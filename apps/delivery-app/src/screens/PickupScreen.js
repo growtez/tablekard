@@ -20,16 +20,20 @@ export default function PickupScreen({ navigation, route }) {
 
     const order = route?.params?.order || {
         orderNumber: 'ORD-001234',
-        restaurantName: 'Pizza Palace',
-        restaurantAddress: '456 Food Street, City Center',
+        restaurantName: 'Sribhumi Restaurant',
+        restaurantAddress: 'Station Road, Karimganj, Assam 788710',
         restaurantPhone: '+91 98765 43210',
-        customerName: 'John Doe',
+        restaurantCoords: { latitude: 24.8648, longitude: 92.3538 },
+        customerName: 'Rajesh Kumar',
+        customerPhone: '+91 98765 43210',
+        customerAddress: 'Nilambazar, Karimganj, Assam 788724',
+        customerCoords: { latitude: 24.8402, longitude: 92.3891 },
         items: [
-            { name: 'Margherita Pizza', quantity: 1, price: 250 },
-            { name: 'Garlic Bread', quantity: 2, price: 100 },
-            { name: 'Coke', quantity: 1, price: 50 },
+            { name: 'Chicken Biryani', quantity: 1, price: 250 },
+            { name: 'Butter Naan', quantity: 4, price: 120 },
+            { name: 'Raita', quantity: 1, price: 40 },
         ],
-        total: 450,
+        total: 410,
         paymentMethod: 'COD',
     };
 
