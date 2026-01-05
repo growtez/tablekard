@@ -2,21 +2,22 @@ import React, { createContext, useContext, useState } from 'react';
 import { useColorScheme } from 'react-native';
 import { darkColors, lightColors } from '../theme';
 
-const darkTheme = {
-    mode: 'dark',
-    colors: darkColors,
-};
-
 const lightTheme = {
     mode: 'light',
     colors: lightColors,
+};
+
+const darkTheme = {
+    mode: 'dark',
+    colors: darkColors,
 };
 
 const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
     const systemColorScheme = useColorScheme();
-    const [themeMode, setThemeMode] = useState('dark');
+    // Default to light theme for the warm design
+    const [themeMode, setThemeMode] = useState('light');
 
     const toggleTheme = (mode) => {
         setThemeMode(mode);
@@ -49,10 +50,10 @@ export function useTheme() {
     const context = useContext(ThemeContext);
     if (!context) {
         return {
-            theme: darkTheme,
-            themeMode: 'dark',
+            theme: lightTheme,
+            themeMode: 'light',
             toggleTheme: () => { },
-            isDark: true,
+            isDark: false,
         };
     }
     return context;
