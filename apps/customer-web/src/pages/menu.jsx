@@ -347,6 +347,14 @@ const MenuPage = () => {
         ))}
       </div>
 
+      {/* Cart Indicator - Shows when items in cart */}
+      {cart.length > 0 && (
+        <NavLink to="/orders" className="cart-indicator">
+          <ShoppingCart size={20} />
+          <span>{cart.reduce((total, item) => total + item.quantity, 0)} items in cart</span>
+        </NavLink>
+      )}
+
       {/* Item Details Modal */}
       {showItemModal && selectedItem && (
         <div className={`item-modal-overlay ${showItemModal ? 'show' : ''}`} onClick={closeItemModal}>

@@ -1,10 +1,13 @@
-// Firebase Configuration for Customer Web
-import { initializeApp } from 'firebase/app';
-import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
-import { getAuth, connectAuthEmulator } from 'firebase/auth';
-import { getStorage, connectStorageEmulator } from 'firebase/storage';
+/**
+ * Firebase Configuration for Customer Web
+ * Using Firebase SDK v10.14.1 for better Vite compatibility
+ */
 
-// Firebase configuration from environment variables
+import { initializeApp } from 'firebase/app';
+import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
+
 const firebaseConfig = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
     authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -14,37 +17,15 @@ const firebaseConfig = {
     appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-console.log('🔥 Firebase Config:', {
-    apiKey: firebaseConfig.apiKey ? '✓ Set' : '✗ Missing',
-    authDomain: firebaseConfig.authDomain || '✗ Missing',
-    projectId: firebaseConfig.projectId || '✗ Missing',
-});
-
 // Initialize Firebase
-let app, db, auth, storage;
+const app = initializeApp(firebaseConfig);
 
-try {
-    app = initializeApp(firebaseConfig);
-    console.log('✅ Firebase app initialized');
+// Initialize services
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+export const storage = getStorage(app);
+export const googleProvider = new GoogleAuthProvider();
 
-    // Initialize services
-    db = getFirestore(app);
-    auth = getAuth(app);
-    storage = getStorage(app);
-    console.log('✅ Firebase services ready (Firestore, Auth, Storage)');
+console.log('✅ Firebase v10 initialized');
 
-} catch (error) {
-    console.error('❌ Firebase initialization failed:', error);
-}
-
-// Connect to emulators in development
-if (import.meta.env.VITE_USE_EMULATORS === 'true' && db && auth && storage) {
-    connectFirestoreEmulator(db, 'localhost', 8080);
-    connectAuthEmulator(auth, 'http://localhost:9099');
-    connectStorageEmulator(storage, 'localhost', 9199);
-    console.log('🔧 Using Firebase Emulators');
-}
-
-export { db, auth, storage };
 export default app;
-

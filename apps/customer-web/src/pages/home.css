@@ -570,30 +570,53 @@ body {
   background: #f9f9f9;
 }
 
-/* Cart Indicator */
+/* Cart Indicator - Enhanced */
 .cart-indicator {
   position: fixed;
-  bottom: 80px;
-  left: 24px;
-  right: 24px;
-  background-color: #d9b550;
-  color: var(--color-background);
-  padding: 12px 20px;
-  border-radius: 12px;
+  bottom: 90px;
+  /* Positioned above bottom nav */
+  left: 20px;
+  right: 20px;
+  background: linear-gradient(135deg, #d9b550 0%, #c9a540 100%);
+  color: #000;
+  padding: 16px 24px;
+  border-radius: 16px;
   text-align: center;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
   z-index: 1000;
   text-decoration: none !important;
   cursor: pointer;
-  transition: all 0.3s ease;
-  display: block;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 8px 24px rgba(217, 181, 80, 0.3);
+  animation: slideUp 0.4s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .cart-indicator:hover {
-  background-color: #d4b202;
-  transform: translateY(-2px);
+  background: linear-gradient(135deg, #c9a540 0%, #b89430 100%);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(217, 181, 80, 0.4);
   text-decoration: none !important;
+}
+
+.cart-indicator:active {
+  transform: translateY(-2px);
 }
 
 .cart-indicator:focus {
@@ -603,10 +626,10 @@ body {
 
 .cart-indicator:visited {
   text-decoration: none !important;
-  color: var(--color-background);
+  color: #000;
 }
 
-/* Bottom Navigation */
+/* Bottom Navigation - Clean without border */
 .bottom-nav {
   position: fixed;
   bottom: 0;
@@ -617,7 +640,9 @@ body {
   display: flex;
   justify-content: space-around;
   align-items: center;
-  border-top: 1px solid var(--color-card-hover);
+  /* Force remove all borders */
+  border-top: none !important;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.3);
 }
 
 .nav-btn {
