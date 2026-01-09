@@ -43,7 +43,7 @@ body {
 }
 
 .logo {
-  background: linear-gradient(135deg, #d9b550 0%, #f0d444 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
   width: 80px;
   height: 80px;
   border-radius: 50%;
@@ -79,7 +79,7 @@ body {
 }
 
 .highlight {
-  color: #d9b550;
+  color: var(--color-primary);
 }
 
 .tagline {
@@ -126,7 +126,7 @@ body {
 }
 
 .feature-icon {
-  color: #d9b550;
+  color: var(--color-primary);
   background: rgba(228, 194, 2, 0.1);
   padding: 16px;
   border-radius: 50%;
@@ -185,17 +185,17 @@ body {
 }
 
 .step-dot.active {
-  background-color: #d9b550;
+  background-color: var(--color-primary);
   transform: scale(1.2);
   box-shadow: 0 0 16px rgba(228, 194, 2, 0.4);
 }
 
 .step-dot.completed {
-  background-color: #d9b550;
+  background-color: var(--color-primary);
 }
 
 .step-dot:hover {
-  background-color: #d9b550;
+  background-color: var(--color-primary);
   transform: scale(1.1);
 }
 
@@ -225,7 +225,7 @@ body {
 }
 
 .nav-button.primary {
-  background: linear-gradient(135deg, #d9b550 0%, #f0d444 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
   color: #1a1a1a;
   box-shadow: 0 4px 16px rgba(228, 194, 2, 0.3);
 }
@@ -253,7 +253,7 @@ body {
 
 .nav-button.get-started {
   width: 100%;
-  background: linear-gradient(135deg, #d9b550 0%, #f0d444 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
   color: #1a1a1a;
   font-weight: 700;
   padding: 18px 32px;
@@ -284,7 +284,7 @@ body {
 }
 
 .info-item svg {
-  color: #d9b550;
+  color: var(--color-primary);
 }
 
 .copyright {

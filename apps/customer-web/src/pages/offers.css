@@ -20,7 +20,7 @@
 .offers-header .back-btn {
   background: none;
   border: none;
-  color: #d9b550;
+  color: var(--color-primary);
   font-size: 24px;
   cursor: pointer;
   margin-right: 16px;
@@ -35,7 +35,7 @@
 
 /* Loyalty Card */
 .loyalty-card {
-  background: linear-gradient(135deg, #d9b550, #d4b202);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
   color: var(--color-background);
   border-radius: 16px;
   padding: 24px;
@@ -150,7 +150,7 @@
 }
 
 .offer-info p {
-  color: #d9b550;
+  color: var(--color-primary);
   font-size: 12px;
   font-weight: 600;
   margin-bottom: 4px;
@@ -162,7 +162,7 @@
 }
 
 .use-offer-btn {
-  background-color: #d9b550;
+  background-color: var(--color-primary);
   color: var(--color-background);
   border: none;
   padding: 8px 12px;
@@ -174,7 +174,7 @@
 }
 
 .use-offer-btn:hover {
-  background-color: #d4b202;
+  background-color: var(--color-primary-dark);
 }
 
 /* Responsive Design */
