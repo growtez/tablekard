@@ -33,5 +33,8 @@
     },
     "devDependencies": {
         "@react-native-community/cli": "latest"
+    },
+    "dependencies": {
+        "firebase": "^12.7.0"
     }
 }
