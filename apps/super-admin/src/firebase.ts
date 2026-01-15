@@ -10,6 +10,11 @@ import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getStorage, connectStorageEmulator } from 'firebase/storage';
 
+// Explicit side-effect imports to ensure registration
+import 'firebase/firestore';
+import 'firebase/auth';
+import 'firebase/storage';
+
 // Firebase configuration using environment variables
 const firebaseConfig = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY,

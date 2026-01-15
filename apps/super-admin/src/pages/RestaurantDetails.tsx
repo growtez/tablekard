@@ -1,29 +1,41 @@
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, Edit, Trash2 } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Edit, Trash2, RefreshCw } from 'lucide-react';
+import { useRestaurantDetails } from '../hooks/useRestaurantDetails';
+import { RestaurantStatus, SubscriptionPlan } from '@restaurant-saas/types';
+
+const getStatusBadge = (status: RestaurantStatus) => {
+    switch (status) {
+        case RestaurantStatus.ACTIVE:
+            return <span className="badge success">Active</span>;
+        case RestaurantStatus.TRIAL:
+            return <span className="badge info">Trial</span>;
+        case RestaurantStatus.EXPIRED:
+            return <span className="badge error">Expired</span>;
+        default:
+            return <span className="badge">{status}</span>;
+    }
+};
+
+const getPlanBadge = (plan: SubscriptionPlan) => {
+    switch (plan) {
+        case SubscriptionPlan.DELIVERY:
+            return <span className="badge" style={{ background: 'rgba(139, 92, 246, 0.15)', color: '#a78bfa' }}>Delivery</span>;
+        case SubscriptionPlan.QR:
+            return <span className="badge" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa' }}>QR Only</span>;
+        case SubscriptionPlan.OWNED:
+            return <span className="badge" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399' }}>Owned</span>;
+        default:
+            return <span className="badge">{plan}</span>;
+    }
+};
 
 export default function RestaurantDetails() {
     const { id } = useParams();
+    const { restaurant, loading, error, refresh } = useRestaurantDetails(id);
 
-    // Mock data - would come from Firebase
-    const restaurant = {
-        id,
-        name: 'Pizza Paradise',
-        slug: 'pizza-paradise',
-        email: 'owner@pizzaparadise.com',
-        phone: '+91 98765 43210',
-        address: '123 Food Street, Mumbai 400001',
-        plan: 'DELIVERY',
-        status: 'ACTIVE',
-        tables: 15,
-        menuItems: 45,
-        totalOrders: 1250,
-        revenue: '₹2,45,000',
-        createdAt: '2024-01-15',
-        branding: {
-            primaryColor: '#FF5722',
-            secondaryColor: '#212121',
-        }
-    };
+    if (loading) return <div className="p-8 text-center">Loading...</div>;
+    if (error) return <div className="p-8 text-center text-red-500">Error: {error}</div>;
+    if (!restaurant) return <div className="p-8 text-center">Restaurant not found</div>;
 
     return (
         <>
@@ -36,14 +48,23 @@ export default function RestaurantDetails() {
                     <div>
                         <h1 style={{ fontSize: '1.5rem', fontWeight: 600 }}>{restaurant.name}</h1>
                         <p className="text-secondary" style={{ fontSize: '0.875rem' }}>
-                            {restaurant.slug}.yourapp.com
+                            {restaurant.slug}
                         </p>
                     </div>
                     <div className="flex items-center gap-sm">
-                        <button className="btn btn-secondary">
+                        <button className="btn btn-ghost" onClick={refresh}>
+                            <RefreshCw size={18} />
+                        </button>
+                        <a
+                            href={`https://${restaurant.domain || restaurant.slug + '.yourapp.com'}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-secondary"
+                            style={{ textDecoration: 'none' }}
+                        >
                             <ExternalLink size={18} />
                             Visit Site
-                        </button>
+                        </a>
                         <button className="btn btn-primary">
                             <Edit size={18} />
                             Edit
@@ -63,19 +84,19 @@ export default function RestaurantDetails() {
                             <div style={{ display: 'grid', gap: '1rem' }}>
                                 <div>
                                     <div className="text-muted" style={{ fontSize: '0.75rem', marginBottom: '0.25rem' }}>Email</div>
-                                    <div>{restaurant.email}</div>
+                                    <div>{restaurant.contact?.email || 'N/A'}</div>
                                 </div>
                                 <div>
                                     <div className="text-muted" style={{ fontSize: '0.75rem', marginBottom: '0.25rem' }}>Phone</div>
-                                    <div>{restaurant.phone}</div>
+                                    <div>{restaurant.contact?.phone || 'N/A'}</div>
                                 </div>
                                 <div>
                                     <div className="text-muted" style={{ fontSize: '0.75rem', marginBottom: '0.25rem' }}>Address</div>
-                                    <div>{restaurant.address}</div>
+                                    <div>{restaurant.contact?.address || 'N/A'}</div>
                                 </div>
                                 <div>
                                     <div className="text-muted" style={{ fontSize: '0.75rem', marginBottom: '0.25rem' }}>Created</div>
-                                    <div>{restaurant.createdAt}</div>
+                                    <div>{restaurant.createdAt?.seconds ? new Date(restaurant.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}</div>
                                 </div>
                             </div>
                         </div>
@@ -90,48 +111,46 @@ export default function RestaurantDetails() {
                             <div style={{ display: 'grid', gap: '1rem' }}>
                                 <div>
                                     <div className="text-muted" style={{ fontSize: '0.75rem', marginBottom: '0.25rem' }}>Plan</div>
-                                    <div className="badge" style={{ background: 'rgba(139, 92, 246, 0.15)', color: '#a78bfa' }}>
-                                        {restaurant.plan === 'DELIVERY' ? '₹1,499 - Delivery' : '₹999 - QR Only'}
+                                    <div className="flex">
+                                        {getPlanBadge(restaurant.subscription?.plan)}
                                     </div>
                                 </div>
                                 <div>
                                     <div className="text-muted" style={{ fontSize: '0.75rem', marginBottom: '0.25rem' }}>Status</div>
-                                    <span className="badge success">Active</span>
+                                    <div className="flex">
+                                        {getStatusBadge(restaurant.status)}
+                                    </div>
                                 </div>
                                 <div>
-                                    <div className="text-muted" style={{ fontSize: '0.75rem', marginBottom: '0.25rem' }}>Features</div>
-                                    <div className="flex gap-sm" style={{ flexWrap: 'wrap' }}>
-                                        <span className="badge info">QR Ordering</span>
-                                        {restaurant.plan === 'DELIVERY' && <span className="badge info">Delivery</span>}
-                                        {restaurant.plan === 'DELIVERY' && <span className="badge info">Custom Domain</span>}
-                                    </div>
+                                    <div className="text-muted" style={{ fontSize: '0.75rem', marginBottom: '0.25rem' }}>Expires At</div>
+                                    <div>{restaurant.subscription?.expiresAt?.seconds ? new Date(restaurant.subscription.expiresAt.seconds * 1000).toLocaleDateString() : 'N/A'}</div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Stats Card */}
+                    {/* Stats Card - Mock data for now as we don't have sub-collections aggregations yet */}
                     <div className="card" style={{ gridColumn: 'span 2' }}>
                         <div className="card-header">
-                            <h2 className="card-title">Statistics</h2>
+                            <h2 className="card-title">Statistics (Coming Soon)</h2>
                         </div>
                         <div className="card-content">
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem' }}>
                                 <div>
                                     <div className="text-muted" style={{ fontSize: '0.75rem', marginBottom: '0.25rem' }}>Tables</div>
-                                    <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{restaurant.tables}</div>
+                                    <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>-</div>
                                 </div>
                                 <div>
                                     <div className="text-muted" style={{ fontSize: '0.75rem', marginBottom: '0.25rem' }}>Menu Items</div>
-                                    <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{restaurant.menuItems}</div>
+                                    <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>-</div>
                                 </div>
                                 <div>
                                     <div className="text-muted" style={{ fontSize: '0.75rem', marginBottom: '0.25rem' }}>Total Orders</div>
-                                    <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{restaurant.totalOrders}</div>
+                                    <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>-</div>
                                 </div>
                                 <div>
                                     <div className="text-muted" style={{ fontSize: '0.75rem', marginBottom: '0.25rem' }}>Revenue</div>
-                                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-success)' }}>{restaurant.revenue}</div>
+                                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-success)' }}>-</div>
                                 </div>
                             </div>
                         </div>

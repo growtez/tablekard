@@ -91,6 +91,7 @@ export interface Address {
 // ==========================================
 
 export interface Restaurant {
+  subscription: any;
   id: string;
   name: string;
   slug: string; // For subdomain
@@ -98,7 +99,7 @@ export interface Restaurant {
   status: RestaurantStatus;
   createdAt: Timestamp;
   updatedAt: Timestamp;
-  
+
   // Contact Info
   contact: {
     phone: string;
@@ -109,7 +110,7 @@ export interface Restaurant {
       lng: number;
     };
   };
-  
+
   // Operating Hours
   operatingHours?: {
     [day: string]: {
@@ -250,20 +251,20 @@ export interface Order {
   id: string;
   orderNumber: string;
   type: OrderType;
-  
+
   // Customer Info
   customerId?: string;
   customerName?: string;
   customerPhone?: string;
-  
+
   // For Dine-In
   tableNumber?: number;
-  
+
   // For Delivery
   address?: Address;
   assignedAgent?: string;
   deliveryInstructions?: string;
-  
+
   // Order Details
   items: OrderItem[];
   subtotal: number;
@@ -271,17 +272,17 @@ export interface Order {
   deliveryFee: number;
   discount: number;
   total: number;
-  
+
   // Status
   status: OrderStatus;
-  
+
   // Payment
   payment: {
     method: PaymentMethod;
     status: PaymentStatus;
     transactionId?: string;
   };
-  
+
   // Timestamps
   createdAt: Timestamp;
   confirmedAt?: Timestamp;

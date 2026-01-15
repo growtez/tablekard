@@ -1,18 +1,5 @@
-import { CreditCard, TrendingUp, DollarSign } from 'lucide-react';
-
-const subscriptionStats = [
-    { label: 'QR Plan (₹999)', count: 127, revenue: '₹1,26,873' },
-    { label: 'Delivery Plan (₹1,499)', count: 71, revenue: '₹1,06,429' },
-    { label: 'Trial', count: 49, revenue: '₹0' },
-];
-
-const recentPayments = [
-    { id: 1, restaurant: 'Pizza Paradise', plan: 'DELIVERY', amount: '₹1,499', date: '2024-03-15', status: 'SUCCESS' },
-    { id: 2, restaurant: 'Tandoori Nights', plan: 'QR', amount: '₹999', date: '2024-03-14', status: 'SUCCESS' },
-    { id: 3, restaurant: 'Dragon Wok', plan: 'DELIVERY', amount: '₹1,499', date: '2024-03-14', status: 'PENDING' },
-    { id: 4, restaurant: 'Cafe Mocha', plan: 'QR', amount: '₹999', date: '2024-03-13', status: 'SUCCESS' },
-    { id: 5, restaurant: 'Sushi Master', plan: 'DELIVERY', amount: '₹1,499', date: '2024-03-12', status: 'FAILED' },
-];
+import { CreditCard, TrendingUp, DollarSign, RefreshCw } from 'lucide-react';
+import { useSubscriptionStats } from '../hooks/useSubscriptionStats';
 
 const getPaymentStatusBadge = (status: string) => {
     switch (status) {
@@ -28,19 +15,34 @@ const getPaymentStatusBadge = (status: string) => {
 };
 
 export default function Subscriptions() {
+    const { stats, monthlyRevenue, recentPayments, loading, refresh } = useSubscriptionStats();
+
+    if (loading && stats.length === 0) {
+        return (
+            <div className="p-8 flex justify-center items-center h-full">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+        );
+    }
+
     return (
         <>
-            <header className="page-header">
-                <h1 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Subscriptions</h1>
-                <p className="text-secondary" style={{ fontSize: '0.875rem' }}>
-                    Manage subscription plans and payments
-                </p>
+            <header className="page-header flex items-center justify-between">
+                <div>
+                    <h1 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Subscriptions</h1>
+                    <p className="text-secondary" style={{ fontSize: '0.875rem' }}>
+                        Manage subscription plans and payments
+                    </p>
+                </div>
+                <button className="btn btn-ghost" onClick={refresh} title="Refresh">
+                    <RefreshCw size={18} />
+                </button>
             </header>
 
             <div className="page-content animate-fadeIn">
                 {/* Subscription Stats */}
                 <div className="stats-grid">
-                    {subscriptionStats.map((stat) => (
+                    {stats.map((stat) => (
                         <div key={stat.label} className="stat-card">
                             <div className="stat-icon purple">
                                 <CreditCard size={24} />
@@ -68,15 +70,21 @@ export default function Subscriptions() {
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
                             <div style={{ textAlign: 'center', padding: '1rem', background: 'var(--color-bg-tertiary)', borderRadius: 'var(--radius-lg)' }}>
                                 <div className="text-muted" style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>This Month</div>
-                                <div style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--color-success)' }}>₹2,33,302</div>
+                                <div style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--color-success)' }}>
+                                    {monthlyRevenue ? `₹${monthlyRevenue.current.toLocaleString()}` : '-'}
+                                </div>
                             </div>
                             <div style={{ textAlign: 'center', padding: '1rem', background: 'var(--color-bg-tertiary)', borderRadius: 'var(--radius-lg)' }}>
                                 <div className="text-muted" style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>Last Month</div>
-                                <div style={{ fontSize: '1.75rem', fontWeight: 700 }}>₹1,98,450</div>
+                                <div style={{ fontSize: '1.75rem', fontWeight: 700 }}>
+                                    {monthlyRevenue ? `₹${monthlyRevenue.last.toLocaleString()}` : '-'}
+                                </div>
                             </div>
                             <div style={{ textAlign: 'center', padding: '1rem', background: 'var(--color-bg-tertiary)', borderRadius: 'var(--radius-lg)' }}>
                                 <div className="text-muted" style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>Growth</div>
-                                <div style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--color-success)' }}>+17.5%</div>
+                                <div style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--color-success)' }}>
+                                    {monthlyRevenue ? `+${monthlyRevenue.growth}%` : '-'}
+                                </div>
                             </div>
                         </div>
                     </div>

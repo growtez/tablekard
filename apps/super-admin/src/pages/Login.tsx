@@ -1,6 +1,6 @@
 // Login Page for Super Admin
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './Login.css';
 
@@ -24,21 +24,25 @@ const LoginPage: React.FC = () => {
         }
     }, [isAuthenticated, loading, navigate]);
 
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+        setIsLoading(true); // Moved up as per instruction
 
+        // Validate email
         if (!email.trim()) {
             setError('Please enter your email');
+            setIsLoading(false);
             return;
         }
 
+        // Validate password
         if (!password.trim()) {
             setError('Please enter your password');
+            setIsLoading(false);
             return;
         }
-
-        setIsLoading(true);
 
         try {
             await signIn(email, password);
@@ -156,6 +160,16 @@ const LoginPage: React.FC = () => {
                 </form>
 
                 <div className="login-footer">
+                    <Link to="/signup" style={{
+                        display: 'inline-block',
+                        marginBottom: '1rem',
+                        fontSize: '0.85rem',
+                        color: 'var(--text-secondary)',
+                        textDecoration: 'none',
+                        opacity: 0.7
+                    }}>
+                        Create Account
+                    </Link>
                     <p>Super Admin Access Only</p>
                     <p className="security-note">🔒 Secured by Firebase</p>
                 </div>

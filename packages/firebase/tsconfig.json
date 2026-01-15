@@ -2,45 +2,27 @@
     "compilerOptions": {
         "target": "ES2020",
         "useDefineForClassFields": true,
+        "module": "ESNext",
         "lib": [
             "ES2020",
             "DOM",
             "DOM.Iterable"
         ],
-        "module": "ESNext",
         "skipLibCheck": true,
         "moduleResolution": "bundler",
         "allowImportingTsExtensions": true,
         "resolveJsonModule": true,
         "isolatedModules": true,
         "noEmit": true,
-        "jsx": "react-jsx",
         "strict": true,
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "noFallthroughCasesInSwitch": true,
-        "baseUrl": ".",
         "types": [
             "vite/client"
-        ],
-        "paths": {
-            "@/*": [
-                "src/*"
-            ],
-            "@restaurant-saas/types": [
-                "../../packages/types/src"
-            ],
-            "@restaurant-saas/firebase": [
-                "../../packages/firebase/src"
-            ]
-        }
+        ]
     },
     "include": [
         "src"
-    ],
-    "references": [
-        {
-            "path": "./tsconfig.node.json"
-        }
     ]
 }

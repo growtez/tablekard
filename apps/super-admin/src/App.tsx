@@ -8,6 +8,10 @@ import RestaurantDetails from './pages/RestaurantDetails';
 import Subscriptions from './pages/Subscriptions';
 import Settings from './pages/Settings';
 import LoginPage from './pages/Login';
+import Signup from './pages/Signup';
+import Analytics from './pages/Analytics';
+import Users from './pages/Users';
+import Notifications from './pages/Notifications';
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -39,6 +43,7 @@ function AppRoutes() {
     return (
         <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<Signup />} /> {/* Added Signup route */}
             <Route path="/" element={
                 <ProtectedRoute><Layout /></ProtectedRoute>
             }>
@@ -47,6 +52,9 @@ function AppRoutes() {
                 <Route path="restaurants" element={<Restaurants />} />
                 <Route path="restaurants/:id" element={<RestaurantDetails />} />
                 <Route path="subscriptions" element={<Subscriptions />} />
+                <Route path="analytics" element={<Analytics />} />
+                <Route path="users" element={<Users />} />
+                <Route path="notifications" element={<Notifications />} />
                 <Route path="settings" element={<Settings />} />
             </Route>
         </Routes>
