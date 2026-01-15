@@ -77,7 +77,7 @@ const HomeScreen = ({ navigation }) => {
         setShowModal(true);
     };
 
-    // Filters
+    // Filters - matching customer-web
     const filters = [
         { id: 'popular', label: 'Popular this week' },
         { id: 'all', label: 'Most selling' },
@@ -87,24 +87,24 @@ const HomeScreen = ({ navigation }) => {
 
     // Featured Offers (Discounts)
     const featuredOffers = [
-        { id: 'featured1', name: 'Sushi Pack', price: 299, time: '15 min', rating: 4.8, discount: '20% OFF', subtitle: 'Special sushi selection', serves: 'Serves 1-2', image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400&h=400&fit=crop', description: 'A curated selection of premium seafood sushi.' },
-        { id: 'featured2', name: 'Salmon Platter', price: 399, time: '15 min', rating: 4.8, discount: '20% OFF', subtitle: 'Premium grilled salmon', serves: 'Serves 1', image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=400&h=400&fit=crop', description: 'Atlantic salmon grilled to perfection.' },
-        { id: 'featured3', name: 'California Rolls', price: 249, time: '12 min', rating: 4.7, discount: '20% OFF', subtitle: 'Classic rolls', serves: 'Serves 1', image: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=400&fit=crop', description: 'Classic California rolls with avocado.' },
+        { id: 'featured1', name: 'Sushi Pack', price: 299, time: '15 min', rating: 4.8, discount: '20% OFF', image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400&h=400&fit=crop', description: 'A curated selection of premium seafood sushi.' },
+        { id: 'featured2', name: 'Salmon Platter', price: 399, time: '15 min', rating: 4.8, discount: '20% OFF', image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=400&h=400&fit=crop', description: 'Atlantic salmon grilled to perfection.' },
+        { id: 'featured3', name: 'California Rolls', price: 249, time: '12 min', rating: 4.7, discount: '20% OFF', image: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=400&fit=crop', description: 'Classic California rolls with avocado.' },
     ];
 
     // Popular Items
     const popularItems = [
-        { id: 'popular1', name: 'Margherita', price: 168, time: '25min', rating: 4.9, serves: 'Serves 2', desc: 'cheese layers 🧀', image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300&h=300&fit=crop', description: 'Classic Italian pizza with fresh mozzarella.' },
-        { id: 'popular2', name: 'Tikka Masala', price: 198, time: '30min', rating: 4.8, serves: 'Serves 1', desc: 'spicy layers 🌶️', image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=300&h=300&fit=crop', description: 'Authentic Indian curry with tender chicken.' },
-        { id: 'popular3', name: 'Lava Cake', price: 568, time: '15min', rating: 4.9, serves: 'Serves 1', desc: 'chocolate 🍫', image: 'https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=300&h=300&fit=crop', description: 'Warm chocolate cake with molten center.' },
-        { id: 'popular4', name: 'Caesar Salad', price: 120, time: '10min', rating: 4.7, serves: 'Serves 1', desc: 'fresh greens 🥗', image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=300&h=300&fit=crop', description: 'Fresh romaine with Caesar dressing.' },
+        { id: 'popular1', name: 'Margherita', price: 168, time: '25min', rating: 4.9, image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300&h=300&fit=crop', description: 'Classic Italian pizza with fresh mozzarella.' },
+        { id: 'popular2', name: 'Tikka Masala', price: 198, time: '30min', rating: 4.8, image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=300&h=300&fit=crop', description: 'Authentic Indian curry with tender chicken.' },
+        { id: 'popular3', name: 'Lava Cake', price: 568, time: '15min', rating: 4.9, image: 'https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=300&h=300&fit=crop', description: 'Warm chocolate cake with molten center.' },
+        { id: 'popular4', name: 'Caesar Salad', price: 120, time: '10min', rating: 4.7, image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=300&h=300&fit=crop', description: 'Fresh romaine with Caesar dressing.' },
     ];
 
     // Recent Orders
     const recentOrders = [
-        { id: 'recent1', name: 'Pepperoni Pizza', price: 148, time: '20min', rating: 4.6, orderDate: '2 days ago', image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300&h=300&fit=crop', serves: 'Serves 2', description: 'Signature pepperoni pizza.' },
-        { id: 'recent2', name: 'Grilled Salmon', price: 228, time: '25min', rating: 4.8, orderDate: '1 week ago', image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=300&h=300&fit=crop', serves: 'Serves 1', description: 'Fresh grilled salmon fillet.' },
-        { id: 'recent3', name: 'Vegan Burger', price: 138, time: '20min', rating: 4.5, orderDate: '1 week ago', image: 'https://images.unsplash.com/photo-1520072959219-c595dc870360?w=300&h=300&fit=crop', serves: 'Serves 1', description: 'Plant-based burger patty.' },
+        { id: 'recent1', name: 'Pepperoni Pizza', price: 148, time: '20min', rating: 4.6, image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300&h=300&fit=crop', description: 'Signature pepperoni pizza.' },
+        { id: 'recent2', name: 'Grilled Salmon', price: 228, time: '25min', rating: 4.8, image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=300&h=300&fit=crop', description: 'Fresh grilled salmon fillet.' },
+        { id: 'recent3', name: 'Vegan Burger', price: 138, time: '20min', rating: 4.5, image: 'https://images.unsplash.com/photo-1520072959219-c595dc870360?w=300&h=300&fit=crop', description: 'Plant-based burger patty.' },
     ];
 
     const getFilteredItems = () => {
@@ -124,7 +124,7 @@ const HomeScreen = ({ navigation }) => {
 
     const handleScroll = (event) => {
         const scrollPosition = event.nativeEvent.contentOffset.x;
-        const cardWidth = width - 80;
+        const cardWidth = 230 + 16; // card width + gap
         const index = Math.round(scrollPosition / cardWidth);
         setCurrentOfferIndex(Math.min(index, featuredOffers.length - 1));
     };
@@ -133,42 +133,37 @@ const HomeScreen = ({ navigation }) => {
     const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.background }]}>
-            <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+        <View style={[styles.container, { backgroundColor: '#FFFFFF' }]}>
+            <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
-                {/* Header */}
-                <View style={[styles.header, { backgroundColor: colors.background }]}>
-                    <View style={styles.headerRow}>
-                        <View style={styles.headerLeft}>
-                            <TouchableOpacity style={styles.hamburger}>
-                                <View style={[styles.hamburgerLine, { backgroundColor: colors.primary }]} />
-                                <View style={[styles.hamburgerLine, { backgroundColor: colors.primary, width: 16 }]} />
-                                <View style={[styles.hamburgerLine, { backgroundColor: colors.primary }]} />
-                            </TouchableOpacity>
-                            <Text style={[styles.brandName, { color: colors.primary }]}>Delish</Text>
-                        </View>
-                        <TouchableOpacity
-                            style={[styles.headerIconBtn, { backgroundColor: colors.primaryLight }]}
-                            onPress={() => { }}
-                        >
-                            <Icon name="heart" size={22} color={colors.primary} />
-                            {favorites.length > 0 && (
-                                <View style={[styles.headerBadge, { backgroundColor: colors.primary }]}>
-                                    <Text style={styles.headerBadgeText}>{favorites.length}</Text>
-                                </View>
-                            )}
+                {/* Header - Matching customer-web */}
+                <View style={styles.header}>
+                    <View style={styles.headerLeft}>
+                        <TouchableOpacity style={styles.hamburger}>
+                            <View style={[styles.hamburgerLine, { backgroundColor: '#8B3A1E' }]} />
+                            <View style={[styles.hamburgerLine, { backgroundColor: '#8B3A1E', width: 16 }]} />
+                            <View style={[styles.hamburgerLine, { backgroundColor: '#8B3A1E' }]} />
                         </TouchableOpacity>
+                        <Text style={styles.brandName}>DELISH</Text>
                     </View>
+                    <TouchableOpacity style={styles.headerIconBtn}>
+                        <Icon name="heart" size={22} color="#8B3A1E" />
+                        {favorites.length > 0 && (
+                            <View style={styles.headerBadge}>
+                                <Text style={styles.headerBadgeText}>{favorites.length}</Text>
+                            </View>
+                        )}
+                    </TouchableOpacity>
                 </View>
 
                 {/* Hero Section */}
                 <View style={styles.heroSection}>
                     <View style={styles.heroText}>
-                        <Text style={[styles.heroTitle, { color: colors.text }]}>
-                            Find Your <Text style={{ color: colors.primary }}>Best</Text>
+                        <Text style={styles.heroTitle}>
+                            Find Your <Text style={styles.heroHighlight}>Best</Text>
                         </Text>
-                        <Text style={[styles.heroTitle, { color: colors.text }]}>Food Around You</Text>
+                        <Text style={styles.heroTitle}>Food Around You</Text>
                     </View>
                     <Image
                         source={{ uri: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=200&h=200&fit=crop' }}
@@ -176,43 +171,32 @@ const HomeScreen = ({ navigation }) => {
                     />
                 </View>
 
-                {/* Deliver To Bar (Only this is different from web) */}
-                <TouchableOpacity
-                    style={[styles.deliverBar, { backgroundColor: colors.card, borderColor: colors.border }]}
-                    onPress={() => navigation.navigate('Address')}
-                >
-                    <View style={[styles.deliverIcon, { backgroundColor: colors.primaryLight }]}>
-                        <Icon name="map-pin" size={16} color={colors.primary} />
+                {/* Deliver To Bar */}
+                <TouchableOpacity style={styles.deliverBar} onPress={() => navigation.navigate('Address')}>
+                    <View style={styles.deliverIcon}>
+                        <Icon name="map-pin" size={16} color="#8B3A1E" />
                     </View>
                     <View style={styles.deliverInfo}>
-                        <Text style={[styles.deliverLabel, { color: colors.textMuted }]}>Deliver to</Text>
-                        <Text style={[styles.deliverText, { color: colors.text }]} numberOfLines={1}>
+                        <Text style={styles.deliverLabel}>Deliver to</Text>
+                        <Text style={styles.deliverText} numberOfLines={1}>
                             {selectedAddress?.label || 'Select Address'}
                         </Text>
                     </View>
-                    <TouchableOpacity
-                        style={[styles.gpsBtn, { backgroundColor: colors.primaryLight }]}
-                        onPress={getCurrentLocation}
-                    >
-                        <Icon name="navigation" size={14} color={colors.primary} />
+                    <TouchableOpacity style={styles.gpsBtn} onPress={getCurrentLocation}>
+                        <Icon name="navigation" size={14} color="#8B3A1E" />
                     </TouchableOpacity>
-                    <Icon name="chevron-down" size={18} color={colors.textMuted} />
+                    <Icon name="chevron-down" size={18} color="#B8ADA9" />
                 </TouchableOpacity>
 
-                {/* Search Bar */}
-                <TouchableOpacity
-                    style={[styles.searchBar, { backgroundColor: colors.card, borderColor: colors.border }]}
-                    onPress={() => navigation.navigate('Menu')}
-                >
-                    <Icon name="search" size={18} color={colors.textMuted} />
-                    <Text style={[styles.searchPlaceholder, { color: colors.textMuted }]}>
-                        Search your favourite food
-                    </Text>
+                {/* Search Bar - matching customer-web */}
+                <TouchableOpacity style={styles.searchBar} onPress={() => navigation.navigate('Menu')}>
+                    <Icon name="search" size={18} color="#8B3A1E" />
+                    <Text style={styles.searchPlaceholder}>Search your favourite food</Text>
                 </TouchableOpacity>
 
-                {/* Categories Section */}
+                {/* Categories Section - with exact customer-web styling */}
                 <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Categories</Text>
+                    <Text style={styles.sectionTitle}>Categories</Text>
                     <ScrollView
                         horizontal
                         showsHorizontalScrollIndicator={false}
@@ -223,15 +207,13 @@ const HomeScreen = ({ navigation }) => {
                                 key={filter.id}
                                 style={[
                                     styles.categoryPill,
-                                    activeFilter === filter.id
-                                        ? { backgroundColor: colors.primary }
-                                        : { backgroundColor: colors.card, borderColor: colors.text, borderWidth: 1 }
+                                    activeFilter === filter.id && styles.categoryPillActive
                                 ]}
                                 onPress={() => setActiveFilter(filter.id)}
                             >
                                 <Text style={[
                                     styles.categoryText,
-                                    { color: activeFilter === filter.id ? '#FFFFFF' : colors.text }
+                                    activeFilter === filter.id && styles.categoryTextActive
                                 ]}>
                                     {filter.label}
                                 </Text>
@@ -243,25 +225,23 @@ const HomeScreen = ({ navigation }) => {
                 {/* Popular Items Section */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                        <Text style={styles.sectionTitle}>
                             {filters.find(f => f.id === activeFilter)?.label || 'Popular this week'}
                         </Text>
-                        <TouchableOpacity onPress={() => navigation.navigate('Menu')}>
-                            <View style={styles.viewAllBtn}>
-                                <Text style={[styles.viewAllText, { color: colors.primary }]}>View all</Text>
-                                <View style={[styles.arrowSquare, { backgroundColor: colors.primary }]}>
-                                    <Icon name="arrow-right" size={12} color="#FFFFFF" />
-                                </View>
+                        <TouchableOpacity style={styles.viewAllBtn} onPress={() => navigation.navigate('Menu')}>
+                            <Text style={styles.viewAllText}>View all</Text>
+                            <View style={styles.arrowSquare}>
+                                <Icon name="arrow-right" size={12} color="#FFFFFF" />
                             </View>
                         </TouchableOpacity>
                     </View>
 
-                    {/* Food Grid - 2 columns */}
+                    {/* Food Grid - 2 columns with black border */}
                     <View style={styles.foodGrid}>
                         {filteredItems.map(item => (
                             <TouchableOpacity
                                 key={item.id}
-                                style={[styles.foodCard, { backgroundColor: colors.card }]}
+                                style={styles.foodCard}
                                 onPress={() => handleItemClick(item)}
                             >
                                 <View style={styles.foodImageContainer}>
@@ -269,29 +249,29 @@ const HomeScreen = ({ navigation }) => {
                                     <TouchableOpacity
                                         style={[
                                             styles.favBtn,
-                                            { backgroundColor: favorites.includes(item.id) ? colors.primary : 'rgba(255,255,255,0.9)' }
+                                            favorites.includes(item.id) && styles.favBtnActive
                                         ]}
                                         onPress={() => toggleFavorite(item.id)}
                                     >
                                         <Icon
                                             name="heart"
                                             size={12}
-                                            color={favorites.includes(item.id) ? '#FFFFFF' : colors.primary}
+                                            color={favorites.includes(item.id) ? '#FFFFFF' : '#8B3A1E'}
                                         />
                                     </TouchableOpacity>
                                 </View>
-                                <Text style={[styles.foodName, { color: colors.text }]} numberOfLines={1}>{item.name}</Text>
+                                <Text style={styles.foodName} numberOfLines={1}>{item.name}</Text>
                                 <View style={styles.foodMeta}>
                                     <View style={styles.foodMetaItem}>
-                                        <Icon name="clock" size={10} color={colors.textMuted} />
-                                        <Text style={[styles.foodMetaText, { color: colors.textMuted }]}>{item.time}</Text>
+                                        <Icon name="clock" size={10} color="#888888" />
+                                        <Text style={styles.foodMetaTime}>{item.time}</Text>
                                     </View>
                                     <View style={styles.foodMetaItem}>
-                                        <Icon name="star" size={10} color={colors.star} />
-                                        <Text style={[styles.foodMetaText, { color: colors.text }]}>{item.rating}</Text>
+                                        <Icon name="star" size={10} color="#8B3A1E" />
+                                        <Text style={styles.foodMetaRating}>{item.rating}</Text>
                                     </View>
                                 </View>
-                                <Text style={[styles.foodPrice, { color: colors.primary }]}>₹{item.price}</Text>
+                                <Text style={styles.foodPrice}>₹{item.price}</Text>
                             </TouchableOpacity>
                         ))}
                     </View>
@@ -300,53 +280,54 @@ const HomeScreen = ({ navigation }) => {
                 {/* Discounts Section */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <Text style={[styles.sectionTitle, { color: colors.text }]}>Discounts for you</Text>
-                        <TouchableOpacity>
-                            <View style={styles.viewAllBtn}>
-                                <Text style={[styles.viewAllText, { color: colors.primary }]}>View all</Text>
-                                <View style={[styles.arrowSquare, { backgroundColor: colors.primary }]}>
-                                    <Icon name="arrow-right" size={12} color="#FFFFFF" />
-                                </View>
+                        <Text style={styles.sectionTitle}>Discounts for you</Text>
+                        <TouchableOpacity style={styles.viewAllBtn}>
+                            <Text style={styles.viewAllText}>View all</Text>
+                            <View style={styles.arrowSquare}>
+                                <Icon name="arrow-right" size={12} color="#FFFFFF" />
                             </View>
                         </TouchableOpacity>
                     </View>
 
-                    {/* Discount Cards Horizontal Scroll */}
+                    {/* Discount Cards - with burgundy tinted border */}
                     <ScrollView
                         ref={scrollRef}
                         horizontal
-                        pagingEnabled
                         showsHorizontalScrollIndicator={false}
                         onScroll={handleScroll}
                         scrollEventThrottle={16}
                         contentContainerStyle={styles.discountScroll}
+                        snapToInterval={246}
+                        decelerationRate="fast"
                     >
                         {featuredOffers.map((offer) => (
                             <TouchableOpacity
                                 key={offer.id}
-                                style={[styles.discountCard, { backgroundColor: colors.card }]}
+                                style={styles.discountCard}
                                 onPress={() => handleItemClick(offer)}
                             >
                                 <View style={styles.discountImageContainer}>
                                     <Image source={{ uri: offer.image }} style={styles.discountImage} />
-                                    <View style={[styles.discountBadge, { backgroundColor: colors.primary }]}>
+                                    {/* Starburst Badge */}
+                                    <View style={styles.discountBadge}>
                                         <Text style={styles.discountBadgeValue}>{offer.discount.split(' ')[0]}</Text>
                                         <Text style={styles.discountBadgeOff}>{offer.discount.split(' ')[1]}</Text>
                                     </View>
                                 </View>
                                 <View style={styles.discountInfo}>
-                                    <Text style={[styles.discountName, { color: colors.text }]}>{offer.name}</Text>
+                                    <Text style={styles.discountName}>{offer.name}</Text>
                                     <View style={styles.discountMeta}>
                                         <View style={styles.discountMetaItem}>
-                                            <Icon name="clock" size={12} color={colors.textMuted} />
-                                            <Text style={[styles.discountMetaText, { color: colors.textMuted }]}>{offer.time}</Text>
+                                            <Icon name="clock" size={12} color="#666666" />
+                                            <Text style={styles.discountMetaTime}>{offer.time}</Text>
                                         </View>
+                                        <Text style={styles.discountMetaDot}>•</Text>
                                         <View style={styles.discountMetaItem}>
-                                            <Icon name="star" size={12} color={colors.star} />
-                                            <Text style={[styles.discountMetaText, { color: colors.text }]}>{offer.rating}</Text>
+                                            <Icon name="star" size={12} color="#8B3A1E" />
+                                            <Text style={styles.discountMetaRating}>{offer.rating}</Text>
                                         </View>
                                     </View>
-                                    <Text style={[styles.discountPrice, { color: colors.primary }]}>₹{offer.price}</Text>
+                                    <Text style={styles.discountPrice}>₹{offer.price}</Text>
                                 </View>
                             </TouchableOpacity>
                         ))}
@@ -359,7 +340,6 @@ const HomeScreen = ({ navigation }) => {
                                 key={index}
                                 style={[
                                     styles.dot,
-                                    { backgroundColor: currentOfferIndex === index ? colors.primary : colors.border },
                                     currentOfferIndex === index && styles.dotActive
                                 ]}
                             />
@@ -370,53 +350,48 @@ const HomeScreen = ({ navigation }) => {
                 {/* Recent Orders Section */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Orders</Text>
-                        <TouchableOpacity onPress={() => navigation.navigate('Orders')}>
-                            <View style={styles.viewAllBtn}>
-                                <Text style={[styles.viewAllText, { color: colors.primary }]}>View all</Text>
-                                <View style={[styles.arrowSquare, { backgroundColor: colors.primary }]}>
-                                    <Icon name="arrow-right" size={12} color="#FFFFFF" />
-                                </View>
+                        <Text style={styles.sectionTitle}>Recent Orders</Text>
+                        <TouchableOpacity style={styles.viewAllBtn} onPress={() => navigation.navigate('Orders')}>
+                            <Text style={styles.viewAllText}>View all</Text>
+                            <View style={styles.arrowSquare}>
+                                <Icon name="arrow-right" size={12} color="#FFFFFF" />
                             </View>
                         </TouchableOpacity>
                     </View>
 
-                    {/* Recent Items List */}
+                    {/* Recent Items - with black border */}
                     <View style={styles.recentList}>
                         {recentOrders.map(item => (
                             <TouchableOpacity
                                 key={item.id}
-                                style={[styles.recentItem, { backgroundColor: colors.card }]}
+                                style={styles.recentItem}
                                 onPress={() => handleItemClick(item)}
                             >
                                 <Image source={{ uri: item.image }} style={styles.recentImage} />
                                 <View style={styles.recentInfo}>
-                                    <Text style={[styles.recentName, { color: colors.text }]}>{item.name}</Text>
+                                    <Text style={styles.recentName}>{item.name}</Text>
                                     <View style={styles.recentMeta}>
-                                        <Text style={[styles.recentTime, { color: colors.textMuted }]}>{item.time}</Text>
+                                        <Text style={styles.recentTime}>{item.time}</Text>
                                         <View style={styles.recentRating}>
-                                            <Icon name="star" size={10} color={colors.star} />
-                                            <Text style={[styles.recentRatingText, { color: colors.text }]}>{item.rating}</Text>
+                                            <Icon name="star" size={10} color="#F2B84B" />
+                                            <Text style={styles.recentRatingText}>{item.rating}</Text>
                                         </View>
                                     </View>
                                 </View>
-                                <Text style={[styles.recentPrice, { color: colors.primary }]}>₹{item.price}</Text>
+                                <Text style={styles.recentPrice}>₹{item.price}</Text>
 
                                 {getItemQuantity(item.id) === 0 ? (
-                                    <TouchableOpacity
-                                        style={[styles.reorderBtn, { backgroundColor: colors.primary }]}
-                                        onPress={() => addToCart(item)}
-                                    >
+                                    <TouchableOpacity style={styles.reorderBtn} onPress={() => addToCart(item)}>
                                         <Icon name="plus" size={16} color="#FFFFFF" />
                                     </TouchableOpacity>
                                 ) : (
-                                    <View style={[styles.qtyStepper, { backgroundColor: colors.primaryLight }]}>
+                                    <View style={styles.qtyStepper}>
                                         <TouchableOpacity onPress={() => removeFromCart(item.id)}>
-                                            <Icon name="minus" size={14} color={colors.primary} />
+                                            <Icon name="minus" size={14} color="#8B3A1E" />
                                         </TouchableOpacity>
-                                        <Text style={[styles.qtyText, { color: colors.text }]}>{getItemQuantity(item.id)}</Text>
+                                        <Text style={styles.qtyText}>{getItemQuantity(item.id)}</Text>
                                         <TouchableOpacity onPress={() => addToCart(item)}>
-                                            <Icon name="plus" size={14} color={colors.primary} />
+                                            <Icon name="plus" size={14} color="#8B3A1E" />
                                         </TouchableOpacity>
                                     </View>
                                 )}
@@ -426,17 +401,14 @@ const HomeScreen = ({ navigation }) => {
                 </View>
             </ScrollView>
 
-            {/* Frosted Glow Cart Indicator */}
+            {/* Cart Indicator */}
             {totalCartItems > 0 && !showModal && (
-                <TouchableOpacity
-                    style={[styles.cartGlow, { backgroundColor: colors.primary }]}
-                    onPress={() => navigation.navigate('Cart')}
-                >
+                <TouchableOpacity style={styles.cartGlow} onPress={() => navigation.navigate('Cart')}>
                     <View style={styles.cartGlowContent}>
                         <View style={styles.cartGlowBadge}>
                             <Icon name="shopping-cart" size={16} color="#FFFFFF" />
                             <View style={styles.cartGlowCount}>
-                                <Text style={styles.cartGlowCountText}>{totalCartItems > 9 ? '9+' : totalCartItems}</Text>
+                                <Text style={styles.cartGlowCountText}>{totalCartItems}</Text>
                             </View>
                         </View>
                         <View style={styles.cartGlowDetails}>
@@ -458,53 +430,40 @@ const HomeScreen = ({ navigation }) => {
                 {selectedItem && (
                     <View style={styles.modalOverlay}>
                         <TouchableOpacity style={styles.modalBackdrop} onPress={() => setShowModal(false)} />
-                        <View style={[styles.modalSheet, { backgroundColor: colors.card }]}>
+                        <View style={styles.modalSheet}>
                             <View style={styles.modalDragBar} />
-                            <TouchableOpacity
-                                style={[styles.modalCloseBtn, { backgroundColor: colors.primaryLight }]}
-                                onPress={() => setShowModal(false)}
-                            >
-                                <Icon name="x" size={18} color={colors.primary} />
+                            <TouchableOpacity style={styles.modalCloseBtn} onPress={() => setShowModal(false)}>
+                                <Icon name="x" size={18} color="#8B3A1E" />
                             </TouchableOpacity>
 
                             <View style={styles.modalImageFrame}>
                                 <Image source={{ uri: selectedItem.image }} style={styles.modalImage} />
                                 <TouchableOpacity
-                                    style={[styles.modalFavBtn, { backgroundColor: colors.primaryLight }]}
+                                    style={[styles.modalFavBtn, favorites.includes(selectedItem.id) && styles.modalFavBtnActive]}
                                     onPress={() => toggleFavorite(selectedItem.id)}
                                 >
-                                    <Icon
-                                        name="heart"
-                                        size={20}
-                                        color={colors.primary}
-                                    />
+                                    <Icon name="heart" size={20} color={favorites.includes(selectedItem.id) ? '#FFFFFF' : '#8B3A1E'} />
                                 </TouchableOpacity>
-                                <View style={[styles.modalRatingPill, { backgroundColor: colors.card }]}>
-                                    <Icon name="star" size={12} color={colors.star} />
-                                    <Text style={[styles.modalRatingText, { color: colors.text }]}>{selectedItem.rating}</Text>
+                                <View style={styles.modalRatingPill}>
+                                    <Icon name="star" size={12} color="#8B3A1E" />
+                                    <Text style={styles.modalRatingText}>{selectedItem.rating}</Text>
                                 </View>
                             </View>
 
                             <View style={styles.modalInfo}>
-                                <Text style={[styles.modalTitle, { color: colors.text }]}>{selectedItem.name}</Text>
+                                <Text style={styles.modalTitle}>{selectedItem.name}</Text>
                                 <View style={styles.modalMeta}>
-                                    <View style={[styles.modalTag, { backgroundColor: colors.primaryLight }]}>
-                                        <Icon name="clock" size={12} color={colors.primary} />
-                                        <Text style={[styles.modalTagText, { color: colors.primary }]}>{selectedItem.time}</Text>
+                                    <View style={styles.modalTag}>
+                                        <Icon name="clock" size={12} color="#8B3A1E" />
+                                        <Text style={styles.modalTagText}>{selectedItem.time}</Text>
                                     </View>
-                                    {selectedItem.serves && (
-                                        <View style={[styles.modalTag, { backgroundColor: colors.primaryLight }]}>
-                                            <Icon name="users" size={12} color={colors.primary} />
-                                            <Text style={[styles.modalTagText, { color: colors.primary }]}>{selectedItem.serves}</Text>
-                                        </View>
-                                    )}
                                 </View>
-                                <Text style={[styles.modalDesc, { color: colors.textSecondary }]}>{selectedItem.description}</Text>
+                                <Text style={styles.modalDesc}>{selectedItem.description}</Text>
 
                                 <View style={styles.modalFooter}>
-                                    <Text style={[styles.modalPrice, { color: colors.primary }]}>₹{selectedItem.price}</Text>
+                                    <Text style={styles.modalPrice}>₹{selectedItem.price}</Text>
                                     <TouchableOpacity
-                                        style={[styles.modalAddBtn, { backgroundColor: colors.primary }]}
+                                        style={styles.modalAddBtn}
                                         onPress={() => { addToCart(selectedItem); setShowModal(false); }}
                                     >
                                         <Icon name="shopping-bag" size={18} color="#FFFFFF" />
@@ -521,40 +480,49 @@ const HomeScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1 },
+    container: { flex: 1, backgroundColor: '#FFFFFF' },
 
-    // Header
+    // Header - matching customer-web
     header: {
-        paddingHorizontal: 20,
-        paddingTop: Platform.OS === 'ios' ? 50 : 16,
-        paddingBottom: 12,
-    },
-    headerRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingTop: Platform.OS === 'ios' ? 50 : 16,
+        paddingBottom: 16,
     },
     headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
     hamburger: { gap: 4, padding: 8 },
     hamburgerLine: { width: 20, height: 2.5, borderRadius: 2 },
-    brandName: { fontSize: 20, fontWeight: '800', letterSpacing: 1 },
+    brandName: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#8B3A1E',
+        letterSpacing: 5,
+        textTransform: 'uppercase',
+    },
     headerIconBtn: {
-        width: 44,
-        height: 44,
-        borderRadius: 14,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
         alignItems: 'center',
         justifyContent: 'center',
-        position: 'relative',
+        backgroundColor: '#FFF0EC',
+        borderWidth: 1,
+        borderColor: '#FFD8CC',
     },
     headerBadge: {
         position: 'absolute',
-        top: -4,
-        right: -4,
-        width: 18,
+        top: -5,
+        right: -5,
+        backgroundColor: '#C41E3A',
+        minWidth: 18,
         height: 18,
         borderRadius: 9,
         alignItems: 'center',
         justifyContent: 'center',
+        borderWidth: 2,
+        borderColor: '#FFFFFF',
     },
     headerBadgeText: { color: '#FFFFFF', fontSize: 10, fontWeight: '700' },
 
@@ -562,23 +530,33 @@ const styles = StyleSheet.create({
     heroSection: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         paddingHorizontal: 20,
-        paddingVertical: 20,
+        paddingTop: 20,
+        paddingBottom: 16,
+        minHeight: 160,
     },
-    heroText: {},
-    heroTitle: { fontSize: 26, fontWeight: '800', lineHeight: 34 },
-    heroImage: { width: 100, height: 100, borderRadius: 50 },
+    heroText: { flex: 1, maxWidth: '55%' },
+    heroTitle: { fontSize: 26, fontWeight: '800', color: '#1A1A1A', lineHeight: 30 },
+    heroHighlight: { color: '#8B3A1E' },
+    heroImage: { width: '45%', height: 150, borderRadius: 20 },
 
     // Deliver Bar
     deliverBar: {
         flexDirection: 'row',
         alignItems: 'center',
         marginHorizontal: 20,
-        borderRadius: 16,
+        borderRadius: 18,
         padding: 14,
         marginBottom: 12,
-        borderWidth: 1,
+        backgroundColor: '#FFFFFF',
+        borderWidth: 1.5,
+        borderColor: '#F0F0F0',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.04,
+        shadowRadius: 20,
+        elevation: 2,
     },
     deliverIcon: {
         width: 36,
@@ -586,11 +564,12 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: 12
+        marginRight: 12,
+        backgroundColor: '#FFF0EC',
     },
     deliverInfo: { flex: 1 },
-    deliverLabel: { fontSize: 11, marginBottom: 2 },
-    deliverText: { fontSize: 14, fontWeight: '600' },
+    deliverLabel: { fontSize: 11, color: '#B8ADA9', marginBottom: 2 },
+    deliverText: { fontSize: 14, fontWeight: '600', color: '#1A1A1A' },
     gpsBtn: {
         width: 32,
         height: 32,
@@ -598,136 +577,229 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         marginRight: 8,
+        backgroundColor: '#FFF0EC',
     },
 
-    // Search
+    // Search - matching customer-web
     searchBar: {
         flexDirection: 'row',
         alignItems: 'center',
         marginHorizontal: 20,
-        borderRadius: 16,
+        borderRadius: 18,
         padding: 14,
+        paddingHorizontal: 20,
         gap: 12,
-        borderWidth: 1,
         marginBottom: 20,
+        backgroundColor: '#FFFFFF',
+        borderWidth: 1.5,
+        borderColor: '#F0F0F0',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.04,
+        shadowRadius: 20,
+        elevation: 2,
     },
-    searchPlaceholder: { fontSize: 14 },
+    searchPlaceholder: { fontSize: 15, fontWeight: '500', color: '#B8ADA9' },
 
     // Section
-    section: { marginBottom: 24 },
+    section: { paddingHorizontal: 20, paddingBottom: 28 },
     sectionHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: 20,
-        marginBottom: 14,
+        marginBottom: 16,
     },
-    sectionTitle: { fontSize: 18, fontWeight: '700' },
-    viewAllBtn: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    viewAllText: { fontSize: 13, fontWeight: '600' },
+    sectionTitle: { fontSize: 18, fontWeight: '700', color: '#1A1A1A', marginBottom: 16 },
+    viewAllBtn: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    viewAllText: { fontSize: 13, fontWeight: '500', color: '#8B3A1E' },
     arrowSquare: {
-        width: 22,
-        height: 22,
-        borderRadius: 6,
+        width: 20,
+        height: 20,
+        borderRadius: 5,
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        backgroundColor: '#8B3A1E',
     },
 
-    // Categories
-    categoryScroll: { paddingHorizontal: 20, gap: 10 },
+    // Categories - EXACT customer-web styling
+    categoryScroll: { gap: 8 },
     categoryPill: {
-        paddingHorizontal: 18,
-        paddingVertical: 10,
-        borderRadius: 25,
+        backgroundColor: '#FDFDFD',
+        borderWidth: 1,
+        borderColor: '#EAEAEA',
+        borderRadius: 14,
+        paddingHorizontal: 20,
+        paddingVertical: 12,
     },
-    categoryText: { fontSize: 12, fontWeight: '600' },
+    categoryPillActive: {
+        backgroundColor: '#1A1A1A', // BLACK not burgundy
+        borderColor: '#1A1A1A',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.15,
+        shadowRadius: 16,
+        elevation: 8,
+    },
+    categoryText: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#888888', // Gray text
+    },
+    categoryTextActive: {
+        color: '#FFFFFF',
+    },
 
-    // Food Grid
+    // Food Grid - BLACK border like customer-web
     foodGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        paddingHorizontal: 20,
-        gap: 12,
+        gap: 14,
     },
     foodCard: {
-        width: (width - 52) / 2,
-        borderRadius: 16,
-        overflow: 'hidden',
-        paddingBottom: 14,
+        width: (width - 54) / 2,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 20,
+        padding: 14,
+        borderWidth: 1.5,
+        borderColor: '#1A1A1A', // BLACK border
+        alignItems: 'center',
     },
-    foodImageContainer: { position: 'relative' },
-    foodImage: { width: '100%', height: 110 },
-    favBtn: {
-        position: 'absolute',
-        top: 8,
-        right: 8,
-        width: 28,
-        height: 28,
-        borderRadius: 14,
+    foodImageContainer: {
+        width: '100%',
+        aspectRatio: 1,
+        borderRadius: 16,
+        backgroundColor: '#FFF9F7',
         alignItems: 'center',
         justifyContent: 'center',
+        marginBottom: 12,
+        position: 'relative',
     },
-    foodName: { fontSize: 14, fontWeight: '700', paddingHorizontal: 12, marginTop: 10 },
-    foodMeta: { flexDirection: 'row', gap: 12, paddingHorizontal: 12, marginTop: 6 },
-    foodMetaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    foodMetaText: { fontSize: 11 },
-    foodPrice: { fontSize: 16, fontWeight: '800', paddingHorizontal: 12, marginTop: 8 },
-
-    // Discounts
-    discountScroll: { paddingHorizontal: 20, gap: 16 },
-    discountCard: {
-        width: width - 60,
-        borderRadius: 16,
+    foodImage: {
+        width: '80%',
+        height: '80%',
+        borderRadius: 100, // Circle image
+    },
+    favBtn: {
+        position: 'absolute',
+        top: 6,
+        right: 6,
+        width: 30,
+        height: 30,
+        borderRadius: 15,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#FFFFFF',
+        borderWidth: 2,
+        borderColor: '#8B3A1E',
+    },
+    favBtnActive: {
+        backgroundColor: '#8B3A1E',
+        borderColor: '#8B3A1E',
+    },
+    foodName: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#1A1A1A',
+        marginBottom: 4,
+        textAlign: 'center',
+    },
+    foodMeta: {
         flexDirection: 'row',
-        overflow: 'hidden',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 10,
+        marginBottom: 6,
     },
-    discountImageContainer: { position: 'relative', width: 110 },
-    discountImage: { width: 110, height: 110 },
+    foodMetaItem: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+    foodMetaTime: { fontSize: 11, fontWeight: '500', color: '#888888' },
+    foodMetaRating: { fontSize: 11, fontWeight: '500', color: '#1A1A1A' },
+    foodPrice: {
+        fontSize: 15,
+        fontWeight: '700',
+        color: '#1A1A1A', // BLACK price like customer-web
+    },
+
+    // Discounts - burgundy tinted border
+    discountScroll: { paddingVertical: 20, paddingRight: 4, gap: 16 },
+    discountCard: {
+        width: 230,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 28,
+        padding: 10,
+        borderWidth: 1.5,
+        borderColor: 'rgba(139, 58, 30, 0.25)', // Burgundy tinted border
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.05,
+        shadowRadius: 15,
+        elevation: 3,
+    },
+    discountImageContainer: {
+        width: '100%',
+        aspectRatio: 1.2,
+        borderRadius: 22,
+        marginBottom: 12,
+        position: 'relative',
+    },
+    discountImage: { width: '100%', height: '100%', borderRadius: 22 },
     discountBadge: {
         position: 'absolute',
-        top: 8,
-        left: 8,
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 8,
+        top: -15,
+        right: -15,
+        width: 64,
+        height: 64,
+        backgroundColor: '#8B3A1E',
+        borderRadius: 32,
         alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#8B3A1E',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 4,
     },
-    discountBadgeValue: { color: '#FFFFFF', fontSize: 12, fontWeight: '800' },
-    discountBadgeOff: { color: '#FFFFFF', fontSize: 8, fontWeight: '600' },
-    discountInfo: { flex: 1, padding: 12, justifyContent: 'center' },
-    discountName: { fontSize: 16, fontWeight: '700', marginBottom: 6 },
-    discountMeta: { flexDirection: 'row', gap: 14, marginBottom: 8 },
+    discountBadgeValue: { color: '#FFFFFF', fontSize: 14, fontWeight: '800' },
+    discountBadgeOff: { color: '#FFFFFF', fontSize: 11, fontWeight: '700' },
+    discountInfo: { paddingHorizontal: 8, paddingBottom: 8 },
+    discountName: { fontSize: 15, fontWeight: '700', color: '#1A1A1A', marginBottom: 2 },
+    discountMeta: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 8 },
     discountMetaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    discountMetaText: { fontSize: 12 },
-    discountPrice: { fontSize: 18, fontWeight: '800' },
+    discountMetaTime: { fontSize: 12, fontWeight: '500', color: '#666666' },
+    discountMetaDot: { fontSize: 10, color: '#D1CEC9', marginHorizontal: 4 },
+    discountMetaRating: { fontSize: 12, fontWeight: '600', color: '#1A1A1A' },
+    discountPrice: { fontSize: 18, fontWeight: '800', color: '#1A1A1A' },
 
     // Dots
-    dotsContainer: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginTop: 16 },
-    dot: { width: 8, height: 8, borderRadius: 4 },
-    dotActive: { width: 24 },
+    dotsContainer: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginTop: -5 },
+    dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#E8D5CA' },
+    dotActive: { backgroundColor: '#8B3A1E', transform: [{ scale: 1.2 }] },
 
-    // Recent Orders
-    recentList: { paddingHorizontal: 20, gap: 12 },
+    // Recent Orders - BLACK border like customer-web
+    recentList: { gap: 10 },
     recentItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        borderRadius: 16,
         padding: 12,
+        borderRadius: 16,
+        backgroundColor: '#FFFFFF',
+        borderWidth: 1.5,
+        borderColor: '#1A1A1A', // BLACK border
     },
-    recentImage: { width: 56, height: 56, borderRadius: 12 },
-    recentInfo: { flex: 1, marginLeft: 12 },
-    recentName: { fontSize: 14, fontWeight: '700' },
-    recentMeta: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 },
-    recentTime: { fontSize: 12 },
-    recentRating: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-    recentRatingText: { fontSize: 12, fontWeight: '600' },
-    recentPrice: { fontSize: 16, fontWeight: '800', marginRight: 12 },
+    recentImage: { width: 55, height: 55, borderRadius: 12, marginRight: 12, backgroundColor: '#FFF9F7' },
+    recentInfo: { flex: 1 },
+    recentName: { fontSize: 14, fontWeight: '600', color: '#1A1A1A', marginBottom: 2 },
+    recentMeta: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    recentTime: { fontSize: 11, color: '#999999' },
+    recentRating: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+    recentRatingText: { fontSize: 11, fontWeight: '500', color: '#1A1A1A' },
+    recentPrice: { fontSize: 14, fontWeight: '700', color: '#1A1A1A', marginRight: 10 },
     reorderBtn: {
-        width: 36,
-        height: 36,
-        borderRadius: 12,
+        width: 34,
+        height: 34,
+        borderRadius: 10,
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        backgroundColor: '#8B3A1E',
     },
     qtyStepper: {
         flexDirection: 'row',
@@ -735,9 +807,10 @@ const styles = StyleSheet.create({
         gap: 12,
         paddingHorizontal: 12,
         paddingVertical: 8,
-        borderRadius: 12,
+        borderRadius: 10,
+        backgroundColor: '#FFF0EC',
     },
-    qtyText: { fontSize: 14, fontWeight: '700' },
+    qtyText: { fontSize: 14, fontWeight: '700', color: '#1A1A1A' },
 
     // Cart Glow
     cartGlow: {
@@ -746,7 +819,7 @@ const styles = StyleSheet.create({
         left: 20,
         right: 20,
         borderRadius: 20,
-        overflow: 'hidden',
+        backgroundColor: '#8B3A1E',
     },
     cartGlowContent: {
         flexDirection: 'row',
@@ -788,6 +861,7 @@ const styles = StyleSheet.create({
     modalOverlay: { flex: 1, justifyContent: 'flex-end' },
     modalBackdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)' },
     modalSheet: {
+        backgroundColor: '#FFFFFF',
         borderTopLeftRadius: 28,
         borderTopRightRadius: 28,
         maxHeight: '80%',
@@ -811,6 +885,7 @@ const styles = StyleSheet.create({
         borderRadius: 18,
         alignItems: 'center',
         justifyContent: 'center',
+        backgroundColor: '#FFF0EC',
         zIndex: 10,
     },
     modalImageFrame: { position: 'relative', alignItems: 'center', paddingHorizontal: 20 },
@@ -824,6 +899,13 @@ const styles = StyleSheet.create({
         borderRadius: 22,
         alignItems: 'center',
         justifyContent: 'center',
+        backgroundColor: '#FFF0EC',
+        borderWidth: 2,
+        borderColor: '#8B3A1E',
+    },
+    modalFavBtnActive: {
+        backgroundColor: '#8B3A1E',
+        borderColor: '#8B3A1E',
     },
     modalRatingPill: {
         position: 'absolute',
@@ -835,10 +917,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         paddingVertical: 6,
         borderRadius: 20,
+        backgroundColor: '#FFFFFF',
     },
-    modalRatingText: { fontSize: 13, fontWeight: '700' },
+    modalRatingText: { fontSize: 13, fontWeight: '700', color: '#1A1A1A' },
     modalInfo: { padding: 24 },
-    modalTitle: { fontSize: 24, fontWeight: '800', marginBottom: 12 },
+    modalTitle: { fontSize: 24, fontWeight: '800', color: '#1A1A1A', marginBottom: 12 },
     modalMeta: { flexDirection: 'row', gap: 10, marginBottom: 16 },
     modalTag: {
         flexDirection: 'row',
@@ -847,15 +930,16 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 20,
+        backgroundColor: '#FFF0EC',
     },
-    modalTagText: { fontSize: 12, fontWeight: '600' },
-    modalDesc: { fontSize: 14, lineHeight: 22, marginBottom: 24 },
+    modalTagText: { fontSize: 12, fontWeight: '600', color: '#8B3A1E' },
+    modalDesc: { fontSize: 14, lineHeight: 22, color: '#666666', marginBottom: 24 },
     modalFooter: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
     },
-    modalPrice: { fontSize: 28, fontWeight: '900' },
+    modalPrice: { fontSize: 28, fontWeight: '900', color: '#1A1A1A' },
     modalAddBtn: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -863,6 +947,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 24,
         paddingVertical: 14,
         borderRadius: 16,
+        backgroundColor: '#8B3A1E',
     },
     modalAddText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
 });
