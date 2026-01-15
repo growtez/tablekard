@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { NavLink } from 'react-router-dom';
-import { Home, ShoppingBag, MessageCircle, User, Star, Settings, LogOut } from 'lucide-react';
+import { Home, ShoppingBag, Star, ListOrdered, User, Info, LogOut } from 'lucide-react';
 import './hamburger.css';
 
 const Hamburger = () => {
@@ -19,17 +20,9 @@ const Hamburger = () => {
     };
   }, [isSidebarOpen]);
 
-  return (
+  // Sidebar content to be rendered via portal
+  const sidebarContent = (
     <>
-      {/* Hamburger Button (only visible when sidebar is closed) */}
-      {!isSidebarOpen && (
-        <div className="menu-icon" onClick={() => setIsSidebarOpen(true)}>
-          <div className="hamburger"></div>
-          <div className="hamburger"></div>
-        </div>
-      )}
-
-      {/* Sidebar */}
       {/* Sidebar */}
       <div className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
@@ -76,21 +69,12 @@ const Hamburger = () => {
           </NavLink>
 
           <NavLink
-            to="/onboarding"
+            to="/live-queue"
             className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
             onClick={() => setIsSidebarOpen(false)}
           >
-            <Star size={20} />
-            <span>Onboarding</span>
-          </NavLink>
-
-          <NavLink
-            to="/offers"
-            className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
-            onClick={() => setIsSidebarOpen(false)}
-          >
-            <Star size={20} />
-            <span>Rewards & Offers</span>
+            <ListOrdered size={20} />
+            <span>Live Queue</span>
           </NavLink>
 
           <NavLink
@@ -100,6 +84,15 @@ const Hamburger = () => {
           >
             <User size={20} />
             <span>Profile</span>
+          </NavLink>
+
+          <NavLink
+            to="/about"
+            className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
+            onClick={() => setIsSidebarOpen(false)}
+          >
+            <Info size={20} />
+            <span>About</span>
           </NavLink>
 
           <button className="sidebar-item logout-btn" onClick={() => setIsSidebarOpen(false)}>
@@ -115,6 +108,22 @@ const Hamburger = () => {
       )}
     </>
   );
+
+  return (
+    <>
+      {/* Hamburger Button (only visible when sidebar is closed) */}
+      {!isSidebarOpen && (
+        <div className="hamburger-btn" onClick={() => setIsSidebarOpen(true)}>
+          <div className="hamburger"></div>
+          <div className="hamburger"></div>
+        </div>
+      )}
+
+      {/* Render sidebar via portal to document.body */}
+      {ReactDOM.createPortal(sidebarContent, document.body)}
+    </>
+  );
 };
 
 export default Hamburger;
+

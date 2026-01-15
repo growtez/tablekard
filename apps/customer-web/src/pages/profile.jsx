@@ -1,38 +1,29 @@
 import React, { useState, useRef } from 'react';
 import {
-  Home, ShoppingBag, User, Edit2, ShoppingCart,
-  LogOut, Camera, ChevronRight, Gift, Heart,
-  Clock, Settings, Moon, Sun
+  LogOut, Camera, ChevronRight, Heart, MapPin,
+  Clock, HelpCircle, Phone, Mail, Utensils, Star, ListOrdered,
+  Home, ShoppingBag, User, Edit2, ShoppingCart, MessageSquare, Info
 } from 'lucide-react';
 import { NavLink, useNavigate } from "react-router-dom";
-import { useTheme } from '../context/ThemeContext';
 import './profile.css';
 import Hamburger from '../components/hamburger';
 
 const ProfilePage = () => {
-  const { theme, themeMode, toggleTheme, isDark } = useTheme();
-
   const [userProfile, setUserProfile] = useState({
     name: 'S & S',
     email: 's&s123@email.com',
+    phone: '+91 98765 43210',
     avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&h=120&fit=crop&crop=face',
-    preferences: {
-      notifications: true,
-      offers: true,
-      language: 'English',
-      theme: 'dark'
-    },
+    tableNumber: 'T-12',
     stats: {
-      totalOrders: 24,
-      favoriteItems: 8,
-      loyaltyPoints: 1250,
-      membershipTier: 'Gold'
+      todaysOrders: 3,
+      totalSpent: 2450,
+      favoriteItems: 8
     }
   });
 
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({ ...userProfile });
-  const [selectedFile, setSelectedFile] = useState(null);
   const fileInputRef = useRef(null);
 
   const handleEditToggle = () => {
@@ -45,21 +36,10 @@ const ProfilePage = () => {
   };
 
   const handleInputChange = (field, value) => {
-    if (field.includes('.')) {
-      const [parent, child] = field.split('.');
-      setEditForm(prev => ({
-        ...prev,
-        [parent]: {
-          ...prev[parent],
-          [child]: value
-        }
-      }));
-    } else {
-      setEditForm(prev => ({
-        ...prev,
-        [field]: value
-      }));
-    }
+    setEditForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   const handleFileSelect = (event) => {
@@ -70,7 +50,6 @@ const ProfilePage = () => {
         ...prev,
         avatar: imageUrl
       }));
-      setSelectedFile(file);
     }
   };
 
@@ -82,33 +61,33 @@ const ProfilePage = () => {
 
   const menuItems = [
     {
-      icon: <Clock size={27} />,
+      icon: <Clock size={20} />,
       title: "Order History",
-      description: "View past orders and reorder",
-      to: "/recent",
+      description: "View all your orders",
+      to: "/order-history",
     },
     {
-      icon: <Heart size={27} />,
+      icon: <Heart size={20} />,
       title: "Favorites",
-      description: "Your favorite restaurants & dishes",
+      description: "Your favorite dishes",
       to: "/likes",
     },
     {
-      icon: <Gift size={27} />,
-      title: "Offers & Rewards",
-      description: `${userProfile.stats.loyaltyPoints} points • ${userProfile.stats.membershipTier} Member`,
-      to: "/offers",
+      icon: <MessageSquare size={20} />,
+      title: "Feedback & Ratings",
+      description: "Rate your dining experience",
+      to: "/feedback",
     },
     {
-      icon: <Settings size={27} />,
-      title: "Settings",
-      description: "App preferences and theme",
-      to: "/settings",
+      icon: <Info size={20} />,
+      title: "About Restaurant",
+      description: "Story, timings & more",
+      to: "/about",
     },
   ];
 
   return (
-    <div className="profile-container" style={{ backgroundColor: theme.background }}>
+    <div className="profile-container">
       {/* Hidden file input */}
       <input
         type="file"
@@ -118,157 +97,181 @@ const ProfilePage = () => {
         style={{ display: 'none' }}
       />
 
-      {/* Header */}
-      <header className="header" style={{ backgroundColor: theme.background }}>
-        <div className="header-content">
+      {/* Hero Header with Gradient */}
+      <div className="profile-hero">
+        <div className="hero-pattern"></div>
+        <div className="hero-header">
           <Hamburger />
-          <div className="profile-badge" style={{ backgroundColor: theme.card }}>
-            <User size={20} color={theme.primary} />
+          <button className="edit-btn" onClick={handleEditToggle}>
+            <Edit2 size={18} />
+          </button>
+        </div>
+
+        {/* Floating Avatar */}
+        <div className="hero-avatar-section">
+          <div className="avatar-wrapper">
+            <img src={userProfile.avatar} alt="Profile" className="hero-avatar" />
+            <button className="camera-btn" onClick={handleCameraClick}>
+              <Camera size={14} />
+            </button>
           </div>
         </div>
 
-        <div className="main-title">
-          <h1 style={{ color: theme.text }}>My <span className="highlight">Profile</span></h1>
+        <div className="hero-info">
+          <h1>{userProfile.name}</h1>
+          <p className="hero-email">{userProfile.email}</p>
+          <div className="table-indicator">
+            <MapPin size={14} />
+            <span>Table {userProfile.tableNumber}</span>
+          </div>
         </div>
-      </header>
+      </div>
 
       {/* Profile Content */}
       <div className="profile-content">
-        {/* Profile Header */}
-        <div className="profile-header" style={{ backgroundColor: theme.card }}>
-          <div className="avatar-container">
-            <img src={userProfile.avatar} alt="Profile" className="profile-avatar" />
-            <button className="avatar-edit-btn" onClick={handleCameraClick} style={{ backgroundColor: theme.primary }}>
-              <Camera size={16} color="#1a1a1a" />
-            </button>
-          </div>
-          <div className="profile-info">
-            <h2 style={{ color: theme.text }}>{userProfile.name}</h2>
-            <p className="profile-email" style={{ color: theme.textSecondary }}>{userProfile.email}</p>
-            <p className="membership-badge" style={{ backgroundColor: `${theme.primary}20`, color: theme.primary }}>{userProfile.stats.membershipTier} Member</p>
-          </div>
-          <button className="edit-profile-btn" onClick={handleEditToggle} style={{ backgroundColor: theme.inputBg }}>
-            <Edit2 size={16} color={theme.primary} />
-          </button>
-        </div>
 
-        {/* Theme Quick Toggle */}
-        <div className="theme-toggle-card" style={{ backgroundColor: theme.card }}>
-          <div className="theme-toggle-icon" style={{ backgroundColor: `${theme.primary}15` }}>
-            {isDark ? <Moon size={20} color={theme.primary} /> : <Sun size={20} color={theme.primary} />}
-          </div>
-          <div className="theme-toggle-info">
-            <span className="theme-toggle-label" style={{ color: theme.text }}>Theme</span>
-            <span className="theme-toggle-value" style={{ color: theme.textMuted }}>{isDark ? 'Dark Mode' : 'Light Mode'}</span>
-          </div>
-          <button
-            className="theme-switch-btn"
-            style={{ backgroundColor: theme.inputBg }}
-            onClick={() => toggleTheme(isDark ? 'light' : 'dark')}
-          >
-            {isDark ? <Sun size={18} color={theme.textMuted} /> : <Moon size={18} color={theme.textMuted} />}
-          </button>
-        </div>
-
-        {/* Profile Details */}
-        {isEditing ? (
-          <div className="edit-form" style={{ backgroundColor: theme.card }}>
+        {/* Edit Form */}
+        {isEditing && (
+          <div className="edit-form">
+            <h3 className="edit-title">Edit Profile</h3>
             <div className="form-group">
-              <label style={{ color: theme.textSecondary }}>Full Name</label>
+              <label>Full Name</label>
               <input
                 type="text"
                 value={editForm.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 className="form-input"
-                style={{ backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border }}
+              />
+            </div>
+            <div className="form-group">
+              <label>Email</label>
+              <input
+                type="email"
+                value={editForm.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                className="form-input"
+              />
+            </div>
+            <div className="form-group">
+              <label>Phone</label>
+              <input
+                type="tel"
+                value={editForm.phone}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
+                className="form-input"
               />
             </div>
             <div className="form-actions">
-              <button className="save-btn" onClick={handleEditToggle} style={{ backgroundColor: theme.primary }}>
+              <button className="save-btn" onClick={handleEditToggle}>
                 Save Changes
               </button>
-              <button className="cancel-btn" onClick={() => setIsEditing(false)} style={{ backgroundColor: theme.inputBg, color: theme.text }}>
+              <button className="cancel-btn" onClick={() => setIsEditing(false)}>
                 Cancel
               </button>
             </div>
           </div>
-        ) : null}
+        )}
 
-        {/* Stats Cards */}
-        <div className="stats-grid">
-          <div className="stat-card" style={{ backgroundColor: theme.card }}>
-            <div className="stat-number" style={{ color: theme.primary }}>{userProfile.stats.totalOrders}</div>
-            <div className="stat-label" style={{ color: theme.textMuted }}>Total Orders</div>
+        {/* Stats Row */}
+        <div className="stats-row">
+          <div className="stat-item">
+            <div className="stat-value">{userProfile.stats.todaysOrders}</div>
+            <div className="stat-label">Orders Today</div>
           </div>
-          <div className="stat-card" style={{ backgroundColor: theme.card }}>
-            <div className="stat-number" style={{ color: theme.primary }}>{userProfile.stats.favoriteItems}</div>
-            <div className="stat-label" style={{ color: theme.textMuted }}>Favorites</div>
+          <div className="stat-divider"></div>
+          <div className="stat-item featured">
+            <div className="stat-value">₹{userProfile.stats.totalSpent}</div>
+            <div className="stat-label">Total Spent</div>
           </div>
-          <div className="stat-card" style={{ backgroundColor: theme.card }}>
-            <div className="stat-number" style={{ color: theme.primary }}>{userProfile.stats.loyaltyPoints}</div>
-            <div className="stat-label" style={{ color: theme.textMuted }}>Points</div>
+          <div className="stat-divider"></div>
+          <div className="stat-item">
+            <div className="stat-value">{userProfile.stats.favoriteItems}</div>
+            <div className="stat-label">Favorites</div>
           </div>
         </div>
 
-        {/* Menu Items */}
+        {/* Quick Actions */}
+        <div className="quick-actions">
+          <button className="action-card live-queue" onClick={() => navigate('/menu')}>
+            <div className="action-icon">
+              <ShoppingBag size={22} />
+            </div>
+            <span>Menu</span>
+          </button>
+          <button className="action-card live-queue" onClick={() => navigate('/orders')}>
+            <div className="action-icon">
+              <Clock size={22} />
+            </div>
+            <span>Orders</span>
+          </button>
+          <button className="action-card live-queue" onClick={() => navigate('/live-queue')}>
+            <div className="action-icon">
+              <ListOrdered size={22} />
+            </div>
+            <span>Live Queue</span>
+          </button>
+        </div>
+
+        {/* Menu Section */}
         <div className="menu-section">
-          <div className="menu-list" style={{ backgroundColor: theme.card }}>
-            {menuItems.map((item, index) =>
-              item.to ? (
-                <NavLink key={index} to={item.to} className="menu-item" style={{ borderBottomColor: theme.border }}>
-                  <div className="menu-icon" style={{ backgroundColor: `${theme.primary}15`, color: theme.primary }}>{item.icon}</div>
-                  <div className="menu-info">
-                    <div className="menu-title" style={{ color: theme.text }}>{item.title}</div>
-                    <div className="menu-description" style={{ color: theme.textMuted }}>{item.description}</div>
-                  </div>
-                  <ChevronRight size={16} className="menu-arrow" color={theme.textMuted} />
-                </NavLink>
-              ) : (
-                <button key={index} className="menu-item" onClick={item.action} style={{ borderBottomColor: theme.border }}>
-                  <div className="menu-icon" style={{ backgroundColor: `${theme.primary}15`, color: theme.primary }}>{item.icon}</div>
-                  <div className="menu-info">
-                    <div className="menu-title" style={{ color: theme.text }}>{item.title}</div>
-                    <div className="menu-description" style={{ color: theme.textMuted }}>{item.description}</div>
-                  </div>
-                  <ChevronRight size={16} className="menu-arrow" color={theme.textMuted} />
-                </button>
-              )
-            )}
+          <div className="menu-list">
+            {menuItems.map((item, index) => (
+              <NavLink key={index} to={item.to} className="menu-item">
+                <div className="menu-icon">{item.icon}</div>
+                <div className="menu-info">
+                  <div className="menu-title">{item.title}</div>
+                  <div className="menu-description">{item.description}</div>
+                </div>
+                <ChevronRight size={18} className="menu-arrow" />
+              </NavLink>
+            ))}
           </div>
         </div>
 
-        {/* Login Button */}
-        <button className="login-btn" onClick={() => navigate("/login")} style={{ backgroundColor: theme.primary }}>
-          <LogOut size={16} color="#1a1a1a" />
-          <span>Log in</span>
-        </button>
+        {/* Restaurant Info Card */}
+        <div className="restaurant-card">
+          <div className="restaurant-header">
+            <Star size={16} fill="#8B3A1E" color="#8B3A1E" />
+            <span>Delish Restaurant</span>
+          </div>
+          <div className="restaurant-contact">
+            <a href="tel:+911234567890" className="contact-link">
+              <Phone size={16} />
+              <span>+91 123 456 7890</span>
+            </a>
+            <a href="mailto:support@delish.com" className="contact-link">
+              <Mail size={16} />
+              <span>support@delish.com</span>
+            </a>
+          </div>
+        </div>
 
         {/* Logout Button */}
-        <button className="signout-btn" style={{ backgroundColor: `${theme.error}15`, color: theme.error }}>
-          <LogOut size={16} />
+        <button className="signout-btn">
+          <LogOut size={18} />
           <span>Sign Out</span>
         </button>
       </div>
 
       {/* Bottom Navigation */}
-      <nav className="bottom-nav" style={{ backgroundColor: theme.card, borderTopColor: theme.border }}>
-        <NavLink to="/" className="nav-btn">
-          <Home size={24} color={theme.textMuted} />
+      <nav className="bottom-nav">
+        <NavLink to="/" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
+          <Home size={22} />
         </NavLink>
 
-        <NavLink to="/menu" className="nav-btn">
-          <ShoppingBag size={24} color={theme.textMuted} />
+        <NavLink to="/menu" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
+          <ShoppingBag size={22} />
         </NavLink>
 
-        <NavLink to="/orders" className="nav-btn">
-          <ShoppingCart size={24} color={theme.textMuted} />
+        <NavLink to="/orders" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
+          <ShoppingCart size={22} />
         </NavLink>
 
-        <NavLink to="/profile" className="nav-btn active" style={{ backgroundColor: isDark ? '#333' : '#e0e0e0' }}>
-          <User size={24} color={theme.text} />
+        <NavLink to="/profile" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
+          <User size={22} />
         </NavLink>
       </nav>
-    </div>
+    </div >
   );
 };
 

@@ -17,6 +17,10 @@ import RecentOrdersPage from './pages/recent';
 import OffersPage from './pages/offers';
 import OnboardingPage from './pages/onboarding';
 import LoginPage from './pages/login';
+import LiveQueuePage from './pages/live_queue';
+import FeedbackPage from './pages/feedback';
+import OrderHistoryPage from './pages/order_history';
+import AboutPage from './pages/about';
 
 // QR Ordering pages (dine-in)
 import QRMenuPage from './pages/qr/menu';
@@ -45,6 +49,11 @@ function App() {
               <Route path="/offers" element={<OffersPage />} />
               <Route path="/onboarding" element={<OnboardingPage />} />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/live-queue" element={<LiveQueuePage />} />
+              <Route path="/feedback" element={<FeedbackPage />} />
+              <Route path="/feedback/:orderId" element={<FeedbackPage />} />
+              <Route path="/order-history" element={<OrderHistoryPage />} />
+              <Route path="/about" element={<AboutPage />} />
 
               {/* QR Ordering routes (dine-in) */}
               <Route path="/r/:restaurantSlug" element={<QRMenuPage />} />

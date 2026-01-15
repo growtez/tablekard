@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import { Home, ShoppingBag, MessageCircle, User, Minus, Plus, Trash2, Clock, CheckCircle, Utensils, ShoppingCart, Heart, ArrowRight, Star, Users } from 'lucide-react';
+import { Home, ShoppingBag, MessageCircle, User, Minus, Plus, Trash2, Clock, CheckCircle, Utensils, ShoppingCart, ListOrdered, ArrowRight, Star, Users } from 'lucide-react';
 import { NavLink } from "react-router-dom";
 import './my_order.css';
 import Hamburger from '../components/hamburger';
 
 const MyOrderPage = () => {
   const [activeTab, setActiveTab] = useState('cart');
-  const [favorites] = useState([]); // You can connect this to your actual favorites state
   const [cartItems, setCartItems] = useState([
     {
       id: 1,
@@ -46,8 +45,10 @@ const MyOrderPage = () => {
         { name: 'Iced Coffee', quantity: 2, price: 3 }
       ],
       total: 18,
-      orderTime: '2:30 PM',
-      estimatedTime: 'Ready for pickup'
+      discount: 0,
+      orderDate: 'Jan 10, 2:30 PM',
+      paymentStatus: 'Paid via UPI',
+      statusLabel: 'Ready for serving'
     },
     {
       id: 'ORD002',
@@ -57,8 +58,10 @@ const MyOrderPage = () => {
         { name: 'Chocolate Cake', quantity: 1, price: 7 }
       ],
       total: 21,
-      orderTime: '3:15 PM',
-      estimatedTime: '10 mins remaining'
+      discount: 0,
+      orderDate: 'Jan 10, 3:15 PM',
+      paymentStatus: 'Not Paid',
+      statusLabel: 'Preparing'
     },
     {
       id: 'ORD003',
@@ -68,8 +71,36 @@ const MyOrderPage = () => {
         { name: 'Smoothie Bowl', quantity: 1, price: 6 }
       ],
       total: 32,
-      orderTime: '3:45 PM',
-      estimatedTime: '25 mins'
+      discount: 5,
+      orderDate: 'Jan 10, 3:45 PM',
+      paymentStatus: 'Paid via Cash',
+      statusLabel: 'Order Placed'
+    },
+    {
+      id: 'ORD004',
+      status: 'ready',
+      items: [
+        { name: 'Premium Sushi Platter', quantity: 2, price: 2500 },
+        { name: 'Sake Selection', quantity: 1, price: 1000 }
+      ],
+      total: 6000,
+      discount: 500,
+      orderDate: 'Jan 10, 4:00 PM',
+      paymentStatus: 'Paid via UPI',
+      statusLabel: 'Ready for serving'
+    },
+    {
+      id: 'ORD005',
+      status: 'preparing',
+      items: [
+        { name: 'Chef Special Omakase', quantity: 1, price: 8000 },
+        { name: 'Wagyu Steak', quantity: 1, price: 4000 }
+      ],
+      total: 12000,
+      discount: 1000,
+      orderDate: 'Jan 10, 4:30 PM',
+      paymentStatus: 'Not Paid',
+      statusLabel: 'Preparing'
     }
   ]);
 
@@ -96,11 +127,11 @@ const MyOrderPage = () => {
   const getStatusIcon = (status) => {
     switch (status) {
       case 'placed':
-        return <Clock size={16} color="#d9b550" />;
+        return <CheckCircle size={16} color="#4CAF50" />;
       case 'preparing':
         return <Utensils size={16} color="#FF9800" />;
       case 'ready':
-        return <CheckCircle size={16} color="#4CAF50" />;
+        return <Clock size={16} color="#d9b550" />;
       default:
         return <Clock size={16} color="#888888" />;
     }
@@ -109,11 +140,11 @@ const MyOrderPage = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'placed':
-        return '#d9b550';
+        return '#4CAF50';
       case 'preparing':
         return '#FF9800';
       case 'ready':
-        return '#4CAF50';
+        return '#d9b550';
       default:
         return '#888888';
     }
@@ -142,29 +173,29 @@ const MyOrderPage = () => {
 
   return (
     <div className="myorder-container">
-      {/* Header */}
-      <header className="header">
-        <div className="header-content">
+      {/* Header - Same style as Home page */}
+      <header className="menu-header-nav">
+        <div className="header-left">
           <Hamburger />
-          <NavLink to="/likes" className="header-favorites-btn">
-            <Heart
-              size={22}
-              color="#8B3A1E"
-              fill={favorites.length > 0 ? '#8B3A1E' : 'transparent'}
-            />
-            {favorites.length > 0 && (
-              <span className="favorites-count">{favorites.length}</span>
-            )}
+        </div>
+        <div className="header-nav-right">
+          <NavLink to="/live-queue" className="header-nav-btn live-queue-btn">
+            <ListOrdered size={22} color="#8B3A1E" />
+            <span className="live-dot"></span>
           </NavLink>
         </div>
+      </header>
 
-        {/* Main Title */}
-        <div className="main-title">
+      {/* Hero Title Section */}
+      <section className="hero-section">
+        <div className="hero-text">
           <h1>My <span className="highlight">Orders</span></h1>
-          <h1>& <span className="highlight">Cart</span></h1>
+          <h1><span className="ampersand">&</span> <span className="highlight">Cart</span></h1>
         </div>
+      </section>
 
-        {/* Tab Navigation */}
+      {/* Tab Navigation */}
+      <div className="tab-section">
         <div className="tab-navigation">
           <button
             className={`tab-btn ${activeTab === 'cart' ? 'active' : ''}`}
@@ -179,7 +210,7 @@ const MyOrderPage = () => {
             Orders ({orders.length})
           </button>
         </div>
-      </header>
+      </div>
 
       {/* Cart Content */}
       {activeTab === 'cart' && (
@@ -251,16 +282,20 @@ const MyOrderPage = () => {
                   <span>₹{getTotalPrice()}</span>
                 </div>
                 <div className="summary-row">
-                  <span>Delivery Fee</span>
-                  <span>₹2</span>
+                  <span>Service Charge (5%)</span>
+                  <span>₹{Math.round(getTotalPrice() * 0.05)}</span>
                 </div>
                 <div className="summary-row">
                   <span>Tax (18%)</span>
                   <span>₹{Math.round(getTotalPrice() * 0.18)}</span>
                 </div>
+                <div className="summary-row discount">
+                  <span>Discount</span>
+                  <span>- ₹0</span>
+                </div>
                 <div className="summary-row total">
                   <span>Total Amount</span>
-                  <span>₹{getTotalPrice() + 2 + Math.round(getTotalPrice() * 0.18)}</span>
+                  <span>₹{getTotalPrice() + Math.round(getTotalPrice() * 0.05) + Math.round(getTotalPrice() * 0.18)}</span>
                 </div>
               </div>
 
@@ -278,43 +313,60 @@ const MyOrderPage = () => {
         <div className="orders-content">
           {orders.length === 0 ? (
             <div className="empty-state">
-              <Clock size={64} color="#888888" />
-              <h3>No orders yet</h3>
-              <p>Your order history will appear here once you place your first order!</p>
+              <img src="/assets/empty-orders.png" alt="Empty Bowl" className="empty-illustration" />
+              <h3>No active orders yet.</h3>
+              <p>Order some delicious food!</p>
             </div>
           ) : (
-            <div className="orders-list">
-              {orders.map(order => (
-                <div key={order.id} className="order-item">
-                  <div className="order-header">
-                    <div className="order-id">
-                      <span>Order #{order.id}</span>
-                      <span className="order-time">{order.orderTime}</span>
-                    </div>
-                    <div className="order-status" style={{ color: getStatusColor(order.status) }}>
-                      {getStatusIcon(order.status)}
-                      <span className="status-text">
-                        {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="order-items">
-                    {order.items.map((item, index) => (
-                      <div key={index} className="order-item-row">
-                        <span>{item.quantity}x {item.name}</span>
-                        <span>₹{(item.price * item.quantity)}</span>
+            <>
+              <h2 className="section-heading">Today's Orders</h2>
+              <div className="orders-list">
+                {orders.map(order => (
+                  <div key={order.id} className="order-item">
+                    <div className="order-header">
+                      <div className="order-id-row">
+                        <span className="order-id">Order #{order.id}</span>
+                        <div className="order-status" style={{ backgroundColor: getStatusColor(order.status) + '20' }}>
+                          {getStatusIcon(order.status)}
+                          <span className="status-text">
+                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                          </span>
+                        </div>
                       </div>
-                    ))}
-                  </div>
+                      <span className="order-date">{order.orderDate}</span>
+                    </div>
 
-                  <div className="order-footer">
-                    <div className="estimated-time">{order.estimatedTime}</div>
-                    <div className="order-total">Total: ₹{order.total}</div>
+                    <div className="order-items">
+                      {order.items.map((item, index) => (
+                        <div key={index} className="order-item-row">
+                          <span>{item.quantity}x {item.name}</span>
+                          <span>₹{(item.price * item.quantity)}</span>
+                        </div>
+                      ))}
+                      {/* Extra Fees for In-House QR App */}
+                      <div className="order-item-row fees">
+                        <span>Service Charge & Tax</span>
+                        <span>₹{(order.total * 0.23).toFixed(0)}</span>
+                      </div>
+                      <div className="order-item-row discount-row">
+                        <span>Discount</span>
+                        <span className="discount-value">- ₹{order.discount || 0}</span>
+                      </div>
+                    </div>
+
+                    <div className="order-footer">
+                      <div className={`payment-badge ${order.paymentStatus.includes('Not') ? 'not-paid' : 'paid'}`}>
+                        {order.paymentStatus}
+                      </div>
+                      <div className="order-total-inline">
+                        <span className="order-total">₹{order.total}</span>
+                        <span className="order-total-note">(Incl. all taxes)</span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       )}

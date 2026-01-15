@@ -1,0 +1,470 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700&family=Inter:wght@300;400;500;600;700&family=Syncopate:wght@700&family=Outfit:wght@300;400;500;600;700&display=swap');
+
+.about-journal-container {
+    background-color: #FAFAFA;
+    min-height: 100vh;
+    font-family: 'Outfit', sans-serif;
+    color: #1A1A1A;
+    padding-bottom: 40px;
+}
+
+/* Elegant Header */
+.about-journal-header {
+    background: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #F0F0F0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.journal-back-btn {
+    background: #FFF0EC;
+    border: none;
+    color: #8B3A1E;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.journal-back-btn:active {
+    transform: scale(0.9);
+}
+
+.journal-header-title {
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    color: #8B3A1E;
+    text-transform: uppercase;
+}
+
+.journal-spacer {
+    width: 42px;
+}
+
+/* Hero Intro */
+.about-journal-hero {
+    text-align: center;
+    padding: 60px 24px 40px;
+    background: #FFFFFF;
+}
+
+.brand-badge {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #8B3A1E;
+    background: #FFF0EC;
+    padding: 6px 14px;
+    border-radius: 50px;
+    margin-bottom: 20px;
+}
+
+.brand-main-title {
+    font-family: 'Syncopate', sans-serif;
+    font-size: 38px;
+    font-weight: 700;
+    letter-spacing: 10px;
+    color: #1A1A1A;
+    margin-bottom: 16px;
+}
+
+.brand-philosophy {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-style: italic;
+    color: #555555;
+    max-width: 80%;
+    margin: 0 auto 24px;
+    line-height: 1.4;
+}
+
+.brand-accent-line {
+    width: 40px;
+    height: 3px;
+    background: #8B3A1E;
+    margin: 0 auto;
+    border-radius: 10px;
+}
+
+/* Sections Content */
+.about-journal-content {
+    padding-bottom: 40px;
+}
+
+.journal-section {
+    padding: 0 20px;
+    margin-bottom: 40px;
+}
+
+.legend-card {
+    background: #FFFFFF;
+    border-radius: 24px;
+    padding: 32px 24px;
+    border: 1.5px solid #F0F0F0;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), 0 5px 15px rgba(0, 0, 0, 0.04);
+    text-align: center;
+}
+
+.legend-icon-row {
+    margin-bottom: 20px;
+}
+
+.legend-icon {
+    color: #8B3A1E;
+    opacity: 1;
+}
+
+.legend-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    font-weight: 800;
+    color: #1A1A1A;
+    margin-bottom: 16px;
+}
+
+.legend-text {
+    font-size: 15px;
+    line-height: 1.8;
+    color: #555555;
+    margin: 0;
+}
+
+/* Highlights Grid */
+.highlights-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.highlight-item {
+    background: #FFFFFF;
+    padding: 24px 12px;
+    border-radius: 20px;
+    border: 1.5px solid #F0F0F0;
+    text-align: center;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.04), 0 4px 8px rgba(0, 0, 0, 0.02);
+}
+
+.highlight-icon-box {
+    color: #8B3A1E;
+    margin-bottom: 12px;
+    opacity: 0.8;
+}
+
+.highlight-value {
+    font-family: 'Outfit', sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: #1A1A1A;
+    margin-bottom: 2px;
+}
+
+.highlight-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #888;
+}
+
+/* Hours Card */
+.section-label-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #8B3A1E;
+    margin-bottom: 16px;
+}
+
+/* Modern Hours Scroller */
+.hours-modern-scroller {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding: 15px 0 16px;
+    /* Increased top padding to prevent badge clipping */
+    scrollbar-width: none;
+}
+
+.hours-modern-scroller::-webkit-scrollbar {
+    display: none;
+}
+
+.hour-pill {
+    flex-shrink: 0;
+    background: #FFFFFF;
+    border: 1.5px solid #F0F0F0;
+    border-radius: 20px;
+    padding: 20px;
+    min-width: 220px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.03);
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.hour-pill.active {
+    border-color: #8B3A1E;
+    background: #FFF0EC;
+    box-shadow: 0 12px 30px rgba(139, 58, 30, 0.1);
+}
+
+.hour-day {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #888;
+}
+
+.hour-pill.active .hour-day {
+    color: #8B3A1E;
+}
+
+.hour-time {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1A1A1A;
+}
+
+.hour-status {
+    position: absolute;
+    top: -10px;
+    right: -5px;
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #FFFFFF;
+    background: #8B3A1E;
+    padding: 3px 12px;
+    border-radius: 50px;
+    box-shadow: 4px 4px 12px rgba(139, 58, 30, 0.4);
+    z-index: 99;
+    /* Boosted z-index for maximum layering */
+}
+
+/* Pagination Dots */
+.hours-pagination-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.hours-pagination-dots .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #E0E0E0;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.hours-pagination-dots .dot.active {
+    width: 24px;
+    border-radius: 10px;
+    background: #8B3A1E;
+}
+
+/* Visit Us - Redesigned */
+.visit-location-card {
+    background: #FFFFFF;
+    border-radius: 24px;
+    overflow: hidden;
+    border: 1.5px solid #F0F0F0;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.06);
+    margin-bottom: 16px;
+}
+
+.location-map-placeholder {
+    background: linear-gradient(135deg, #FFF0EC 0%, #FFE4DC 100%);
+    height: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    position: relative;
+}
+
+.map-icon-pulse {
+    color: #8B3A1E;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.1);
+        opacity: 0.7;
+    }
+}
+
+.map-label {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #8B3A1E;
+    text-transform: uppercase;
+}
+
+.location-details {
+    padding: 24px;
+    text-align: center;
+}
+
+.location-name {
+    font-family: 'Outfit', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    color: #1A1A1A;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+}
+
+.location-address {
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 16px;
+    line-height: 1.5;
+}
+
+.directions-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #8B3A1E;
+    color: #FFFFFF;
+    padding: 10px 20px;
+    border-radius: 50px;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.directions-btn:active {
+    transform: scale(0.95);
+    background: #6D2D17;
+}
+
+/* Contact Icons Row - Minimal Centered */
+.contact-icons-row {
+    display: flex;
+    justify-content: center;
+    gap: 28px;
+    padding: 24px 0;
+    background: #FFFFFF;
+    border-radius: 24px;
+    border: 1.5px solid #F0F0F0;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+}
+
+.contact-icon-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.contact-icon-item:active {
+    transform: scale(0.9);
+}
+
+.icon-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.icon-circle.call {
+    background: #FFF0EC;
+    color: #8B3A1E;
+    border: 2px solid #FFD8CC;
+}
+
+.icon-circle.email {
+    background: #FFF0EC;
+    color: #8B3A1E;
+    border: 2px solid #FFD8CC;
+}
+
+.icon-circle.whatsapp {
+    background: #FFF0EC;
+    color: #8B3A1E;
+    border: 2px solid #FFD8CC;
+}
+
+.icon-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #8B3A1E;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Footer Signature */
+.about-journal-footer {
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.social-row {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.social-row a {
+    color: #8B3A1E;
+    transition: transform 0.2s ease;
+}
+
+.social-row a:active {
+    transform: scale(0.9);
+}
+
+.footer-signature {
+    opacity: 0.3;
+}
+
+.sig-line {
+    width: 30px;
+    height: 1px;
+    background: #1A1A1A;
+    margin: 0 auto 16px;
+}
+
+.footer-signature p {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+}

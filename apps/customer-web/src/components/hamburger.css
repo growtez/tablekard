@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=Syncopate:wght@700&display=swap');
 
 /* Hamburger Button Styles */
-.menu-icon {
+.hamburger-btn {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -10,16 +10,17 @@
   padding-left: 0;
   z-index: 1001;
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  background: transparent;
 }
 
-.menu-icon:active {
+.hamburger-btn:active {
   transform: scale(0.9);
 }
 
 .hamburger {
   display: block;
   height: 2.5px;
-  background-color: #1A1A1A;
+  background-color: #8B3A1E;
   border-radius: 4px;
   transition: all 0.3s ease;
 }
@@ -41,7 +42,7 @@
   width: 85%;
   max-width: 320px;
   background-color: #FFFFFF;
-  z-index: 2100;
+  z-index: 9999;
   transition: left 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: 25px 0 60px rgba(0, 0, 0, 0.08);
   display: flex;
@@ -62,7 +63,7 @@
   height: 100%;
   background-color: rgba(26, 26, 26, 0.2);
   backdrop-filter: blur(10px);
-  z-index: 2050;
+  z-index: 9998;
   opacity: 0;
   animation: fadeIn 0.4s forwards;
 }

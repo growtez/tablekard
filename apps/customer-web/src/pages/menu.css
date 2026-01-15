@@ -1255,53 +1255,70 @@ body {
   left: 0;
   right: 0;
   background: #FFFFFF;
-  padding: 12px 24px 28px;
+  padding: 12px 24px 24px;
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
   align-items: center;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
-  z-index: 1000;
+  border-top: 1px solid #F0F0F0;
+  z-index: 100;
 }
 
 .nav-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  color: #B8ADA9;
-  text-decoration: none;
-  padding: 8px;
+  background: none;
+  border: none;
+  color: #D4A59A;
+  cursor: pointer;
+  padding: 12px;
   border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
   transition: all 0.2s ease;
 }
 
+/* Active state - Full burgundy background with white icon */
 .nav-btn.active {
+  background: #8B3A1E !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(139, 58, 30, 0.3);
+}
+
+.nav-btn:hover:not(.active) {
   color: #8B3A1E;
-  background: #FFF0EC;
+  background: #FFF7F3;
 }
 
+/* Remove special center button elevation - all buttons same level */
 .nav-center {
-  background: #F8F8F8;
-  width: 48px;
-  height: 48px;
+  background: none;
+  color: #D4A59A;
+  width: auto;
+  height: auto;
   border-radius: 14px;
-  justify-content: center;
-  margin-top: -10px;
+  margin-top: 0;
+  box-shadow: none;
+  border: none;
+  padding: 12px;
 }
 
+/* Center button active - same as others */
 .nav-center.active {
-  background: #8B3A1E;
-  color: #FFFFFF;
+  background: #8B3A1E !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(139, 58, 30, 0.3);
 }
 
 .cart-badge {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: -4px;
+  right: -4px;
   background: #8B3A1E;
   color: #FFFFFF;
   font-size: 9px;
-  font-weight: 800;
+  font-weight: 700;
   min-width: 18px;
   height: 18px;
   border-radius: 10px;
@@ -1311,4 +1328,5 @@ body {
   padding: 0 4px;
   border: 2px solid #FFFFFF;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 2;
 }

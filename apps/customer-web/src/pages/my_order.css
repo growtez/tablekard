@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Inter:wght@300;400;500;600;700&family=Syncopate:wght@700&display=swap');
 
 * {
   margin: 0;
@@ -19,38 +19,121 @@ body {
   padding-bottom: 100px;
 }
 
-/* Header Styles */
-.header {
-  padding: 24px 20px;
-  background: #FFFFFF;
-  border-bottom: 1px solid #F0F0F0;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.header-content {
+/* ===== HEADER - Same as Home Page ===== */
+.menu-header-nav {
+  padding: 16px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  background: #FFFFFF;
 }
 
-/* Main Title */
-.main-title {
-  margin-bottom: 24px;
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.main-title h1 {
+.header-brand-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #8B3A1E;
+  letter-spacing: 5px;
+  font-family: 'Syncopate', sans-serif;
+  text-transform: uppercase;
+}
+
+.header-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-nav-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #FFF0EC;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #FFD8CC;
+  transition: transform 0.2s ease;
+  text-decoration: none;
+}
+
+.header-nav-btn:active {
+  transform: scale(0.9);
+}
+
+/* Live Queue Button with pulsing dot */
+.live-queue-btn {
+  position: relative;
+}
+
+.live-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  background: #4CAF50;
+  border-radius: 50%;
+  border: 2px solid #FFF0EC;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: scale(0.85);
+  }
+}
+
+/* ===== HERO SECTION (scoped to My Orders page only) ===== */
+.myorder-container .hero-section {
+  padding: 20px 20px 24px;
+  background: #FFFFFF;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.myorder-container .hero-text {
+  text-align: center;
+  width: 100%;
+}
+
+.myorder-container .hero-text h1 {
   font-family: 'Playfair Display', serif;
   font-size: 32px;
   font-weight: 800;
-  line-height: 1.1;
+  line-height: 1.15;
+  color: #1A1A1A;
+  margin: 0;
+}
+
+.myorder-container .ampersand {
   color: #1A1A1A;
 }
 
-.highlight {
+.myorder-container .highlight {
   color: #8B3A1E;
+}
+
+/* ===== TAB SECTION ===== */
+.tab-section {
+  padding: 0 20px 20px;
+  background: #FFFFFF;
+  border-bottom: 1px solid #F0F0F0;
 }
 
 /* Tab Navigation - Pill Style */
@@ -59,7 +142,6 @@ body {
   background-color: #F5F5F5;
   border-radius: 14px;
   padding: 5px;
-  margin-bottom: 10px;
 }
 
 .tab-btn {
@@ -210,7 +292,7 @@ body {
 
 .quantity-btn {
   background: #FFFFFF;
-  border: none;
+  border: 1px solid rgba(0, 0, 0, 0.12);
   color: #1A1A1A;
   cursor: pointer;
   width: 28px;
@@ -269,6 +351,15 @@ body {
   font-weight: 500;
 }
 
+.summary-row.discount {
+  font-weight: 700;
+  color: #1A1A1A;
+}
+
+.summary-row.discount span:last-child {
+  color: #1A1A1A;
+}
+
 .summary-row.total {
   border-top: 1.5px dashed #F0F0F0;
   padding-top: 16px;
@@ -308,6 +399,14 @@ body {
 }
 
 /* Orders List */
+.section-heading {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1A1A1A;
+  margin-bottom: 16px;
+}
+
 .orders-content {
   padding: 20px;
 }
@@ -322,45 +421,53 @@ body {
   background-color: #FFFFFF;
   border-radius: 24px;
   padding: 20px;
-  border: 1.2px solid rgba(0, 0, 0, 0.18);
+  border: 1.5px solid rgba(0, 0, 0, 0.22);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
 }
 
 .order-header {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 20px;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 16px;
 }
 
-.order-id span:first-child {
+.order-id-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.order-id {
   color: #1A1A1A;
   font-weight: 800;
   font-size: 16px;
-  display: block;
 }
 
-.order-time {
-  color: #999999;
+.order-date {
+  color: #888888;
   font-size: 12px;
-  margin-top: 4px;
+  font-weight: 500;
 }
 
 .order-status {
-  padding: 6px 12px;
-  border-radius: 12px;
+  padding: 5px 10px;
+  border-radius: 20px;
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
+  gap: 5px;
+  font-size: 11px;
   font-weight: 700;
+  color: #1A1A1A;
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .order-items {
   background: #F9F9F9;
   border-radius: 16px;
   padding: 16px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .order-item-row {
@@ -373,8 +480,23 @@ body {
   font-weight: 500;
 }
 
-.order-item-row:last-child {
-  margin-bottom: 0;
+.order-item-row.fees {
+  padding-top: 10px;
+  margin-top: 10px;
+  border-top: 1px dashed rgba(0, 0, 0, 0.1);
+  color: #888888;
+  font-style: italic;
+  font-size: 13px;
+}
+
+.order-item-row.discount-row {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1A1A1A;
+}
+
+.discount-value {
+  color: #1A1A1A;
 }
 
 .order-footer {
@@ -383,19 +505,43 @@ body {
   align-items: center;
 }
 
-.estimated-time {
-  color: #8B3A1E;
-  font-size: 13px;
+.payment-badge {
+  font-size: 11px;
   font-weight: 700;
-  background: rgba(139, 58, 30, 0.1);
   padding: 6px 12px;
-  border-radius: 10px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.payment-badge.paid {
+  background: rgba(76, 175, 80, 0.15);
+  color: #2E7D32;
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.payment-badge.not-paid {
+  background: rgba(244, 67, 54, 0.1);
+  color: #C62828;
+  border: 1px solid rgba(244, 67, 54, 0.25);
+}
+
+.order-total-inline {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-right: 4px;
 }
 
 .order-total {
   color: #1A1A1A;
   font-size: 18px;
   font-weight: 800;
+}
+
+.order-total-note {
+  font-size: 10px;
+  color: #888888;
 }
 
 /* Empty State */
@@ -405,21 +551,29 @@ body {
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 80px 20px;
+  padding: 60px 40px;
+}
+
+.empty-illustration {
+  width: 150px;
+  height: auto;
+  margin-bottom: 20px;
+  opacity: 1;
 }
 
 .empty-state h3 {
   font-family: 'Playfair Display', serif;
   color: #1A1A1A;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 800;
-  margin: 24px 0 12px;
+  margin: 10px 0 8px;
 }
 
 .empty-state p {
-  color: #999999;
-  font-size: 15px;
-  line-height: 1.6;
+  color: #666666;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
   max-width: 250px;
 }
 
@@ -429,44 +583,51 @@ body {
   bottom: 0;
   left: 0;
   right: 0;
-  background-color: #FFFFFF;
+  background: #FFFFFF;
   padding: 12px 24px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   border-top: 1px solid #F0F0F0;
-  z-index: 2000;
+  z-index: 100;
 }
 
 .nav-btn {
   background: none;
   border: none;
-  color: #CCCCCC;
+  color: #D4A59A;
   cursor: pointer;
-  width: 50px;
-  height: 50px;
-  border-radius: 16px;
-  transition: all 0.3s ease;
+  padding: 12px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
   text-decoration: none;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.2s ease;
 }
 
+/* Active state - Full burgundy background with white icon */
 .nav-btn.active {
+  background: #8B3A1E !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(139, 58, 30, 0.3);
+}
+
+.nav-btn:hover:not(.active) {
   color: #8B3A1E;
-  background-color: rgba(139, 58, 30, 0.08);
+  background: #FFF7F3;
 }
 
 .cart-badge {
   position: absolute;
-  top: 2px;
-  right: 2px;
+  top: -4px;
+  right: -4px;
   background: #8B3A1E;
   color: #FFFFFF;
   font-size: 9px;
-  font-weight: 800;
+  font-weight: 700;
   min-width: 18px;
   height: 18px;
   border-radius: 10px;
@@ -476,6 +637,7 @@ body {
   padding: 0 4px;
   border: 2px solid #FFFFFF;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 2;
 }
 
 /* Favorites Button */
