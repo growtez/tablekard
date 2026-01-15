@@ -56,8 +56,8 @@ const ProfileScreen = ({ navigation }) => {
 
     const menuItems = [
         { icon: 'clock', title: 'Order History', description: 'View all your orders', route: 'Orders' },
-        { icon: 'heart', title: 'Favorites', description: 'Your favorite dishes', route: 'Likes' },
-        { icon: 'message-square', title: 'Feedback & Ratings', description: 'Rate your dining experience', route: 'Feedback' },
+        { icon: 'heart', title: 'Favorites', description: 'Your favorite dishes', route: null },
+        { icon: 'message-square', title: 'Feedback & Ratings', description: 'Rate your dining experience', route: null },
         { icon: 'info', title: 'About Restaurant', description: 'Story, timings & more', route: 'About' },
     ];
 
