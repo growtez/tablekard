@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Image,
 import Icon from 'react-native-vector-icons/Feather';
 import { useTheme } from '../context/ThemeContext';
 import { spacing, shadows } from '../theme';
-import BottomNavBar from '../components/BottomNavBar';
 
 const MenuScreen = ({ navigation }) => {
     const { theme, isDark } = useTheme();

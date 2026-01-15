@@ -12,7 +12,6 @@ import {
 import Icon from 'react-native-vector-icons/Feather';
 import { useTheme } from '../context/ThemeContext';
 import { spacing, shadows } from '../theme';
-import BottomNavBar from '../components/BottomNavBar';
 
 const { width } = Dimensions.get('window');
 
@@ -158,11 +157,8 @@ const ProfileScreen = ({ navigation }) => {
                 </View>
 
                 {/* Bottom Padding for NavBar */}
-                <View style={{ height: 100 }} />
+                <View style={{ height: 20 }} />
             </ScrollView>
-
-            {/* Bottom Navigation */}
-            <BottomNavBar navigation={navigation} activeRoute="Profile" />
         </View>
     );
 };

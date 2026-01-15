@@ -13,7 +13,6 @@ import {
 import Icon from 'react-native-vector-icons/Feather';
 import { useTheme } from '../context/ThemeContext';
 import { spacing, shadows } from '../theme';
-import BottomNavBar from '../components/BottomNavBar';
 
 const CartScreen = ({ navigation }) => {
     const { theme } = useTheme();
@@ -232,12 +231,9 @@ const CartScreen = ({ navigation }) => {
                         <Icon name="arrow-right" size={20} color="#FFFFFF" />
                     </TouchableOpacity>
 
-                    <View style={{ height: 100 }} />
+                    <View style={{ height: 20 }} />
                 </ScrollView>
             )}
-
-            {/* Bottom Navigation */}
-            <BottomNavBar navigation={navigation} activeRoute="Cart" />
         </View>
     );
 };
