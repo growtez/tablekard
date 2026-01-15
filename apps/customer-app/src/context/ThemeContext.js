@@ -1,65 +1,117 @@
 import React, { createContext, useContext, useState } from 'react';
 import { useColorScheme } from 'react-native';
+import { shadows } from '../theme';
 
-// Dark Theme Colors (matching customer-web)
-const darkTheme = {
-    mode: 'dark',
-    colors: {
-        primary: '#d9b550',
-        primaryDark: '#b8973f',
-        background: '#212121',
-        card: '#2D2D2D',
-        cardHover: '#333333',
-        text: '#FFFFFF',
-        textSecondary: '#CCCCCC',
-        textMuted: '#888888',
-        success: '#4CAF50',
-        warning: '#FF9800',
-        error: '#FF4444',
-        border: '#333333',
-        star: '#FFD700',
-        vegan: '#22c55e',
-        nonVeg: '#ef4444',
-        overlay: 'rgba(0, 0, 0, 0.8)',
-        inputBg: 'rgba(255, 255, 255, 0.1)',
-    },
-};
-
-// Light Theme Colors
+// Premium Light Theme (Burgundy + Cream - matching customer-web)
 const lightTheme = {
     mode: 'light',
     colors: {
-        primary: '#d9b550',
-        primaryDark: '#b8973f',
-        background: '#F5F5F5',
+        // Primary brand colors
+        primary: '#8B3A1E',
+        primaryDark: '#6D2D17',
+        primaryLight: '#FFF0EC',
+        primaryBorder: '#FFD8CC',
+
+        // Backgrounds
+        background: '#FAFAFA',
+        backgroundPure: '#FFFFFF',
         card: '#FFFFFF',
-        cardHover: '#EEEEEE',
-        text: '#212121',
-        textSecondary: '#666666',
-        textMuted: '#999999',
-        success: '#4CAF50',
-        warning: '#FF9800',
-        error: '#FF4444',
-        border: '#E0E0E0',
-        star: '#FFD700',
-        vegan: '#22c55e',
-        nonVeg: '#ef4444',
+        cardHover: '#FFF7F3',
+
+        // Text
+        text: '#1A1A1A',
+        textSecondary: '#555555',
+        textMuted: '#888888',
+
+        // Navigation
+        navInactive: '#D4A59A',
+        navActive: '#8B3A1E',
+
+        // Status
+        success: '#22C55E',
+        successLight: '#E8F5E9',
+        warning: '#F2B84B',
+        error: '#E14B4B',
+        errorLight: '#FFEBEE',
+
+        // Borders
+        border: '#F0F0F0',
+        borderDark: '#E8E1DD',
+
+        // Special
+        star: '#F2B84B',
         overlay: 'rgba(0, 0, 0, 0.5)',
-        inputBg: 'rgba(0, 0, 0, 0.05)',
+        inputBg: 'rgba(139, 58, 30, 0.05)',
+
+        // Badges
+        vegan: '#2E7D32',
+        veganBg: '#E8F5E9',
+        nonVeg: '#C62828',
+        nonVegBg: '#FFEBEE',
     },
+    shadows,
+};
+
+// Dark Theme (optional - keeping for future)
+const darkTheme = {
+    mode: 'dark',
+    colors: {
+        // Primary brand colors
+        primary: '#D4A59A',
+        primaryDark: '#8B3A1E',
+        primaryLight: '#3D2A24',
+        primaryBorder: '#5D3D35',
+
+        // Backgrounds
+        background: '#1A1A1A',
+        backgroundPure: '#0D0D0D',
+        card: '#2D2D2D',
+        cardHover: '#333333',
+
+        // Text
+        text: '#FFFFFF',
+        textSecondary: '#CCCCCC',
+        textMuted: '#888888',
+
+        // Navigation
+        navInactive: '#6D5D58',
+        navActive: '#D4A59A',
+
+        // Status
+        success: '#4CAF50',
+        successLight: '#1B3D1B',
+        warning: '#F2B84B',
+        error: '#EF4444',
+        errorLight: '#3D1B1B',
+
+        // Borders
+        border: '#333333',
+        borderDark: '#444444',
+
+        // Special
+        star: '#F2B84B',
+        overlay: 'rgba(0, 0, 0, 0.8)',
+        inputBg: 'rgba(255, 255, 255, 0.08)',
+
+        // Badges
+        vegan: '#4CAF50',
+        veganBg: '#1B3D1B',
+        nonVeg: '#EF4444',
+        nonVegBg: '#3D1B1B',
+    },
+    shadows,
 };
 
 const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
     const systemColorScheme = useColorScheme();
-    const [themeMode, setThemeMode] = useState('dark'); // 'dark', 'light', or 'system'
+    const [themeMode, setThemeMode] = useState('light'); // Default to light (matching customer-web)
 
     const toggleTheme = (mode) => {
         setThemeMode(mode);
     };
 
-    // Determine actual theme based on themeMode
     const getActiveTheme = () => {
         if (themeMode === 'system') {
             return systemColorScheme === 'dark' ? darkTheme : lightTheme;
@@ -86,15 +138,15 @@ export function ThemeProvider({ children }) {
 export function useTheme() {
     const context = useContext(ThemeContext);
     if (!context) {
-        // Return default theme if context is not available
         return {
-            theme: darkTheme,
-            themeMode: 'dark',
+            theme: lightTheme,
+            themeMode: 'light',
             toggleTheme: () => { },
-            isDark: true,
+            isDark: false,
         };
     }
     return context;
 }
 
 export { darkTheme, lightTheme };
+

@@ -14,7 +14,7 @@ import {
 import Icon from 'react-native-vector-icons/Feather';
 import { useTheme } from '../context/ThemeContext';
 import { useLocation } from '../context/LocationContext';
-import { spacing } from '../theme';
+import { spacing, shadows } from '../theme';
 
 const { width } = Dimensions.get('window');
 
