@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Home, ShoppingBag, MessageCircle, User, Minus, Plus, Trash2, Clock, CheckCircle, Utensils, ShoppingCart, Heart } from 'lucide-react';
+import { Home, ShoppingBag, MessageCircle, User, Minus, Plus, Trash2, Clock, CheckCircle, Utensils, ShoppingCart, Heart, ArrowRight, Star, Users } from 'lucide-react';
 import { NavLink } from "react-router-dom";
 import './my_order.css';
 import Hamburger from '../components/hamburger';
@@ -11,26 +11,29 @@ const MyOrderPage = () => {
     {
       id: 1,
       name: 'Caesar Salad',
-      price: 8,
+      price: 180,
       quantity: 2,
       image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=120&h=120&fit=crop',
-      customizations: ['Extra Parmesan', 'No Croutons']
+      rating: 4.8,
+      serves: '1-2'
     },
     {
       id: 2,
       name: 'Grilled Salmon',
-      price: 18,
+      price: 450,
       quantity: 1,
       image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=120&h=120&fit=crop',
-      customizations: ['Medium Rare', 'Extra Lemon']
+      rating: 4.9,
+      serves: '1'
     },
     {
       id: 3,
       name: 'Fresh Orange Juice',
-      price: 4,
+      price: 120,
       quantity: 3,
       image: 'https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=120&h=120&fit=crop',
-      customizations: []
+      rating: 4.5,
+      serves: '1'
     }
   ]);
 
@@ -143,14 +146,11 @@ const MyOrderPage = () => {
       <header className="header">
         <div className="header-content">
           <Hamburger />
-
-          {/* Favorites Icon */}
-
           <NavLink to="/likes" className="header-favorites-btn">
             <Heart
-              size={24}
-              color="#d9b550"
-              fill={favorites.length > 0 ? '#d9b550' : 'transparent'}
+              size={22}
+              color="#8B3A1E"
+              fill={favorites.length > 0 ? '#8B3A1E' : 'transparent'}
             />
             {favorites.length > 0 && (
               <span className="favorites-count">{favorites.length}</span>
@@ -208,13 +208,16 @@ const MyOrderPage = () => {
                           <Trash2 size={16} />
                         </button>
                       </div>
-                      {item.customizations.length > 0 && (
-                        <div className="customizations">
-                          {item.customizations.map((custom, index) => (
-                            <span key={index} className="custom-tag">{custom}</span>
-                          ))}
+                      <div className="cart-meta">
+                        <div className="cart-rating">
+                          <Star size={12} fill="#8B3A1E" color="#8B3A1E" />
+                          <span>{item.rating}</span>
                         </div>
-                      )}
+                        <div className="cart-serves">
+                          <Users size={12} />
+                          <span>Serves {item.serves}</span>
+                        </div>
+                      </div>
                       <div className="cart-bottom">
                         <div className="quantity-controls">
                           <button
@@ -241,6 +244,7 @@ const MyOrderPage = () => {
               </div>
 
               {/* Order Summary */}
+              <h2 className="summary-title">Summary</h2>
               <div className="order-summary">
                 <div className="summary-row">
                   <span>Subtotal</span>
@@ -251,18 +255,18 @@ const MyOrderPage = () => {
                   <span>₹2</span>
                 </div>
                 <div className="summary-row">
-                  <span>Tax</span>
-                  <span>₹{Math.round(getTotalPrice() * 0.08)}</span>
+                  <span>Tax (18%)</span>
+                  <span>₹{Math.round(getTotalPrice() * 0.18)}</span>
                 </div>
                 <div className="summary-row total">
-                  <span>Total</span>
-                  <span>₹{getTotalPrice() + 2 + Math.round(getTotalPrice() * 0.08)}</span>
+                  <span>Total Amount</span>
+                  <span>₹{getTotalPrice() + 2 + Math.round(getTotalPrice() * 0.18)}</span>
                 </div>
               </div>
 
               {/* Place Order Button */}
               <button className="place-order-btn" onClick={placeOrder}>
-                Place Order
+                Place Order <ArrowRight size={20} />
               </button>
             </>
           )}
@@ -317,20 +321,21 @@ const MyOrderPage = () => {
 
       {/* Bottom Navigation */}
       <nav className="bottom-nav">
-        <NavLink to="/" className="nav-btn">
-          <Home size={24} />
+        <NavLink to="/" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
+          <Home size={22} />
         </NavLink>
 
-        <NavLink to="/menu" className="nav-btn">
-          <ShoppingBag size={24} />
+        <NavLink to="/menu" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
+          <ShoppingBag size={22} />
         </NavLink>
 
-        <NavLink to="/orders" className="nav-btn">
-          <ShoppingCart size={24} />
+        <NavLink to="/orders" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
+          <ShoppingCart size={22} />
+          {cartItems.length > 0 && <span className="cart-badge">{cartItems.length > 9 ? '9+' : cartItems.length}</span>}
         </NavLink>
 
-        <NavLink to="/profile" className="nav-btn">
-          <User size={24} />
+        <NavLink to="/profile" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
+          <User size={22} />
         </NavLink>
       </nav>
     </div>

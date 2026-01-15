@@ -89,7 +89,7 @@
 
 .google-signin-button:hover {
   background: var(--color-card-hover);
-  border-color: #d9b550;
+  border-color: var(--color-primary);
 }
 
 .google-signin-button:active {
@@ -115,7 +115,7 @@
   width: 22px;
   height: 22px;
   border: 2px solid var(--color-card-hover);
-  border-top-color: #d9b550;
+  border-top-color: var(--color-primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -151,7 +151,7 @@
 }
 
 .terms-text .link {
-  color: #d9b550;
+  color: var(--color-primary);
   text-decoration: none;
 }
 

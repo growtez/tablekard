@@ -26,7 +26,6 @@ const Hamburger = () => {
         <div className="menu-icon" onClick={() => setIsSidebarOpen(true)}>
           <div className="hamburger"></div>
           <div className="hamburger"></div>
-          <div className="hamburger"></div>
         </div>
       )}
 
@@ -36,20 +35,21 @@ const Hamburger = () => {
         <div className="sidebar-header">
           <div className="company-section">
             <div className="company-logo">
-              <img src="/assets/pizza.jpg" alt="Company Logo" />
+              <img src="/assets/delish_logo.png" alt="Delish Logo" />
             </div>
             <div className="company-info">
-              <h3>Pizza Hut</h3>
+              <h3>Delish</h3>
+              <p>The Art of Fine Dining</p>
             </div>
           </div>
           <button className="close-btn" onClick={() => setIsSidebarOpen(false)}>
             ×
           </button>
         </div>
-        
+
         <div className="sidebar-content">
-          <NavLink 
-            to="/" 
+          <NavLink
+            to="/"
             className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
             onClick={() => setIsSidebarOpen(false)}
           >
@@ -57,8 +57,8 @@ const Hamburger = () => {
             <span>Home</span>
           </NavLink>
 
-          <NavLink 
-            to="/orders" 
+          <NavLink
+            to="/orders"
             className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
             onClick={() => setIsSidebarOpen(false)}
           >
@@ -66,8 +66,8 @@ const Hamburger = () => {
             <span>My Orders</span>
           </NavLink>
 
-          <NavLink 
-            to="/likes" 
+          <NavLink
+            to="/likes"
             className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
             onClick={() => setIsSidebarOpen(false)}
           >
@@ -75,8 +75,8 @@ const Hamburger = () => {
             <span>Favourites</span>
           </NavLink>
 
-          <NavLink 
-            to="/onboarding" 
+          <NavLink
+            to="/onboarding"
             className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
             onClick={() => setIsSidebarOpen(false)}
           >
@@ -84,8 +84,8 @@ const Hamburger = () => {
             <span>Onboarding</span>
           </NavLink>
 
-          <NavLink 
-            to="/offers" 
+          <NavLink
+            to="/offers"
             className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
             onClick={() => setIsSidebarOpen(false)}
           >
@@ -93,8 +93,8 @@ const Hamburger = () => {
             <span>Rewards & Offers</span>
           </NavLink>
 
-          <NavLink 
-            to="/profile" 
+          <NavLink
+            to="/profile"
             className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
             onClick={() => setIsSidebarOpen(false)}
           >

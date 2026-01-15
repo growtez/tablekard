@@ -10,6 +10,7 @@ import MyOrdersPage from "./pages/my_order";
 import ProfilePage from "./pages/profile";
 import SettingsPage from "./pages/settings";
 
+import SearchPage from './pages/search';
 import LikesPage from './pages/likes';
 import MostPopularPage from './pages/popular';
 import RecentOrdersPage from './pages/recent';
@@ -37,6 +38,7 @@ function App() {
               <Route path="/orders" element={<MyOrdersPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/search" element={<SearchPage />} />
               <Route path="/likes" element={<LikesPage />} />
               <Route path="/popular" element={<MostPopularPage />} />
               <Route path="/recent" element={<RecentOrdersPage />} />
