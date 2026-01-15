@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, StatusBar, Platform } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { useTheme } from '../context/ThemeContext';
-import { spacing } from '../theme';
+import { spacing, shadows } from '../theme';
 
 const SettingsScreen = ({ navigation }) => {
     const { theme, themeMode, toggleTheme, isDark } = useTheme();

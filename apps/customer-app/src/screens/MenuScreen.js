@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Image, Modal, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Image, Modal, StatusBar, Platform, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { useTheme } from '../context/ThemeContext';
-import { spacing } from '../theme';
+import { spacing, shadows } from '../theme';
+import BottomNavBar from '../components/BottomNavBar';
 
 const MenuScreen = ({ navigation }) => {
     const { theme, isDark } = useTheme();

@@ -17,6 +17,7 @@ import CheckoutScreen from '../screens/CheckoutScreen';
 import OrderTrackingScreen from '../screens/OrderTrackingScreen';
 import AddressScreen from '../screens/AddressScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import AboutScreen from '../screens/AboutScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -38,8 +39,8 @@ function MainTabs() {
                     paddingBottom: 10,
                     paddingTop: 10,
                 },
-                tabBarActiveTintColor: colors.text,
-                tabBarInactiveTintColor: colors.textMuted,
+                tabBarActiveTintColor: colors.primary,
+                tabBarInactiveTintColor: colors.navInactive,
                 tabBarShowLabel: false,
                 tabBarIcon: ({ color, focused }) => {
                     let iconName;
@@ -58,12 +59,10 @@ function MainTabs() {
                                 height: 44,
                                 borderRadius: 12,
                                 backgroundColor: focused
-                                    ? isDark
-                                        ? '#333333'
-                                        : '#E0E0E0'
+                                    ? colors.primary
                                     : 'transparent',
                             }}>
-                            <Icon name={iconName} size={22} color={color} />
+                            <Icon name={iconName} size={22} color={focused ? '#FFFFFF' : colors.navInactive} />
                         </View>
                     );
                 },
@@ -98,6 +97,7 @@ export default function AppNavigator() {
                 <Stack.Screen name="Address" component={AddressScreen} />
                 <Stack.Screen name="OrderTracking" component={OrderTrackingScreen} />
                 <Stack.Screen name="Settings" component={SettingsScreen} />
+                <Stack.Screen name="About" component={AboutScreen} />
             </Stack.Navigator>
         </NavigationContainer>
     );
