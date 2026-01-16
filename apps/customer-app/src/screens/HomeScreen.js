@@ -90,26 +90,129 @@ const HomeScreen = ({ navigation }) => {
         { id: 'budget', label: 'Under ₹200' },
     ];
 
-    // Featured Offers (Discounts)
+    // Featured Offers (Discounts) - Matching customer-web exactly
     const featuredOffers = [
-        { id: 'featured1', name: 'Sushi Pack', price: 299, time: '15 min', rating: 4.8, discount: '20% OFF', image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400&h=400&fit=crop', description: 'A curated selection of premium seafood sushi.' },
-        { id: 'featured2', name: 'Salmon Platter', price: 399, time: '15 min', rating: 4.8, discount: '20% OFF', image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=400&h=400&fit=crop', description: 'Atlantic salmon grilled to perfection.' },
-        { id: 'featured3', name: 'California Rolls', price: 249, time: '12 min', rating: 4.7, discount: '20% OFF', image: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=400&fit=crop', description: 'Classic California rolls with avocado.' },
+        {
+            id: 'featured1',
+            name: 'Sushi Pack',
+            price: 299,
+            time: '15 min',
+            rating: 4.8,
+            discount: '20% OFF',
+            serves: 'Serves 1-2',
+            dietType: 'non-veg',
+            image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400&h=400&fit=crop',
+            description: 'A curated selection of premium seafood, including fresh Atlantic salmon nigiri, spicy tuna rolls, and delicate cucumber maki. Served with traditional pickled ginger, wasabi, and lower-sodium soy sauce.'
+        },
+        {
+            id: 'featured2',
+            name: 'Salmon Platter',
+            price: 399,
+            time: '15 min',
+            rating: 4.8,
+            discount: '20% OFF',
+            serves: 'Serves 1',
+            dietType: 'non-veg',
+            image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=400&h=400&fit=crop',
+            description: 'Heart-healthy Atlantic salmon fillet, seasoned with a blend of Mediterranean herbs and lemon zest. Grilled over an open flame for a smoky finish.'
+        },
+        {
+            id: 'featured3',
+            name: 'California Rolls',
+            price: 249,
+            time: '12 min',
+            rating: 4.7,
+            discount: '20% OFF',
+            serves: 'Serves 1',
+            dietType: 'non-veg',
+            image: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=400&fit=crop',
+            description: 'The classic fan-favorite! Authentic crab stick, creamy Haas avocado, and crisp cucumber wrapped in premium vinegared sushi rice and toasted nori.'
+        },
     ];
 
-    // Popular Items
+    // Popular Items - Matching customer-web exactly
     const popularItems = [
-        { id: 'popular1', name: 'Margherita', price: 168, time: '25min', rating: 4.9, image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300&h=300&fit=crop', description: 'Classic Italian pizza with fresh mozzarella.' },
-        { id: 'popular2', name: 'Tikka Masala', price: 198, time: '30min', rating: 4.8, image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=300&h=300&fit=crop', description: 'Authentic Indian curry with tender chicken.' },
-        { id: 'popular3', name: 'Lava Cake', price: 568, time: '15min', rating: 4.9, image: 'https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=300&h=300&fit=crop', description: 'Warm chocolate cake with molten center.' },
-        { id: 'popular4', name: 'Caesar Salad', price: 120, time: '10min', rating: 4.7, image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=300&h=300&fit=crop', description: 'Fresh romaine with Caesar dressing.' },
+        {
+            id: 'popular1',
+            name: 'Margherita',
+            price: 168,
+            time: '25min',
+            rating: 4.9,
+            serves: 'Serves 2',
+            dietType: 'veg',
+            image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300&h=300&fit=crop',
+            description: 'A timeless Italian masterpiece. Hand-stretched sourdough base topped with rich San Marzano tomato sauce, fresh buffalo mozzarella, and aromatic basil leaves.'
+        },
+        {
+            id: 'popular2',
+            name: 'Tikka Masala',
+            price: 198,
+            time: '30min',
+            rating: 4.8,
+            serves: 'Serves 1',
+            dietType: 'non-veg',
+            image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=300&h=300&fit=crop',
+            description: 'Tender chunks of marinated chicken simmered in our signature creamy tomato-based masala sauce. Infused with traditional Indian spices and finished with a swirl of fresh cream.'
+        },
+        {
+            id: 'popular3',
+            name: 'Lava Cake',
+            price: 568,
+            time: '15min',
+            rating: 4.9,
+            serves: 'Serves 1',
+            dietType: 'veg',
+            image: 'https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=300&h=300&fit=crop',
+            description: 'Indulgent dark chocolate cake with a warm, molten center. Made with premium Swiss chocolate and served with a scoop of vanilla bean ice cream.'
+        },
+        {
+            id: 'popular4',
+            name: 'Caesar Salad',
+            price: 120,
+            time: '10min',
+            rating: 4.7,
+            serves: 'Serves 1',
+            dietType: 'veg',
+            image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=300&h=300&fit=crop',
+            description: 'Crisp romaine lettuce tossed with house-made Caesar dressing, shaved Parmesan, and garlic croutons. A classic that never disappoints.'
+        },
     ];
 
-    // Recent Orders
+    // Recent Orders - Matching customer-web exactly
     const recentOrders = [
-        { id: 'recent1', name: 'Pepperoni Pizza', price: 148, time: '20min', rating: 4.6, image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300&h=300&fit=crop', description: 'Signature pepperoni pizza.' },
-        { id: 'recent2', name: 'Grilled Salmon', price: 228, time: '25min', rating: 4.8, image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=300&h=300&fit=crop', description: 'Fresh grilled salmon fillet.' },
-        { id: 'recent3', name: 'Vegan Burger', price: 138, time: '20min', rating: 4.5, image: 'https://images.unsplash.com/photo-1520072959219-c595dc870360?w=300&h=300&fit=crop', description: 'Plant-based burger patty.' },
+        {
+            id: 'recent1',
+            name: 'Pepperoni Pizza',
+            price: 148,
+            time: '20min',
+            rating: 4.6,
+            serves: 'Serves 2',
+            dietType: 'non-veg',
+            image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300&h=300&fit=crop',
+            description: 'Classic pepperoni pizza loaded with spicy pepperoni slices on a bed of melted mozzarella and our signature tomato sauce.'
+        },
+        {
+            id: 'recent2',
+            name: 'Grilled Salmon',
+            price: 228,
+            time: '25min',
+            rating: 4.8,
+            serves: 'Serves 1',
+            dietType: 'non-veg',
+            image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=300&h=300&fit=crop',
+            description: 'Fresh Atlantic salmon fillet grilled to perfection, served with seasonal vegetables and lemon herb butter sauce.'
+        },
+        {
+            id: 'recent3',
+            name: 'Vegan Burger',
+            price: 138,
+            time: '20min',
+            rating: 4.5,
+            serves: 'Serves 1',
+            dietType: 'vegan',
+            image: 'https://images.unsplash.com/photo-1520072959219-c595dc870360?w=300&h=300&fit=crop',
+            description: 'Plant-based patty made with black beans and quinoa, topped with fresh lettuce, tomato, pickles, and our special vegan mayo.'
+        },
     ];
 
     const getFilteredItems = () => {
