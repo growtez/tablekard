@@ -423,51 +423,92 @@ const HomeScreen = ({ navigation }) => {
                 </TouchableOpacity>
             )}
 
-            {/* Item Modal */}
+            {/* Item Modal - Matching customer-web */}
             <Modal visible={showModal} transparent animationType="slide" onRequestClose={() => setShowModal(false)}>
                 {selectedItem && (
                     <View style={styles.modalOverlay}>
                         <TouchableOpacity style={styles.modalBackdrop} onPress={() => setShowModal(false)} />
                         <View style={styles.modalSheet}>
+                            {/* Drag Handle */}
                             <View style={styles.modalDragBar} />
+
+                            {/* Close Button */}
                             <TouchableOpacity style={styles.modalCloseBtn} onPress={() => setShowModal(false)}>
-                                <Icon name="x" size={18} color="#8B3A1E" />
+                                <Icon name="x" size={18} color="#666666" />
                             </TouchableOpacity>
 
-                            <View style={styles.modalImageFrame}>
-                                <Image source={{ uri: selectedItem.image }} style={styles.modalImage} />
-                                <TouchableOpacity
-                                    style={[styles.modalFavBtn, favorites.includes(selectedItem.id) && styles.modalFavBtnActive]}
-                                    onPress={() => toggleFavorite(selectedItem.id)}
-                                >
-                                    <FontAwesome name={favorites.includes(selectedItem.id) ? 'heart' : 'heart-o'} size={20} color={favorites.includes(selectedItem.id) ? '#FFFFFF' : '#8B3A1E'} />
-                                </TouchableOpacity>
-                                <View style={styles.modalRatingPill}>
-                                    <FontAwesome name="star" size={12} color="#8B3A1E" />
-                                    <Text style={styles.modalRatingText}>{selectedItem.rating}</Text>
-                                </View>
-                            </View>
+                            <ScrollView showsVerticalScrollIndicator={false}>
+                                {/* Dish Showcase - Centered Image */}
+                                <View style={styles.modalDishShowcase}>
+                                    <View style={styles.dishImageFrame}>
+                                        <Image source={{ uri: selectedItem.image }} style={styles.dishImage} />
+                                    </View>
 
-                            <View style={styles.modalInfo}>
-                                <Text style={styles.modalTitle}>{selectedItem.name}</Text>
-                                <View style={styles.modalMeta}>
-                                    <View style={styles.modalTag}>
-                                        <Icon name="clock" size={12} color="#8B3A1E" />
-                                        <Text style={styles.modalTagText}>{selectedItem.time}</Text>
+                                    {/* Favorite Button */}
+                                    <TouchableOpacity
+                                        style={styles.modalFavFloating}
+                                        onPress={() => toggleFavorite(selectedItem.id)}
+                                    >
+                                        <FontAwesome
+                                            name={favorites.includes(selectedItem.id) ? 'heart' : 'heart-o'}
+                                            size={20}
+                                            color="#8B3A1E"
+                                        />
+                                    </TouchableOpacity>
+
+                                    {/* Rating Pill - Black background */}
+                                    <View style={styles.dishRatingPill}>
+                                        <FontAwesome name="star" size={12} color="#8B3A1E" />
+                                        <Text style={styles.dishRatingText}>{selectedItem.rating}</Text>
                                     </View>
                                 </View>
-                                <Text style={styles.modalDesc}>{selectedItem.description}</Text>
 
-                                <View style={styles.modalFooter}>
-                                    <Text style={styles.modalPrice}>₹{selectedItem.price}</Text>
-                                    <TouchableOpacity
-                                        style={styles.modalAddBtn}
-                                        onPress={() => { addToCart(selectedItem); setShowModal(false); }}
-                                    >
-                                        <Icon name="shopping-bag" size={18} color="#FFFFFF" />
-                                        <Text style={styles.modalAddText}>Add to Cart</Text>
-                                    </TouchableOpacity>
+                                {/* Dish Info - Centered */}
+                                <View style={styles.modalDishInfo}>
+                                    <Text style={styles.dishTitle}>{selectedItem.name}</Text>
+
+                                    {/* Meta Chips */}
+                                    <View style={styles.metaChips}>
+                                        <View style={styles.metaChip}>
+                                            <Icon name="clock" size={13} color="#1A1A1A" />
+                                            <Text style={styles.metaChipText}>{selectedItem.time}</Text>
+                                        </View>
+                                        <View style={styles.metaChip}>
+                                            <Icon name="users" size={13} color="#1A1A1A" />
+                                            <Text style={styles.metaChipText}>Serves 1</Text>
+                                        </View>
+                                        {selectedItem.dietType === 'vegan' && (
+                                            <View style={[styles.metaChip, styles.metaChipVegan]}>
+                                                <Text style={styles.metaChipTextVegan}>Vegan</Text>
+                                            </View>
+                                        )}
+                                        {selectedItem.dietType === 'veg' && (
+                                            <View style={[styles.metaChip, styles.metaChipGreen]}>
+                                                <Text style={styles.metaChipTextGreen}>Veg</Text>
+                                            </View>
+                                        )}
+                                        {selectedItem.dietType === 'non-veg' && (
+                                            <View style={[styles.metaChip, styles.metaChipRed]}>
+                                                <Text style={styles.metaChipTextRed}>Non-Veg</Text>
+                                            </View>
+                                        )}
+                                    </View>
+
+                                    <Text style={styles.dishFullDesc}>{selectedItem.description}</Text>
                                 </View>
+                            </ScrollView>
+
+                            {/* Bottom Action Bar */}
+                            <View style={styles.modalBottomBar}>
+                                <View style={styles.priceDisplay}>
+                                    <Text style={styles.priceRupee}>₹{selectedItem.price}</Text>
+                                </View>
+                                <TouchableOpacity
+                                    style={styles.addToOrderBtn}
+                                    onPress={() => { addToCart(selectedItem); setShowModal(false); }}
+                                >
+                                    <Text style={styles.addToOrderText}>Add to Order</Text>
+                                </TouchableOpacity>
                             </View>
                         </View>
                     </View>
@@ -864,15 +905,14 @@ const styles = StyleSheet.create({
         justifyContent: 'center'
     },
 
-    // Modal
+    // Modal - Matching customer-web
     modalOverlay: { flex: 1, justifyContent: 'flex-end' },
     modalBackdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)' },
     modalSheet: {
         backgroundColor: '#FFFFFF',
         borderTopLeftRadius: 28,
         borderTopRightRadius: 28,
-        maxHeight: '80%',
-        paddingBottom: 40,
+        maxHeight: '85%',
     },
     modalDragBar: {
         width: 40,
@@ -892,71 +932,141 @@ const styles = StyleSheet.create({
         borderRadius: 18,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#FFF0EC',
+        backgroundColor: '#F5F5F5',
         zIndex: 10,
     },
-    modalImageFrame: { position: 'relative', alignItems: 'center', paddingHorizontal: 20 },
-    modalImage: { width: width - 80, height: 180, borderRadius: 20 },
-    modalFavBtn: {
+
+    // Dish Showcase
+    modalDishShowcase: {
+        alignItems: 'center',
+        paddingHorizontal: 24,
+        paddingTop: 32,
+        paddingBottom: 28,
+        position: 'relative',
+    },
+    dishImageFrame: {
+        width: 280,
+        height: 200,
+        borderRadius: 24,
+        overflow: 'hidden',
+        backgroundColor: '#FFFFFF',
+        borderWidth: 5,
+        borderColor: '#FFFFFF',
+        shadowColor: 'rgba(139, 58, 30, 0.18)',
+        shadowOffset: { width: 0, height: 16 },
+        shadowOpacity: 1,
+        shadowRadius: 50,
+        elevation: 10,
+    },
+    dishImage: {
+        width: '100%',
+        height: '100%',
+    },
+    modalFavFloating: {
         position: 'absolute',
-        bottom: 16,
-        right: 36,
-        width: 44,
-        height: 44,
-        borderRadius: 22,
+        top: 44,
+        right: 50,
+        width: 42,
+        height: 42,
+        borderRadius: 21,
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#FFF0EC',
-        borderWidth: 2,
-        borderColor: '#8B3A1E',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.12,
+        shadowRadius: 15,
+        elevation: 5,
     },
-    modalFavBtnActive: {
-        backgroundColor: '#8B3A1E',
-        borderColor: '#8B3A1E',
-    },
-    modalRatingPill: {
+    dishRatingPill: {
         position: 'absolute',
-        bottom: 16,
-        left: 36,
+        bottom: 36,
+        right: 55,
         flexDirection: 'row',
         alignItems: 'center',
         gap: 4,
-        paddingHorizontal: 10,
+        backgroundColor: '#1A1A1A',
+        paddingHorizontal: 12,
         paddingVertical: 6,
-        borderRadius: 20,
-        backgroundColor: '#FFFFFF',
+        borderRadius: 14,
     },
-    modalRatingText: { fontSize: 13, fontWeight: '700', color: '#1A1A1A' },
-    modalInfo: { padding: 24 },
-    modalTitle: { fontSize: 24, fontWeight: '800', color: '#1A1A1A', marginBottom: 12 },
-    modalMeta: { flexDirection: 'row', gap: 10, marginBottom: 16 },
-    modalTag: {
+    dishRatingText: { fontSize: 13, fontWeight: '700', color: '#FFFFFF' },
+
+    // Dish Info
+    modalDishInfo: {
+        paddingHorizontal: 24,
+        paddingBottom: 100,
+        alignItems: 'center',
+    },
+    dishTitle: {
+        fontSize: 24,
+        fontWeight: '800',
+        color: '#1A1A1A',
+        marginBottom: 12,
+        textAlign: 'center',
+    },
+    metaChips: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        flexWrap: 'wrap',
+        gap: 8,
+        marginBottom: 16,
+    },
+    metaChip: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 5,
+        backgroundColor: '#FFFFFF',
         paddingHorizontal: 12,
         paddingVertical: 6,
-        borderRadius: 20,
-        backgroundColor: '#FFF0EC',
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: '#1A1A1A',
     },
-    modalTagText: { fontSize: 12, fontWeight: '600', color: '#8B3A1E' },
-    modalDesc: { fontSize: 14, lineHeight: 22, color: '#666666', marginBottom: 24 },
-    modalFooter: {
+    metaChipText: { fontSize: 12, fontWeight: '600', color: '#1A1A1A' },
+    metaChipGreen: { backgroundColor: '#E8F5E9', borderColor: '#2E7D32' },
+    metaChipTextGreen: { fontSize: 12, fontWeight: '600', color: '#2E7D32' },
+    metaChipVegan: { backgroundColor: '#E0F2F1', borderColor: '#00695C' },
+    metaChipTextVegan: { fontSize: 12, fontWeight: '600', color: '#00695C' },
+    metaChipRed: { backgroundColor: '#FFEBEE', borderColor: '#C62828' },
+    metaChipTextRed: { fontSize: 12, fontWeight: '600', color: '#C62828' },
+    dishFullDesc: {
+        fontSize: 14,
+        lineHeight: 24,
+        color: '#666666',
+        textAlign: 'center',
+    },
+
+    // Bottom Action Bar
+    modalBottomBar: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: '#FFFFFF',
+        paddingHorizontal: 24,
+        paddingVertical: 16,
+        paddingBottom: 28,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+        borderTopWidth: 1,
+        borderTopColor: '#F0F0F0',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 20,
+        elevation: 10,
     },
-    modalPrice: { fontSize: 28, fontWeight: '900', color: '#1A1A1A' },
-    modalAddBtn: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-        paddingHorizontal: 24,
-        paddingVertical: 14,
-        borderRadius: 16,
+    priceDisplay: {},
+    priceRupee: { fontSize: 28, fontWeight: '900', color: '#1A1A1A' },
+    addToOrderBtn: {
         backgroundColor: '#8B3A1E',
+        paddingHorizontal: 32,
+        paddingVertical: 16,
+        borderRadius: 14,
     },
-    modalAddText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
+    addToOrderText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
 });
 
 export default HomeScreen;
