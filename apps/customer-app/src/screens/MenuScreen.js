@@ -412,7 +412,7 @@ const MenuScreen = ({ navigation }) => {
                                 <Icon name="x" size={18} color="#666666" />
                             </TouchableOpacity>
 
-                            <ScrollView showsVerticalScrollIndicator={false}>
+                            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
                                 {/* Dish Showcase - Centered Image */}
                                 <View style={styles.modalDishShowcase}>
                                     <View style={styles.dishImageFrame}>
