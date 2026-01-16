@@ -18,6 +18,7 @@ import OrderTrackingScreen from '../screens/OrderTrackingScreen';
 import AddressScreen from '../screens/AddressScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import AboutScreen from '../screens/AboutScreen';
+import SearchScreen from '../screens/SearchScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -98,6 +99,7 @@ export default function AppNavigator() {
                 <Stack.Screen name="OrderTracking" component={OrderTrackingScreen} />
                 <Stack.Screen name="Settings" component={SettingsScreen} />
                 <Stack.Screen name="About" component={AboutScreen} />
+                <Stack.Screen name="Search" component={SearchScreen} />
             </Stack.Navigator>
         </NavigationContainer>
     );

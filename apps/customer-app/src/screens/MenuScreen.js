@@ -24,7 +24,6 @@ const MenuScreen = ({ navigation }) => {
     const { theme } = useTheme();
     const colors = theme.colors;
 
-    const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('Starters');
     const [favorites, setFavorites] = useState([]);
     const [cart, setCart] = useState([]);
@@ -208,12 +207,7 @@ const MenuScreen = ({ navigation }) => {
         setShowModal(true);
     };
 
-    const filteredItems = menuItems[selectedCategory].filter(item =>
-        item.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
     const cartTotal = cart.reduce((total, item) => total + item.quantity, 0);
-    const cartValue = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -260,17 +254,17 @@ const MenuScreen = ({ navigation }) => {
                     />
                 </View>
 
-                {/* Search Bar */}
-                <View style={[styles.searchBar, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                {/* Search Bar Redirect - Matching customer-web */}
+                <TouchableOpacity
+                    style={[styles.searchBar, { backgroundColor: colors.card, borderColor: colors.border }]}
+                    onPress={() => navigation.navigate('Search')}
+                    activeOpacity={0.9}
+                >
                     <Icon name="search" size={18} color={colors.textMuted} />
-                    <TextInput
-                        style={[styles.searchInput, { color: colors.text }]}
-                        placeholder="Search your favourite food..."
-                        placeholderTextColor={colors.textMuted}
-                        value={searchTerm}
-                        onChangeText={setSearchTerm}
-                    />
-                </View>
+                    <Text style={[styles.searchPlaceholderText, { color: colors.textMuted }]}>
+                        Search your favourite food...
+                    </Text>
+                </TouchableOpacity>
 
                 {/* Categories */}
                 <ScrollView
@@ -301,7 +295,7 @@ const MenuScreen = ({ navigation }) => {
 
                 {/* Menu Items */}
                 <View style={styles.menuItems}>
-                    {filteredItems.map(item => (
+                    {menuItems[selectedCategory].map(item => (
                         <TouchableOpacity
                             key={item.id}
                             style={[styles.menuItem, { backgroundColor: colors.card }]}
@@ -578,7 +572,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         marginBottom: 16,
     },
-    searchInput: { flex: 1, fontSize: 14 },
+    searchPlaceholderText: { flex: 1, fontSize: 14, fontWeight: '500' },
 
     // Categories
     categoryScroll: { paddingHorizontal: 20, gap: 10, marginBottom: 20 },

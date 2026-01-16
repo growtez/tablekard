@@ -29,7 +29,6 @@ const HomeScreen = ({ navigation }) => {
     const { selectedAddress, getCurrentLocation } = useLocation();
     const colors = theme.colors;
 
-    const [searchTerm, setSearchTerm] = useState('');
     const [favorites, setFavorites] = useState([]);
     const [cart, setCart] = useState([]);
     const [currentOfferIndex, setCurrentOfferIndex] = useState(0);
@@ -253,7 +252,7 @@ const HomeScreen = ({ navigation }) => {
                     </View>
                     <TouchableOpacity
                         style={styles.headerIconBtn}
-                        onPress={() => navigation.navigate('Menu')}
+                        onPress={() => navigation.navigate('Search')}
                     >
                         <Icon name="search" size={22} color="#8B3A1E" />
                     </TouchableOpacity>
@@ -767,27 +766,6 @@ const styles = StyleSheet.create({
         marginRight: 8,
         backgroundColor: '#FFF0EC',
     },
-
-    // Search - matching customer-web
-    searchBar: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginHorizontal: 20,
-        borderRadius: 18,
-        padding: 14,
-        paddingHorizontal: 20,
-        gap: 12,
-        marginBottom: 20,
-        backgroundColor: '#FFFFFF',
-        borderWidth: 1.5,
-        borderColor: '#F0F0F0',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.04,
-        shadowRadius: 20,
-        elevation: 2,
-    },
-    searchPlaceholder: { fontSize: 15, fontWeight: '500', color: '#B8ADA9' },
 
     // Section
     section: { paddingHorizontal: 20, paddingBottom: 28 },
