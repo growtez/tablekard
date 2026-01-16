@@ -543,7 +543,7 @@ const HomeScreen = ({ navigation }) => {
                                 <Icon name="x" size={18} color="#666666" />
                             </TouchableOpacity>
 
-                            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
+                            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
                                 {/* Dish Showcase - Centered Image */}
                                 <View style={styles.modalDishShowcase}>
                                     <View style={styles.dishImageFrame}>
@@ -1104,7 +1104,7 @@ const styles = StyleSheet.create({
     modalDishShowcase: {
         alignItems: 'center',
         paddingHorizontal: 24,
-        paddingTop: 32,
+        paddingTop: 64, // Pushed image down
         paddingBottom: 28,
         position: 'relative',
     },
@@ -1128,7 +1128,7 @@ const styles = StyleSheet.create({
     },
     modalFavFloating: {
         position: 'absolute',
-        top: 44,
+        top: 16, // Moved it above the image
         right: 50,
         width: 42,
         height: 42,
@@ -1159,7 +1159,7 @@ const styles = StyleSheet.create({
     // Dish Info
     modalDishInfo: {
         paddingHorizontal: 24,
-        paddingBottom: 100,
+        paddingBottom: 30, // Reduced gap between description and bottom bar
         alignItems: 'center',
     },
     dishTitle: {
