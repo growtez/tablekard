@@ -1152,8 +1152,8 @@ const styles = StyleSheet.create({
     },
     dishRatingPill: {
         position: 'absolute',
-        bottom: 8, // Inside the frame
-        right: 8, // Inside the frame
+        bottom: -12, // Offset below the image frame
+        right: -12, // Offset to the right of the image frame
         flexDirection: 'row',
         alignItems: 'center',
         gap: 4,
@@ -1162,6 +1162,11 @@ const styles = StyleSheet.create({
         paddingVertical: 6,
         borderRadius: 14,
         zIndex: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.12,
+        shadowRadius: 15,
+        elevation: 5,
     },
     dishRatingText: { fontSize: 13, fontWeight: '700', color: '#FFFFFF' },
 
