@@ -685,8 +685,8 @@ const styles = StyleSheet.create({
     },
     favBtn: {
         position: 'absolute',
-        top: 6,
-        right: 6,
+        top: 10,
+        right: 10,
         width: 30,
         height: 30,
         borderRadius: 15,
