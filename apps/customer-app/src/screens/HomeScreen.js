@@ -546,26 +546,28 @@ const HomeScreen = ({ navigation }) => {
                             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
                                 {/* Dish Showcase - Centered Image */}
                                 <View style={styles.modalDishShowcase}>
-                                    <View style={styles.dishImageFrame}>
-                                        <Image source={{ uri: selectedItem.image }} style={styles.dishImage} />
-                                    </View>
+                                    <View style={styles.modalImageWrapper}>
+                                        <View style={styles.dishImageFrame}>
+                                            <Image source={{ uri: selectedItem.image }} style={styles.dishImage} />
+                                        </View>
 
-                                    {/* Favorite Button - Top right of image */}
-                                    <TouchableOpacity
-                                        style={styles.modalFavFloating}
-                                        onPress={() => toggleFavorite(selectedItem.id)}
-                                    >
-                                        <FontAwesome
-                                            name={favorites.includes(selectedItem.id) ? 'heart' : 'heart-o'}
-                                            size={20}
-                                            color="#8B3A1E"
-                                        />
-                                    </TouchableOpacity>
+                                        {/* Favorite Button - Fixed to top right of image */}
+                                        <TouchableOpacity
+                                            style={styles.modalFavFloating}
+                                            onPress={() => toggleFavorite(selectedItem.id)}
+                                        >
+                                            <FontAwesome
+                                                name={favorites.includes(selectedItem.id) ? 'heart' : 'heart-o'}
+                                                size={20}
+                                                color="#8B3A1E"
+                                            />
+                                        </TouchableOpacity>
 
-                                    {/* Rating Pill - Black background, bottom right */}
-                                    <View style={styles.dishRatingPill}>
-                                        <FontAwesome name="star" size={12} color="#8B3A1E" />
-                                        <Text style={styles.dishRatingText}>{selectedItem.rating}</Text>
+                                        {/* Rating Pill - Fixed to bottom right of image */}
+                                        <View style={styles.dishRatingPill}>
+                                            <FontAwesome name="star" size={12} color="#8B3A1E" />
+                                            <Text style={styles.dishRatingText}>{selectedItem.rating}</Text>
+                                        </View>
                                     </View>
                                 </View>
 
@@ -1108,6 +1110,11 @@ const styles = StyleSheet.create({
         paddingBottom: 28,
         position: 'relative',
     },
+    modalImageWrapper: {
+        width: 280,
+        height: 200,
+        position: 'relative',
+    },
     dishImageFrame: {
         width: 280,
         height: 200,
@@ -1128,8 +1135,8 @@ const styles = StyleSheet.create({
     },
     modalFavFloating: {
         position: 'absolute',
-        top: 16, // Moved it above the image
-        right: 50,
+        top: -12, // Offset above the image frame
+        right: -12, // Offset to the right of the image frame
         width: 42,
         height: 42,
         borderRadius: 21,
@@ -1141,11 +1148,12 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.12,
         shadowRadius: 15,
         elevation: 5,
+        zIndex: 5,
     },
     dishRatingPill: {
         position: 'absolute',
-        bottom: 36,
-        right: 55,
+        bottom: 8, // Inside the frame
+        right: 8, // Inside the frame
         flexDirection: 'row',
         alignItems: 'center',
         gap: 4,
@@ -1153,6 +1161,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 14,
+        zIndex: 5,
     },
     dishRatingText: { fontSize: 13, fontWeight: '700', color: '#FFFFFF' },
 
