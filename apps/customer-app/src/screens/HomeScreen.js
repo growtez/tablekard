@@ -502,24 +502,27 @@ const HomeScreen = ({ navigation }) => {
                 </View>
             </ScrollView>
 
-            {/* Cart Indicator */}
+            {/* Modern Frosted Glow Cart Indicator - Matching customer-web */}
             {totalCartItems > 0 && !showModal && (
-                <TouchableOpacity style={styles.cartGlow} onPress={() => navigation.navigate('Cart')}>
-                    <View style={styles.cartGlowContent}>
-                        <View style={styles.cartGlowBadge}>
+                <TouchableOpacity style={styles.cartModernGlow} onPress={() => navigation.navigate('Cart')}>
+                    <View style={styles.glowContent}>
+                        {/* Badge with cart icon and count */}
+                        <View style={styles.glowBadge}>
                             <Icon name="shopping-cart" size={16} color="#FFFFFF" />
-                            <View style={styles.cartGlowCount}>
-                                <Text style={styles.cartGlowCountText}>{totalCartItems}</Text>
-                            </View>
+                            <Text style={styles.glowCount}>{totalCartItems > 9 ? '9+' : totalCartItems}</Text>
                         </View>
-                        <View style={styles.cartGlowDetails}>
-                            <Text style={styles.cartGlowLabel}>Your Order</Text>
-                            <Text style={styles.cartGlowTotal}>₹{cartTotal}</Text>
+
+                        {/* Details - Your Order + Total */}
+                        <View style={styles.glowDetails}>
+                            <Text style={styles.glowLabel}>YOUR ORDER</Text>
+                            <Text style={styles.glowTotal}>₹{cartTotal}</Text>
                         </View>
-                        <View style={styles.cartGlowCta}>
-                            <Text style={styles.cartGlowCtaText}>View Cart</Text>
-                            <View style={styles.cartGlowCtaIcon}>
-                                <Icon name="arrow-right" size={16} color="#FFFFFF" />
+
+                        {/* Black CTA Button */}
+                        <View style={styles.glowCta}>
+                            <Text style={styles.glowCtaText}>View Cart</Text>
+                            <View style={styles.ctaIcon}>
+                                <Icon name="arrow-right" size={18} color="#FFFFFF" />
                             </View>
                         </View>
                     </View>
@@ -982,49 +985,88 @@ const styles = StyleSheet.create({
     },
     qtyText: { fontSize: 14, fontWeight: '700', color: '#1A1A1A' },
 
-    // Cart Glow
-    cartGlow: {
+    // Modern Frosted Glow Cart - Matching customer-web exactly
+    cartModernGlow: {
         position: 'absolute',
         bottom: 16,
-        left: 20,
-        right: 20,
-        borderRadius: 20,
+        left: 32,
+        right: 32,
+        zIndex: 1500,
+    },
+    glowContent: {
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        padding: 8,
+        paddingLeft: 14,
+        borderRadius: 24,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderWidth: 1.5,
+        borderColor: 'rgba(139, 58, 30, 0.15)',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 15 },
+        shadowOpacity: 0.12,
+        shadowRadius: 35,
+        elevation: 15,
+    },
+    glowBadge: {
         backgroundColor: '#8B3A1E',
-    },
-    cartGlowContent: {
+        paddingVertical: 8,
+        paddingHorizontal: 14,
+        borderRadius: 18,
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 16,
+        gap: 8,
+        shadowColor: 'rgba(139, 58, 30, 0.3)',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 1,
+        shadowRadius: 20,
+        elevation: 4,
     },
-    cartGlowBadge: {
+    glowCount: {
+        fontSize: 14,
+        fontWeight: '800',
+        color: '#FFFFFF',
+    },
+    glowDetails: {
+        flex: 1,
+        paddingLeft: 16,
+    },
+    glowLabel: {
+        fontSize: 11,
+        fontWeight: '600',
+        color: '#8B3A1E',
+        letterSpacing: 0.5,
+        opacity: 0.8,
+    },
+    glowTotal: {
+        fontSize: 18,
+        fontWeight: '800',
+        color: '#1A1A1A',
+        letterSpacing: -0.5,
+    },
+    glowCta: {
+        backgroundColor: '#1A1A1A',
+        paddingVertical: 6,
+        paddingLeft: 16,
+        paddingRight: 6,
+        borderRadius: 16,
         flexDirection: 'row',
         alignItems: 'center',
-        position: 'relative',
+        gap: 8,
     },
-    cartGlowCount: {
-        position: 'absolute',
-        top: -8,
-        right: -12,
-        backgroundColor: '#FFFFFF',
-        width: 20,
-        height: 20,
-        borderRadius: 10,
+    glowCtaText: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: '#FFFFFF',
+    },
+    ctaIcon: {
+        width: 32,
+        height: 32,
+        borderRadius: 12,
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
         alignItems: 'center',
         justifyContent: 'center',
-    },
-    cartGlowCountText: { fontSize: 10, fontWeight: '800', color: '#8B3A1E' },
-    cartGlowDetails: { flex: 1, marginLeft: 16 },
-    cartGlowLabel: { color: 'rgba(255,255,255,0.8)', fontSize: 11, fontWeight: '500' },
-    cartGlowTotal: { color: '#FFFFFF', fontSize: 16, fontWeight: '800' },
-    cartGlowCta: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    cartGlowCtaText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
-    cartGlowCtaIcon: {
-        width: 28,
-        height: 28,
-        borderRadius: 8,
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        alignItems: 'center',
-        justifyContent: 'center'
     },
 
     // Modal - Matching customer-web
