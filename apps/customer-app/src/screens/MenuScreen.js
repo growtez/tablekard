@@ -15,6 +15,7 @@ import {
 import Icon from 'react-native-vector-icons/Feather';
 import { useTheme } from '../context/ThemeContext';
 import { spacing, shadows } from '../theme';
+import HamburgerMenu from '../components/HamburgerMenu';
 
 const { width } = Dimensions.get('window');
 
@@ -110,11 +111,7 @@ const MenuScreen = ({ navigation }) => {
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
                 {/* Header */}
                 <View style={styles.header}>
-                    <TouchableOpacity style={styles.hamburger}>
-                        <View style={[styles.hamburgerLine, { backgroundColor: colors.primary }]} />
-                        <View style={[styles.hamburgerLine, { backgroundColor: colors.primary, width: 16 }]} />
-                        <View style={[styles.hamburgerLine, { backgroundColor: colors.primary }]} />
-                    </TouchableOpacity>
+                    <HamburgerMenu navigation={navigation} activeRoute="Menu" />
                     <View style={styles.headerRight}>
                         <TouchableOpacity style={[styles.headerBtn, { backgroundColor: colors.primaryLight }]}>
                             <Icon name="heart" size={22} color={colors.primary} />

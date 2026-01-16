@@ -15,6 +15,7 @@ import {
 import Icon from 'react-native-vector-icons/Feather';
 import { useTheme } from '../context/ThemeContext';
 import { spacing, shadows } from '../theme';
+import HamburgerMenu from '../components/HamburgerMenu';
 
 const { width } = Dimensions.get('window');
 
@@ -70,11 +71,7 @@ const ProfileScreen = ({ navigation }) => {
                 <View style={[styles.heroSection, { backgroundColor: colors.primaryLight }]}>
                     {/* Pattern overlay could be added as an image */}
                     <View style={styles.heroHeader}>
-                        <TouchableOpacity style={styles.hamburger}>
-                            <View style={[styles.hamburgerLine, { backgroundColor: colors.primary }]} />
-                            <View style={[styles.hamburgerLine, { backgroundColor: colors.primary, width: 16 }]} />
-                            <View style={[styles.hamburgerLine, { backgroundColor: colors.primary }]} />
-                        </TouchableOpacity>
+                        <HamburgerMenu navigation={navigation} activeRoute="Profile" />
                         <TouchableOpacity
                             style={[styles.editBtn, { backgroundColor: colors.card }]}
                             onPress={handleEditToggle}

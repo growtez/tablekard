@@ -16,6 +16,7 @@ import Icon from 'react-native-vector-icons/Feather';
 import { useTheme } from '../context/ThemeContext';
 import { useLocation } from '../context/LocationContext';
 import { spacing, shadows } from '../theme';
+import HamburgerMenu from '../components/HamburgerMenu';
 
 const { width } = Dimensions.get('window');
 
@@ -140,11 +141,7 @@ const HomeScreen = ({ navigation }) => {
                 {/* Header - Matching customer-web */}
                 <View style={styles.header}>
                     <View style={styles.headerLeft}>
-                        <TouchableOpacity style={styles.hamburger}>
-                            <View style={[styles.hamburgerLine, { backgroundColor: '#8B3A1E' }]} />
-                            <View style={[styles.hamburgerLine, { backgroundColor: '#8B3A1E', width: 16 }]} />
-                            <View style={[styles.hamburgerLine, { backgroundColor: '#8B3A1E' }]} />
-                        </TouchableOpacity>
+                        <HamburgerMenu navigation={navigation} activeRoute="Home" />
                         <Text style={styles.brandName}>DELISH</Text>
                     </View>
                     <TouchableOpacity style={styles.headerIconBtn}>

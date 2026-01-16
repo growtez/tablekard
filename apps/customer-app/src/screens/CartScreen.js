@@ -13,6 +13,7 @@ import {
 import Icon from 'react-native-vector-icons/Feather';
 import { useTheme } from '../context/ThemeContext';
 import { spacing, shadows } from '../theme';
+import HamburgerMenu from '../components/HamburgerMenu';
 
 const { width } = Dimensions.get('window');
 
@@ -105,11 +106,7 @@ const CartScreen = ({ navigation }) => {
             {/* Header */}
             <View style={styles.header}>
                 <View style={styles.headerLeft}>
-                    <TouchableOpacity style={styles.hamburger}>
-                        <View style={[styles.hamburgerLine, { backgroundColor: colors.primary }]} />
-                        <View style={[styles.hamburgerLine, { backgroundColor: colors.primary, width: 16 }]} />
-                        <View style={[styles.hamburgerLine, { backgroundColor: colors.primary }]} />
-                    </TouchableOpacity>
+                    <HamburgerMenu navigation={navigation} activeRoute="Cart" />
                 </View>
                 <TouchableOpacity
                     style={[styles.liveQueueBtn, { backgroundColor: colors.primaryLight }]}
@@ -352,8 +349,6 @@ const styles = StyleSheet.create({
         paddingBottom: 12,
     },
     headerLeft: {},
-    hamburger: { gap: 4, padding: 8 },
-    hamburgerLine: { width: 20, height: 2.5, borderRadius: 2 },
     liveQueueBtn: {
         width: 44,
         height: 44,
