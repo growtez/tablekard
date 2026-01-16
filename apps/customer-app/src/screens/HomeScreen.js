@@ -423,7 +423,7 @@ const HomeScreen = ({ navigation }) => {
                 </TouchableOpacity>
             )}
 
-            {/* Item Modal - Matching customer-web */}
+            {/* Item Modal - Matching customer-web EXACTLY */}
             <Modal visible={showModal} transparent animationType="slide" onRequestClose={() => setShowModal(false)}>
                 {selectedItem && (
                     <View style={styles.modalOverlay}>
@@ -437,14 +437,14 @@ const HomeScreen = ({ navigation }) => {
                                 <Icon name="x" size={18} color="#666666" />
                             </TouchableOpacity>
 
-                            <ScrollView showsVerticalScrollIndicator={false}>
+                            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
                                 {/* Dish Showcase - Centered Image */}
                                 <View style={styles.modalDishShowcase}>
                                     <View style={styles.dishImageFrame}>
                                         <Image source={{ uri: selectedItem.image }} style={styles.dishImage} />
                                     </View>
 
-                                    {/* Favorite Button */}
+                                    {/* Favorite Button - Top right of image */}
                                     <TouchableOpacity
                                         style={styles.modalFavFloating}
                                         onPress={() => toggleFavorite(selectedItem.id)}
@@ -456,7 +456,7 @@ const HomeScreen = ({ navigation }) => {
                                         />
                                     </TouchableOpacity>
 
-                                    {/* Rating Pill - Black background */}
+                                    {/* Rating Pill - Black background, bottom right */}
                                     <View style={styles.dishRatingPill}>
                                         <FontAwesome name="star" size={12} color="#8B3A1E" />
                                         <Text style={styles.dishRatingText}>{selectedItem.rating}</Text>
@@ -475,7 +475,7 @@ const HomeScreen = ({ navigation }) => {
                                         </View>
                                         <View style={styles.metaChip}>
                                             <Icon name="users" size={13} color="#1A1A1A" />
-                                            <Text style={styles.metaChipText}>Serves 1</Text>
+                                            <Text style={styles.metaChipText}>{selectedItem.serves || 'Serves 1'}</Text>
                                         </View>
                                         {selectedItem.dietType === 'vegan' && (
                                             <View style={[styles.metaChip, styles.metaChipVegan]}>
@@ -498,17 +498,36 @@ const HomeScreen = ({ navigation }) => {
                                 </View>
                             </ScrollView>
 
-                            {/* Bottom Action Bar */}
+                            {/* Bottom Action Bar - Fixed */}
                             <View style={styles.modalBottomBar}>
                                 <View style={styles.priceDisplay}>
                                     <Text style={styles.priceRupee}>₹{selectedItem.price}</Text>
                                 </View>
-                                <TouchableOpacity
-                                    style={styles.addToOrderBtn}
-                                    onPress={() => { addToCart(selectedItem); setShowModal(false); }}
-                                >
-                                    <Text style={styles.addToOrderText}>Add to Order</Text>
-                                </TouchableOpacity>
+
+                                {getItemQuantity(selectedItem.id) === 0 ? (
+                                    <TouchableOpacity
+                                        style={styles.addToOrderBtn}
+                                        onPress={() => addToCart(selectedItem)}
+                                    >
+                                        <Text style={styles.addToOrderText}>Add to Order</Text>
+                                    </TouchableOpacity>
+                                ) : (
+                                    <View style={styles.qtyStepper}>
+                                        <TouchableOpacity
+                                            style={styles.stepperBtn}
+                                            onPress={() => removeFromCart(selectedItem.id)}
+                                        >
+                                            <Icon name="minus" size={18} color="#FFFFFF" />
+                                        </TouchableOpacity>
+                                        <Text style={styles.stepperCount}>{getItemQuantity(selectedItem.id)}</Text>
+                                        <TouchableOpacity
+                                            style={styles.stepperBtn}
+                                            onPress={() => addToCart(selectedItem)}
+                                        >
+                                            <Icon name="plus" size={18} color="#FFFFFF" />
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
                             </View>
                         </View>
                     </View>
@@ -1067,6 +1086,28 @@ const styles = StyleSheet.create({
         borderRadius: 14,
     },
     addToOrderText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
+
+    // Quantity Stepper - Matching customer-web
+    qtyStepper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#8B3A1E',
+        borderRadius: 14,
+        overflow: 'hidden',
+    },
+    stepperBtn: {
+        width: 48,
+        height: 52,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    stepperCount: {
+        color: '#FFFFFF',
+        fontSize: 18,
+        fontWeight: '800',
+        minWidth: 36,
+        textAlign: 'center',
+    },
 });
 
 export default HomeScreen;

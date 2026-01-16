@@ -363,17 +363,36 @@ const MenuScreen = ({ navigation }) => {
                                 </View>
                             </ScrollView>
 
-                            {/* Bottom Action Bar */}
+                            {/* Bottom Action Bar - Fixed */}
                             <View style={styles.modalBottomBar}>
                                 <View style={styles.priceDisplay}>
                                     <Text style={styles.priceRupee}>₹{selectedItem.price}</Text>
                                 </View>
-                                <TouchableOpacity
-                                    style={styles.addToOrderBtn}
-                                    onPress={() => { addToCart(selectedItem); setShowModal(false); }}
-                                >
-                                    <Text style={styles.addToOrderText}>Add to Order</Text>
-                                </TouchableOpacity>
+
+                                {getItemQuantity(selectedItem.id) === 0 ? (
+                                    <TouchableOpacity
+                                        style={styles.addToOrderBtn}
+                                        onPress={() => addToCart(selectedItem)}
+                                    >
+                                        <Text style={styles.addToOrderText}>Add to Order</Text>
+                                    </TouchableOpacity>
+                                ) : (
+                                    <View style={styles.qtyStepper}>
+                                        <TouchableOpacity
+                                            style={styles.stepperBtn}
+                                            onPress={() => removeFromCart(selectedItem.id)}
+                                        >
+                                            <Icon name="minus" size={18} color="#FFFFFF" />
+                                        </TouchableOpacity>
+                                        <Text style={styles.stepperCount}>{getItemQuantity(selectedItem.id)}</Text>
+                                        <TouchableOpacity
+                                            style={styles.stepperBtn}
+                                            onPress={() => addToCart(selectedItem)}
+                                        >
+                                            <Icon name="plus" size={18} color="#FFFFFF" />
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
                             </View>
                         </View>
                     </View>
@@ -708,6 +727,28 @@ const styles = StyleSheet.create({
         borderRadius: 14,
     },
     addToOrderText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
+
+    // Quantity Stepper - Matching customer-web
+    qtyStepper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#8B3A1E',
+        borderRadius: 14,
+        overflow: 'hidden',
+    },
+    stepperBtn: {
+        width: 48,
+        height: 52,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    stepperCount: {
+        color: '#FFFFFF',
+        fontSize: 18,
+        fontWeight: '800',
+        minWidth: 36,
+        textAlign: 'center',
+    },
 });
 
 export default MenuScreen;
