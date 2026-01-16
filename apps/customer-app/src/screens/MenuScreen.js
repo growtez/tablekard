@@ -348,19 +348,25 @@ const MenuScreen = ({ navigation }) => {
 
                                     {getItemQuantity(item.id) === 0 ? (
                                         <TouchableOpacity
-                                            style={[styles.addBtn, { backgroundColor: colors.primary }]}
+                                            style={[styles.addBtn, { backgroundColor: '#8B3A1E' }]}
                                             onPress={() => addToCart(item)}
                                         >
                                             <Icon name="plus" size={20} color="#FFFFFF" />
                                         </TouchableOpacity>
                                     ) : (
-                                        <View style={[styles.qtyStepper, { backgroundColor: colors.primaryLight }]}>
-                                            <TouchableOpacity onPress={() => removeFromCart(item.id)}>
-                                                <Icon name="minus" size={16} color={colors.primary} />
+                                        <View style={styles.recentQtyStepper}>
+                                            <TouchableOpacity
+                                                style={styles.recentStepperBtn}
+                                                onPress={() => removeFromCart(item.id)}
+                                            >
+                                                <Icon name="minus" size={12} color="#FFFFFF" />
                                             </TouchableOpacity>
-                                            <Text style={[styles.qtyText, { color: colors.text }]}>{getItemQuantity(item.id)}</Text>
-                                            <TouchableOpacity onPress={() => addToCart(item)}>
-                                                <Icon name="plus" size={16} color={colors.primary} />
+                                            <Text style={styles.recentStepperValue}>{getItemQuantity(item.id)}</Text>
+                                            <TouchableOpacity
+                                                style={styles.recentStepperBtn}
+                                                onPress={() => addToCart(item)}
+                                            >
+                                                <Icon name="plus" size={12} color="#FFFFFF" />
                                             </TouchableOpacity>
                                         </View>
                                     )}
@@ -623,15 +629,29 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center'
     },
-    qtyStepper: {
+    recentQtyStepper: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 12,
+        backgroundColor: '#8B3A1E',
+        borderRadius: 10,
+        padding: 3,
+        gap: 6,
     },
-    qtyText: { fontSize: 14, fontWeight: '700' },
+    recentStepperBtn: {
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        width: 26,
+        height: 26,
+        borderRadius: 7,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    recentStepperValue: {
+        color: '#FFFFFF',
+        fontSize: 13,
+        fontWeight: '700',
+        minWidth: 16,
+        textAlign: 'center',
+    },
 
     // Modern Frosted Glow Cart - Matching customer-web exactly
     cartModernGlow: {

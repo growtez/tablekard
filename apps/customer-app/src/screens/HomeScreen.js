@@ -409,10 +409,18 @@ const HomeScreen = ({ navigation }) => {
                             >
                                 <View style={styles.discountImageContainer}>
                                     <Image source={{ uri: offer.image }} style={styles.discountImage} />
-                                    {/* Starburst Badge */}
-                                    <View style={styles.discountBadge}>
-                                        <Text style={styles.discountBadgeValue}>{offer.discount.split(' ')[0]}</Text>
-                                        <Text style={styles.discountBadgeOff}>{offer.discount.split(' ')[1]}</Text>
+                                    {/* Starburst Badge - Multi-square rotate for effect */}
+                                    <View style={styles.discountBadgeContainer}>
+                                        <View style={styles.discountBadgeStar}>
+                                            <View style={[styles.starSquare, { transform: [{ rotate: '22deg' }] }]} />
+                                            <View style={[styles.starSquare, { transform: [{ rotate: '45deg' }] }]} />
+                                            <View style={[styles.starSquare, { transform: [{ rotate: '67deg' }] }]} />
+                                            <View style={[styles.starSquare, { transform: [{ rotate: '0deg' }] }]} />
+                                        </View>
+                                        <View style={styles.discountBadgeContent}>
+                                            <Text style={styles.discountBadgeValue}>{offer.discount.split(' ')[0]}</Text>
+                                            <Text style={styles.discountBadgeOff}>{offer.discount.split(' ')[1]}</Text>
+                                        </View>
                                     </View>
                                 </View>
                                 <View style={styles.discountInfo}>
@@ -486,13 +494,19 @@ const HomeScreen = ({ navigation }) => {
                                         <Icon name="plus" size={16} color="#FFFFFF" />
                                     </TouchableOpacity>
                                 ) : (
-                                    <View style={styles.qtyStepper}>
-                                        <TouchableOpacity onPress={() => removeFromCart(item.id)}>
-                                            <Icon name="minus" size={14} color="#8B3A1E" />
+                                    <View style={styles.recentQtyStepper}>
+                                        <TouchableOpacity
+                                            style={styles.recentStepperBtn}
+                                            onPress={() => removeFromCart(item.id)}
+                                        >
+                                            <Icon name="minus" size={12} color="#FFFFFF" />
                                         </TouchableOpacity>
-                                        <Text style={styles.qtyText}>{getItemQuantity(item.id)}</Text>
-                                        <TouchableOpacity onPress={() => addToCart(item)}>
-                                            <Icon name="plus" size={14} color="#8B3A1E" />
+                                        <Text style={styles.recentStepperValue}>{getItemQuantity(item.id)}</Text>
+                                        <TouchableOpacity
+                                            style={styles.recentStepperBtn}
+                                            onPress={() => addToCart(item)}
+                                        >
+                                            <Icon name="plus" size={12} color="#FFFFFF" />
                                         </TouchableOpacity>
                                     </View>
                                 )}
@@ -902,7 +916,7 @@ const styles = StyleSheet.create({
         borderRadius: 28,
         padding: 10,
         borderWidth: 1.5,
-        borderColor: 'rgba(139, 58, 30, 0.25)', // Burgundy tinted border
+        borderColor: 'rgba(139, 58, 30, 0.4)', // Matched to customer-web #8B3A1E40
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.05,
@@ -917,24 +931,53 @@ const styles = StyleSheet.create({
         position: 'relative',
     },
     discountImage: { width: '100%', height: '100%', borderRadius: 22 },
-    discountBadge: {
+    discountBadgeContainer: {
         position: 'absolute',
         top: -15,
         right: -15,
         width: 64,
         height: 64,
-        backgroundColor: '#8B3A1E',
-        borderRadius: 32,
+        zIndex: 10,
         alignItems: 'center',
         justifyContent: 'center',
-        shadowColor: '#8B3A1E',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-        elevation: 4,
     },
-    discountBadgeValue: { color: '#FFFFFF', fontSize: 14, fontWeight: '800' },
-    discountBadgeOff: { color: '#FFFFFF', fontSize: 11, fontWeight: '700' },
+    discountBadgeStar: {
+        position: 'absolute',
+        width: 64,
+        height: 64,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: 'rgba(139, 58, 30, 0.5)',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 1,
+        shadowRadius: 8,
+        elevation: 6,
+    },
+    starSquare: {
+        position: 'absolute',
+        width: 46,
+        height: 46,
+        backgroundColor: '#8B3A1E',
+        borderRadius: 4,
+    },
+    discountBadgeContent: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 2,
+        transform: [{ rotate: '-5deg' }],
+    },
+    discountBadgeValue: {
+        color: '#FFFFFF',
+        fontSize: 14,
+        fontWeight: '800',
+        lineHeight: 16,
+    },
+    discountBadgeOff: {
+        color: '#FFFFFF',
+        fontSize: 10,
+        fontWeight: '700',
+        lineHeight: 12,
+    },
     discountInfo: { paddingHorizontal: 8, paddingBottom: 8 },
     discountName: { fontSize: 15, fontWeight: '700', color: '#1A1A1A', marginBottom: 2 },
     discountMeta: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 8 },
@@ -976,16 +1019,29 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         backgroundColor: '#8B3A1E',
     },
-    qtyStepper: {
+    recentQtyStepper: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
-        paddingHorizontal: 12,
-        paddingVertical: 8,
+        backgroundColor: '#8B3A1E',
         borderRadius: 10,
-        backgroundColor: '#FFF0EC',
+        padding: 3,
+        gap: 6,
     },
-    qtyText: { fontSize: 14, fontWeight: '700', color: '#1A1A1A' },
+    recentStepperBtn: {
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        width: 26,
+        height: 26,
+        borderRadius: 7,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    recentStepperValue: {
+        color: '#FFFFFF',
+        fontSize: 13,
+        fontWeight: '700',
+        minWidth: 16,
+        textAlign: 'center',
+    },
 
     // Modern Frosted Glow Cart - Matching customer-web exactly
     cartModernGlow: {
