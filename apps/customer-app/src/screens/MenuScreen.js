@@ -35,22 +35,132 @@ const MenuScreen = ({ navigation }) => {
 
     const menuItems = {
         'Starters': [
-            { id: 1, name: 'Caesar Salad', shortDesc: 'Crisp romaine lettuce with creamy Caesar dressing', price: 340, time: '15min', rating: 4.6, serves: 'Serves 1', image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=400&fit=crop', description: 'Fresh romaine lettuce tossed in creamy Caesar dressing.', dietType: 'veg' },
-            { id: 2, name: 'Chicken Wings', shortDesc: 'Crispy fried wings tossed in spicy buffalo sauce', price: 480, time: '20min', rating: 4.8, serves: 'Serves 2', image: 'https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=400&h=400&fit=crop', description: 'Crispy fried chicken wings in signature spicy buffalo sauce.', dietType: 'non-veg' },
-            { id: 3, name: 'Avocado Toast', shortDesc: 'Fresh smashed avocado on artisan sourdough', price: 380, time: '10min', rating: 4.4, serves: 'Serves 1', image: 'https://images.unsplash.com/photo-1623428187969-5da2dcea5ebf?w=400&h=400&fit=crop', description: 'Perfectly ripe avocado on toasted artisan sourdough.', dietType: 'vegan' },
+            {
+                id: 1,
+                name: 'Caesar Salad',
+                shortDesc: 'Crisp romaine lettuce with creamy Caesar dressing',
+                price: 340,
+                time: '15min',
+                rating: 4.6,
+                serves: 'Serves 1',
+                image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=400&fit=crop',
+                description: 'Crisp romaine lettuce tossed with house-made Caesar dressing, shaved Parmesan, and garlic croutons. A classic that never disappoints.',
+                dietType: 'veg'
+            },
+            {
+                id: 2,
+                name: 'Chicken Wings',
+                shortDesc: 'Crispy fried wings tossed in spicy buffalo sauce',
+                price: 480,
+                time: '20min',
+                rating: 4.8,
+                serves: 'Serves 2',
+                image: 'https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=400&h=400&fit=crop',
+                description: 'Crispy fried chicken wings tossed in our signature spicy buffalo sauce. Served with cooling blue cheese dip and fresh celery sticks.',
+                dietType: 'non-veg'
+            },
+            {
+                id: 3,
+                name: 'Avocado Toast',
+                shortDesc: 'Fresh smashed avocado on artisan sourdough',
+                price: 380,
+                time: '10min',
+                rating: 4.4,
+                serves: 'Serves 1',
+                image: 'https://images.unsplash.com/photo-1623428187969-5da2dcea5ebf?w=400&h=400&fit=crop',
+                description: 'Perfectly ripe Haas avocado smashed on toasted artisan sourdough, topped with cherry tomatoes, microgreens, and a drizzle of extra virgin olive oil.',
+                dietType: 'vegan'
+            },
         ],
         'Main Course': [
-            { id: 4, name: 'Grilled Salmon', shortDesc: 'Premium Atlantic salmon with lemon herb butter', price: 740, time: '25min', rating: 4.7, serves: 'Serves 1', image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400&h=400&fit=crop', description: 'Premium Atlantic salmon grilled to perfection.', dietType: 'non-veg' },
-            { id: 5, name: 'Pasta Carbonara', shortDesc: 'Classic creamy Italian pasta with bacon', price: 560, time: '20min', rating: 4.5, serves: 'Serves 2', image: 'https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=400&h=400&fit=crop', description: 'Traditional Italian carbonara with crispy bacon.', dietType: 'non-veg' },
-            { id: 6, name: 'Veggie Burger', shortDesc: 'Plant-based patty with fresh veggies', price: 540, time: '18min', rating: 4.3, serves: 'Serves 1', image: 'https://images.unsplash.com/photo-1520072959219-c595dc870360?w=400&h=400&fit=crop', description: 'Delicious plant-based burger patty.', dietType: 'vegan' },
+            {
+                id: 4,
+                name: 'Grilled Salmon',
+                shortDesc: 'Premium Atlantic salmon with lemon herb butter',
+                price: 740,
+                time: '25min',
+                rating: 4.7,
+                serves: 'Serves 1',
+                image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400&h=400&fit=crop',
+                description: 'Heart-healthy Atlantic salmon fillet, seasoned with a blend of Mediterranean herbs and lemon zest. Grilled over an open flame for a smoky finish and served atop a bed of sautéed garden vegetables.',
+                dietType: 'non-veg'
+            },
+            {
+                id: 5,
+                name: 'Pasta Carbonara',
+                shortDesc: 'Classic creamy Italian pasta with bacon',
+                price: 560,
+                time: '20min',
+                rating: 4.5,
+                serves: 'Serves 2',
+                image: 'https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=400&h=400&fit=crop',
+                description: 'Traditional Italian carbonara featuring al dente spaghetti tossed in a silky sauce of egg yolks, Pecorino Romano, and crispy guanciale. Finished with freshly cracked black pepper.',
+                dietType: 'non-veg'
+            },
+            {
+                id: 6,
+                name: 'Veggie Burger',
+                shortDesc: 'Plant-based patty with fresh veggies',
+                price: 540,
+                time: '18min',
+                rating: 4.3,
+                serves: 'Serves 1',
+                image: 'https://images.unsplash.com/photo-1520072959219-c595dc870360?w=400&h=400&fit=crop',
+                description: 'Plant-based patty made with black beans and quinoa, topped with fresh lettuce, ripe tomato, pickles, caramelized onions, and our special vegan mayo on a brioche bun.',
+                dietType: 'vegan'
+            },
         ],
         'Drinks': [
-            { id: 7, name: 'Fresh Orange Juice', shortDesc: 'Pure freshly squeezed juice from premium oranges', price: 180, time: '5min', rating: 4.8, serves: 'Serves 1', image: 'https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=400&h=400&fit=crop', description: 'Pure, freshly squeezed orange juice.', dietType: 'vegan' },
-            { id: 8, name: 'Iced Coffee', shortDesc: 'Smooth cold brew from premium arabica beans', price: 140, time: '3min', rating: 4.6, serves: 'Serves 1', image: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=400&h=400&fit=crop', description: 'Smooth cold brew coffee served over ice.', dietType: 'veg' },
+            {
+                id: 7,
+                name: 'Fresh Orange Juice',
+                shortDesc: 'Pure freshly squeezed juice from premium oranges',
+                price: 180,
+                time: '5min',
+                rating: 4.8,
+                serves: 'Serves 1',
+                image: 'https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=400&h=400&fit=crop',
+                description: 'Pure, freshly squeezed orange juice from premium Valencia oranges. No added sugar, no preservatives - just natural goodness in every sip.',
+                dietType: 'vegan'
+            },
+            {
+                id: 8,
+                name: 'Iced Coffee',
+                shortDesc: 'Smooth cold brew from premium arabica beans',
+                price: 140,
+                time: '3min',
+                rating: 4.6,
+                serves: 'Serves 1',
+                image: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=400&h=400&fit=crop',
+                description: 'Smooth cold brew coffee made from premium single-origin Arabica beans, slow-steeped for 12 hours. Served over ice with your choice of milk.',
+                dietType: 'veg'
+            },
         ],
         'Desserts': [
-            { id: 10, name: 'Chocolate Cake', shortDesc: 'Triple-layer chocolate cake with ganache', price: 300, time: '5min', rating: 4.9, serves: 'Serves 1', image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&h=400&fit=crop', description: 'Decadent triple-layer chocolate cake.', dietType: 'veg' },
-            { id: 11, name: 'Tiramisu', shortDesc: 'Authentic Italian tiramisu with mascarpone', price: 320, time: '5min', rating: 4.8, serves: 'Serves 1', image: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=400&h=400&fit=crop', description: 'Authentic Italian tiramisu with mascarpone cream.', dietType: 'veg' },
+            {
+                id: 10,
+                name: 'Chocolate Cake',
+                shortDesc: 'Triple-layer chocolate cake with ganache',
+                price: 300,
+                time: '5min',
+                rating: 4.9,
+                serves: 'Serves 1',
+                image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&h=400&fit=crop',
+                description: 'Decadent triple-layer chocolate cake with rich Belgian chocolate ganache between each layer. Topped with chocolate shavings and served with vanilla ice cream.',
+                dietType: 'veg'
+            },
+            {
+                id: 11,
+                name: 'Tiramisu',
+                shortDesc: 'Authentic Italian tiramisu with mascarpone',
+                price: 320,
+                time: '5min',
+                rating: 4.8,
+                serves: 'Serves 1',
+                image: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=400&h=400&fit=crop',
+                description: 'Authentic Italian tiramisu with layers of espresso-soaked ladyfingers and creamy mascarpone cheese. Dusted with premium Dutch cocoa powder.',
+                dietType: 'veg'
+            },
         ]
     };
 
