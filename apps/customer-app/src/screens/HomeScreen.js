@@ -19,7 +19,7 @@ import { spacing, shadows } from '../theme';
 import HamburgerMenu from '../components/HamburgerMenu';
 
 // Import local assets
-const heroIllustration = require('../assets/hero-illustration.png');
+const heroIllustration = require('../assets/food_app_hero.png');
 
 const { width } = Dimensions.get('window');
 
@@ -147,13 +147,11 @@ const HomeScreen = ({ navigation }) => {
                         <HamburgerMenu navigation={navigation} activeRoute="Home" />
                         <Text style={styles.brandName}>DELISH</Text>
                     </View>
-                    <TouchableOpacity style={styles.headerIconBtn}>
-                        <Icon name="heart" size={22} color="#8B3A1E" />
-                        {favorites.length > 0 && (
-                            <View style={styles.headerBadge}>
-                                <Text style={styles.headerBadgeText}>{favorites.length}</Text>
-                            </View>
-                        )}
+                    <TouchableOpacity
+                        style={styles.headerIconBtn}
+                        onPress={() => navigation.navigate('Menu')}
+                    >
+                        <Icon name="search" size={22} color="#8B3A1E" />
                     </TouchableOpacity>
                 </View>
 
@@ -189,12 +187,6 @@ const HomeScreen = ({ navigation }) => {
                         <Icon name="navigation" size={14} color="#8B3A1E" />
                     </TouchableOpacity>
                     <Icon name="chevron-down" size={18} color="#B8ADA9" />
-                </TouchableOpacity>
-
-                {/* Search Bar - matching customer-web */}
-                <TouchableOpacity style={styles.searchBar} onPress={() => navigation.navigate('Menu')}>
-                    <Icon name="search" size={18} color="#8B3A1E" />
-                    <Text style={styles.searchPlaceholder}>Search your favourite food</Text>
                 </TouchableOpacity>
 
                 {/* Categories Section - with exact customer-web styling */}
