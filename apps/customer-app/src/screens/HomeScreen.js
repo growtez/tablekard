@@ -13,6 +13,7 @@ import {
     Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { useTheme } from '../context/ThemeContext';
 import { useLocation } from '../context/LocationContext';
 import { spacing, shadows } from '../theme';
@@ -248,8 +249,8 @@ const HomeScreen = ({ navigation }) => {
                                         ]}
                                         onPress={() => toggleFavorite(item.id)}
                                     >
-                                        <Icon
-                                            name="heart"
+                                        <FontAwesome
+                                            name={favorites.includes(item.id) ? 'heart' : 'heart-o'}
                                             size={12}
                                             color={favorites.includes(item.id) ? '#FFFFFF' : '#8B3A1E'}
                                         />
@@ -262,7 +263,7 @@ const HomeScreen = ({ navigation }) => {
                                         <Text style={styles.foodMetaTime}>{item.time}</Text>
                                     </View>
                                     <View style={styles.foodMetaItem}>
-                                        <Icon name="star" size={10} color="#8B3A1E" />
+                                        <FontAwesome name="star" size={10} color="#8B3A1E" />
                                         <Text style={styles.foodMetaRating}>{item.rating}</Text>
                                     </View>
                                 </View>
@@ -318,7 +319,7 @@ const HomeScreen = ({ navigation }) => {
                                         </View>
                                         <Text style={styles.discountMetaDot}>•</Text>
                                         <View style={styles.discountMetaItem}>
-                                            <Icon name="star" size={12} color="#8B3A1E" />
+                                            <FontAwesome name="star" size={12} color="#8B3A1E" />
                                             <Text style={styles.discountMetaRating}>{offer.rating}</Text>
                                         </View>
                                     </View>
@@ -368,7 +369,7 @@ const HomeScreen = ({ navigation }) => {
                                     <View style={styles.recentMeta}>
                                         <Text style={styles.recentTime}>{item.time}</Text>
                                         <View style={styles.recentRating}>
-                                            <Icon name="star" size={10} color="#F2B84B" />
+                                            <FontAwesome name="star" size={10} color="#8B3A1E" />
                                             <Text style={styles.recentRatingText}>{item.rating}</Text>
                                         </View>
                                     </View>
@@ -437,10 +438,10 @@ const HomeScreen = ({ navigation }) => {
                                     style={[styles.modalFavBtn, favorites.includes(selectedItem.id) && styles.modalFavBtnActive]}
                                     onPress={() => toggleFavorite(selectedItem.id)}
                                 >
-                                    <Icon name="heart" size={20} color={favorites.includes(selectedItem.id) ? '#FFFFFF' : '#8B3A1E'} />
+                                    <FontAwesome name={favorites.includes(selectedItem.id) ? 'heart' : 'heart-o'} size={20} color={favorites.includes(selectedItem.id) ? '#FFFFFF' : '#8B3A1E'} />
                                 </TouchableOpacity>
                                 <View style={styles.modalRatingPill}>
-                                    <Icon name="star" size={12} color="#8B3A1E" />
+                                    <FontAwesome name="star" size={12} color="#8B3A1E" />
                                     <Text style={styles.modalRatingText}>{selectedItem.rating}</Text>
                                 </View>
                             </View>
