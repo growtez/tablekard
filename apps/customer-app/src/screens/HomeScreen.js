@@ -240,21 +240,23 @@ const HomeScreen = ({ navigation }) => {
                                 style={styles.foodCard}
                                 onPress={() => handleItemClick(item)}
                             >
+                                {/* Favorite button at card level */}
+                                <TouchableOpacity
+                                    style={[
+                                        styles.favBtn,
+                                        favorites.includes(item.id) && styles.favBtnActive
+                                    ]}
+                                    onPress={() => toggleFavorite(item.id)}
+                                >
+                                    <FontAwesome
+                                        name={favorites.includes(item.id) ? 'heart' : 'heart-o'}
+                                        size={12}
+                                        color={favorites.includes(item.id) ? '#FFFFFF' : '#8B3A1E'}
+                                    />
+                                </TouchableOpacity>
+
                                 <View style={styles.foodImageContainer}>
                                     <Image source={{ uri: item.image }} style={styles.foodImage} />
-                                    <TouchableOpacity
-                                        style={[
-                                            styles.favBtn,
-                                            favorites.includes(item.id) && styles.favBtnActive
-                                        ]}
-                                        onPress={() => toggleFavorite(item.id)}
-                                    >
-                                        <FontAwesome
-                                            name={favorites.includes(item.id) ? 'heart' : 'heart-o'}
-                                            size={12}
-                                            color={favorites.includes(item.id) ? '#FFFFFF' : '#8B3A1E'}
-                                        />
-                                    </TouchableOpacity>
                                 </View>
                                 <Text style={styles.foodName} numberOfLines={1}>{item.name}</Text>
                                 <View style={styles.foodMeta}>
@@ -667,6 +669,7 @@ const styles = StyleSheet.create({
         borderWidth: 1.5,
         borderColor: '#1A1A1A', // BLACK border
         alignItems: 'center',
+        position: 'relative', // For absolute positioning of favBtn
     },
     foodImageContainer: {
         width: '100%',
@@ -676,7 +679,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: 12,
-        position: 'relative',
     },
     foodImage: {
         width: '80%',
@@ -685,8 +687,8 @@ const styles = StyleSheet.create({
     },
     favBtn: {
         position: 'absolute',
-        top: 10,
-        right: 10,
+        top: 8,
+        right: 8,
         width: 30,
         height: 30,
         borderRadius: 15,
@@ -695,6 +697,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFFFF',
         borderWidth: 2,
         borderColor: '#8B3A1E',
+        zIndex: 10,
     },
     favBtnActive: {
         backgroundColor: '#8B3A1E',
