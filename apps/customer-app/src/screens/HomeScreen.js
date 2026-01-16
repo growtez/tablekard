@@ -18,6 +18,9 @@ import { useLocation } from '../context/LocationContext';
 import { spacing, shadows } from '../theme';
 import HamburgerMenu from '../components/HamburgerMenu';
 
+// Import local assets
+const heroIllustration = require('../assets/hero-illustration.png');
+
 const { width } = Dimensions.get('window');
 
 const HomeScreen = ({ navigation }) => {
@@ -162,10 +165,13 @@ const HomeScreen = ({ navigation }) => {
                         </Text>
                         <Text style={styles.heroTitle}>Food Around You</Text>
                     </View>
-                    <Image
-                        source={{ uri: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=200&h=200&fit=crop' }}
-                        style={styles.heroImage}
-                    />
+                    <View style={styles.heroIllustration}>
+                        <Image
+                            source={heroIllustration}
+                            style={styles.heroImage}
+                            resizeMode="contain"
+                        />
+                    </View>
                 </View>
 
                 {/* Deliver To Bar */}
@@ -532,11 +538,19 @@ const styles = StyleSheet.create({
         paddingTop: 20,
         paddingBottom: 16,
         minHeight: 160,
+        position: 'relative',
     },
-    heroText: { flex: 1, maxWidth: '55%' },
-    heroTitle: { fontSize: 26, fontWeight: '800', color: '#1A1A1A', lineHeight: 30 },
+    heroText: { flex: 1, maxWidth: '55%', zIndex: 2 },
+    heroTitle: { fontSize: 26, fontWeight: '800', color: '#1A1A1A', lineHeight: 30, letterSpacing: -0.5 },
     heroHighlight: { color: '#8B3A1E' },
-    heroImage: { width: '45%', height: 150, borderRadius: 20 },
+    heroIllustration: {
+        position: 'absolute',
+        right: 0,
+        top: 10,
+        width: '45%',
+        height: 150,
+    },
+    heroImage: { width: '100%', height: '100%' },
 
     // Deliver Bar
     deliverBar: {
