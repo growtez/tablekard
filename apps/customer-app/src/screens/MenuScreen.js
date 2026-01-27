@@ -18,6 +18,9 @@ import { useTheme } from '../context/ThemeContext';
 import { spacing, shadows } from '../theme';
 import HamburgerMenu from '../components/HamburgerMenu';
 
+// Import local assets
+const heroAiIllustration = require('../assets/menu-hero-ai.png');
+
 const { width } = Dimensions.get('window');
 
 const MenuScreen = ({ navigation }) => {
@@ -213,7 +216,10 @@ const MenuScreen = ({ navigation }) => {
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
 
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: cartTotal > 0 ? 100 : 20 }}
+            >
                 {/* Header */}
                 <View style={styles.header}>
                     <HamburgerMenu navigation={navigation} activeRoute="Menu" />
@@ -243,13 +249,12 @@ const MenuScreen = ({ navigation }) => {
                 {/* Hero Section */}
                 <View style={styles.heroSection}>
                     <View style={styles.heroText}>
-                        <Text style={[styles.heroTitle, { color: colors.text }]}>
-                            Our <Text style={{ color: colors.primary }}>Delicious</Text>
-                        </Text>
-                        <Text style={[styles.heroTitle, { color: colors.text }]}>Menu</Text>
+                        <Text style={styles.heroTitle}>Our</Text>
+                        <Text style={[styles.heroTitle, styles.heroHighlight, { marginLeft: -15 }]}>Delicious</Text>
+                        <Text style={styles.heroTitle}>Menu</Text>
                     </View>
                     <Image
-                        source={{ uri: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=200&h=200&fit=crop' }}
+                        source={heroAiIllustration}
                         style={styles.heroImage}
                     />
                 </View>
@@ -278,8 +283,8 @@ const MenuScreen = ({ navigation }) => {
                             style={[
                                 styles.categoryBtn,
                                 selectedCategory === category
-                                    ? { backgroundColor: colors.primary }
-                                    : { backgroundColor: colors.card, borderColor: colors.text, borderWidth: 1 }
+                                    ? { backgroundColor: '#1A1A1A' }
+                                    : { backgroundColor: colors.card, borderColor: '#1A1A1A', borderWidth: 1 }
                             ]}
                             onPress={() => setSelectedCategory(category)}
                         >
@@ -298,7 +303,7 @@ const MenuScreen = ({ navigation }) => {
                     {menuItems[selectedCategory].map(item => (
                         <TouchableOpacity
                             key={item.id}
-                            style={[styles.menuItem, { backgroundColor: colors.card }]}
+                            style={styles.menuItem}
                             onPress={() => handleItemClick(item)}
                         >
                             <View style={styles.menuImageContainer}>
@@ -306,43 +311,46 @@ const MenuScreen = ({ navigation }) => {
                             </View>
 
                             <View style={styles.menuDetails}>
-                                <View style={styles.menuHeader}>
-                                    <View style={styles.menuTitleRow}>
-                                        <Text style={[styles.menuName, { color: colors.text }]}>{item.name}</Text>
-                                        <TouchableOpacity onPress={() => toggleFavorite(item.id)}>
-                                            <Icon
-                                                name="heart"
-                                                size={18}
-                                                color={favorites.includes(item.id) ? colors.primary : colors.textMuted}
-                                            />
-                                        </TouchableOpacity>
+                                <View style={styles.menuTitleRow}>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={styles.menuName} numberOfLines={1}>{item.name}</Text>
+                                        <Text style={styles.menuDesc} numberOfLines={2}>
+                                            {item.shortDesc}
+                                        </Text>
                                     </View>
-                                    <Text style={[styles.menuDesc, { color: colors.textMuted }]} numberOfLines={2}>
-                                        {item.shortDesc}
-                                    </Text>
+                                    <TouchableOpacity
+                                        style={{ marginLeft: 8 }}
+                                        onPress={() => toggleFavorite(item.id)}
+                                    >
+                                        <FontAwesome
+                                            name={favorites.includes(item.id) ? "heart" : "heart-o"}
+                                            size={20}
+                                            color="#8B3A1E"
+                                        />
+                                    </TouchableOpacity>
                                 </View>
 
                                 <View style={styles.menuMeta}>
                                     <View style={styles.metaItem}>
-                                        <Icon name="star" size={14} color={colors.star} />
-                                        <Text style={[styles.metaText, { color: colors.text }]}>{item.rating}</Text>
+                                        <FontAwesome name="star" size={12} color="#8B3A1E" />
+                                        <Text style={styles.metaText}>{item.rating}</Text>
                                     </View>
                                     <View style={styles.metaItem}>
-                                        <Icon name="clock" size={14} color={colors.textMuted} />
-                                        <Text style={[styles.metaText, { color: colors.textMuted }]}>{item.time}</Text>
+                                        <Icon name="clock" size={12} color="#1A1A1A" />
+                                        <Text style={styles.metaText}>{item.time}</Text>
                                     </View>
-                                    <View style={[styles.servesPill, { backgroundColor: colors.primaryLight }]}>
-                                        <Icon name="users" size={12} color={colors.primary} />
-                                        <Text style={[styles.servesText, { color: colors.primary }]}>{item.serves}</Text>
+                                    <View style={styles.servesPill}>
+                                        <Icon name="users" size={12} color="#1A1A1A" />
+                                        <Text style={styles.servesText}>{item.serves}</Text>
                                     </View>
                                 </View>
 
                                 <View style={styles.menuFooter}>
-                                    <Text style={[styles.menuPrice, { color: colors.primary }]}>₹{item.price}</Text>
+                                    <Text style={styles.menuPrice}>₹{item.price}</Text>
 
                                     {getItemQuantity(item.id) === 0 ? (
                                         <TouchableOpacity
-                                            style={[styles.addBtn, { backgroundColor: '#8B3A1E' }]}
+                                            style={styles.addBtn}
                                             onPress={() => addToCart(item)}
                                         >
                                             <Icon name="plus" size={20} color="#FFFFFF" />
@@ -353,14 +361,14 @@ const MenuScreen = ({ navigation }) => {
                                                 style={styles.recentStepperBtn}
                                                 onPress={() => removeFromCart(item.id)}
                                             >
-                                                <Icon name="minus" size={12} color="#FFFFFF" />
+                                                <Icon name="minus" size={16} color="#FFFFFF" />
                                             </TouchableOpacity>
                                             <Text style={styles.recentStepperValue}>{getItemQuantity(item.id)}</Text>
                                             <TouchableOpacity
                                                 style={styles.recentStepperBtn}
                                                 onPress={() => addToCart(item)}
                                             >
-                                                <Icon name="plus" size={12} color="#FFFFFF" />
+                                                <Icon name="plus" size={16} color="#FFFFFF" />
                                             </TouchableOpacity>
                                         </View>
                                     )}
@@ -530,22 +538,27 @@ const styles = StyleSheet.create({
     hamburgerLine: { width: 20, height: 2.5, borderRadius: 2 },
     headerRight: { flexDirection: 'row', gap: 12 },
     headerBtn: {
-        width: 44,
-        height: 44,
-        borderRadius: 14,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
         alignItems: 'center',
         justifyContent: 'center',
         position: 'relative',
+        borderWidth: 1,
+        borderColor: '#FFD8CC',
     },
     badge: {
         position: 'absolute',
-        top: -4,
-        right: -4,
-        width: 18,
+        top: -5,
+        right: -5,
+        minWidth: 18,
         height: 18,
         borderRadius: 9,
         alignItems: 'center',
         justifyContent: 'center',
+        borderWidth: 2,
+        borderColor: '#FFFFFF',
+        paddingHorizontal: 4,
     },
     badgeText: { color: '#FFFFFF', fontSize: 10, fontWeight: '700' },
 
@@ -557,93 +570,177 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingVertical: 16,
     },
-    heroText: {},
-    heroTitle: { fontSize: 26, fontWeight: '800', lineHeight: 34 },
-    heroImage: { width: 80, height: 80, borderRadius: 40 },
+    heroText: {
+        flex: 1,
+        maxWidth: '70%',
+        paddingLeft: 60,
+    },
+    heroTitle: {
+        fontSize: 32,
+        fontWeight: '800',
+        lineHeight: 35,
+        color: '#1A1A1A',
+        letterSpacing: -0.5,
+    },
+    heroHighlight: {
+        color: '#8B3A1E',
+    },
+    heroImage: {
+        width: 120,
+        height: 120,
+        borderRadius: 20,
+        backgroundColor: '#FFFFFF',
+    },
 
     // Search
     searchBar: {
         flexDirection: 'row',
         alignItems: 'center',
+        backgroundColor: '#F8F8F8',
         marginHorizontal: 20,
-        borderRadius: 16,
-        padding: 14,
-        gap: 12,
+        borderRadius: 14,
+        padding: 12,
+        paddingHorizontal: 16,
+        gap: 10,
         borderWidth: 1,
-        marginBottom: 16,
+        borderColor: '#F0F0F0',
+        marginBottom: 24,
     },
     searchPlaceholderText: { flex: 1, fontSize: 14, fontWeight: '500' },
 
     // Categories
-    categoryScroll: { paddingHorizontal: 20, gap: 10, marginBottom: 20 },
+    categoryScroll: { paddingHorizontal: 20, gap: 8, marginBottom: 24 },
     categoryBtn: {
-        paddingHorizontal: 20,
-        paddingVertical: 12,
-        borderRadius: 25,
+        backgroundColor: '#FFFFFF',
+        borderWidth: 1.5,
+        borderColor: '#1A1A1A',
+        borderRadius: 20,
+        paddingHorizontal: 18,
+        paddingVertical: 10,
     },
-    categoryText: { fontSize: 13, fontWeight: '600' },
+    categoryText: { fontSize: 13, fontWeight: '500' },
 
     // Menu Items
-    menuItems: { paddingHorizontal: 20, gap: 16 },
+    menuItems: { paddingHorizontal: 20, gap: 16, marginTop: 8 },
     menuItem: {
         flexDirection: 'row',
-        borderRadius: 16,
-        overflow: 'hidden',
+        backgroundColor: '#FFFFFF',
+        borderRadius: 24,
+        padding: 12,
+        borderWidth: 1.5,
+        borderColor: '#1A1A1A',
     },
-    menuImageContainer: { width: 100 },
-    menuImage: { width: 100, height: 120 },
-    menuDetails: { flex: 1, padding: 12, justifyContent: 'space-between' },
-    menuHeader: {},
-    menuTitleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    menuName: { fontSize: 15, fontWeight: '700', flex: 1, marginRight: 8 },
-    menuDesc: { fontSize: 12, marginTop: 4, lineHeight: 16 },
-    menuMeta: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 8 },
-    metaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    metaText: { fontSize: 12, fontWeight: '500' },
+    menuImageContainer: {
+        width: 90,
+        height: 90,
+    },
+    menuImage: {
+        width: '100%',
+        height: '100%',
+        borderRadius: 18,
+        borderWidth: 1,
+        borderColor: '#1A1A1A',
+    },
+    menuDetails: {
+        flex: 1,
+        paddingLeft: 14,
+        justifyContent: 'flex-start',
+    },
+    menuHeader: {
+        textAlign: 'left',
+    },
+    menuTitleRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+    },
+    menuName: {
+        fontSize: 15,
+        fontWeight: '700',
+        color: '#1A1A1A',
+        flex: 1,
+        marginRight: 8,
+        textAlign: 'left',
+    },
+    menuDesc: {
+        fontSize: 11,
+        color: '#666666',
+        marginTop: 6,
+        lineHeight: 14,
+        textAlign: 'left',
+    },
+    menuMeta: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginTop: 8,
+        marginBottom: 8,
+    },
+    metaItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    metaText: {
+        fontSize: 10,
+        fontWeight: '600',
+        color: '#1A1A1A',
+    },
     servesPill: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 4,
         paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 12,
+        paddingVertical: 2,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: '#1A1A1A',
+        backgroundColor: '#FFFFFF',
     },
-    servesText: { fontSize: 11, fontWeight: '600' },
+    servesText: {
+        fontSize: 9,
+        fontWeight: '700',
+        color: '#1A1A1A',
+    },
     menuFooter: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginTop: 10,
     },
-    menuPrice: { fontSize: 18, fontWeight: '800' },
+    menuPrice: {
+        fontSize: 18,
+        fontWeight: '900',
+        color: '#1A1A1A',
+    },
     addBtn: {
-        width: 36,
-        height: 36,
+        width: 38,
+        height: 38,
         borderRadius: 12,
+        backgroundColor: '#8B3A1E',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
     },
     recentQtyStepper: {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: '#8B3A1E',
-        borderRadius: 10,
-        padding: 3,
-        gap: 6,
+        borderRadius: 12,
+        padding: 4,
+        gap: 8,
     },
     recentStepperBtn: {
         backgroundColor: 'rgba(255, 255, 255, 0.2)',
-        width: 26,
-        height: 26,
-        borderRadius: 7,
+        width: 28,
+        height: 28,
+        borderRadius: 8,
         alignItems: 'center',
         justifyContent: 'center',
     },
     recentStepperValue: {
         color: '#FFFFFF',
-        fontSize: 13,
+        fontSize: 14,
         fontWeight: '700',
-        minWidth: 16,
+        minWidth: 20,
         textAlign: 'center',
     },
 
