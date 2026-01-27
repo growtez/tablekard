@@ -243,7 +243,10 @@ const HomeScreen = ({ navigation }) => {
         <View style={[styles.container, { backgroundColor: '#FFFFFF' }]}>
             <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: totalCartItems > 0 ? 90 : 20 }}
+            >
                 {/* Header - Matching customer-web */}
                 <View style={styles.header}>
                     <View style={styles.headerLeft}>

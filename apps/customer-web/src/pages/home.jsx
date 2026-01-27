@@ -274,7 +274,7 @@ const HomePage = () => {
     const cartTotal = cart.reduce((total, item) => total + item.quantity, 0);
 
     return (
-        <div className="home-container">
+        <div className={`home-container ${cartTotal > 0 ? 'has-cart' : ''}`}>
             {/* Header with Burgundy Hamburger */}
             <header className="menu-header-nav">
                 <div className="header-left">
