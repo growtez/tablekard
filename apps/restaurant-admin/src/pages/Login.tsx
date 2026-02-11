@@ -45,17 +45,8 @@ const LoginPage: React.FC = () => {
             navigate('/dashboard');
         } catch (err: any) {
             console.error('Login error:', err);
-            if (err.code === 'auth/user-not-found') {
-                setError('No account found with this email');
-            } else if (err.code === 'auth/wrong-password') {
-                setError('Incorrect password');
-            } else if (err.code === 'auth/invalid-credential') {
-                setError('Invalid email or password');
-            } else if (err.code === 'auth/too-many-requests') {
-                setError('Too many failed attempts. Please try again later.');
-            } else {
-                setError(err.message || 'Failed to sign in. Please try again.');
-            }
+            const message = typeof err?.message === 'string' ? err.message : 'Failed to sign in. Please try again.';
+            setError(message);
         } finally {
             setIsLoading(false);
         }
@@ -157,7 +148,7 @@ const LoginPage: React.FC = () => {
 
                 <div className="login-footer">
                     <p>For restaurant administrators only</p>
-                    <p className="security-note">🔒 Secured by Firebase</p>
+                    <p className="security-note">🔒 Secured by Supabase</p>
                 </div>
             </div>
 

@@ -1,4 +1,7 @@
-# Delivery App Documentation
+# Delivery App Documentation (Deprecated)
+
+> The delivery app has been removed.  
+> The platform now supports **QR-only, on-premise** orders.
 
 ## 🚚 Overview
 

@@ -8,7 +8,7 @@ import {
     RefreshCw
 } from 'lucide-react';
 import { useDashboardStats } from '../hooks/useDashboardStats';
-import { RestaurantStatus, SubscriptionPlan } from '@restaurant-saas/types';
+import { RestaurantStatus } from '@restaurant-saas/types';
 import { Link } from 'react-router-dom';
 
 const getStatusBadge = (status: RestaurantStatus) => {
@@ -24,18 +24,11 @@ const getStatusBadge = (status: RestaurantStatus) => {
     }
 };
 
-const getPlanBadge = (plan: SubscriptionPlan) => {
-    switch (plan) {
-        case SubscriptionPlan.DELIVERY:
-            return <span className="badge" style={{ background: 'rgba(139, 92, 246, 0.15)', color: '#a78bfa' }}>Delivery</span>;
-        case SubscriptionPlan.QR:
-            return <span className="badge" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa' }}>QR Only</span>;
-        case SubscriptionPlan.OWNED:
-            return <span className="badge" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399' }}>Owned</span>;
-        default:
-            return <span className="badge">{plan}</span>;
-    }
-};
+const planBadge = (
+    <span className="badge" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa' }}>
+        QR Only
+    </span>
+);
 
 export default function Dashboard() {
     const { stats, revenue, recentRestaurants, loading, error, refresh } = useDashboardStats();
@@ -163,7 +156,7 @@ export default function Dashboard() {
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td>{getPlanBadge(restaurant.subscription?.plan)}</td>
+                                            <td>{planBadge}</td>
                                             <td>{getStatusBadge(restaurant.status)}</td>
                                             {/* <td className="font-medium">₹0</td> */}
                                             <td>

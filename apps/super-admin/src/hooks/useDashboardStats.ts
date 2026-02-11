@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
-import firebaseService from '../services/firebaseService';
+import supabaseService from '../services/supabaseService';
 import { Restaurant, Order } from '@restaurant-saas/types';
 
 export function useDashboardStats() {
     const [stats, setStats] = useState<{
         totalUsers: number;
         totalRestaurants: number;
-        totalDrivers: number;
         totalOrders: number;
     } | null>(null);
 
@@ -31,10 +30,10 @@ export function useDashboardStats() {
             const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
             const [statsData, restaurantsData, ordersData, revenueData] = await Promise.all([
-                firebaseService.getPlatformStats(),
-                firebaseService.getRestaurants(5), // Top 5 recent
-                firebaseService.getRecentOrders(5),
-                firebaseService.getRevenueStats(startOfMonth, endOfMonth)
+                supabaseService.getPlatformStats(),
+                supabaseService.getRestaurants(5), // Top 5 recent
+                supabaseService.getRecentOrders(5),
+                supabaseService.getRevenueStats(startOfMonth, endOfMonth)
             ]);
 
             setStats(statsData);

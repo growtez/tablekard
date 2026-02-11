@@ -8,7 +8,7 @@ import {
     RefreshCw
 } from 'lucide-react';
 import { useRestaurants } from '../hooks/useRestaurants';
-import { RestaurantStatus, SubscriptionPlan } from '@restaurant-saas/types';
+import { RestaurantStatus } from '@restaurant-saas/types';
 
 const getStatusBadge = (status: RestaurantStatus) => {
     switch (status) {
@@ -25,18 +25,11 @@ const getStatusBadge = (status: RestaurantStatus) => {
     }
 };
 
-const getPlanBadge = (plan: SubscriptionPlan) => {
-    switch (plan) {
-        case SubscriptionPlan.DELIVERY:
-            return <span className="badge" style={{ background: 'rgba(139, 92, 246, 0.15)', color: '#a78bfa' }}>Delivery</span>;
-        case SubscriptionPlan.QR:
-            return <span className="badge" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa' }}>QR Only</span>;
-        case SubscriptionPlan.OWNED:
-            return <span className="badge" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399' }}>Owned</span>;
-        default:
-            return <span className="badge">{plan}</span>;
-    }
-};
+const planBadge = (
+    <span className="badge" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa' }}>
+        QR Only
+    </span>
+);
 
 export default function Restaurants() {
     const { restaurants, loading, error, actions } = useRestaurants();
@@ -152,23 +145,21 @@ export default function Restaurants() {
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td>{getPlanBadge(restaurant.subscription?.plan)}</td>
+                                            <td>{planBadge}</td>
                                             <td>{getStatusBadge(restaurant.status)}</td>
                                             <td>
                                                 <div className="text-sm">{restaurant.contact?.email}</div>
                                                 <div className="text-xs text-muted">{restaurant.contact?.phone}</div>
                                             </td>
                                             <td className="text-secondary">
-                                                {restaurant.createdAt?.seconds ? new Date(restaurant.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}
+                                                {restaurant.createdAt ? new Date(restaurant.createdAt).toLocaleDateString() : 'N/A'}
                                             </td>
                                             <td>
                                                 <div className="flex items-center gap-sm">
                                                     <a
-                                                        href={`https://${restaurant.domain || restaurant.slug + '.yourapp.com'}`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
+                                                        href={`/r/${restaurant.slug}`}
                                                         className="btn btn-ghost"
-                                                        title="Visit Restaurant"
+                                                        title="Preview QR Menu"
                                                     >
                                                         <ExternalLink size={16} />
                                                     </a>

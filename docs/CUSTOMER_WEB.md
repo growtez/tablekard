@@ -1,4 +1,6 @@
-# Customer Web Documentation
+# Customer Web Documentation (QR Only)
+
+> This app now focuses on **QR-based, on-premise ordering**.
 
 ## 🌐 Overview
 

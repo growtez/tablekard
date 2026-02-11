@@ -1,4 +1,7 @@
-# Customer App Documentation
+# Customer App Documentation (Deprecated)
+
+> The mobile customer app has been removed.  
+> This repo now focuses on **QR-only Customer Web**.
 
 ## 📱 Overview
 

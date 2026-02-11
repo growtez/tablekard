@@ -30,8 +30,8 @@
             "@restaurant-saas/types": [
                 "../../packages/types/src"
             ],
-            "@restaurant-saas/firebase": [
-                "../../packages/firebase/src"
+            "@restaurant-saas/supabase": [
+                "../../packages/supabase/src"
             ]
         }
     },

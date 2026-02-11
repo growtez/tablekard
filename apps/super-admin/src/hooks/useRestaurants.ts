@@ -5,7 +5,7 @@ import {
     suspendRestaurant,
     reactivateRestaurant,
     deleteRestaurant
-} from '../services/firebaseService.ts';
+} from '../services/supabaseService';
 import { Restaurant } from '@restaurant-saas/types';
 
 export function useRestaurants() {

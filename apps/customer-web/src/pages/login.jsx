@@ -1,39 +1,55 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft } from 'lucide-react';
-import { NavLink, useNavigate } from "react-router-dom";
+import { ArrowLeft, Mail } from 'lucide-react';
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from '../context/AuthContext';
 import './login.css';
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { signInWithGoogle, isAuthenticated } = useAuth();
+  const location = useLocation();
+  const { signInWithGoogle, sendMagicLink, isAuthenticated } = useAuth();
 
+  const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [error, setError] = useState('');
 
-  // Redirect if already authenticated
+  const redirectTo = new URLSearchParams(location.search).get('redirect') || '/';
+
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/');
+      navigate(redirectTo);
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, redirectTo]);
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     setError('');
-
     try {
-      await signInWithGoogle();
-      navigate('/');
-    } catch (error) {
-      console.error('Google sign-in error:', error);
-      if (error.code === 'auth/popup-closed-by-user') {
-        // User closed the popup, no error needed
-      } else if (error.code === 'auth/popup-blocked') {
-        setError('Popup was blocked. Please allow popups for this site.');
-      } else {
-        setError('Sign in failed. Please try again.');
-      }
+      const absoluteRedirect = `${window.location.origin}${redirectTo}`;
+      await signInWithGoogle(absoluteRedirect);
+    } catch (err) {
+      console.error('Google sign-in error:', err);
+      setError('Sign in failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleMagicLink = async () => {
+    if (!email.trim()) {
+      setError('Please enter your email');
+      return;
+    }
+    setIsLoading(true);
+    setError('');
+    try {
+      const absoluteRedirect = `${window.location.origin}${redirectTo}`;
+      await sendMagicLink(email, absoluteRedirect);
+      setMagicLinkSent(true);
+    } catch (err) {
+      console.error('Magic link error:', err);
+      setError('Failed to send magic link. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -41,23 +57,19 @@ const LoginPage = () => {
 
   return (
     <div className="login-container">
-      {/* Header */}
       <header className="login-header">
-        <NavLink to="/" className="back-button">
+        <NavLink to={redirectTo} className="back-button">
           <ArrowLeft size={24} />
         </NavLink>
       </header>
 
-      {/* Main Content */}
       <main className="login-main">
         <div className="login-content">
-          {/* Welcome Text */}
           <div className="welcome-section">
             <h1 className="welcome-title">Welcome</h1>
             <p className="welcome-subtitle">Sign in to continue</p>
           </div>
 
-          {/* Google Sign In Button */}
           <button
             type="button"
             className={`google-signin-button ${isLoading ? 'loading' : ''}`}
@@ -78,14 +90,50 @@ const LoginPage = () => {
             )}
           </button>
 
-          {/* Error Message */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '20px 0' }}>
+            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.1)' }} />
+            <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>or</span>
+            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.1)' }} />
+          </div>
+
+          <div className="email-signin-section">
+            <div className="email-input-wrapper">
+              <Mail size={18} className="email-icon" />
+              <input
+                type="email"
+                placeholder="Email for magic link"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="email-input"
+              />
+            </div>
+
+            <button
+              type="button"
+              className={`google-signin-button ${isLoading ? 'loading' : ''}`}
+              onClick={handleMagicLink}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <div className="loading-spinner"></div>
+              ) : (
+                <span>Send Magic Link</span>
+              )}
+            </button>
+
+            {magicLinkSent && (
+              <div className="success-message" style={{ marginTop: '12px' }}>
+                Check your email for the sign-in link.
+              </div>
+            )}
+          </div>
+
           {error && (
             <div className="error-message">
               <span>{error}</span>
             </div>
           )}
 
-          {/* Terms */}
           <div className="login-footer">
             <p className="terms-text">
               By continuing, you agree to our{' '}

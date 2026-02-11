@@ -1,4 +1,7 @@
-# 🔥 Firebase Setup Guide
+# 🔥 Firebase Setup Guide (Deprecated)
+
+> This project has migrated to **Supabase**.  
+> Use `docs/SUPABASE_SETUP.md` and `supabase/schema.sql` instead.
 
 ## Project Information
 

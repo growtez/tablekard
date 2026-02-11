@@ -1,26 +1,70 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Search, Heart, Star, Plus, Filter, ShoppingCart, X, MapPin } from 'lucide-react';
 import '../menu.css';
+import { getRestaurantBySlug, getMenuCategories, getMenuItems } from '../../services/supabaseService';
 
 const QRMenuPage = () => {
     const { restaurantSlug, tableNumber } = useParams();
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState('Starters');
+    const [selectedCategory, setSelectedCategory] = useState('');
     const [favorites, setFavorites] = useState([]);
     const [cart, setCart] = useState([]);
     const cartIconRef = useRef(null);
     const [selectedItem, setSelectedItem] = useState(null);
     const [showItemModal, setShowItemModal] = useState(false);
 
-    // Would fetch from Firebase based on restaurantSlug
-    const restaurant = {
-        name: 'The Gourmet Kitchen',
-        logo: 'https://via.placeholder.com/50',
-    };
+    const [restaurant, setRestaurant] = useState(null);
+    const [categories, setCategories] = useState([]);
+    const [items, setItems] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
 
-    const categories = ['Starters', 'Main Course', 'Drinks', 'Desserts'];
+    useEffect(() => {
+        const savedCart = sessionStorage.getItem('qr_cart');
+        if (savedCart) {
+            try {
+                setCart(JSON.parse(savedCart));
+            } catch {
+                // ignore
+            }
+        }
+    }, []);
+
+    useEffect(() => {
+        const loadMenu = async () => {
+            try {
+                setLoading(true);
+                const restaurantData = await getRestaurantBySlug(restaurantSlug);
+                if (!restaurantData) {
+                    setError('Restaurant not found');
+                    return;
+                }
+                setRestaurant(restaurantData);
+
+                const [categoryData, itemData] = await Promise.all([
+                    getMenuCategories(restaurantData.id),
+                    getMenuItems(restaurantData.id)
+                ]);
+
+                setCategories(categoryData);
+                setItems(itemData);
+                if (categoryData.length > 0) {
+                    setSelectedCategory(categoryData[0].id);
+                }
+            } catch (err) {
+                console.error(err);
+                setError('Failed to load menu. Please try again.');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (restaurantSlug) {
+            loadMenu();
+        }
+    }, [restaurantSlug]);
 
     const closeItemModal = () => {
         const overlay = document.querySelector('.item-modal-overlay');
@@ -41,125 +85,6 @@ const QRMenuPage = () => {
         setTimeout(() => {
             setSelectedItem(null);
         }, 400);
-    };
-
-    const menuItems = {
-        'Starters': [
-            {
-                id: 1,
-                name: 'Caesar Salad',
-                description: 'Fresh romaine lettuce with parmesan cheese',
-                fullDescription: 'Fresh romaine lettuce tossed with creamy Caesar dressing, shaved parmesan cheese, and crispy croutons.',
-                price: 340,
-                time: '15min',
-                rating: 4.6,
-                servings: 1,
-                image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=120&h=120&fit=crop',
-                isVegan: true
-            },
-            {
-                id: 2,
-                name: 'Chicken Wings',
-                description: 'Spicy buffalo wings with ranch dip',
-                fullDescription: 'Crispy fried chicken wings tossed in our signature spicy buffalo sauce.',
-                price: 480,
-                time: '20min',
-                rating: 4.8,
-                servings: 2,
-                image: 'https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=120&h=120&fit=crop',
-                isVegan: false
-            },
-            {
-                id: 3,
-                name: 'Avocado Toast',
-                description: 'Smashed avocado on sourdough bread',
-                fullDescription: 'Perfectly ripe avocado smashed and seasoned with lime, sea salt, and red pepper flakes.',
-                price: 380,
-                time: '10min',
-                rating: 4.4,
-                servings: 1,
-                image: 'https://images.unsplash.com/photo-1623428187969-5da2dcea5ebf?w=120&h=120&fit=crop',
-                isVegan: true
-            }
-        ],
-        'Main Course': [
-            {
-                id: 4,
-                name: 'Grilled Salmon',
-                description: 'Fresh salmon with lemon herbs',
-                fullDescription: 'Premium Atlantic salmon fillet grilled to perfection.',
-                price: 740,
-                time: '25min',
-                rating: 4.7,
-                servings: 1,
-                image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=120&h=120&fit=crop',
-                isVegan: false
-            },
-            {
-                id: 5,
-                name: 'Pasta Carbonara',
-                description: 'Creamy pasta with bacon and parmesan',
-                fullDescription: 'Traditional Italian pasta carbonara made with al dente spaghetti.',
-                price: 560,
-                time: '20min',
-                rating: 4.5,
-                servings: 2,
-                image: 'https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=120&h=120&fit=crop',
-                isVegan: false
-            }
-        ],
-        'Drinks': [
-            {
-                id: 7,
-                name: 'Fresh Orange Juice',
-                description: 'Freshly squeezed orange juice',
-                fullDescription: 'Pure, freshly squeezed orange juice.',
-                price: 180,
-                time: '5min',
-                rating: 4.8,
-                servings: 1,
-                image: 'https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=120&h=120&fit=crop',
-                isVegan: true
-            },
-            {
-                id: 8,
-                name: 'Iced Coffee',
-                description: 'Cold brew coffee with ice',
-                fullDescription: 'Smooth cold brew coffee made from premium arabica beans.',
-                price: 140,
-                time: '3min',
-                rating: 4.6,
-                servings: 1,
-                image: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=120&h=120&fit=crop',
-                isVegan: true
-            }
-        ],
-        'Desserts': [
-            {
-                id: 10,
-                name: 'Chocolate Cake',
-                description: 'Rich chocolate cake with cream',
-                fullDescription: 'Decadent triple-layer chocolate cake.',
-                price: 300,
-                time: '5min',
-                rating: 4.9,
-                servings: 1,
-                image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=120&h=120&fit=crop',
-                isVegan: false
-            },
-            {
-                id: 11,
-                name: 'Tiramisu',
-                description: 'Classic Italian dessert',
-                fullDescription: 'Authentic Italian tiramisu.',
-                price: 320,
-                time: '5min',
-                rating: 4.8,
-                servings: 1,
-                image: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=120&h=120&fit=crop',
-                isVegan: false
-            }
-        ]
     };
 
     const toggleFavorite = (itemId) => {
@@ -205,35 +130,51 @@ const QRMenuPage = () => {
     };
 
     const goToCart = () => {
-        // Store cart in sessionStorage for the cart page
         sessionStorage.setItem('qr_cart', JSON.stringify(cart));
         sessionStorage.setItem('qr_restaurant', JSON.stringify(restaurant));
         sessionStorage.setItem('qr_table', tableNumber || '');
         navigate(`/r/${restaurantSlug}/cart`);
     };
 
-    const filteredItems = menuItems[selectedCategory]?.filter(item =>
-        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchTerm.toLowerCase())
-    ) || [];
+    const filteredItems = items
+        .filter(item => !selectedCategory || item.category_id === selectedCategory)
+        .filter(item =>
+            item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (item.description || '').toLowerCase().includes(searchTerm.toLowerCase())
+        );
 
     const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+    if (loading) {
+        return (
+            <div className="menu-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+                <p style={{ color: '#fff' }}>Loading menu...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="menu-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+                <p style={{ color: '#fff' }}>{error}</p>
+            </div>
+        );
+    }
 
     return (
         <div className="menu-container">
             {/* Header with Table Info */}
             <header className="header">
                 <div className="header-content">
-                    {/* Restaurant Info */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <img
-                            src={restaurant.logo}
-                            alt={restaurant.name}
+                            src={restaurant?.logo_url || 'https://via.placeholder.com/50'}
+                            alt={restaurant?.name || 'Restaurant'}
                             style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover' }}
                         />
                         <div>
-                            <h3 style={{ fontSize: '14px', margin: 0, color: '#fff' }}>{restaurant.name}</h3>
+                            <h3 style={{ fontSize: '14px', margin: 0, color: '#fff' }}>{restaurant?.name}</h3>
                             {tableNumber && (
                                 <div style={{
                                     display: 'flex',
@@ -260,13 +201,11 @@ const QRMenuPage = () => {
                     </div>
                 </div>
 
-                {/* Main Title */}
                 <div className="main-title">
                     <h1>Order <span className="highlight">Delicious</span></h1>
                     <h1><span className="highlight">Food</span></h1>
                 </div>
 
-                {/* Search Bar */}
                 <div className="search-container">
                     <Search className="search-icon" size={20} />
                     <input
@@ -287,11 +226,11 @@ const QRMenuPage = () => {
                 <div className="categories-list">
                     {categories.map(category => (
                         <button
-                            key={category}
-                            className={`category-btn ${selectedCategory === category ? 'active' : ''}`}
-                            onClick={() => setSelectedCategory(category)}
+                            key={category.id}
+                            className={`category-btn ${selectedCategory === category.id ? 'active' : ''}`}
+                            onClick={() => setSelectedCategory(category.id)}
                         >
-                            {category}
+                            {category.name}
                         </button>
                     ))}
                 </div>
@@ -302,7 +241,7 @@ const QRMenuPage = () => {
                 {filteredItems.map(item => (
                     <div key={item.id} className="menu-item" onClick={() => handleItemClick(item)}>
                         <div className="menu-image">
-                            <img src={item.image} alt={item.name} />
+                            <img src={item.image_url || 'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=120&h=120&fit=crop'} alt={item.name} />
                             <button
                                 className="favorite-btn"
                                 onClick={(e) => {
@@ -316,7 +255,7 @@ const QRMenuPage = () => {
                                     color={favorites.includes(item.id) ? '#d9b550' : '#FFFFFF'}
                                 />
                             </button>
-                            {item.isVegan && <div className="vegan-badge">V</div>}
+                            {item.is_veg && <div className="vegan-badge">V</div>}
                         </div>
                         <div className="menu-info">
                             <div className="menu-header">
@@ -333,12 +272,12 @@ const QRMenuPage = () => {
                             </div>
                             <p className="menu-description">{item.description}</p>
                             <div className="menu-meta">
-                                <span className="time">{item.time}</span>
+                                <span className="time">{item.preparation_time ? `${item.preparation_time}min` : '15min'}</span>
                                 <div className="rating">
                                     <Star className="star-icon" size={12} fill="#FFD700" color="#FFD700" />
-                                    <span>{item.rating}</span>
+                                    <span>{item.rating || 4.5}</span>
                                 </div>
-                                <span className="serves">serves {item.servings}</span>
+                                <span className="serves">serves {item.serves || 1}</span>
                             </div>
                             <div className="price">₹{item.price}</div>
                         </div>
@@ -350,7 +289,6 @@ const QRMenuPage = () => {
             {showItemModal && selectedItem && (
                 <div className={`item-modal-overlay ${showItemModal ? 'show' : ''}`} onClick={closeItemModal}>
                     <div className={`item-modal-content ${showItemModal ? 'slide-up' : ''}`} onClick={(e) => e.stopPropagation()}>
-
                         <div className="modal-header-info">
                             <h2 className="modal-item-name">{selectedItem.name}</h2>
                             <button className="modal-close-btn" onClick={closeItemModal}>
@@ -359,19 +297,19 @@ const QRMenuPage = () => {
                         </div>
 
                         <div className="modal-main-image">
-                            <img src={selectedItem.image} alt={selectedItem.name} />
-                            {selectedItem.isVegan && <div className="modal-vegan-badge">Vegan</div>}
+                            <img src={selectedItem.image_url || 'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=400&h=300&fit=crop'} alt={selectedItem.name} />
+                            {selectedItem.is_veg && <div className="modal-vegan-badge">Veg</div>}
                         </div>
 
                         <div className="modal-content-section">
-                            <div className="modal-serves-info">Serves {selectedItem.servings}</div>
+                            <div className="modal-serves-info">Serves {selectedItem.serves || 1}</div>
 
                             <div className="modal-time-rating-row">
                                 <div className="modal-time-rating-left">
-                                    <div className="modal-item-time">{selectedItem.time}</div>
+                                    <div className="modal-item-time">{selectedItem.preparation_time ? `${selectedItem.preparation_time}min` : '15min'}</div>
                                     <div className="modal-rating-section">
                                         <Star size={16} fill="#d9b550" color="#d9b550" />
-                                        <span>{selectedItem.rating}</span>
+                                        <span>{selectedItem.rating || 4.5}</span>
                                     </div>
                                 </div>
                                 <button
@@ -395,7 +333,7 @@ const QRMenuPage = () => {
                 </div>
             )}
 
-            {/* Cart Footer (for QR ordering - no bottom nav) */}
+            {/* Cart Footer */}
             {cartItemCount > 0 && (
                 <div
                     onClick={goToCart}

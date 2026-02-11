@@ -19,12 +19,7 @@ export default function Settings() {
                 [SubscriptionPlan.QR]: {
                     ...config.plans?.[SubscriptionPlan.QR],
                     price: Number(formData.get('qrPrice'))
-                },
-                [SubscriptionPlan.DELIVERY]: {
-                    ...config.plans?.[SubscriptionPlan.DELIVERY],
-                    price: Number(formData.get('deliveryPrice'))
-                }
-            }
+                }            }
         };
 
         await updateConfig(newConfig as any);
@@ -116,7 +111,7 @@ export default function Settings() {
                             <h2 className="card-title">Subscription Pricing</h2>
                         </div>
                         <div className="card-content">
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', maxWidth: '600px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem', maxWidth: '600px' }}>
                                 <div className="form-group">
                                     <label className="form-label">QR Only Plan (₹/month)</label>
                                     <input
@@ -124,15 +119,6 @@ export default function Settings() {
                                         type="number"
                                         className="form-input"
                                         defaultValue={config.plans?.[SubscriptionPlan.QR]?.price || 999}
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Delivery Plan (₹/month)</label>
-                                    <input
-                                        name="deliveryPrice"
-                                        type="number"
-                                        className="form-input"
-                                        defaultValue={config.plans?.[SubscriptionPlan.DELIVERY]?.price || 1499}
                                     />
                                 </div>
                             </div>
@@ -146,7 +132,7 @@ export default function Settings() {
                             <h2 className="card-title">Default Branding</h2>
                         </div>
                         <div className="card-content">
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', maxWidth: '600px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem', maxWidth: '600px' }}>
                                 <div className="form-group">
                                     <label className="form-label">Default Primary Color</label>
                                     <div className="flex items-center gap-sm">

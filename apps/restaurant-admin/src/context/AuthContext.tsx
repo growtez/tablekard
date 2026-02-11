@@ -1,27 +1,31 @@
-// Authentication Context for Restaurant Admin
-import { createContext, useContext, useState, useEffect } from 'react';
+// Authentication Context for Restaurant Admin (Supabase)
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import {
-    signInWithEmailAndPassword,
-    signOut as firebaseSignOut,
-    onAuthStateChanged,
-    sendPasswordResetEmail,
-} from 'firebase/auth';
-import type { User } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '../firebase';
+import { supabase } from '@restaurant-saas/supabase';
+import type { User } from '@supabase/supabase-js';
+import { UserRole } from '@restaurant-saas/types';
 
 interface UserProfile {
     id: string;
     email: string;
+    name: string | null;
+    role: UserRole;
+}
+
+interface RestaurantMembership {
+    id: string;
+    restaurantId: string;
+    role: 'ADMIN' | 'STAFF';
     name: string;
-    role: 'restaurant_admin' | 'super_admin' | 'customer' | 'driver';
-    restaurantId?: string;
+    email: string;
 }
 
 interface AuthContextType {
     user: User | null;
     userProfile: UserProfile | null;
+    memberships: RestaurantMembership[];
+    activeRestaurantId: string | null;
+    setActiveRestaurantId: (restaurantId: string) => void;
     loading: boolean;
     signIn: (email: string, password: string) => Promise<User>;
     signOut: () => Promise<void>;
@@ -36,85 +40,171 @@ interface AuthProviderProps {
     children: ReactNode;
 }
 
+async function fetchProfile(userId: string): Promise<UserProfile | null> {
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('id,email,name,role')
+        .eq('id', userId)
+        .maybeSingle();
+    if (error) {
+        console.warn('Failed to fetch profile:', error.message);
+        return null;
+    }
+    if (!data) return null;
+    return {
+        id: data.id,
+        email: data.email,
+        name: data.name,
+        role: data.role as UserRole
+    };
+}
+
+async function fetchMemberships(userId: string): Promise<RestaurantMembership[]> {
+    const { data, error } = await supabase
+        .from('restaurant_users')
+        .select('id,restaurant_id,role,name,email')
+        .eq('auth_user_id', userId)
+        .eq('active', true);
+
+    if (error) {
+        console.warn('Failed to fetch memberships:', error.message);
+        return [];
+    }
+    return (data ?? []).map(row => ({
+        id: row.id,
+        restaurantId: row.restaurant_id,
+        role: row.role,
+        name: row.name,
+        email: row.email
+    }));
+}
+
 export function AuthProvider({ children }: AuthProviderProps) {
     const [user, setUser] = useState<User | null>(null);
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+    const [memberships, setMemberships] = useState<RestaurantMembership[]>([]);
+    const [activeRestaurantId, setActiveRestaurantIdState] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
+    const setActiveRestaurantId = (restaurantId: string) => {
+        setActiveRestaurantIdState(restaurantId);
+        localStorage.setItem('active_restaurant_id', restaurantId);
+    };
+
+    const syncMemberships = async (nextUser: User | null) => {
+        if (!nextUser) {
+            setMemberships([]);
+            setActiveRestaurantIdState(null);
+            return;
+        }
+
+        const [profile, membershipList] = await Promise.all([
+            fetchProfile(nextUser.id),
+            fetchMemberships(nextUser.id)
+        ]);
+
+        setUserProfile(profile);
+        setMemberships(membershipList);
+
+        const stored = localStorage.getItem('active_restaurant_id');
+        if (stored && membershipList.some(m => m.restaurantId === stored)) {
+            setActiveRestaurantIdState(stored);
+        } else if (membershipList[0]?.restaurantId) {
+            setActiveRestaurantIdState(membershipList[0].restaurantId);
+            localStorage.setItem('active_restaurant_id', membershipList[0].restaurantId);
+        } else {
+            setActiveRestaurantIdState(null);
+        }
+    };
+
     useEffect(() => {
-        console.log('🔐 Setting up Firebase Auth listener for Restaurant Admin...');
+        let mounted = true;
 
-        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-            console.log('🔐 Auth state changed:', firebaseUser ? 'User logged in' : 'No user');
-            setUser(firebaseUser);
+        const init = async () => {
+            const { data } = await supabase.auth.getSession();
+            const currentUser = data.session?.user ?? null;
+            if (!mounted) return;
+            setUser(currentUser);
+            await syncMemberships(currentUser);
+            setLoading(false);
+        };
 
-            if (firebaseUser) {
-                try {
-                    // Fetch user profile from Firestore
-                    const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-                    if (userDoc.exists()) {
-                        const data = userDoc.data() as Omit<UserProfile, 'id'>;
-                        const profile: UserProfile = { id: userDoc.id, ...data };
-                        setUserProfile(profile);
+        init();
 
-                        // Verify user is a restaurant admin
-                        if (profile.role !== 'restaurant_admin' && profile.role !== 'super_admin') {
-                            console.warn('⚠️ User is not a restaurant admin');
-                        }
-                    }
-                } catch (error) {
-                    console.warn('⚠️ Could not fetch user profile:', error);
-                }
-            } else {
-                setUserProfile(null);
-            }
-
+        const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+            const nextUser = session?.user ?? null;
+            setUser(nextUser);
+            await syncMemberships(nextUser);
             setLoading(false);
         });
 
-        return () => unsubscribe();
+        return () => {
+            mounted = false;
+            authListener.subscription.unsubscribe();
+        };
     }, []);
 
-    // Sign in with email and password
     const signIn = async (email: string, password: string): Promise<User> => {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-
-        // Verify user role
-        const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
-        if (userDoc.exists()) {
-            const profile = userDoc.data() as UserProfile;
-            if (profile.role !== 'restaurant_admin' && profile.role !== 'super_admin') {
-                // Sign out if not authorized
-                await firebaseSignOut(auth);
-                throw new Error('You are not authorized to access the restaurant admin panel');
-            }
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error || !data.user) {
+            throw error ?? new Error('Failed to sign in');
         }
 
-        return userCredential.user;
+        const [profile, membershipList] = await Promise.all([
+            fetchProfile(data.user.id),
+            fetchMemberships(data.user.id)
+        ]);
+
+        const roleAllowed = profile?.role === UserRole.RESTAURANT_ADMIN
+            || profile?.role === UserRole.RESTAURANT_STAFF
+            || profile?.role === UserRole.SUPER_ADMIN;
+
+        if (!roleAllowed || membershipList.length === 0) {
+            await supabase.auth.signOut();
+            throw new Error('You are not authorized to access the restaurant admin panel');
+        }
+
+        setUserProfile(profile);
+        setMemberships(membershipList);
+        if (membershipList[0]?.restaurantId) {
+            setActiveRestaurantIdState(membershipList[0].restaurantId);
+            localStorage.setItem('active_restaurant_id', membershipList[0].restaurantId);
+        } else {
+            setActiveRestaurantIdState(null);
+        }
+
+        return data.user;
     };
 
-    // Sign out
     const signOut = async (): Promise<void> => {
-        await firebaseSignOut(auth);
+        await supabase.auth.signOut();
         setUser(null);
         setUserProfile(null);
+        setMemberships([]);
+        setActiveRestaurantIdState(null);
+        localStorage.removeItem('active_restaurant_id');
     };
 
-    // Reset password
     const resetPassword = async (email: string): Promise<void> => {
-        await sendPasswordResetEmail(auth, email);
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: window.location.origin
+        });
+        if (error) throw error;
     };
 
-    const value: AuthContextType = {
+    const value: AuthContextType = useMemo(() => ({
         user,
         userProfile,
+        memberships,
+        activeRestaurantId,
+        setActiveRestaurantId,
         loading,
         signIn,
         signOut,
         resetPassword,
-        isAuthenticated: !!user,
-        isRestaurantAdmin: userProfile?.role === 'restaurant_admin' || userProfile?.role === 'super_admin',
-    };
+        isAuthenticated: !!user && memberships.length > 0,
+        isRestaurantAdmin: memberships.some(m => m.role === 'ADMIN') || userProfile?.role === UserRole.SUPER_ADMIN
+    }), [user, userProfile, memberships, activeRestaurantId, loading]);
 
     return (
         <AuthContext.Provider value={value}>

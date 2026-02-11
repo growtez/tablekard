@@ -1,4 +1,7 @@
-# 🗄️ Firestore Database Structure
+# 🗄️ Firestore Database Structure (Deprecated)
+
+> This document reflects the legacy Firebase schema.  
+> The project now uses **Supabase**. See `supabase/schema.sql`.
 
 ## Multi-Tenant Architecture Overview
 

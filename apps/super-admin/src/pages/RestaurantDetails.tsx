@@ -1,7 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, ExternalLink, Edit, Trash2, RefreshCw } from 'lucide-react';
 import { useRestaurantDetails } from '../hooks/useRestaurantDetails';
-import { RestaurantStatus, SubscriptionPlan } from '@restaurant-saas/types';
+import { RestaurantStatus } from '@restaurant-saas/types';
 
 const getStatusBadge = (status: RestaurantStatus) => {
     switch (status) {
@@ -16,18 +16,11 @@ const getStatusBadge = (status: RestaurantStatus) => {
     }
 };
 
-const getPlanBadge = (plan: SubscriptionPlan) => {
-    switch (plan) {
-        case SubscriptionPlan.DELIVERY:
-            return <span className="badge" style={{ background: 'rgba(139, 92, 246, 0.15)', color: '#a78bfa' }}>Delivery</span>;
-        case SubscriptionPlan.QR:
-            return <span className="badge" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa' }}>QR Only</span>;
-        case SubscriptionPlan.OWNED:
-            return <span className="badge" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399' }}>Owned</span>;
-        default:
-            return <span className="badge">{plan}</span>;
-    }
-};
+const planBadge = (
+    <span className="badge" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa' }}>
+        QR Only
+    </span>
+);
 
 export default function RestaurantDetails() {
     const { id } = useParams();
@@ -56,14 +49,12 @@ export default function RestaurantDetails() {
                             <RefreshCw size={18} />
                         </button>
                         <a
-                            href={`https://${restaurant.domain || restaurant.slug + '.yourapp.com'}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            href={`/r/${restaurant.slug}`}
                             className="btn btn-secondary"
                             style={{ textDecoration: 'none' }}
                         >
                             <ExternalLink size={18} />
-                            Visit Site
+                            Preview QR Menu
                         </a>
                         <button className="btn btn-primary">
                             <Edit size={18} />
@@ -96,7 +87,7 @@ export default function RestaurantDetails() {
                                 </div>
                                 <div>
                                     <div className="text-muted" style={{ fontSize: '0.75rem', marginBottom: '0.25rem' }}>Created</div>
-                                    <div>{restaurant.createdAt?.seconds ? new Date(restaurant.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}</div>
+                                    <div>{restaurant.createdAt ? new Date(restaurant.createdAt).toLocaleDateString() : 'N/A'}</div>
                                 </div>
                             </div>
                         </div>
@@ -112,7 +103,7 @@ export default function RestaurantDetails() {
                                 <div>
                                     <div className="text-muted" style={{ fontSize: '0.75rem', marginBottom: '0.25rem' }}>Plan</div>
                                     <div className="flex">
-                                        {getPlanBadge(restaurant.subscription?.plan)}
+                                        {planBadge}
                                     </div>
                                 </div>
                                 <div>
@@ -122,8 +113,8 @@ export default function RestaurantDetails() {
                                     </div>
                                 </div>
                                 <div>
-                                    <div className="text-muted" style={{ fontSize: '0.75rem', marginBottom: '0.25rem' }}>Expires At</div>
-                                    <div>{restaurant.subscription?.expiresAt?.seconds ? new Date(restaurant.subscription.expiresAt.seconds * 1000).toLocaleDateString() : 'N/A'}</div>
+                                    <div className="text-muted" style={{ fontSize: '0.75rem', marginBottom: '0.25rem' }}>Status Reason</div>
+                                    <div>{restaurant.statusReason || 'N/A'}</div>
                                 </div>
                             </div>
                         </div>

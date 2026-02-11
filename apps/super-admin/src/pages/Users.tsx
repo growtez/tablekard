@@ -8,8 +8,8 @@ const getRoleBadge = (role: string) => {
             return <span className="badge warning">Super Admin</span>;
         case UserRole.RESTAURANT_ADMIN:
             return <span className="badge info">Restaurant Admin</span>;
-        case UserRole.DELIVERY_PERSONNEL:
-            return <span className="badge neutral">Driver</span>;
+        case UserRole.RESTAURANT_STAFF:
+            return <span className="badge neutral">Restaurant Staff</span>;
         default:
             return <span className="badge">{role}</span>;
     }
@@ -81,7 +81,7 @@ export default function Users() {
                                     </tr>
                                 ) : (
                                     users.map((user) => (
-                                        <tr key={user.uid}>
+                                        <tr key={user.id}>
                                             <td>
                                                 <div className="flex items-center gap-sm">
                                                     <div className="avatar">
@@ -100,18 +100,18 @@ export default function Users() {
                                                 <span className="badge success">Active</span>
                                             </td>
                                             <td>
-                                                {user.createdAt ? new Date(user.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}
+                                                {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
                                             </td>
                                             <td>
                                                 <select
                                                     className="form-input text-sm py-1"
                                                     value={user.role}
-                                                    onChange={(e) => updateRole(user.uid, e.target.value)}
+                                                    onChange={(e) => updateRole(user.id, e.target.value)}
                                                     style={{ width: 'auto' }}
                                                 >
                                                     <option value={UserRole.CUSTOMER}>Customer</option>
                                                     <option value={UserRole.RESTAURANT_ADMIN}>Restaurant Admin</option>
-                                                    <option value={UserRole.DELIVERY_PERSONNEL}>Driver</option>
+                                                    <option value={UserRole.RESTAURANT_STAFF}>Restaurant Staff</option>
                                                     <option value={UserRole.SUPER_ADMIN}>Super Admin</option>
                                                 </select>
                                             </td>

@@ -1,4 +1,7 @@
-# Customer Web - Firebase Auth Issue & Solutions
+# Customer Web - Firebase Auth Issue & Solutions (Deprecated)
+
+> This app has migrated to **Supabase Auth**.  
+> This document is kept only for historical reference.
 
 ## Current Status ✅
 - **UI**: Fully functional and rendering correctly

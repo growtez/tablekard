@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import firebaseService from '../services/firebaseService';
-import { SaasSettings, SubscriptionPlan } from '@restaurant-saas/types';
+import supabaseService from '../services/supabaseService';
+import { SaasSettings } from '@restaurant-saas/types';
 
 export function useSystemConfig() {
     const [config, setConfig] = useState<Partial<SaasSettings>>({});
@@ -12,7 +12,7 @@ export function useSystemConfig() {
     const fetchConfig = async () => {
         try {
             setLoading(true);
-            const data = await firebaseService.getSystemConfig();
+            const data = await supabaseService.getSystemConfig();
             setConfig(data || {});
             setError(null);
         } catch (err: any) {
@@ -27,7 +27,7 @@ export function useSystemConfig() {
         try {
             setSaving(true);
             setSuccessMessage(null);
-            await firebaseService.updateSystemConfig(newConfig);
+            await supabaseService.updateSystemConfig(newConfig);
             setConfig(prev => ({ ...prev, ...newConfig }));
             setSuccessMessage('Settings saved successfully');
             setTimeout(() => setSuccessMessage(null), 3000);

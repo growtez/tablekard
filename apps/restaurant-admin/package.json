@@ -12,7 +12,8 @@
     "dependencies": {
         "@tanstack/react-query": "^5.90.2",
         "axios": "^1.12.2",
-        "firebase": "^12.7.0",
+        "@restaurant-saas/supabase": "*",
+        "@restaurant-saas/types": "*",
         "lucide-react": "^0.544.0",
         "react": "^19.1.1",
         "react-dom": "^19.1.1",

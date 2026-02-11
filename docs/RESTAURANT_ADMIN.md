@@ -1,5 +1,7 @@
 # Restaurant Admin Documentation
 
+> Backend is now **Supabase** (Firebase sections are legacy).
+
 ## 🏪 Overview
 
 The **Restaurant Admin** is a React web application that allows restaurant owners to manage their menu, orders, staff, and settings. Each restaurant subscribing to the platform gets their own admin panel.

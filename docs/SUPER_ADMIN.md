@@ -1,5 +1,7 @@
 # Super Admin Documentation
 
+> Backend is now **Supabase** (Firebase sections are legacy).
+
 ## 👑 Overview
 
 The **Super Admin** is the platform-level administration panel that allows the platform owner (you) to manage all restaurants, drivers, customers, and system-wide settings.

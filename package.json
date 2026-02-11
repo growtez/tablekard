@@ -2,7 +2,7 @@
     "name": "restaurant-saas",
     "version": "1.0.0",
     "private": true,
-    "description": "Multi-tenant Restaurant SaaS Platform with QR Ordering & Delivery",
+    "description": "Multi-tenant Restaurant SaaS Platform with QR Ordering",
     "workspaces": [
         "packages/*",
         "apps/super-admin",
@@ -12,18 +12,14 @@
     "scripts": {
         "dev:super-admin": "npm run dev -w @restaurant-saas/super-admin",
         "dev:restaurant-admin": "npm run dev -w @restaurant-saas/restaurant-admin",
-        "dev:customer-app": "npm run dev -w @restaurant-saas/customer-web",
+        "dev:customer-web": "npm run dev -w @restaurant-saas/customer-web",
         "build:all": "npm run build --workspaces --if-present",
-        "lint:all": "npm run lint --workspaces --if-present",
-        "firebase:deploy": "firebase deploy",
-        "firebase:emulators": "firebase emulators:start"
+        "lint:all": "npm run lint --workspaces --if-present"
     },
     "keywords": [
         "restaurant",
         "saas",
-        "firebase",
         "qr-ordering",
-        "delivery",
         "multi-tenant"
     ],
     "author": "GrowTez",
@@ -31,10 +27,6 @@
     "engines": {
         "node": ">=18.0.0"
     },
-    "devDependencies": {
-        "@react-native-community/cli": "latest"
-    },
-    "dependencies": {
-        "firebase": "^12.7.0"
-    }
+    "devDependencies": {},
+    "dependencies": {}
 }

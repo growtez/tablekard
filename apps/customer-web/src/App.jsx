@@ -1,33 +1,70 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 
-// Import your pages
-import HomePage from "./pages/home";
-import MenuPage from "./pages/menu";
-import MyOrdersPage from "./pages/my_order";
-import ProfilePage from "./pages/profile";
-import SettingsPage from "./pages/settings";
-
-import SearchPage from './pages/search';
-import LikesPage from './pages/likes';
-import MostPopularPage from './pages/popular';
-import RecentOrdersPage from './pages/recent';
-import OffersPage from './pages/offers';
-import OnboardingPage from './pages/onboarding';
-import LoginPage from './pages/login';
-import LiveQueuePage from './pages/live_queue';
-import FeedbackPage from './pages/feedback';
-import OrderHistoryPage from './pages/order_history';
-import AboutPage from './pages/about';
-
-// QR Ordering pages (dine-in)
+// QR Ordering pages
 import QRMenuPage from './pages/qr/menu';
 import QRCartPage from './pages/qr/cart';
 import QROrderSuccessPage from './pages/qr/order_success';
+import LoginPage from './pages/login';
 
 import "./App.css";
+
+function RequireAuth({ children }) {
+  const { isAuthenticated, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#1a1a2e',
+        color: '#fff'
+      }}>
+        Loading...
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    const redirect = encodeURIComponent(location.pathname + location.search);
+    return <Navigate to={`/login?redirect=${redirect}`} replace />;
+  }
+
+  return children;
+}
+
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/login" element={<LoginPage />} />
+
+      <Route
+        path="/r/:restaurantSlug"
+        element={<RequireAuth><QRMenuPage /></RequireAuth>}
+      />
+      <Route
+        path="/r/:restaurantSlug/table/:tableNumber"
+        element={<RequireAuth><QRMenuPage /></RequireAuth>}
+      />
+      <Route
+        path="/r/:restaurantSlug/cart"
+        element={<RequireAuth><QRCartPage /></RequireAuth>}
+      />
+      <Route
+        path="/r/:restaurantSlug/order-success"
+        element={<RequireAuth><QROrderSuccessPage /></RequireAuth>}
+      />
+
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
+  );
+}
 
 function App() {
   return (
@@ -35,32 +72,7 @@ function App() {
       <ThemeProvider>
         <Router>
           <div className="App">
-            <Routes>
-              {/* Regular customer routes */}
-              <Route path="/" element={<HomePage />} />
-              <Route path="/menu" element={<MenuPage />} />
-              <Route path="/orders" element={<MyOrdersPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/search" element={<SearchPage />} />
-              <Route path="/likes" element={<LikesPage />} />
-              <Route path="/popular" element={<MostPopularPage />} />
-              <Route path="/recent" element={<RecentOrdersPage />} />
-              <Route path="/offers" element={<OffersPage />} />
-              <Route path="/onboarding" element={<OnboardingPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/live-queue" element={<LiveQueuePage />} />
-              <Route path="/feedback" element={<FeedbackPage />} />
-              <Route path="/feedback/:orderId" element={<FeedbackPage />} />
-              <Route path="/order-history" element={<OrderHistoryPage />} />
-              <Route path="/about" element={<AboutPage />} />
-
-              {/* QR Ordering routes (dine-in) */}
-              <Route path="/r/:restaurantSlug" element={<QRMenuPage />} />
-              <Route path="/r/:restaurantSlug/table/:tableNumber" element={<QRMenuPage />} />
-              <Route path="/r/:restaurantSlug/cart" element={<QRCartPage />} />
-              <Route path="/r/:restaurantSlug/order-success" element={<QROrderSuccessPage />} />
-            </Routes>
+            <AppRoutes />
           </div>
         </Router>
       </ThemeProvider>

@@ -1,8 +1,8 @@
 // ==========================================
-// Restaurant SaaS - Shared Types
+// Restaurant SaaS - Shared Types (Supabase)
 // ==========================================
 
-import { Timestamp } from 'firebase/firestore';
+export type IsoDateString = string;
 
 // ==========================================
 // Enums
@@ -12,19 +12,16 @@ export enum UserRole {
   SUPER_ADMIN = 'SUPER_ADMIN',
   RESTAURANT_ADMIN = 'RESTAURANT_ADMIN',
   RESTAURANT_STAFF = 'RESTAURANT_STAFF',
-  DELIVERY_PERSONNEL = 'DELIVERY_PERSONNEL',
   CUSTOMER = 'CUSTOMER',
 }
 
 export enum SubscriptionPlan {
   QR = 'QR',
-  DELIVERY = 'DELIVERY',
-  OWNED = 'OWNED',
 }
 
 export enum OrderType {
   DINE_IN = 'DINE_IN',
-  DELIVERY = 'DELIVERY',
+  TAKEAWAY = 'TAKEAWAY',
 }
 
 export enum OrderStatus {
@@ -32,14 +29,13 @@ export enum OrderStatus {
   CONFIRMED = 'CONFIRMED',
   PREPARING = 'PREPARING',
   READY = 'READY',
-  OUT_FOR_DELIVERY = 'OUT_FOR_DELIVERY',
-  DELIVERED = 'DELIVERED',
+  SERVED = 'SERVED',
   CANCELLED = 'CANCELLED',
 }
 
 export enum PaymentMethod {
   ONLINE = 'ONLINE',
-  COD = 'COD',
+  PAY_AT_COUNTER = 'PAY_AT_COUNTER',
 }
 
 export enum PaymentStatus {
@@ -60,16 +56,18 @@ export enum RestaurantStatus {
 // User Types
 // ==========================================
 
-export interface User {
-  uid: string;
-  name: string;
+export interface Profile {
+  id: string; // Supabase auth user id
   email: string;
-  phone?: string;
+  name?: string | null;
   role: UserRole;
-  restaurantId?: string; // For restaurant staff
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  avatarUrl?: string | null;
+  createdAt: IsoDateString;
+  updatedAt: IsoDateString;
 }
+
+// Backwards-compatible alias for existing UI code
+export type User = Profile;
 
 export interface Address {
   id: string;
@@ -91,70 +89,53 @@ export interface Address {
 // ==========================================
 
 export interface Restaurant {
-  subscription: any;
   id: string;
   name: string;
-  slug: string; // For subdomain
-  domain?: string; // Custom domain (paid feature)
+  slug: string;
   status: RestaurantStatus;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  statusReason?: string | null;
+  createdAt: IsoDateString;
+  updatedAt: IsoDateString;
 
-  // Contact Info
   contact: {
-    phone: string;
-    email: string;
-    address: string;
-    coordinates?: {
-      lat: number;
-      lng: number;
-    };
+    phone?: string | null;
+    email?: string | null;
+    address?: string | null;
   };
 
-  // Operating Hours
-  operatingHours?: {
-    [day: string]: {
-      open: string;
-      close: string;
-      isClosed: boolean;
-    };
+  branding?: {
+    logoUrl?: string | null;
+    primaryColor?: string | null;
+    secondaryColor?: string | null;
+  };
+
+  settings?: {
+    razorpayKeyId?: string | null;
+    razorpayKeySecret?: string | null;
+    allowPayAtCounter?: boolean;
   };
 }
 
 export interface RestaurantSubscription {
   plan: SubscriptionPlan;
-  price: number | null; // null for OWNED (contact team)
+  price: number | null; // null for custom/negotiated
   active: boolean;
-  trialEndsAt?: Timestamp;
-  expiresAt: Timestamp;
-  createdAt: Timestamp;
-}
-
-export interface RestaurantBranding {
-  logoUrl?: string;
-  faviconUrl?: string;
-  primaryColor: string;
-  secondaryColor: string;
-  accentColor?: string;
-  font: string;
-  showSaasBranding: boolean;
-}
-
-export interface RestaurantFeatures {
-  qrOrder: boolean;
-  delivery: boolean;
-  customDomain: boolean;
-  ownedApp: boolean;
+  trialEndsAt?: IsoDateString;
+  expiresAt?: IsoDateString;
+  createdAt: IsoDateString;
 }
 
 export interface RestaurantUser {
-  uid: string;
-  role: 'ADMIN' | 'STAFF' | 'DELIVERY';
+  id: string;
+  restaurantId: string;
+  authUserId: string;
+  role: 'ADMIN' | 'STAFF';
   name: string;
   email: string;
-  phone?: string;
+  phone?: string | null;
   active: boolean;
-  createdAt: Timestamp;
+  createdAt: IsoDateString;
+  updatedAt: IsoDateString;
 }
 
 // ==========================================
@@ -163,27 +144,29 @@ export interface RestaurantUser {
 
 export interface MenuCategory {
   id: string;
+  restaurantId: string;
   name: string;
-  description?: string;
-  image?: string;
+  description?: string | null;
+  image?: string | null;
   order: number;
   active: boolean;
 }
 
 export interface MenuItem {
   id: string;
+  restaurantId: string;
   categoryId: string;
   name: string;
-  description?: string;
+  description?: string | null;
   price: number;
-  discountPrice?: number;
-  image?: string;
+  discountPrice?: number | null;
+  image?: string | null;
   available: boolean;
   isVeg: boolean;
-  preparationTime?: number; // in minutes
-  tags?: string[];
-  variants?: MenuItemVariant[];
-  addons?: MenuItemAddon[];
+  preparationTime?: number | null; // in minutes
+  tags?: string[] | null;
+  variants?: MenuItemVariant[] | null;
+  addons?: MenuItemAddon[] | null;
 }
 
 export interface MenuItemVariant {
@@ -204,14 +187,15 @@ export interface MenuItemAddon {
 
 export interface Table {
   id: string;
+  restaurantId: string;
   tableNumber: number;
-  qrCodeUrl?: string;
+  qrCodeUrl?: string | null;
   active: boolean;
-  capacity?: number;
+  capacity?: number | null;
 }
 
 // ==========================================
-// Cart Types
+// Cart Types (Client-side)
 // ==========================================
 
 export interface CartItem {
@@ -227,9 +211,9 @@ export interface CartItem {
 export interface Cart {
   id: string; // uid or sessionId
   items: CartItem[];
-  tableNumber?: number; // For dine-in
+  tableNumber?: number;
   type: OrderType;
-  updatedAt: Timestamp;
+  updatedAt: IsoDateString;
 }
 
 // ==========================================
@@ -249,86 +233,49 @@ export interface OrderItem {
 
 export interface Order {
   id: string;
+  restaurantId: string;
   orderNumber: string;
   type: OrderType;
 
-  // Customer Info
   customerId?: string;
   customerName?: string;
   customerPhone?: string;
 
-  // For Dine-In
   tableNumber?: number;
 
-  // For Delivery
-  address?: Address;
-  assignedAgent?: string;
-  deliveryInstructions?: string;
-
-  // Order Details
   items: OrderItem[];
   subtotal: number;
   taxes: number;
-  deliveryFee: number;
   discount: number;
   total: number;
 
-  // Status
   status: OrderStatus;
+  statusReason?: string | null;
 
-  // Payment
   payment: {
     method: PaymentMethod;
     status: PaymentStatus;
     transactionId?: string;
   };
 
-  // Timestamps
-  createdAt: Timestamp;
-  confirmedAt?: Timestamp;
-  preparingAt?: Timestamp;
-  readyAt?: Timestamp;
-  deliveredAt?: Timestamp;
-  cancelledAt?: Timestamp;
+  createdAt: IsoDateString;
+  updatedAt?: IsoDateString;
+  confirmedAt?: IsoDateString;
+  preparingAt?: IsoDateString;
+  readyAt?: IsoDateString;
+  servedAt?: IsoDateString;
+  cancelledAt?: IsoDateString;
 }
 
 // ==========================================
-// Delivery Types
-// ==========================================
-
-export interface DeliveryAgent {
-  uid: string;
-  name: string;
-  phone: string;
-  email?: string;
-  active: boolean;
-  available: boolean;
-  currentLocation?: {
-    lat: number;
-    lng: number;
-    updatedAt: Timestamp;
-  };
-  createdAt: Timestamp;
-}
-
-export interface DeliveryAssignment {
-  orderId: string;
-  agentId: string;
-  status: 'ASSIGNED' | 'PICKED_UP' | 'IN_TRANSIT' | 'DELIVERED';
-  assignedAt: Timestamp;
-  pickedUpAt?: Timestamp;
-  deliveredAt?: Timestamp;
-}
-
-// ==========================================
-// Analytics Types
+// Analytics Types (Optional)
 // ==========================================
 
 export interface DailyAnalytics {
   date: string; // YYYY-MM-DD
   totalOrders: number;
   dineInOrders: number;
-  deliveryOrders: number;
+  takeawayOrders: number;
   totalRevenue: number;
   averageOrderValue: number;
   topItems: {
@@ -344,15 +291,357 @@ export interface DailyAnalytics {
 
 export interface SaasSettings {
   platformName: string;
-  platformLogo: string;
+  platformLogo?: string | null;
   supportEmail: string;
   supportPhone: string;
   defaultTrialDays: number;
   plans: {
-    [key in SubscriptionPlan]: {
-      name: string;
-      price: number | null;
-      features: RestaurantFeatures;
+    [key in SubscriptionPlan]?: {
+      name?: string;
+      price?: number | null;
+      features?: Record<string, boolean>;
     };
   };
 }
+
+// ==========================================
+// Supabase Database Type
+// ==========================================
+
+export type Database = {
+  public: {
+    Tables: {
+      profiles: {
+        Row: {
+          id: string;
+          email: string;
+          name: string | null;
+          role: UserRole;
+          avatar_url: string | null;
+          created_at: IsoDateString;
+          updated_at: IsoDateString;
+        };
+        Insert: {
+          id: string;
+          email: string;
+          name?: string | null;
+          role?: UserRole;
+          avatar_url?: string | null;
+          created_at?: IsoDateString;
+          updated_at?: IsoDateString;
+        };
+        Update: {
+          email?: string;
+          name?: string | null;
+          role?: UserRole;
+          avatar_url?: string | null;
+          updated_at?: IsoDateString;
+        };
+      };
+      restaurants: {
+        Row: {
+          id: string;
+          name: string;
+          slug: string;
+          status: RestaurantStatus;
+          status_reason: string | null;
+          contact_email: string | null;
+          contact_phone: string | null;
+          contact_address: string | null;
+          logo_url: string | null;
+          primary_color: string | null;
+          secondary_color: string | null;
+          settings: Record<string, unknown> | null;
+          created_at: IsoDateString;
+          updated_at: IsoDateString;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          slug: string;
+          status?: RestaurantStatus;
+          status_reason?: string | null;
+          contact_email?: string | null;
+          contact_phone?: string | null;
+          contact_address?: string | null;
+          logo_url?: string | null;
+          primary_color?: string | null;
+          secondary_color?: string | null;
+          settings?: Record<string, unknown> | null;
+          created_at?: IsoDateString;
+          updated_at?: IsoDateString;
+        };
+        Update: {
+          name?: string;
+          slug?: string;
+          status?: RestaurantStatus;
+          status_reason?: string | null;
+          contact_email?: string | null;
+          contact_phone?: string | null;
+          contact_address?: string | null;
+          logo_url?: string | null;
+          primary_color?: string | null;
+          secondary_color?: string | null;
+          settings?: Record<string, unknown> | null;
+          updated_at?: IsoDateString;
+        };
+      };
+      restaurant_users: {
+        Row: {
+          id: string;
+          restaurant_id: string;
+          auth_user_id: string;
+          role: 'ADMIN' | 'STAFF';
+          name: string;
+          email: string;
+          phone: string | null;
+          active: boolean;
+          created_at: IsoDateString;
+          updated_at: IsoDateString;
+        };
+        Insert: {
+          id?: string;
+          restaurant_id: string;
+          auth_user_id: string;
+          role: 'ADMIN' | 'STAFF';
+          name: string;
+          email: string;
+          phone?: string | null;
+          active?: boolean;
+          created_at?: IsoDateString;
+          updated_at?: IsoDateString;
+        };
+        Update: {
+          role?: 'ADMIN' | 'STAFF';
+          name?: string;
+          email?: string;
+          phone?: string | null;
+          active?: boolean;
+          updated_at?: IsoDateString;
+        };
+      };
+      restaurant_tables: {
+        Row: {
+          id: string;
+          restaurant_id: string;
+          table_number: number;
+          qr_code_url: string | null;
+          active: boolean;
+          capacity: number | null;
+          created_at: IsoDateString;
+          updated_at: IsoDateString;
+        };
+        Insert: {
+          id?: string;
+          restaurant_id: string;
+          table_number: number;
+          qr_code_url?: string | null;
+          active?: boolean;
+          capacity?: number | null;
+          created_at?: IsoDateString;
+          updated_at?: IsoDateString;
+        };
+        Update: {
+          table_number?: number;
+          qr_code_url?: string | null;
+          active?: boolean;
+          capacity?: number | null;
+          updated_at?: IsoDateString;
+        };
+      };
+      menu_categories: {
+        Row: {
+          id: string;
+          restaurant_id: string;
+          name: string;
+          description: string | null;
+          image_url: string | null;
+          sort_order: number;
+          active: boolean;
+          created_at: IsoDateString;
+          updated_at: IsoDateString;
+        };
+        Insert: {
+          id?: string;
+          restaurant_id: string;
+          name: string;
+          description?: string | null;
+          image_url?: string | null;
+          sort_order?: number;
+          active?: boolean;
+          created_at?: IsoDateString;
+          updated_at?: IsoDateString;
+        };
+        Update: {
+          name?: string;
+          description?: string | null;
+          image_url?: string | null;
+          sort_order?: number;
+          active?: boolean;
+          updated_at?: IsoDateString;
+        };
+      };
+      menu_items: {
+        Row: {
+          id: string;
+          restaurant_id: string;
+          category_id: string | null;
+          name: string;
+          description: string | null;
+          price: number;
+          discount_price: number | null;
+          image_url: string | null;
+          is_available: boolean;
+          is_veg: boolean;
+          preparation_time: number | null;
+          tags: string[] | null;
+          variants: Record<string, unknown>[] | null;
+          addons: Record<string, unknown>[] | null;
+          created_at: IsoDateString;
+          updated_at: IsoDateString;
+        };
+        Insert: {
+          id?: string;
+          restaurant_id: string;
+          category_id?: string | null;
+          name: string;
+          description?: string | null;
+          price: number;
+          discount_price?: number | null;
+          image_url?: string | null;
+          is_available?: boolean;
+          is_veg?: boolean;
+          preparation_time?: number | null;
+          tags?: string[] | null;
+          variants?: Record<string, unknown>[] | null;
+          addons?: Record<string, unknown>[] | null;
+          created_at?: IsoDateString;
+          updated_at?: IsoDateString;
+        };
+        Update: {
+          category_id?: string | null;
+          name?: string;
+          description?: string | null;
+          price?: number;
+          discount_price?: number | null;
+          image_url?: string | null;
+          is_available?: boolean;
+          is_veg?: boolean;
+          preparation_time?: number | null;
+          tags?: string[] | null;
+          variants?: Record<string, unknown>[] | null;
+          addons?: Record<string, unknown>[] | null;
+          updated_at?: IsoDateString;
+        };
+      };
+      orders: {
+        Row: {
+          id: string;
+          restaurant_id: string;
+          customer_id: string | null;
+          order_number: string;
+          type: OrderType;
+          table_number: number | null;
+          customer_name: string | null;
+          customer_phone: string | null;
+          status: OrderStatus;
+          status_reason: string | null;
+          payment_method: PaymentMethod;
+          payment_status: PaymentStatus;
+          transaction_id: string | null;
+          subtotal: number;
+          taxes: number;
+          discount: number;
+          total: number;
+          created_at: IsoDateString;
+          updated_at: IsoDateString;
+        };
+        Insert: {
+          id?: string;
+          restaurant_id: string;
+          customer_id?: string | null;
+          order_number: string;
+          type: OrderType;
+          table_number?: number | null;
+          customer_name?: string | null;
+          customer_phone?: string | null;
+          status?: OrderStatus;
+          status_reason?: string | null;
+          payment_method?: PaymentMethod;
+          payment_status?: PaymentStatus;
+          transaction_id?: string | null;
+          subtotal: number;
+          taxes: number;
+          discount?: number;
+          total: number;
+          created_at?: IsoDateString;
+          updated_at?: IsoDateString;
+        };
+        Update: {
+          status?: OrderStatus;
+          status_reason?: string | null;
+          payment_method?: PaymentMethod;
+          payment_status?: PaymentStatus;
+          transaction_id?: string | null;
+          updated_at?: IsoDateString;
+        };
+      };
+      platform_settings: {
+        Row: {
+          id: string;
+          config: Record<string, unknown> | null;
+          updated_at: IsoDateString;
+        };
+        Insert: {
+          id: string;
+          config?: Record<string, unknown> | null;
+          updated_at?: IsoDateString;
+        };
+        Update: {
+          config?: Record<string, unknown> | null;
+          updated_at?: IsoDateString;
+        };
+      };
+      order_items: {
+        Row: {
+          id: string;
+          order_id: string;
+          menu_item_id: string | null;
+          name: string;
+          price: number;
+          quantity: number;
+          total: number;
+          variant: Record<string, unknown> | null;
+          addons: Record<string, unknown>[] | null;
+          special_instructions: string | null;
+          created_at: IsoDateString;
+        };
+        Insert: {
+          id?: string;
+          order_id: string;
+          menu_item_id?: string | null;
+          name: string;
+          price: number;
+          quantity: number;
+          total: number;
+          variant?: Record<string, unknown> | null;
+          addons?: Record<string, unknown>[] | null;
+          special_instructions?: string | null;
+          created_at?: IsoDateString;
+        };
+        Update: {
+          name?: string;
+          price?: number;
+          quantity?: number;
+          total?: number;
+          variant?: Record<string, unknown> | null;
+          addons?: Record<string, unknown>[] | null;
+          special_instructions?: string | null;
+        };
+      };
+    };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: Record<string, never>;
+  };
+};

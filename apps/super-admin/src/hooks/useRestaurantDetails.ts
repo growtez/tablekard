@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import firebaseService from '../services/firebaseService';
+import supabaseService from '../services/supabaseService';
 import { Restaurant } from '@restaurant-saas/types';
 
 export function useRestaurantDetails(id: string | undefined) {
@@ -12,7 +12,7 @@ export function useRestaurantDetails(id: string | undefined) {
 
         try {
             setLoading(true);
-            const data = await firebaseService.getRestaurantById(id);
+            const data = await supabaseService.getRestaurantById(id);
             if (!data) {
                 setError('Restaurant not found');
             } else {
@@ -33,7 +33,7 @@ export function useRestaurantDetails(id: string | undefined) {
 
     const handleUpdate = async (data: Partial<Restaurant>) => {
         // Implementation for updating restaurant would go here
-        // We'd need to add updateRestaurant to firebaseService first
+        // Add updateRestaurant to supabaseService when needed
         console.log('Update not implemented yet', data);
     };
 

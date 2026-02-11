@@ -1,22 +1,15 @@
-// Authentication Context for Super Admin
-import { createContext, useContext, useState, useEffect } from 'react';
+// Authentication Context for Super Admin (Supabase)
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import {
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    signOut as firebaseSignOut,
-    onAuthStateChanged,
-    sendPasswordResetEmail,
-} from 'firebase/auth';
-import type { User } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db } from '../firebase';
+import { supabase } from '@restaurant-saas/supabase';
+import type { User } from '@supabase/supabase-js';
+import { UserRole } from '@restaurant-saas/types';
 
 interface UserProfile {
     id: string;
     email: string;
-    name: string;
-    role: 'restaurant_admin' | 'super_admin' | 'customer' | 'driver';
+    name: string | null;
+    role: UserRole;
 }
 
 interface AuthContextType {
@@ -37,141 +30,122 @@ interface AuthProviderProps {
     children: ReactNode;
 }
 
+async function fetchProfile(userId: string): Promise<UserProfile | null> {
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('id,email,name,role')
+        .eq('id', userId)
+        .maybeSingle();
+
+    if (error) {
+        console.warn('Failed to fetch profile:', error.message);
+        return null;
+    }
+    if (!data) return null;
+    return {
+        id: data.id,
+        email: data.email,
+        name: data.name,
+        role: data.role as UserRole
+    };
+}
+
 export function AuthProvider({ children }: AuthProviderProps) {
     const [user, setUser] = useState<User | null>(null);
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        console.log('🔐 Setting up Firebase Auth listener for Super Admin...');
+        let mounted = true;
 
-        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-            console.log('🔐 Auth state changed:', firebaseUser ? 'User logged in' : 'No user');
-            setUser(firebaseUser);
+        const init = async () => {
+            const { data } = await supabase.auth.getSession();
+            const currentUser = data.session?.user ?? null;
+            if (!mounted) return;
+            setUser(currentUser);
+            if (currentUser) {
+                const profile = await fetchProfile(currentUser.id);
+                if (!mounted) return;
+                setUserProfile(profile);
+            }
+            setLoading(false);
+        };
 
-            if (firebaseUser) {
-                try {
-                    await firebaseUser.getIdToken(true);
+        init();
 
-                    if (import.meta.env.DEV) {
-                        console.log('🔥 Firebase projectId (auth):', auth.app.options.projectId);
-                        console.log('🔥 Firebase projectId (firestore):', db.app.options.projectId);
-                    }
-                    // Fetch user profile from Firestore
-                    const userDocRef = doc(db, 'users', firebaseUser.uid);
-                    const userDoc = await getDoc(userDocRef);
-
-                    if (userDoc.exists()) {
-                        const data = userDoc.data() as Omit<UserProfile, 'id'>;
-                        const profile: UserProfile = { id: userDoc.id, ...data };
-
-                        setUserProfile(profile);
-
-                        // If not super admin, warn
-                        if (profile.role !== 'super_admin') {
-                            console.warn('⚠️ User is not a super admin');
-                            // We don't force logout here to allow context to show "Access Denied" UI if needed, 
-                            // but for now strict mode is handled in signIn.
-                        }
-                    } else {
-                        console.warn('⚠️ User logged in but no profile found:', firebaseUser.email);
-                        setUserProfile(null);
-                    }
-                } catch (error) {
-                    console.warn('⚠️ Could not fetch user profile:', error);
-                    if (
-                        typeof error === 'object' &&
-                        error !== null &&
-                        'code' in error &&
-                        typeof (error as { code?: unknown }).code === 'string' &&
-                        [
-                            'auth/user-token-expired',
-                            'auth/invalid-user-token',
-                            'auth/user-disabled',
-                            'auth/network-request-failed',
-                            'auth/internal-error',
-                        ].includes((error as { code: string }).code)
-                    ) {
-                        try {
-                            await firebaseSignOut(auth);
-                        } catch {
-                            // ignore
-                        }
-                        setUser(null);
-                    }
-                    setUserProfile(null);
-                }
+        const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+            const nextUser = session?.user ?? null;
+            setUser(nextUser);
+            if (nextUser) {
+                const profile = await fetchProfile(nextUser.id);
+                setUserProfile(profile);
             } else {
                 setUserProfile(null);
             }
-
             setLoading(false);
         });
 
-        return () => unsubscribe();
+        return () => {
+            mounted = false;
+            authListener.subscription.unsubscribe();
+        };
     }, []);
 
-    // Sign in with email and password
     const signIn = async (email: string, password: string): Promise<User> => {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-
-        await userCredential.user.getIdToken(true);
-
-        // Verify role from DB
-        const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
-        if (userDoc.exists()) {
-            const profile = userDoc.data() as UserProfile;
-            if (profile.role !== 'super_admin') {
-                await firebaseSignOut(auth);
-                throw new Error('You are not authorized to access the super admin panel');
-            }
-        } else {
-            await firebaseSignOut(auth);
-            throw new Error('Access Denied: User profile not found.');
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error || !data.user) {
+            throw error ?? new Error('Failed to sign in');
         }
 
-        return userCredential.user;
+        const profile = await fetchProfile(data.user.id);
+        if (!profile || profile.role !== UserRole.SUPER_ADMIN) {
+            await supabase.auth.signOut();
+            throw new Error('You are not authorized to access the super admin panel');
+        }
+
+        setUserProfile(profile);
+        return data.user;
     };
 
-    // Sign out
+    const createAccount = async (email: string, password: string, name: string): Promise<User> => {
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: { name, role: UserRole.SUPER_ADMIN }
+            }
+        });
+        if (error || !data.user) {
+            throw error ?? new Error('Failed to create account');
+        }
+
+        const { error: profileError } = await supabase.from('profiles').upsert({
+            id: data.user.id,
+            email: data.user.email ?? email,
+            name,
+            role: UserRole.SUPER_ADMIN
+        });
+        if (profileError) {
+            console.warn('Failed to upsert profile:', profileError.message);
+        }
+
+        return data.user;
+    };
+
     const signOut = async (): Promise<void> => {
-        await firebaseSignOut(auth);
+        await supabase.auth.signOut();
         setUser(null);
         setUserProfile(null);
     };
 
-    // Create super admin account (restricted)
-    const createAccount = async (email: string, password: string, name: string): Promise<User> => {
-        // Removed whitelist logic as requested
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-
-        await user.getIdToken(true);
-
-        // Create profile
-        const newProfile = {
-            email: user.email!,
-            name: name,
-            role: 'super_admin' as const,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
-        };
-
-        await setDoc(doc(db, 'users', user.uid), newProfile, { merge: true });
-
-        // Update local state is handled by onAuthStateChanged, but we can set it optimistically
-        const profile: UserProfile = { id: user.uid, ...newProfile };
-        setUserProfile(profile);
-
-        return user;
-    };
-
-    // Reset password
     const resetPassword = async (email: string): Promise<void> => {
-        await sendPasswordResetEmail(auth, email);
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: window.location.origin
+        });
+        if (error) throw error;
     };
 
-    const value: AuthContextType = {
+    const value: AuthContextType = useMemo(() => ({
         user,
         userProfile,
         loading,
@@ -179,9 +153,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         createAccount,
         signOut,
         resetPassword,
-        isAuthenticated: !!user && userProfile?.role === 'super_admin',
-        isSuperAdmin: userProfile?.role === 'super_admin',
-    };
+        isAuthenticated: !!user && userProfile?.role === UserRole.SUPER_ADMIN,
+        isSuperAdmin: userProfile?.role === UserRole.SUPER_ADMIN
+    }), [user, userProfile, loading]);
 
     return (
         <AuthContext.Provider value={value}>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
-import { createRestaurant } from '../services/firebaseService';
-import { SubscriptionPlan, RestaurantStatus } from '@restaurant-saas/types';
+import { createRestaurant } from '../services/supabaseService';
+import { RestaurantStatus } from '@restaurant-saas/types';
 
 interface AddRestaurantModalProps {
     onClose: () => void;
@@ -14,8 +14,7 @@ export default function AddRestaurantModal({ onClose, onSuccess }: AddRestaurant
         name: '',
         slug: '',
         email: '',
-        phone: '',
-        plan: SubscriptionPlan.QR as string
+        phone: ''
     });
     const [error, setError] = useState<string | null>(null);
 
@@ -109,18 +108,14 @@ export default function AddRestaurantModal({ onClose, onSuccess }: AddRestaurant
                             />
                         </div>
                     </div>
-
                     <div className="form-group">
                         <label>Initial Plan</label>
-                        <select
+                        <input
+                            type="text"
                             className="form-input"
-                            value={formData.plan}
-                            onChange={e => setFormData({ ...formData, plan: e.target.value })}
-                        >
-                            <option value={SubscriptionPlan.QR}>QR Plan (₹999)</option>
-                            <option value={SubscriptionPlan.DELIVERY}>Delivery Plan (₹1,499)</option>
-                            <option value={SubscriptionPlan.OWNED}>Owned App (Contact Sales)</option>
-                        </select>
+                            value="QR Only"
+                            disabled
+                        />
                     </div>
 
                     <div className="modal-actions">
