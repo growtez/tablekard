@@ -7,9 +7,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
     <meta name="description" content="Order delicious food from your favorite restaurants" />
-    <link rel="apple-touch-icon" href="/logo192.png" />
+    <link rel="apple-touch-icon" href="/favicon.ico" />
     <link rel="manifest" href="/manifest.json" />
     <title>Restaurant SaaS - Order Food</title>
+    <script>
+        window.onerror = function (msg, url, line, col, error) {
+            var errorDiv = document.createElement('div');
+            errorDiv.style.position = 'fixed';
+            errorDiv.style.top = '0';
+            errorDiv.style.left = '0';
+            errorDiv.style.width = '100%';
+            errorDiv.style.background = 'red';
+            errorDiv.style.color = 'white';
+            errorDiv.style.padding = '20px';
+            errorDiv.style.zIndex = '10000';
+            errorDiv.innerHTML = '<strong>JS Error:</strong> ' + msg + '<br>at ' + url + ':' + line + ':' + col;
+            document.body.appendChild(errorDiv);
+            return false;
+        };
+        window.addEventListener('unhandledrejection', function (event) {
+            console.error('Unhandled rejection:', event.reason);
+
+            // Skip UI alert for AbortErrors (common in dev from Supabase/locks)
+            var reason = event.reason;
+            var isAbort = reason && (
+                reason.name === 'AbortError' ||
+                (reason.message && reason.message.includes('aborted')) ||
+                (reason.message && reason.message.includes('signal is aborted'))
+            );
+
+            if (isAbort) return;
+
+            var errorDiv = document.createElement('div');
+            errorDiv.style.position = 'fixed';
+            errorDiv.style.top = '50px';
+            errorDiv.style.left = '0';
+            errorDiv.style.width = '100%';
+            errorDiv.style.background = 'orange';
+            errorDiv.style.color = 'white';
+            errorDiv.style.padding = '20px';
+            errorDiv.style.zIndex = '10001';
+            errorDiv.innerHTML = '<strong>Promise Rejection:</strong> ' + (reason ? reason.message || reason : 'unknown');
+            document.body.appendChild(errorDiv);
+        });
+    </script>
 </head>
 
 <body>

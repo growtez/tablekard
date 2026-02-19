@@ -279,7 +279,7 @@ const HomePage = () => {
             <header className="menu-header-nav">
                 <div className="header-left">
                     <Hamburger />
-                    <span className="header-brand-name">Delish</span>
+                    <span className="header-brand-name">Tablekard</span>
                 </div>
                 <div className="header-nav-right">
                     <NavLink to="/likes" className="header-nav-btn">

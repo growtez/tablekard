@@ -7,12 +7,14 @@
         "packages/*",
         "apps/super-admin",
         "apps/restaurant-admin",
-        "apps/customer-web"
+        "apps/customer-web",
+        "apps/customer-web-1"
     ],
     "scripts": {
         "dev:super-admin": "npm run dev -w @restaurant-saas/super-admin",
         "dev:restaurant-admin": "npm run dev -w @restaurant-saas/restaurant-admin",
         "dev:customer-web": "npm run dev -w @restaurant-saas/customer-web",
+        "dev:customer-web-1": "npm run dev -w @restaurant-saas/customer-web-1",
         "build:all": "npm run build --workspaces --if-present",
         "lint:all": "npm run lint --workspaces --if-present"
     },

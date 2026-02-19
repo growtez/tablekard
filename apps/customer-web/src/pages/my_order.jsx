@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { Home, ShoppingBag, MessageCircle, User, Minus, Plus, Trash2, Clock, CheckCircle, Utensils, ShoppingCart, ListOrdered, ArrowRight, Star, Users } from 'lucide-react';
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from '../context/AuthContext';
 import './my_order.css';
 import Hamburger from '../components/hamburger';
 
 const MyOrderPage = () => {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState('cart');
   const [cartItems, setCartItems] = useState([
     {
@@ -75,32 +78,6 @@ const MyOrderPage = () => {
       orderDate: 'Jan 10, 3:45 PM',
       paymentStatus: 'Paid via Cash',
       statusLabel: 'Order Placed'
-    },
-    {
-      id: 'ORD004',
-      status: 'ready',
-      items: [
-        { name: 'Premium Sushi Platter', quantity: 2, price: 2500 },
-        { name: 'Sake Selection', quantity: 1, price: 1000 }
-      ],
-      total: 6000,
-      discount: 500,
-      orderDate: 'Jan 10, 4:00 PM',
-      paymentStatus: 'Paid via UPI',
-      statusLabel: 'Ready for serving'
-    },
-    {
-      id: 'ORD005',
-      status: 'preparing',
-      items: [
-        { name: 'Chef Special Omakase', quantity: 1, price: 8000 },
-        { name: 'Wagyu Steak', quantity: 1, price: 4000 }
-      ],
-      total: 12000,
-      discount: 1000,
-      orderDate: 'Jan 10, 4:30 PM',
-      paymentStatus: 'Not Paid',
-      statusLabel: 'Preparing'
     }
   ]);
 
@@ -153,6 +130,12 @@ const MyOrderPage = () => {
   const placeOrder = () => {
     if (cartItems.length === 0) return;
 
+    if (!isAuthenticated) {
+      const currentPath = encodeURIComponent(window.location.pathname + window.location.search);
+      navigate(`/login?redirect=${currentPath}`);
+      return;
+    }
+
     const newOrder = {
       id: `ORD00${orders.length + 1}`,
       status: 'placed',
@@ -163,7 +146,9 @@ const MyOrderPage = () => {
       })),
       total: getTotalPrice(),
       orderTime: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
-      estimatedTime: '30 mins'
+      estimatedTime: '30 mins',
+      orderDate: 'Just now',
+      paymentStatus: 'Not Paid'
     };
 
     setOrders(prev => [newOrder, ...prev]);
@@ -205,7 +190,14 @@ const MyOrderPage = () => {
           </button>
           <button
             className={`tab-btn ${activeTab === 'orders' ? 'active' : ''}`}
-            onClick={() => setActiveTab('orders')}
+            onClick={() => {
+              if (!isAuthenticated) {
+                const currentPath = encodeURIComponent('/orders');
+                navigate(`/login?redirect=${currentPath}`);
+                return;
+              }
+              setActiveTab('orders');
+            }}
           >
             Orders ({orders.length})
           </button>
@@ -313,7 +305,7 @@ const MyOrderPage = () => {
         <div className="orders-content">
           {orders.length === 0 ? (
             <div className="empty-state">
-              <img src="/assets/empty-orders.png" alt="Empty Bowl" className="empty-illustration" />
+              <ShoppingBag size={64} color="#888888" />
               <h3>No active orders yet.</h3>
               <p>Order some delicious food!</p>
             </div>
@@ -343,19 +335,10 @@ const MyOrderPage = () => {
                           <span>₹{(item.price * item.quantity)}</span>
                         </div>
                       ))}
-                      {/* Extra Fees for In-House QR App */}
-                      <div className="order-item-row fees">
-                        <span>Service Charge & Tax</span>
-                        <span>₹{(order.total * 0.23).toFixed(0)}</span>
-                      </div>
-                      <div className="order-item-row discount-row">
-                        <span>Discount</span>
-                        <span className="discount-value">- ₹{order.discount || 0}</span>
-                      </div>
                     </div>
 
                     <div className="order-footer">
-                      <div className={`payment-badge ${order.paymentStatus.includes('Not') ? 'not-paid' : 'paid'}`}>
+                      <div className={`payment-badge ${order.paymentStatus?.includes('Not') ? 'not-paid' : 'paid'}`}>
                         {order.paymentStatus}
                       </div>
                       <div className="order-total-inline">

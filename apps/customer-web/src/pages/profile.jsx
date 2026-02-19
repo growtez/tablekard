@@ -1,30 +1,57 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   LogOut, Camera, ChevronRight, Heart, MapPin,
   Clock, HelpCircle, Phone, Mail, Utensils, Star, ListOrdered,
   Home, ShoppingBag, User, Edit2, ShoppingCart, MessageSquare, Info
 } from 'lucide-react';
 import { NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from '../context/AuthContext';
 import './profile.css';
 import Hamburger from '../components/hamburger';
 
 const ProfilePage = () => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [userProfile, setUserProfile] = useState({
-    name: 'S & S',
-    email: 's&s123@email.com',
-    phone: '+91 98765 43210',
+    name: 'Loading...',
+    email: '',
+    phone: '',
     avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&h=120&fit=crop&crop=face',
     tableNumber: 'T-12',
     stats: {
-      todaysOrders: 3,
-      totalSpent: 2450,
-      favoriteItems: 8
+      todaysOrders: 0,
+      totalSpent: 0,
+      favoriteItems: 0
     }
   });
 
+  useEffect(() => {
+    if (user) {
+      setUserProfile(prev => ({
+        ...prev,
+        name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Member',
+        email: user?.email || '',
+        phone: user?.phone || '+91 98XXX XXXXX',
+        avatar: user?.user_metadata?.avatar_url || prev.avatar,
+        stats: {
+          todaysOrders: 3,
+          totalSpent: 2450,
+          favoriteItems: 8
+        }
+      }));
+    }
+  }, [user]);
+
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({ ...userProfile });
+
+  // Sync edit form when userProfile changes
+  useEffect(() => {
+    setEditForm({ ...userProfile });
+  }, [userProfile]);
+
   const fileInputRef = useRef(null);
+
 
   const handleEditToggle = () => {
     if (isEditing) {
@@ -54,10 +81,20 @@ const ProfilePage = () => {
   };
 
   const handleCameraClick = () => {
-    fileInputRef.current.click();
+    if (fileInputRef.current) fileInputRef.current.click();
   };
 
-  const navigate = useNavigate();
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (err) {
+      console.error('Logout failed:', err);
+      // Still navigate to login to clear UI state if needed
+      navigate('/login');
+    }
+  };
+
 
   const menuItems = [
     {
@@ -232,7 +269,7 @@ const ProfilePage = () => {
         <div className="restaurant-card">
           <div className="restaurant-header">
             <Star size={16} fill="#8B3A1E" color="#8B3A1E" />
-            <span>Delish Restaurant</span>
+            <span>Tablekard</span>
           </div>
           <div className="restaurant-contact">
             <a href="tel:+911234567890" className="contact-link">
@@ -247,7 +284,7 @@ const ProfilePage = () => {
         </div>
 
         {/* Logout Button */}
-        <button className="signout-btn">
+        <button className="signout-btn" onClick={handleLogout}>
           <LogOut size={18} />
           <span>Sign Out</span>
         </button>

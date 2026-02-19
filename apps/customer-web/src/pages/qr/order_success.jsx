@@ -6,14 +6,14 @@ const QROrderSuccessPage = () => {
     const { restaurantSlug } = useParams();
     const navigate = useNavigate();
     const [tableNumber, setTableNumber] = useState('');
-    const [orderNumber, setOrderNumber] = useState('');
 
     useEffect(() => {
         const savedTable = sessionStorage.getItem('qr_table');
-        const savedOrderNumber = sessionStorage.getItem('qr_order_number');
         if (savedTable) setTableNumber(savedTable);
-        if (savedOrderNumber) setOrderNumber(savedOrderNumber);
     }, []);
+
+    // Generate random order number
+    const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}`;
 
     const goBack = () => {
         navigate(`/r/${restaurantSlug}${tableNumber ? `/table/${tableNumber}` : ''}`);
@@ -30,6 +30,7 @@ const QROrderSuccessPage = () => {
             padding: '40px 20px',
             textAlign: 'center'
         }}>
+            {/* Success Icon */}
             <div style={{
                 width: '100px',
                 height: '100px',
@@ -61,6 +62,7 @@ const QROrderSuccessPage = () => {
                 Your order has been sent to the kitchen
             </p>
 
+            {/* Order Number */}
             <div style={{
                 background: 'rgba(255,255,255,0.05)',
                 padding: '20px 40px',
@@ -81,10 +83,11 @@ const QROrderSuccessPage = () => {
                     fontWeight: 700,
                     color: '#d9b550'
                 }}>
-                    {orderNumber || '—'}
+                    {orderNumber}
                 </p>
             </div>
 
+            {/* Table Info */}
             {tableNumber && (
                 <div style={{
                     background: 'rgba(217, 181, 80, 0.1)',
@@ -99,6 +102,7 @@ const QROrderSuccessPage = () => {
                 </div>
             )}
 
+            {/* Estimated Time */}
             <div style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -110,6 +114,7 @@ const QROrderSuccessPage = () => {
                 <span>Estimated preparation time: 15-20 mins</span>
             </div>
 
+            {/* Back to Menu Button */}
             <button
                 onClick={goBack}
                 style={{
@@ -130,6 +135,7 @@ const QROrderSuccessPage = () => {
                 Order More
             </button>
 
+            {/* Powered by */}
             <p style={{
                 marginTop: '48px',
                 fontSize: '12px',

@@ -28,10 +28,10 @@ const Hamburger = () => {
         <div className="sidebar-header">
           <div className="company-section">
             <div className="company-logo">
-              <img src="/assets/delish_logo.png" alt="Delish Logo" />
+              <img src="/assets/delish_logo.png" alt="Tablekard Logo" />
             </div>
             <div className="company-info">
-              <h3>Delish</h3>
+              <h3>Tablekard</h3>
               <p>The Art of Fine Dining</p>
             </div>
           </div>

@@ -52,7 +52,7 @@ const AboutPage = () => {
                 {/* Hero / Brand Intro */}
                 <section className="about-journal-hero">
                     <div className="brand-badge">SINCE 2020</div>
-                    <h1 className="brand-main-title">DELISH</h1>
+                    <h1 className="brand-main-title">TABLEKARD</h1>
                     <p className="brand-philosophy">The art of fine dining, redefined for the modern connoisseur.</p>
                     <div className="brand-accent-line"></div>
                 </section>
@@ -65,7 +65,7 @@ const AboutPage = () => {
                         </div>
                         <h2 className="legend-title">The Manifesto</h2>
                         <p className="legend-text">
-                            Delish was born from a singular vision: to create a sanctuary where flavors tell stories.
+                            Tablekard was born from a singular vision: to create a sanctuary where flavors tell stories.
                             Our journey began in 2020, driven by a passion for culinary excellence and a commitment
                             to locally-sourced, seasonal ingredients. We believe that every meal is an opportunity
                             to create a lasting memory.
@@ -145,7 +145,7 @@ const AboutPage = () => {
                             <span className="map-label">Bongaigaon</span>
                         </div>
                         <div className="location-details">
-                            <h3 className="location-name">DELISH Restaurant</h3>
+                            <h3 className="location-name">TABLEKARD</h3>
                             <p className="location-address">BOC Gate, Chapaguri Rd, Bongaigaon, Assam 783380</p>
                             <a href="https://maps.google.com/?q=BOC+Gate+Chapaguri+Rd+Bongaigaon+Assam+783380" target="_blank" rel="noopener noreferrer" className="directions-btn">
                                 <MapPin size={14} /> Get Directions
@@ -185,7 +185,7 @@ const AboutPage = () => {
                     </div>
                     <div className="footer-signature">
                         <div className="sig-line"></div>
-                        <p>© 2026 DELISH RESTAURANT GROUP</p>
+                        <p>© 2026 TABLEKARD</p>
                     </div>
                 </footer>
             </div>
