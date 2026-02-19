@@ -26,8 +26,11 @@ const LoginPage = () => {
     setIsLoading(true);
     setError('');
     try {
-      const absoluteRedirect = `${window.location.origin}${redirectTo}`;
-      await signInWithGoogle(absoluteRedirect);
+      // Always redirect to origin base URL so Supabase can detect the 
+      // access_token in the URL hash before any route guard kicks in.
+      // The internal redirect to the intended page happens via the 
+      // useEffect that watches isAuthenticated.
+      await signInWithGoogle(window.location.origin);
     } catch (err) {
       console.error('Google sign-in error:', err);
       setError('Sign in failed. Please try again.');
@@ -44,8 +47,7 @@ const LoginPage = () => {
     setIsLoading(true);
     setError('');
     try {
-      const absoluteRedirect = `${window.location.origin}${redirectTo}`;
-      await sendMagicLink(email, absoluteRedirect);
+      await sendMagicLink(email, window.location.origin);
       setMagicLinkSent(true);
     } catch (err) {
       console.error('Magic link error:', err);
@@ -58,21 +60,21 @@ const LoginPage = () => {
   return (
     <div className="login-container">
       <header className="login-header">
-        <NavLink to={redirectTo} className="back-button">
+        <NavLink to="/" className="back-button" title="Go back">
           <ArrowLeft size={24} />
         </NavLink>
       </header>
 
       <main className="login-main">
-        <div className="login-content">
+        <div className="login-content-card">
           <div className="welcome-section">
             <h1 className="welcome-title">Welcome</h1>
-            <p className="welcome-subtitle">Sign in to continue</p>
+            <p className="welcome-subtitle">Sign in to discover premium dining experiences</p>
           </div>
 
           <button
             type="button"
-            className={`google-signin-button ${isLoading ? 'loading' : ''}`}
+            className={`signin-button ${isLoading ? 'loading' : ''}`}
             onClick={handleGoogleSignIn}
             disabled={isLoading}
           >
@@ -83,60 +85,61 @@ const LoginPage = () => {
                 <img
                   src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
                   alt="Google"
-                  className="google-icon"
+                  className="social-icon"
                 />
                 <span>Continue with Google</span>
               </>
             )}
           </button>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '20px 0' }}>
-            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.1)' }} />
-            <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>or</span>
-            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.1)' }} />
+          <div className="divider">
+            <div className="divider-line" />
+            <span className="divider-text">or</span>
+            <div className="divider-line" />
           </div>
 
           <div className="email-signin-section">
             <div className="email-input-wrapper">
-              <Mail size={18} className="email-icon" />
+              <Mail size={20} className="input-icon" />
               <input
                 type="email"
-                placeholder="Email for magic link"
+                placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="email-input"
+                autoComplete="email"
               />
             </div>
 
             <button
               type="button"
-              className={`google-signin-button ${isLoading ? 'loading' : ''}`}
+              className={`signin-button primary ${isLoading ? 'loading' : ''}`}
               onClick={handleMagicLink}
               disabled={isLoading}
             >
               {isLoading ? (
                 <div className="loading-spinner"></div>
               ) : (
-                <span>Send Magic Link</span>
+                <span>Email Magic Link</span>
               )}
             </button>
 
             {magicLinkSent && (
-              <div className="success-message" style={{ marginTop: '12px' }}>
-                Check your email for the sign-in link.
+              <div className="success-message">
+                ✨ Magic link sent! Please check your inbox.
               </div>
             )}
           </div>
 
           {error && (
             <div className="error-message">
-              <span>{error}</span>
+              {error}
             </div>
           )}
 
           <div className="login-footer">
             <p className="terms-text">
-              By continuing, you agree to our{' '}
+              By joining, you agree to our{' '}
               <a href="/terms" className="link">Terms</a> and{' '}
               <a href="/privacy" className="link">Privacy Policy</a>
             </p>
@@ -148,3 +151,4 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
+

@@ -3,11 +3,28 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "r
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
-// QR Ordering pages
+// Import your pages
+import HomePage from "./pages/home";
+import MenuPage from "./pages/menu";
+import MyOrdersPage from "./pages/my_order";
+import ProfilePage from "./pages/profile";
+import SettingsPage from "./pages/settings";
+import SearchPage from './pages/search';
+import LikesPage from './pages/likes';
+import MostPopularPage from './pages/popular';
+import RecentOrdersPage from './pages/recent';
+import OffersPage from './pages/offers';
+import OnboardingPage from './pages/onboarding';
+import LoginPage from './pages/login';
+import LiveQueuePage from './pages/live_queue';
+import FeedbackPage from './pages/feedback';
+import OrderHistoryPage from './pages/order_history';
+import AboutPage from './pages/about';
+
+// QR Ordering pages (dine-in)
 import QRMenuPage from './pages/qr/menu';
 import QRCartPage from './pages/qr/cart';
 import QROrderSuccessPage from './pages/qr/order_success';
-import LoginPage from './pages/login';
 
 import "./App.css";
 
@@ -41,27 +58,39 @@ function RequireAuth({ children }) {
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      {/* Public Customer Routes */}
+      <Route path="/" element={<HomePage />} />
+      <Route path="/menu" element={<MenuPage />} />
+      <Route path="/orders" element={<MyOrdersPage />} />
+      <Route path="/search" element={<SearchPage />} />
+      <Route path="/popular" element={<MostPopularPage />} />
+      <Route path="/offers" element={<OffersPage />} />
+      <Route path="/onboarding" element={<OnboardingPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/about" element={<AboutPage />} />
 
-      <Route
-        path="/r/:restaurantSlug"
-        element={<RequireAuth><QRMenuPage /></RequireAuth>}
-      />
-      <Route
-        path="/r/:restaurantSlug/table/:tableNumber"
-        element={<RequireAuth><QRMenuPage /></RequireAuth>}
-      />
-      <Route
-        path="/r/:restaurantSlug/cart"
-        element={<RequireAuth><QRCartPage /></RequireAuth>}
-      />
+      {/* Protected Customer Routes */}
+      <Route path="/profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
+      <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
+      <Route path="/likes" element={<RequireAuth><LikesPage /></RequireAuth>} />
+      <Route path="/recent" element={<RequireAuth><RecentOrdersPage /></RequireAuth>} />
+      <Route path="/live-queue" element={<RequireAuth><LiveQueuePage /></RequireAuth>} />
+      <Route path="/feedback" element={<RequireAuth><FeedbackPage /></RequireAuth>} />
+      <Route path="/feedback/:orderId" element={<RequireAuth><FeedbackPage /></RequireAuth>} />
+      <Route path="/order-history" element={<RequireAuth><OrderHistoryPage /></RequireAuth>} />
+
+      {/* Public QR Ordering routes (browsing is allowed) */}
+      <Route path="/r/:restaurantSlug" element={<QRMenuPage />} />
+      <Route path="/r/:restaurantSlug/table/:tableNumber" element={<QRMenuPage />} />
+      <Route path="/r/:restaurantSlug/cart" element={<QRCartPage />} />
+
+      {/* Protected QR Order Success (only makes sense if you just ordered) */}
       <Route
         path="/r/:restaurantSlug/order-success"
         element={<RequireAuth><QROrderSuccessPage /></RequireAuth>}
       />
 
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
@@ -81,3 +110,5 @@ function App() {
 }
 
 export default App;
+
+
