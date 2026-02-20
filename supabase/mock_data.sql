@@ -1,14 +1,16 @@
--- Mock Data for TableKard Restaurant SaaS
--- This file contains sample data for testing and development
+-- ============================================================
+-- Mock Data for Tablekard Restaurant SaaS
+-- Updated to match the new schema (with geo fields, profile_id, table_id, etc.)
+-- ============================================================
 
 -- Clear existing data (optional - uncomment if needed)
--- TRUNCATE order_items, orders, menu_items, menu_categories, restaurant_tables, restaurant_users, restaurants CASCADE;
+-- TRUNCATE payment_logs, payments, feedback, favorites, order_items, orders, menu_items, menu_categories, restaurant_tables, restaurant_users, restaurants CASCADE;
 
 -- ============================================
--- RESTAURANTS
+-- RESTAURANTS (with latitude, longitude, allowed_radius)
 -- ============================================
 
-INSERT INTO restaurants (id, name, slug, status, contact_email, contact_phone, contact_address, logo_url, primary_color, secondary_color, settings) VALUES
+INSERT INTO restaurants (id, name, slug, status, contact_email, contact_phone, contact_address, logo_url, primary_color, secondary_color, settings, latitude, longitude, allowed_radius) VALUES
 (
   'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d',
   'The Golden Spoon',
@@ -20,7 +22,10 @@ INSERT INTO restaurants (id, name, slug, status, contact_email, contact_phone, c
   'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400',
   '#D4AF37',
   '#1a1a2e',
-  '{"tax_percentage": 5, "service_charge": 10, "currency": "INR", "enable_online_payment": true}'::jsonb
+  '{"tax_percentage": 5, "service_charge": 10, "currency": "INR", "enable_online_payment": true}'::jsonb,
+  12.975820,          -- latitude (MG Road, Bangalore)
+  77.609810,          -- longitude
+  200                 -- 200 meters allowed radius
 ),
 (
   'b2c3d4e5-f6a7-5b6c-9d0e-1f2a3b4c5d6e',
@@ -33,7 +38,10 @@ INSERT INTO restaurants (id, name, slug, status, contact_email, contact_phone, c
   'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=400',
   '#FF6B35',
   '#2C3E50',
-  '{"tax_percentage": 5, "service_charge": 0, "currency": "INR", "enable_online_payment": true}'::jsonb
+  '{"tax_percentage": 5, "service_charge": 0, "currency": "INR", "enable_online_payment": true}'::jsonb,
+  12.971600,          -- latitude (Brigade Road, Bangalore)
+  77.607200,          -- longitude
+  150                 -- 150 meters allowed radius
 ),
 (
   'c3d4e5f6-a7b8-6c7d-0e1f-2a3b4c5d6e7f',
@@ -46,7 +54,10 @@ INSERT INTO restaurants (id, name, slug, status, contact_email, contact_phone, c
   'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=400',
   '#6F4E37',
   '#F5E6D3',
-  '{"tax_percentage": 5, "service_charge": 5, "currency": "INR", "enable_online_payment": false}'::jsonb
+  '{"tax_percentage": 5, "service_charge": 5, "currency": "INR", "enable_online_payment": false}'::jsonb,
+  12.978400,          -- latitude (Indiranagar, Bangalore)
+  77.640600,          -- longitude
+  100                 -- 100 meters allowed radius
 );
 
 -- ============================================
@@ -54,23 +65,23 @@ INSERT INTO restaurants (id, name, slug, status, contact_email, contact_phone, c
 -- ============================================
 
 -- Golden Spoon Tables
-INSERT INTO restaurant_tables (restaurant_id, table_number, qr_code_url, active, capacity) VALUES
-('a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d', 1, 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=golden-spoon-t1', true, 4),
-('a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d', 2, 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=golden-spoon-t2', true, 2),
-('a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d', 3, 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=golden-spoon-t3', true, 6),
-('a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d', 4, 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=golden-spoon-t4', true, 4),
-('a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d', 5, 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=golden-spoon-t5', true, 8);
+INSERT INTO restaurant_tables (id, restaurant_id, table_number, qr_code_url, active, capacity) VALUES
+('t1000001-0001-0001-0001-000000000001', 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d', 1, 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=golden-spoon-t1', true, 4),
+('t1000001-0001-0001-0001-000000000002', 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d', 2, 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=golden-spoon-t2', true, 2),
+('t1000001-0001-0001-0001-000000000003', 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d', 3, 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=golden-spoon-t3', true, 6),
+('t1000001-0001-0001-0001-000000000004', 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d', 4, 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=golden-spoon-t4', true, 4),
+('t1000001-0001-0001-0001-000000000005', 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d', 5, 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=golden-spoon-t5', true, 8);
 
 -- Spice Garden Tables
-INSERT INTO restaurant_tables (restaurant_id, table_number, qr_code_url, active, capacity) VALUES
-('b2c3d4e5-f6a7-5b6c-9d0e-1f2a3b4c5d6e', 1, 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=spice-garden-t1', true, 4),
-('b2c3d4e5-f6a7-5b6c-9d0e-1f2a3b4c5d6e', 2, 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=spice-garden-t2', true, 4),
-('b2c3d4e5-f6a7-5b6c-9d0e-1f2a3b4c5d6e', 3, 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=spice-garden-t3', true, 2);
+INSERT INTO restaurant_tables (id, restaurant_id, table_number, qr_code_url, active, capacity) VALUES
+('t2000001-0001-0001-0001-000000000001', 'b2c3d4e5-f6a7-5b6c-9d0e-1f2a3b4c5d6e', 1, 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=spice-garden-t1', true, 4),
+('t2000001-0001-0001-0001-000000000002', 'b2c3d4e5-f6a7-5b6c-9d0e-1f2a3b4c5d6e', 2, 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=spice-garden-t2', true, 4),
+('t2000001-0001-0001-0001-000000000003', 'b2c3d4e5-f6a7-5b6c-9d0e-1f2a3b4c5d6e', 3, 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=spice-garden-t3', true, 2);
 
 -- Café Mocha Tables
-INSERT INTO restaurant_tables (restaurant_id, table_number, qr_code_url, active, capacity) VALUES
-('c3d4e5f6-a7b8-6c7d-0e1f-2a3b4c5d6e7f', 1, 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=cafe-mocha-t1', true, 2),
-('c3d4e5f6-a7b8-6c7d-0e1f-2a3b4c5d6e7f', 2, 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=cafe-mocha-t2', true, 4);
+INSERT INTO restaurant_tables (id, restaurant_id, table_number, qr_code_url, active, capacity) VALUES
+('t3000001-0001-0001-0001-000000000001', 'c3d4e5f6-a7b8-6c7d-0e1f-2a3b4c5d6e7f', 1, 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=cafe-mocha-t1', true, 2),
+('t3000001-0001-0001-0001-000000000002', 'c3d4e5f6-a7b8-6c7d-0e1f-2a3b4c5d6e7f', 2, 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=cafe-mocha-t2', true, 4);
 
 -- ============================================
 -- MENU CATEGORIES - Golden Spoon
@@ -162,28 +173,43 @@ INSERT INTO menu_items (restaurant_id, category_id, name, description, price, di
 ('c3d4e5f6-a7b8-6c7d-0e1f-2a3b4c5d6e7f', '33333333-3333-3333-3333-333333333333', 'Chocolate Muffin', 'Rich chocolate muffin', 100, null, 'https://images.unsplash.com/photo-1607958996333-41aef7caefaa?w=400', true, true, 5, ARRAY['kids-favorite'], null);
 
 -- ============================================
--- Note: To add sample orders, you would need actual customer user IDs from auth.users
+-- Note: To add sample orders, you need actual customer user IDs from auth.users
 -- The following is a template for creating orders once you have authenticated users
 -- ============================================
 
 /*
 -- Sample Order Template (uncomment and replace UUIDs when you have actual users)
 
-INSERT INTO orders (id, restaurant_id, customer_id, order_number, type, table_number, customer_name, customer_phone, status, payment_method, payment_status, subtotal, taxes, discount, total) VALUES
-('order-1', 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d', 'YOUR-CUSTOMER-UUID', 'GS-001', 'DINE_IN', 1, 'John Doe', '+91-9876543210', 'CONFIRMED', 'PAY_AT_COUNTER', 'PENDING', 700, 35, 0, 735);
+-- 1. Create an order using table_id (UUID reference to restaurant_tables)
+INSERT INTO orders (id, restaurant_id, customer_id, order_number, type, status, table_id, payment_method, payment_status, subtotal, taxes, discount, total) VALUES
+('d4e5f6a7-b8c9-4d0e-a1f2-3b4c5d6e7f8a', 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d', 'YOUR-CUSTOMER-UUID', 'GS-001', 'DINE_IN', 'CONFIRMED', 't1000001-0001-0001-0001-000000000001', 'PAY_AT_COUNTER', 'PENDING', 700, 35, 0, 735);
 
+-- 2. Add order items
 INSERT INTO order_items (order_id, menu_item_id, name, price, quantity, total) VALUES
-('order-1', (SELECT id FROM menu_items WHERE name = 'Paneer Tikka' LIMIT 1), 'Paneer Tikka', 250, 1, 250),
-('order-1', (SELECT id FROM menu_items WHERE name = 'Butter Chicken' LIMIT 1), 'Butter Chicken', 380, 1, 380),
-('order-1', (SELECT id FROM menu_items WHERE name = 'Mango Lassi' LIMIT 1), 'Mango Lassi', 100, 1, 100);
+('d4e5f6a7-b8c9-4d0e-a1f2-3b4c5d6e7f8a', (SELECT id FROM menu_items WHERE name = 'Paneer Tikka' AND restaurant_id = 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d' LIMIT 1), 'Paneer Tikka', 250, 1, 250),
+('d4e5f6a7-b8c9-4d0e-a1f2-3b4c5d6e7f8a', (SELECT id FROM menu_items WHERE name = 'Butter Chicken' AND restaurant_id = 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d' LIMIT 1), 'Butter Chicken', 380, 1, 380),
+('d4e5f6a7-b8c9-4d0e-a1f2-3b4c5d6e7f8a', (SELECT id FROM menu_items WHERE name = 'Mango Lassi' AND restaurant_id = 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d' LIMIT 1), 'Mango Lassi', 100, 1, 100);
+
+-- 3. Create a payment record (for online payment via Razorpay)
+INSERT INTO payments (id, user_id, restaurant_id, order_id, amount, currency, method, gateway, razorpay_order_id, razorpay_payment_id, razorpay_signature, status, paid_at) VALUES
+('e5f6a7b8-c9d0-4e1f-b2a3-4c5d6e7f8a9b', 'YOUR-CUSTOMER-UUID', 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d', 'd4e5f6a7-b8c9-4d0e-a1f2-3b4c5d6e7f8a', 735, 'INR', 'upi', 'razorpay', 'order_RzpXXXXXXXXXXXX', 'pay_RzpXXXXXXXXXXXX', 'sig_XXXXXXXXXXXXXXX', 'PAID', now());
+
+-- 4. Add feedback
+INSERT INTO feedback (user_id, rating, comment, order_id) VALUES
+('YOUR-CUSTOMER-UUID', 5, 'Amazing food and great service!', 'd4e5f6a7-b8c9-4d0e-a1f2-3b4c5d6e7f8a');
+
+-- 5. Add favorites
+INSERT INTO favorites (user_id, menu_item_id) VALUES
+('YOUR-CUSTOMER-UUID', (SELECT id FROM menu_items WHERE name = 'Butter Chicken' AND restaurant_id = 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d' LIMIT 1)),
+('YOUR-CUSTOMER-UUID', (SELECT id FROM menu_items WHERE name = 'Paneer Tikka' AND restaurant_id = 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d' LIMIT 1));
 */
 
 -- ============================================
 -- VERIFICATION QUERIES
 -- ============================================
 
--- Check restaurants
--- SELECT name, slug, status FROM restaurants;
+-- Check restaurants with geo data
+-- SELECT name, slug, status, latitude, longitude, allowed_radius FROM restaurants;
 
 -- Check menu items count per restaurant
 -- SELECT r.name, COUNT(mi.id) as item_count 
@@ -196,3 +222,9 @@ INSERT INTO order_items (order_id, menu_item_id, name, price, quantity, total) V
 -- FROM restaurants r 
 -- LEFT JOIN menu_categories mc ON r.id = mc.restaurant_id 
 -- GROUP BY r.name;
+
+-- Check tables per restaurant
+-- SELECT r.name, rt.table_number, rt.id as table_uuid, rt.capacity
+-- FROM restaurants r
+-- JOIN restaurant_tables rt ON r.id = rt.restaurant_id
+-- ORDER BY r.name, rt.table_number;
