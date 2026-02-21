@@ -129,7 +129,7 @@ export function ThemeProvider({ children }) {
         root.style.setProperty('--color-link-hover', theme.linkHover || theme.primaryDark);
         root.style.setProperty('--color-active-tab', theme.activeTab || theme.primary);
         root.style.setProperty('--color-inactive-tab', theme.inactiveTab || theme.textMuted);
-        root.style.setProperty('--color-focus-ring', theme.focusRing || `rgba(${theme.primary}, 0.25)`);
+        root.style.setProperty('--color-focus-ring', theme.focusRing || 'rgba(0, 0, 0, 0.1)');
 
         // Icons
         root.style.setProperty('--color-icon-active', theme.iconActive || theme.primary);
