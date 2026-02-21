@@ -21,6 +21,7 @@ import LiveQueuePage from './pages/live_queue';
 import FeedbackPage from './pages/feedback';
 import OrderHistoryPage from './pages/order_history';
 import AboutPage from './pages/about';
+import TestWebhookPage from './pages/test_webhook';
 
 // QR Ordering pages (dine-in)
 import QRMenuPage from './pages/qr/menu';
@@ -90,6 +91,9 @@ function AppRoutes() {
         path="/r/:restaurantSlug/order-success"
         element={<RequireAuth><QROrderSuccessPage /></RequireAuth>}
       />
+
+      {/* Developer Demo Route */}
+      <Route path="/test-webhook" element={<TestWebhookPage />} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
