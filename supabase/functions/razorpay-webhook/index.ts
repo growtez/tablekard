@@ -1,169 +1,317 @@
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { createHmac } from "https://deno.land/std@0.177.0/node/crypto.ts";
+// @ts-nocheck — This file runs on Deno (Supabase Edge Functions), not Node.js.
+// VS Code may show import errors, but the functions deploy and work correctly.
 
-const RAZORPAY_WEBHOOK_SECRET = Deno.env.get("RAZORPAY_WEBHOOK_SECRET")!;
+// supabase/functions/razorpay-webhook/index.ts
+//
+// PURPOSE: Handle webhook events from Razorpay servers.
+//          This is the SAFETY NET — if the frontend verify call fails
+//          (e.g. customer's browser crashes after payment), this function
+//          still receives the payment confirmation from Razorpay.
+//
+// CALLED BY: Razorpay servers (NOT your frontend!)
+// DOES NOT: Need authentication — uses webhook signature instead
+
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createHmac } from "https://deno.land/std@0.168.0/node/crypto.ts";
 
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-razorpay-signature",
 };
 
-serve(async (req) => {
+serve(async (req: Request) => {
     // Handle CORS preflight requests
     if (req.method === "OPTIONS") {
         return new Response("ok", { headers: corsHeaders });
     }
 
     try {
-        const supabase = createClient(
-            Deno.env.get("SUPABASE_URL")!,
-            Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-        );
-
-        // Read the body as text to properly calculate the HMAC signature
-        const body = await req.text();
-        const signature = req.headers.get("x-razorpay-signature");
-
-        if (!signature) {
-            console.error("Missing x-razorpay-signature header");
-            return new Response("Missing signature", { status: 400 });
-        }
+        // ──────────────────────────────────────────────
+        // 0. Read environment variables
+        // ──────────────────────────────────────────────
+        const RAZORPAY_WEBHOOK_SECRET = Deno.env.get("RAZORPAY_WEBHOOK_SECRET");
+        const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+        const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
         if (!RAZORPAY_WEBHOOK_SECRET) {
-            console.error("Missing RAZORPAY_WEBHOOK_SECRET environment variable");
-            return new Response("Server configuration error", { status: 500 });
+            throw new Error("Webhook secret not configured");
         }
 
-        // 1. Verify webhook signature
-        // The signature is an HMAC hex digest of the request body using the webhook secret
+        // ──────────────────────────────────────────────
+        // 1. Read the raw request body (needed for signature verification)
+        // ──────────────────────────────────────────────
+        const rawBody = await req.text();
+
+        // ──────────────────────────────────────────────
+        // 2. Verify the webhook signature
+        //    Razorpay signs the ENTIRE request body with your webhook secret
+        // ──────────────────────────────────────────────
+        const razorpaySignature = req.headers.get("x-razorpay-signature");
+
+        if (!razorpaySignature) {
+            console.error("Missing x-razorpay-signature header");
+            return new Response("Missing signature", { status: 400, headers: corsHeaders });
+        }
+
         const expectedSignature = createHmac("sha256", RAZORPAY_WEBHOOK_SECRET)
-            .update(body)
+            .update(rawBody)
             .digest("hex");
 
-        if (signature !== expectedSignature) {
-            console.error("Webhook signature mismatch", { expected: expectedSignature, received: signature });
-            return new Response("Invalid signature", { status: 400 });
+        if (expectedSignature !== razorpaySignature) {
+            console.error("Webhook signature mismatch — possible spoofing!");
+            return new Response("Invalid signature", { status: 400, headers: corsHeaders });
         }
 
-        const event = JSON.parse(body);
-        const eventType = event.event;
+        // ──────────────────────────────────────────────
+        // ✅ Signature verified — this is a genuine Razorpay webhook
+        // ──────────────────────────────────────────────
 
-        console.log(`Received verified webhook event: ${eventType}`);
+        const supabaseAdmin = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+        const webhookData = JSON.parse(rawBody);
+        const event = webhookData.event;
 
-        // 2. Handle different webhook events
-        switch (eventType) {
-            case "payment.captured": {
-                const payment = event.payload.payment.entity;
-                const razorpayOrderId = payment.order_id;
-                const razorpayPaymentId = payment.id;
-                const method = payment.method;      // e.g. 'upi', 'card', 'netbanking'
+        console.log(`Webhook received: ${event}`);
 
-                // 3a. Update payment record
-                const { error: paymentUpdateError } = await supabase
-                    .from("payments")
-                    .update({
-                        status: "CAPTURED",
-                        razorpay_payment_id: razorpayPaymentId,
-                        method: method,
-                        method_details: payment.card || payment.upi || payment.wallet || null,
-                        webhook_verified: true,
-                        webhook_event_id: event.event_id || null,
-                        paid_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString(),
-                    })
-                    .eq("razorpay_order_id", razorpayOrderId);
+        // ──────────────────────────────────────────────
+        // 3. Handle different webhook events
+        // ──────────────────────────────────────────────
 
-                if (paymentUpdateError) {
-                    console.error("Failed to update payment record:", paymentUpdateError);
-                    // Return 500 so Razorpay retries the webhook
-                    return new Response("Database error", { status: 500 });
-                }
+        if (event === "payment.captured") {
+            // ───── PAYMENT CAPTURED (Success) ─────
+            const paymentEntity = webhookData.payload.payment.entity;
+            const razorpayOrderId = paymentEntity.order_id;
+            const razorpayPaymentId = paymentEntity.id;
+            const method = paymentEntity.method;     // 'upi', 'card', 'netbanking', etc.
 
-                // 3b. Fetch the order_id from the payments table to update the associated order
-                const { data: paymentRecord, error: fetchPaymentError } = await supabase
-                    .from("payments")
-                    .select("id, order_id")
-                    .eq("razorpay_order_id", razorpayOrderId)
-                    .maybeSingle();
+            // Find our payment record by razorpay_order_id
+            const { data: payment, error: findError } = await supabaseAdmin
+                .from("payments")
+                .select("id, order_id, status")
+                .eq("razorpay_order_id", razorpayOrderId)
+                .single();
 
-                if (fetchPaymentError) {
-                    console.error("Failed to fetch payment record for order_id:", fetchPaymentError);
-                }
+            if (findError || !payment) {
+                console.error(`Payment not found for razorpay_order_id: ${razorpayOrderId}`);
+                // Still return 200 to prevent Razorpay from retrying
+                return new Response("Payment record not found", { status: 200, headers: corsHeaders });
+            }
 
-                if (paymentRecord && paymentRecord.order_id) {
-                    // 3c. Update the order
-                    const { error: orderUpdateError } = await supabase
-                        .from("orders")
-                        .update({
-                            payment_status: "PAID",
-                            transaction_id: razorpayPaymentId, // Fast lookup
-                            payment_method: "ONLINE",
-                            updated_at: new Date().toISOString(),
-                        })
-                        .eq("id", paymentRecord.order_id);
+            // Update payment: mark webhook as verified, fill in method
+            await supabaseAdmin
+                .from("payments")
+                .update({
+                    webhook_verified: true,
+                    webhook_event_id: webhookData.event_id || null,
+                    razorpay_payment_id: razorpayPaymentId,
+                    method: method,
+                    status: "PAID",                                // Confirm payment
+                    paid_at: new Date().toISOString(),
+                })
+                .eq("id", payment.id);
 
-                    if (orderUpdateError) {
-                        console.error("Failed to update order record:", orderUpdateError);
+            // If the verify-razorpay-payment function already created the order,
+            // update the order's payment_status too (safety net)
+            if (payment.order_id) {
+                await supabaseAdmin
+                    .from("orders")
+                    .update({ payment_status: "PAID" })
+                    .eq("id", payment.order_id);
+            }
+
+            // If verify function DIDN'T run (browser crashed), we need to
+            // create the order now using the stored cart data
+            if (!payment.order_id && payment.status !== "PAID") {
+                console.log("Frontend verify did not run — creating order from webhook");
+
+                // Fetch cart data from payment_logs
+                const { data: logEntry } = await supabaseAdmin
+                    .from("payment_logs")
+                    .select("event_data")
+                    .eq("payment_id", payment.id)
+                    .eq("event_type", "ORDER_CREATED")
+                    .single();
+
+                if (logEntry?.event_data?.items) {
+                    const cartData = logEntry.event_data;
+
+                    // Generate order number
+                    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+                    let orderNumber = "ORD-";
+                    for (let i = 0; i < 6; i++) {
+                        orderNumber += chars.charAt(Math.floor(Math.random() * chars.length));
                     }
 
-                    // 3d. Log success in payment_logs
-                    await supabase.from("payment_logs").insert({
-                        payment_id: paymentRecord.id,
-                        order_id: paymentRecord.order_id,
-                        event_type: "WEBHOOK_PAYMENT_CAPTURED",
-                        event_data: event, // Save the full Razorpay payload
-                    });
-                }
+                    // Create the order
+                    const { data: order } = await supabaseAdmin
+                        .from("orders")
+                        .insert({
+                            customer_id: cartData.customer_id,
+                            restaurant_id: cartData.restaurant_id,
+                            order_number: orderNumber,
+                            type: cartData.order_type || "DINE_IN",
+                            status: "CONFIRMED",
+                            table_id: cartData.table_id || null,
+                            payment_method: "ONLINE",
+                            payment_status: "PAID",
+                            subtotal: cartData.subtotal,
+                            taxes: cartData.taxes,
+                            discount: 0,
+                            total: cartData.amount,
+                        })
+                        .select("id")
+                        .single();
 
-                break;
+                    if (order) {
+                        // Create order items
+                        const orderItems = cartData.items.map((item: any) => ({
+                            order_id: order.id,
+                            menu_item_id: item.menu_item_id,
+                            name: item.name,
+                            price: item.price,
+                            quantity: item.quantity,
+                            total: item.total,
+                            variant: item.variant,
+                            addons: item.addons,
+                            special_instructions: item.special_instructions,
+                        }));
+
+                        await supabaseAdmin.from("order_items").insert(orderItems);
+
+                        // Link payment to the new order
+                        await supabaseAdmin
+                            .from("payments")
+                            .update({ order_id: order.id })
+                            .eq("id", payment.id);
+                    }
+                }
             }
 
-            case "payment.failed": {
-                const payment = event.payload.payment.entity;
-                const razorpayOrderId = payment.order_id;
-                // ... Handle failures if necessary
-                console.log(`Payment failed for order ${razorpayOrderId}`);
-                const { data: paymentRecord } = await supabase
+            // Log the webhook event
+            await supabaseAdmin.from("payment_logs").insert({
+                payment_id: payment.id,
+                order_id: payment.order_id,
+                event_type: "WEBHOOK_PAYMENT_CAPTURED",
+                event_data: {
+                    razorpay_order_id: razorpayOrderId,
+                    razorpay_payment_id: razorpayPaymentId,
+                    method,
+                    amount: paymentEntity.amount,
+                    webhook_event_id: webhookData.event_id,
+                    received_at: new Date().toISOString(),
+                },
+            });
+
+        } else if (event === "payment.failed") {
+            // ───── PAYMENT FAILED ─────
+            const paymentEntity = webhookData.payload.payment.entity;
+            const razorpayOrderId = paymentEntity.order_id;
+            const errorCode = paymentEntity.error_code;
+            const errorDescription = paymentEntity.error_description;
+
+            const { data: payment } = await supabaseAdmin
+                .from("payments")
+                .select("id, order_id")
+                .eq("razorpay_order_id", razorpayOrderId)
+                .single();
+
+            if (payment) {
+                await supabaseAdmin
                     .from("payments")
-                    .select("id, order_id")
-                    .eq("razorpay_order_id", razorpayOrderId)
-                    .maybeSingle();
-
-                if (paymentRecord) {
-                    await supabase.from("payments").update({
+                    .update({
                         status: "FAILED",
-                        failure_reason: payment.error_description || "Payment failed",
-                        failure_code: payment.error_code || null,
-                        updated_at: new Date().toISOString()
-                    }).eq("id", paymentRecord.id);
+                        failure_reason: errorDescription,
+                        failure_code: errorCode,
+                        webhook_verified: true,
+                        webhook_event_id: webhookData.event_id || null,
+                    })
+                    .eq("id", payment.id);
 
-                    await supabase.from("orders").update({
-                        payment_status: "FAILED",
-                        updated_at: new Date().toISOString()
-                    }).eq("id", paymentRecord.order_id);
-
-                    await supabase.from("payment_logs").insert({
-                        payment_id: paymentRecord.id,
-                        order_id: paymentRecord.order_id,
-                        event_type: "WEBHOOK_PAYMENT_FAILED",
-                        event_data: event,
-                    });
-                }
-                break;
+                await supabaseAdmin.from("payment_logs").insert({
+                    payment_id: payment.id,
+                    order_id: payment.order_id,
+                    event_type: "WEBHOOK_PAYMENT_FAILED",
+                    event_data: {
+                        razorpay_order_id: razorpayOrderId,
+                        error_code: errorCode,
+                        error_description: errorDescription,
+                        webhook_event_id: webhookData.event_id,
+                        received_at: new Date().toISOString(),
+                    },
+                });
             }
 
-            default:
-                console.log(`Unhandled webhook event type: ${eventType}`);
+        } else if (event === "refund.created" || event === "refund.processed") {
+            // ───── REFUND EVENTS ─────
+            const refundEntity = webhookData.payload.refund.entity;
+            const razorpayPaymentId = refundEntity.payment_id;
+
+            const { data: payment } = await supabaseAdmin
+                .from("payments")
+                .select("id, order_id")
+                .eq("razorpay_payment_id", razorpayPaymentId)
+                .single();
+
+            if (payment) {
+                const eventType = event === "refund.created"
+                    ? "WEBHOOK_REFUND_CREATED"
+                    : "WEBHOOK_REFUND_PROCESSED";
+
+                if (event === "refund.processed") {
+                    await supabaseAdmin
+                        .from("payments")
+                        .update({
+                            status: "REFUNDED",
+                            refund_id: refundEntity.id,
+                            refund_amount: refundEntity.amount / 100,  // Convert paise to rupees
+                            webhook_verified: true,
+                        })
+                        .eq("id", payment.id);
+
+                    if (payment.order_id) {
+                        await supabaseAdmin
+                            .from("orders")
+                            .update({ payment_status: "REFUNDED" })
+                            .eq("id", payment.order_id);
+                    }
+                }
+
+                await supabaseAdmin.from("payment_logs").insert({
+                    payment_id: payment.id,
+                    order_id: payment.order_id,
+                    event_type: eventType,
+                    event_data: {
+                        refund_id: refundEntity.id,
+                        razorpay_payment_id: razorpayPaymentId,
+                        amount: refundEntity.amount,
+                        status: refundEntity.status,
+                        webhook_event_id: webhookData.event_id,
+                        received_at: new Date().toISOString(),
+                    },
+                });
+            }
+
+        } else {
+            // ───── UNHANDLED EVENT ─────
+            console.log(`Unhandled webhook event: ${event}`);
         }
 
-        // Return 200 OK so Razorpay knows we received it successfully
-        return new Response(JSON.stringify({ success: true }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
+        // ──────────────────────────────────────────────
+        // ALWAYS return 200 OK to Razorpay.
+        // If you return an error, Razorpay will retry the webhook
+        // up to 24 hours, which could cause duplicate processing.
+        // ──────────────────────────────────────────────
+        return new Response(JSON.stringify({ received: true }), {
             status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
-    } catch (err) {
-        console.error("Unexpected error processing webhook:", err);
-        return new Response("Internal Server Error", { status: 500 });
+
+    } catch (error) {
+        console.error("razorpay-webhook error:", error);
+        // Still return 200 to prevent infinite retries
+        return new Response(JSON.stringify({ received: true, error: "Internal error logged" }), {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
     }
 });
