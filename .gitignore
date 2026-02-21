@@ -54,6 +54,7 @@ firebase-debug.log
 *.log
 *.tmp
 .cache/
+.temp
 
 # Test coverage
 coverage/
