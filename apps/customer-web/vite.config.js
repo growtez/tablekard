@@ -12,7 +12,8 @@ export default defineConfig({
         alias: {
             '@restaurant-saas/types': path.resolve(__dirname, '../../packages/types/src/index.ts'),
             '@restaurant-saas/supabase': path.resolve(__dirname, '../../packages/supabase/src/index.ts'),
-        }
+        },
+        dedupe: ['react', 'react-dom']
     },
     server: {
         port: 3003,

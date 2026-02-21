@@ -3,6 +3,7 @@ import { Search, Heart, Home, User, ShoppingBag, Grid, ShoppingCart, Clock, Star
 import { NavLink, useNavigate } from "react-router-dom";
 import './home.css';
 import Hamburger from '../components/hamburger';
+import ThemeToggle from '../components/ThemeToggle';
 import { useTheme } from '../context/ThemeContext';
 
 const HomePage = () => {
@@ -281,7 +282,8 @@ const HomePage = () => {
                     <Hamburger />
                     <span className="header-brand-name">Tablekard</span>
                 </div>
-                <div className="header-nav-right">
+                <div className="header-nav-right" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <ThemeToggle />
                     <NavLink to="/likes" className="header-nav-btn">
                         <Heart size={24} color="#8B3A1E" />
                         {favorites.length > 0 && (

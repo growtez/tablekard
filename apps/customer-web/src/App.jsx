@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { Smartphone } from "lucide-react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -95,14 +96,51 @@ function AppRoutes() {
   );
 }
 
+function MobileOnlyWrapper({ children }) {
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth > 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  if (isDesktop) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#212121', // Dark background from new theme
+        color: '#FFFFFF', // White text
+        padding: '2rem',
+        textAlign: 'center'
+      }}>
+        <Smartphone size={80} color="#d9b550" style={{ marginBottom: '1.5rem', strokeWidth: 1.5 }} />
+        <h2 style={{ marginBottom: '1rem', fontSize: '1.8rem', fontWeight: 'bold', color: '#d9b550' }}>Mobile Only</h2>
+        <p style={{ color: '#CCCCCC', fontSize: '1rem' }}>Please open this app on your phone for the correct experience.</p>
+      </div>
+    );
+  }
+
+  return children;
+}
+
 function App() {
   return (
     <AuthProvider>
       <ThemeProvider>
         <Router>
-          <div className="App">
-            <AppRoutes />
-          </div>
+          <MobileOnlyWrapper>
+            <div className="App">
+              <AppRoutes />
+            </div>
+          </MobileOnlyWrapper>
         </Router>
       </ThemeProvider>
     </AuthProvider>
