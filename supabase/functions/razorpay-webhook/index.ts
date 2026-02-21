@@ -15,7 +15,17 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createHmac } from "https://deno.land/std@0.168.0/node/crypto.ts";
 
+const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-razorpay-signature",
+};
+
 serve(async (req: Request) => {
+    // Handle CORS preflight requests
+    if (req.method === "OPTIONS") {
+        return new Response("ok", { headers: corsHeaders });
+    }
+
     try {
         // ──────────────────────────────────────────────
         // 0. Read environment variables
@@ -41,7 +51,7 @@ serve(async (req: Request) => {
 
         if (!razorpaySignature) {
             console.error("Missing x-razorpay-signature header");
-            return new Response("Missing signature", { status: 400 });
+            return new Response("Missing signature", { status: 400, headers: corsHeaders });
         }
 
         const expectedSignature = createHmac("sha256", RAZORPAY_WEBHOOK_SECRET)
@@ -50,7 +60,7 @@ serve(async (req: Request) => {
 
         if (expectedSignature !== razorpaySignature) {
             console.error("Webhook signature mismatch — possible spoofing!");
-            return new Response("Invalid signature", { status: 400 });
+            return new Response("Invalid signature", { status: 400, headers: corsHeaders });
         }
 
         // ──────────────────────────────────────────────
@@ -84,7 +94,7 @@ serve(async (req: Request) => {
             if (findError || !payment) {
                 console.error(`Payment not found for razorpay_order_id: ${razorpayOrderId}`);
                 // Still return 200 to prevent Razorpay from retrying
-                return new Response("Payment record not found", { status: 200 });
+                return new Response("Payment record not found", { status: 200, headers: corsHeaders });
             }
 
             // Update payment: mark webhook as verified, fill in method
@@ -293,7 +303,7 @@ serve(async (req: Request) => {
         // ──────────────────────────────────────────────
         return new Response(JSON.stringify({ received: true }), {
             status: 200,
-            headers: { "Content-Type": "application/json" },
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
 
     } catch (error) {
@@ -301,7 +311,7 @@ serve(async (req: Request) => {
         // Still return 200 to prevent infinite retries
         return new Response(JSON.stringify({ received: true, error: "Internal error logged" }), {
             status: 200,
-            headers: { "Content-Type": "application/json" },
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
     }
 });
