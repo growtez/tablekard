@@ -23,6 +23,7 @@ export default defineConfig({
     },
     optimizeDeps: {
         exclude: ['@restaurant-saas/supabase', '@restaurant-saas/types']
-    }
+    },
+    envDir: '../../'
 })
 
