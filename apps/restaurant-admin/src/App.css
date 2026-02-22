@@ -20,11 +20,17 @@
 }
 
 .main-content {
-  margin-left: 240px; /* Same width as sidebar */
+  margin-left: 240px;
+  /* Same width as sidebar */
   flex: 1;
   padding: 20px;
   overflow-y: auto;
   min-height: 100vh;
+  transition: all 0.3s ease;
+}
+
+.sidebar-collapsed .main-content {
+  margin-left: 80px;
 }
 
 /* Remove these if you want a full-width layout */
@@ -35,8 +41,12 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .main-content {
+
+  .main-content,
+  .sidebar-collapsed .main-content {
     margin-left: 0;
     padding: 16px;
+    padding-top: 72px;
+    /* Space for mobile hamburger menu */
   }
 }

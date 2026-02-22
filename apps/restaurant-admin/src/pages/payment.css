@@ -4,21 +4,32 @@
 .dashboard-container {
   display: flex;
   min-height: 100vh;
-  background-color: #343A40; /* Match sidebar background */
+  background-color: #343A40;
+  /* Match sidebar background */
   position: relative;
 }
 
 .main-content {
-  margin-left: 240px; /* Same width as sidebar */
+  margin-left: 240px;
+  /* Same width as sidebar */
   flex: 1;
   padding: 24px;
-  padding-left: 32px; /* Extra padding on left for visual separation */
+  padding-left: 32px;
+  /* Extra padding on left for visual separation */
   overflow-y: auto;
   min-height: 100vh;
   width: calc(100% - 240px);
   background-color: #f7f8fa;
-  border-radius: 32px 0 0 32px; /* Rounded corners on left side */
-  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12); /* Shadow on left edge */
+  border-radius: 32px 0 0 32px;
+  /* Rounded corners on left side */
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12);
+  /* Shadow on left edge */
+  transition: all 0.3s ease;
+}
+
+.sidebar-collapsed .main-content {
+  margin-left: 80px;
+  width: calc(100% - 80px);
 }
 
 /* Header */
@@ -610,11 +621,15 @@
 }
 
 @media (max-width: 768px) {
-  .main-content {
+
+  .main-content,
+  .sidebar-collapsed .main-content {
     margin-left: 0;
     width: 100%;
     border-radius: 0;
-    padding-left: 24px;
+    padding: 16px;
+    padding-top: 72px;
+    /* Space for mobile hamburger menu */
   }
 
   .filter-buttons {
