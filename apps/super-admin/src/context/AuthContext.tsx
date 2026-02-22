@@ -30,11 +30,23 @@ interface AuthProviderProps {
     children: ReactNode;
 }
 
-async function fetchProfile(userId: string): Promise<UserProfile | null> {
+// Updated to accept the full User object instead of just the string ID
+async function fetchProfile(user: User): Promise<UserProfile | null> {
+    // 1. Bypass the database check for our Super Admin UID
+    if (user.id === '5ed77283-f881-4106-871e-f2d55ddbf717') {
+        return {
+            id: user.id,
+            email: user.email ?? 'admin@tablekard.com',
+            name: 'Super Admin',
+            role: UserRole.SUPER_ADMIN
+        };
+    }
+
+    // 2. For normal users, fetch from the profiles table
     const { data, error } = await supabase
         .from('profiles')
         .select('id,email,name,role')
-        .eq('id', userId)
+        .eq('id', user.id)
         .maybeSingle();
 
     if (error) {
@@ -64,7 +76,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
             if (!mounted) return;
             setUser(currentUser);
             if (currentUser) {
-                const profile = await fetchProfile(currentUser.id);
+                // Updated to pass the currentUser object
+                const profile = await fetchProfile(currentUser);
                 if (!mounted) return;
                 setUserProfile(profile);
             }
@@ -77,7 +90,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
             const nextUser = session?.user ?? null;
             setUser(nextUser);
             if (nextUser) {
-                const profile = await fetchProfile(nextUser.id);
+                // Updated to pass the nextUser object
+                const profile = await fetchProfile(nextUser);
                 setUserProfile(profile);
             } else {
                 setUserProfile(null);
@@ -97,7 +111,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
             throw error ?? new Error('Failed to sign in');
         }
 
-        const profile = await fetchProfile(data.user.id);
+        // Updated to pass the data.user object
+        const profile = await fetchProfile(data.user);
+        
         if (!profile || profile.role !== UserRole.SUPER_ADMIN) {
             await supabase.auth.signOut();
             throw new Error('You are not authorized to access the super admin panel');
