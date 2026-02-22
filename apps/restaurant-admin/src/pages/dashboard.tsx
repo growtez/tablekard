@@ -4,15 +4,13 @@ import './dashboard.css';
 import Sidebar from '../components/sidebar';
 
 // Type Definitions
-interface OrderItem 
-{
+interface OrderItem {
   name: string;
   quantity: number;
   price: number;
 }
 
-interface Order
- {
+interface Order {
   id: string;
   table: string;
   orderedTime: string;
@@ -67,7 +65,7 @@ const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({ order, onClose,
             <X size={24} color="#718096" />
           </button>
         </div>
-        
+
         <div className="order-details">
           <div className="order-summary">
             <div className="order-id-section">
@@ -119,7 +117,7 @@ const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({ order, onClose,
 
           {order.status !== 'Served' && (
             <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
-              <button 
+              <button
                 className="served-action-btn"
                 onClick={() => {
                   onMarkServed(order.id);
@@ -148,7 +146,7 @@ const AllOrdersDialog: React.FC<AllOrdersDialogProps & { showAction?: boolean }>
             <X size={24} color="#718096" />
           </button>
         </div>
-        
+
         <table className="orders-table">
           <thead>
             <tr>
@@ -198,7 +196,7 @@ const AllOrdersDialog: React.FC<AllOrdersDialogProps & { showAction?: boolean }>
                 {showAction && (
                   <td>
                     {order.status !== 'Served' ? (
-                      <button 
+                      <button
                         className="served-action-btn"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -227,11 +225,11 @@ const Dashboard: React.FC = () => {
   const [showAllOrders, setShowAllOrders] = useState<boolean>(false);
   const [showAllCompleted, setShowAllCompleted] = useState<boolean>(false);
   const [orders, setOrders] = useState<Order[]>([
-    { 
-      id: 'ORDER-234', 
-      table: 'Table 7', 
-      orderedTime: '12:35 PM - Oct 02, 2025', 
-      status: 'Preparing', 
+    {
+      id: 'ORDER-234',
+      table: 'Table 7',
+      orderedTime: '12:35 PM - Oct 02, 2025',
+      status: 'Preparing',
       statusColor: 'preparing',
       customer: 'Rajesh Kumar',
       items: [
@@ -242,11 +240,11 @@ const Dashboard: React.FC = () => {
       total: 890,
       isPaid: false
     },
-    { 
-      id: 'ORDER-235', 
-      table: 'Table 3', 
-      orderedTime: '12:30 PM - Oct 02, 2025', 
-      status: 'Ready', 
+    {
+      id: 'ORDER-235',
+      table: 'Table 3',
+      orderedTime: '12:30 PM - Oct 02, 2025',
+      status: 'Ready',
       statusColor: 'ready',
       customer: 'Priya Sharma',
       items: [
@@ -256,11 +254,11 @@ const Dashboard: React.FC = () => {
       total: 470,
       isPaid: true
     },
-    { 
-      id: 'ORDER-237', 
-      table: 'Table 10', 
-      orderedTime: '12:25 PM - Oct 02, 2025', 
-      status: 'Preparing', 
+    {
+      id: 'ORDER-237',
+      table: 'Table 10',
+      orderedTime: '12:25 PM - Oct 02, 2025',
+      status: 'Preparing',
       statusColor: 'preparing',
       customer: 'Sneha Reddy',
       items: [
@@ -270,11 +268,11 @@ const Dashboard: React.FC = () => {
       total: 500,
       isPaid: false
     },
-    { 
-      id: 'ORDER-238', 
-      table: 'Table 2', 
-      orderedTime: '12:20 PM - Oct 02, 2025', 
-      status: 'Ready', 
+    {
+      id: 'ORDER-238',
+      table: 'Table 2',
+      orderedTime: '12:20 PM - Oct 02, 2025',
+      status: 'Ready',
       statusColor: 'ready',
       customer: 'Vikram Singh',
       items: [
@@ -283,11 +281,11 @@ const Dashboard: React.FC = () => {
       total: 320,
       isPaid: false
     },
-    { 
-      id: 'ORDER-239', 
-      table: 'Table 8', 
-      orderedTime: '12:18 PM - Oct 02, 2025', 
-      status: 'Preparing', 
+    {
+      id: 'ORDER-239',
+      table: 'Table 8',
+      orderedTime: '12:18 PM - Oct 02, 2025',
+      status: 'Preparing',
       statusColor: 'preparing',
       customer: 'Ananya Gupta',
       items: [
@@ -297,11 +295,11 @@ const Dashboard: React.FC = () => {
       total: 420,
       isPaid: true
     },
-    { 
-      id: 'ORDER-240', 
-      table: 'Table 15', 
-      orderedTime: '12:15 PM - Oct 02, 2025', 
-      status: 'Ready', 
+    {
+      id: 'ORDER-240',
+      table: 'Table 15',
+      orderedTime: '12:15 PM - Oct 02, 2025',
+      status: 'Ready',
       statusColor: 'ready',
       customer: 'Karan Malhotra',
       items: [
@@ -310,11 +308,11 @@ const Dashboard: React.FC = () => {
       total: 480,
       isPaid: false
     },
-    { 
-      id: 'ORDER-241', 
-      table: 'Table 6', 
-      orderedTime: '12:12 PM - Oct 02, 2025', 
-      status: 'Preparing', 
+    {
+      id: 'ORDER-241',
+      table: 'Table 6',
+      orderedTime: '12:12 PM - Oct 02, 2025',
+      status: 'Preparing',
       statusColor: 'preparing',
       customer: 'Divya Nair',
       items: [
@@ -323,11 +321,11 @@ const Dashboard: React.FC = () => {
       total: 350,
       isPaid: false
     },
-    { 
-      id: 'ORDER-242', 
-      table: 'Table 11', 
-      orderedTime: '12:10 PM - Oct 02, 2025', 
-      status: 'Ready', 
+    {
+      id: 'ORDER-242',
+      table: 'Table 11',
+      orderedTime: '12:10 PM - Oct 02, 2025',
+      status: 'Ready',
       statusColor: 'ready',
       customer: 'Rohit Desai',
       items: [
@@ -339,11 +337,11 @@ const Dashboard: React.FC = () => {
     }
   ]);
   const [completedOrders, setCompletedOrders] = useState<Order[]>([
-    { 
-      id: 'ORDER-220', 
-      table: 'Table 5', 
-      orderedTime: '11:45 AM - Oct 02, 2025', 
-      status: 'Served', 
+    {
+      id: 'ORDER-220',
+      table: 'Table 5',
+      orderedTime: '11:45 AM - Oct 02, 2025',
+      status: 'Served',
       statusColor: 'served',
       customer: 'Amit Patel',
       items: [
@@ -353,11 +351,11 @@ const Dashboard: React.FC = () => {
       total: 500,
       isPaid: true
     },
-    { 
-      id: 'ORDER-219', 
-      table: 'Table 12', 
-      orderedTime: '11:30 AM - Oct 02, 2025', 
-      status: 'Served', 
+    {
+      id: 'ORDER-219',
+      table: 'Table 12',
+      orderedTime: '11:30 AM - Oct 02, 2025',
+      status: 'Served',
       statusColor: 'served',
       customer: 'Sanjay Khanna',
       items: [
@@ -367,11 +365,11 @@ const Dashboard: React.FC = () => {
       total: 1000,
       isPaid: true
     },
-    { 
-      id: 'ORDER-218', 
-      table: 'Table 8', 
-      orderedTime: '11:20 AM - Oct 02, 2025', 
-      status: 'Served', 
+    {
+      id: 'ORDER-218',
+      table: 'Table 8',
+      orderedTime: '11:20 AM - Oct 02, 2025',
+      status: 'Served',
       statusColor: 'served',
       customer: 'Neha Kapoor',
       items: [
@@ -382,11 +380,11 @@ const Dashboard: React.FC = () => {
       total: 540,
       isPaid: true
     },
-    { 
-      id: 'ORDER-217', 
-      table: 'Table 3', 
-      orderedTime: '11:10 AM - Oct 02, 2025', 
-      status: 'Served', 
+    {
+      id: 'ORDER-217',
+      table: 'Table 3',
+      orderedTime: '11:10 AM - Oct 02, 2025',
+      status: 'Served',
       statusColor: 'served',
       customer: 'Ravi Mehta',
       items: [
@@ -396,11 +394,11 @@ const Dashboard: React.FC = () => {
       total: 520,
       isPaid: true
     },
-    { 
-      id: 'ORDER-216', 
-      table: 'Table 14', 
-      orderedTime: '10:55 AM - Oct 02, 2025', 
-      status: 'Served', 
+    {
+      id: 'ORDER-216',
+      table: 'Table 14',
+      orderedTime: '10:55 AM - Oct 02, 2025',
+      status: 'Served',
       statusColor: 'served',
       customer: 'Pooja Singh',
       items: [
@@ -410,11 +408,11 @@ const Dashboard: React.FC = () => {
       total: 360,
       isPaid: true
     },
-    { 
-      id: 'ORDER-215', 
-      table: 'Table 9', 
-      orderedTime: '10:40 AM - Oct 02, 2025', 
-      status: 'Served', 
+    {
+      id: 'ORDER-215',
+      table: 'Table 9',
+      orderedTime: '10:40 AM - Oct 02, 2025',
+      status: 'Served',
       statusColor: 'served',
       customer: 'Arjun Reddy',
       items: [
@@ -423,11 +421,11 @@ const Dashboard: React.FC = () => {
       total: 350,
       isPaid: false
     },
-    { 
-      id: 'ORDER-214', 
-      table: 'Table 6', 
-      orderedTime: '10:25 AM - Oct 02, 2025', 
-      status: 'Served', 
+    {
+      id: 'ORDER-214',
+      table: 'Table 6',
+      orderedTime: '10:25 AM - Oct 02, 2025',
+      status: 'Served',
       statusColor: 'served',
       customer: 'Kavita Sharma',
       items: [
@@ -437,11 +435,11 @@ const Dashboard: React.FC = () => {
       total: 240,
       isPaid: true
     },
-    { 
-      id: 'ORDER-213', 
-      table: 'Table 11', 
-      orderedTime: '10:15 AM - Oct 02, 2025', 
-      status: 'Served', 
+    {
+      id: 'ORDER-213',
+      table: 'Table 11',
+      orderedTime: '10:15 AM - Oct 02, 2025',
+      status: 'Served',
       statusColor: 'served',
       customer: 'Manish Gupta',
       items: [
@@ -452,11 +450,11 @@ const Dashboard: React.FC = () => {
       total: 610,
       isPaid: true
     },
-    { 
-      id: 'ORDER-212', 
-      table: 'Table 4', 
-      orderedTime: '10:00 AM - Oct 02, 2025', 
-      status: 'Served', 
+    {
+      id: 'ORDER-212',
+      table: 'Table 4',
+      orderedTime: '10:00 AM - Oct 02, 2025',
+      status: 'Served',
       statusColor: 'served',
       customer: 'Deepika Iyer',
       items: [
@@ -466,11 +464,11 @@ const Dashboard: React.FC = () => {
       total: 460,
       isPaid: true
     },
-    { 
-      id: 'ORDER-211', 
-      table: 'Table 7', 
-      orderedTime: '09:45 AM - Oct 02, 2025', 
-      status: 'Served', 
+    {
+      id: 'ORDER-211',
+      table: 'Table 7',
+      orderedTime: '09:45 AM - Oct 02, 2025',
+      status: 'Served',
       statusColor: 'served',
       customer: 'Rahul Verma',
       items: [
@@ -520,7 +518,7 @@ const Dashboard: React.FC = () => {
   return (
     <div className="dashboard-container">
       <Sidebar />
-      
+
       <div className="main-content">
         <div className="header">
           <h1 className="page-title">Dashboard</h1>
@@ -555,74 +553,19 @@ const Dashboard: React.FC = () => {
                 <h2 className="table-title">Active Orders</h2>
                 <button className="view-all-btn" onClick={() => setShowAllOrders(true)}>View All</button>
               </div>
-              <table className="orders-table">
-                <thead>
-                  <tr>
-                    <th>Order ID</th>
-                    <th>Table</th>
-                    <th>Ordered Time</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {activeOrders.slice(0, 5).map((order, idx) => (
-                    <tr key={idx}>
-                      <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
-                        {order.id}
-                      </td>
-                      <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
-                        {order.table}
-                      </td>
-                      <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
-                        {order.orderedTime}
-                      </td>
-                      <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
-                        <span className={`status-pill status-${order.statusColor}`}>
-                          {order.status}
-                        </span>
-                      </td>
-                      <td>
-                        <button 
-                          className="served-action-btn"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleMarkServed(order.id);
-                          }}
-                        >
-                          Mark Served
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="table-card" style={{ marginTop: '24px' }}>
-              <div className="table-header">
-                <h2 className="table-title">Completed Orders</h2>
-                <button className="view-all-btn" onClick={() => setShowAllCompleted(true)}>View All</button>
-              </div>
-              <table className="orders-table">
-                <thead>
-                  <tr>
-                    <th>Order ID</th>
-                    <th>Table</th>
-                    <th>Ordered Time</th>
-                    <th>Status</th>
-                    <th>Customer</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {completedOrders.length === 0 ? (
+              <div className="table-wrapper">
+                <table className="orders-table">
+                  <thead>
                     <tr>
-                      <td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>
-                        No completed orders yet
-                      </td>
+                      <th>Order ID</th>
+                      <th>Table</th>
+                      <th>Ordered Time</th>
+                      <th>Status</th>
+                      <th>Action</th>
                     </tr>
-                  ) : (
-                    completedOrders.slice(0, 5).map((order, idx) => (
+                  </thead>
+                  <tbody>
+                    {activeOrders.slice(0, 5).map((order, idx) => (
                       <tr key={idx}>
                         <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
                           {order.id}
@@ -638,14 +581,73 @@ const Dashboard: React.FC = () => {
                             {order.status}
                           </span>
                         </td>
-                        <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
-                          {order.customer}
+                        <td>
+                          <button
+                            className="served-action-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleMarkServed(order.id);
+                            }}
+                          >
+                            Mark Served
+                          </button>
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="table-card" style={{ marginTop: '24px' }}>
+              <div className="table-header">
+                <h2 className="table-title">Completed Orders</h2>
+                <button className="view-all-btn" onClick={() => setShowAllCompleted(true)}>View All</button>
+              </div>
+              <div className="table-wrapper">
+                <table className="orders-table">
+                  <thead>
+                    <tr>
+                      <th>Order ID</th>
+                      <th>Table</th>
+                      <th>Ordered Time</th>
+                      <th>Status</th>
+                      <th>Customer</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {completedOrders.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>
+                          No completed orders yet
+                        </td>
+                      </tr>
+                    ) : (
+                      completedOrders.slice(0, 5).map((order, idx) => (
+                        <tr key={idx}>
+                          <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
+                            {order.id}
+                          </td>
+                          <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
+                            {order.table}
+                          </td>
+                          <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
+                            {order.orderedTime}
+                          </td>
+                          <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
+                            <span className={`status-pill status-${order.statusColor}`}>
+                              {order.status}
+                            </span>
+                          </td>
+                          <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
+                            {order.customer}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 
@@ -689,7 +691,7 @@ const Dashboard: React.FC = () => {
                     </div>
                     <div className="payment-action">
                       <div className="payment-amount">₹{payment.amount}</div>
-                      <button 
+                      <button
                         className="mark-paid-btn"
                         onClick={() => handlePaymentComplete(payment.id)}
                       >
@@ -709,8 +711,8 @@ const Dashboard: React.FC = () => {
       </div>
 
       {selectedOrder && (
-        <OrderDetailsDialog 
-          order={selectedOrder} 
+        <OrderDetailsDialog
+          order={selectedOrder}
           onClose={() => setSelectedOrder(null)}
           onMarkServed={handleMarkServed}
         />
@@ -731,7 +733,7 @@ const Dashboard: React.FC = () => {
           orders={completedOrders}
           onClose={() => setShowAllCompleted(false)}
           onSelectOrder={setSelectedOrder}
-          onMarkServed={() => {}}
+          onMarkServed={() => { }}
           showAction={false}
         />
       )}
