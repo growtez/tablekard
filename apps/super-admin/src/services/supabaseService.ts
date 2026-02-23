@@ -26,7 +26,6 @@ const mapRestaurant = (row: any): Restaurant => ({
     slug: row.slug,
     status: row.status,
     statusReason: row.status_reason ?? undefined,
-    statusReason: row.status_reason,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     contact: {
@@ -276,6 +275,21 @@ export const getRevenueStats = async (startDate: Date, endDate: Date) => {
     };
 };
 
+export const getSubscriptionStats = async () => {
+    const [activeCount, trialCount] = await Promise.all([
+        supabase.from('restaurants').select('*', { count: 'exact', head: true }).eq('status', RestaurantStatus.ACTIVE),
+        supabase.from('restaurants').select('*', { count: 'exact', head: true }).eq('status', RestaurantStatus.TRIAL)
+    ]);
+
+    if (activeCount.error) throw activeCount.error;
+    if (trialCount.error) throw trialCount.error;
+
+    return {
+        activeCount: activeCount.count ?? 0,
+        trialCount: trialCount.count ?? 0
+    };
+};
+
 export const getRecentOrders = async (limitCount: number = 10) => {
     const { data, error } = await supabase
         .from('orders')
@@ -327,7 +341,8 @@ const supabaseService = {
     getRevenueStats,
     getRecentOrders,
     getSystemConfig,
-    updateSystemConfig
+    updateSystemConfig,
+    getSubscriptionStats
 };
 
 export default supabaseService;

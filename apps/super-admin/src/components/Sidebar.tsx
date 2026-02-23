@@ -7,8 +7,10 @@ import {
     Users,
     BarChart3,
     Bell,
-    HelpCircle
+    HelpCircle,
+    LogOut
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const navItems = [
     {
@@ -37,6 +39,8 @@ const navItems = [
 ];
 
 export default function Sidebar() {
+    const { signOut, userProfile } = useAuth();
+
     return (
         <aside className="sidebar">
             <div className="sidebar-header">
@@ -66,27 +70,37 @@ export default function Sidebar() {
                 ))}
             </nav>
 
-            <div style={{ padding: '1rem', borderTop: '1px solid var(--color-border)' }}>
-                <div className="flex items-center gap-sm">
-                    <div style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: '50%',
-                        background: 'var(--color-accent-gradient)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '0.875rem',
-                        fontWeight: 600
-                    }}>
-                        SA
-                    </div>
-                    <div>
-                        <div style={{ fontSize: '0.875rem', fontWeight: 500 }}>Super Admin</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                            admin@saas.com
+            <div style={{ padding: '1rem', borderTop: '1px solid var(--color-border)', marginTop: 'auto' }}>
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-sm">
+                        <div style={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: '50%',
+                            background: 'var(--color-accent-gradient)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.875rem',
+                            fontWeight: 600
+                        }}>
+                            {userProfile?.name?.charAt(0) || 'A'}
+                        </div>
+                        <div>
+                            <div style={{ fontSize: '0.875rem', fontWeight: 500 }}>{userProfile?.name || 'Admin'}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {userProfile?.email}
+                            </div>
                         </div>
                     </div>
+                    <button
+                        onClick={() => signOut()}
+                        className="btn btn-ghost"
+                        title="Logout"
+                        style={{ padding: '8px', minWidth: 'auto' }}
+                    >
+                        <LogOut size={18} />
+                    </button>
                 </div>
             </div>
         </aside>

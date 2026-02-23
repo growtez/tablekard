@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@restaurant-saas/supabase';
-import { RestaurantStatus, SubscriptionPlan } from '@restaurant-saas/types';
+import supabaseService from '../services/supabaseService';
+import { SubscriptionPlan } from '@restaurant-saas/types';
 
 export function useSubscriptionStats() {
     const [stats, setStats] = useState<any[]>([]);
@@ -17,23 +17,17 @@ export function useSubscriptionStats() {
         try {
             setLoading(true);
 
-            const [activeCount, trialCount] = await Promise.all([
-                supabase.from('restaurants').select('*', { count: 'exact', head: true }).eq('status', RestaurantStatus.ACTIVE),
-                supabase.from('restaurants').select('*', { count: 'exact', head: true }).eq('status', RestaurantStatus.TRIAL)
-            ]);
-
-            if (activeCount.error) throw activeCount.error;
-            if (trialCount.error) throw trialCount.error;
+            const { activeCount, trialCount } = await supabaseService.getSubscriptionStats();
 
             setStats([
                 {
                     label: `QR Plan (${SubscriptionPlan.QR})`,
-                    count: activeCount.count ?? 0,
+                    count: activeCount,
                     revenue: 'Manual'
                 },
                 {
                     label: 'Trial',
-                    count: trialCount.count ?? 0,
+                    count: trialCount,
                     revenue: '₹0'
                 }
             ]);
