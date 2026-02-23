@@ -1,43 +1,21 @@
-import React, { useState } from 'react';
-import { Home, ShoppingBag, MessageCircle, User, Minus, Plus, Trash2, Clock, CheckCircle, Utensils, ShoppingCart, ListOrdered, ArrowRight, Star, Users } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Home, ShoppingBag, MessageCircle, User, Minus, Plus, Trash2, Clock, CheckCircle, Utensils, ShoppingCart, ListOrdered, ArrowRight, Star, Users, CreditCard, Wallet, Loader2, AlertCircle } from 'lucide-react';
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
+import { processOnlinePayment } from '../services/paymentService';
+import { createOrder } from '../services/supabaseService';
 import './my_order.css';
 import Hamburger from '../components/hamburger';
 
 const MyOrderPage = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const { cartItems, updateQuantity, deleteFromCart, cartSubtotal, clearCart } = useCart();
   const [activeTab, setActiveTab] = useState('cart');
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: 'Caesar Salad',
-      price: 180,
-      quantity: 2,
-      image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=120&h=120&fit=crop',
-      rating: 4.8,
-      serves: '1-2'
-    },
-    {
-      id: 2,
-      name: 'Grilled Salmon',
-      price: 450,
-      quantity: 1,
-      image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=120&h=120&fit=crop',
-      rating: 4.9,
-      serves: '1'
-    },
-    {
-      id: 3,
-      name: 'Fresh Orange Juice',
-      price: 120,
-      quantity: 3,
-      image: 'https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=120&h=120&fit=crop',
-      rating: 4.5,
-      serves: '1'
-    }
-  ]);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState('');
+  const [error, setError] = useState('');
 
   const [orders, setOrders] = useState([
     {
@@ -81,25 +59,9 @@ const MyOrderPage = () => {
     }
   ]);
 
-  const updateQuantity = (id, increment) => {
-    setCartItems(prev =>
-      prev.map(item => {
-        if (item.id === id) {
-          const newQuantity = Math.max(0, item.quantity + increment);
-          return newQuantity === 0 ? null : { ...item, quantity: newQuantity };
-        }
-        return item;
-      }).filter(Boolean)
-    );
-  };
-
-  const removeItem = (id) => {
-    setCartItems(prev => prev.filter(item => item.id !== id));
-  };
-
-  const getTotalPrice = () => {
-    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-  };
+  // Alias for template compatibility
+  const removeItem = deleteFromCart;
+  const getTotalPrice = () => cartSubtotal;
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -127,37 +89,129 @@ const MyOrderPage = () => {
     }
   };
 
-  const placeOrder = () => {
+  // ─── PAY ONLINE: Razorpay flow ───
+  const handlePayOnline = async () => {
     if (cartItems.length === 0) return;
-
     if (!isAuthenticated) {
-      const currentPath = encodeURIComponent(window.location.pathname + window.location.search);
+      const currentPath = encodeURIComponent(window.location.pathname);
       navigate(`/login?redirect=${currentPath}`);
       return;
     }
 
-    const newOrder = {
-      id: `ORD00${orders.length + 1}`,
-      status: 'placed',
-      items: cartItems.map(item => ({
-        name: item.name,
-        quantity: item.quantity,
-        price: item.price
-      })),
-      total: getTotalPrice(),
-      orderTime: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
-      estimatedTime: '30 mins',
-      orderDate: 'Just now',
-      paymentStatus: 'Not Paid'
-    };
+    setPaymentLoading(true);
+    setError('');
 
-    setOrders(prev => [newOrder, ...prev]);
-    setCartItems([]);
-    setActiveTab('orders');
+    try {
+      // Restaurant ID — for single-restaurant setup
+      const restaurantId = 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d';
+
+      const result = await processOnlinePayment({
+        restaurantId,
+        tableId: null,
+        orderType: 'DINE_IN',
+        items: cartItems,
+        restaurantName: 'Tablekard',
+        userName: user?.user_metadata?.full_name || '',
+        userEmail: user?.email || '',
+        userPhone: user?.phone || '',
+        onStatusChange: (status) => setPaymentStatus(status),
+      });
+
+      if (result.success) {
+        const newOrder = {
+          id: result.orderNumber,
+          status: 'placed',
+          items: cartItems.map(item => ({ name: item.name, quantity: item.quantity, price: item.price })),
+          total: getTotalPrice() + Math.round(getTotalPrice() * 0.05) + Math.round(getTotalPrice() * 0.18),
+          orderDate: 'Just now',
+          paymentStatus: 'Paid Online',
+          statusLabel: 'Order Placed'
+        };
+        setOrders(prev => [newOrder, ...prev]);
+        clearCart();
+        setActiveTab('orders');
+      }
+    } catch (err) {
+      console.error('Payment error:', err);
+      if (err.message !== 'Payment cancelled by user') {
+        setError(err.message || 'Payment failed. Please try again.');
+      }
+    } finally {
+      setPaymentLoading(false);
+      setPaymentStatus('');
+    }
+  };
+
+  // ─── PAY AT COUNTER: Direct order ───
+  const handlePayAtCounter = async () => {
+    if (cartItems.length === 0) return;
+    if (!isAuthenticated) {
+      const currentPath = encodeURIComponent(window.location.pathname);
+      navigate(`/login?redirect=${currentPath}`);
+      return;
+    }
+
+    setPaymentLoading(true);
+    setError('');
+
+    try {
+      // Restaurant ID — for single-restaurant setup
+      const restaurantId = 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d';
+
+      const result = await createOrder({
+        restaurantId,
+        customerId: user?.id,
+        customerName: user?.user_metadata?.full_name || null,
+        customerPhone: user?.phone || null,
+        tableNumber: null,
+        items: cartItems,
+        paymentMethod: 'PAY_AT_COUNTER',
+      });
+
+      const newOrder = {
+        id: result.orderNumber,
+        status: 'placed',
+        items: cartItems.map(item => ({ name: item.name, quantity: item.quantity, price: item.price })),
+        total: getTotalPrice() + Math.round(getTotalPrice() * 0.05) + Math.round(getTotalPrice() * 0.18),
+        orderDate: 'Just now',
+        paymentStatus: 'Pay at Counter',
+        statusLabel: 'Order Placed'
+      };
+      setOrders(prev => [newOrder, ...prev]);
+      setCartItems([]);
+      setActiveTab('orders');
+    } catch (err) {
+      console.error('Order error:', err);
+      setError(err.message || 'Failed to place order.');
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  const statusMessages = {
+    creating_order: 'Preparing your order...',
+    opening_checkout: 'Opening payment gateway...',
+    verifying_payment: 'Verifying payment...',
+    success: 'Payment successful!',
   };
 
   return (
     <div className="myorder-container">
+      {/* Loading Overlay */}
+      {paymentLoading && paymentStatus !== 'opening_checkout' && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          zIndex: 9999, gap: '16px',
+        }}>
+          <Loader2 size={40} color="#8B3A1E" style={{ animation: 'spin 1s linear infinite' }} />
+          <p style={{ color: '#fff', fontSize: '16px', fontWeight: 500 }}>
+            {statusMessages[paymentStatus] || 'Processing...'}
+          </p>
+        </div>
+      )}
+
       {/* Header - Same style as Home page */}
       <header className="menu-header-nav">
         <div className="header-left">
@@ -291,10 +345,55 @@ const MyOrderPage = () => {
                 </div>
               </div>
 
-              {/* Place Order Button */}
-              <button className="place-order-btn" onClick={placeOrder}>
-                Place Order <ArrowRight size={20} />
-              </button>
+              {/* Error Message */}
+              {error && (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                  background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)',
+                  padding: '10px 14px', borderRadius: '10px', marginBottom: '12px',
+                }}>
+                  <AlertCircle size={16} color="#ef4444" />
+                  <p style={{ color: '#ef4444', fontSize: '13px', margin: 0 }}>{error}</p>
+                </div>
+              )}
+
+              {/* Payment Buttons */}
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  className="place-order-btn"
+                  onClick={handlePayAtCounter}
+                  disabled={paymentLoading}
+                  style={{
+                    flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                    padding: '10px 12px', fontSize: '13px', whiteSpace: 'nowrap',
+                    opacity: paymentLoading ? 0.6 : 1
+                  }}
+                >
+                  <Wallet size={16} />
+                  Pay at Counter
+                </button>
+                <button
+                  className="place-order-btn"
+                  onClick={handlePayOnline}
+                  disabled={paymentLoading}
+                  style={{
+                    flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                    background: 'transparent', border: '2px solid #8B3A1E', color: '#8B3A1E',
+                    padding: '10px 12px', fontSize: '13px', whiteSpace: 'nowrap',
+                    opacity: paymentLoading ? 0.6 : 1
+                  }}
+                >
+                  <CreditCard size={16} />
+                  Pay Online
+                </button>
+              </div>
+
+              <style>{`
+                @keyframes spin {
+                  from { transform: rotate(0deg); }
+                  to { transform: rotate(360deg); }
+                }
+              `}</style>
             </>
           )}
         </div>
