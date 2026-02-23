@@ -9,21 +9,22 @@ const LoadingScreen: React.FC = () => {
             alignItems: 'center',
             height: '100vh',
             width: '100vw',
-            background: '#0f0c29',
-            color: '#fff',
-            fontFamily: 'system-ui, -apple-system, sans-serif'
+            background: 'var(--color-bg-primary)',
+            color: 'var(--color-text-primary)',
+            fontFamily: 'var(--font-family)'
         }}>
-            <div className="animate-spin" style={{
+            <div className="custom-spinner" style={{
                 width: '40px',
                 height: '40px',
-                border: '3px solid rgba(255,255,255,0.1)',
-                borderTopColor: '#6366f1',
+                border: '3px solid var(--color-border)',
+                borderTopColor: 'var(--color-accent-primary)',
                 borderRadius: '50%',
-                marginBottom: '1rem'
+                marginBottom: 'var(--spacing-md)'
             }}></div>
             <p style={{
                 fontSize: '0.875rem',
                 fontWeight: 500,
+                color: 'var(--color-text-secondary)',
                 letterSpacing: '0.025em',
                 opacity: 0.8
             }}>
@@ -35,7 +36,7 @@ const LoadingScreen: React.FC = () => {
                 @keyframes spin {
                     to { transform: rotate(360deg); }
                 }
-                .animate-spin {
+                .custom-spinner {
                     animation: spin 1s linear infinite;
                 }
             `}</style>
