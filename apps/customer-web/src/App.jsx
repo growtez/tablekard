@@ -3,6 +3,7 @@ import { Smartphone } from "lucide-react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { CartProvider } from "./context/CartContext";
 
 // Import your pages
 import HomePage from "./pages/home";
@@ -23,10 +24,7 @@ import OrderHistoryPage from './pages/order_history';
 import AboutPage from './pages/about';
 import TestWebhookPage from './pages/test_webhook';
 
-// QR Ordering pages (dine-in)
-import QRMenuPage from './pages/qr/menu';
-import QRCartPage from './pages/qr/cart';
-import QROrderSuccessPage from './pages/qr/order_success';
+
 
 import "./App.css";
 
@@ -81,16 +79,7 @@ function AppRoutes() {
       <Route path="/feedback/:orderId" element={<RequireAuth><FeedbackPage /></RequireAuth>} />
       <Route path="/order-history" element={<RequireAuth><OrderHistoryPage /></RequireAuth>} />
 
-      {/* Public QR Ordering routes (browsing is allowed) */}
-      <Route path="/r/:restaurantSlug" element={<QRMenuPage />} />
-      <Route path="/r/:restaurantSlug/table/:tableNumber" element={<QRMenuPage />} />
-      <Route path="/r/:restaurantSlug/cart" element={<QRCartPage />} />
 
-      {/* Protected QR Order Success (only makes sense if you just ordered) */}
-      <Route
-        path="/r/:restaurantSlug/order-success"
-        element={<RequireAuth><QROrderSuccessPage /></RequireAuth>}
-      />
 
       {/* Developer Demo Route */}
       <Route path="/test-webhook" element={<TestWebhookPage />} />
@@ -138,15 +127,17 @@ function MobileOnlyWrapper({ children }) {
 function App() {
   return (
     <AuthProvider>
-      <ThemeProvider>
-        <Router>
-          <MobileOnlyWrapper>
-            <div className="App">
-              <AppRoutes />
-            </div>
-          </MobileOnlyWrapper>
-        </Router>
-      </ThemeProvider>
+      <CartProvider>
+        <ThemeProvider>
+          <Router>
+            <MobileOnlyWrapper>
+              <div className="App">
+                <AppRoutes />
+              </div>
+            </MobileOnlyWrapper>
+          </Router>
+        </ThemeProvider>
+      </CartProvider>
     </AuthProvider>
   );
 }

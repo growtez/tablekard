@@ -7,7 +7,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // https://vite.dev/config/
 export default defineConfig({
-    envDir: path.resolve(__dirname, '../../'),
+    envDir: path.resolve(__dirname),
     plugins: [react()],
     resolve: {
         alias: {
@@ -25,6 +25,5 @@ export default defineConfig({
     optimizeDeps: {
         exclude: ['@restaurant-saas/supabase', '@restaurant-saas/types']
     },
-    envDir: '../../'
 })
 
