@@ -26,7 +26,7 @@ const getStatusBadge = (status: RestaurantStatus) => {
 };
 
 const planBadge = (
-    <span className="badge" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa' }}>
+    <span className="badge" style={{ background: 'var(--color-bg-tertiary)', color: 'var(--color-accent-primary)', border: '1px solid var(--color-border)' }}>
         QR Only
     </span>
 );

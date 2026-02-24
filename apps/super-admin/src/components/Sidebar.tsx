@@ -45,8 +45,8 @@ export default function Sidebar() {
         <aside className="sidebar">
             <div className="sidebar-header">
                 <div className="sidebar-logo">
-                    <div className="sidebar-logo-icon">🍽️</div>
-                    <span className="sidebar-logo-text">Restaurant SaaS</span>
+                    <div className="sidebar-logo-icon">🍣</div>
+                    <span className="sidebar-logo-text">TableKard</span>
                 </div>
             </div>
 
@@ -82,7 +82,8 @@ export default function Sidebar() {
                             alignItems: 'center',
                             justifyContent: 'center',
                             fontSize: '0.875rem',
-                            fontWeight: 600
+                            fontWeight: 600,
+                            color: 'var(--color-on-accent)'
                         }}>
                             {userProfile?.name?.charAt(0) || 'A'}
                         </div>

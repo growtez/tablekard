@@ -83,9 +83,9 @@ const LoginPage: React.FC = () => {
         <div className="login-page">
             <div className="login-container">
                 <div className="login-header">
-                    <div className="logo">🏢</div>
-                    <h1>Super Admin</h1>
-                    <p>Restaurant SaaS Management Portal</p>
+                    <div className="logo">🍣</div>
+                    <h1>TableKard</h1>
+                    <p>Super Admin Management Portal</p>
                 </div>
 
                 <form className="login-form" onSubmit={handleSubmit}>
