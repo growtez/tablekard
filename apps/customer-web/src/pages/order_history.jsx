@@ -1,49 +1,50 @@
-import React, { useState } from 'react';
-import { ArrowLeft, RotateCcw } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, RotateCcw, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { getOrderHistory } from '../services/supabaseService';
 import './order_history.css';
 
 const OrderHistoryPage = () => {
     const navigate = useNavigate();
+    const { user, isAuthenticated } = useAuth();
     const [activeFilter, setActiveFilter] = useState('all');
+    const [orders, setOrders] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const orders = [
-        {
-            id: '#ORD-9901',
-            date: '10 Jan / 02:30 PM',
-            items: ['Margherita Pizza', 'Caesar Salad'],
-            total: 3568,
-            status: 'completed'
-        },
-        {
-            id: '#ORD-9844',
-            date: '08 Jan / 12:15 PM',
-            items: ['Grilled Salmon', 'Orange Juice'],
-            total: 728,
-            status: 'completed'
-        },
-        {
-            id: '#ORD-9801',
-            date: '05 Jan / 07:45 PM',
-            items: ['Chef Special Omakase'],
-            total: 4500,
-            status: 'completed'
-        },
-        {
-            id: '#ORD-9755',
-            date: '02 Jan / 01:00 PM',
-            items: ['Vegan Burger', 'Lava Cake'],
-            total: 856,
-            status: 'cancelled'
-        },
-        {
-            id: '#ORD-9722',
-            date: '28 Dec / 08:30 PM',
-            items: ['Tikka Masala', 'Naan'],
-            total: 1456,
-            status: 'completed'
-        },
-    ];
+    useEffect(() => {
+        const fetchHistory = async () => {
+            if (!isAuthenticated || !user) {
+                setLoading(false);
+                return;
+            }
+            try {
+                const history = await getOrderHistory(user.id);
+                // Map database statuses to UI classes
+                const mappedOrders = history.map(order => ({
+                    id: `#${order.order_number || order.id.substring(0, 8).toUpperCase()}`,
+                    date: new Date(order.created_at).toLocaleString('en-IN', {
+                        day: '2-digit',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                    }),
+                    items: order.order_items.map(item => item.name),
+                    total: order.total,
+                    status: order.status === 'SERVED' ? 'completed' : order.status === 'CANCELLED' ? 'cancelled' : 'pending',
+                    realStatus: order.status
+                }));
+                setOrders(mappedOrders);
+            } catch (err) {
+                console.error('Failed to fetch order history:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchHistory();
+    }, [user, isAuthenticated]);
 
     const filters = [
         { id: 'all', label: 'All History' },
@@ -54,6 +55,33 @@ const OrderHistoryPage = () => {
     const filteredOrders = activeFilter === 'all'
         ? orders
         : orders.filter(o => o.status === activeFilter);
+
+    // Calculate sum of completed orders
+    const totalSpent = orders
+        .filter(o => o.status === 'completed')
+        .reduce((sum, o) => sum + o.total, 0);
+
+    const completedCount = orders.filter(o => o.status === 'completed').length;
+
+    if (!isAuthenticated) {
+        return (
+            <div className="order-history-page-container">
+                <header className="order-history-page-header">
+                    <button className="order-history-page-back-btn" onClick={() => navigate(-1)}>
+                        <ArrowLeft size={22} />
+                    </button>
+                    <h1>Order History</h1>
+                    <div style={{ width: 44 }}></div>
+                </header>
+                <div className="history-empty">
+                    <div className="empty-art">🔐</div>
+                    <h3>Login Required</h3>
+                    <p>Please log in to see your order history.</p>
+                    <button className="filter-pill active" style={{ marginTop: 20 }} onClick={() => navigate('/login')}>Login Now</button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="order-history-page-container">
@@ -69,15 +97,15 @@ const OrderHistoryPage = () => {
             {/* Stats Bubble */}
             <div className="order-history-stats-bubble">
                 <span className="bubble-label">Dining Summary</span>
-                <span className="bubble-value">₹11,098</span>
+                <span className="bubble-value">₹{totalSpent.toLocaleString()}</span>
 
                 <div className="bubble-grid">
                     <div className="bubble-stat">
-                        <span className="bubble-stat-val">24</span>
+                        <span className="bubble-stat-val">{completedCount}</span>
                         <span className="bubble-stat-label">Visits</span>
                     </div>
                     <div className="bubble-stat">
-                        <span className="bubble-stat-val">12</span>
+                        <span className="bubble-stat-val">⭐</span>
                         <span className="bubble-stat-label">Favourite</span>
                     </div>
                 </div>
@@ -98,7 +126,11 @@ const OrderHistoryPage = () => {
 
             {/* List */}
             <div className="order-history-list">
-                {filteredOrders.length === 0 ? (
+                {loading ? (
+                    <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
+                        <Loader2 className="animate-spin" size={32} color="#8B3A1E" />
+                    </div>
+                ) : filteredOrders.length === 0 ? (
                     <div className="history-empty">
                         <div className="empty-art">🍽️</div>
                         <h3>Empty Plate</h3>
@@ -113,7 +145,7 @@ const OrderHistoryPage = () => {
                                     <span className="order-timestamp">{order.date}</span>
                                 </div>
                                 <span className={`status-badge ${order.status}`}>
-                                    {order.status}
+                                    {order.status === 'pending' ? order.realStatus : order.status}
                                 </span>
                             </div>
 
@@ -128,7 +160,7 @@ const OrderHistoryPage = () => {
                                     <span className="price-label">Transaction</span>
                                     <span className="price-amount">₹{order.total.toLocaleString()}</span>
                                 </div>
-                                <button className="action-btn">
+                                <button className="action-btn" onClick={() => navigate('/menu')}>
                                     <RotateCcw size={20} />
                                 </button>
                             </div>
@@ -136,6 +168,15 @@ const OrderHistoryPage = () => {
                     ))
                 )}
             </div>
+            <style>{`
+                .animate-spin {
+                    animation: spin 1s linear infinite;
+                }
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+            `}</style>
         </div>
     );
 };

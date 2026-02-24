@@ -13,6 +13,16 @@ body {
   overflow-x: hidden;
 }
 
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .menu-container {
   min-height: 100vh;
   background-color: var(--color-background, #FFFFFF);
@@ -213,18 +223,19 @@ body {
   overflow: visible;
 }
 
-.menu-item {
+.menu-container .menu-item {
   display: flex;
   background: var(--color-card, #FFFFFF);
   border-radius: 24px;
   padding: 12px;
   box-shadow: none;
-  border: 1.5px solid var(--color-text, #1A1A1A);
+  border: 1.5px solid #000000 !important;
+  box-shadow: none !important;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
-.menu-item:active {
+.menu-container .menu-item:active {
   transform: scale(0.98);
 }
 

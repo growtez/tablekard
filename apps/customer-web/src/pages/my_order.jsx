@@ -4,7 +4,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { processOnlinePayment } from '../services/paymentService';
-import { createOrder } from '../services/supabaseService';
+import { createOrder, getTodaysOrders } from '../services/supabaseService';
 import './my_order.css';
 import Hamburger from '../components/hamburger';
 
@@ -17,47 +17,41 @@ const MyOrderPage = () => {
   const [paymentStatus, setPaymentStatus] = useState('');
   const [error, setError] = useState('');
 
-  const [orders, setOrders] = useState([
-    {
-      id: 'ORD001',
-      status: 'ready',
-      items: [
-        { name: 'Chicken Wings', quantity: 1, price: 12 },
-        { name: 'Iced Coffee', quantity: 2, price: 3 }
-      ],
-      total: 18,
-      discount: 0,
-      orderDate: 'Jan 10, 2:30 PM',
-      paymentStatus: 'Paid via UPI',
-      statusLabel: 'Ready for serving'
-    },
-    {
-      id: 'ORD002',
-      status: 'preparing',
-      items: [
-        { name: 'Pasta Carbonara', quantity: 1, price: 14 },
-        { name: 'Chocolate Cake', quantity: 1, price: 7 }
-      ],
-      total: 21,
-      discount: 0,
-      orderDate: 'Jan 10, 3:15 PM',
-      paymentStatus: 'Not Paid',
-      statusLabel: 'Preparing'
-    },
-    {
-      id: 'ORD003',
-      status: 'placed',
-      items: [
-        { name: 'Veggie Burger', quantity: 2, price: 13 },
-        { name: 'Smoothie Bowl', quantity: 1, price: 6 }
-      ],
-      total: 32,
-      discount: 5,
-      orderDate: 'Jan 10, 3:45 PM',
-      paymentStatus: 'Paid via Cash',
-      statusLabel: 'Order Placed'
+  const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      if (!isAuthenticated || !user) return;
+      setOrdersLoading(true);
+      try {
+        const data = await getTodaysOrders(user.id);
+        const mapped = data.map(order => ({
+          id: order.order_number || order.id.substring(0, 8),
+          status: order.status.toLowerCase(),
+          items: order.order_items.map(item => ({
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price
+          })),
+          total: order.total,
+          discount: order.discount || 0,
+          orderDate: new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          paymentStatus: order.payment_status === 'PAID' ? 'Paid' : order.payment_status === 'PENDING' ? 'Pending' : order.payment_status,
+          statusLabel: order.status.charAt(0).toUpperCase() + order.status.slice(1).toLowerCase()
+        }));
+        setOrders(mapped);
+      } catch (err) {
+        console.error('Failed to fetch today\'s orders:', err);
+      } finally {
+        setOrdersLoading(false);
+      }
+    };
+
+    if (isAuthenticated && user) {
+      fetchOrders();
     }
-  ]);
+  }, [isAuthenticated, user]);
 
   // Alias for template compatibility
   const removeItem = deleteFromCart;
@@ -292,7 +286,7 @@ const MyOrderPage = () => {
                         </div>
                         <div className="cart-serves">
                           <Users size={12} />
-                          <span>Serves {item.serves}</span>
+                          <span>{item.serves}</span>
                         </div>
                       </div>
                       <div className="cart-bottom">
@@ -402,11 +396,16 @@ const MyOrderPage = () => {
       {/* Orders Content */}
       {activeTab === 'orders' && (
         <div className="orders-content">
-          {orders.length === 0 ? (
+          {ordersLoading ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 0' }}>
+              <Loader2 size={40} color="#8B3A1E" style={{ animation: 'spin 1s linear infinite' }} />
+              <p style={{ marginTop: '16px', color: '#666', fontWeight: 500 }}>Fetching today's orders...</p>
+            </div>
+          ) : orders.length === 0 ? (
             <div className="empty-state">
               <ShoppingBag size={64} color="#888888" />
               <h3>No active orders yet.</h3>
-              <p>Order some delicious food!</p>
+              <p>You haven't ordered anything today.</p>
             </div>
           ) : (
             <>

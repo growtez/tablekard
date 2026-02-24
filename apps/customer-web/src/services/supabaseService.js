@@ -90,3 +90,35 @@ export const createOrder = async ({
 
     return { orderId: order.id, orderNumber };
 };
+
+export const getOrderHistory = async (userId) => {
+    const { data, error } = await supabase
+        .from('orders')
+        .select(`
+            *,
+            order_items (*)
+        `)
+        .eq('customer_id', userId)
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data ?? [];
+};
+
+export const getTodaysOrders = async (userId) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const { data, error } = await supabase
+        .from('orders')
+        .select(`
+            *,
+            order_items (*)
+        `)
+        .eq('customer_id', userId)
+        .gte('created_at', today.toISOString())
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data ?? [];
+};
