@@ -1,28 +1,48 @@
-import React, { useState, useEffect } from "react";
-import { Smartphone } from "lucide-react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
+import { Smartphone, Loader2 } from "lucide-react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 
-// Import your pages
-import HomePage from "./pages/home";
-import MenuPage from "./pages/menu";
-import MyOrdersPage from "./pages/my_order";
-import ProfilePage from "./pages/profile";
-import SettingsPage from "./pages/settings";
-import SearchPage from './pages/search';
-import LikesPage from './pages/likes';
-import MostPopularPage from './pages/popular';
-import RecentOrdersPage from './pages/recent';
-import OffersPage from './pages/offers';
-import OnboardingPage from './pages/onboarding';
-import LoginPage from './pages/login';
-import LiveQueuePage from './pages/live_queue';
-import FeedbackPage from './pages/feedback';
-import OrderHistoryPage from './pages/order_history';
-import AboutPage from './pages/about';
-import TestWebhookPage from './pages/test_webhook';
+// Lazy load pages for faster initial startup
+const HomePage = lazy(() => import("./pages/home"));
+const MenuPage = lazy(() => import("./pages/menu"));
+const MyOrdersPage = lazy(() => import("./pages/my_order"));
+const ProfilePage = lazy(() => import("./pages/profile"));
+const SettingsPage = lazy(() => import("./pages/settings"));
+const SearchPage = lazy(() => import("./pages/search"));
+const LikesPage = lazy(() => import("./pages/likes"));
+const MostPopularPage = lazy(() => import("./pages/popular"));
+const RecentOrdersPage = lazy(() => import("./pages/recent"));
+const OffersPage = lazy(() => import("./pages/offers"));
+const OnboardingPage = lazy(() => import("./pages/onboarding"));
+const LoginPage = lazy(() => import("./pages/login"));
+const LiveQueuePage = lazy(() => import("./pages/live_queue"));
+const FeedbackPage = lazy(() => import("./pages/feedback"));
+const OrderHistoryPage = lazy(() => import("./pages/order_history"));
+const AboutPage = lazy(() => import("./pages/about"));
+const TestWebhookPage = lazy(() => import("./pages/test_webhook"));
+
+// Loading fallbacks
+const PageLoader = () => (
+  <div style={{
+    minHeight: '80vh',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '12px',
+    color: '#8B3A1E'
+  }}>
+    <Loader2 size={32} className="animate-spin" />
+    <span style={{ fontWeight: 500, fontSize: '14px' }}>Loading...</span>
+    <style>{`
+      .animate-spin { animation: spin 1s linear infinite; }
+      @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    `}</style>
+  </div>
+);
 
 
 
@@ -132,7 +152,9 @@ function App() {
           <Router>
             <MobileOnlyWrapper>
               <div className="App">
-                <AppRoutes />
+                <Suspense fallback={<PageLoader />}>
+                  <AppRoutes />
+                </Suspense>
               </div>
             </MobileOnlyWrapper>
           </Router>

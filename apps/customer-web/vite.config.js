@@ -22,8 +22,5 @@ export default defineConfig({
             overlay: true
         }
     },
-    optimizeDeps: {
-        exclude: ['@restaurant-saas/supabase', '@restaurant-saas/types']
-    },
 })
 
