@@ -1,16 +1,11 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, ShoppingBag, ShoppingCart, User, Moon, Sun, Monitor, ArrowLeft, Bell, Globe, Shield, HelpCircle } from 'lucide-react';
+import { Home, ShoppingBag, ShoppingCart, User, ArrowLeft, Bell, Globe, Shield, HelpCircle } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import './settings.css';
 
 const SettingsPage = () => {
-    const { theme, themeMode, toggleTheme, isDark } = useTheme();
-
-    const themeOptions = [
-        { id: 'dark', label: 'Dark', icon: Moon, description: 'Dark background with light text' },
-        { id: 'light', label: 'Light', icon: Sun, description: 'Light background with dark text' },
-    ];
+    const { theme } = useTheme();
 
     const settingsItems = [
         { id: 1, icon: Bell, label: 'Notifications', value: 'On' },
@@ -31,40 +26,7 @@ const SettingsPage = () => {
             </header>
 
             <div className="settings-content">
-                {/* Theme Section */}
-                <section className="settings-section">
-                    <h2 className="section-title" style={{ color: theme.text }}>Appearance</h2>
-                    <div className="theme-card" style={{ backgroundColor: theme.card }}>
-                        {themeOptions.map((option, index) => {
-                            const IconComponent = option.icon;
-                            const isSelected = themeMode === option.id;
-                            return (
-                                <div
-                                    key={option.id}
-                                    className={`theme-option ${isSelected ? 'selected' : ''}`}
-                                    style={{
-                                        borderBottom: index !== themeOptions.length - 1 ? `1px solid ${theme.border}` : 'none',
-                                        backgroundColor: isSelected ? `${theme.primary}15` : 'transparent',
-                                    }}
-                                    onClick={() => toggleTheme(option.id)}
-                                >
-                                    <div className="theme-icon" style={{ backgroundColor: isSelected ? `${theme.primary}30` : theme.inputBg }}>
-                                        <IconComponent size={20} color={isSelected ? theme.primary : theme.textMuted} />
-                                    </div>
-                                    <div className="theme-info">
-                                        <span className="theme-label" style={{ color: theme.text }}>{option.label}</span>
-                                        <span className="theme-desc" style={{ color: theme.textMuted }}>{option.description}</span>
-                                    </div>
-                                    <div className={`radio ${isSelected ? 'selected' : ''}`} style={{ borderColor: isSelected ? theme.primary : theme.textMuted }}>
-                                        {isSelected && <div className="radio-inner" style={{ backgroundColor: theme.primary }}></div>}
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </section>
-
-                {/* Other Settings */}
+                {/* Preferences */}
                 <section className="settings-section">
                     <h2 className="section-title" style={{ color: theme.text }}>Preferences</h2>
                     <div className="settings-card" style={{ backgroundColor: theme.card }}>

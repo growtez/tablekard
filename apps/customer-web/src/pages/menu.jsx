@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Heart, Home, ShoppingBag, User, Star, Plus, Minus, Filter, ShoppingCart, X, Grid, Clock, Hourglass, ArrowRight, Users } from 'lucide-react';
+import { Search, Heart, Home, ShoppingBag, User, Star, Plus, Minus, Filter, ShoppingCart, X, Grid, Clock, Hourglass, ArrowRight, Users, Loader2 } from 'lucide-react';
 import { NavLink, useNavigate } from "react-router-dom";
 import { useCart } from '../context/CartContext';
 import { supabase } from '@restaurant-saas/supabase';
@@ -28,50 +28,55 @@ const MenuPage = () => {
   // Load real menu items from database
   useEffect(() => {
     const loadMenu = async () => {
+      // 1. Check Cache First
+      const cachedMenu = sessionStorage.getItem('menuData');
+      const cachedCats = sessionStorage.getItem('menuCategories');
+      if (cachedMenu && cachedCats) {
+        setMenuItems(JSON.parse(cachedMenu));
+        setCategories(JSON.parse(cachedCats));
+        setMenuLoading(false);
+      }
+
       try {
-        // Fetch categories
-        const { data: cats } = await supabase
-          .from('menu_categories')
-          .select('id, name, sort_order')
-          .eq('restaurant_id', 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d')
-          .eq('active', true)
-          .order('sort_order');
+        const restaurantId = 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d';
 
-        // Fetch menu items
-        const { data: items } = await supabase
-          .from('menu_items')
-          .select('id, name, description, price, discount_price, image_url, is_available, is_veg, preparation_time, tags, category_id')
-          .eq('restaurant_id', 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d')
-          .eq('is_available', true);
+        // 2. Parallel Fetch
+        const [catsRes, itemsRes] = await Promise.all([
+          supabase.from('menu_categories').select('id, name').eq('restaurant_id', restaurantId).eq('active', true).order('sort_order'),
+          supabase.from('menu_items').select('*').eq('restaurant_id', restaurantId).eq('is_available', true)
+        ]);
 
-        if (cats && items) {
-          const categoryNames = cats.map(c => c.name);
-          setCategories(categoryNames);
-          if (!categoryNames.includes(selectedCategory) && categoryNames.length > 0) {
-            setSelectedCategory(categoryNames[0]);
-          }
-
-          // Group items by category name
+        if (catsRes.data && itemsRes.data) {
+          const catNames = catsRes.data.map(c => c.name);
           const grouped = {};
-          cats.forEach(cat => {
-            grouped[cat.name] = items
+
+          catsRes.data.forEach(cat => {
+            grouped[cat.name] = itemsRes.data
               .filter(item => item.category_id === cat.id)
               .map(item => ({
-                id: item.id,  // Real UUID
+                id: item.id,
                 name: item.name,
                 shortDesc: item.description?.substring(0, 80) || '',
                 description: item.description || '',
                 price: item.discount_price || item.price,
                 originalPrice: item.discount_price ? item.price : null,
                 time: item.preparation_time ? `${item.preparation_time}min` : '15min',
-                rating: 4.5 + Math.random() * 0.4,
-                serves: 'Serves 1',
+                rating: parseFloat((4.5 + Math.random() * 0.4).toFixed(1)),
+                serves: item.serves || 'Serves 1',
                 image: item.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
-                image_url: item.image_url,
                 dietType: item.is_veg ? 'veg' : 'non-veg',
               }));
           });
+
+          // 3. Update State & Cache
+          setCategories(catNames);
           setMenuItems(grouped);
+          sessionStorage.setItem('menuData', JSON.stringify(grouped));
+          sessionStorage.setItem('menuCategories', JSON.stringify(catNames));
+
+          if (!catNames.includes(selectedCategory) && catNames.length > 0) {
+            setSelectedCategory(catNames[0]);
+          }
         }
       } catch (err) {
         console.error('Failed to load menu:', err);
@@ -165,86 +170,93 @@ const MenuPage = () => {
       </div>
 
       {/* Menu Items */}
-      <div className="menu-items">
-        {filteredItems.map(item => (
-          <div key={item.id} className="menu-item" onClick={() => handleItemClick(item)}>
-            <div className="menu-image-container">
-              <div className="image-bg-wrapper">
-                <img src={item.image} alt={item.name} />
-              </div>
-            </div>
-
-            <div className="menu-details">
-              <div className="details-header">
-                <div className="title-desc">
-                  <h3>{item.name}</h3>
-                  <p className="menu-description">{item.shortDesc}</p>
-                </div>
-                <button
-                  className="favorite-btn-inline"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleFavorite(item.id);
-                  }}
-                >
-                  <Heart
-                    size={20}
-                    fill={favorites.includes(item.id) ? '#8B3A1E' : 'transparent'}
-                    color={favorites.includes(item.id) ? '#8B3A1E' : '#B8ADA9'}
-                  />
-                </button>
-              </div>
-
-              <div className="details-meta">
-                <div className="meta-item">
-                  <Star size={14} fill="#8B3A1E" color="#8B3A1E" />
-                  <span>{item.rating}</span>
-                </div>
-                <div className="meta-item">
-                  <Clock size={14} color="#1A1A1A" />
-                  <span>{item.time}</span>
-                </div>
-                <div className="serves-pill">
-                  <Users size={12} /> {item.serves || '8 pcs'}
+      {menuLoading && Object.keys(menuItems).length === 0 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 0' }}>
+          <Loader2 size={40} color="#8B3A1E" style={{ animation: 'spin 1s linear infinite' }} />
+          <p style={{ marginTop: '16px', color: '#666', fontWeight: 500 }}>Fetching menu...</p>
+        </div>
+      ) : (
+        <div className="menu-items">
+          {filteredItems.map(item => (
+            <div key={item.id} className="menu-item" onClick={() => handleItemClick(item)}>
+              <div className="menu-image-container">
+                <div className="image-bg-wrapper">
+                  <img src={item.image} alt={item.name} />
                 </div>
               </div>
 
-              <div className="details-footer">
-                <div className="price-vegan">
-                  <span className="price-text">₹{item.price}</span>
-                </div>
-                {getItemQuantity(item.id) === 0 ? (
+              <div className="menu-details">
+                <div className="details-header">
+                  <div className="title-desc">
+                    <h3>{item.name}</h3>
+                    <p className="menu-description">{item.shortDesc}</p>
+                  </div>
                   <button
-                    className="add-btn-large"
+                    className="favorite-btn-inline"
                     onClick={(e) => {
                       e.stopPropagation();
-                      addToCart(item);
+                      toggleFavorite(item.id);
                     }}
                   >
-                    <Plus size={20} color="#FFFFFF" />
+                    <Heart
+                      size={20}
+                      fill={favorites.includes(item.id) ? '#8B3A1E' : 'transparent'}
+                      color={favorites.includes(item.id) ? '#8B3A1E' : '#B8ADA9'}
+                    />
                   </button>
-                ) : (
-                  <div className="menu-qty-stepper" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      className="menu-stepper-btn"
-                      onClick={(e) => { e.stopPropagation(); removeFromCart(item.id); }}
-                    >
-                      <Minus size={16} />
-                    </button>
-                    <span className="menu-stepper-value">{getItemQuantity(item.id)}</span>
-                    <button
-                      className="menu-stepper-btn"
-                      onClick={(e) => { e.stopPropagation(); addToCart(item); }}
-                    >
-                      <Plus size={16} />
-                    </button>
+                </div>
+
+                <div className="details-meta">
+                  <div className="meta-item">
+                    <Star size={14} fill="#8B3A1E" color="#8B3A1E" />
+                    <span>{item.rating}</span>
                   </div>
-                )}
+                  <div className="meta-item">
+                    <Clock size={14} color="#1A1A1A" />
+                    <span>{item.time}</span>
+                  </div>
+                  <div className="serves-pill">
+                    <Users size={12} /> {item.serves || '8 pcs'}
+                  </div>
+                </div>
+
+                <div className="details-footer">
+                  <div className="price-vegan">
+                    <span className="price-text">₹{item.price}</span>
+                  </div>
+                  {getItemQuantity(item.id) === 0 ? (
+                    <button
+                      className="add-btn-large"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addToCart(item);
+                      }}
+                    >
+                      <Plus size={20} color="#FFFFFF" />
+                    </button>
+                  ) : (
+                    <div className="menu-qty-stepper" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        className="menu-stepper-btn"
+                        onClick={(e) => { e.stopPropagation(); removeFromCart(item.id); }}
+                      >
+                        <Minus size={16} />
+                      </button>
+                      <span className="menu-stepper-value">{getItemQuantity(item.id)}</span>
+                      <button
+                        className="menu-stepper-btn"
+                        onClick={(e) => { e.stopPropagation(); addToCart(item); }}
+                      >
+                        <Plus size={16} />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Modern Frosted Glow Cart Indicator */}
       {cartTotal > 0 && !showItemModal && (
