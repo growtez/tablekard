@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Home, ShoppingBag, MessageCircle, User, Minus, Plus, Trash2, Clock, CheckCircle, Utensils, ShoppingCart, ListOrdered, ArrowRight, Star, Users, CreditCard, Wallet, Loader2, AlertCircle } from 'lucide-react';
+import { Home, ShoppingBag, MessageCircle, User, Minus, Plus, Trash2, Clock, CheckCircle, Utensils, ShoppingCart, ListOrdered, ArrowRight, Star, Users, CreditCard, Wallet, Loader2, AlertCircle, Download } from 'lucide-react';
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
@@ -7,6 +7,7 @@ import { processOnlinePayment } from '../services/paymentService';
 import { createOrder, getTodaysOrders } from '../services/supabaseService';
 import './my_order.css';
 import Hamburger from '../components/hamburger';
+import { jsPDF } from 'jspdf';
 
 const MyOrderPage = () => {
   const navigate = useNavigate();
@@ -26,21 +27,33 @@ const MyOrderPage = () => {
       setOrdersLoading(true);
       try {
         const data = await getTodaysOrders(user.id);
-        const mapped = data.map(order => ({
-          id: order.order_number || order.id.substring(0, 8),
-          status: order.status.toLowerCase(),
-          items: order.order_items.map(item => ({
-            name: item.name,
-            quantity: item.quantity,
-            price: item.price
-          })),
-          total: order.total,
-          discount: order.discount || 0,
-          orderDate: new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          paymentStatus: order.payment_status === 'PAID' ? 'Paid' : order.payment_status === 'PENDING' ? 'Pending' : order.payment_status,
-          statusLabel: order.status.charAt(0).toUpperCase() + order.status.slice(1).toLowerCase()
+        const mapped = data
+          .map(order => ({
+            id: order.order_number || order.id.substring(0, 8),
+            status: order.status.toLowerCase(),
+            items: order.order_items.map(item => ({
+              name: item.name,
+              quantity: item.quantity,
+              price: item.price
+            })),
+            total: order.total,
+            discount: order.discount || 0,
+            orderDate: new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            fullDate: new Date(order.created_at).toLocaleDateString(),
+            paymentStatus: order.payment_status === 'PAID' ? 'Paid' : order.payment_status === 'PENDING' ? 'Pending' : order.payment_status,
+            paymentMethod: order.payment_method,
+            statusLabel: order.status.charAt(0).toUpperCase() + order.status.slice(1).toLowerCase(),
+            rawOrder: order
+          }))
+          .filter(o => o.status === 'pending' || o.status === 'confirmed' || o.status === 'cancelled');
+
+        // Final mapping to UI labels for consistency
+        const finalMapped = mapped.map(o => ({
+          ...o,
+          status: (o.status === 'pending' || o.status === 'confirmed') ? 'placed' : o.status
         }));
-        setOrders(mapped);
+
+        setOrders(finalMapped);
       } catch (err) {
         console.error('Failed to fetch today\'s orders:', err);
       } finally {
@@ -187,6 +200,70 @@ const MyOrderPage = () => {
     opening_checkout: 'Opening payment gateway...',
     verifying_payment: 'Verifying payment...',
     success: 'Payment successful!',
+  };
+
+  const downloadInvoice = (order) => {
+    const doc = new jsPDF();
+
+    // Header
+    doc.setFontSize(22);
+    doc.setTextColor(139, 58, 30); // #8B3A1E
+    doc.text('TABLEKARD', 105, 20, { align: 'center' });
+
+    doc.setDrawColor(200, 200, 200);
+    doc.line(20, 25, 190, 25);
+
+    // Order Info
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Invoice: ${order.id}`, 20, 35);
+    doc.text(`Date: ${order.fullDate} ${order.orderDate}`, 20, 42);
+
+    doc.line(20, 48, 190, 48);
+
+    // Items Table Header
+    doc.setFont(undefined, 'bold');
+    doc.text('Items', 20, 55);
+    doc.text('Qty', 140, 55);
+    doc.text('Price', 170, 55);
+    doc.setFont(undefined, 'normal');
+
+    let y = 62;
+    order.items.forEach(item => {
+      doc.text(item.name, 20, y);
+      doc.text(`x${item.quantity}`, 140, y);
+      doc.text(`₹${item.price * item.quantity}`, 170, y);
+      y += 8;
+    });
+
+    doc.line(20, y, 190, y);
+    y += 10;
+
+    // Summary
+    const subtotal = order.total - Math.round(order.total * 0.18);
+    const tax = Math.round(order.total * 0.18);
+
+    doc.text('Subtotal:', 140, y);
+    doc.text(`₹${subtotal}`, 170, y);
+    y += 8;
+
+    doc.text('Tax (18%):', 140, y);
+    doc.text(`₹${tax}`, 170, y);
+    y += 8;
+
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(14);
+    doc.text('TOTAL:', 140, y);
+    doc.text(`₹${order.total}`, 170, y);
+
+    // Footer
+    y += 20;
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'italic');
+    doc.text('Payment Status: ' + order.paymentStatus, 20, y);
+    doc.text('Thank you for dining with us!', 105, y + 15, { align: 'center' });
+
+    doc.save(`Invoice_${order.id}.pdf`);
   };
 
   return (
@@ -436,8 +513,32 @@ const MyOrderPage = () => {
                     </div>
 
                     <div className="order-footer">
-                      <div className={`payment-badge ${order.paymentStatus?.includes('Not') ? 'not-paid' : 'paid'}`}>
-                        {order.paymentStatus}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div className={`payment-badge ${order.paymentStatus?.includes('Not') || order.paymentStatus === 'Pending' ? 'not-paid' : 'paid'}`}>
+                          {order.paymentStatus}
+                        </div>
+                        {order.paymentStatus === 'Paid' && (
+                          <button
+                            className="download-invoice-btn"
+                            onClick={() => downloadInvoice(order)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              background: '#8B3A1E',
+                              color: 'white',
+                              border: 'none',
+                              padding: '6px 10px',
+                              borderRadius: '8px',
+                              fontSize: '11px',
+                              fontWeight: '600',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <Download size={14} />
+                            Invoice
+                          </button>
+                        )}
                       </div>
                       <div className="order-total-inline">
                         <span className="order-total">₹{order.total}</span>
