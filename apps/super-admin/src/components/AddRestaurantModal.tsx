@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, Store, Globe, Mail, Phone, Shield } from 'lucide-react';
 import { createRestaurant } from '../services/supabaseService';
-import { RestaurantStatus } from '@restaurant-saas/types';
 import toast from 'react-hot-toast';
 
 interface AddRestaurantModalProps {
@@ -42,15 +41,14 @@ export default function AddRestaurantModal({ onClose, onSuccess }: AddRestaurant
             await createRestaurant({
                 name: formData.name,
                 slug: formData.slug,
-                status: RestaurantStatus.TRIAL,
-                contact_email: formData.email,      // Changed to flat snake_case
-                contact_phone: formData.phone,      // Changed to flat snake_case
-                contact_address: '',                // Changed to flat snake_case
-                subscription_status: true,          // Changed to snake_case
-                subscription_type: formData.subscriptionType, // Changed to snake_case
-                allowed_radius: formData.allowedRadius        // Changed to flat snake_case
-                // Note: If id is a UUID type, Supabase usually auto-generates it if omitted.
-            });
+                status: 'pending' as any,
+                contact_email: formData.email,
+                contact_phone: formData.phone,
+                contact_address: '',
+                subscription_status: true,
+                subscription_type: formData.subscriptionType,
+                allowed_radius: formData.allowedRadius
+            } as any);
             onSuccess();
             onClose();
         } catch (err: any) {

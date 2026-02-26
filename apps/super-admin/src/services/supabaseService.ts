@@ -12,7 +12,6 @@
 import { supabase } from '@restaurant-saas/supabase';
 import {
     Restaurant,
-    RestaurantStatus,
     User,
     UserRole,
     Order,
@@ -113,23 +112,19 @@ export const getRestaurantById = async (restaurantId: string): Promise<Restauran
     return mapRestaurant(data);
 };
 
-export const createRestaurant = async (restaurantData: Partial<Restaurant>) => {
+export const createRestaurant = async (restaurantData: any) => {
     const { data, error } = await supabase
         .from('restaurants')
         .insert({
-            name: restaurantData.name as string,
-            slug: restaurantData.slug as string,
-            status: restaurantData.status ?? RestaurantStatus.TRIAL,
-            contact_email: restaurantData.contact?.email ?? null,
-            contact_phone: restaurantData.contact?.phone ?? null,
-            contact_address: restaurantData.contact?.address ?? null,
-            logo_url: restaurantData.branding?.logoUrl ?? null,
-            primary_color: restaurantData.branding?.primaryColor ?? null,
-            secondary_color: restaurantData.branding?.secondaryColor ?? null,
-            settings: (restaurantData.settings as any) ?? null,
-            latitude: restaurantData.location?.latitude ?? null,
-            longitude: restaurantData.location?.longitude ?? null,
-            allowed_radius: restaurantData.location?.allowedRadius ?? 500
+            name: restaurantData.name,
+            slug: restaurantData.slug,
+            status: restaurantData.status,
+            contact_email: restaurantData.contact_email,
+            contact_phone: restaurantData.contact_phone,
+            contact_address: restaurantData.contact_address,
+            subscription_status: restaurantData.subscription_status,
+            subscription_type: restaurantData.subscription_type,
+            allowed_radius: restaurantData.allowed_radius
         })
         .select('*')
         .single();
@@ -141,7 +136,7 @@ export const createRestaurant = async (restaurantData: Partial<Restaurant>) => {
 export const approveRestaurant = async (restaurantId: string) => {
     const { error } = await supabase
         .from('restaurants')
-        .update({ status: RestaurantStatus.ACTIVE, status_reason: null })
+        .update({ status: 'active' as any, status_reason: null })
         .eq('id', restaurantId);
     if (error) throw error;
 };
@@ -149,7 +144,7 @@ export const approveRestaurant = async (restaurantId: string) => {
 export const suspendRestaurant = async (restaurantId: string, reason: string) => {
     const { error } = await supabase
         .from('restaurants')
-        .update({ status: RestaurantStatus.SUSPENDED, status_reason: reason })
+        .update({ status: 'suspended' as any, status_reason: reason })
         .eq('id', restaurantId);
     if (error) throw error;
 };
@@ -157,7 +152,7 @@ export const suspendRestaurant = async (restaurantId: string, reason: string) =>
 export const reactivateRestaurant = async (restaurantId: string) => {
     const { error } = await supabase
         .from('restaurants')
-        .update({ status: RestaurantStatus.ACTIVE, status_reason: null })
+        .update({ status: 'active' as any, status_reason: null })
         .eq('id', restaurantId);
     if (error) throw error;
 };
@@ -287,8 +282,8 @@ export const getRevenueStats = async (startDate: Date, endDate: Date) => {
 
 export const getSubscriptionStats = async () => {
     const [activeCount, trialCount] = await Promise.all([
-        supabase.from('restaurants').select('*', { count: 'exact', head: true }).eq('status', RestaurantStatus.ACTIVE),
-        supabase.from('restaurants').select('*', { count: 'exact', head: true }).eq('status', RestaurantStatus.TRIAL)
+        supabase.from('restaurants').select('*', { count: 'exact', head: true }).eq('status', 'active' as any),
+        supabase.from('restaurants').select('*', { count: 'exact', head: true }).eq('status', 'pending' as any)
     ]);
 
     if (activeCount.error) throw activeCount.error;
