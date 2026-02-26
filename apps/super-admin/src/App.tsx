@@ -5,6 +5,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import LoadingScreen from './components/LoadingScreen';
 import Layout from './components/Layout';
 import GlobalErrorBoundary from './components/GlobalErrorBoundary';
+import { Toaster } from 'react-hot-toast';
 
 // Lazy load pages for better performance (code-splitting)
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -54,6 +55,28 @@ function App() {
     return (
         <GlobalErrorBoundary>
             <AuthProvider>
+                <Toaster
+                    position="bottom-right"
+                    toastOptions={{
+                        style: {
+                            background: 'var(--color-bg-tertiary)',
+                            color: 'var(--color-text-primary)',
+                            border: '1px solid var(--color-border)',
+                        },
+                        success: {
+                            iconTheme: {
+                                primary: 'var(--color-success)',
+                                secondary: 'white',
+                            },
+                        },
+                        error: {
+                            iconTheme: {
+                                primary: 'var(--color-error)',
+                                secondary: 'white',
+                            },
+                        },
+                    }}
+                />
                 <AppRoutes />
             </AuthProvider>
         </GlobalErrorBoundary>

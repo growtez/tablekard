@@ -114,6 +114,13 @@ export interface Restaurant {
     razorpayKeySecret?: string | null;
     allowPayAtCounter?: boolean;
   };
+  subscriptionStatus?: boolean;
+  subscriptionType?: string | null;
+  location?: {
+    latitude?: number | null;
+    longitude?: number | null;
+    allowedRadius?: number | null;
+  };
 }
 
 export interface RestaurantSubscription {
@@ -308,7 +315,7 @@ export interface SaasSettings {
 // Supabase Database Type
 // ==========================================
 
-export type Database = {
+export interface Database {
   public: {
     Tables: {
       profiles: {
@@ -337,6 +344,7 @@ export type Database = {
           avatar_url?: string | null;
           updated_at?: IsoDateString;
         };
+        Relationships: [];
       };
       restaurants: {
         Row: {
@@ -352,6 +360,11 @@ export type Database = {
           primary_color: string | null;
           secondary_color: string | null;
           settings: Record<string, unknown> | null;
+          subscription_status: boolean;
+          subscription_type: string | null;
+          latitude: number | null;
+          longitude: number | null;
+          allowed_radius: number | null;
           created_at: IsoDateString;
           updated_at: IsoDateString;
         };
@@ -368,6 +381,11 @@ export type Database = {
           primary_color?: string | null;
           secondary_color?: string | null;
           settings?: Record<string, unknown> | null;
+          subscription_status?: boolean;
+          subscription_type?: string | null;
+          latitude?: number | null;
+          longitude?: number | null;
+          allowed_radius?: number | null;
           created_at?: IsoDateString;
           updated_at?: IsoDateString;
         };
@@ -383,8 +401,14 @@ export type Database = {
           primary_color?: string | null;
           secondary_color?: string | null;
           settings?: Record<string, unknown> | null;
+          subscription_status?: boolean;
+          subscription_type?: string | null;
+          latitude?: number | null;
+          longitude?: number | null;
+          allowed_radius?: number | null;
           updated_at?: IsoDateString;
         };
+        Relationships: [];
       };
       restaurant_users: {
         Row: {
@@ -419,6 +443,7 @@ export type Database = {
           active?: boolean;
           updated_at?: IsoDateString;
         };
+        Relationships: [];
       };
       restaurant_tables: {
         Row: {
@@ -448,6 +473,7 @@ export type Database = {
           capacity?: number | null;
           updated_at?: IsoDateString;
         };
+        Relationships: [];
       };
       menu_categories: {
         Row: {
@@ -480,6 +506,7 @@ export type Database = {
           active?: boolean;
           updated_at?: IsoDateString;
         };
+        Relationships: [];
       };
       menu_items: {
         Row: {
@@ -533,6 +560,7 @@ export type Database = {
           addons?: Record<string, unknown>[] | null;
           updated_at?: IsoDateString;
         };
+        Relationships: [];
       };
       orders: {
         Row: {
@@ -585,6 +613,7 @@ export type Database = {
           transaction_id?: string | null;
           updated_at?: IsoDateString;
         };
+        Relationships: [];
       };
       platform_settings: {
         Row: {
@@ -601,6 +630,7 @@ export type Database = {
           config?: Record<string, unknown> | null;
           updated_at?: IsoDateString;
         };
+        Relationships: [];
       };
       order_items: {
         Row: {
@@ -638,10 +668,17 @@ export type Database = {
           addons?: Record<string, unknown>[] | null;
           special_instructions?: string | null;
         };
+        Relationships: [];
       };
     };
-    Views: Record<string, never>;
-    Functions: Record<string, never>;
-    Enums: Record<string, never>;
+    Views: {
+      [key: string]: never;
+    };
+    Functions: {
+      [key: string]: never;
+    };
+    Enums: {
+      [key: string]: never;
+    };
   };
-};
+}

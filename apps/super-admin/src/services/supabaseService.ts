@@ -25,7 +25,7 @@ const mapRestaurant = (row: any): Restaurant => ({
     name: row.name,
     slug: row.slug,
     status: row.status,
-    statusReason: row.status_reason ?? undefined,
+    statusReason: undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     contact: {
@@ -38,7 +38,14 @@ const mapRestaurant = (row: any): Restaurant => ({
         primaryColor: row.primary_color,
         secondaryColor: row.secondary_color
     },
-    settings: row.settings ?? undefined
+    settings: row.settings ?? undefined,
+    subscriptionStatus: true,
+    subscriptionType: 'QR Only',
+    location: {
+        latitude: row.latitude,
+        longitude: row.longitude,
+        allowedRadius: row.allowed_radius
+    }
 });
 
 const mapOrder = (row: any): Order => ({
@@ -110,8 +117,8 @@ export const createRestaurant = async (restaurantData: Partial<Restaurant>) => {
     const { data, error } = await supabase
         .from('restaurants')
         .insert({
-            name: restaurantData.name,
-            slug: restaurantData.slug,
+            name: restaurantData.name as string,
+            slug: restaurantData.slug as string,
             status: restaurantData.status ?? RestaurantStatus.TRIAL,
             contact_email: restaurantData.contact?.email ?? null,
             contact_phone: restaurantData.contact?.phone ?? null,
@@ -119,7 +126,10 @@ export const createRestaurant = async (restaurantData: Partial<Restaurant>) => {
             logo_url: restaurantData.branding?.logoUrl ?? null,
             primary_color: restaurantData.branding?.primaryColor ?? null,
             secondary_color: restaurantData.branding?.secondaryColor ?? null,
-            settings: restaurantData.settings ?? null
+            settings: (restaurantData.settings as any) ?? null,
+            latitude: restaurantData.location?.latitude ?? null,
+            longitude: restaurantData.location?.longitude ?? null,
+            allowed_radius: restaurantData.location?.allowedRadius ?? 500
         })
         .select('*')
         .single();
