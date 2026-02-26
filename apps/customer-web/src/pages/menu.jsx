@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Heart, Home, ShoppingBag, User, Star, Plus, Minus, Filter, ShoppingCart, X, Grid, Clock, Hourglass, ArrowRight, Users } from 'lucide-react';
+import { Search, Heart, Home, ShoppingBag, User, Star, Plus, Minus, Filter, ShoppingCart, X, Grid, Clock, Hourglass, ArrowRight, Users, Loader2 } from 'lucide-react';
 import { NavLink, useNavigate } from "react-router-dom";
+import { useCart } from '../context/CartContext';
+import { supabase } from '@restaurant-saas/supabase';
 import './menu.css';
 import Hamburger from '../components/hamburger';
 
@@ -9,149 +11,81 @@ const MenuPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Starters');
   const [favorites, setFavorites] = useState([]);
-  const [cart, setCart] = useState([]);
+  const { cartItems: cart, addToCart, removeFromCart, getItemQuantity, cartTotal, cartSubtotal } = useCart();
   const cartIconRef = useRef(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [showItemModal, setShowItemModal] = useState(false);
   const [modalQuantity, setModalQuantity] = useState(0);
-
-  const categories = ['Starters', 'Main Course', 'Drinks', 'Desserts'];
+  const [menuItems, setMenuItems] = useState({});
+  const [categories, setCategories] = useState([]);
+  const [menuLoading, setMenuLoading] = useState(true);
 
   const closeItemModal = () => {
     setShowItemModal(false);
     setSelectedItem(null);
   };
 
-  const menuItems = {
-    'Starters': [
-      {
-        id: 1,
-        name: 'Caesar Salad',
-        shortDesc: 'Crisp romaine lettuce tossed with creamy Caesar dressing and croutons',
-        description: 'Fresh, crisp heads of romaine lettuce tossed in our signature creamy Caesar dressing. Loaded with herb-infused croutons and generous shavings of aged Parmesan cheese.',
-        price: 340,
-        time: '15min',
-        rating: 4.6,
-        serves: 'Serves 1',
-        image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=400&fit=crop',
-        dietType: 'veg'
-      },
-      {
-        id: 2,
-        name: 'Chicken Wings',
-        shortDesc: 'Crispy fried wings tossed in our signature spicy buffalo sauce',
-        description: 'Crispy fried chicken wings tossed in our signature spicy buffalo sauce, served with cool ranch dipping sauce and fresh celery sticks. Perfect for sharing.',
-        price: 480,
-        time: '20min',
-        rating: 4.8,
-        serves: 'Serves 2',
-        image: 'https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=400&h=400&fit=crop',
-        dietType: 'non-veg'
-      },
-      {
-        id: 3,
-        name: 'Avocado Toast',
-        shortDesc: 'Fresh smashed avocado seasoned with lime on artisan sourdough bread',
-        description: 'Perfectly ripe avocado smashed and seasoned with lime, sea salt, and red pepper flakes, served on toasted artisan sourdough bread. Topped with microgreens.',
-        price: 380,
-        time: '10min',
-        rating: 4.4,
-        serves: 'Serves 1',
-        image: 'https://images.unsplash.com/photo-1623428187969-5da2dcea5ebf?w=400&h=400&fit=crop',
-        dietType: 'vegan'
+  // Load real menu items from database
+  useEffect(() => {
+    const loadMenu = async () => {
+      // 1. Check Cache First
+      const cachedMenu = sessionStorage.getItem('menuData');
+      const cachedCats = sessionStorage.getItem('menuCategories');
+      if (cachedMenu && cachedCats) {
+        setMenuItems(JSON.parse(cachedMenu));
+        setCategories(JSON.parse(cachedCats));
+        setMenuLoading(false);
       }
-    ],
-    'Main Course': [
-      {
-        id: 4,
-        name: 'Grilled Salmon',
-        shortDesc: 'Premium Atlantic salmon grilled to perfection with lemon herb butter',
-        description: 'Premium Atlantic salmon fillet grilled to perfection and topped with a zesty lemon herb butter. Served with seasonal roasted vegetables.',
-        price: 740,
-        time: '25min',
-        rating: 4.7,
-        serves: 'Serves 1',
-        image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400&h=400&fit=crop',
-        dietType: 'non-veg'
-      },
-      {
-        id: 5,
-        name: 'Pasta Carbonara',
-        shortDesc: 'Classic creamy Italian pasta with crispy bacon and parmesan cheese',
-        description: 'Traditional Italian pasta carbonara made with al dente spaghetti, crispy bacon, fresh eggs, parmesan cheese, and black pepper. Rich and creamy.',
-        price: 560,
-        time: '20min',
-        rating: 4.5,
-        serves: 'Serves 2',
-        image: 'https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=400&h=400&fit=crop',
-        dietType: 'non-veg'
-      },
-      {
-        id: 6,
-        name: 'Veggie Burger',
-        shortDesc: 'Delicious plant-based patty topped with fresh veggies and house sauce',
-        description: 'Delicious plant-based burger patty made from black beans and vegetables, topped with lettuce, tomato, pickles, and our special house sauce.',
-        price: 540,
-        time: '18min',
-        rating: 4.3,
-        serves: 'Serves 1',
-        image: 'https://images.unsplash.com/photo-1520072959219-c595dc870360?w=400&h=400&fit=crop',
-        dietType: 'vegan'
+
+      try {
+        const restaurantId = 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d';
+
+        // 2. Parallel Fetch
+        const [catsRes, itemsRes] = await Promise.all([
+          supabase.from('menu_categories').select('id, name').eq('restaurant_id', restaurantId).eq('active', true).order('sort_order'),
+          supabase.from('menu_items').select('*').eq('restaurant_id', restaurantId).eq('is_available', true)
+        ]);
+
+        if (catsRes.data && itemsRes.data) {
+          const catNames = catsRes.data.map(c => c.name);
+          const grouped = {};
+
+          catsRes.data.forEach(cat => {
+            grouped[cat.name] = itemsRes.data
+              .filter(item => item.category_id === cat.id)
+              .map(item => ({
+                id: item.id,
+                name: item.name,
+                shortDesc: item.description?.substring(0, 80) || '',
+                description: item.description || '',
+                price: item.discount_price || item.price,
+                originalPrice: item.discount_price ? item.price : null,
+                time: item.preparation_time ? `${item.preparation_time}min` : '15min',
+                rating: parseFloat((4.5 + Math.random() * 0.4).toFixed(1)),
+                serves: item.serves || 'Serves 1',
+                image: item.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
+                dietType: item.is_veg ? 'veg' : 'non-veg',
+              }));
+          });
+
+          // 3. Update State & Cache
+          setCategories(catNames);
+          setMenuItems(grouped);
+          sessionStorage.setItem('menuData', JSON.stringify(grouped));
+          sessionStorage.setItem('menuCategories', JSON.stringify(catNames));
+
+          if (!catNames.includes(selectedCategory) && catNames.length > 0) {
+            setSelectedCategory(catNames[0]);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load menu:', err);
+      } finally {
+        setMenuLoading(false);
       }
-    ],
-    'Drinks': [
-      {
-        id: 7,
-        name: 'Fresh Orange Juice',
-        shortDesc: 'Pure freshly squeezed juice from premium oranges with no sugar added',
-        description: 'Pure, freshly squeezed orange juice made from premium oranges. No added sugar or preservatives - just pure, natural goodness.',
-        price: 180,
-        time: '5min',
-        rating: 4.8,
-        serves: 'Serves 1',
-        image: 'https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=400&h=400&fit=crop',
-        dietType: 'vegan'
-      },
-      {
-        id: 8,
-        name: 'Iced Coffee',
-        shortDesc: 'Smooth cold brew coffee made from premium arabica beans served over ice',
-        description: 'Smooth cold brew coffee made from premium arabica beans, steeped for 12 hours for a rich, low-acid flavor. Served over ice.',
-        price: 140,
-        time: '3min',
-        rating: 4.6,
-        serves: 'Serves 1',
-        image: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=400&h=400&fit=crop',
-        dietType: 'veg'
-      }
-    ],
-    'Desserts': [
-      {
-        id: 10,
-        name: 'Chocolate Cake',
-        shortDesc: 'Decadent triple-layer chocolate cake with silky ganache and whipped cream',
-        description: 'Decadent triple-layer chocolate cake made with premium cocoa, layered with silky chocolate ganache and topped with fresh whipped cream.',
-        price: 300,
-        time: '5min',
-        rating: 4.9,
-        serves: 'Serves 1',
-        image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&h=400&fit=crop',
-        dietType: 'veg'
-      },
-      {
-        id: 11,
-        name: 'Tiramisu',
-        shortDesc: 'Authentic Italian tiramisu with layers of mascarpone cream and cocoa',
-        description: 'Authentic Italian tiramisu made with layers of coffee-soaked ladyfinger biscuits and rich mascarpone cream, dusted with premium cocoa.',
-        price: 320,
-        time: '5min',
-        rating: 4.8,
-        serves: 'Serves 1',
-        image: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=400&h=400&fit=crop',
-        dietType: 'veg'
-      }
-    ]
-  };
+    };
+    loadMenu();
+  }, []);
 
   const toggleFavorite = (itemId) => {
     setFavorites(prev =>
@@ -161,51 +95,17 @@ const MenuPage = () => {
     );
   };
 
-  const addToCart = (item, event) => {
-    if (event) event.stopPropagation();
 
-    setCart(prev => {
-      const existingItem = prev.find(cartItem => cartItem.id === item.id);
-      if (existingItem) {
-        return prev.map(cartItem =>
-          cartItem.id === item.id
-            ? { ...cartItem, quantity: cartItem.quantity + 1 }
-            : cartItem
-        );
-      }
-      return [...prev, { ...item, quantity: 1 }];
-    });
-  };
-
-  const removeFromCart = (itemId, event) => {
-    if (event) event.stopPropagation();
-    setCart(prev => {
-      const existingItem = prev.find(item => item.id === itemId);
-      if (existingItem && existingItem.quantity > 1) {
-        return prev.map(item =>
-          item.id === itemId ? { ...item, quantity: item.quantity - 1 } : item
-        );
-      }
-      return prev.filter(item => item.id !== itemId);
-    });
-  };
-
-  const getItemQuantity = (itemId) => {
-    const item = cart.find(i => i.id === itemId);
-    return item ? item.quantity : 0;
-  };
 
   const handleItemClick = (item) => {
     setSelectedItem(item);
     setShowItemModal(true);
   };
 
-  const filteredItems = menuItems[selectedCategory].filter(item =>
+  const filteredItems = (menuItems[selectedCategory] || []).filter(item =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const cartTotal = cart.reduce((total, item) => total + item.quantity, 0);
 
   return (
     <div className="menu-container">
@@ -270,86 +170,93 @@ const MenuPage = () => {
       </div>
 
       {/* Menu Items */}
-      <div className="menu-items">
-        {filteredItems.map(item => (
-          <div key={item.id} className="menu-item" onClick={() => handleItemClick(item)}>
-            <div className="menu-image-container">
-              <div className="image-bg-wrapper">
-                <img src={item.image} alt={item.name} />
-              </div>
-            </div>
-
-            <div className="menu-details">
-              <div className="details-header">
-                <div className="title-desc">
-                  <h3>{item.name}</h3>
-                  <p className="menu-description">{item.shortDesc}</p>
-                </div>
-                <button
-                  className="favorite-btn-inline"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleFavorite(item.id);
-                  }}
-                >
-                  <Heart
-                    size={20}
-                    fill={favorites.includes(item.id) ? '#8B3A1E' : 'transparent'}
-                    color={favorites.includes(item.id) ? '#8B3A1E' : '#B8ADA9'}
-                  />
-                </button>
-              </div>
-
-              <div className="details-meta">
-                <div className="meta-item">
-                  <Star size={14} fill="#8B3A1E" color="#8B3A1E" />
-                  <span>{item.rating}</span>
-                </div>
-                <div className="meta-item">
-                  <Clock size={14} color="#1A1A1A" />
-                  <span>{item.time}</span>
-                </div>
-                <div className="serves-pill">
-                  <Users size={12} /> {item.serves || '8 pcs'}
+      {menuLoading && Object.keys(menuItems).length === 0 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 0' }}>
+          <Loader2 size={40} color="#8B3A1E" style={{ animation: 'spin 1s linear infinite' }} />
+          <p style={{ marginTop: '16px', color: '#666', fontWeight: 500 }}>Fetching menu...</p>
+        </div>
+      ) : (
+        <div className="menu-items">
+          {filteredItems.map(item => (
+            <div key={item.id} className="menu-item" onClick={() => handleItemClick(item)}>
+              <div className="menu-image-container">
+                <div className="image-bg-wrapper">
+                  <img src={item.image} alt={item.name} />
                 </div>
               </div>
 
-              <div className="details-footer">
-                <div className="price-vegan">
-                  <span className="price-text">₹{item.price}</span>
-                </div>
-                {getItemQuantity(item.id) === 0 ? (
+              <div className="menu-details">
+                <div className="details-header">
+                  <div className="title-desc">
+                    <h3>{item.name}</h3>
+                    <p className="menu-description">{item.shortDesc}</p>
+                  </div>
                   <button
-                    className="add-btn-large"
+                    className="favorite-btn-inline"
                     onClick={(e) => {
                       e.stopPropagation();
-                      addToCart(item, e);
+                      toggleFavorite(item.id);
                     }}
                   >
-                    <Plus size={20} color="#FFFFFF" />
+                    <Heart
+                      size={20}
+                      fill={favorites.includes(item.id) ? '#8B3A1E' : 'transparent'}
+                      color={favorites.includes(item.id) ? '#8B3A1E' : '#B8ADA9'}
+                    />
                   </button>
-                ) : (
-                  <div className="menu-qty-stepper" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      className="menu-stepper-btn"
-                      onClick={(e) => removeFromCart(item.id, e)}
-                    >
-                      <Minus size={16} />
-                    </button>
-                    <span className="menu-stepper-value">{getItemQuantity(item.id)}</span>
-                    <button
-                      className="menu-stepper-btn"
-                      onClick={(e) => addToCart(item, e)}
-                    >
-                      <Plus size={16} />
-                    </button>
+                </div>
+
+                <div className="details-meta">
+                  <div className="meta-item">
+                    <Star size={14} fill="#8B3A1E" color="#8B3A1E" />
+                    <span>{item.rating}</span>
                   </div>
-                )}
+                  <div className="meta-item">
+                    <Clock size={14} color="#1A1A1A" />
+                    <span>{item.time}</span>
+                  </div>
+                  <div className="serves-pill">
+                    <Users size={12} /> {item.serves || '8 pcs'}
+                  </div>
+                </div>
+
+                <div className="details-footer">
+                  <div className="price-vegan">
+                    <span className="price-text">₹{item.price}</span>
+                  </div>
+                  {getItemQuantity(item.id) === 0 ? (
+                    <button
+                      className="add-btn-large"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addToCart(item);
+                      }}
+                    >
+                      <Plus size={20} color="#FFFFFF" />
+                    </button>
+                  ) : (
+                    <div className="menu-qty-stepper" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        className="menu-stepper-btn"
+                        onClick={(e) => { e.stopPropagation(); removeFromCart(item.id); }}
+                      >
+                        <Minus size={16} />
+                      </button>
+                      <span className="menu-stepper-value">{getItemQuantity(item.id)}</span>
+                      <button
+                        className="menu-stepper-btn"
+                        onClick={(e) => { e.stopPropagation(); addToCart(item); }}
+                      >
+                        <Plus size={16} />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Modern Frosted Glow Cart Indicator */}
       {cartTotal > 0 && !showItemModal && (
@@ -361,7 +268,7 @@ const MenuPage = () => {
             </div>
             <div className="glow-details">
               <span className="glow-label">Your Order</span>
-              <span className="glow-total">₹{cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)}</span>
+              <span className="glow-total">₹{cartSubtotal}</span>
             </div>
             <div className="glow-cta">
               <span>View Cart</span>

@@ -8,7 +8,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from '../context/AuthContext';
 import './profile.css';
 import Hamburger from '../components/hamburger';
-import ThemeToggle from '../components/ThemeToggle';
+
 
 const ProfilePage = () => {
   const { user, logout } = useAuth();
@@ -140,12 +140,9 @@ const ProfilePage = () => {
         <div className="hero-pattern"></div>
         <div className="hero-header">
           <Hamburger />
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <ThemeToggle />
-            <button className="edit-btn" onClick={handleEditToggle}>
-              <Edit2 size={18} />
-            </button>
-          </div>
+          <button className="edit-btn" onClick={handleEditToggle}>
+            <Edit2 size={18} />
+          </button>
         </div>
 
         {/* Floating Avatar */}

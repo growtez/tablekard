@@ -214,6 +214,11 @@
     color: #C53030;
 }
 
+.status-badge.pending {
+    background: #FFFBEB;
+    color: #B45309;
+}
+
 .items-preview {
     display: flex;
     flex-wrap: wrap;

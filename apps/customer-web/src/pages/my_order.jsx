@@ -1,105 +1,74 @@
-import React, { useState } from 'react';
-import { Home, ShoppingBag, MessageCircle, User, Minus, Plus, Trash2, Clock, CheckCircle, Utensils, ShoppingCart, ListOrdered, ArrowRight, Star, Users } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Home, ShoppingBag, MessageCircle, User, Minus, Plus, Trash2, Clock, CheckCircle, Utensils, ShoppingCart, ListOrdered, ArrowRight, Star, Users, CreditCard, Wallet, Loader2, AlertCircle, Download } from 'lucide-react';
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
+import { processOnlinePayment } from '../services/paymentService';
+import { createOrder, getTodaysOrders } from '../services/supabaseService';
 import './my_order.css';
 import Hamburger from '../components/hamburger';
+import { jsPDF } from 'jspdf';
 
 const MyOrderPage = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const { cartItems, updateQuantity, deleteFromCart, cartSubtotal, clearCart } = useCart();
   const [activeTab, setActiveTab] = useState('cart');
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: 'Caesar Salad',
-      price: 180,
-      quantity: 2,
-      image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=120&h=120&fit=crop',
-      rating: 4.8,
-      serves: '1-2'
-    },
-    {
-      id: 2,
-      name: 'Grilled Salmon',
-      price: 450,
-      quantity: 1,
-      image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=120&h=120&fit=crop',
-      rating: 4.9,
-      serves: '1'
-    },
-    {
-      id: 3,
-      name: 'Fresh Orange Juice',
-      price: 120,
-      quantity: 3,
-      image: 'https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=120&h=120&fit=crop',
-      rating: 4.5,
-      serves: '1'
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState('');
+  const [error, setError] = useState('');
+
+  const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      if (!isAuthenticated || !user) return;
+      setOrdersLoading(true);
+      try {
+        const data = await getTodaysOrders(user.id);
+        const mapped = data
+          .map(order => ({
+            id: order.order_number || order.id.substring(0, 8),
+            status: order.status.toLowerCase(),
+            items: order.order_items.map(item => ({
+              name: item.name,
+              quantity: item.quantity,
+              price: item.price
+            })),
+            total: order.total,
+            discount: order.discount || 0,
+            orderDate: new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            fullDate: new Date(order.created_at).toLocaleDateString(),
+            paymentStatus: order.payment_status === 'PAID' ? 'Paid' : order.payment_status === 'PENDING' ? 'Pending' : order.payment_status,
+            paymentMethod: order.payment_method,
+            statusLabel: order.status.charAt(0).toUpperCase() + order.status.slice(1).toLowerCase(),
+            rawOrder: order
+          }))
+          .filter(o => o.status === 'pending' || o.status === 'confirmed' || o.status === 'cancelled');
+
+        // Final mapping to UI labels for consistency
+        const finalMapped = mapped.map(o => ({
+          ...o,
+          status: (o.status === 'pending' || o.status === 'confirmed') ? 'placed' : o.status
+        }));
+
+        setOrders(finalMapped);
+      } catch (err) {
+        console.error('Failed to fetch today\'s orders:', err);
+      } finally {
+        setOrdersLoading(false);
+      }
+    };
+
+    if (isAuthenticated && user) {
+      fetchOrders();
     }
-  ]);
+  }, [isAuthenticated, user]);
 
-  const [orders, setOrders] = useState([
-    {
-      id: 'ORD001',
-      status: 'ready',
-      items: [
-        { name: 'Chicken Wings', quantity: 1, price: 12 },
-        { name: 'Iced Coffee', quantity: 2, price: 3 }
-      ],
-      total: 18,
-      discount: 0,
-      orderDate: 'Jan 10, 2:30 PM',
-      paymentStatus: 'Paid via UPI',
-      statusLabel: 'Ready for serving'
-    },
-    {
-      id: 'ORD002',
-      status: 'preparing',
-      items: [
-        { name: 'Pasta Carbonara', quantity: 1, price: 14 },
-        { name: 'Chocolate Cake', quantity: 1, price: 7 }
-      ],
-      total: 21,
-      discount: 0,
-      orderDate: 'Jan 10, 3:15 PM',
-      paymentStatus: 'Not Paid',
-      statusLabel: 'Preparing'
-    },
-    {
-      id: 'ORD003',
-      status: 'placed',
-      items: [
-        { name: 'Veggie Burger', quantity: 2, price: 13 },
-        { name: 'Smoothie Bowl', quantity: 1, price: 6 }
-      ],
-      total: 32,
-      discount: 5,
-      orderDate: 'Jan 10, 3:45 PM',
-      paymentStatus: 'Paid via Cash',
-      statusLabel: 'Order Placed'
-    }
-  ]);
-
-  const updateQuantity = (id, increment) => {
-    setCartItems(prev =>
-      prev.map(item => {
-        if (item.id === id) {
-          const newQuantity = Math.max(0, item.quantity + increment);
-          return newQuantity === 0 ? null : { ...item, quantity: newQuantity };
-        }
-        return item;
-      }).filter(Boolean)
-    );
-  };
-
-  const removeItem = (id) => {
-    setCartItems(prev => prev.filter(item => item.id !== id));
-  };
-
-  const getTotalPrice = () => {
-    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-  };
+  // Alias for template compatibility
+  const removeItem = deleteFromCart;
+  const getTotalPrice = () => cartSubtotal;
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -127,37 +96,193 @@ const MyOrderPage = () => {
     }
   };
 
-  const placeOrder = () => {
+  // ─── PAY ONLINE: Razorpay flow ───
+  const handlePayOnline = async () => {
     if (cartItems.length === 0) return;
-
     if (!isAuthenticated) {
-      const currentPath = encodeURIComponent(window.location.pathname + window.location.search);
+      const currentPath = encodeURIComponent(window.location.pathname);
       navigate(`/login?redirect=${currentPath}`);
       return;
     }
 
-    const newOrder = {
-      id: `ORD00${orders.length + 1}`,
-      status: 'placed',
-      items: cartItems.map(item => ({
-        name: item.name,
-        quantity: item.quantity,
-        price: item.price
-      })),
-      total: getTotalPrice(),
-      orderTime: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
-      estimatedTime: '30 mins',
-      orderDate: 'Just now',
-      paymentStatus: 'Not Paid'
-    };
+    setPaymentLoading(true);
+    setError('');
 
-    setOrders(prev => [newOrder, ...prev]);
-    setCartItems([]);
-    setActiveTab('orders');
+    try {
+      // Restaurant ID — for single-restaurant setup
+      const restaurantId = 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d';
+
+      const result = await processOnlinePayment({
+        restaurantId,
+        tableId: null,
+        orderType: 'DINE_IN',
+        items: cartItems,
+        restaurantName: 'Tablekard',
+        userName: user?.user_metadata?.full_name || '',
+        userEmail: user?.email || '',
+        userPhone: user?.phone || '',
+        onStatusChange: (status) => setPaymentStatus(status),
+      });
+
+      if (result.success) {
+        const newOrder = {
+          id: result.orderNumber,
+          status: 'placed',
+          items: cartItems.map(item => ({ name: item.name, quantity: item.quantity, price: item.price })),
+          total: getTotalPrice() + Math.round(getTotalPrice() * 0.05) + Math.round(getTotalPrice() * 0.18),
+          orderDate: 'Just now',
+          paymentStatus: 'Paid Online',
+          statusLabel: 'Order Placed'
+        };
+        setOrders(prev => [newOrder, ...prev]);
+        clearCart();
+        setActiveTab('orders');
+      }
+    } catch (err) {
+      console.error('Payment error:', err);
+      if (err.message !== 'Payment cancelled by user') {
+        setError(err.message || 'Payment failed. Please try again.');
+      }
+    } finally {
+      setPaymentLoading(false);
+      setPaymentStatus('');
+    }
+  };
+
+  // ─── PAY AT COUNTER: Direct order ───
+  const handlePayAtCounter = async () => {
+    if (cartItems.length === 0) return;
+    if (!isAuthenticated) {
+      const currentPath = encodeURIComponent(window.location.pathname);
+      navigate(`/login?redirect=${currentPath}`);
+      return;
+    }
+
+    setPaymentLoading(true);
+    setError('');
+
+    try {
+      // Restaurant ID — for single-restaurant setup
+      const restaurantId = 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d';
+
+      const result = await createOrder({
+        restaurantId,
+        customerId: user?.id,
+        customerName: user?.user_metadata?.full_name || null,
+        customerPhone: user?.phone || null,
+        tableNumber: null,
+        items: cartItems,
+        paymentMethod: 'PAY_AT_COUNTER',
+      });
+
+      const newOrder = {
+        id: result.orderNumber,
+        status: 'placed',
+        items: cartItems.map(item => ({ name: item.name, quantity: item.quantity, price: item.price })),
+        total: getTotalPrice() + Math.round(getTotalPrice() * 0.05) + Math.round(getTotalPrice() * 0.18),
+        orderDate: 'Just now',
+        paymentStatus: 'Pay at Counter',
+        statusLabel: 'Order Placed'
+      };
+      setOrders(prev => [newOrder, ...prev]);
+      setCartItems([]);
+      setActiveTab('orders');
+    } catch (err) {
+      console.error('Order error:', err);
+      setError(err.message || 'Failed to place order.');
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  const statusMessages = {
+    creating_order: 'Preparing your order...',
+    opening_checkout: 'Opening payment gateway...',
+    verifying_payment: 'Verifying payment...',
+    success: 'Payment successful!',
+  };
+
+  const downloadInvoice = (order) => {
+    const doc = new jsPDF();
+
+    // Header
+    doc.setFontSize(22);
+    doc.setTextColor(139, 58, 30); // #8B3A1E
+    doc.text('TABLEKARD', 105, 20, { align: 'center' });
+
+    doc.setDrawColor(200, 200, 200);
+    doc.line(20, 25, 190, 25);
+
+    // Order Info
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Invoice: ${order.id}`, 20, 35);
+    doc.text(`Date: ${order.fullDate} ${order.orderDate}`, 20, 42);
+
+    doc.line(20, 48, 190, 48);
+
+    // Items Table Header
+    doc.setFont(undefined, 'bold');
+    doc.text('Items', 20, 55);
+    doc.text('Qty', 140, 55);
+    doc.text('Price', 170, 55);
+    doc.setFont(undefined, 'normal');
+
+    let y = 62;
+    order.items.forEach(item => {
+      doc.text(item.name, 20, y);
+      doc.text(`x${item.quantity}`, 140, y);
+      doc.text(`₹${item.price * item.quantity}`, 170, y);
+      y += 8;
+    });
+
+    doc.line(20, y, 190, y);
+    y += 10;
+
+    // Summary
+    const subtotal = order.total - Math.round(order.total * 0.18);
+    const tax = Math.round(order.total * 0.18);
+
+    doc.text('Subtotal:', 140, y);
+    doc.text(`₹${subtotal}`, 170, y);
+    y += 8;
+
+    doc.text('Tax (18%):', 140, y);
+    doc.text(`₹${tax}`, 170, y);
+    y += 8;
+
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(14);
+    doc.text('TOTAL:', 140, y);
+    doc.text(`₹${order.total}`, 170, y);
+
+    // Footer
+    y += 20;
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'italic');
+    doc.text('Payment Status: ' + order.paymentStatus, 20, y);
+    doc.text('Thank you for dining with us!', 105, y + 15, { align: 'center' });
+
+    doc.save(`Invoice_${order.id}.pdf`);
   };
 
   return (
     <div className="myorder-container">
+      {/* Loading Overlay */}
+      {paymentLoading && paymentStatus !== 'opening_checkout' && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          zIndex: 9999, gap: '16px',
+        }}>
+          <Loader2 size={40} color="#8B3A1E" style={{ animation: 'spin 1s linear infinite' }} />
+          <p style={{ color: '#fff', fontSize: '16px', fontWeight: 500 }}>
+            {statusMessages[paymentStatus] || 'Processing...'}
+          </p>
+        </div>
+      )}
+
       {/* Header - Same style as Home page */}
       <header className="menu-header-nav">
         <div className="header-left">
@@ -238,7 +363,7 @@ const MyOrderPage = () => {
                         </div>
                         <div className="cart-serves">
                           <Users size={12} />
-                          <span>Serves {item.serves}</span>
+                          <span>{item.serves}</span>
                         </div>
                       </div>
                       <div className="cart-bottom">
@@ -291,10 +416,55 @@ const MyOrderPage = () => {
                 </div>
               </div>
 
-              {/* Place Order Button */}
-              <button className="place-order-btn" onClick={placeOrder}>
-                Place Order <ArrowRight size={20} />
-              </button>
+              {/* Error Message */}
+              {error && (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                  background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)',
+                  padding: '10px 14px', borderRadius: '10px', marginBottom: '12px',
+                }}>
+                  <AlertCircle size={16} color="#ef4444" />
+                  <p style={{ color: '#ef4444', fontSize: '13px', margin: 0 }}>{error}</p>
+                </div>
+              )}
+
+              {/* Payment Buttons */}
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  className="place-order-btn"
+                  onClick={handlePayAtCounter}
+                  disabled={paymentLoading}
+                  style={{
+                    flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                    padding: '10px 12px', fontSize: '13px', whiteSpace: 'nowrap',
+                    opacity: paymentLoading ? 0.6 : 1
+                  }}
+                >
+                  <Wallet size={16} />
+                  Pay at Counter
+                </button>
+                <button
+                  className="place-order-btn"
+                  onClick={handlePayOnline}
+                  disabled={paymentLoading}
+                  style={{
+                    flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                    background: 'transparent', border: '2px solid #8B3A1E', color: '#8B3A1E',
+                    padding: '10px 12px', fontSize: '13px', whiteSpace: 'nowrap',
+                    opacity: paymentLoading ? 0.6 : 1
+                  }}
+                >
+                  <CreditCard size={16} />
+                  Pay Online
+                </button>
+              </div>
+
+              <style>{`
+                @keyframes spin {
+                  from { transform: rotate(0deg); }
+                  to { transform: rotate(360deg); }
+                }
+              `}</style>
             </>
           )}
         </div>
@@ -303,11 +473,16 @@ const MyOrderPage = () => {
       {/* Orders Content */}
       {activeTab === 'orders' && (
         <div className="orders-content">
-          {orders.length === 0 ? (
+          {ordersLoading ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 0' }}>
+              <Loader2 size={40} color="#8B3A1E" style={{ animation: 'spin 1s linear infinite' }} />
+              <p style={{ marginTop: '16px', color: '#666', fontWeight: 500 }}>Fetching today's orders...</p>
+            </div>
+          ) : orders.length === 0 ? (
             <div className="empty-state">
               <ShoppingBag size={64} color="#888888" />
               <h3>No active orders yet.</h3>
-              <p>Order some delicious food!</p>
+              <p>You haven't ordered anything today.</p>
             </div>
           ) : (
             <>
@@ -338,8 +513,32 @@ const MyOrderPage = () => {
                     </div>
 
                     <div className="order-footer">
-                      <div className={`payment-badge ${order.paymentStatus?.includes('Not') ? 'not-paid' : 'paid'}`}>
-                        {order.paymentStatus}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div className={`payment-badge ${order.paymentStatus?.includes('Not') || order.paymentStatus === 'Pending' ? 'not-paid' : 'paid'}`}>
+                          {order.paymentStatus}
+                        </div>
+                        {order.paymentStatus === 'Paid' && (
+                          <button
+                            className="download-invoice-btn"
+                            onClick={() => downloadInvoice(order)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              background: '#8B3A1E',
+                              color: 'white',
+                              border: 'none',
+                              padding: '6px 10px',
+                              borderRadius: '8px',
+                              fontSize: '11px',
+                              fontWeight: '600',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <Download size={14} />
+                            Invoice
+                          </button>
+                        )}
                       </div>
                       <div className="order-total-inline">
                         <span className="order-total">₹{order.total}</span>
