@@ -5,8 +5,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    background: var(--color-bg-secondary);
     padding: 20px;
+    font-family: var(--font-family);
 }
 
 .login-loading {
@@ -15,20 +16,20 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: #0f0c29;
-    color: #fff;
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
 }
 
 .login-container {
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--color-bg-primary);
     -webkit-backdrop-filter: blur(20px);
     backdrop-filter: blur(20px);
     border-radius: 24px;
     padding: 48px;
     width: 100%;
     max-width: 420px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--color-border);
 }
 
 .login-header {
@@ -39,22 +40,22 @@
 .login-header .logo {
     font-size: 64px;
     margin-bottom: 16px;
-    filter: drop-shadow(0 4px 12px rgba(99, 102, 241, 0.5));
+    filter: drop-shadow(0 4px 12px rgba(217, 181, 80, 0.3));
 }
 
 .login-header h1 {
-    color: #fff;
+    color: var(--color-text-primary);
     font-size: 28px;
     font-weight: 700;
     margin: 0 0 8px 0;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    background: var(--color-accent-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
 
 .login-header p {
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--color-text-secondary);
     font-size: 14px;
     margin: 0;
 }
@@ -72,30 +73,30 @@
 }
 
 .form-group label {
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--color-text-secondary);
     font-size: 14px;
     font-weight: 500;
 }
 
 .form-group input {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
     border-radius: 12px;
     padding: 14px 16px;
-    color: #fff;
+    color: var(--color-text-primary);
     font-size: 16px;
     transition: all 0.3s ease;
 }
 
 .form-group input:focus {
     outline: none;
-    border-color: #6366f1;
-    background: rgba(99, 102, 241, 0.1);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    border-color: var(--color-accent-primary);
+    background: var(--color-bg-primary);
+    box-shadow: 0 0 0 3px rgba(217, 181, 80, 0.2);
 }
 
 .form-group input::placeholder {
-    color: rgba(255, 255, 255, 0.35);
+    color: var(--color-text-muted);
 }
 
 .password-input-wrapper {
@@ -126,9 +127,9 @@
 }
 
 .error-message {
-    background: rgba(239, 68, 68, 0.15);
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    color: #fca5a5;
+    background: rgba(255, 68, 68, 0.15);
+    border: 1px solid var(--color-error);
+    color: #ff8a80;
     padding: 12px 16px;
     border-radius: 10px;
     font-size: 14px;
@@ -136,9 +137,9 @@
 }
 
 .success-message {
-    background: rgba(34, 197, 94, 0.15);
-    border: 1px solid rgba(34, 197, 94, 0.3);
-    color: #86efac;
+    background: rgba(76, 175, 80, 0.15);
+    border: 1px solid var(--color-success);
+    color: #81c784;
     padding: 12px 16px;
     border-radius: 10px;
     font-size: 14px;
@@ -146,8 +147,8 @@
 }
 
 .login-button {
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-    color: #fff;
+    background: var(--color-accent-gradient);
+    color: var(--color-on-accent);
     border: none;
     border-radius: 12px;
     padding: 16px;
@@ -163,7 +164,7 @@
 
 .login-button:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
+    box-shadow: var(--shadow-glow);
 }
 
 .login-button:disabled {
@@ -200,7 +201,7 @@
 .forgot-password-link {
     background: none;
     border: none;
-    color: #8b5cf6;
+    color: var(--color-accent-primary);
     font-size: 14px;
     cursor: pointer;
     text-decoration: underline;
@@ -216,17 +217,17 @@
     text-align: center;
     margin-top: 32px;
     padding-top: 24px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid var(--color-border);
 }
 
 .login-footer p {
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--color-text-muted);
     font-size: 12px;
     margin: 0 0 8px 0;
 }
 
 .security-note {
-    color: rgba(34, 197, 94, 0.8) !important;
+    color: var(--color-success) !important;
 }
 
 /* Modal Styles */
@@ -236,7 +237,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -245,33 +246,34 @@
 }
 
 .modal-content {
-    background: #1a1a2e;
+    background: var(--color-bg-primary);
     border-radius: 16px;
     padding: 32px;
     width: 100%;
     max-width: 380px;
-    border: 1px solid rgba(99, 102, 241, 0.2);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-lg);
 }
 
 .modal-content h3 {
-    color: #fff;
+    color: var(--color-text-primary);
     margin: 0 0 8px 0;
     font-size: 20px;
 }
 
 .modal-content>p {
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--color-text-secondary);
     font-size: 14px;
     margin: 0 0 20px 0;
 }
 
 .modal-content input {
     width: 100%;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
     border-radius: 10px;
     padding: 12px 16px;
-    color: #fff;
+    color: var(--color-text-primary);
     font-size: 14px;
     margin-bottom: 16px;
     box-sizing: border-box;
@@ -279,7 +281,7 @@
 
 .modal-content input:focus {
     outline: none;
-    border-color: #6366f1;
+    border-color: var(--color-accent-primary);
 }
 
 .modal-buttons {
@@ -298,15 +300,15 @@
 }
 
 .modal-buttons button:first-child {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    background: var(--color-accent-gradient);
     color: #fff;
     border: none;
 }
 
 .modal-buttons button:last-child {
     background: transparent;
-    color: rgba(255, 255, 255, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
 }
 
 .modal-buttons button:hover {

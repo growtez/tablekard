@@ -1,16 +1,9 @@
 // Authentication Context for Super Admin (Supabase)
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { supabase } from '@restaurant-saas/supabase';
 import type { User } from '@supabase/supabase-js';
 import { UserRole } from '@restaurant-saas/types';
-
-interface UserProfile {
-    id: string;
-    email: string;
-    name: string | null;
-    role: UserRole;
-}
+import { authService, UserProfile } from '../services/auth.service';
 
 interface AuthContextType {
     user: User | null;
@@ -30,26 +23,6 @@ interface AuthProviderProps {
     children: ReactNode;
 }
 
-async function fetchProfile(userId: string): Promise<UserProfile | null> {
-    const { data, error } = await supabase
-        .from('profiles')
-        .select('id,email,name,role')
-        .eq('id', userId)
-        .maybeSingle();
-
-    if (error) {
-        console.warn('Failed to fetch profile:', error.message);
-        return null;
-    }
-    if (!data) return null;
-    return {
-        id: data.id,
-        email: data.email,
-        name: data.name,
-        role: data.role as UserRole
-    };
-}
-
 export function AuthProvider({ children }: AuthProviderProps) {
     const [user, setUser] = useState<User | null>(null);
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -59,12 +32,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         let mounted = true;
 
         const init = async () => {
-            const { data } = await supabase.auth.getSession();
+            const { data } = await authService.getSession();
             const currentUser = data.session?.user ?? null;
             if (!mounted) return;
             setUser(currentUser);
             if (currentUser) {
-                const profile = await fetchProfile(currentUser.id);
+                const profile = await authService.fetchProfile(currentUser);
                 if (!mounted) return;
                 setUserProfile(profile);
             }
@@ -73,11 +46,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         init();
 
-        const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        const { data: authListener } = authService.onAuthStateChange(async (_event, session) => {
             const nextUser = session?.user ?? null;
             setUser(nextUser);
             if (nextUser) {
-                const profile = await fetchProfile(nextUser.id);
+                const profile = await authService.fetchProfile(nextUser);
                 setUserProfile(profile);
             } else {
                 setUserProfile(null);
@@ -92,57 +65,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }, []);
 
     const signIn = async (email: string, password: string): Promise<User> => {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error || !data.user) {
-            throw error ?? new Error('Failed to sign in');
-        }
+        const nextUser = await authService.signIn(email, password);
+        const profile = await authService.fetchProfile(nextUser);
 
-        const profile = await fetchProfile(data.user.id);
         if (!profile || profile.role !== UserRole.SUPER_ADMIN) {
-            await supabase.auth.signOut();
+            await authService.signOut();
             throw new Error('You are not authorized to access the super admin panel');
         }
 
         setUserProfile(profile);
-        return data.user;
+        return nextUser;
     };
 
     const createAccount = async (email: string, password: string, name: string): Promise<User> => {
-        const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-                data: { name, role: UserRole.SUPER_ADMIN }
-            }
-        });
-        if (error || !data.user) {
-            throw error ?? new Error('Failed to create account');
-        }
-
-        const { error: profileError } = await supabase.from('profiles').upsert({
-            id: data.user.id,
-            email: data.user.email ?? email,
-            name,
-            role: UserRole.SUPER_ADMIN
-        });
-        if (profileError) {
-            console.warn('Failed to upsert profile:', profileError.message);
-        }
-
-        return data.user;
+        const nextUser = await authService.signUp(email, password, name);
+        const profile = await authService.fetchProfile(nextUser);
+        setUserProfile(profile);
+        return nextUser;
     };
 
     const signOut = async (): Promise<void> => {
-        await supabase.auth.signOut();
+        await authService.signOut();
         setUser(null);
         setUserProfile(null);
     };
 
     const resetPassword = async (email: string): Promise<void> => {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.origin
-        });
-        if (error) throw error;
+        await authService.resetPassword(email);
     };
 
     const value: AuthContextType = useMemo(() => ({

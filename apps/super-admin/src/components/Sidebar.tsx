@@ -1,94 +1,144 @@
-import { NavLink } from 'react-router-dom';
+import { useState } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard,
     Store,
     CreditCard,
     Settings,
     Users,
-    BarChart3,
-    Bell,
-    HelpCircle
+    LogOut,
+    ChevronDown,
+    ChevronRight,
+    Headphones // Replaced Headset with Headphones or similar if Headset is missing
 } from 'lucide-react';
 
-const navItems = [
+type NavItem = {
+    path?: string;
+    icon: any;
+    label: string;
+    subItems?: { path: string; label: string }[];
+};
+
+const navItems: NavItem[] = [
+    { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     {
-        section: 'Overview',
-        items: [
-            { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-            { path: '/restaurants', icon: Store, label: 'Restaurants' },
-            { path: '/subscriptions', icon: CreditCard, label: 'Subscriptions' },
+        icon: Store,
+        label: 'Restaurants',
+        subItems: [
+            { path: '/restaurants', label: 'All Restaurants' },
+            { path: '/restaurants/pending', label: 'Pending Approvals' },
         ]
     },
     {
-        section: 'Analytics',
-        items: [
-            { path: '/analytics', icon: BarChart3, label: 'Reports' },
-            { path: '/users', icon: Users, label: 'Users' },
+        icon: Users,
+        label: 'Users',
+        subItems: [
+            { path: '/users', label: 'All Users' },
+            { path: '/users/roles', label: 'Roles & Permissions' },
         ]
     },
     {
-        section: 'System',
-        items: [
-            { path: '/notifications', icon: Bell, label: 'Notifications' },
-            { path: '/settings', icon: Settings, label: 'Settings' },
-            { path: '/help', icon: HelpCircle, label: 'Help & Docs' },
+        icon: CreditCard,
+        label: 'Billing',
+        subItems: [
+            { path: '/subscriptions', label: 'Subscriptions Overview' },
+            { path: '/billing/transactions', label: 'Transactions & Refunds' },
+            { path: '/billing/plans', label: 'Pricing Plans' },
+        ]
+    },
+    {
+        icon: Headphones,
+        label: 'Support',
+        subItems: [
+            { path: '/support/complaints', label: 'Complaints & Disputes' },
+            { path: '/support/reviews', label: 'Reviews Moderation' },
+            { path: '/support/announcements', label: 'Announcements' },
+        ]
+    },
+    {
+        icon: Settings,
+        label: 'Settings',
+        subItems: [
+            { path: '/settings/general', label: 'General Settings' },
+            { path: '/settings/integrations', label: 'Integrations & API' },
+            { path: '/settings/security', label: 'Security & Backups' },
+            { path: '/settings/email', label: 'Email Templates' },
         ]
     }
 ];
 
-export default function Sidebar() {
+const NavItemComponent = ({ item, collapsed }: { item: NavItem, collapsed: boolean }) => {
+    const location = useLocation();
+
+    // Check if any subitem is active to keep accordion open
+    const isSubItemActive = item.subItems?.some(sub => location.pathname.startsWith(sub.path));
+    const [isOpen, setIsOpen] = useState(isSubItemActive || false);
+
+    if (item.subItems) {
+        return (
+            <div className="nav-item-group">
+                <button
+                    className={`nav-item ${isSubItemActive ? 'group-active' : ''}`}
+                    onClick={() => setIsOpen(!isOpen)}
+                >
+                    <div className="flex items-center gap-sm">
+                        <item.icon className="nav-item-icon" />
+                        {!collapsed && <span>{item.label}</span>}
+                    </div>
+                    {!collapsed && (
+                        isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />
+                    )}
+                </button>
+                {isOpen && !collapsed && (
+                    <div className="nav-sub-items">
+                        {item.subItems.map((sub, idx) => (
+                            <NavLink
+                                key={idx}
+                                to={sub.path}
+                                className={({ isActive }) =>
+                                    `nav-sub-item ${isActive ? 'active' : ''}`
+                                }
+                            >
+                                {sub.label}
+                            </NavLink>
+                        ))}
+                    </div>
+                )}
+            </div>
+        );
+    }
+
     return (
-        <aside className="sidebar">
+        <NavLink
+            to={item.path!}
+            className={({ isActive }) =>
+                `nav-item ${isActive ? 'active' : ''}`
+            }
+            title={collapsed ? item.label : undefined}
+        >
+            <item.icon className="nav-item-icon" />
+            {!collapsed && <span>{item.label}</span>}
+        </NavLink>
+    );
+};
+
+export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) {
+    return (
+        <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
             <div className="sidebar-header">
                 <div className="sidebar-logo">
-                    <div className="sidebar-logo-icon">🍽️</div>
-                    <span className="sidebar-logo-text">Restaurant SaaS</span>
+                    <div className="sidebar-logo-icon flex items-center justify-center">🍣</div>
+                    {!collapsed && <span className="sidebar-logo-text">TableKard</span>}
                 </div>
             </div>
 
             <nav className="sidebar-nav">
-                {navItems.map((section) => (
-                    <div key={section.section} className="nav-section">
-                        <div className="nav-section-title">{section.section}</div>
-                        {section.items.map((item) => (
-                            <NavLink
-                                key={item.path}
-                                to={item.path}
-                                className={({ isActive }) =>
-                                    `nav-item ${isActive ? 'active' : ''}`
-                                }
-                            >
-                                <item.icon className="nav-item-icon" />
-                                <span>{item.label}</span>
-                            </NavLink>
-                        ))}
-                    </div>
+                {navItems.map((item, idx) => (
+                    <NavItemComponent key={idx} item={item} collapsed={collapsed} />
                 ))}
             </nav>
 
-            <div style={{ padding: '1rem', borderTop: '1px solid var(--color-border)' }}>
-                <div className="flex items-center gap-sm">
-                    <div style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: '50%',
-                        background: 'var(--color-accent-gradient)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '0.875rem',
-                        fontWeight: 600
-                    }}>
-                        SA
-                    </div>
-                    <div>
-                        <div style={{ fontSize: '0.875rem', fontWeight: 500 }}>Super Admin</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                            admin@saas.com
-                        </div>
-                    </div>
-                </div>
-            </div>
+
         </aside>
     );
 }

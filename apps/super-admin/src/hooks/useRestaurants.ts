@@ -4,7 +4,8 @@ import {
     approveRestaurant,
     suspendRestaurant,
     reactivateRestaurant,
-    deleteRestaurant
+    deleteRestaurant,
+    createRestaurant
 } from '../services/supabaseService';
 import { Restaurant } from '@restaurant-saas/types';
 
@@ -74,6 +75,17 @@ export function useRestaurants() {
         }
     };
 
+    const handleAdd = async (restaurantData: Partial<Restaurant>) => {
+        try {
+            const newRestaurant = await createRestaurant(restaurantData);
+            setRestaurants(prev => [newRestaurant, ...prev]);
+            return newRestaurant;
+        } catch (err: any) {
+            console.error('Failed to add restaurant', err);
+            throw err;
+        }
+    };
+
     return {
         restaurants,
         loading,
@@ -83,6 +95,7 @@ export function useRestaurants() {
             suspend: handleSuspend,
             reactivate: handleReactivate,
             remove: handleDelete,
+            add: handleAdd,
             refresh: fetchRestaurants
         }
     };
