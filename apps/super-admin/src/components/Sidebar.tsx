@@ -21,22 +21,8 @@ type NavItem = {
 
 const navItems: NavItem[] = [
     { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    {
-        icon: Store,
-        label: 'Restaurants',
-        subItems: [
-            { path: '/restaurants', label: 'All Restaurants' },
-            { path: '/restaurants/pending', label: 'Pending Approvals' },
-        ]
-    },
-    {
-        icon: Users,
-        label: 'Users',
-        subItems: [
-            { path: '/users', label: 'All Users' },
-            { path: '/users/roles', label: 'Roles & Permissions' },
-        ]
-    },
+    { path: '/restaurants', icon: Store, label: 'Restaurants' },
+    { path: '/users', icon: Users, label: 'Users' },
     {
         icon: CreditCard,
         label: 'Billing',
@@ -72,7 +58,7 @@ const NavItemComponent = ({ item, collapsed }: { item: NavItem, collapsed: boole
 
     // Check if any subitem is active to keep accordion open
     const isSubItemActive = item.subItems?.some(sub => location.pathname.startsWith(sub.path));
-    const [isOpen, setIsOpen] = useState(isSubItemActive || false);
+    const [isOpen, setIsOpen] = useState(true);
 
     if (item.subItems) {
         return (

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, ExternalLink, RefreshCw, Mail, Phone, Calendar } from 'lucide-react';
+import { Plus, ExternalLink, RefreshCw, Mail, Phone, Calendar, Store } from 'lucide-react';
 import { useRestaurants } from '../hooks/useRestaurants';
 import { Restaurant, RestaurantStatus } from '@restaurant-saas/types';
 import { DataTable, Column } from '../components/DataTable';
@@ -24,8 +24,16 @@ const getStatusBadge = (status: RestaurantStatus) => {
 };
 
 const planBadge = (
-    <span className="badge" style={{ background: 'var(--color-bg-tertiary)', color: 'var(--color-accent-primary)', border: '1px solid var(--color-border)' }}>
-        QR Only
+    <span className="badge" style={{
+        background: 'rgba(217, 181, 80, 0.1)',
+        color: 'var(--color-accent-primary)',
+        border: '1px solid rgba(217, 181, 80, 0.2)',
+        fontWeight: 600,
+        letterSpacing: '0.5px',
+        fontSize: '10px',
+        textTransform: 'uppercase'
+    }}>
+        QR Menu Plan
     </span>
 );
 
@@ -96,7 +104,7 @@ export default function Restaurants() {
                     href={`/r/${row.slug}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-1 rounded hover:bg-[var(--color-bg-hover)] text-[var(--color-text-secondary)] hover:text-[var(--color-accent-primary)] transition-colors inline-block"
+                    className="p-2 rounded-lg bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)] text-[var(--color-text-secondary)] hover:text-[var(--color-accent-primary)] border border-[var(--color-border)] transition-all shadow-sm hover:shadow-md inline-block"
                     title="Preview QR Menu"
                     onClick={(e) => e.stopPropagation()}
                 >
@@ -122,36 +130,62 @@ export default function Restaurants() {
         );
     }
 
+    const statsData = [
+        { label: 'Total Restaurants', value: restaurants.length, icon: Store, color: 'purple' },
+        { label: 'Active', value: restaurants.filter(r => r.status === RestaurantStatus.ACTIVE).length, icon: Calendar, color: 'green' },
+        { label: 'Pending Approval', value: restaurants.filter(r => r.status === 'pending' as any).length, icon: RefreshCw, color: 'orange' },
+    ];
+
     return (
-        <div className="p-6 space-y-6 animate-fadeIn">
+        <div className="p-6 space-y-8 animate-fadeIn">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-[var(--color-text-primary)] mb-1">Restaurants</h1>
+                    <h1 className="text-3xl font-bold text-[var(--color-text-primary)] mb-1 tracking-tight">
+                        Platform <span className="text-gradient">Restaurants</span>
+                    </h1>
                     <p className="text-sm text-[var(--color-text-secondary)]">
-                        Manage all registered restaurants on your platform
+                        Central command for managing all restaurant partners and their status.
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
                     <button
-                        className="btn-icon bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)]"
+                        className="p-2.5 rounded-xl bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)] border border-[var(--color-border)] transition-all"
                         onClick={actions.refresh}
                         title="Refresh Data"
                     >
-                        <RefreshCw size={18} className={loading ? 'animate-spin text-[var(--color-accent-primary)]' : 'text-[var(--color-text-secondary)]'} />
+                        <RefreshCw size={20} className={loading ? 'animate-spin text-[var(--color-accent-primary)]' : 'text-[var(--color-text-secondary)]'} />
                     </button>
                     <button
-                        className="btn btn-primary shadow-lg shadow-black/20 flex items-center gap-2"
+                        className="btn btn-primary shadow-premium flex items-center gap-2 px-6 py-2.5"
                         onClick={() => setIsAddModalOpen(true)}
                     >
-                        <Plus size={18} />
-                        <span>Add Restaurant</span>
+                        <Plus size={20} />
+                        <span className="font-semibold">Add Restaurant</span>
                     </button>
                 </div>
             </div>
 
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {statsData.map((stat, i) => (
+                    <div key={i} className="stat-card glass-card">
+                        <div className={`stat-icon ${stat.color}`}>
+                            <stat.icon size={22} />
+                        </div>
+                        <div className="stat-info">
+                            <div className="stat-label uppercase text-[10px] font-bold tracking-widest">{stat.label}</div>
+                            <div className="stat-value text-2xl">{stat.value}</div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
             {/* Main Content */}
-            <div className="card shadow-lg shadow-black/40 overflow-hidden border border-[var(--color-border)]">
+            <div className="glass-card shadow-premium overflow-hidden">
+                <div className="p-4 border-b border-[var(--color-border)] bg-[var(--color-bg-tertiary)]/30">
+                    <h3 className="text-sm font-semibold text-[var(--color-text-secondary)]">Partner Registry</h3>
+                </div>
                 {loading ? (
                     <TableSkeleton rows={5} columns={6} />
                 ) : (
@@ -161,9 +195,11 @@ export default function Restaurants() {
                         searchPlaceholder="Search by name, slug, or email..."
                         actions={rowActions}
                         onRowAction={handleRowAction}
+                        actionsOpenByDefault={true}
                     />
                 )}
             </div>
+
 
             {/* Restaurant Details Drawer */}
             <SlideOver
