@@ -1,4 +1,4 @@
-.dialog-overlay {
+.menu-dialog-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -13,11 +13,16 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
-.dialog-container {
+.menu-dialog-container {
   background-color: #FFFFFF;
   border-radius: 24px;
   padding: 32px;
@@ -27,33 +32,37 @@
   overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   animation: slideUp 0.3s ease-out;
+  color: #1A202C;
+  /* ensure text is dark */
 }
 
 @keyframes slideUp {
-  from { 
+  from {
     opacity: 0;
     transform: translateY(30px);
   }
-  to { 
+
+  to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-.dialog-header {
+.menu-dialog-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
 }
 
-.dialog-title {
+.menu-dialog-title {
   font-size: 24px;
   font-weight: 600;
   color: #1A202C;
+  margin: 0;
 }
 
-.dialog-close {
+.menu-dialog-close {
   background: none;
   border: none;
   cursor: pointer;
@@ -66,58 +75,61 @@
   transition: all 0.2s;
 }
 
-.dialog-close:hover {
+.menu-dialog-close:hover {
   background-color: #F7FAFC;
   color: #1A202C;
 }
 
-.dialog-form {
+.menu-dialog-form {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-.form-group {
+.menu-form-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.form-label {
+.menu-form-label {
   font-size: 14px;
   font-weight: 500;
   color: #4A5568;
 }
 
-.form-input,
-.form-select {
+.menu-form-input,
+.menu-form-select {
   padding: 12px 16px;
   border: 2px solid #E2E8F0;
+  background-color: #FFFFFF;
   border-radius: 12px;
   font-size: 14px;
   color: #1A202C;
   font-family: 'Poppins', sans-serif;
   transition: all 0.2s;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.form-input:focus,
-.form-select:focus {
+.menu-form-input:focus,
+.menu-form-select:focus {
   outline: none;
   border-color: #68D391;
   box-shadow: 0 0 0 3px rgba(104, 211, 145, 0.1);
 }
 
-.form-input::placeholder {
+.menu-form-input::placeholder {
   color: #A0AEC0;
 }
 
-.emoji-grid {
+.menu-emoji-grid {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   gap: 8px;
 }
 
-.emoji-button {
+.menu-emoji-button {
   padding: 12px;
   border: 2px solid #E2E8F0;
   border-radius: 12px;
@@ -130,18 +142,18 @@
   justify-content: center;
 }
 
-.emoji-button:hover {
+.menu-emoji-button:hover {
   border-color: #CBD5E0;
   transform: scale(1.1);
 }
 
-.emoji-button.selected {
+.menu-emoji-button.selected {
   border-color: #68D391;
   background-color: #F0FFF4;
   transform: scale(1.1);
 }
 
-.form-checkbox-label {
+.menu-form-checkbox-label {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -151,21 +163,21 @@
   font-weight: 500;
 }
 
-.form-checkbox {
+.menu-form-checkbox {
   width: 20px;
   height: 20px;
   cursor: pointer;
   accent-color: #37724e;
 }
 
-.dialog-actions {
+.menu-dialog-actions {
   display: flex;
   gap: 12px;
   margin-top: 12px;
 }
 
-.btn-cancel,
-.btn-save {
+.menu-btn-cancel,
+.menu-btn-save {
   flex: 1;
   padding: 12px 20px;
   border: none;
@@ -175,34 +187,37 @@
   cursor: pointer;
   transition: all 0.2s;
   font-family: 'Poppins', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.btn-cancel {
+.menu-btn-cancel {
   background-color: #F7FAFC;
   color: #4A5568;
 }
 
-.btn-cancel:hover {
+.menu-btn-cancel:hover {
   background-color: #E2E8F0;
 }
 
-.btn-save {
+.menu-btn-save {
   background-color: #37724e;
   color: white;
 }
 
-.btn-save:hover {
+.menu-btn-save:hover {
   background-color: #4f755c;
   transform: translateY(-2px);
 }
 
 @media (max-width: 768px) {
-  .dialog-container {
+  .menu-dialog-container {
     padding: 24px;
     max-width: 95%;
   }
 
-  .emoji-grid {
+  .menu-emoji-grid {
     grid-template-columns: repeat(6, 1fr);
   }
 }

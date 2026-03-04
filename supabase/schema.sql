@@ -44,6 +44,9 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Add password column to profiles
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS password TEXT;
+
 -- restaurants
 CREATE TABLE IF NOT EXISTS public.restaurants (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
