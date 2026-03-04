@@ -1,88 +1,66 @@
-// Order.jsx
-import React, { useState } from 'react';
-import { Search, Bell, TrendingUp, ChevronDown, Filter } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Search, Bell, TrendingUp, Filter } from 'lucide-react';
 import Sidebar from '../components/sidebar';
+import { useAuth } from '../context/AuthContext';
+import { getDashboardOrders, updateOrderStatus } from '../services/supabaseService';
+import type { DashboardOrder } from '../services/supabaseService';
 import './order.css';
 
-const Order = () => {
+const Order: React.FC = () => {
+  const { activeRestaurantId } = useAuth();
   const [selectedTable, setSelectedTable] = useState('All Tables');
   const [selectedPayment, setSelectedPayment] = useState('Payment Method');
   const [selectedStatus, setSelectedStatus] = useState('Status');
 
-  const orders = [
-    { 
-      id: 'ORDER-234', 
-      table: 'Table 7', 
-      time: '12:35 PM', 
-      status: 'New', 
-      statusColor: 'yellow',
-      paymentMethod: 'Cash',
-      items: 'Butter Chicken, Naan x2, Lassi'
-    },
-    { 
-      id: 'ORDER-235', 
-      table: 'Table 3', 
-      time: '12:30 PM', 
-      status: 'Preparing', 
-      statusColor: 'blue',
-      paymentMethod: 'Online',
-      items: 'Paneer Tikka, Rice, Coke'
-    },
-    { 
-      id: 'ORDER-236', 
-      table: 'Table 10', 
-      time: '12:28 PM', 
-      status: 'Ready', 
-      statusColor: 'green',
-      paymentMethod: 'Cash',
-      items: 'Biryani, Raita, Salad'
-    },
-    { 
-      id: 'ORDER-237', 
-      table: 'Table 5', 
-      time: '12:25 PM', 
-      status: 'Served', 
-      statusColor: 'teal',
-      paymentMethod: 'Online',
-      items: 'Masala Dosa, Coffee x2'
-    },
-    { 
-      id: 'ORDER-238', 
-      table: 'Table 12', 
-      time: '12:20 PM', 
-      status: 'New', 
-      statusColor: 'yellow',
-      paymentMethod: 'Cash',
-      items: 'Tandoori Chicken, Roti x3'
-    },
-    { 
-      id: 'ORDER-239', 
-      table: 'Table 8', 
-      time: '12:18 PM', 
-      status: 'Preparing', 
-      statusColor: 'blue',
-      paymentMethod: 'Online',
-      items: 'Dal Makhani, Jeera Rice, Papad'
-    },
-    { 
-      id: 'ORDER-240', 
-      table: 'Table 2', 
-      time: '12:15 PM', 
-      status: 'Ready', 
-      statusColor: 'green',
-      paymentMethod: 'Cash',
-      items: 'Fish Curry, Rice, Pickle'
-    },
-    { 
-      id: 'ORDER-241', 
-      table: 'Table 15', 
-      time: '12:10 PM', 
-      status: 'Served', 
-      statusColor: 'teal',
-      paymentMethod: 'Online',
-      items: 'Veg Thali, Buttermilk'
+  const [searchQuery, setSearchQuery] = useState('');
+  const [orders, setOrders] = useState<DashboardOrder[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (activeRestaurantId) {
+      fetchOrders();
     }
-  ];
+  }, [activeRestaurantId]);
+
+  const fetchOrders = async () => {
+    if (!activeRestaurantId) return;
+    setLoading(true);
+    try {
+      const data = await getDashboardOrders(activeRestaurantId);
+      setOrders(data);
+    } catch (err) {
+      console.error('Failed to fetch orders:', err);
+      alert('Failed to load orders.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStatusChange = async (orderId: string, currentStatus: string) => {
+    // Basic cycle example: Pending -> Preparing -> Ready -> Served -> Completed
+    const cycle = ['Pending', 'Preparing', 'Ready', 'Served', 'Completed'];
+    const idx = cycle.indexOf(currentStatus);
+    if (idx >= 0 && idx < cycle.length - 1) {
+      const nextStatus = cycle[idx + 1];
+      try {
+        await updateOrderStatus(orderId, nextStatus.toLowerCase() as any);
+        fetchOrders(); // refresh
+      } catch (err) {
+        console.error('Failed to update status', err);
+      }
+    }
+  };
+
+  const filteredOrders = useMemo(() => {
+    return orders.filter(o => {
+      const matchesSearch = o.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        o.items.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesTable = selectedTable === 'All Tables' || o.table === selectedTable;
+      const matchesPayment = selectedPayment === 'Payment Method' || o.paymentMethod.toLowerCase() === selectedPayment.toLowerCase();
+      const matchesStatus = selectedStatus === 'Status' || o.status.toLowerCase() === selectedStatus.toLowerCase();
+      return matchesSearch && matchesTable && matchesPayment && matchesStatus;
+    });
+  }, [orders, searchQuery, selectedTable, selectedPayment, selectedStatus]);
 
   const getStatusClass = (color) => {
     return `status-${color}`;
@@ -91,7 +69,7 @@ const Order = () => {
   return (
     <div className="order-container">
       <Sidebar />
-      
+
       <div className="order-main-content">
         {/* Header */}
         <div className="order-header">
@@ -103,6 +81,8 @@ const Order = () => {
                 type="text"
                 placeholder="Search orders..."
                 className="order-search-input"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
             <div className="order-icon-button">
@@ -117,7 +97,7 @@ const Order = () => {
           <div className="order-stat-card">
             <div className="order-card-top-bar order-card-green"></div>
             <h3 className="order-stat-title">Total Orders Today</h3>
-            <div className="order-stat-number">125</div>
+            <div className="order-stat-number">{loading ? '...' : orders.length}</div>
             <div className="order-stat-change">
               <span className="order-change-positive">+12% vs yesterday</span>
               <TrendingUp size={16} color="#68D391" className="order-trend-icon" />
@@ -138,18 +118,43 @@ const Order = () => {
         {/* Filter Section */}
         <div className="order-filter-section">
           <div className="order-filter-buttons">
-            <button className="order-filter-btn">
-              <span>All Tables</span>
-              <ChevronDown size={18} />
-            </button>
-            <button className="order-filter-btn">
-              <span>Payment Method</span>
-              <ChevronDown size={18} />
-            </button>
-            <button className="order-filter-btn">
-              <span>Status</span>
-              <ChevronDown size={18} />
-            </button>
+            <select
+              className="order-filter-btn"
+              value={selectedTable}
+              onChange={e => setSelectedTable(e.target.value)}
+              style={{ paddingRight: '24px', cursor: 'pointer', appearance: 'none' }}
+            >
+              <option value="All Tables">All Tables</option>
+              {Array.from(new Set(orders.map(o => o.table))).map(table => (
+                table !== 'N/A' && <option key={table} value={table}>{table}</option>
+              ))}
+            </select>
+            <select
+              className="order-filter-btn"
+              value={selectedPayment}
+              onChange={e => setSelectedPayment(e.target.value)}
+              style={{ paddingRight: '24px', cursor: 'pointer', appearance: 'none' }}
+            >
+              <option value="Payment Method">All Payment</option>
+              <option value="cash">Cash</option>
+              <option value="upi">UPI</option>
+              <option value="card">Card</option>
+            </select>
+            <select
+              className="order-filter-btn"
+              value={selectedStatus}
+              onChange={e => setSelectedStatus(e.target.value)}
+              style={{ paddingRight: '24px', cursor: 'pointer', appearance: 'none' }}
+            >
+              <option value="Status">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="preparing">Preparing</option>
+              <option value="ready">Ready</option>
+              <option value="served">Served</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+
           </div>
           <button className="order-filter-icon-btn">
             <Filter size={18} color="#718096" />
@@ -174,24 +179,43 @@ const Order = () => {
                 </tr>
               </thead>
               <tbody>
-                {orders.map((order, idx) => (
-                  <tr key={idx}>
-                    <td className="order-id-cell">{order.id}</td>
-                    <td>{order.table}</td>
-                    <td>{order.time}</td>
-                    <td>
-                      <span className={`order-status-pill ${getStatusClass(order.statusColor)}`}>
-                        {order.status}
-                      </span>
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>
+                      Loading orders...
                     </td>
-                    <td>
-                      <span className="order-payment-badge">
-                        {order.paymentMethod}
-                      </span>
-                    </td>
-                    <td className="order-items-cell">{order.items}</td>
                   </tr>
-                ))}
+                ) : filteredOrders.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>
+                      No orders found
+                    </td>
+                  </tr>
+                ) : (
+                  filteredOrders.map((order) => (
+                    <tr key={order.id}>
+                      <td className="order-id-cell">{order.orderNumber}</td>
+                      <td>{order.table}</td>
+                      <td>{order.time}</td>
+                      <td>
+                        <span
+                          className={`order-status-pill ${getStatusClass(order.statusColor)}`}
+                          onClick={() => handleStatusChange(order.id, order.status)}
+                          style={{ cursor: 'pointer' }}
+                          title="Click to advance status"
+                        >
+                          {order.status}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="order-payment-badge">
+                          {order.paymentMethod}
+                        </span>
+                      </td>
+                      <td className="order-items-cell">{order.items}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

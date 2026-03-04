@@ -1,235 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TrendingUp, Download, Calendar, CreditCard, CheckCircle, Eye, Trash2, X } from 'lucide-react';
 import './payment.css';
 import Sidebar from '../components/sidebar';
-
-// Type Definitions
-interface PaymentTransaction {
-  orderId: string;
-  customerName: string;
-  tableNo: string;
-  dateTime: string;
-  paymentMethod: string;
-  paymentStatus: string;
-  statusColor: string;
-  amount: number;
-  orderItems: Array<{
-    name: string;
-    quantity: number;
-    price: number;
-  }>;
-}
+import { useAuth } from '../context/AuthContext';
+import { getPaymentTransactions, updatePaymentStatus } from '../services/supabaseService';
+import type { PaymentTransaction } from '../services/supabaseService';
 
 // Main Payment Component
 const Payment: React.FC = () => {
+  const { activeRestaurantId } = useAuth();
   const [selectedDateRange, setSelectedDateRange] = useState<string>('today');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('all');
   const [selectedPaymentStatus, setSelectedPaymentStatus] = useState<string>('all');
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [selectedTransaction, setSelectedTransaction] = useState<PaymentTransaction | null>(null);
 
-  const [transactions, setTransactions] = useState<PaymentTransaction[]>([
-    {
-      orderId: 'ORDER-242',
-      customerName: 'Rohit Desai',
-      tableNo: 'Table 11',
-      dateTime: '12:10 PM - Oct 02, 2025',
-      paymentMethod: 'UPI',
-      paymentStatus: 'Paid',
-      statusColor: 'paid',
-      amount: 580,
-      orderItems: [
-        { name: 'Chicken Biryani', quantity: 1, price: 320 },
-        { name: 'Gulab Jamun', quantity: 2, price: 130 },
-        { name: 'Lassi', quantity: 1, price: 130 }
-      ]
-    },
-    {
-      orderId: 'ORDER-241',
-      customerName: 'Divya Nair',
-      tableNo: 'Table 6',
-      dateTime: '12:12 PM - Oct 02, 2025',
-      paymentMethod: 'Cash',
-      paymentStatus: 'Paid',
-      statusColor: 'paid',
-      amount: 350,
-      orderItems: [
-        { name: 'Paneer Butter Masala', quantity: 1, price: 280 },
-        { name: 'Naan', quantity: 2, price: 70 }
-      ]
-    },
-    {
-      orderId: 'ORDER-240',
-      customerName: 'Sanjeev Iqbal',
-      tableNo: 'Table 15',
-      dateTime: '12:15 PM - Oct 02, 2025',
-      paymentMethod: 'Card',
-      paymentStatus: 'Pending',
-      statusColor: 'pending',
-      amount: 480,
-      orderItems: [
-        { name: 'Mutton Curry', quantity: 1, price: 380 },
-        { name: 'Rice', quantity: 1, price: 100 }
-      ]
-    },
-    {
-      orderId: 'ORDER-239',
-      customerName: 'Sourav Sharma',
-      tableNo: 'Table 8',
-      dateTime: '12:18 PM - Oct 02, 2025',
-      paymentMethod: 'UPI',
-      paymentStatus: 'Paid',
-      statusColor: 'paid',
-      amount: 420,
-      orderItems: [
-        { name: 'Dal Tadka', quantity: 1, price: 180 },
-        { name: 'Roti', quantity: 4, price: 120 },
-        { name: 'Raita', quantity: 1, price: 120 }
-      ]
-    },
-    {
-      orderId: 'ORDER-238',
-      customerName: 'Vikram Singh',
-      tableNo: 'Table 2',
-      dateTime: '12:20 PM - Oct 02, 2025',
-      paymentMethod: 'Cash',
-      paymentStatus: 'Pending',
-      statusColor: 'pending',
-      amount: 320,
-      orderItems: [
-        { name: 'Veg Thali', quantity: 1, price: 250 },
-        { name: 'Sweet Lassi', quantity: 1, price: 70 }
-      ]
-    },
-    {
-      orderId: 'ORDER-237',
-      customerName: 'Anjali Verma',
-      tableNo: 'Table 10',
-      dateTime: '12:25 PM - Oct 02, 2025',
-      paymentMethod: 'Card',
-      paymentStatus: 'Paid',
-      statusColor: 'paid',
-      amount: 500,
-      orderItems: [
-        { name: 'Fish Curry', quantity: 1, price: 350 },
-        { name: 'Steamed Rice', quantity: 1, price: 150 }
-      ]
-    },
-    {
-      orderId: 'ORDER-235',
-      customerName: 'Priya Sharma',
-      tableNo: 'Table 3',
-      dateTime: '12:30 PM - Oct 02, 2025',
-      paymentMethod: 'UPI',
-      paymentStatus: 'Paid',
-      statusColor: 'paid',
-      amount: 470,
-      orderItems: [
-        { name: 'Chole Bhature', quantity: 1, price: 220 },
-        { name: 'Kulfi', quantity: 2, price: 250 }
-      ]
-    },
-    {
-      orderId: 'ORDER-234',
-      customerName: 'Rajesh Kumar',
-      tableNo: 'Table 7',
-      dateTime: '12:35 PM - Oct 02, 2025',
-      paymentMethod: 'Cash',
-      paymentStatus: 'Pending',
-      statusColor: 'pending',
-      amount: 890,
-      orderItems: [
-        { name: 'Family Thali', quantity: 2, price: 800 },
-        { name: 'Ice Cream', quantity: 3, price: 90 }
-      ]
-    },
-    {
-      orderId: 'ORDER-220',
-      customerName: 'Amit Patel',
-      tableNo: 'Table 5',
-      dateTime: '11:45 AM - Oct 02, 2025',
-      paymentMethod: 'Card',
-      paymentStatus: 'Paid',
-      statusColor: 'paid',
-      amount: 500,
-      orderItems: [
-        { name: 'Tandoori Chicken', quantity: 1, price: 450 },
-        { name: 'Mint Chutney', quantity: 1, price: 50 }
-      ]
-    },
-    {
-      orderId: 'ORDER-219',
-      customerName: 'Sanjay Khanna',
-      tableNo: 'Table 12',
-      dateTime: '11:30 AM - Oct 02, 2025',
-      paymentMethod: 'UPI',
-      paymentStatus: 'Paid',
-      statusColor: 'paid',
-      amount: 1000,
-      orderItems: [
-        { name: 'Special Biryani', quantity: 2, price: 800 },
-        { name: 'Rasgulla', quantity: 4, price: 200 }
-      ]
-    },
-    {
-      orderId: 'ORDER-218',
-      customerName: 'Neha Kapoor',
-      tableNo: 'Table 8',
-      dateTime: '11:20 AM - Oct 02, 2025',
-      paymentMethod: 'Cash',
-      paymentStatus: 'Paid',
-      statusColor: 'paid',
-      amount: 540,
-      orderItems: [
-        { name: 'Palak Paneer', quantity: 1, price: 280 },
-        { name: 'Garlic Naan', quantity: 2, price: 160 },
-        { name: 'Mango Juice', quantity: 1, price: 100 }
-      ]
-    },
-    {
-      orderId: 'ORDER-217',
-      customerName: 'Ravi Mehta',
-      tableNo: 'Table 3',
-      dateTime: '11:10 AM - Oct 02, 2025',
-      paymentMethod: 'Card',
-      paymentStatus: 'Failed',
-      statusColor: 'failed',
-      amount: 520,
-      orderItems: [
-        { name: 'Butter Chicken', quantity: 1, price: 380 },
-        { name: 'Jeera Rice', quantity: 1, price: 140 }
-      ]
-    },
-    {
-      orderId: 'ORDER-216',
-      customerName: 'Pooja Singh',
-      tableNo: 'Table 14',
-      dateTime: '10:55 AM - Oct 02, 2025',
-      paymentMethod: 'UPI',
-      paymentStatus: 'Paid',
-      statusColor: 'paid',
-      amount: 360,
-      orderItems: [
-        { name: 'Aloo Gobi', quantity: 1, price: 200 },
-        { name: 'Chapati', quantity: 3, price: 90 },
-        { name: 'Pickle', quantity: 1, price: 70 }
-      ]
-    },
-    {
-      orderId: 'ORDER-215',
-      customerName: 'Arjun Reddy',
-      tableNo: 'Table 9',
-      dateTime: '10:40 AM - Oct 02, 2025',
-      paymentMethod: 'Cash',
-      paymentStatus: 'Pending',
-      statusColor: 'pending',
-      amount: 350,
-      orderItems: [
-        { name: 'Masala Dosa', quantity: 2, price: 300 },
-        { name: 'Filter Coffee', quantity: 1, price: 50 }
-      ]
+  const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (activeRestaurantId) {
+      fetchTransactions();
     }
-  ]);
+  }, [activeRestaurantId]);
+
+  const fetchTransactions = async () => {
+    if (!activeRestaurantId) return;
+    setLoading(true);
+    try {
+      const data = await getPaymentTransactions(activeRestaurantId);
+      setTransactions(data);
+    } catch (err) {
+      console.error('Failed to fetch transactions:', err);
+      alert('Failed to load payment transactions.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filter transactions based on selected filters
   const filteredTransactions = transactions.filter(transaction => {
@@ -239,7 +46,6 @@ const Payment: React.FC = () => {
   });
 
   // Calculate totals
-  const totalRevenue = filteredTransactions.reduce((sum, t) => sum + t.amount, 0);
   const todayRevenue = 125380;
   const weekRevenue = 890000;
 
@@ -248,25 +54,31 @@ const Payment: React.FC = () => {
     // Implementation for exporting report
   };
 
-  const handleView = (orderId: string) => {
-    const transaction = transactions.find(t => t.orderId === orderId);
+  const handleView = (id: string) => {
+    const transaction = transactions.find(t => t.id === id);
     if (transaction) {
       setSelectedTransaction(transaction);
       setIsModalOpen(true);
     }
   };
 
-  const handleMarkPaid = (orderId: string) => {
-    setTransactions(transactions.map(transaction => 
-      transaction.orderId === orderId 
-        ? { ...transaction, paymentStatus: 'Paid', statusColor: 'paid' }
-        : transaction
-    ));
+  const handleMarkPaid = async (id: string) => {
+    try {
+      await updatePaymentStatus(id, 'paid');
+      setTransactions(transactions.map(transaction =>
+        transaction.id === id
+          ? { ...transaction, paymentStatus: 'Paid', statusColor: 'paid' }
+          : transaction
+      ));
+    } catch (err) {
+      console.error(err);
+      alert('Failed to mark as paid');
+    }
   };
 
-  const handleDelete = (orderId: string) => {
-    if (window.confirm('Are you sure you want to delete this transaction?')) {
-      setTransactions(transactions.filter(transaction => transaction.orderId !== orderId));
+  const handleDelete = (id: string) => {
+    if (window.confirm('Are you sure you want to delete this transaction from view? (Not deleted from DB)')) {
+      setTransactions(transactions.filter(transaction => transaction.id !== id));
     }
   };
 
@@ -278,7 +90,7 @@ const Payment: React.FC = () => {
   return (
     <div className="dashboard-container">
       <Sidebar />
-      
+
       <div className="main-content">
         <div className="header">
           <h1 className="page-title">Payments & Billing</h1>
@@ -310,7 +122,7 @@ const Payment: React.FC = () => {
           <div className="filter-buttons">
             <div className="filter-group">
               <Calendar size={16} color="#718096" />
-              <select 
+              <select
                 className="filter-select"
                 value={selectedDateRange}
                 onChange={(e) => setSelectedDateRange(e.target.value)}
@@ -324,7 +136,7 @@ const Payment: React.FC = () => {
 
             <div className="filter-group">
               <CreditCard size={16} color="#718096" />
-              <select 
+              <select
                 className="filter-select"
                 value={selectedPaymentMethod}
                 onChange={(e) => setSelectedPaymentMethod(e.target.value)}
@@ -339,7 +151,7 @@ const Payment: React.FC = () => {
 
             <div className="filter-group">
               <CheckCircle size={16} color="#718096" />
-              <select 
+              <select
                 className="filter-select"
                 value={selectedPaymentStatus}
                 onChange={(e) => setSelectedPaymentStatus(e.target.value)}
@@ -362,7 +174,7 @@ const Payment: React.FC = () => {
         <div className="table-card">
           <div className="table-header">
             <h2 className="table-title">Completed Payments</h2>
-            <button className="view-all-btn" onClick={() => setShowAllPayments(true)}>View All</button>
+            {/* <button className="view-all-btn" onClick={() => setShowAllPayments(true)}>View All</button> */}
             {/* <div className="payment-summary">
               Total: ₹{totalRevenue.toLocaleString()} ({filteredTransactions.length} transactions)
             </div> */}
@@ -380,17 +192,23 @@ const Payment: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredTransactions.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>
+                    Loading transactions...
+                  </td>
+                </tr>
+              ) : filteredTransactions.length === 0 ? (
                 <tr>
                   <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>
                     No transactions found matching the selected filters
                   </td>
                 </tr>
               ) : (
-                filteredTransactions.map((transaction, idx) => (
-                  <tr key={idx}>
+                filteredTransactions.map((transaction) => (
+                  <tr key={transaction.id}>
                     <td>
-                      <div className="order-id-cell">{transaction.orderId}</div>
+                      <div className="order-id-cell">{transaction.orderNumber}</div>
                     </td>
                     <td>
                       <div className="customer-name-cell">{transaction.customerName}</div>
@@ -408,26 +226,26 @@ const Payment: React.FC = () => {
                     </td>
                     <td>
                       <div className="action-buttons">
-                        <button 
+                        <button
                           className="action-btn view-btn"
-                          onClick={() => handleView(transaction.orderId)}
+                          onClick={() => handleView(transaction.id)}
                           title="View Details"
                         >
                           <Eye size={14} />
                         </button>
                         {transaction.paymentStatus === 'Pending' && (
-                          <button 
+                          <button
                             className="action-btn paid-btn"
-                            onClick={() => handleMarkPaid(transaction.orderId)}
+                            onClick={() => handleMarkPaid(transaction.id)}
                             title="Mark as Paid"
                           >
                             <CheckCircle size={14} />
                           </button>
                         )}
-                        <button 
+                        <button
                           className="action-btn delete-btn"
-                          onClick={() => handleDelete(transaction.orderId)}
-                          title="Delete Transaction"
+                          onClick={() => handleDelete(transaction.id)}
+                          title="Hide Transaction"
                         >
                           <Trash2 size={14} />
                         </button>
@@ -450,12 +268,12 @@ const Payment: React.FC = () => {
                   <X size={20} />
                 </button>
               </div>
-              
+
               <div className="modal-body">
                 <div className="detail-section">
                   <div className="detail-row">
                     <span className="detail-label">Order ID:</span>
-                    <span className="detail-value">{selectedTransaction.orderId}</span>
+                    <span className="detail-value">{selectedTransaction.orderNumber}</span>
                   </div>
                   <div className="detail-row">
                     <span className="detail-label">Customer Name:</span>

@@ -275,10 +275,133 @@ export const getOrders = async (restaurantId: string, limitCount: number = 50): 
     }));
 };
 
+export interface DashboardOrder {
+    id: string;
+    orderNumber: string;
+    table: string;
+    time: string;
+    status: string;
+    statusColor: string;
+    paymentMethod: string;
+    items: string;
+}
+
+export const getDashboardOrders = async (restaurantId: string): Promise<DashboardOrder[]> => {
+    const { data, error } = await db
+        .from('orders')
+        .select(`
+            id,
+            order_number,
+            created_at,
+            status,
+            payment_method,
+            restaurant_tables(table_number),
+            order_items(name, quantity)
+        `)
+        .eq('restaurant_id', restaurantId)
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    return (data || []).map((row: any) => {
+        const table = Array.isArray(row.restaurant_tables) ? row.restaurant_tables[0] : row.restaurant_tables;
+        const itemsList = Array.isArray(row.order_items) ? row.order_items : [];
+        const itemsStr = itemsList.map((item: any) => `${item.name} x${item.quantity}`).join(', ');
+
+        let statusColor = 'yellow';
+        const st = (row.status || '').toLowerCase();
+        if (st === 'preparing') statusColor = 'blue';
+        else if (st === 'ready') statusColor = 'green';
+        else if (st === 'served' || st === 'completed') statusColor = 'teal';
+        else if (st === 'cancelled') statusColor = 'red';
+
+        return {
+            id: row.id,
+            orderNumber: row.order_number || 'UNKNOWN',
+            table: table?.table_number ? `Table ${table.table_number}` : 'N/A',
+            time: new Date(row.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+            status: (row.status || 'New').charAt(0).toUpperCase() + (row.status || 'New').slice(1),
+            statusColor: statusColor,
+            paymentMethod: row.payment_method || 'Cash',
+            items: itemsStr
+        };
+    });
+};
+
 export const updateOrderStatus = async (orderId: string, status: OrderStatus): Promise<void> => {
     const { error } = await db
         .from('orders')
         .update({ status, updated_at: new Date().toISOString() })
+        .eq('id', orderId);
+    if (error) throw error;
+};
+
+// ==========================================
+// Payments
+// ==========================================
+
+export interface PaymentTransaction {
+    id: string;
+    orderNumber: string;
+    customerName: string;
+    tableNo: string;
+    dateTime: string;
+    paymentMethod: string;
+    paymentStatus: string;
+    statusColor: string;
+    amount: number;
+    orderItems: Array<{
+        name: string;
+        quantity: number;
+        price: number;
+    }>;
+}
+
+export const getPaymentTransactions = async (restaurantId: string): Promise<PaymentTransaction[]> => {
+    const { data, error } = await db
+        .from('orders')
+        .select(`
+            id,
+            order_number,
+            created_at,
+            payment_method,
+            payment_status,
+            total,
+            profiles(name),
+            restaurant_tables(table_number),
+            order_items(name, quantity, price)
+        `)
+        .eq('restaurant_id', restaurantId)
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    return (data || []).map((row: any) => {
+        const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
+        const table = Array.isArray(row.restaurant_tables) ? row.restaurant_tables[0] : row.restaurant_tables;
+
+        return {
+            id: row.id,
+            orderNumber: row.order_number || 'UNKNOWN',
+            customerName: profile?.name || 'Guest',
+            tableNo: table?.table_number ? `Table ${table.table_number}` : 'N/A',
+            dateTime: new Date(row.created_at).toLocaleString('en-US', {
+                month: 'short', day: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            }),
+            paymentMethod: row.payment_method || 'Cash',
+            paymentStatus: (row.payment_status || 'pending').charAt(0).toUpperCase() + (row.payment_status || 'pending').slice(1),
+            statusColor: (row.payment_status || 'pending').toLowerCase(),
+            amount: Number(row.total) || 0,
+            orderItems: Array.isArray(row.order_items) ? row.order_items : []
+        };
+    });
+};
+
+export const updatePaymentStatus = async (orderId: string, paymentStatus: string): Promise<void> => {
+    const { error } = await db
+        .from('orders')
+        .update({ payment_status: paymentStatus.toLowerCase(), updated_at: new Date().toISOString() })
         .eq('id', orderId);
     if (error) throw error;
 };
