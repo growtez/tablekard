@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, ExternalLink, RefreshCw, Calendar, Store, Eye, Edit, ShieldAlert } from 'lucide-react';
 import { useRestaurants } from '../hooks/useRestaurants';
-import { Restaurant, RestaurantStatus } from '@restaurant-saas/types';
+import { Restaurant, RestaurantStatus, SubscriptionStatus } from '@restaurant-saas/types';
 import { DataTable, Column } from '../components/DataTable';
 import { TableSkeleton } from '../components/Skeleton';
 import AddRestaurantModal from '../components/AddRestaurantModal';
@@ -12,16 +12,20 @@ import { PageHeader } from '../components/ui/PageHeader';
 import { StatCard } from '../components/ui/StatCard';
 import toast from 'react-hot-toast';
 
-const getStatusBadge = (status: RestaurantStatus) => {
+const getStatusBadge = (status: RestaurantStatus | SubscriptionStatus | string) => {
     switch (status) {
-        case RestaurantStatus.ACTIVE:
+        case SubscriptionStatus.ACTIVE:
             return <Badge variant="success" className="px-3 py-1 font-semibold">Active</Badge>;
-        case RestaurantStatus.TRIAL:
+        case SubscriptionStatus.TRIAL:
             return <Badge variant="info" className="px-3 py-1 font-semibold">Trial</Badge>;
-        case RestaurantStatus.EXPIRED:
+        case SubscriptionStatus.EXPIRED:
             return <Badge variant="error" className="px-3 py-1 font-semibold">Expired</Badge>;
-        case RestaurantStatus.SUSPENDED:
+        case SubscriptionStatus.SUSPENDED:
             return <Badge variant="warning" className="px-3 py-1 font-semibold">Suspended</Badge>;
+        case RestaurantStatus.OPEN:
+            return <Badge variant="success" className="px-3 py-1 font-semibold">Open</Badge>;
+        case RestaurantStatus.CLOSED:
+            return <Badge variant="warning" className="px-3 py-1 font-semibold">Closed</Badge>;
         default:
             return <Badge className="px-3 py-1 font-semibold capitalize">{status}</Badge>;
     }
@@ -150,7 +154,7 @@ export default function Restaurants() {
 
     const statsData = [
         { label: 'Total Restaurants', value: restaurants.length, icon: Store, color: 'purple' },
-        { label: 'Active', value: restaurants.filter(r => r.status === RestaurantStatus.ACTIVE).length, icon: Calendar, color: 'green' },
+        { label: 'Active', value: restaurants.filter(r => r.status === RestaurantStatus.OPEN).length, icon: Calendar, color: 'green' },
         { label: 'Pending Approval', value: restaurants.filter(r => r.status === 'pending' as any).length, icon: RefreshCw, color: 'orange' },
     ];
 

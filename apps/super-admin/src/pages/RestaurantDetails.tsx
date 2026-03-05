@@ -26,13 +26,16 @@ import AddRestaurantModal from '../components/AddRestaurantModal';
 import { useState } from 'react';
 
 const statusConfig = {
-    [RestaurantStatus.ACTIVE]: { label: 'Active', color: '#22c55e', bg: 'rgba(34,197,94,0.1)', border: 'rgba(34,197,94,0.2)' },
-    [RestaurantStatus.TRIAL]: { label: 'Trial', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', border: 'rgba(59,130,246,0.2)' },
-    [RestaurantStatus.EXPIRED]: { label: 'Expired', color: '#ef4444', bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.2)' },
-    [RestaurantStatus.SUSPENDED]: { label: 'Suspended', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.2)' },
+    [RestaurantStatus.OPEN]: { label: 'Open', color: '#22c55e', bg: 'rgba(34,197,94,0.1)', border: 'rgba(34,197,94,0.2)' },
+    [RestaurantStatus.CLOSED]: { label: 'Closed', color: '#ef4444', bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.2)' },
+    [SubscriptionStatus.ACTIVE]: { label: 'Active', color: '#22c55e', bg: 'rgba(34,197,94,0.1)', border: 'rgba(34,197,94,0.2)' },
+    [SubscriptionStatus.TRIAL]: { label: 'Trial', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', border: 'rgba(59,130,246,0.2)' },
+    [SubscriptionStatus.EXPIRED]: { label: 'Expired', color: '#ef4444', bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.2)' },
+    [SubscriptionStatus.SUSPENDED]: { label: 'Suspended', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.2)' },
 };
 
-const StatusPill = ({ status }: { status: RestaurantStatus }) => {
+const StatusPill = ({ status }: { status: string }) => {
+    // @ts-ignore
     const cfg = statusConfig[status] || { label: status, color: '#888', bg: 'rgba(136,136,136,0.1)', border: 'rgba(136,136,136,0.2)' };
     return (
         <span style={{
@@ -358,7 +361,7 @@ export default function RestaurantDetails() {
                                     <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-primary)' }}>{restaurant.subscriptionType || 'Monthly Base Plan'}</div>
                                     <div style={{ fontSize: 10, color: 'var(--color-text-muted)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px', marginTop: 2 }}>Current Tier</div>
                                 </div>
-                                <StatusPill status={restaurant.subscriptionStatus ? RestaurantStatus.ACTIVE : RestaurantStatus.EXPIRED} />
+                                <StatusPill status={restaurant.subscriptionStatus ? SubscriptionStatus.ACTIVE : SubscriptionStatus.EXPIRED} />
                             </div>
 
                             <button style={{

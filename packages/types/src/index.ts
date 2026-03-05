@@ -45,11 +45,16 @@ export enum PaymentStatus {
   REFUNDED = 'REFUNDED',
 }
 
-export enum RestaurantStatus {
+export enum SubscriptionStatus {
   ACTIVE = 'ACTIVE',
   SUSPENDED = 'SUSPENDED',
   TRIAL = 'TRIAL',
   EXPIRED = 'EXPIRED',
+}
+
+export enum RestaurantStatus {
+  OPEN = 'OPEN',
+  CLOSED = 'CLOSED',
 }
 
 // ==========================================

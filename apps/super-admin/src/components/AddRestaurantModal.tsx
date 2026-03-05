@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, Store, Globe, Mail, Phone, Shield } from 'lucide-react';
-import { Restaurant } from '@restaurant-saas/types';
+import { Restaurant, RestaurantStatus } from '@restaurant-saas/types';
 import { createRestaurant, updateRestaurant } from '../services/supabaseService';
 import toast from 'react-hot-toast';
 
@@ -19,7 +19,8 @@ export default function AddRestaurantModal({ onClose, onSuccess, restaurant }: A
         email: restaurant?.contact?.email || '',
         phone: restaurant?.contact?.phone || '',
         allowedRadius: restaurant?.location?.allowedRadius || 500,
-        subscriptionType: restaurant?.subscriptionType || 'QR Only'
+        subscriptionType: restaurant?.subscriptionType || 'QR Only',
+        status: restaurant?.status || RestaurantStatus.OPEN
     });
     const [error, setError] = useState<string | null>(null);
 
@@ -46,6 +47,7 @@ export default function AddRestaurantModal({ onClose, onSuccess, restaurant }: A
                     slug: formData.slug,
                     contact_email: formData.email,
                     contact_phone: formData.phone,
+                    status: formData.status,
                     subscriptionType: formData.subscriptionType,
                     allowedRadius: formData.allowedRadius
                 });
@@ -54,7 +56,7 @@ export default function AddRestaurantModal({ onClose, onSuccess, restaurant }: A
                 await createRestaurant({
                     name: formData.name,
                     slug: formData.slug,
-                    status: 'pending' as any,
+                    status: formData.status,
                     contact_email: formData.email,
                     contact_phone: formData.phone,
                     contact_address: '',
@@ -202,6 +204,8 @@ export default function AddRestaurantModal({ onClose, onSuccess, restaurant }: A
                                 </div>
                             </div>
                         </div>
+
+
                     </div>
 
                     <div className="modal-actions flex items-center justify-end gap-3 pt-2">
