@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { ChevronDown, ChevronUp, Search, MoreHorizontal, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export interface Column<T> {
@@ -15,6 +15,7 @@ interface DataTableProps<T> {
     onRowAction?: (action: string, row: T) => void;
     actions?: { label: string; value: string; destructive?: boolean }[];
     itemsPerPage?: number;
+    actionsOpenByDefault?: boolean;
 }
 
 export function DataTable<T>({
@@ -23,12 +24,17 @@ export function DataTable<T>({
     searchPlaceholder = "Search...",
     actions = [],
     onRowAction,
-    itemsPerPage = 10
+    itemsPerPage = 10,
+    actionsOpenByDefault = false
 }: DataTableProps<T>) {
     const [globalFilter, setGlobalFilter] = useState('');
     const [sorting, setSorting] = useState<{ id: string; desc: boolean } | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
-    const [activeActionMenu, setActiveActionMenu] = useState<number | null>(null);
+    const [activeActionMenus, setActiveActionMenus] = useState<Record<number, boolean>>({});
+
+
+
+
 
     // Filtering
     const filteredData = useMemo(() => {
@@ -59,6 +65,17 @@ export function DataTable<T>({
         const start = (currentPage - 1) * itemsPerPage;
         return sortedData.slice(start, start + itemsPerPage);
     }, [sortedData, currentPage, itemsPerPage]);
+
+    // Sync open state when data changes if open by default
+    useEffect(() => {
+        if (actionsOpenByDefault) {
+            const initial: Record<number, boolean> = {};
+            paginatedData.forEach((_, idx) => {
+                initial[idx] = true;
+            });
+            setActiveActionMenus(initial);
+        }
+    }, [paginatedData, actionsOpenByDefault]);
 
     const handleSort = (columnId: string) => {
         setSorting(prev => {
@@ -130,17 +147,20 @@ export function DataTable<T>({
                                     {actions.length > 0 && (
                                         <td className="p-4 text-right relative">
                                             <button
-                                                onClick={() => setActiveActionMenu(activeActionMenu === rowIndex ? null : rowIndex)}
+                                                onClick={() => setActiveActionMenus(prev => ({
+                                                    ...prev,
+                                                    [rowIndex]: !prev[rowIndex]
+                                                }))}
                                                 className="p-2 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] rounded-full hover:bg-[var(--color-bg-tertiary)] transition-colors"
                                             >
                                                 <MoreHorizontal size={18} />
                                             </button>
 
                                             {/* Action Dropdown */}
-                                            {activeActionMenu === rowIndex && (
+                                            {activeActionMenus[rowIndex] && (
                                                 <div
                                                     className="absolute right-[calc(100%-1rem)] top-10 mt-2 w-48 bg-[var(--color-bg-card)] rounded-md shadow-lg border border-[var(--color-border)] z-50 flex flex-col py-1"
-                                                    onMouseLeave={() => setActiveActionMenu(null)}
+                                                    onMouseLeave={() => !actionsOpenByDefault && setActiveActionMenus(prev => ({ ...prev, [rowIndex]: false }))}
                                                 >
                                                     {actions.map((action) => (
                                                         <button
@@ -148,7 +168,9 @@ export function DataTable<T>({
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 onRowAction?.(action.value, row);
-                                                                setActiveActionMenu(null);
+                                                                if (!actionsOpenByDefault) {
+                                                                    setActiveActionMenus(prev => ({ ...prev, [rowIndex]: false }));
+                                                                }
                                                             }}
                                                             className={`px-4 py-2 text-sm text-left hover:bg-[var(--color-bg-hover)] transition-colors ${action.destructive ? 'text-[var(--color-error)]' : 'text-[var(--color-text-primary)]'}`}
                                                         >
@@ -159,6 +181,7 @@ export function DataTable<T>({
                                             )}
                                         </td>
                                     )}
+
                                 </tr>
                             ))
                         )}
@@ -186,8 +209,8 @@ export function DataTable<T>({
                                 key={page}
                                 onClick={() => setCurrentPage(page)}
                                 className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${currentPage === page
-                                        ? 'bg-[var(--color-accent-gradient)] text-[var(--color-on-accent)] font-medium'
-                                        : 'hover:bg-[var(--color-bg-hover)] text-[var(--color-text-secondary)]'
+                                    ? 'bg-[var(--color-accent-gradient)] text-[var(--color-on-accent)] font-medium'
+                                    : 'hover:bg-[var(--color-bg-hover)] text-[var(--color-text-secondary)]'
                                     }`}
                             >
                                 {page}

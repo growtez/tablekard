@@ -18,6 +18,15 @@ const Signup = lazy(() => import('./pages/Signup'));
 const Analytics = lazy(() => import('./pages/Analytics'));
 const Users = lazy(() => import('./pages/Users'));
 const Notifications = lazy(() => import('./pages/Notifications'));
+const Transactions = lazy(() => import('./pages/Transactions'));
+const PricingPlans = lazy(() => import('./pages/PricingPlans'));
+const ComplaintsDisputes = lazy(() => import('./pages/ComplaintsDisputes'));
+const ReviewsModeration = lazy(() => import('./pages/ReviewsModeration'));
+const Announcements = lazy(() => import('./pages/Announcements'));
+const GeneralSettings = lazy(() => import('./pages/GeneralSettings'));
+const IntegrationsAPI = lazy(() => import('./pages/IntegrationsAPI'));
+const SecurityBackups = lazy(() => import('./pages/SecurityBackups'));
+const EmailTemplates = lazy(() => import('./pages/EmailTemplates'));
 
 function AppRoutes() {
     return (
@@ -38,6 +47,15 @@ function AppRoutes() {
                     <Route path="restaurants" element={<Restaurants />} />
                     <Route path="restaurants/:id" element={<RestaurantDetails />} />
                     <Route path="subscriptions" element={<Subscriptions />} />
+                    <Route path="billing/transactions" element={<Transactions />} />
+                    <Route path="billing/plans" element={<PricingPlans />} />
+                    <Route path="support/complaints" element={<ComplaintsDisputes />} />
+                    <Route path="support/reviews" element={<ReviewsModeration />} />
+                    <Route path="support/announcements" element={<Announcements />} />
+                    <Route path="settings/general" element={<GeneralSettings />} />
+                    <Route path="settings/integrations" element={<IntegrationsAPI />} />
+                    <Route path="settings/security" element={<SecurityBackups />} />
+                    <Route path="settings/email" element={<EmailTemplates />} />
                     <Route path="analytics" element={<Analytics />} />
                     <Route path="users" element={<Users />} />
                     <Route path="notifications" element={<Notifications />} />
