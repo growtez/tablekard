@@ -148,13 +148,7 @@ export default function Restaurants() {
                 description="Central command for managing all restaurant partners and their status."
                 actions={
                     <>
-                        <button
-                            className="p-2.5 rounded-xl bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)] border border-[var(--color-border)] transition-all"
-                            onClick={actions.refresh}
-                            title="Refresh Data"
-                        >
-                            <RefreshCw size={20} className={loading ? 'animate-spin text-[var(--color-accent-primary)]' : 'text-[var(--color-text-secondary)]'} />
-                        </button>
+                        
                         <Button
                             className="shadow-premium flex items-center gap-2 px-6 py-2.5"
                             onClick={() => setIsAddModalOpen(true)}

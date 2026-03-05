@@ -18,7 +18,6 @@ export default function AddRestaurantModal({ onClose, onSuccess }: AddRestaurant
         allowedRadius: 500,
         subscriptionType: 'QR Only'
     });
-    const [showAdvanced, setShowAdvanced] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     // Auto-generate slug from name
@@ -61,8 +60,8 @@ export default function AddRestaurantModal({ onClose, onSuccess }: AddRestaurant
 
     return (
         <div className="modal-overlay" onClick={onClose}>
-            <div className="modal animate-fadeIn" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px' }}>
-                <div className="modal-header border-b border-[var(--color-border)] p-6 bg-[var(--color-bg-secondary)]">
+            <div className="modal animate-fadeIn" onClick={e => e.stopPropagation()} style={{ maxWidth: '800px' }}>
+                <div className="modal-header border-b border-[var(--color-border)] bg-[var(--color-bg-secondary)]" style={{ padding: '32px' }}>
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-[var(--color-accent-gradient)] flex items-center justify-center text-[var(--color-on-accent)] shadow-glow">
                             <Store size={22} />
@@ -77,7 +76,7 @@ export default function AddRestaurantModal({ onClose, onSuccess }: AddRestaurant
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="modal-content p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+                <form onSubmit={handleSubmit} className="modal-content space-y-8 max-h-[90vh] overflow-y-auto" style={{ padding: '32px' }}>
                     {error && (
                         <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-sm flex items-center gap-2">
                             <Shield size={16} />
@@ -85,8 +84,8 @@ export default function AddRestaurantModal({ onClose, onSuccess }: AddRestaurant
                         </div>
                     )}
 
-                    <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-6">
+                        <div className="grid grid-cols-2" style={{ gap: '24px' }}>
                             <div className="form-group">
                                 <label className="form-label flex items-center gap-2">
                                     <Store size={14} className="text-[var(--color-accent-primary)]" />
@@ -108,22 +107,25 @@ export default function AddRestaurantModal({ onClose, onSuccess }: AddRestaurant
                                     Subdomain Slug
                                 </label>
                                 <div className="relative">
-                                    <input
-                                        type="text"
-                                        required
-                                        className="form-input pr-24"
-                                        placeholder="e.g. pizza-paradise"
-                                        value={formData.slug}
-                                        onChange={e => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
-                                    />
-                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-[var(--color-text-muted)] font-medium">
-                                        .tablekard.com
+                                    <div className="flex">
+                                        <input
+                                            type="text"
+                                            required
+                                            className="form-input flex-1"
+                                            placeholder="e.g. pizza-paradise"
+                                            value={formData.slug}
+                                            onChange={e => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
+                                            style={{ borderRadius: '10px 0 0 10px' }}
+                                        />
+                                        <div className="flex items-center px-3 bg-[var(--color-bg-tertiary)] border border-l-0 border-[var(--color-border)] text-[var(--color-text-muted)] text-sm font-medium" style={{ borderRadius: '0 10px 10px 0' }}>
+                                            .tablekard.com
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2" style={{ gap: '24px' }}>
                             <div className="form-group">
                                 <label className="form-label flex items-center gap-2">
                                     <Mail size={14} className="text-[var(--color-accent-primary)]" />
@@ -156,17 +158,7 @@ export default function AddRestaurantModal({ onClose, onSuccess }: AddRestaurant
                         </div>
 
                         <div className="pt-2 border-t border-[var(--color-border)]">
-                            <button
-                                type="button"
-                                className="text-xs text-[var(--color-accent-primary)] font-medium flex items-center gap-1 hover:underline"
-                                onClick={() => setShowAdvanced(!showAdvanced)}
-                            >
-                                {showAdvanced ? 'Hide Advanced Settings' : 'Show Advanced Settings'}
-                            </button>
-                        </div>
-
-                        {showAdvanced && (
-                            <div className="grid grid-cols-2 gap-4 animate-fadeIn">
+                            <div className="grid grid-cols-2" style={{ gap: '24px' }}>
                                 <div className="form-group">
                                     <label className="form-label">Geo-Fence Radius (meters)</label>
                                     <input
@@ -189,7 +181,7 @@ export default function AddRestaurantModal({ onClose, onSuccess }: AddRestaurant
                                     </select>
                                 </div>
                             </div>
-                        )}
+                        </div>
                     </div>
 
                     <div className="modal-actions flex items-center justify-end gap-3 pt-2">
@@ -198,7 +190,7 @@ export default function AddRestaurantModal({ onClose, onSuccess }: AddRestaurant
                         </button>
                         <button type="submit" className="btn btn-primary shadow-lg shadow-black/20 px-8" disabled={loading}>
                             {loading ? (
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center" style={{ gap: '8px' }}>
                                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                                     <span>Creating...</span>
                                 </div>
