@@ -6,6 +6,7 @@ import Order from "./pages/order";
 import Menu from "./pages/menu";
 import Payment from "./pages/payment";
 import LoginPage from "./pages/Login";
+import Reports from "./pages/reports";
 
 console.log('🚀 App.tsx loaded');
 
@@ -55,6 +56,9 @@ function AppRoutes() {
       } />
       <Route path="/payments" element={
         <ProtectedRoute><Payment /></ProtectedRoute>
+      } />
+      <Route path="/reports" element={
+        <ProtectedRoute><Reports /></ProtectedRoute>
       } />
     </Routes>
   );

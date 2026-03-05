@@ -1,23 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import type { MenuCategory, MenuItem } from '@restaurant-saas/types';
 import './menu_dialog.css';
 
 interface MenuDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (item: any) => void;
-  item?: any;
+  item?: MenuItem | null;
+  categories: MenuCategory[];
   mode: 'add' | 'edit';
 }
 
-const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, mode }) => {
+const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, categories, mode }) => {
   const [formData, setFormData] = useState({
     name: '',
     price: '',
     image: '🍽️',
-    category: 'Starters',
-    description:'',
-    inStock: true
+    categoryId: categories.length > 0 ? categories[0].id : '',
+    description: '',
+    available: true,
+    isVeg: true
   });
 
   useEffect(() => {
@@ -25,32 +28,40 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
       setFormData({
         name: item.name,
         price: item.price.toString(),
-        image: item.image,
-        category: item.category,
-        description: item.description,
-        inStock: item.inStock
+        image: item.image ?? '🍽️',
+        categoryId: item.categoryId,
+        description: item.description ?? '',
+        available: item.available,
+        isVeg: item.isVeg
       });
     } else {
       setFormData({
         name: '',
         price: '',
         image: '🍽️',
-        category: 'Starters',
-        description:'',
-        inStock: true
+        categoryId: categories.length > 0 ? categories[0].id : '',
+        description: '',
+        available: true,
+        isVeg: true
       });
     }
-  }, [mode, item, isOpen]);
+  }, [mode, item, isOpen, categories]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.categoryId) {
+      alert("Please select a valid category or create one first.");
+      return;
+    }
     onSave({
-      ...item,
+      ...(item || {}),
       name: formData.name,
       price: parseFloat(formData.price),
       image: formData.image,
-      category: formData.category,
-      inStock: formData.inStock
+      categoryId: formData.categoryId,
+      description: formData.description || null,
+      available: formData.available,
+      isVeg: formData.isVeg
     });
     onClose();
   };
@@ -68,69 +79,68 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
   const emojis = ['🍽️', '🍗', '🧀', '🥘', '🍚', '🍮', '🫓', '🍕', '🍔', '🍟', '🌮', '🍜', '🍱', '🥗', '🍖', '🥩'];
 
   return (
-    <div className="dialog-overlay" onClick={onClose}>
-      <div className="dialog-container" onClick={(e) => e.stopPropagation()}>
-        <div className="dialog-header">
-          <h2 className="dialog-title">
+    <div className="menu-dialog-overlay" onClick={onClose}>
+      <div className="menu-dialog-container" onClick={(e) => e.stopPropagation()}>
+        <div className="menu-dialog-header">
+          <h2 className="menu-dialog-title">
             {mode === 'add' ? 'Add New Menu Item' : 'Edit Menu Item'}
           </h2>
-          <button className="dialog-close" onClick={onClose}>
+          <button className="menu-dialog-close" onClick={onClose} type="button">
             <X size={20} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="dialog-form">
-          <div className="form-group">
-            <label className="form-label">Item Name</label>
+        <form onSubmit={handleSubmit} className="menu-dialog-form">
+          <div className="menu-form-group">
+            <label className="menu-form-label">Item Name</label>
             <input
               type="text"
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className="form-input"
+              className="menu-form-input"
               placeholder="Enter item name"
               required
             />
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Category</label>
+          <div className="menu-form-group">
+            <label className="menu-form-label">Category</label>
             <select
-              name="category"
-              value={formData.category}
+              name="categoryId"
+              value={formData.categoryId}
               onChange={handleChange}
-              className="form-select"
+              className="menu-form-select"
               required
             >
-              <option value="Starters">Starters</option>
-              <option value="Main Course">Main Course</option>
-              <option value="Drinks">Drinks</option>
-              <option value="Desserts">Desserts</option>
-              <option value="Breads">Breads</option>
+              <option value="" disabled>Select a category</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
             </select>
           </div>
 
-            <div className="form-group">
-            <label className="form-label">Description</label>
+          <div className="menu-form-group">
+            <label className="menu-form-label">Description</label>
             <input
               type="text"
-              name="name"
+              name="description"
               value={formData.description}
               onChange={handleChange}
-              className="form-input"
+              className="menu-form-input"
               placeholder="Enter item description"
               required
             />
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Price (₹)</label>
+          <div className="menu-form-group">
+            <label className="menu-form-label">Price (₹)</label>
             <input
               type="number"
               name="price"
               value={formData.price}
               onChange={handleChange}
-              className="form-input"
+              className="menu-form-input"
               placeholder="Enter price"
               min="0"
               step="0.01"
@@ -138,14 +148,14 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
             />
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Icon</label>
-            <div className="emoji-grid">
+          <div className="menu-form-group">
+            <label className="menu-form-label">Icon</label>
+            <div className="menu-emoji-grid">
               {emojis.map((emoji) => (
                 <button
                   key={emoji}
                   type="button"
-                  className={`emoji-button ${formData.image === emoji ? 'selected' : ''}`}
+                  className={`menu-emoji-button ${formData.image === emoji ? 'selected' : ''}`}
                   onClick={() => setFormData(prev => ({ ...prev, image: emoji }))}
                 >
                   {emoji}
@@ -154,24 +164,36 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
             </div>
           </div>
 
-          <div className="form-group">
-            <label className="form-checkbox-label">
+          <div className="menu-form-group" style={{ display: 'flex', gap: '24px', flexDirection: 'row' }}>
+            <label className="menu-form-checkbox-label">
               <input
                 type="checkbox"
-                name="inStock"
-                checked={formData.inStock}
+                name="available"
+                checked={formData.available}
                 onChange={handleChange}
-                className="form-checkbox"
+                className="menu-form-checkbox"
               />
-              <span>In Stock</span>
+              <span>Available</span>
+            </label>
+            <label className="menu-form-checkbox-label">
+              <input
+                type="checkbox"
+                name="isVeg"
+                checked={formData.isVeg}
+                onChange={handleChange}
+                className="menu-form-checkbox"
+              />
+              <span style={{ color: formData.isVeg ? '#38A169' : '#E53E3E', fontWeight: 'bold' }}>
+                {formData.isVeg ? '🟩 Veg' : '🟥 Non-Veg'}
+              </span>
             </label>
           </div>
 
-          <div className="dialog-actions">
-            <button type="button" className="btn-cancel" onClick={onClose}>
+          <div className="menu-dialog-actions">
+            <button type="button" className="menu-btn-cancel" onClick={onClose}>
               Cancel
             </button>
-            <button type="submit" className="btn-save">
+            <button type="submit" className="menu-btn-save">
               {mode === 'add' ? 'Add Item' : 'Save Changes'}
             </button>
           </div>

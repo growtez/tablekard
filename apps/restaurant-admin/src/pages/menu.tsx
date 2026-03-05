@@ -1,72 +1,35 @@
-import React, { useState } from 'react';
-import { Search, Bell, Plus, Edit3, Trash2} from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Bell, Plus, Edit3, Trash2, Layers } from 'lucide-react';
 import Sidebar from '../components/sidebar';
 import MenuDialog from '../components/menu_dialog';
+import CategoryDialog from '../components/category_dialog';
 import OfferDialog from '../components/offer_dialog';
+import { useAuth } from '../context/AuthContext';
+import {
+  getMenuItems,
+  getMenuCategories,
+  addMenuItem,
+  updateMenuItem,
+  deleteMenuItem,
+  toggleMenuItemAvailability,
+  addMenuCategory,
+  updateMenuCategory,
+  deleteMenuCategory
+} from '../services/supabaseService';
+import type { MenuItem, MenuCategory } from '@restaurant-saas/types';
 import './menu.css';
 
 const Menu: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('menu-items');
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [menuItems, setMenuItems] = useState([
-    { 
-      id: 1, 
-      name: 'Butter Chicken', 
-      price: 420, 
-      image: '🍗', 
-      inStock: true,
-      category: 'Main Course'
-    },
-    { 
-      id: 2, 
-      name: 'Paneer Tikka', 
-      price: 350, 
-      image: '🧀', 
-      inStock: true,
-      category: 'Starters'
-    },
-    { 
-      id: 3, 
-      name: 'Masala Dosa', 
-      price: 180, 
-      image: '🥘', 
-      inStock: false,
-      category: 'Main Course'
-    },
-    { 
-      id: 4, 
-      name: 'Biryani', 
-      price: 380, 
-      image: '🍚', 
-      inStock: true,
-      category: 'Main Course'
-    },
-    { 
-      id: 5, 
-      name: 'Gulab Jamun', 
-      price: 120, 
-      image: '🍮', 
-      inStock: true,
-      category: 'Desserts'
-    },
-    { 
-      id: 6, 
-      name: 'Tandoori Roti', 
-      price: 45, 
-      image: '🫓', 
-      inStock: false,
-      category: 'Breads'
-    },
-    { 
-      id: 7, 
-      name: 'Mango Lassi', 
-      price: 80, 
-      image: '🥤', 
-      inStock: true,
-      category: 'Drinks'
-    }
-  ]);
+  const { activeRestaurantId } = useAuth();
 
+  const [activeTab, setActiveTab] = useState('menu-items');
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
+
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [categories, setCategories] = useState<MenuCategory[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Offers (mock data for now)
   const [offers, setOffers] = useState([
     {
       id: 1,
@@ -101,31 +64,57 @@ const Menu: React.FC = () => {
   ]);
 
   const [menuDialogOpen, setMenuDialogOpen] = useState(false);
+  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [offerDialogOpen, setOfferDialogOpen] = useState(false);
-  const [selectedMenuItem, setSelectedMenuItem] = useState(null);
-  const [selectedOffer, setSelectedOffer] = useState(null);
+
+  const [selectedMenuItem, setSelectedMenuItem] = useState<MenuItem | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<MenuCategory | null>(null);
+  const [selectedOffer, setSelectedOffer] = useState<any>(null);
   const [dialogMode, setDialogMode] = useState<'add' | 'edit'>('add');
 
-  const categories = ['All', 'Starters', 'Main Course', 'Drinks', 'Desserts', 'Breads'];
+  useEffect(() => {
+    if (activeRestaurantId) {
+      fetchMenuData();
+    }
+  }, [activeRestaurantId]);
 
-  const filteredMenuItems = selectedCategory === 'All' 
-    ? menuItems 
-    : menuItems.filter(item => item.category === selectedCategory);
-
-  const toggleStock = (id: number) => {
-    setMenuItems(items => 
-      items.map(item => 
-        item.id === id ? { ...item, inStock: !item.inStock } : item
-      )
-    );
+  const fetchMenuData = async () => {
+    if (!activeRestaurantId) return;
+    setLoading(true);
+    try {
+      const [fetchedCategories, fetchedItems] = await Promise.all([
+        getMenuCategories(activeRestaurantId),
+        getMenuItems(activeRestaurantId)
+      ]);
+      setCategories(fetchedCategories);
+      setMenuItems(fetchedItems);
+    } catch (err) {
+      console.error('Failed to fetch menu data:', err);
+      alert('Failed to load menu data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const toggleOffer = (id: number) => {
-    setOffers(offers => 
-      offers.map(offer => 
-        offer.id === id ? { ...offer, isActive: !offer.isActive } : offer
-      )
-    );
+  const filteredMenuItems = selectedCategoryId === 'all'
+    ? menuItems
+    : menuItems.filter(item => item.categoryId === selectedCategoryId);
+
+  const getCategoryName = (catId: string) => {
+    const cat = categories.find(c => c.id === catId);
+    return cat ? cat.name : 'Unknown';
+  };
+
+  // --- ITEM HANDLERS ---
+  const toggleStock = async (item: MenuItem) => {
+    try {
+      setMenuItems(items => items.map(i => i.id === item.id ? { ...i, available: !i.available } : i));
+      await toggleMenuItemAvailability(item.id, !item.available);
+    } catch (err) {
+      console.error(err);
+      setMenuItems(items => items.map(i => i.id === item.id ? { ...i, available: item.available } : i));
+      alert('Failed to update availability');
+    }
   };
 
   const handleAddMenuItem = () => {
@@ -134,66 +123,136 @@ const Menu: React.FC = () => {
     setMenuDialogOpen(true);
   };
 
-  const handleEditMenuItem = (item: any) => {
+  const handleEditMenuItem = (item: MenuItem) => {
     setDialogMode('edit');
     setSelectedMenuItem(item);
     setMenuDialogOpen(true);
   };
 
-  const handleSaveMenuItem = (item: any) => {
-    if (dialogMode === 'add') {
-      const newItem = {
-        ...item,
-        id: Math.max(...menuItems.map(i => i.id), 0) + 1
-      };
-      setMenuItems([...menuItems, newItem]);
-    } else {
-      setMenuItems(items =>
-        items.map(i => i.id === item.id ? item : i)
-      );
+  const handleSaveMenuItem = async (itemData: any) => {
+    if (!activeRestaurantId) return;
+    try {
+      if (dialogMode === 'add') {
+        const newItem = await addMenuItem(activeRestaurantId, {
+          name: itemData.name,
+          price: itemData.price,
+          category_id: itemData.categoryId,
+          description: itemData.description,
+          image_url: itemData.image,
+          is_available: itemData.available,
+          is_veg: itemData.isVeg
+        });
+        setMenuItems([...menuItems, newItem]);
+      } else {
+        await updateMenuItem(itemData.id, {
+          name: itemData.name,
+          price: itemData.price,
+          category_id: itemData.categoryId,
+          description: itemData.description,
+          image_url: itemData.image,
+          is_available: itemData.available,
+          is_veg: itemData.isVeg
+        });
+        setMenuItems(items => items.map(i => i.id === itemData.id ? ({ ...i, ...itemData }) : i));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to save menu item');
     }
   };
 
-  const handleAddOffer = () => {
+  const handleDeleteMenuItem = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this menu item?')) return;
+    try {
+      await deleteMenuItem(id);
+      setMenuItems(items => items.filter(i => i.id !== id));
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete menu item');
+    }
+  };
+
+  // --- CATEGORY HANDLERS ---
+  const handleAddCategory = () => {
     setDialogMode('add');
-    setSelectedOffer(null);
-    setOfferDialogOpen(true);
+    setSelectedCategory(null);
+    setCategoryDialogOpen(true);
   };
 
-  const handleEditOffer = (offer: any) => {
+  const handleEditCategory = (category: MenuCategory) => {
     setDialogMode('edit');
-    setSelectedOffer(offer);
-    setOfferDialogOpen(true);
+    setSelectedCategory(category);
+    setCategoryDialogOpen(true);
   };
 
+  const handleSaveCategory = async (catData: Partial<MenuCategory>) => {
+    if (!activeRestaurantId) return;
+    try {
+      if (dialogMode === 'add') {
+        const newCat = await addMenuCategory(activeRestaurantId, {
+          name: catData.name!,
+          description: catData.description || undefined,
+          sort_order: catData.order,
+          active: catData.active
+        });
+        setCategories([...categories, newCat].sort((a, b) => a.order - b.order));
+      } else {
+        await updateMenuCategory(catData.id!, {
+          name: catData.name,
+          description: catData.description || null,
+          sort_order: catData.order,
+          active: catData.active
+        });
+        setCategories(cats => cats.map(c => c.id === catData.id ? { ...c, ...catData } as MenuCategory : c).sort((a, b) => a.order - b.order));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to save category');
+    }
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    try {
+      await deleteMenuCategory(id);
+      setCategories(cats => cats.filter(c => c.id !== id));
+      if (selectedCategoryId === id) setSelectedCategoryId('all');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete category');
+    }
+  };
+
+
+  // --- OFFER HANDLERS ---
+  const toggleOffer = (id: number) => {
+    setOffers(offs => offs.map(off => off.id === id ? { ...off, isActive: !off.isActive } : off));
+  };
+  const handleAddOffer = () => { setDialogMode('add'); setSelectedOffer(null); setOfferDialogOpen(true); };
+  const handleEditOffer = (offer: any) => { setDialogMode('edit'); setSelectedOffer(offer); setOfferDialogOpen(true); };
   const handleSaveOffer = (offer: any) => {
     if (dialogMode === 'add') {
-      const newOffer = {
-        ...offer,
-        id: Math.max(...offers.map(o => o.id), 0) + 1
-      };
+      const newOffer = { ...offer, id: Math.max(...offers.map(o => o.id), 0) + 1 };
       setOffers([...offers, newOffer]);
     } else {
-      setOffers(offerList =>
-        offerList.map(o => o.id === offer.id ? offer : o)
-      );
+      setOffers(offs => offs.map(o => o.id === offer.id ? offer : o));
     }
   };
-
   const handleDeleteOffer = (id: number) => {
-    if (window.confirm('Are you sure you want to delete this offer?')) {
+    if (window.confirm('Delete this offer?')) {
       setOffers(offers.filter(offer => offer.id !== id));
     }
   };
 
-  const activeItems = menuItems.filter(item => item.inStock).length;
-  const outOfStockItems = menuItems.filter(item => !item.inStock).length;
-  const topSellingItem = 'Butter Chicken';
+  // --- STATS ---
+  const activeItems = menuItems.filter(item => item.available).length;
+  const outOfStockItems = menuItems.filter(item => !item.available).length;
+  // TODO: Fetch real top selling when analytics are active.
+  const topSellingItem = menuItems.length > 0 ? menuItems[0].name : '-';
 
   return (
     <div className="menu-container">
       <Sidebar />
-      
+
       <div className="main-content">
         {/* Header */}
         <div className="header">
@@ -219,14 +278,14 @@ const Menu: React.FC = () => {
           <div className="stats-card">
             <div className="card-top-bar card-top-bar-green"></div>
             <h3 className="card-title">Active Menu Items</h3>
-            <div className="stats-number">{activeItems}</div>
+            <div className="stats-number">{loading ? '...' : activeItems}</div>
             <div className="stats-subtitle">Currently available</div>
           </div>
 
           <div className="stats-card">
             <div className="card-top-bar card-top-bar-red"></div>
             <h3 className="card-title">Out of Stock Items</h3>
-            <div className="stats-number">{outOfStockItems}</div>
+            <div className="stats-number">{loading ? '...' : outOfStockItems}</div>
             <div className="stats-subtitle">Need restocking</div>
           </div>
 
@@ -234,22 +293,21 @@ const Menu: React.FC = () => {
             <div className="card-top-bar card-top-bar-blue"></div>
             <h3 className="card-title">Top Selling Items (This Week)</h3>
             <div className="top-selling-item">
-              <span className="top-selling-emoji">🍗</span>
-              <span className="top-selling-name">{topSellingItem}</span>
+              <span className="top-selling-name">{loading ? '...' : topSellingItem}</span>
             </div>
-            <div className="stats-subtitle">45 orders this week</div>
+            <div className="stats-subtitle">Calculated dynamically</div>
           </div>
         </div>
 
         {/* Tab Navigation */}
         <div className="tab-navigation">
-          <button 
+          <button
             className={`tab-button ${activeTab === 'menu-items' ? 'active' : ''}`}
             onClick={() => setActiveTab('menu-items')}
           >
             Menu Items
           </button>
-          <button 
+          <button
             className={`tab-button ${activeTab === 'offers' ? 'active' : ''}`}
             onClick={() => setActiveTab('offers')}
           >
@@ -261,57 +319,108 @@ const Menu: React.FC = () => {
         {activeTab === 'menu-items' && (
           <div className="tab-content">
             <div className="content-header">
-              <h2 className="content-title">Menu Items</h2>
-              <button className="add-button" onClick={handleAddMenuItem}>
-                <Plus size={16} />
-                Add New Item
-              </button>
+              <h2 className="content-title">Menu Items & Categories</h2>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button className="add-button" onClick={handleAddCategory} style={{ backgroundColor: '#E2E8F0', color: '#1A202C' }}>
+                  <Layers size={16} />
+                  New Category
+                </button>
+                <button className="add-button" onClick={handleAddMenuItem}>
+                  <Plus size={16} />
+                  Add New Item
+                </button>
+              </div>
             </div>
 
             {/* Category Filter */}
-            <div className="category-filter">
+            <div className="category-filter" style={{ display: 'flex', alignItems: 'center', gap: '12px', overflowX: 'auto', paddingBottom: '8px' }}>
+              <button
+                className={`category-button ${selectedCategoryId === 'all' ? 'active' : ''}`}
+                onClick={() => setSelectedCategoryId('all')}
+              >
+                All
+              </button>
               {categories.map((category) => (
-                <button
-                  key={category}
-                  className={`category-button ${selectedCategory === category ? 'active' : ''}`}
-                  onClick={() => setSelectedCategory(category)}
-                >
-                  {category}
-                </button>
-              ))}
-            </div>
-            
-            <div className="menu-grid">
-              {filteredMenuItems.map((item) => (
-                <div key={item.id} className="menu-card">
-                  <div className="menu-image">{item.image}</div>
-                  <div className="menu-info">
-                    <h3 className="menu-name">{item.name}</h3>
-                    <p className="menu-category">{item.category}</p>
-                    <div className="menu-price">₹{item.price}</div>
-                  </div>
-                  <div className="menu-actions">
-                    <div className="stock-toggle">
-                      <label className="toggle-switch">
-                        <input 
-                          type="checkbox" 
-                          checked={item.inStock}
-                          onChange={() => toggleStock(item.id)}
-                        />
-                        <span className="toggle-slider"></span>
-                      </label>
-                      <span className={`stock-status ${item.inStock ? 'in-stock' : 'out-of-stock'}`}>
-                        {item.inStock ? 'In Stock' : 'Out of Stock'}
-                      </span>
-                    </div>
-                    <button className="edit-button" onClick={() => handleEditMenuItem(item)}>
-                      <Edit3 size={16} />
-                      Edit
+                <div key={category.id} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <button
+                    className={`category-button ${selectedCategoryId === category.id ? 'active' : ''}`}
+                    onClick={() => setSelectedCategoryId(category.id)}
+                  >
+                    {category.name}
+                  </button>
+                  {selectedCategoryId === category.id && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleEditCategory(category); }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#718096', padding: '4px' }}
+                      title="Edit Category"
+                    >
+                      <Edit3 size={14} />
                     </button>
-                  </div>
+                  )}
                 </div>
               ))}
             </div>
+
+            {loading ? (
+              <div style={{ padding: '40px', textAlign: 'center', color: '#718096' }}>Loading menu...</div>
+            ) : filteredMenuItems.length === 0 ? (
+              <div style={{ padding: '40px', textAlign: 'center', color: '#718096' }}>No menu items found. Add one to get started!</div>
+            ) : (
+              <div className="menu-grid">
+                {filteredMenuItems.map((item) => (
+                  <div key={item.id} className="menu-card">
+                    <div className="menu-image">{item.image ?? '🍽️'}</div>
+                    <div className="menu-info">
+                      <h3 className="menu-name">
+                        <span style={{ fontSize: '12px', marginRight: '6px' }}>
+                          {item.isVeg ? '🟩' : '🟥'}
+                        </span>
+                        {item.name}
+                      </h3>
+                      <p className="menu-category">{getCategoryName(item.categoryId)}</p>
+                      <div className="menu-price">₹{item.price}</div>
+                    </div>
+                    <div className="menu-actions" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '12px' }}>
+                      <div className="stock-toggle">
+                        <label className="toggle-switch">
+                          <input
+                            type="checkbox"
+                            checked={item.available}
+                            onChange={() => toggleStock(item)}
+                          />
+                          <span className="toggle-slider"></span>
+                        </label>
+                        <span className={`stock-status ${item.available ? 'in-stock' : 'out-of-stock'}`}>
+                          {item.available ? 'In Stock' : 'Out of Stock'}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                        <button className="edit-button" style={{ flex: 1 }} onClick={() => handleEditMenuItem(item)}>
+                          <Edit3 size={16} />
+                          Edit
+                        </button>
+                        <button className="delete-button" style={{
+                          flex: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          padding: '8px 12px',
+                          border: '1px solid #FC8181',
+                          borderRadius: '8px',
+                          backgroundColor: 'transparent',
+                          color: '#E53E3E',
+                          cursor: 'pointer'
+                        }} onClick={() => handleDeleteMenuItem(item.id)}>
+                          <Trash2 size={16} />
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -324,7 +433,7 @@ const Menu: React.FC = () => {
                 Add New Offer
               </button>
             </div>
-            
+
             <div className="offers-grid">
               {offers.map((offer) => (
                 <div key={offer.id} className="offer-card">
@@ -346,8 +455,8 @@ const Menu: React.FC = () => {
                   <div className="offer-actions">
                     <div className="offer-toggle">
                       <label className="toggle-switch">
-                        <input 
-                          type="checkbox" 
+                        <input
+                          type="checkbox"
                           checked={offer.isActive}
                           onChange={() => toggleOffer(offer.id)}
                         />
@@ -376,6 +485,16 @@ const Menu: React.FC = () => {
         onClose={() => setMenuDialogOpen(false)}
         onSave={handleSaveMenuItem}
         item={selectedMenuItem}
+        categories={categories}
+        mode={dialogMode}
+      />
+
+      <CategoryDialog
+        isOpen={categoryDialogOpen}
+        onClose={() => setCategoryDialogOpen(false)}
+        onSave={handleSaveCategory}
+        onDelete={dialogMode === 'edit' ? handleDeleteCategory : undefined}
+        category={selectedCategory}
         mode={dialogMode}
       />
 
