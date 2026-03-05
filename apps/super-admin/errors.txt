@@ -1,0 +1,100 @@
+﻿src/App.tsx(25,14): error TS2786: 'Routes' cannot be used as a JSX component.
+  Its type '({ children, location, }: RoutesProps) => ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not a valid JSX element type.
+    Type '({ children, location, }: RoutesProps) => ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not assignable to type '(props: any, deprecatedLegacyContext?: any) => ReactNode'.
+      Type 'ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not assignable to type 'ReactNode'.
+        Type 'ReactElement<unknown, string | JSXElementConstructor<any>>' is not assignable to type 'ReactNode'.
+          Property 'children' is missing in type 'ReactElement<unknown, string | JSXElementConstructor<any>>' but required in type 'ReactPortal'.
+src/App.tsx(27,18): error TS2786: 'Route' cannot be used as a JSX component.
+  Its type '(_props: RouteProps) => ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not a valid JSX element type.
+    Type '(_props: RouteProps) => ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not assignable to type '(props: any, deprecatedLegacyContext?: any) => ReactNode'.
+      Type 'ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not assignable to type 'ReactNode'.
+        Type 'ReactElement<unknown, string | JSXElementConstructor<any>>' is not assignable to type 'ReactNode'.
+          Property 'children' is missing in type 'ReactElement<unknown, string | JSXElementConstructor<any>>' but required in type 'ReactPortal'.
+src/App.tsx(28,18): error TS2786: 'Route' cannot be used as a JSX component.
+  Its type '(_props: RouteProps) => ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not a valid JSX element type.
+    Type '(_props: RouteProps) => ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not assignable to type '(props: any, deprecatedLegacyContext?: any) => ReactNode'.
+      Type 'ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not assignable to type 'ReactNode'.
+        Type 'ReactElement<unknown, string | JSXElementConstructor<any>>' is not assignable to type 'ReactNode'.
+          Property 'children' is missing in type 'ReactElement<unknown, string | JSXElementConstructor<any>>' but required in type 'ReactPortal'.
+src/App.tsx(31,18): error TS2786: 'Route' cannot be used as a JSX component.
+  Its type '(_props: RouteProps) => ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not a valid JSX element type.
+    Type '(_props: RouteProps) => ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not assignable to type '(props: any, deprecatedLegacyContext?: any) => ReactNode'.
+      Type 'ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not assignable to type 'ReactNode'.
+        Type 'ReactElement<unknown, string | JSXElementConstructor<any>>' is not assignable to type 'ReactNode'.
+          Property 'children' is missing in type 'ReactElement<unknown, string | JSXElementConstructor<any>>' but required in type 'ReactPortal'.
+src/App.tsx(36,22): error TS2786: 'Route' cannot be used as a JSX component.
+  Its type '(_props: RouteProps) => ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not a valid JSX element type.
+    Type '(_props: RouteProps) => ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not assignable to type '(props: any, deprecatedLegacyContext?: any) => ReactNode'.
+      Type 'ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not assignable to type 'ReactNode'.
+        Type 'ReactElement<unknown, string | JSXElementConstructor<any>>' is not assignable to type 'ReactNode'.
+          Property 'children' is missing in type 'ReactElement<unknown, string | JSXElementConstructor<any>>' but required in type 'ReactPortal'.
+src/App.tsx(37,22): error TS2786: 'Route' cannot be used as a JSX component.
+  Its type '(_props: RouteProps) => ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not a valid JSX element type.
+    Type '(_props: RouteProps) => ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not assignable to type '(props: any, deprecatedLegacyContext?: any) => ReactNode'.
+      Type 'ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not assignable to type 'ReactNode'.
+        Type 'ReactElement<unknown, string | JSXElementConstructor<any>>' is not assignable to type 'ReactNode'.
+          Property 'children' is missing in type 'ReactElement<unknown, string | JSXElementConstructor<any>>' but required in type 'ReactPortal'.
+src/App.tsx(38,22): error TS2786: 'Route' cannot be used as a JSX component.
+  Its type '(_props: RouteProps) => ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not a valid JSX element type.
+    Type '(_props: RouteProps) => ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not assignable to type '(props: any, deprecatedLegacyContext?: any) => ReactNode'.
+      Type 'ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not assignable to type 'ReactNode'.
+        Type 'ReactElement<unknown, string | JSXElementConstructor<any>>' is not assignable to type 'ReactNode'.
+          Property 'children' is missing in type 'ReactElement<unknown, string | JSXElementConstructor<any>>' but required in type 'ReactPortal'.
+src/App.tsx(39,22): error TS2786: 'Route' cannot be used as a JSX component.
+  Its type '(_props: RouteProps) => ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not a valid JSX element type.
+    Type '(_props: RouteProps) => ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not assignable to type '(props: any, deprecatedLegacyContext?: any) => ReactNode'.
+      Type 'ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not assignable to type 'ReactNode'.
+        Type 'ReactElement<unknown, string | JSXElementConstructor<any>>' is not assignable to type 'ReactNode'.
+          Property 'children' is missing in type 'ReactElement<unknown, string | JSXElementConstructor<any>>' but required in type 'ReactPortal'.
+src/App.tsx(40,22): error TS2786: 'Route' cannot be used as a JSX component.
+  Its type '(_props: RouteProps) => ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not a valid JSX element type.
+    Type '(_props: RouteProps) => ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not assignable to type '(props: any, deprecatedLegacyContext?: any) => ReactNode'.
+      Type 'ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not assignable to type 'ReactNode'.
+        Type 'ReactElement<unknown, string | JSXElementConstructor<any>>' is not assignable to type 'ReactNode'.
+          Property 'children' is missing in type 'ReactElement<unknown, string | JSXElementConstructor<any>>' but required in type 'ReactPortal'.
+src/App.tsx(41,22): error TS2786: 'Route' cannot be used as a JSX component.
+  Its type '(_props: RouteProps) => ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not a valid JSX element type.
+    Type '(_props: RouteProps) => ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not assignable to type '(props: any, deprecatedLegacyContext?: any) => ReactNode'.
+      Type 'ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not assignable to type 'ReactNode'.
+        Type 'ReactElement<unknown, string | JSXElementConstructor<any>>' is not assignable to type 'ReactNode'.
+          Property 'children' is missing in type 'ReactElement<unknown, string | JSXElementConstructor<any>>' but required in type 'ReactPortal'.
+src/App.tsx(42,22): error TS2786: 'Route' cannot be used as a JSX component.
+  Its type '(_props: RouteProps) => ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not a valid JSX element type.
+    Type '(_props: RouteProps) => ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not assignable to type '(props: any, deprecatedLegacyContext?: any) => ReactNode'.
+      Type 'ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not assignable to type 'ReactNode'.
+        Type 'ReactElement<unknown, string | JSXElementConstructor<any>>' is not assignable to type 'ReactNode'.
+          Property 'children' is missing in type 'ReactElement<unknown, string | JSXElementConstructor<any>>' but required in type 'ReactPortal'.
+src/App.tsx(43,22): error TS2786: 'Route' cannot be used as a JSX component.
+  Its type '(_props: RouteProps) => ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not a valid JSX element type.
+    Type '(_props: RouteProps) => ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not assignable to type '(props: any, deprecatedLegacyContext?: any) => ReactNode'.
+      Type 'ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not assignable to type 'ReactNode'.
+        Type 'ReactElement<unknown, string | JSXElementConstructor<any>>' is not assignable to type 'ReactNode'.
+          Property 'children' is missing in type 'ReactElement<unknown, string | JSXElementConstructor<any>>' but required in type 'ReactPortal'.
+src/App.tsx(44,22): error TS2786: 'Route' cannot be used as a JSX component.
+  Its type '(_props: RouteProps) => ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not a valid JSX element type.
+    Type '(_props: RouteProps) => ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not assignable to type '(props: any, deprecatedLegacyContext?: any) => ReactNode'.
+      Type 'ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not assignable to type 'ReactNode'.
+        Type 'ReactElement<unknown, string | JSXElementConstructor<any>>' is not assignable to type 'ReactNode'.
+          Property 'children' is missing in type 'ReactElement<unknown, string | JSXElementConstructor<any>>' but required in type 'ReactPortal'.
+src/App.tsx(48,18): error TS2786: 'Route' cannot be used as a JSX component.
+  Its type '(_props: RouteProps) => ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not a valid JSX element type.
+    Type '(_props: RouteProps) => ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not assignable to type '(props: any, deprecatedLegacyContext?: any) => ReactNode'.
+      Type 'ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not assignable to type 'ReactNode'.
+        Type 'ReactElement<unknown, string | JSXElementConstructor<any>>' is not assignable to type 'ReactNode'.
+          Property 'children' is missing in type 'ReactElement<unknown, string | JSXElementConstructor<any>>' but required in type 'ReactPortal'.
+src/App.tsx(58,18): error TS2786: 'Toaster' cannot be used as a JSX component.
+  Its type 'FC<ToasterProps>' is not a valid JSX element type.
+    Type 'FunctionComponent<ToasterProps>' is not assignable to type '(props: any, deprecatedLegacyContext?: any) => ReactNode'.
+      Type 'ReactNode | Promise<ReactNode>' is not assignable to type 'ReactNode'.
+        Type 'bigint' is not assignable to type 'ReactNode'.
+src/components/Breadcrumbs.tsx(1,1): error TS6133: 'useState' is declared but its value is never read.
+src/components/Layout.tsx(15,22): error TS2786: 'Outlet' cannot be used as a JSX component.
+  Its type '(props: OutletProps) => ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not a valid JSX element type.
+    Type '(props: OutletProps) => ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not assignable to type '(props: any, deprecatedLegacyContext?: any) => ReactNode'.
+      Type 'ReactElement<unknown, string | JSXElementConstructor<any>> | null' is not assignable to type 'ReactNode'.
+        Type 'ReactElement<unknown, string | JSXElementConstructor<any>>' is not assignable to type 'ReactNode'.
+          Property 'children' is missing in type 'ReactElement<unknown, string | JSXElementConstructor<any>>' but required in type 'ReactPortal'.
+src/components/Sidebar.tsx(9,5): error TS6133: 'LogOut' is declared but its value is never read.
+src/components/TopBar.tsx(2,18): error TS6133: 'Plus' is declared but its value is never read.
+../../packages/supabase/src/client.ts(34,30): error TS6133: 'name' is declared but its value is never read.
+../../packages/supabase/src/client.ts(34,44): error TS6133: 'acquireTimeout' is declared but its value is never read.

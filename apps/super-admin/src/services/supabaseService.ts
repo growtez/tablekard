@@ -267,7 +267,7 @@ export const getRevenueStats = async (startDate: Date, endDate: Date) => {
         .select('total')
         .gte('created_at', startDate.toISOString())
         .lte('created_at', endDate.toISOString())
-        .eq('status', OrderStatus.SERVED);
+        .eq('status', 'completed' as any);
 
     if (error) throw error;
     const totals = data ?? [];

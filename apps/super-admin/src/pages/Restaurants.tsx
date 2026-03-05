@@ -6,25 +6,29 @@ import { DataTable, Column } from '../components/DataTable';
 import { SlideOver } from '../components/SlideOver';
 import { TableSkeleton } from '../components/Skeleton';
 import AddRestaurantModal from '../components/AddRestaurantModal';
+import { Badge } from '../components/ui/Badge';
+import { Button } from '../components/ui/Button';
+import { PageHeader } from '../components/ui/PageHeader';
+import { StatCard } from '../components/ui/StatCard';
 import toast from 'react-hot-toast';
 
 const getStatusBadge = (status: RestaurantStatus) => {
     switch (status) {
         case RestaurantStatus.ACTIVE:
-            return <span className="badge success">Active</span>;
+            return <Badge variant="success">Active</Badge>;
         case RestaurantStatus.TRIAL:
-            return <span className="badge info">Trial</span>;
+            return <Badge variant="info">Trial</Badge>;
         case RestaurantStatus.EXPIRED:
-            return <span className="badge error">Expired</span>;
+            return <Badge variant="error">Expired</Badge>;
         case RestaurantStatus.SUSPENDED:
-            return <span className="badge warning">Suspended</span>;
+            return <Badge variant="warning">Suspended</Badge>;
         default:
-            return <span className="badge">{status}</span>;
+            return <Badge>{status}</Badge>;
     }
 };
 
 const planBadge = (
-    <span className="badge" style={{
+    <Badge style={{
         background: 'rgba(217, 181, 80, 0.1)',
         color: 'var(--color-accent-primary)',
         border: '1px solid rgba(217, 181, 80, 0.2)',
@@ -34,7 +38,7 @@ const planBadge = (
         textTransform: 'uppercase'
     }}>
         QR Menu Plan
-    </span>
+    </Badge>
 );
 
 export default function Restaurants() {
@@ -125,7 +129,7 @@ export default function Restaurants() {
         return (
             <div className="p-8 text-center bg-[var(--color-bg-card)] rounded-xl border border-red-500/20 m-6">
                 <div className="text-red-500 mb-4 font-medium">Error loading restaurants: {error}</div>
-                <button onClick={actions.refresh} className="btn btn-primary">Try Again</button>
+                <Button onClick={actions.refresh}>Try Again</Button>
             </div>
         );
     }
@@ -139,45 +143,39 @@ export default function Restaurants() {
     return (
         <div className="p-6 space-y-8 animate-fadeIn">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-[var(--color-text-primary)] mb-1 tracking-tight">
-                        Platform <span className="text-gradient">Restaurants</span>
-                    </h1>
-                    <p className="text-sm text-[var(--color-text-secondary)]">
-                        Central command for managing all restaurant partners and their status.
-                    </p>
-                </div>
-                <div className="flex items-center gap-3">
-                    <button
-                        className="p-2.5 rounded-xl bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)] border border-[var(--color-border)] transition-all"
-                        onClick={actions.refresh}
-                        title="Refresh Data"
-                    >
-                        <RefreshCw size={20} className={loading ? 'animate-spin text-[var(--color-accent-primary)]' : 'text-[var(--color-text-secondary)]'} />
-                    </button>
-                    <button
-                        className="btn btn-primary shadow-premium flex items-center gap-2 px-6 py-2.5"
-                        onClick={() => setIsAddModalOpen(true)}
-                    >
-                        <Plus size={20} />
-                        <span className="font-semibold">Add Restaurant</span>
-                    </button>
-                </div>
-            </div>
+            <PageHeader
+                title={<>Platform <span className="text-gradient">Restaurants</span></>}
+                description="Central command for managing all restaurant partners and their status."
+                actions={
+                    <>
+                        <button
+                            className="p-2.5 rounded-xl bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)] border border-[var(--color-border)] transition-all"
+                            onClick={actions.refresh}
+                            title="Refresh Data"
+                        >
+                            <RefreshCw size={20} className={loading ? 'animate-spin text-[var(--color-accent-primary)]' : 'text-[var(--color-text-secondary)]'} />
+                        </button>
+                        <Button
+                            className="shadow-premium flex items-center gap-2 px-6 py-2.5"
+                            onClick={() => setIsAddModalOpen(true)}
+                        >
+                            <Plus size={20} />
+                            <span className="font-semibold">Add Restaurant</span>
+                        </Button>
+                    </>
+                }
+            />
 
             {/* Quick Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {statsData.map((stat, i) => (
-                    <div key={i} className="stat-card glass-card">
-                        <div className={`stat-icon ${stat.color}`}>
-                            <stat.icon size={22} />
-                        </div>
-                        <div className="stat-info">
-                            <div className="stat-label uppercase text-[10px] font-bold tracking-widest">{stat.label}</div>
-                            <div className="stat-value text-2xl">{stat.value}</div>
-                        </div>
-                    </div>
+                    <StatCard
+                        key={i}
+                        label={stat.label}
+                        value={stat.value}
+                        icon={stat.icon}
+                        color={stat.color}
+                    />
                 ))}
             </div>
 
@@ -212,15 +210,16 @@ export default function Restaurants() {
                 width="max-w-md"
                 footer={
                     <>
-                        <button
-                            className="btn btn-ghost border border-[var(--color-border)] text-sm"
+                        <Button
+                            variant="ghost"
+                            className="border border-[var(--color-border)] text-sm"
                             onClick={() => setIsSlideOverOpen(false)}
                         >
                             Close
-                        </button>
-                        <button className="btn btn-primary text-sm shadow-md">
+                        </Button>
+                        <Button className="text-sm shadow-md">
                             Edit Configurations
-                        </button>
+                        </Button>
                     </>
                 }
             >
