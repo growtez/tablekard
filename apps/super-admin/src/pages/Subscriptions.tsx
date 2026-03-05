@@ -1,5 +1,7 @@
 import { CreditCard, TrendingUp, DollarSign, RefreshCw } from 'lucide-react';
 import { useSubscriptionStats } from '../hooks/useSubscriptionStats';
+import { PageHeader } from '../components/ui/PageHeader';
+import { Button } from '../components/ui/Button';
 
 const getPaymentStatusBadge = (status: string) => {
     switch (status) {
@@ -27,17 +29,14 @@ export default function Subscriptions() {
 
     return (
         <>
-            <header className="page-header flex items-center justify-between">
-                <div>
-                    <h1 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Subscriptions</h1>
-                    <p className="text-secondary" style={{ fontSize: '0.875rem' }}>
-                        Manage subscription plans and payments
-                    </p>
-                </div>
-                <button className="btn btn-ghost" onClick={refresh} title="Refresh">
-                    <RefreshCw size={18} />
-                </button>
-            </header>
+            <PageHeader
+                title="Subscriptions"
+                actions={
+                    <Button variant="ghost" onClick={refresh} title="Refresh">
+                        <RefreshCw size={18} />
+                    </Button>
+                }
+            />
 
             <div className="page-content animate-fadeIn">
                 {/* Subscription Stats */}

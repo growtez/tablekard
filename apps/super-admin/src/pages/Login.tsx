@@ -168,8 +168,8 @@ const LoginPage: React.FC = () => {
 
             {/* Password Reset Modal */}
             {showResetModal && (
-                <div className="modal-overlay" onClick={() => setShowResetModal(false)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <div className="login-modal-overlay" onClick={() => setShowResetModal(false)}>
+                    <div className="login-modal-content" onClick={(e) => e.stopPropagation()}>
                         <h3>Reset Password</h3>
                         <p>Enter your email to receive a password reset link</p>
 
@@ -186,7 +186,7 @@ const LoginPage: React.FC = () => {
                             </p>
                         )}
 
-                        <div className="modal-buttons">
+                        <div className="login-modal-buttons">
                             <button onClick={handleResetPassword}>Send Reset Email</button>
                             <button onClick={() => setShowResetModal(false)}>Cancel</button>
                         </div>

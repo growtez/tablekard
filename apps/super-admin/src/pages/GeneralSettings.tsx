@@ -74,7 +74,7 @@ export default function GeneralSettings() {
     const handleSave = async () => {
         setIsSaving(true);
         setSaveStatus('idle');
-        
+
         // Simulate API call
         setTimeout(() => {
             setIsSaving(false);
@@ -101,7 +101,6 @@ export default function GeneralSettings() {
             <PageHeader
                 className="page-header"
                 title="General Settings"
-                description="Configure platform-wide settings and preferences."
                 actions={
                     <div className="flex items-center gap-3">
                         <Button variant="ghost" onClick={handleReset}>
@@ -153,7 +152,7 @@ export default function GeneralSettings() {
                                 <input
                                     type="text"
                                     value={platformSettings.platformName}
-                                    onChange={(e) => setPlatformSettings({...platformSettings, platformName: e.target.value})}
+                                    onChange={(e) => setPlatformSettings({ ...platformSettings, platformName: e.target.value })}
                                     className="w-full px-4 py-2 border border-[var(--color-border)] rounded-lg bg-[var(--color-bg-tertiary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent-primary)]/20"
                                 />
                             </div>
@@ -164,7 +163,7 @@ export default function GeneralSettings() {
                                 <input
                                     type="text"
                                     value={platformSettings.platformLogo}
-                                    onChange={(e) => setPlatformSettings({...platformSettings, platformLogo: e.target.value})}
+                                    onChange={(e) => setPlatformSettings({ ...platformSettings, platformLogo: e.target.value })}
                                     className="w-full px-4 py-2 border border-[var(--color-border)] rounded-lg bg-[var(--color-bg-tertiary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent-primary)]/20"
                                 />
                             </div>
@@ -175,7 +174,7 @@ export default function GeneralSettings() {
                                 <input
                                     type="email"
                                     value={platformSettings.supportEmail}
-                                    onChange={(e) => setPlatformSettings({...platformSettings, supportEmail: e.target.value})}
+                                    onChange={(e) => setPlatformSettings({ ...platformSettings, supportEmail: e.target.value })}
                                     className="w-full px-4 py-2 border border-[var(--color-border)] rounded-lg bg-[var(--color-bg-tertiary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent-primary)]/20"
                                 />
                             </div>
@@ -186,7 +185,7 @@ export default function GeneralSettings() {
                                 <input
                                     type="tel"
                                     value={platformSettings.supportPhone}
-                                    onChange={(e) => setPlatformSettings({...platformSettings, supportPhone: e.target.value})}
+                                    onChange={(e) => setPlatformSettings({ ...platformSettings, supportPhone: e.target.value })}
                                     className="w-full px-4 py-2 border border-[var(--color-border)] rounded-lg bg-[var(--color-bg-tertiary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent-primary)]/20"
                                 />
                             </div>
@@ -196,7 +195,7 @@ export default function GeneralSettings() {
                                 </label>
                                 <select
                                     value={platformSettings.defaultCurrency}
-                                    onChange={(e) => setPlatformSettings({...platformSettings, defaultCurrency: e.target.value})}
+                                    onChange={(e) => setPlatformSettings({ ...platformSettings, defaultCurrency: e.target.value })}
                                     className="w-full px-4 py-2 border border-[var(--color-border)] rounded-lg bg-[var(--color-bg-tertiary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent-primary)]/20"
                                 >
                                     <option value="INR">Indian Rupee (₹)</option>
@@ -211,7 +210,7 @@ export default function GeneralSettings() {
                                 </label>
                                 <select
                                     value={platformSettings.timezone}
-                                    onChange={(e) => setPlatformSettings({...platformSettings, timezone: e.target.value})}
+                                    onChange={(e) => setPlatformSettings({ ...platformSettings, timezone: e.target.value })}
                                     className="w-full px-4 py-2 border border-[var(--color-border)] rounded-lg bg-[var(--color-bg-tertiary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent-primary)]/20"
                                 >
                                     <option value="Asia/Kolkata">India (IST)</option>
@@ -242,7 +241,7 @@ export default function GeneralSettings() {
                                 <input
                                     type="number"
                                     value={businessSettings.defaultTrialDays}
-                                    onChange={(e) => setBusinessSettings({...businessSettings, defaultTrialDays: parseInt(e.target.value)})}
+                                    onChange={(e) => setBusinessSettings({ ...businessSettings, defaultTrialDays: parseInt(e.target.value) })}
                                     className="w-full px-4 py-2 border border-[var(--color-border)] rounded-lg bg-[var(--color-bg-tertiary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent-primary)]/20"
                                 />
                             </div>
@@ -253,7 +252,7 @@ export default function GeneralSettings() {
                                 <input
                                     type="number"
                                     value={businessSettings.commissionRate}
-                                    onChange={(e) => setBusinessSettings({...businessSettings, commissionRate: parseInt(e.target.value)})}
+                                    onChange={(e) => setBusinessSettings({ ...businessSettings, commissionRate: parseInt(e.target.value) })}
                                     className="w-full px-4 py-2 border border-[var(--color-border)] rounded-lg bg-[var(--color-bg-tertiary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent-primary)]/20"
                                 />
                             </div>
@@ -264,7 +263,7 @@ export default function GeneralSettings() {
                                 <input
                                     type="number"
                                     value={businessSettings.minimumOrderAmount}
-                                    onChange={(e) => setBusinessSettings({...businessSettings, minimumOrderAmount: parseInt(e.target.value)})}
+                                    onChange={(e) => setBusinessSettings({ ...businessSettings, minimumOrderAmount: parseInt(e.target.value) })}
                                     className="w-full px-4 py-2 border border-[var(--color-border)] rounded-lg bg-[var(--color-bg-tertiary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent-primary)]/20"
                                 />
                             </div>
@@ -275,7 +274,7 @@ export default function GeneralSettings() {
                                 <input
                                     type="number"
                                     value={businessSettings.maximumOrderAmount}
-                                    onChange={(e) => setBusinessSettings({...businessSettings, maximumOrderAmount: parseInt(e.target.value)})}
+                                    onChange={(e) => setBusinessSettings({ ...businessSettings, maximumOrderAmount: parseInt(e.target.value) })}
                                     className="w-full px-4 py-2 border border-[var(--color-border)] rounded-lg bg-[var(--color-bg-tertiary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent-primary)]/20"
                                 />
                             </div>
@@ -285,7 +284,7 @@ export default function GeneralSettings() {
                                 <input
                                     type="checkbox"
                                     checked={businessSettings.autoAcceptOrders}
-                                    onChange={(e) => setBusinessSettings({...businessSettings, autoAcceptOrders: e.target.checked})}
+                                    onChange={(e) => setBusinessSettings({ ...businessSettings, autoAcceptOrders: e.target.checked })}
                                     className="w-4 h-4 text-[var(--color-accent-primary)] border-[var(--color-border)] rounded focus:ring-[var(--color-accent-primary)]/20"
                                 />
                                 <span className="text-sm text-[var(--color-text-primary)]">Auto-accept orders</span>
@@ -294,7 +293,7 @@ export default function GeneralSettings() {
                                 <input
                                     type="checkbox"
                                     checked={businessSettings.enableDelivery}
-                                    onChange={(e) => setBusinessSettings({...businessSettings, enableDelivery: e.target.checked})}
+                                    onChange={(e) => setBusinessSettings({ ...businessSettings, enableDelivery: e.target.checked })}
                                     className="w-4 h-4 text-[var(--color-accent-primary)] border-[var(--color-border)] rounded focus:ring-[var(--color-accent-primary)]/20"
                                 />
                                 <span className="text-sm text-[var(--color-text-primary)]">Enable delivery service</span>
@@ -303,7 +302,7 @@ export default function GeneralSettings() {
                                 <input
                                     type="checkbox"
                                     checked={businessSettings.enableTakeaway}
-                                    onChange={(e) => setBusinessSettings({...businessSettings, enableTakeaway: e.target.checked})}
+                                    onChange={(e) => setBusinessSettings({ ...businessSettings, enableTakeaway: e.target.checked })}
                                     className="w-4 h-4 text-[var(--color-accent-primary)] border-[var(--color-border)] rounded focus:ring-[var(--color-accent-primary)]/20"
                                 />
                                 <span className="text-sm text-[var(--color-text-primary)]">Enable takeaway service</span>
@@ -327,7 +326,7 @@ export default function GeneralSettings() {
                                 <input
                                     type="checkbox"
                                     checked={notificationSettings.emailNotifications}
-                                    onChange={(e) => setNotificationSettings({...notificationSettings, emailNotifications: e.target.checked})}
+                                    onChange={(e) => setNotificationSettings({ ...notificationSettings, emailNotifications: e.target.checked })}
                                     className="w-4 h-4 text-[var(--color-accent-primary)] border-[var(--color-border)] rounded focus:ring-[var(--color-accent-primary)]/20"
                                 />
                                 <div className="flex items-center gap-2">
@@ -339,7 +338,7 @@ export default function GeneralSettings() {
                                 <input
                                     type="checkbox"
                                     checked={notificationSettings.smsNotifications}
-                                    onChange={(e) => setNotificationSettings({...notificationSettings, smsNotifications: e.target.checked})}
+                                    onChange={(e) => setNotificationSettings({ ...notificationSettings, smsNotifications: e.target.checked })}
                                     className="w-4 h-4 text-[var(--color-accent-primary)] border-[var(--color-border)] rounded focus:ring-[var(--color-accent-primary)]/20"
                                 />
                                 <div className="flex items-center gap-2">
@@ -351,7 +350,7 @@ export default function GeneralSettings() {
                                 <input
                                     type="checkbox"
                                     checked={notificationSettings.pushNotifications}
-                                    onChange={(e) => setNotificationSettings({...notificationSettings, pushNotifications: e.target.checked})}
+                                    onChange={(e) => setNotificationSettings({ ...notificationSettings, pushNotifications: e.target.checked })}
                                     className="w-4 h-4 text-[var(--color-accent-primary)] border-[var(--color-border)] rounded focus:ring-[var(--color-accent-primary)]/20"
                                 />
                                 <div className="flex items-center gap-2">
@@ -363,7 +362,7 @@ export default function GeneralSettings() {
                                 <input
                                     type="checkbox"
                                     checked={notificationSettings.orderAlerts}
-                                    onChange={(e) => setNotificationSettings({...notificationSettings, orderAlerts: e.target.checked})}
+                                    onChange={(e) => setNotificationSettings({ ...notificationSettings, orderAlerts: e.target.checked })}
                                     className="w-4 h-4 text-[var(--color-accent-primary)] border-[var(--color-border)] rounded focus:ring-[var(--color-accent-primary)]/20"
                                 />
                                 <div className="flex items-center gap-2">
@@ -375,7 +374,7 @@ export default function GeneralSettings() {
                                 <input
                                     type="checkbox"
                                     checked={notificationSettings.paymentAlerts}
-                                    onChange={(e) => setNotificationSettings({...notificationSettings, paymentAlerts: e.target.checked})}
+                                    onChange={(e) => setNotificationSettings({ ...notificationSettings, paymentAlerts: e.target.checked })}
                                     className="w-4 h-4 text-[var(--color-accent-primary)] border-[var(--color-border)] rounded focus:ring-[var(--color-accent-primary)]/20"
                                 />
                                 <div className="flex items-center gap-2">
@@ -387,7 +386,7 @@ export default function GeneralSettings() {
                                 <input
                                     type="checkbox"
                                     checked={notificationSettings.systemAlerts}
-                                    onChange={(e) => setNotificationSettings({...notificationSettings, systemAlerts: e.target.checked})}
+                                    onChange={(e) => setNotificationSettings({ ...notificationSettings, systemAlerts: e.target.checked })}
                                     className="w-4 h-4 text-[var(--color-accent-primary)] border-[var(--color-border)] rounded focus:ring-[var(--color-accent-primary)]/20"
                                 />
                                 <div className="flex items-center gap-2">
@@ -418,13 +417,13 @@ export default function GeneralSettings() {
                                     <input
                                         type="color"
                                         value={uiSettings.primaryColor}
-                                        onChange={(e) => setUiSettings({...uiSettings, primaryColor: e.target.value})}
+                                        onChange={(e) => setUiSettings({ ...uiSettings, primaryColor: e.target.value })}
                                         className="w-12 h-10 border border-[var(--color-border)] rounded cursor-pointer"
                                     />
                                     <input
                                         type="text"
                                         value={uiSettings.primaryColor}
-                                        onChange={(e) => setUiSettings({...uiSettings, primaryColor: e.target.value})}
+                                        onChange={(e) => setUiSettings({ ...uiSettings, primaryColor: e.target.value })}
                                         className="flex-1 px-4 py-2 border border-[var(--color-border)] rounded-lg bg-[var(--color-bg-tertiary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent-primary)]/20"
                                     />
                                 </div>
@@ -437,13 +436,13 @@ export default function GeneralSettings() {
                                     <input
                                         type="color"
                                         value={uiSettings.secondaryColor}
-                                        onChange={(e) => setUiSettings({...uiSettings, secondaryColor: e.target.value})}
+                                        onChange={(e) => setUiSettings({ ...uiSettings, secondaryColor: e.target.value })}
                                         className="w-12 h-10 border border-[var(--color-border)] rounded cursor-pointer"
                                     />
                                     <input
                                         type="text"
                                         value={uiSettings.secondaryColor}
-                                        onChange={(e) => setUiSettings({...uiSettings, secondaryColor: e.target.value})}
+                                        onChange={(e) => setUiSettings({ ...uiSettings, secondaryColor: e.target.value })}
                                         className="flex-1 px-4 py-2 border border-[var(--color-border)] rounded-lg bg-[var(--color-bg-tertiary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent-primary)]/20"
                                     />
                                 </div>
@@ -454,7 +453,7 @@ export default function GeneralSettings() {
                                 <input
                                     type="checkbox"
                                     checked={uiSettings.darkMode}
-                                    onChange={(e) => setUiSettings({...uiSettings, darkMode: e.target.checked})}
+                                    onChange={(e) => setUiSettings({ ...uiSettings, darkMode: e.target.checked })}
                                     className="w-4 h-4 text-[var(--color-accent-primary)] border-[var(--color-border)] rounded focus:ring-[var(--color-accent-primary)]/20"
                                 />
                                 <div className="flex items-center gap-2">
@@ -466,7 +465,7 @@ export default function GeneralSettings() {
                                 <input
                                     type="checkbox"
                                     checked={uiSettings.compactMode}
-                                    onChange={(e) => setUiSettings({...uiSettings, compactMode: e.target.checked})}
+                                    onChange={(e) => setUiSettings({ ...uiSettings, compactMode: e.target.checked })}
                                     className="w-4 h-4 text-[var(--color-accent-primary)] border-[var(--color-border)] rounded focus:ring-[var(--color-accent-primary)]/20"
                                 />
                                 <div className="flex items-center gap-2">
@@ -478,7 +477,7 @@ export default function GeneralSettings() {
                                 <input
                                     type="checkbox"
                                     checked={uiSettings.showAnimations}
-                                    onChange={(e) => setUiSettings({...uiSettings, showAnimations: e.target.checked})}
+                                    onChange={(e) => setUiSettings({ ...uiSettings, showAnimations: e.target.checked })}
                                     className="w-4 h-4 text-[var(--color-accent-primary)] border-[var(--color-border)] rounded focus:ring-[var(--color-accent-primary)]/20"
                                 />
                                 <div className="flex items-center gap-2">

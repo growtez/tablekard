@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle } from '../components/ui/Card';
 export default function EmailTemplates() {
     return (
         <>
-            <PageHeader title="Email Templates" description="Manage email templates and notifications." />
+            <PageHeader title="Email Templates" />
             <div className="page-content">
                 <Card>
                     <CardHeader>

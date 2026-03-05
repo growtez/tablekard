@@ -241,8 +241,8 @@ export default function Transactions() {
 
     const filteredTransactions = transactions.filter(transaction => {
         const matchesSearch = transaction.restaurantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            transaction.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            transaction.orderId.toLowerCase().includes(searchTerm.toLowerCase());
+            transaction.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            transaction.orderId.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesMethod = paymentMethod === 'all' || transaction.paymentMethod === paymentMethod;
         const matchesStatus = status === 'all' || transaction.status === status;
         return matchesSearch && matchesMethod && matchesStatus;
@@ -250,7 +250,7 @@ export default function Transactions() {
 
     const filteredRefunds = refunds.filter(refund => {
         const matchesSearch = refund.restaurantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            refund.customerName.toLowerCase().includes(searchTerm.toLowerCase());
+            refund.customerName.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = refundStatus === 'all' || refund.status === refundStatus;
         return matchesSearch && matchesStatus;
     });
@@ -298,7 +298,6 @@ export default function Transactions() {
             <PageHeader
                 className="page-header"
                 title="Transactions & Refunds"
-                description="Manage all financial transactions and refund requests across the platform."
                 actions={
                     <div className="flex items-center gap-3">
                         <Button variant="ghost" title="Export Data">
@@ -336,26 +335,26 @@ export default function Transactions() {
                             <AreaChart data={revenueData}>
                                 <defs>
                                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
-                                        <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                                        <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
+                                        <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
                                     </linearGradient>
                                     <linearGradient id="colorRefunds" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#EF4444" stopOpacity={0.3}/>
-                                        <stop offset="95%" stopColor="#EF4444" stopOpacity={0}/>
+                                        <stop offset="5%" stopColor="#EF4444" stopOpacity={0.3} />
+                                        <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                                <XAxis 
-                                    dataKey="month" 
+                                <XAxis
+                                    dataKey="month"
                                     stroke="var(--color-text-muted)"
                                     fontSize={12}
                                     tickLine={false}
                                 />
-                                <YAxis 
+                                <YAxis
                                     stroke="var(--color-text-muted)"
                                     fontSize={12}
                                     tickLine={false}
-                                    tickFormatter={(value) => `₹${value/1000}k`}
+                                    tickFormatter={(value) => `₹${value / 1000}k`}
                                 />
                                 <Tooltip content={<CustomTooltip />} />
                                 <Legend />
@@ -386,21 +385,19 @@ export default function Transactions() {
                 <div className="flex gap-1 p-1 bg-[var(--color-bg-tertiary)] rounded-lg mb-6">
                     <button
                         onClick={() => setActiveTab('transactions')}
-                        className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                            activeTab === 'transactions'
+                        className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'transactions'
                                 ? 'bg-[var(--color-bg-card)] text-[var(--color-text-primary)] shadow-sm'
                                 : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
-                        }`}
+                            }`}
                     >
                         Transactions
                     </button>
                     <button
                         onClick={() => setActiveTab('refunds')}
-                        className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                            activeTab === 'refunds'
+                        className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'refunds'
                                 ? 'bg-[var(--color-bg-card)] text-[var(--color-text-primary)] shadow-sm'
                                 : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
-                        }`}
+                            }`}
                     >
                         Refunds
                     </button>
@@ -420,7 +417,7 @@ export default function Transactions() {
                             />
                         </div>
                     </div>
-                    
+
                     {activeTab === 'transactions' ? (
                         <>
                             <select

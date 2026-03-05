@@ -145,10 +145,9 @@ export default function Restaurants() {
             {/* Header */}
             <PageHeader
                 title={<>Platform <span className="text-gradient">Restaurants</span></>}
-                description="Central command for managing all restaurant partners and their status."
                 actions={
                     <>
-                        
+
                         <Button
                             className="shadow-premium flex items-center gap-2 px-6 py-2.5"
                             onClick={() => setIsAddModalOpen(true)}

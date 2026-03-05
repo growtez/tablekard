@@ -261,9 +261,9 @@ export default function ComplaintsDisputes() {
 
     const filteredCases = complaintsDisputes.filter(case_ => {
         const matchesSearch = case_.restaurantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            case_.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            case_.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            case_.id.toLowerCase().includes(searchTerm.toLowerCase());
+            case_.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            case_.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            case_.id.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesCategory = category === 'all' || case_.category === category;
         const matchesPriority = priority === 'all' || case_.priority === priority;
         const matchesStatus = status === 'all' || case_.status === status;
@@ -348,7 +348,6 @@ export default function ComplaintsDisputes() {
             <PageHeader
                 className="page-header"
                 title="Complaints & Disputes"
-                description="Manage customer complaints and disputes across all restaurants."
                 actions={
                     <div className="flex items-center gap-3">
                         <Button variant="ghost" title="Refresh">
@@ -386,7 +385,7 @@ export default function ComplaintsDisputes() {
                             />
                         </div>
                     </div>
-                    
+
                     <select
                         value={category}
                         onChange={(e) => setCategory(e.target.value)}

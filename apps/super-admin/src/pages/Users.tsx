@@ -1,6 +1,8 @@
 import { AlertCircle, Search, RefreshCw } from 'lucide-react';
 import { useUsers } from '../hooks/useUsers';
 import { UserRole } from '@restaurant-saas/types';
+import { PageHeader } from '../components/ui/PageHeader';
+import { Button } from '../components/ui/Button';
 
 const getRoleBadge = (role: string) => {
     switch (role) {
@@ -28,17 +30,14 @@ export default function Users() {
 
     return (
         <>
-            <header className="page-header flex items-center justify-between">
-                <div>
-                    <h1 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Users</h1>
-                    <p className="text-secondary" style={{ fontSize: '0.875rem' }}>
-                        Manage platform users and roles
-                    </p>
-                </div>
-                <button className="btn btn-ghost" onClick={refresh}>
-                    <RefreshCw size={18} />
-                </button>
-            </header>
+            <PageHeader
+                title="Users"
+                actions={
+                    <Button variant="ghost" onClick={refresh}>
+                        <RefreshCw size={18} />
+                    </Button>
+                }
+            />
 
             <div className="page-content animate-fadeIn">
                 {error && (

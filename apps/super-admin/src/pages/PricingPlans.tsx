@@ -226,14 +226,14 @@ export default function PricingPlans() {
 
     const filteredPlans = pricingPlans.filter(plan => {
         const matchesSearch = plan.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            plan.description.toLowerCase().includes(searchTerm.toLowerCase());
+            plan.description.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = filterStatus === 'all' || plan.status === filterStatus;
         return matchesSearch && matchesStatus;
     });
 
     const filteredSubscriptions = subscriptionHistory.filter(sub => {
         const matchesSearch = sub.restaurantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            sub.planName.toLowerCase().includes(searchTerm.toLowerCase());
+            sub.planName.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = filterStatus === 'all' || sub.status === filterStatus;
         return matchesSearch && matchesStatus;
     });
@@ -276,7 +276,6 @@ export default function PricingPlans() {
             <PageHeader
                 className="page-header"
                 title="Pricing Plans"
-                description="Manage subscription plans and pricing for your restaurant platform."
                 actions={
                     <div className="flex items-center gap-3">
                         <Button variant="ghost" title="Refresh">

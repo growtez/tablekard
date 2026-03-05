@@ -222,7 +222,6 @@ export default function Dashboard() {
             <PageHeader
                 className="page-header"
                 title="Dashboard"
-                description="Welcome back! Here's what's happening with your platform."
                 actions={
                     <>
                         <Button className="flex items-center gap-2" onClick={handleAddRestaurant}>
@@ -262,8 +261,8 @@ export default function Dashboard() {
                                         key={range}
                                         onClick={() => setTimeRange(range)}
                                         className={`px-3 py-1 text-xs rounded-md transition-all ${timeRange === range
-                                                ? 'bg-[var(--color-accent-primary)] text-white'
-                                                : 'bg-[var(--color-bg-tertiary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]'
+                                            ? 'bg-[var(--color-accent-primary)] text-white'
+                                            : 'bg-[var(--color-bg-tertiary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]'
                                             }`}
                                     >
                                         {range}
@@ -402,8 +401,8 @@ export default function Dashboard() {
                                         </div>
                                     </div>
                                     <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${service.status === 'operational'
-                                            ? 'bg-green-500/10 text-green-500'
-                                            : 'bg-yellow-500/10 text-yellow-500'
+                                        ? 'bg-green-500/10 text-green-500'
+                                        : 'bg-yellow-500/10 text-yellow-500'
                                         }`}>
                                         <div className={`w-1.5 h-1.5 rounded-full ${service.status === 'operational' ? 'bg-green-500' : 'bg-yellow-500'
                                             }`} />
@@ -476,10 +475,10 @@ export default function Dashboard() {
                                 {recentActivities.map((activity) => (
                                     <div key={activity.id} className="flex items-start gap-3 p-3 rounded-xl hover:bg-[var(--color-bg-tertiary)] transition-all border border-transparent hover:border-[var(--color-border)]">
                                         <div className={`p-2 rounded-lg shrink-0 ${activity.color === 'blue' ? 'bg-blue-500/10 text-blue-500' :
-                                                activity.color === 'green' ? 'bg-green-500/10 text-green-500' :
-                                                    activity.color === 'purple' ? 'bg-purple-500/10 text-purple-500' :
-                                                        activity.color === 'orange' ? 'bg-orange-500/10 text-orange-500' :
-                                                            'bg-teal-500/10 text-teal-500'
+                                            activity.color === 'green' ? 'bg-green-500/10 text-green-500' :
+                                                activity.color === 'purple' ? 'bg-purple-500/10 text-purple-500' :
+                                                    activity.color === 'orange' ? 'bg-orange-500/10 text-orange-500' :
+                                                        'bg-teal-500/10 text-teal-500'
                                             }`}>
                                             <activity.icon size={16} />
                                         </div>

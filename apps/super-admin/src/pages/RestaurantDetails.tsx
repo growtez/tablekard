@@ -1,7 +1,9 @@
-import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, Edit, Trash2, RefreshCw } from 'lucide-react';
+import { useParams } from 'react-router-dom';
+import { ExternalLink, Edit, RefreshCw } from 'lucide-react';
 import { useRestaurantDetails } from '../hooks/useRestaurantDetails';
 import { RestaurantStatus } from '@restaurant-saas/types';
+import { PageHeader } from '../components/ui/PageHeader';
+import { Button } from '../components/ui/Button';
 
 const getStatusBadge = (status: RestaurantStatus) => {
     switch (status) {
@@ -32,37 +34,28 @@ export default function RestaurantDetails() {
 
     return (
         <>
-            <header className="page-header">
-                <Link to="/restaurants" className="flex items-center gap-sm text-secondary" style={{ marginBottom: '0.5rem', textDecoration: 'none' }}>
-                    <ArrowLeft size={18} />
-                    Back to Restaurants
-                </Link>
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 style={{ fontSize: '1.5rem', fontWeight: 600 }}>{restaurant.name}</h1>
-                        <p className="text-secondary" style={{ fontSize: '0.875rem' }}>
-                            {restaurant.slug}
-                        </p>
-                    </div>
+            <PageHeader
+                title={restaurant.name}
+                actions={
                     <div className="flex items-center gap-sm">
-                        <button className="btn btn-ghost" onClick={refresh}>
+                        <Button variant="ghost" onClick={refresh}>
                             <RefreshCw size={18} />
-                        </button>
+                        </Button>
                         <a
                             href={`/r/${restaurant.slug}`}
-                            className="btn btn-secondary"
+                            className="btn btn-secondary flex items-center gap-2"
                             style={{ textDecoration: 'none' }}
                         >
                             <ExternalLink size={18} />
                             Preview QR Menu
                         </a>
-                        <button className="btn btn-primary">
+                        <Button variant="primary" className="flex items-center gap-2">
                             <Edit size={18} />
                             Edit
-                        </button>
+                        </Button>
                     </div>
-                </div>
-            </header>
+                }
+            />
 
             <div className="page-content animate-fadeIn">
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
@@ -120,7 +113,7 @@ export default function RestaurantDetails() {
                         </div>
                     </div>
 
-                    {/* Stats Card - Mock data for now as we don't have sub-collections aggregations yet */}
+                    {/* Stats Card */}
                     <div className="card" style={{ gridColumn: 'span 2' }}>
                         <div className="card-header">
                             <h2 className="card-title">Statistics (Coming Soon)</h2>
@@ -145,25 +138,6 @@ export default function RestaurantDetails() {
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                {/* Danger Zone */}
-                <div className="card" style={{ marginTop: '1.5rem', borderColor: 'var(--color-error)' }}>
-                    <div className="card-header" style={{ background: 'rgba(239, 68, 68, 0.1)' }}>
-                        <h2 className="card-title" style={{ color: 'var(--color-error)' }}>Danger Zone</h2>
-                    </div>
-                    <div className="card-content flex items-center justify-between">
-                        <div>
-                            <div className="font-medium">Delete Restaurant</div>
-                            <div className="text-secondary" style={{ fontSize: '0.875rem' }}>
-                                Permanently delete this restaurant and all its data
-                            </div>
-                        </div>
-                        <button className="btn" style={{ background: 'var(--color-error)', color: 'white' }}>
-                            <Trash2 size={18} />
-                            Delete
-                        </button>
                     </div>
                 </div>
             </div>

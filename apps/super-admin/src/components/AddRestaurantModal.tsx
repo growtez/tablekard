@@ -76,7 +76,7 @@ export default function AddRestaurantModal({ onClose, onSuccess }: AddRestaurant
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="modal-content space-y-8 max-h-[90vh] overflow-y-auto" style={{ padding: '32px' }}>
+                <form onSubmit={handleSubmit} className="modal-content space-y-8 max-h-[90vh] overflow-y-auto w-full" style={{ padding: '32px' }}>
                     {error && (
                         <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-sm flex items-center gap-2">
                             <Shield size={16} />
@@ -85,7 +85,7 @@ export default function AddRestaurantModal({ onClose, onSuccess }: AddRestaurant
                     )}
 
                     <div className="space-y-6">
-                        <div className="grid grid-cols-2" style={{ gap: '24px' }}>
+                        <div className="grid grid-cols-2 w-full" style={{ gap: '24px' }}>
                             <div className="form-group">
                                 <label className="form-label flex items-center gap-2">
                                     <Store size={14} className="text-[var(--color-accent-primary)]" />
@@ -107,7 +107,7 @@ export default function AddRestaurantModal({ onClose, onSuccess }: AddRestaurant
                                     Subdomain Slug
                                 </label>
                                 <div className="relative">
-                                    <div className="flex">
+                                    <div className="flex w-full">
                                         <input
                                             type="text"
                                             required
@@ -115,9 +115,9 @@ export default function AddRestaurantModal({ onClose, onSuccess }: AddRestaurant
                                             placeholder="e.g. pizza-paradise"
                                             value={formData.slug}
                                             onChange={e => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
-                                            style={{ borderRadius: '10px 0 0 10px' }}
+                                            style={{ borderRadius: '10px 0 0 10px', minWidth: '0' }}
                                         />
-                                        <div className="flex items-center px-3 bg-[var(--color-bg-tertiary)] border border-l-0 border-[var(--color-border)] text-[var(--color-text-muted)] text-sm font-medium" style={{ borderRadius: '0 10px 10px 0' }}>
+                                        <div className="flex items-center px-3 bg-[var(--color-bg-tertiary)] border border-l-0 border-[var(--color-border)] text-[var(--color-text-muted)] text-sm font-medium shrink-0" style={{ borderRadius: '0 10px 10px 0' }}>
                                             .tablekard.com
                                         </div>
                                     </div>
@@ -125,7 +125,7 @@ export default function AddRestaurantModal({ onClose, onSuccess }: AddRestaurant
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2" style={{ gap: '24px' }}>
+                        <div className="grid grid-cols-2 w-full" style={{ gap: '24px' }}>
                             <div className="form-group">
                                 <label className="form-label flex items-center gap-2">
                                     <Mail size={14} className="text-[var(--color-accent-primary)]" />
@@ -158,7 +158,7 @@ export default function AddRestaurantModal({ onClose, onSuccess }: AddRestaurant
                         </div>
 
                         <div className="pt-2 border-t border-[var(--color-border)]">
-                            <div className="grid grid-cols-2" style={{ gap: '24px' }}>
+                            <div className="grid grid-cols-2 w-full" style={{ gap: '24px' }}>
                                 <div className="form-group">
                                     <label className="form-label">Geo-Fence Radius (meters)</label>
                                     <input
