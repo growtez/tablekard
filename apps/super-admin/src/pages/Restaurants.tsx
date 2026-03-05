@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ExternalLink, RefreshCw, Calendar, Store, Eye, Edit, ShieldAlert } from 'lucide-react';
+import { Plus, ExternalLink, RefreshCw, Calendar, Store, Eye, Edit } from 'lucide-react';
 import { useRestaurants } from '../hooks/useRestaurants';
 import { Restaurant, RestaurantStatus, SubscriptionStatus } from '@restaurant-saas/types';
 import { DataTable, Column } from '../components/DataTable';
@@ -10,7 +10,6 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { PageHeader } from '../components/ui/PageHeader';
 import { StatCard } from '../components/ui/StatCard';
-import toast from 'react-hot-toast';
 
 const getStatusBadge = (status: RestaurantStatus | SubscriptionStatus | string) => {
     switch (status) {
@@ -50,15 +49,13 @@ export default function Restaurants() {
     const { restaurants, loading, error, actions } = useRestaurants();
     const navigate = useNavigate();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [editingRestaurant, setEditingRestaurant] = useState<Restaurant | null>(null);
 
     const handleRowAction = (action: string, row: Restaurant) => {
         if (action === 'view') {
             navigate(`/restaurants/${row.id}`);
         } else if (action === 'edit') {
-            toast('Edit feature coming soon!', { icon: '🚧' });
-        } else if (action === 'suspend') {
-            toast.success(`Suspended ${row.name}`);
-            // TODO: Call API to suspend
+            setEditingRestaurant(row);
         }
     };
 
@@ -140,7 +137,6 @@ export default function Restaurants() {
     const rowActions = [
         { label: 'View Details', value: 'view', icon: Eye },
         { label: 'Edit Restaurant', value: 'edit', icon: Edit },
-        { label: 'Suspend Account', value: 'suspend', icon: ShieldAlert, destructive: true }
     ];
 
     if (error) {
@@ -208,13 +204,18 @@ export default function Restaurants() {
                 )}
             </div>
 
-            {/* Add Restaurant Modal */}
-            {isAddModalOpen && (
+            {/* Add/Edit Restaurant Modal */}
+            {(isAddModalOpen || editingRestaurant) && (
                 <AddRestaurantModal
-                    onClose={() => setIsAddModalOpen(false)}
+                    restaurant={editingRestaurant || undefined}
+                    onClose={() => {
+                        setIsAddModalOpen(false);
+                        setEditingRestaurant(null);
+                    }}
                     onSuccess={() => {
                         actions.refresh();
-                        toast.success('Restaurant added successfully!');
+                        setIsAddModalOpen(false);
+                        setEditingRestaurant(null);
                     }}
                 />
             )}
