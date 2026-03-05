@@ -230,8 +230,8 @@
     color: var(--color-success) !important;
 }
 
-/* Modal Styles */
-.modal-overlay {
+/* Login Modal Styles */
+.login-modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -245,7 +245,7 @@
     padding: 20px;
 }
 
-.modal-content {
+.login-modal-content {
     background: var(--color-bg-primary);
     border-radius: 16px;
     padding: 32px;
@@ -255,19 +255,19 @@
     box-shadow: var(--shadow-lg);
 }
 
-.modal-content h3 {
+.login-modal-content h3 {
     color: var(--color-text-primary);
     margin: 0 0 8px 0;
     font-size: 20px;
 }
 
-.modal-content>p {
+.login-modal-content>p {
     color: var(--color-text-secondary);
     font-size: 14px;
     margin: 0 0 20px 0;
 }
 
-.modal-content input {
+.login-modal-content input {
     width: 100%;
     background: var(--color-bg-tertiary);
     border: 1px solid var(--color-border);
@@ -279,17 +279,17 @@
     box-sizing: border-box;
 }
 
-.modal-content input:focus {
+.login-modal-content input:focus {
     outline: none;
     border-color: var(--color-accent-primary);
 }
 
-.modal-buttons {
+.login-modal-buttons {
     display: flex;
     gap: 12px;
 }
 
-.modal-buttons button {
+.login-modal-buttons button {
     flex: 1;
     padding: 12px;
     border-radius: 10px;
@@ -299,19 +299,19 @@
     transition: all 0.3s;
 }
 
-.modal-buttons button:first-child {
+.login-modal-buttons button:first-child {
     background: var(--color-accent-gradient);
     color: #fff;
     border: none;
 }
 
-.modal-buttons button:last-child {
+.login-modal-buttons button:last-child {
     background: transparent;
     color: var(--color-text-secondary);
     border: 1px solid var(--color-border);
 }
 
-.modal-buttons button:hover {
+.login-modal-buttons button:hover {
     transform: translateY(-1px);
 }
 

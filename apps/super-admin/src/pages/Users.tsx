@@ -1,6 +1,9 @@
 import { AlertCircle, Search, RefreshCw } from 'lucide-react';
+import { useState } from 'react';
 import { useUsers } from '../hooks/useUsers';
 import { UserRole } from '@restaurant-saas/types';
+import { PageHeader } from '../components/ui/PageHeader';
+import { Button } from '../components/ui/Button';
 
 const getRoleBadge = (role: string) => {
     switch (role) {
@@ -17,6 +20,7 @@ const getRoleBadge = (role: string) => {
 
 export default function Users() {
     const { users, loading, error, updateRole, refresh } = useUsers();
+    const [globalFilter, setGlobalFilter] = useState('');
 
     if (loading) {
         return (
@@ -28,17 +32,14 @@ export default function Users() {
 
     return (
         <>
-            <header className="page-header flex items-center justify-between">
-                <div>
-                    <h1 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Users</h1>
-                    <p className="text-secondary" style={{ fontSize: '0.875rem' }}>
-                        Manage platform users and roles
-                    </p>
-                </div>
-                <button className="btn btn-ghost" onClick={refresh}>
-                    <RefreshCw size={18} />
-                </button>
-            </header>
+            <PageHeader
+                title="Users"
+                actions={
+                    <Button variant="ghost" onClick={refresh}>
+                        <RefreshCw size={18} />
+                    </Button>
+                }
+            />
 
             <div className="page-content animate-fadeIn">
                 {error && (
@@ -50,14 +51,18 @@ export default function Users() {
 
                 <div className="card">
                     {/* Search Bar */}
-                    <div className="p-4 border-b border-border flex items-center gap-sm">
-                        <div className="search-input-wrapper flex-1 max-w-md">
-                            <Search className="search-icon" size={18} />
-                            <input
-                                type="text"
-                                placeholder="Search users by name or email..."
-                                className="search-input"
-                            />
+                    <div className="p-4 border-b border-border flex justify-center">
+                        <div className="flex-1 flex justify-center">
+                            <div className="flex items-center gap-3 bg-[var(--color-bg-tertiary)] border border-[var(--color-border)] rounded-xl p-3 w-full max-w-xs">
+                                <Search className="text-[var(--color-text-muted)] shrink-0" size={16} />
+                                <input
+                                    type="text"
+                                    placeholder="Search users by name or email..."
+                                    value={globalFilter ?? ''}
+                                    onChange={(e) => setGlobalFilter(e.target.value)}
+                                    className="bg-transparent border-none outline-none text-sm text-[var(--color-text-primary)] w-full"
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -73,14 +78,22 @@ export default function Users() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {users.length === 0 ? (
+                                {users.filter((user) => {
+                                    if (!globalFilter) return true;
+                                    const q = globalFilter.toLowerCase();
+                                    return user.name?.toLowerCase().includes(q) || user.email?.toLowerCase().includes(q);
+                                }).length === 0 ? (
                                     <tr>
                                         <td colSpan={5} className="text-center p-8 text-secondary">
                                             No users found
                                         </td>
                                     </tr>
                                 ) : (
-                                    users.map((user) => (
+                                    users.filter((user) => {
+                                        if (!globalFilter) return true;
+                                        const q = globalFilter.toLowerCase();
+                                        return user.name?.toLowerCase().includes(q) || user.email?.toLowerCase().includes(q);
+                                    }).map((user) => (
                                         <tr key={user.id}>
                                             <td>
                                                 <div className="flex items-center gap-sm">

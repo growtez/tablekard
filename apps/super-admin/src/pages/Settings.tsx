@@ -44,7 +44,6 @@ export default function Settings() {
             <PageHeader
                 className="page-header"
                 title="Settings"
-                description="Configure your SaaS platform settings"
             />
 
             <div className="page-content animate-fadeIn">

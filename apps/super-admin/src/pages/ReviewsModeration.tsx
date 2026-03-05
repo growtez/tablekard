@@ -206,9 +206,9 @@ export default function ReviewsModeration() {
 
     const filteredReviews = reviews.filter(review => {
         const matchesSearch = review.restaurantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            review.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            review.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            review.content.toLowerCase().includes(searchTerm.toLowerCase());
+            review.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            review.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            review.content.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = status === 'all' || review.status === status;
         const matchesRating = rating === 'all' || review.rating.toString() === rating;
         return matchesSearch && matchesStatus && matchesRating;
@@ -269,7 +269,6 @@ export default function ReviewsModeration() {
             <PageHeader
                 className="page-header"
                 title="Reviews Moderation"
-                description="Manage and moderate customer reviews across all restaurants."
                 actions={
                     <div className="flex items-center gap-3">
                         <Button variant="ghost" title="Refresh">
@@ -307,7 +306,7 @@ export default function ReviewsModeration() {
                             />
                         </div>
                     </div>
-                    
+
                     <select
                         value={status}
                         onChange={(e) => setStatus(e.target.value)}

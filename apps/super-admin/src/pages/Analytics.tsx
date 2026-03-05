@@ -1,14 +1,10 @@
 import { BarChart3 } from 'lucide-react';
+import { PageHeader } from '../components/ui/PageHeader';
 
 export default function Analytics() {
     return (
         <>
-            <header className="page-header">
-                <h1 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Analytics</h1>
-                <p className="text-secondary" style={{ fontSize: '0.875rem' }}>
-                    Platform performance reports
-                </p>
-            </header>
+            <PageHeader title="Analytics" />
 
             <div className="page-content animate-fadeIn">
                 <div className="card text-center p-12">

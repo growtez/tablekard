@@ -133,6 +133,25 @@ export const createRestaurant = async (restaurantData: any) => {
     return mapRestaurant(data);
 };
 
+export const updateRestaurant = async (restaurantId: string, restaurantData: any) => {
+    const { data, error } = await supabase
+        .from('restaurants')
+        .update({
+            name: restaurantData.name,
+            slug: restaurantData.slug,
+            contact_email: restaurantData.contact_email,
+            contact_phone: restaurantData.contact_phone,
+            subscription_type: restaurantData.subscriptionType,
+            allowed_radius: restaurantData.allowedRadius
+        })
+        .eq('id', restaurantId)
+        .select('*')
+        .single();
+
+    if (error) throw error;
+    return mapRestaurant(data);
+};
+
 export const approveRestaurant = async (restaurantId: string) => {
     const { error } = await supabase
         .from('restaurants')
@@ -334,6 +353,7 @@ const supabaseService = {
     getRestaurants,
     getRestaurantById,
     createRestaurant,
+    updateRestaurant,
     approveRestaurant,
     suspendRestaurant,
     reactivateRestaurant,

@@ -197,7 +197,7 @@ export default function Announcements() {
 
     const filteredAnnouncements = announcements.filter(announcement => {
         const matchesSearch = announcement.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            announcement.content.toLowerCase().includes(searchTerm.toLowerCase());
+            announcement.content.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesType = type === 'all' || announcement.type === type;
         const matchesPriority = priority === 'all' || announcement.priority === priority;
         const matchesStatus = status === 'all' || announcement.status === status;
@@ -297,7 +297,6 @@ export default function Announcements() {
             <PageHeader
                 className="page-header"
                 title="Announcements"
-                description="Create and manage platform announcements and communications."
                 actions={
                     <div className="flex items-center gap-3">
                         <Button variant="ghost" title="Refresh">
@@ -339,7 +338,7 @@ export default function Announcements() {
                             />
                         </div>
                     </div>
-                    
+
                     <select
                         value={type}
                         onChange={(e) => setType(e.target.value)}

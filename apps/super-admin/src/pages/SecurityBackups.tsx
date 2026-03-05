@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle } from '../components/ui/Card';
 export default function SecurityBackups() {
     return (
         <>
-            <PageHeader title="Security & Backups" description="Manage security settings and data backups." />
+            <PageHeader title="Security & Backups" />
             <div className="page-content">
                 <Card>
                     <CardHeader>

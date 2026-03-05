@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle } from '../components/ui/Card';
 export default function IntegrationsAPI() {
     return (
         <>
-            <PageHeader title="Integrations & API" description="Manage third-party integrations and API access." />
+            <PageHeader title="Integrations & API" />
             <div className="page-content">
                 <Card>
                     <CardHeader>
