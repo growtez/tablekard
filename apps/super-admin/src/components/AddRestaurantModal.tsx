@@ -1,35 +1,38 @@
 import { useState, useEffect } from 'react';
 import { X, Store, Globe, Mail, Phone, Shield } from 'lucide-react';
-import { createRestaurant } from '../services/supabaseService';
+import { Restaurant } from '@restaurant-saas/types';
+import { createRestaurant, updateRestaurant } from '../services/supabaseService';
 import toast from 'react-hot-toast';
 
 interface AddRestaurantModalProps {
     onClose: () => void;
     onSuccess: () => void;
+    restaurant?: Restaurant; // Add this for edit mode
 }
 
-export default function AddRestaurantModal({ onClose, onSuccess }: AddRestaurantModalProps) {
+export default function AddRestaurantModal({ onClose, onSuccess, restaurant }: AddRestaurantModalProps) {
+    const isEditMode = !!restaurant;
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
-        name: '',
-        slug: '',
-        email: '',
-        phone: '',
-        allowedRadius: 500,
-        subscriptionType: 'QR Only'
+        name: restaurant?.name || '',
+        slug: restaurant?.slug || '',
+        email: restaurant?.contact?.email || '',
+        phone: restaurant?.contact?.phone || '',
+        allowedRadius: restaurant?.location?.allowedRadius || 500,
+        subscriptionType: restaurant?.subscriptionType || 'QR Only'
     });
     const [error, setError] = useState<string | null>(null);
 
-    // Auto-generate slug from name
+    // Auto-generate slug from name (only in add mode)
     useEffect(() => {
-        if (formData.name) {
+        if (!isEditMode && formData.name) {
             const generatedSlug = formData.name
                 .toLowerCase()
                 .replace(/[^a-z0-9]+/g, '-')
                 .replace(/(^-|-$)+/g, '');
             setFormData(prev => ({ ...prev, slug: generatedSlug }));
         }
-    }, [formData.name]);
+    }, [formData.name, isEditMode]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -37,22 +40,35 @@ export default function AddRestaurantModal({ onClose, onSuccess }: AddRestaurant
         setLoading(true);
 
         try {
-            await createRestaurant({
-                name: formData.name,
-                slug: formData.slug,
-                status: 'pending' as any,
-                contact_email: formData.email,
-                contact_phone: formData.phone,
-                contact_address: '',
-                subscription_status: true,
-                subscription_type: formData.subscriptionType,
-                allowed_radius: formData.allowedRadius
-            } as any);
+            if (isEditMode && restaurant) {
+                await updateRestaurant(restaurant.id, {
+                    name: formData.name,
+                    slug: formData.slug,
+                    contact_email: formData.email,
+                    contact_phone: formData.phone,
+                    subscriptionType: formData.subscriptionType,
+                    allowedRadius: formData.allowedRadius
+                });
+                toast.success('Restaurant updated successfully');
+            } else {
+                await createRestaurant({
+                    name: formData.name,
+                    slug: formData.slug,
+                    status: 'pending' as any,
+                    contact_email: formData.email,
+                    contact_phone: formData.phone,
+                    contact_address: '',
+                    subscription_status: true,
+                    subscription_type: formData.subscriptionType,
+                    allowed_radius: formData.allowedRadius
+                } as any);
+                toast.success('Restaurant added successfully');
+            }
             onSuccess();
             onClose();
         } catch (err: any) {
-            setError(err.message || 'Failed to create restaurant');
-            toast.error(err.message || 'Failed to create restaurant');
+            setError(err.message || `Failed to ${isEditMode ? 'update' : 'create'} restaurant`);
+            toast.error(err.message || `Failed to ${isEditMode ? 'update' : 'create'} restaurant`);
         } finally {
             setLoading(false);
         }
@@ -67,8 +83,12 @@ export default function AddRestaurantModal({ onClose, onSuccess }: AddRestaurant
                             <Store size={22} />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-[var(--color-text-primary)]">Add New Restaurant</h2>
-                            <p className="text-xs text-[var(--color-text-muted)]">Register a new business on the platform</p>
+                            <h2 className="text-xl font-bold text-[var(--color-text-primary)]">
+                                {isEditMode ? 'Edit Restaurant' : 'Add New Restaurant'}
+                            </h2>
+                            <p className="text-xs text-[var(--color-text-muted)]">
+                                {isEditMode ? `Updating ${restaurant?.name}` : 'Register a new business on the platform'}
+                            </p>
                         </div>
                     </div>
                     <button onClick={onClose} className="btn-icon hover:bg-[var(--color-bg-hover)] transition-colors">
@@ -192,9 +212,9 @@ export default function AddRestaurantModal({ onClose, onSuccess }: AddRestaurant
                             {loading ? (
                                 <div className="flex items-center" style={{ gap: '8px' }}>
                                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                    <span>Creating...</span>
+                                    <span>{isEditMode ? 'Updating...' : 'Creating...'}</span>
                                 </div>
-                            ) : 'Generate Restaurant'}
+                            ) : (isEditMode ? 'Save Changes' : 'Add Restaurant')}
                         </button>
                     </div>
                 </form>

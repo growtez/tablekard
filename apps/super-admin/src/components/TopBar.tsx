@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Search, Plus, Bell, ChevronDown, Menu } from 'lucide-react';
+import { Search, Bell, ChevronDown, Menu } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { usePageHeader } from '../context/PageHeaderContext';
 
@@ -21,11 +21,9 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void }) {
                 </button>
 
                 {header ? (
-                    <div className="flex flex-col ml-2">
-                        <h1 className="text-xl font-bold text-[var(--color-text-primary)] leading-none">
-                            {header.title}
-                        </h1>
-                    </div>
+                    <h1 className="text-xl font-bold text-[var(--color-text-primary)] leading-none ml-2">
+                        {header.title}
+                    </h1>
                 ) : (
                     <div className="top-bar-search">
                         <Search size={18} className="search-icon" />
