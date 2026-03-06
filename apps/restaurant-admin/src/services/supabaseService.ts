@@ -5,7 +5,7 @@
  * - Restaurant profile
  * - Menu management
  * - Orders overview
- * - Tables
+ * - Tables (with full CRUD operations)
  *
  * NOTE: We use `(supabase as any).from(...)` to bypass a type incompatibility between
  * `@supabase/supabase-js` v2.95+ and our manually-written Database type. The functions
@@ -403,5 +403,114 @@ export const updatePaymentStatus = async (orderId: string, paymentStatus: string
         .from('orders')
         .update({ payment_status: paymentStatus.toLowerCase(), updated_at: new Date().toISOString() })
         .eq('id', orderId);
+    if (error) throw error;
+};
+
+// ==========================================
+// Restaurant Tables (Full CRUD Operations)
+// ==========================================
+
+export interface RestaurantTable {
+    id: string;
+    table_number: number;
+    capacity: number;
+    active: boolean;
+    qr_code_url: string | null;
+}
+
+/**
+ * Get all tables for a restaurant
+ */
+export const getRestaurantTables = async (restaurantId: string): Promise<RestaurantTable[]> => {
+    const { data, error } = await db
+        .from('restaurant_tables')
+        .select('id, table_number, capacity, active, qr_code_url')
+        .eq('restaurant_id', restaurantId)
+        .order('table_number', { ascending: true });
+    if (error) throw error;
+    return (data || []).map((row: any) => ({
+        id: row.id,
+        table_number: row.table_number,
+        capacity: row.capacity ?? 4,
+        active: row.active ?? true,
+        qr_code_url: row.qr_code_url ?? null
+    }));
+};
+
+/**
+ * Create a new table
+ */
+export const createRestaurantTable = async (
+    restaurantId: string,
+    tableData: {
+        table_number: number;
+        capacity: number;
+        active?: boolean;
+    }
+): Promise<RestaurantTable> => {
+    const { data, error } = await db
+        .from('restaurant_tables')
+        .insert({
+            restaurant_id: restaurantId,
+            table_number: tableData.table_number,
+            capacity: tableData.capacity,
+            active: tableData.active ?? true,
+            qr_code_url: null
+        })
+        .select('id, table_number, capacity, active, qr_code_url')
+        .single();
+    
+    if (error) throw error;
+    
+    return {
+        id: data.id,
+        table_number: data.table_number,
+        capacity: data.capacity ?? 4,
+        active: data.active ?? true,
+        qr_code_url: data.qr_code_url ?? null
+    };
+};
+
+/**
+ * Update an existing table
+ */
+export const updateRestaurantTable = async (
+    tableId: string,
+    tableData: Partial<{
+        table_number: number;
+        capacity: number;
+        active: boolean;
+        qr_code_url: string | null;
+    }>
+): Promise<void> => {
+    const { error } = await db
+        .from('restaurant_tables')
+        .update(tableData)
+        .eq('id', tableId);
+    
+    if (error) throw error;
+};
+
+/**
+ * Delete a table
+ */
+export const deleteRestaurantTable = async (tableId: string): Promise<void> => {
+    const { error } = await db
+        .from('restaurant_tables')
+        .delete()
+        .eq('id', tableId);
+    
+    if (error) throw error;
+};
+
+/**
+ * Toggle table active status
+ */
+export const toggleTableActiveStatus = async (tableId: string, active: boolean): Promise<void> => {
+    const { error } = await db
+        .from('restaurant_tables')
+        .update({ active })
+        .eq('id', tableId);
+    
     if (error) throw error;
 };
