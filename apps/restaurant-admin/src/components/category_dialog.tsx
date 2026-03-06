@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { X, Trash2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Trash2, Upload, Image } from 'lucide-react';
 import type { MenuCategory } from '@restaurant-saas/types';
 import './category_dialog.css';
 
 interface CategoryDialogProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (category: Partial<MenuCategory>) => void;
+    onSave: (category: Partial<MenuCategory> & { image_url?: string | null }) => void;
     onDelete?: (categoryId: string) => void;
     category?: MenuCategory | null;
     mode: 'add' | 'edit';
@@ -24,8 +24,11 @@ const CategoryDialog: React.FC<CategoryDialogProps> = ({
         name: '',
         description: '',
         sort_order: 0,
-        active: true
+        active: true,
+        image_url: '' as string | null
     });
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (mode === 'edit' && category) {
@@ -33,17 +36,27 @@ const CategoryDialog: React.FC<CategoryDialogProps> = ({
                 name: category.name,
                 description: category.description ?? '',
                 sort_order: category.order ?? 0,
-                active: category.active ?? true
+                active: category.active ?? true,
+                image_url: (category as any).image_url ?? null
             });
+            setImagePreview((category as any).image_url ?? null);
         } else {
-            setFormData({
-                name: '',
-                description: '',
-                sort_order: 0,
-                active: true
-            });
+            setFormData({ name: '', description: '', sort_order: 0, active: true, image_url: null });
+            setImagePreview(null);
         }
     }, [mode, category, isOpen]);
+
+    const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const result = reader.result as string;
+            setImagePreview(result);
+            setFormData(prev => ({ ...prev, image_url: result }));
+        };
+        reader.readAsDataURL(file);
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -52,7 +65,8 @@ const CategoryDialog: React.FC<CategoryDialogProps> = ({
             name: formData.name,
             description: formData.description || null,
             order: formData.sort_order,
-            active: formData.active
+            active: formData.active,
+            image_url: formData.image_url || null
         });
         onClose();
     };
@@ -61,7 +75,11 @@ const CategoryDialog: React.FC<CategoryDialogProps> = ({
         const { name, value, type } = e.target;
         setFormData(prev => ({
             ...prev,
-            [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : (type === 'number' ? parseInt(value) || 0 : value)
+            [name]: type === 'checkbox'
+                ? (e.target as HTMLInputElement).checked
+                : type === 'number'
+                    ? parseInt(value) || 0
+                    : value
         }));
     };
 
@@ -80,8 +98,9 @@ const CategoryDialog: React.FC<CategoryDialogProps> = ({
                 </div>
 
                 <form onSubmit={handleSubmit} className="category-dialog-form">
+                    {/* Category Name */}
                     <div className="category-form-group">
-                        <label className="category-form-label">Category Name</label>
+                        <label className="category-form-label">Category Name *</label>
                         <input
                             type="text"
                             name="name"
@@ -93,18 +112,52 @@ const CategoryDialog: React.FC<CategoryDialogProps> = ({
                         />
                     </div>
 
+                    {/* Description */}
                     <div className="category-form-group">
                         <label className="category-form-label">Description (Optional)</label>
-                        <input
-                            type="text"
+                        <textarea
                             name="description"
                             value={formData.description}
                             onChange={handleChange}
-                            className="category-form-input"
-                            placeholder="Brief description of the category"
+                            className="category-form-input category-form-textarea"
+                            placeholder="Brief description of this category"
+                            rows={2}
                         />
                     </div>
 
+                    {/* Image Upload */}
+                    <div className="category-form-group">
+                        <label className="category-form-label">Category Image (Optional)</label>
+                        <div
+                            className="category-image-upload-area"
+                            onClick={() => fileInputRef.current?.click()}
+                        >
+                            {imagePreview ? (
+                                <div className="category-image-preview-wrap">
+                                    <img src={imagePreview} alt="preview" className="category-image-preview" />
+                                    <div className="category-image-overlay">
+                                        <Upload size={20} />
+                                        <span>Change Image</span>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="category-image-placeholder">
+                                    <Image size={32} color="#A0AEC0" />
+                                    <span>Click to upload image</span>
+                                    <small>PNG, JPG up to 2MB</small>
+                                </div>
+                            )}
+                        </div>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            style={{ display: 'none' }}
+                            onChange={handleImageFile}
+                        />
+                    </div>
+
+                    {/* Sort Order */}
                     <div className="category-form-group">
                         <label className="category-form-label">Sort Order</label>
                         <input
@@ -116,22 +169,26 @@ const CategoryDialog: React.FC<CategoryDialogProps> = ({
                             min="0"
                             placeholder="0"
                         />
-                        <small style={{ color: '#718096', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-                            Lower numbers appear first in the menu.
-                        </small>
+                        <small className="category-form-hint">Lower numbers appear first in the menu.</small>
                     </div>
 
+                    {/* Active Toggle */}
                     <div className="category-form-group">
-                        <label className="category-form-checkbox-label">
-                            <input
-                                type="checkbox"
-                                name="active"
-                                checked={formData.active}
-                                onChange={handleChange}
-                                className="category-form-checkbox"
-                            />
-                            <span>Active (Visible on Menu)</span>
-                        </label>
+                        <div className="category-toggle-row">
+                            <div>
+                                <div className="category-toggle-label">Active</div>
+                                <div className="category-toggle-desc">Make this category visible on the menu</div>
+                            </div>
+                            <label className="category-toggle-switch">
+                                <input
+                                    type="checkbox"
+                                    name="active"
+                                    checked={formData.active}
+                                    onChange={handleChange}
+                                />
+                                <span className="category-toggle-slider"></span>
+                            </label>
+                        </div>
                     </div>
 
                     <div className="category-dialog-actions">
