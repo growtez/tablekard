@@ -509,3 +509,14 @@
     right: -100%;
   }
 }
+
+.clickable-stat {
+  transition: var(--transition);
+}
+
+.clickable-stat:hover {
+  border-color: var(--accent-primary);
+  transform: translateY(-4px) !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6), 0 0 15px var(--accent-primary-glow);
+  background: var(--surface-hover);
+}

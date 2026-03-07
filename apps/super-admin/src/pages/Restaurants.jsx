@@ -71,13 +71,6 @@ export default function Restaurants() {
 
     return (
         <div className="space-y-8">
-            <div className="flex justify-end items-center">
-                <button onClick={fetchRestaurants} className="btn-refresh" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
-                    Sync Fleet
-                </button>
-            </div>
-
             {/* Stats Row */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
                 {stats.map((stat, i) => (
@@ -106,6 +99,20 @@ export default function Restaurants() {
                             }}
                         />
                     </div>
+                    <button
+                        onClick={fetchRestaurants}
+                        className="btn-refresh"
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            height: '46px',
+                            whiteSpace: 'nowrap'
+                        }}
+                    >
+                        <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+                        Sync Fleet
+                    </button>
                 </div>
             </Card>
 

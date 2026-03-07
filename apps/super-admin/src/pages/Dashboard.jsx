@@ -17,8 +17,6 @@ import {
     CreditCard
 } from 'lucide-react';
 import {
-    AreaChart,
-    Area,
     BarChart,
     Bar,
     PieChart,
@@ -95,12 +93,24 @@ const systemHealth = [
 const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
         return (
-            <div className="glass" style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                <p style={{ margin: 0, fontWeight: 600, fontSize: '0.85rem' }}>{label}</p>
+            <div style={{
+                padding: '0.75rem 1rem',
+                borderRadius: '10px',
+                border: '1px solid var(--border-color)',
+                backgroundColor: 'rgba(10, 10, 15, 0.95)',
+                backdropFilter: 'blur(8px)',
+                boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+                zIndex: 100
+            }}>
+                <p style={{ margin: '0 0 0.5rem 0', fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-main)' }}>{label}</p>
                 {payload.map((entry, index) => (
-                    <p key={index} style={{ margin: 0, fontSize: '0.75rem', color: entry.color || 'var(--accent-primary)' }}>
-                        {entry.name}: {entry.dataKey === 'revenue' ? `₹${entry.value.toLocaleString()}` : entry.value}
-                    </p>
+                    <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.25rem 0' }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: entry.color || entry.fill || 'var(--accent-primary)' }}></div>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{entry.name}:</span>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-main)' }}>
+                            {entry.dataKey === 'revenue' ? `₹${entry.value.toLocaleString()}` : entry.value}
+                        </span>
+                    </div>
                 ))}
             </div>
         );
@@ -143,10 +153,10 @@ export default function Dashboard() {
     }, []);
 
     const dashboardStats = [
-        { label: 'Total Restaurants', value: stats.totalRestaurants, change: '+12%', icon: Store, color: 'purple' },
+        { label: 'Total Restaurants', value: stats.totalRestaurants, change: '+12%', icon: Store, color: 'purple', path: '/restaurants' },
         { label: 'Total Orders', value: stats.totalOrders, change: '+18%', icon: TrendingUp, color: 'blue' },
         { label: 'Monthly Revenue', value: `₹${stats.totalRevenue.toLocaleString()}`, change: '+23%', icon: DollarSign, color: 'green' },
-        { label: 'Total Users', value: stats.totalUsers, change: '+8%', icon: Users, color: 'orange' },
+        { label: 'Total Users', value: stats.totalUsers, change: '+8%', icon: Users, color: 'orange', path: '/users' },
     ];
 
     return (
@@ -167,19 +177,13 @@ export default function Dashboard() {
                     </CardHeader>
                     <div style={{ height: '350px', width: '100%', minHeight: '350px' }}>
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={revenueData}>
-                                <defs>
-                                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="var(--accent-primary)" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="var(--accent-primary)" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
+                            <BarChart data={revenueData}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
                                 <XAxis dataKey="month" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
                                 <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v / 1000}k`} />
-                                <Tooltip content={<CustomTooltip />} />
-                                <Area type="monotone" dataKey="revenue" stroke="var(--accent-primary)" fillOpacity={1} fill="url(#colorRevenue)" strokeWidth={2} />
-                            </AreaChart>
+                                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--surface-hover)' }} />
+                                <Bar dataKey="revenue" fill="var(--accent-primary)" radius={[6, 6, 0, 0]} maxBarSize={45} />
+                            </BarChart>
                         </ResponsiveContainer>
                     </div>
                 </Card>
@@ -201,7 +205,7 @@ export default function Dashboard() {
                                         <Cell key={`cell-${index}`} fill={entry.color} />
                                     ))}
                                 </Pie>
-                                <Tooltip />
+                                <Tooltip content={<CustomTooltip />} />
                                 <Legend verticalAlign="bottom" align="center" iconType="circle" />
                             </PieChart>
                         </ResponsiveContainer>
