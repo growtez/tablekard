@@ -4,6 +4,7 @@ import { supabase } from './supabaseClient'
 import Login from './Login'
 import AdminPanel from './AdminPanel'
 import Dashboard from './pages/Dashboard'
+import Restaurants from './pages/Restaurants'
 import Sidebar from './components/Sidebar'
 import QuickCreateDrawer from './components/QuickCreateDrawer'
 import { Plus, UserPlus, FilePlus } from 'lucide-react'
@@ -208,6 +209,16 @@ export default function App() {
     )
   }
 
+  const getPageTitle = () => {
+    const path = location.pathname;
+    if (path === '/dashboard') return { title: 'Platform Overview', sub: 'Live System Stats' };
+    if (path === '/restaurants') return { title: 'Restaurant Directory', sub: 'Management and oversight of all platform vendors' };
+    if (path === '/' || path === '/users') return { title: 'User Account Directory', sub: 'Access control and platform permissions' };
+    return { title: 'Command Center', sub: 'TableKard Administration' };
+  };
+
+  const { title, sub } = getPageTitle();
+
   return (
     <div className="app-shell">
       <Sidebar
@@ -227,7 +238,10 @@ export default function App() {
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
               </button>
-              <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Command Center</h2>
+              <div className="flex column" style={{ gap: '2px' }}>
+                <h2 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>{title}</h2>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>{sub}</span>
+              </div>
             </div>
 
             <div className="nav-actions">
@@ -257,6 +271,7 @@ export default function App() {
           <div className="content-container">
             <Routes>
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/restaurants" element={<Restaurants />} />
               <Route path="/" element={<AdminPanel activeForm={activeForm} setActiveForm={setActiveForm} />} />
               <Route path="/users" element={<AdminPanel activeForm={activeForm} setActiveForm={setActiveForm} />} />
               {/* Fallback to Dashboard */}

@@ -151,12 +151,6 @@ export default function Dashboard() {
 
     return (
         <div className="animate-fade-in">
-            <div className="section-header" style={{ marginBottom: '2rem' }}>
-                <div className="section-title">
-                    <h2>Platform Overview</h2>
-                    <Badge variant="info">Live System Stats</Badge>
-                </div>
-            </div>
 
             {/* Stats Grid */}
             <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>

@@ -171,7 +171,6 @@ export default function AdminPanel({ activeForm, setActiveForm }) {
       <section className="users-section">
         <div className="section-header">
           <div className="section-title">
-            <h2>User Management</h2>
             <span className="count-badge">{users.length} Users</span>
           </div>
           <button onClick={fetchUsers} className="btn-refresh">
