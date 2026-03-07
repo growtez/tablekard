@@ -18,16 +18,11 @@ const LoginPage: React.FC = () => {
     const [resetMessage, setResetMessage] = useState('');
 
     // Redirect if already logged in
-    // useEffect(() => {
-    //     if (!loading && isAuthenticated) {
-    //         navigate('/dashboard');
-    //     }
-    // }, [isAuthenticated, loading, navigate]);
-
-    // Bypass login and go straight to dashboard
     useEffect(() => {
-        navigate('/dashboard');
-    }, [navigate]);
+        if (!loading && isAuthenticated) {
+            navigate('/dashboard');
+        }
+    }, [isAuthenticated, loading, navigate]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
