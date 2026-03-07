@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import Login from './Login'
 import AdminPanel from './AdminPanel'
+import Dashboard from './pages/Dashboard'
 import Sidebar from './components/Sidebar'
 import { Plus, UserPlus, FilePlus } from 'lucide-react'
 import './App.css'
@@ -14,6 +16,8 @@ export default function App() {
   const [authError, setAuthError] = useState(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [activeForm, setActiveForm] = useState('user')
+  const navigate = useNavigate()
+  const location = useLocation()
 
   useEffect(() => {
     let active = true;
@@ -228,11 +232,11 @@ export default function App() {
                 </button>
                 <div className="quick-create-menu">
                   <div className="menu-content">
-                    <button className="menu-item" onClick={() => setActiveForm('user')}>
+                    <button className="menu-item" onClick={() => { setActiveForm('user'); navigate('/users'); }}>
                       <UserPlus />
                       Add New User
                     </button>
-                    <button className="menu-item" onClick={() => setActiveForm('restaurant')}>
+                    <button className="menu-item" onClick={() => { setActiveForm('restaurant'); navigate('/users'); }}>
                       <FilePlus />
                       Add Restaurant
                     </button>
@@ -259,7 +263,13 @@ export default function App() {
 
         <main className="main-content animate-fade-in">
           <div className="content-container">
-            <AdminPanel activeForm={activeForm} setActiveForm={setActiveForm} />
+            <Routes>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/" element={<AdminPanel activeForm={activeForm} setActiveForm={setActiveForm} />} />
+              <Route path="/users" element={<AdminPanel activeForm={activeForm} setActiveForm={setActiveForm} />} />
+              {/* Fallback to Dashboard */}
+              <Route path="*" element={<Dashboard />} />
+            </Routes>
           </div>
         </main>
 
