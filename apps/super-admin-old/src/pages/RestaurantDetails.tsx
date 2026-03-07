@@ -18,7 +18,7 @@ import {
     Activity
 } from 'lucide-react';
 import { useRestaurantDetails } from '../hooks/useRestaurantDetails';
-import { RestaurantStatus } from '@restaurant-saas/types';
+import { RestaurantStatus, SubscriptionStatus } from '@restaurant-saas/types';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
@@ -26,13 +26,16 @@ import AddRestaurantModal from '../components/AddRestaurantModal';
 import { useState } from 'react';
 
 const statusConfig = {
-    [RestaurantStatus.ACTIVE]: { label: 'Active', color: '#22c55e', bg: 'rgba(34,197,94,0.1)', border: 'rgba(34,197,94,0.2)' },
-    [RestaurantStatus.TRIAL]: { label: 'Trial', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', border: 'rgba(59,130,246,0.2)' },
-    [RestaurantStatus.EXPIRED]: { label: 'Expired', color: '#ef4444', bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.2)' },
-    [RestaurantStatus.SUSPENDED]: { label: 'Suspended', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.2)' },
+    [RestaurantStatus.OPEN]: { label: 'Open', color: '#22c55e', bg: 'rgba(34,197,94,0.1)', border: 'rgba(34,197,94,0.2)' },
+    [RestaurantStatus.CLOSED]: { label: 'Closed', color: '#ef4444', bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.2)' },
+    [SubscriptionStatus.ACTIVE]: { label: 'Active', color: '#22c55e', bg: 'rgba(34,197,94,0.1)', border: 'rgba(34,197,94,0.2)' },
+    [SubscriptionStatus.TRIAL]: { label: 'Trial', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', border: 'rgba(59,130,246,0.2)' },
+    [SubscriptionStatus.EXPIRED]: { label: 'Expired', color: '#ef4444', bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.2)' },
+    [SubscriptionStatus.SUSPENDED]: { label: 'Suspended', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.2)' },
 };
 
-const StatusPill = ({ status }: { status: RestaurantStatus }) => {
+const StatusPill = ({ status }: { status: string }) => {
+    // @ts-ignore
     const cfg = statusConfig[status] || { label: status, color: '#888', bg: 'rgba(136,136,136,0.1)', border: 'rgba(136,136,136,0.2)' };
     return (
         <span style={{
@@ -218,7 +221,7 @@ export default function RestaurantDetails() {
             )}
 
             {/* Main Content Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 340px', gap: 20, alignItems: 'start' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: 24, alignItems: 'start' }}>
 
                 {/* Contact Info */}
                 <div style={{ background: 'var(--color-bg-card)', border: '1px solid var(--color-border)', borderRadius: 16, overflow: 'hidden' }}>
@@ -279,7 +282,7 @@ export default function RestaurantDetails() {
                         {/* Color swatches */}
                         <div>
                             <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--color-text-muted)', marginBottom: 12 }}>Brand Colors</div>
-                            <div style={{ display: 'flex', gap: 10 }}>
+                            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                                 {[
                                     { label: 'Primary', color: restaurant.branding?.primaryColor || '#d9b550' },
                                     { label: 'Secondary', color: restaurant.branding?.secondaryColor || '#121212' }
@@ -305,89 +308,85 @@ export default function RestaurantDetails() {
                     </div>
                 </div>
 
-                {/* Right sidebar: Security + Subscription stacked */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-
-                    {/* Security & API */}
-                    <div style={{ background: 'var(--color-bg-card)', border: '1px solid var(--color-border)', borderRadius: 16, overflow: 'hidden' }}>
-                        <SectionHeader icon={Shield} title="Security & API" iconColor="#22c55e" />
-                        <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                            <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                                <CreditCard size={12} /> Razorpay Integration
-                            </div>
-                            <KeyField label="Key ID" value={restaurant.settings?.razorpayKeyId ? 'rzp_live_configured' : undefined} />
-                            <KeyField label="Key Secret" value={restaurant.settings?.razorpayKeySecret} masked />
-
-                            <div style={{ height: 1, background: 'var(--color-border)', margin: '4px 0' }} />
-
-                            <div style={{
-                                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                padding: '10px 14px', borderRadius: 10,
-                                background: restaurant.settings?.allowPayAtCounter ? 'rgba(34,197,94,0.06)' : 'var(--color-bg-tertiary)',
-                                border: `1px solid ${restaurant.settings?.allowPayAtCounter ? 'rgba(34,197,94,0.2)' : 'var(--color-border)'}`
-                            }}>
-                                <div>
-                                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-primary)' }}>Counter Payments</div>
-                                    <div style={{ fontSize: 10, color: 'var(--color-text-muted)', marginTop: 2 }}>Pay at cashier/counter</div>
-                                </div>
-                                {restaurant.settings?.allowPayAtCounter
-                                    ? <CheckCircle2 size={18} color="#22c55e" />
-                                    : <XCircle size={18} color="var(--color-text-muted)" />
-                                }
-                            </div>
+                {/* Security & API */}
+                <div style={{ background: 'var(--color-bg-card)', border: '1px solid var(--color-border)', borderRadius: 16, overflow: 'hidden' }}>
+                    <SectionHeader icon={Shield} title="Security & API" iconColor="#22c55e" />
+                    <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                        <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                            <CreditCard size={12} /> Razorpay Integration
                         </div>
-                    </div>
+                        <KeyField label="Key ID" value={restaurant.settings?.razorpayKeyId ? 'rzp_live_configured' : undefined} />
+                        <KeyField label="Key Secret" value={restaurant.settings?.razorpayKeySecret} masked />
 
-                    {/* Subscription */}
-                    <div style={{ background: 'var(--color-bg-card)', border: '1px solid var(--color-border)', borderRadius: 16, overflow: 'hidden' }}>
-                        <SectionHeader icon={CreditCard} title="Subscription" iconColor="#3b82f6" />
-                        <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-                            <div style={{
-                                display: 'flex', alignItems: 'center', gap: 14,
-                                padding: '14px', borderRadius: 12,
-                                background: 'var(--color-bg-tertiary)', border: '1px solid var(--color-border)'
-                            }}>
-                                <div style={{
-                                    width: 40, height: 40, borderRadius: 10,
-                                    background: 'rgba(59,130,246,0.1)', flexShrink: 0,
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                }}>
-                                    <Settings size={18} color="#3b82f6" />
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-primary)' }}>{restaurant.subscriptionType || 'Monthly Base Plan'}</div>
-                                    <div style={{ fontSize: 10, color: 'var(--color-text-muted)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px', marginTop: 2 }}>Current Tier</div>
-                                </div>
-                                <StatusPill status={restaurant.subscriptionStatus ? RestaurantStatus.ACTIVE : RestaurantStatus.EXPIRED} />
-                            </div>
+                        <div style={{ height: 1, background: 'var(--color-border)', margin: '4px 0' }} />
 
-                            <button style={{
-                                width: '100%', padding: '9px 0', borderRadius: 10,
-                                background: 'transparent', border: '1px solid var(--color-border)',
-                                color: 'var(--color-text-secondary)', fontSize: 12, fontWeight: 600,
-                                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
-                            }}>
-                                Manage Subscription <ChevronRight size={13} />
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Analytics placeholder */}
-                    <div style={{
-                        borderRadius: 16, border: '1px dashed rgba(217,181,80,0.3)',
-                        background: 'rgba(217,181,80,0.04)', padding: '24px 20px', textAlign: 'center'
-                    }}>
                         <div style={{
-                            width: 44, height: 44, borderRadius: '50%', margin: '0 auto 12px',
-                            background: 'rgba(217,181,80,0.12)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                            padding: '10px 14px', borderRadius: 10,
+                            background: restaurant.settings?.allowPayAtCounter ? 'rgba(34,197,94,0.06)' : 'var(--color-bg-tertiary)',
+                            border: `1px solid ${restaurant.settings?.allowPayAtCounter ? 'rgba(34,197,94,0.2)' : 'var(--color-border)'}`
                         }}>
-                            <Activity size={20} color="var(--color-accent-primary)" />
+                            <div>
+                                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-primary)' }}>Counter Payments</div>
+                                <div style={{ fontSize: 10, color: 'var(--color-text-muted)', marginTop: 2 }}>Pay at cashier/counter</div>
+                            </div>
+                            {restaurant.settings?.allowPayAtCounter
+                                ? <CheckCircle2 size={18} color="#22c55e" />
+                                : <XCircle size={18} color="var(--color-text-muted)" />
+                            }
                         </div>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-accent-primary)', marginBottom: 6 }}>Analytics Coming Soon</div>
-                        <div style={{ fontSize: 11, color: 'var(--color-text-muted)', lineHeight: 1.6 }}>
-                            Live performance data will appear once this restaurant starts processing orders.
+                    </div>
+                </div>
+
+                {/* Subscription */}
+                <div style={{ background: 'var(--color-bg-card)', border: '1px solid var(--color-border)', borderRadius: 16, overflow: 'hidden' }}>
+                    <SectionHeader icon={CreditCard} title="Subscription" iconColor="#3b82f6" />
+                    <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                        <div style={{
+                            display: 'flex', alignItems: 'center', gap: 14,
+                            padding: '14px', borderRadius: 12,
+                            background: 'var(--color-bg-tertiary)', border: '1px solid var(--color-border)'
+                        }}>
+                            <div style={{
+                                width: 40, height: 40, borderRadius: 10,
+                                background: 'rgba(59,130,246,0.1)', flexShrink: 0,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            }}>
+                                <Settings size={18} color="#3b82f6" />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-primary)' }}>{restaurant.subscriptionType || 'Monthly Base Plan'}</div>
+                                <div style={{ fontSize: 10, color: 'var(--color-text-muted)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px', marginTop: 2 }}>Current Tier</div>
+                            </div>
+                            <StatusPill status={restaurant.subscriptionStatus ? SubscriptionStatus.ACTIVE : SubscriptionStatus.EXPIRED} />
                         </div>
+
+                        <button style={{
+                            width: '100%', padding: '9px 0', borderRadius: 10,
+                            background: 'transparent', border: '1px solid var(--color-border)',
+                            color: 'var(--color-text-secondary)', fontSize: 12, fontWeight: 600,
+                            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
+                        }}>
+                            Manage Subscription <ChevronRight size={13} />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Analytics placeholder */}
+                <div style={{
+                    borderRadius: 16, border: '1px dashed rgba(217,181,80,0.3)',
+                    background: 'rgba(217,181,80,0.04)', padding: '24px 20px', textAlign: 'center'
+                }}>
+                    <div style={{
+                        width: 44, height: 44, borderRadius: '50%', margin: '0 auto 12px',
+                        background: 'rgba(217,181,80,0.12)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}>
+                        <Activity size={20} color="var(--color-accent-primary)" />
+                    </div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-accent-primary)', marginBottom: 6 }}>Analytics Coming Soon</div>
+                    <div style={{ fontSize: 11, color: 'var(--color-text-muted)', lineHeight: 1.6 }}>
+                        Live performance data will appear once this restaurant starts processing orders.
                     </div>
                 </div>
             </div>

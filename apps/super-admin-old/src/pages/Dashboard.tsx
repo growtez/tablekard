@@ -6,7 +6,6 @@ import {
     Users,
     Plus,
     MoreHorizontal,
-    RefreshCw,
     Activity,
     Utensils,
     AlertCircle,
@@ -34,7 +33,7 @@ import {
     Legend
 } from 'recharts';
 import { useDashboardStats } from '../hooks/useDashboardStats';
-import { RestaurantStatus } from '@restaurant-saas/types';
+import { RestaurantStatus, SubscriptionStatus } from '@restaurant-saas/types';
 import { Link } from 'react-router-dom';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
@@ -100,14 +99,20 @@ const systemHealth = [
     { name: 'WebSocket', status: 'degraded', uptime: '97.2%', icon: Zap },
 ];
 
-const getStatusBadge = (status: RestaurantStatus) => {
+const getStatusBadge = (status: RestaurantStatus | SubscriptionStatus | string) => {
     switch (status) {
-        case RestaurantStatus.ACTIVE:
+        case SubscriptionStatus.ACTIVE:
             return <Badge variant="success">Active</Badge>;
-        case RestaurantStatus.TRIAL:
+        case SubscriptionStatus.TRIAL:
             return <Badge variant="info">Trial</Badge>;
-        case RestaurantStatus.EXPIRED:
+        case SubscriptionStatus.EXPIRED:
             return <Badge variant="error">Expired</Badge>;
+        case SubscriptionStatus.SUSPENDED:
+            return <Badge variant="warning">Suspended</Badge>;
+        case RestaurantStatus.OPEN:
+            return <Badge variant="success">Open</Badge>;
+        case RestaurantStatus.CLOSED:
+            return <Badge variant="warning">Closed</Badge>;
         default:
             return <Badge>{status}</Badge>;
     }
@@ -210,11 +215,11 @@ export default function Dashboard() {
 
     // Use static data for recent restaurants if API fails
     const displayRecentRestaurants = recentRestaurants.length > 0 ? recentRestaurants : [
-        { id: 1, name: 'Spice Garden', slug: 'spice-garden', status: 'active' as any, createdAt: new Date().toISOString() },
-        { id: 2, name: 'Biryani House', slug: 'biryani-house', status: 'active' as any, createdAt: new Date().toISOString() },
+        { id: 1, name: 'Spice Garden', slug: 'spice-garden', status: RestaurantStatus.OPEN as any, createdAt: new Date().toISOString() },
+        { id: 2, name: 'Biryani House', slug: 'biryani-house', status: RestaurantStatus.OPEN as any, createdAt: new Date().toISOString() },
         { id: 3, name: 'Tandoori Nights', slug: 'tandoori-nights', status: 'pending' as any, createdAt: new Date().toISOString() },
-        { id: 4, name: 'Curry Palace', slug: 'curry-palace', status: 'active' as any, createdAt: new Date().toISOString() },
-        { id: 5, name: 'Masala Dhaba', slug: 'masala-dhaba', status: 'trial' as any, createdAt: new Date().toISOString() },
+        { id: 4, name: 'Curry Palace', slug: 'curry-palace', status: RestaurantStatus.OPEN as any, createdAt: new Date().toISOString() },
+        { id: 5, name: 'Masala Dhaba', slug: 'masala-dhaba', status: SubscriptionStatus.TRIAL as any, createdAt: new Date().toISOString() },
     ];
 
     return (

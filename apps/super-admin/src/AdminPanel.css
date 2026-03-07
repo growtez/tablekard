@@ -1,0 +1,316 @@
+.admin-panel {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.admin-panel.full-width {
+  display: block;
+}
+
+/* Sidebar Forms Toggle */
+.form-toggle-group {
+  display: flex;
+  background: var(--surface-hover);
+  padding: 6px;
+  border-radius: var(--radius-md);
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border-color);
+}
+
+.toggle-btn {
+  flex: 1;
+  padding: 0.6rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: calc(var(--radius-md) - 2px);
+  transition: var(--transition);
+}
+
+.toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-main);
+  transform: none;
+}
+
+.toggle-btn.active {
+  background: var(--surface-color);
+  color: var(--accent-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Section Controls */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.section-title h2 {
+  font-size: 1.5rem;
+  color: var(--text-main);
+}
+
+.count-badge {
+  background: var(--surface-hover);
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent-primary);
+}
+
+/* Create Form Sidebar */
+.form-sidebar {
+  position: sticky;
+  top: 100px;
+}
+
+.premium-card {
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.premium-card h3 {
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.form-group-modern {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* User Table Premium */
+.table-container {
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.premium-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.premium-table th {
+  background: hsla(240, 10%, 12%, 0.5);
+  padding: 1rem 1.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.premium-table td {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.95rem;
+  vertical-align: middle;
+}
+
+.premium-table tr:last-child td {
+  border-bottom: none;
+}
+
+.premium-table tr {
+  transition: var(--transition);
+}
+
+.premium-table tr:hover {
+  background: hsla(0, 0%, 100%, 0.02);
+}
+
+/* Table Cells */
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent-secondary) 0%, hsl(260, 100%, 60%) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: white;
+  font-size: 0.8rem;
+}
+
+.user-info-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.user-email {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.role-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.role-super_admin {
+  background: hsla(150, 100%, 50%, 0.1);
+  color: hsl(150, 100%, 50%);
+}
+
+.role-restaurant_admin {
+  background: hsla(260, 100%, 70%, 0.1);
+  color: hsl(260, 100%, 70%);
+}
+
+.role-restaurant_staff {
+  background: hsla(200, 100%, 60%, 0.1);
+  color: hsl(200, 100%, 60%);
+}
+
+.role-customer {
+  background: hsla(240, 5%, 40%, 0.1);
+  color: var(--text-muted);
+}
+
+/* Table Actions (Hover-to-Open Menu Pattern) */
+.actions-cell {
+  position: relative;
+  width: 60px;
+}
+
+.action-trigger {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.action-trigger:hover {
+  background: var(--surface-hover);
+  color: var(--text-main);
+}
+
+.actions-menu {
+  position: absolute;
+  right: 1.5rem;
+  top: 50%;
+  transform: translateY(-50%) scale(0.9);
+  opacity: 0;
+  pointer-events: none;
+  display: flex;
+  gap: 0.5rem;
+  background: var(--surface-color);
+  padding: 0.5rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+  z-index: 10;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+tr:hover .actions-menu {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(-50%) scale(1);
+  right: 4.5rem;
+  /* Slide out effect */
+}
+
+.action-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-btn.edit {
+  color: var(--accent-primary);
+  border-color: var(--accent-primary-glow);
+}
+
+.action-btn.edit:hover {
+  background: var(--accent-primary);
+  color: black;
+}
+
+.action-btn.delete {
+  color: hsl(0, 100%, 65%);
+  border-color: hsla(0, 100%, 65%, 0.1);
+}
+
+.action-btn.delete:hover {
+  background: hsl(0, 100%, 60%);
+  color: white;
+}
+
+/* Editing Overlay */
+.editing-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.editing-modal {
+  width: 100%;
+  max-width: 500px;
+  background: var(--surface-color);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-md);
+  padding: 2.5rem;
+}
