@@ -5,6 +5,10 @@
   align-items: start;
 }
 
+.admin-panel.full-width {
+  display: block;
+}
+
 /* Sidebar Forms Toggle */
 .form-toggle-group {
   display: flex;

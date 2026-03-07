@@ -5,6 +5,7 @@ import Login from './Login'
 import AdminPanel from './AdminPanel'
 import Dashboard from './pages/Dashboard'
 import Sidebar from './components/Sidebar'
+import QuickCreateDrawer from './components/QuickCreateDrawer'
 import { Plus, UserPlus, FilePlus } from 'lucide-react'
 import './App.css'
 
@@ -16,6 +17,7 @@ export default function App() {
   const [authError, setAuthError] = useState(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [activeForm, setActiveForm] = useState('user')
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -225,25 +227,6 @@ export default function App() {
             </div>
 
             <div className="nav-actions">
-              <div className="quick-create-wrapper">
-                <button className="btn-quick-create">
-                  <Plus size={18} />
-                  <span>Quick Create</span>
-                </button>
-                <div className="quick-create-menu">
-                  <div className="menu-content">
-                    <button className="menu-item" onClick={() => { setActiveForm('user'); navigate('/users'); }}>
-                      <UserPlus />
-                      Add New User
-                    </button>
-                    <button className="menu-item" onClick={() => { setActiveForm('restaurant'); navigate('/users'); }}>
-                      <FilePlus />
-                      Add Restaurant
-                    </button>
-                  </div>
-                </div>
-              </div>
-
               <div className="user-profile">
                 <div className="profile-img">
                   {session.user.email[0].toUpperCase()}
@@ -253,10 +236,30 @@ export default function App() {
                   <span className="profile-role">Super Admin</span>
                 </div>
               </div>
+
               <button onClick={handleLogout} className="logout-button">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
                 Logout
               </button>
+
+              <div className="quick-create-wrapper">
+                <button className="btn-quick-create" onClick={() => setIsDrawerOpen(true)}>
+                  <Plus size={18} />
+                  <span>Quick Create</span>
+                </button>
+                <div className="quick-create-menu">
+                  <div className="menu-content">
+                    <button className="menu-item" onClick={() => { setActiveForm('user'); setIsDrawerOpen(true); }}>
+                      <UserPlus />
+                      Add New User
+                    </button>
+                    <button className="menu-item" onClick={() => { setActiveForm('restaurant'); setIsDrawerOpen(true); }}>
+                      <FilePlus />
+                      Add Restaurant
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </header>
@@ -277,6 +280,13 @@ export default function App() {
           <p>System Status: <span className="status-dot"></span> Operational • v1.0.4</p>
         </footer>
       </div>
+
+      <QuickCreateDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        activeForm={activeForm}
+        setActiveForm={setActiveForm}
+      />
     </div>
   )
 }
