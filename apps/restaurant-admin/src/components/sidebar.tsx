@@ -26,6 +26,8 @@ const Sidebar: React.FC = () => {
     if (path.includes('/menu')) return 'menu';
     if (path.includes('/payments')) return 'payment';
     if (path.includes('/reports')) return 'report';
+    if (path.includes('/qr-menu')) return 'qr-menu';
+    if (path.includes('/table-management')) return 'table-management';
     return 'dashboard';
   };
 
@@ -73,6 +75,8 @@ const Sidebar: React.FC = () => {
     { icon: '📋', label: 'Menu Management', id: 'menu', path: '/menu' },
     { icon: '💰', label: 'Payment Management', id: 'payment', path: '/payments' },
     { icon: '📈', label: 'Report and Analytics', id: 'report', path: '/reports' },
+    { icon: '📋',label:"QR Menu",id:"qr-menu",path:"/qrcode"},
+    { icon: '📦',label:"Table Management",id:"table-management",path:"/table-management"}
   ];
 
   const handleNavClick = (item: NavItem) => {

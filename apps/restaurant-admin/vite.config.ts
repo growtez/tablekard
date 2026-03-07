@@ -8,5 +8,11 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3001
+  },
+  resolve: {
+    dedupe: ['react', 'react-dom']
+  },
+  optimizeDeps: {
+    include: ['react', 'react/jsx-runtime', 'react/jsx-dev-runtime', 'react-dom/client']
   }
 })

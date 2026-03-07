@@ -7,6 +7,8 @@ import Menu from "./pages/menu";
 import Payment from "./pages/payment";
 import LoginPage from "./pages/Login";
 import Reports from "./pages/reports";
+import QRCodePage from "./pages/qrcode";
+import TableManagement from "./pages/table_management";
 
 console.log('🚀 App.tsx loaded');
 
@@ -59,6 +61,12 @@ function AppRoutes() {
       } />
       <Route path="/reports" element={
         <ProtectedRoute><Reports /></ProtectedRoute>
+      } />
+      <Route path="/qrcode" element={
+        <ProtectedRoute><QRCodePage /></ProtectedRoute>
+      } />
+      <Route path="/table-management" element={
+        <ProtectedRoute><TableManagement /></ProtectedRoute>
       } />
     </Routes>
   );
