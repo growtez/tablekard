@@ -23,7 +23,7 @@ const mapRestaurant = (row: any): Restaurant => ({
     id: row.id,
     name: row.name,
     slug: row.slug,
-    status: row.status,
+    status: (row.status === 'active' ? 'OPEN' : 'CLOSED') as any,
     statusReason: undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -113,12 +113,15 @@ export const getRestaurantById = async (restaurantId: string): Promise<Restauran
 };
 
 export const createRestaurant = async (restaurantData: any) => {
+    // Map internal OPEN/CLOSED to DB values
+    const dbStatus = restaurantData.status === 'OPEN' ? 'active' : 'suspended';
+
     const { data, error } = await supabase
         .from('restaurants')
         .insert({
             name: restaurantData.name,
             slug: restaurantData.slug,
-            status: restaurantData.status,
+            status: dbStatus as any,
             contact_email: restaurantData.contact_email,
             contact_phone: restaurantData.contact_phone,
             contact_address: restaurantData.contact_address,
@@ -134,6 +137,9 @@ export const createRestaurant = async (restaurantData: any) => {
 };
 
 export const updateRestaurant = async (restaurantId: string, restaurantData: any) => {
+    // Map internal OPEN/CLOSED to DB values
+    const dbStatus = restaurantData.status === 'OPEN' ? 'active' : 'suspended';
+
     const { data, error } = await supabase
         .from('restaurants')
         .update({
@@ -141,6 +147,7 @@ export const updateRestaurant = async (restaurantId: string, restaurantData: any
             slug: restaurantData.slug,
             contact_email: restaurantData.contact_email,
             contact_phone: restaurantData.contact_phone,
+            status: dbStatus as any,
             subscription_type: restaurantData.subscriptionType,
             allowed_radius: restaurantData.allowedRadius
         })
