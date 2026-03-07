@@ -10,7 +10,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 // Use a global singleton to prevent multiple Supabase client instances
 // during Vite HMR reloads. Multiple instances cause Web Lock conflicts.
-const GLOBAL_KEY = '__supabase_client__';
+const GLOBAL_KEY = '__supabase_admin_client_v3__';
 
 function getOrCreateClient(): SupabaseClient<Database> {
     const existing = (globalThis as any)[GLOBAL_KEY] as SupabaseClient<Database> | undefined;
@@ -26,13 +26,10 @@ function getOrCreateClient(): SupabaseClient<Database> {
                 persistSession: true,
                 autoRefreshToken: true,
                 detectSessionInUrl: true,
-                flowType: 'implicit',
-                // Use a unique storage key per app to avoid conflicts
-                storageKey: 'tablekard-customer-auth',
-                // Disable the navigator.locks API to prevent AbortError
-                // in development environments with HMR
+                // Use a unique storage key per app to avoid cross-tab conflicts
+                storageKey: 'tablekard-admin-auth',
+                // Avoid navigator.locks deadlock on tab focus / HMR
                 lock: async (name: string, acquireTimeout: number, fn: () => Promise<any>) => {
-                    // Simple no-lock implementation: just run the function directly
                     return await fn();
                 }
             }

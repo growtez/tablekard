@@ -32,7 +32,7 @@ const Sidebar: React.FC = () => {
   };
 
   const [activeTab, setActiveTab] = useState(getActiveTab());
-  
+
   // Collapse state - default to collapsed on mobile
   const [isCollapsed, setIsCollapsed] = useState(() => {
     if (typeof window !== 'undefined' && window.innerWidth <= 768) {
@@ -75,8 +75,8 @@ const Sidebar: React.FC = () => {
     { icon: '📋', label: 'Menu Management', id: 'menu', path: '/menu' },
     { icon: '💰', label: 'Payment Management', id: 'payment', path: '/payments' },
     { icon: '📈', label: 'Report and Analytics', id: 'report', path: '/reports' },
-    { icon: '📋',label:"QR Menu",id:"qr-menu",path:"/qrcode"},
-    { icon: '📦',label:"Table Management",id:"table-management",path:"/table-management"}
+    // { icon: '📋', label: "QR Menu", id: "qr-menu", path: "/qrcode" },
+    { icon: '📦', label: "Table Management", id: "table-management", path: "/table-management" }
   ];
 
   const handleNavClick = (item: NavItem) => {
@@ -94,7 +94,7 @@ const Sidebar: React.FC = () => {
   return (
     <>
       {/* Mobile Hamburger Button */}
-      <button 
+      <button
         className={`mobile-menu-btn ${!isCollapsed ? 'hidden' : ''}`}
         onClick={() => setIsCollapsed(false)}
       >
@@ -102,7 +102,7 @@ const Sidebar: React.FC = () => {
       </button>
 
       {/* Overlay for mobile when sidebar is open */}
-      <div 
+      <div
         className={`sidebar-overlay ${!isCollapsed ? 'visible' : ''}`}
         onClick={() => setIsCollapsed(true)}
       />
@@ -134,9 +134,9 @@ const Sidebar: React.FC = () => {
           ))}
         </nav>
 
-        <div className="help-button" onClick={() => navigate('/help')} title={isCollapsed && !isMobile ? "Help & Support" : undefined}>
-          <span className="help-icon">❓</span>
-          {showLabels && <span className="help-text">Help & Support</span>}
+        <div className="help-button" onClick={() => navigate('/profile')} title={isCollapsed && !isMobile ? "Profile" : undefined}>
+          <span className="help-icon">👤</span>
+          {showLabels && <span className="help-text">Profile</span>}
         </div>
       </div>
     </>
