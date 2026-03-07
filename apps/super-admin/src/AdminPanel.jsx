@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
 import './AdminPanel.css'
 
-export default function AdminPanel() {
+export default function AdminPanel({ activeForm, setActiveForm }) {
   const [users, setUsers] = useState([])
   const [restaurants, setRestaurants] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [activeForm, setActiveForm] = useState('user') // 'user' or 'restaurant'
+  // activeForm is now passed as a prop
   const [formData, setFormData] = useState({ email: '', password: '', role: 'customer', restaurantId: '' })
   const [resFormData, setResFormData] = useState({ name: '', contact_email: '', contact_address: '', contact_phone: '' })
   const [editingUser, setEditingUser] = useState(null)

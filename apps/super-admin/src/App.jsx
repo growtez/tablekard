@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
 import Login from './Login'
 import AdminPanel from './AdminPanel'
+import Sidebar from './components/Sidebar'
+import { Plus, UserPlus, FilePlus } from 'lucide-react'
 import './App.css'
 
 export default function App() {
@@ -10,6 +12,8 @@ export default function App() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [userRole, setUserRole] = useState(null)
   const [authError, setAuthError] = useState(null)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [activeForm, setActiveForm] = useState('user')
 
   useEffect(() => {
     let active = true;
@@ -200,39 +204,69 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <header className="main-nav glass">
-        <div className="nav-container">
-          <div className="brand">
-            <div className="logo-icon">TK</div>
-            <span className="brand-name">TableKard <span className="admin-tag">Admin</span></span>
-          </div>
-          <div className="nav-actions">
-            <div className="user-profile">
-              <div className="profile-img">
-                {session.user.email[0].toUpperCase()}
-              </div>
-              <div className="profile-details">
-                <span className="profile-email">{session.user.email}</span>
-                <span className="profile-role">Super Admin</span>
-              </div>
+      <Sidebar collapsed={sidebarCollapsed} />
+
+      <div className={`main-wrapper ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+        <header className="top-nav">
+          <div className="nav-container">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                className="btn-ghost"
+                style={{ padding: '8px', minWidth: 'auto', border: 'none' }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+              </button>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Command Center</h2>
             </div>
-            <button onClick={handleLogout} className="logout-button">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
-              Logout
-            </button>
+
+            <div className="nav-actions">
+              <div className="quick-create-wrapper">
+                <button className="btn-quick-create">
+                  <Plus size={18} />
+                  <span>Quick Create</span>
+                </button>
+                <div className="quick-create-menu">
+                  <div className="menu-content">
+                    <button className="menu-item" onClick={() => setActiveForm('user')}>
+                      <UserPlus />
+                      Add New User
+                    </button>
+                    <button className="menu-item" onClick={() => setActiveForm('restaurant')}>
+                      <FilePlus />
+                      Add Restaurant
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="user-profile">
+                <div className="profile-img">
+                  {session.user.email[0].toUpperCase()}
+                </div>
+                <div className="profile-details">
+                  <span className="profile-email">{session.user.email}</span>
+                  <span className="profile-role">Super Admin</span>
+                </div>
+              </div>
+              <button onClick={handleLogout} className="logout-button">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
+                Logout
+              </button>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <main className="main-content animate-fade-in">
-        <div className="content-container">
-          <AdminPanel />
-        </div>
-      </main>
+        <main className="main-content animate-fade-in">
+          <div className="content-container">
+            <AdminPanel activeForm={activeForm} setActiveForm={setActiveForm} />
+          </div>
+        </main>
 
-      <footer className="app-footer">
-        <p>System Status: <span className="status-dot"></span> Operational • v1.0.4</p>
-      </footer>
+        <footer className="app-footer">
+          <p>System Status: <span className="status-dot"></span> Operational • v1.0.4</p>
+        </footer>
+      </div>
     </div>
   )
 }
