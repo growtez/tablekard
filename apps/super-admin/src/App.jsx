@@ -211,9 +211,9 @@ export default function App() {
 
   const getPageTitle = () => {
     const path = location.pathname;
-    if (path === '/dashboard') return { title: 'Platform Overview', sub: 'Live System Stats' };
+    if (path === '/' || path === '/dashboard') return { title: 'Platform Overview', sub: 'Live System Stats' };
     if (path === '/restaurants') return { title: 'Restaurant Directory', sub: 'Management and oversight of all platform vendors' };
-    if (path === '/' || path === '/users') return { title: 'User Account Directory', sub: 'Access control and platform permissions' };
+    if (path === '/users') return { title: 'User Account Directory', sub: 'Access control and platform permissions' };
     return { title: 'Command Center', sub: 'TableKard Administration' };
   };
 
@@ -270,9 +270,9 @@ export default function App() {
         <main className="main-content animate-fade-in">
           <div className="content-container">
             <Routes>
+              <Route path="/" element={<Dashboard />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/restaurants" element={<Restaurants />} />
-              <Route path="/" element={<AdminPanel activeForm={activeForm} setActiveForm={setActiveForm} />} />
               <Route path="/users" element={<AdminPanel activeForm={activeForm} setActiveForm={setActiveForm} />} />
               {/* Fallback to Dashboard */}
               <Route path="*" element={<Dashboard />} />

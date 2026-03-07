@@ -13,9 +13,9 @@ import {
 } from 'lucide-react';
 
 const navItems = [
-    { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/restaurants', icon: Store, label: 'Restaurants' },
-    { path: '/', icon: Users, label: 'Users' }, // Pointed Users back to root for now
+    { path: '/users', icon: Users, label: 'Users' },
     {
         icon: CreditCard,
         label: 'Billing',
