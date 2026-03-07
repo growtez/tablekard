@@ -8,7 +8,8 @@ import {
     Users,
     ChevronDown,
     ChevronRight,
-    Headphones
+    Headphones,
+    LogOut
 } from 'lucide-react';
 
 const navItems = [
@@ -100,7 +101,7 @@ const NavItemComponent = ({ item, collapsed }) => {
     );
 };
 
-export default function Sidebar({ collapsed = false }) {
+export default function Sidebar({ collapsed = false, session, onLogout }) {
     return (
         <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
             <div className="sidebar-header">
@@ -115,6 +116,25 @@ export default function Sidebar({ collapsed = false }) {
                     <NavItemComponent key={idx} item={item} collapsed={collapsed} />
                 ))}
             </nav>
+
+            <div className="sidebar-footer">
+                <div className="sidebar-user">
+                    <div className="sidebar-user-avatar">
+                        {session?.user?.email?.[0]?.toUpperCase() || 'A'}
+                    </div>
+                    {!collapsed && (
+                        <div className="sidebar-user-info">
+                            <span className="sidebar-user-email">{session?.user?.email}</span>
+                            <span className="sidebar-user-role">Super Admin</span>
+                        </div>
+                    )}
+                </div>
+
+                <button className="sidebar-logout-btn" onClick={onLogout} title="Logout">
+                    <LogOut size={20} />
+                    {!collapsed && <span>Logout</span>}
+                </button>
+            </div>
         </aside>
     );
 }

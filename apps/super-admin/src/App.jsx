@@ -210,7 +210,11 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <Sidebar collapsed={sidebarCollapsed} />
+      <Sidebar
+        collapsed={sidebarCollapsed}
+        session={session}
+        onLogout={handleLogout}
+      />
 
       <div className={`main-wrapper ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         <header className="top-nav">
@@ -227,21 +231,6 @@ export default function App() {
             </div>
 
             <div className="nav-actions">
-              <div className="user-profile">
-                <div className="profile-img">
-                  {session.user.email[0].toUpperCase()}
-                </div>
-                <div className="profile-details">
-                  <span className="profile-email">{session.user.email}</span>
-                  <span className="profile-role">Super Admin</span>
-                </div>
-              </div>
-
-              <button onClick={handleLogout} className="logout-button">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
-                Logout
-              </button>
-
               <div className="quick-create-wrapper">
                 <button className="btn-quick-create" onClick={() => setIsDrawerOpen(true)}>
                   <Plus size={18} />
