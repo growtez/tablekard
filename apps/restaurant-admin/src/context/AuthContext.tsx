@@ -15,9 +15,7 @@ interface UserProfile {
 interface RestaurantMembership {
     id: string;
     restaurantId: string;
-    role: 'ADMIN' | 'STAFF';
-    name: string;
-    email: string;
+    role: string;
 }
 
 interface AuthContextType {
@@ -62,8 +60,8 @@ async function fetchProfile(userId: string): Promise<UserProfile | null> {
 async function fetchMemberships(userId: string): Promise<RestaurantMembership[]> {
     const { data, error } = await supabase
         .from('restaurant_users')
-        .select('id,restaurant_id,role,name,email')
-        .eq('auth_user_id', userId)
+        .select('id,restaurant_id,role')
+        .eq('profile_id', userId)
         .eq('active', true);
 
     if (error) {
@@ -73,9 +71,7 @@ async function fetchMemberships(userId: string): Promise<RestaurantMembership[]>
     return (data ?? []).map(row => ({
         id: row.id,
         restaurantId: row.restaurant_id,
-        role: row.role,
-        name: row.name,
-        email: row.email
+        role: row.role
     }));
 }
 
@@ -155,7 +151,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
             fetchMemberships(data.user.id)
         ]);
 
-        const roleAllowed = profile?.role === UserRole.RESTAURANT_ADMIN
+        const roleStr = String(profile?.role).toLowerCase();
+        const roleAllowed = roleStr === 'restaurant_admin'
+            || roleStr === 'restaurant_staff'
+            || roleStr === 'super_admin'
+            || profile?.role === UserRole.RESTAURANT_ADMIN
             || profile?.role === UserRole.RESTAURANT_STAFF
             || profile?.role === UserRole.SUPER_ADMIN;
 
@@ -203,7 +203,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         signOut,
         resetPassword,
         isAuthenticated: !!user && memberships.length > 0,
-        isRestaurantAdmin: memberships.some(m => m.role === 'ADMIN') || userProfile?.role === UserRole.SUPER_ADMIN
+        isRestaurantAdmin: memberships.some(m => String(m.role).toLowerCase() === 'admin') || String(userProfile?.role).toLowerCase() === 'super_admin'
     }), [user, userProfile, memberships, activeRestaurantId, loading]);
 
     return (

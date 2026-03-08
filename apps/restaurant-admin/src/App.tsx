@@ -9,6 +9,8 @@ import LoginPage from "./pages/Login";
 import Reports from "./pages/reports";
 import QRCodePage from "./pages/qrcode";
 import TableManagement from "./pages/table_management";
+import ProfilePage from "./pages/profile/profile";
+
 
 console.log('🚀 App.tsx loaded');
 
@@ -33,10 +35,9 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // BYPASS LOGIN FOR NOW
-  // if (!isAuthenticated) {
-  //   return <Navigate to="/login" replace />;
-  // }
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
 
   return <>{children}</>;
 }
@@ -67,6 +68,9 @@ function AppRoutes() {
       } />
       <Route path="/table-management" element={
         <ProtectedRoute><TableManagement /></ProtectedRoute>
+      } />
+      <Route path="/profile" element={
+        <ProtectedRoute><ProfilePage /></ProtectedRoute>
       } />
     </Routes>
   );
