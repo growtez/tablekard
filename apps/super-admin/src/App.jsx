@@ -8,7 +8,7 @@ import Restaurants from './pages/Restaurants'
 import RestaurantDetail from './pages/RestaurantDetail'
 import Sidebar from './components/Sidebar'
 import QuickCreateDrawer from './components/QuickCreateDrawer'
-import { Plus, UserPlus, FilePlus, ChevronLeft } from 'lucide-react'
+import { Plus, UserPlus, FilePlus, ChevronLeft, Edit, Save, X, RefreshCw } from 'lucide-react'
 import { Badge } from './components/ui/Badge'
 import './App.css'
 
@@ -24,6 +24,7 @@ export default function App() {
   const [editingData, setEditingData] = useState(null)
   const [refreshCallback, setRefreshCallback] = useState(null)
   const [headerData, setHeaderData] = useState(null)
+  const [syncAction, setSyncAction] = useState(null)
 
   const openDrawer = (formType, data = null, onRefresh = null) => {
     setActiveForm(formType)
@@ -229,13 +230,35 @@ export default function App() {
 
   const getPageTitle = () => {
     const path = location.pathname;
-    if (path === '/' || path === '/dashboard') return { title: 'Platform Overview', sub: 'Live System Stats' };
-    if (path === '/restaurants') return { title: 'Restaurant Directory', sub: 'Management and oversight of all platform vendors' };
-    if (path === '/users') return { title: 'User Account Directory', sub: 'Access control and platform permissions' };
-    return { title: 'Command Center', sub: 'TableKard Administration' };
+    if (path === '/' || path === '/dashboard') return {
+      title: 'Dashboard',
+      stats: [
+        { label: 'Total Restaurants', value: '1', growth: '+12%', path: '/restaurants' },
+        { label: 'Total Orders', value: '1247', growth: '+18%' },
+        { label: 'Monthly Revenue', value: '₹85,000', growth: '+23%' },
+        { label: 'Total Users', value: '8', growth: '+8%', path: '/users' }
+      ]
+    };
+    if (path === '/restaurants') return {
+      title: 'Restaurants',
+      stats: [
+        { label: 'Total Restaurants', value: '1', growth: '+0%' },
+        { label: 'Active Status', value: '1', growth: '+0%' },
+        { label: 'Recently Added', value: '1', growth: '+0%' }
+      ]
+    };
+    if (path === '/users') return {
+      title: 'Users',
+      stats: [
+        { label: 'Total Users', value: '8', growth: '+8%' },
+        { label: 'Super Admins', value: '2', growth: '+0%' },
+        { label: 'Active Staff', value: '4', growth: '+15%' }
+      ]
+    };
+    return { title: 'Command Center' };
   };
 
-  const { title, sub } = getPageTitle();
+  const { title, stats } = getPageTitle();
 
   return (
     <div className="app-shell">
@@ -270,16 +293,71 @@ export default function App() {
                       <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>ID: {headerData.id}</span>
                     </div>
                   </div>
+                  <div className="flex items-center gap-2" style={{ marginLeft: '1rem' }}>
+                    {headerData.onEdit && (
+                      <button
+                        onClick={headerData.onEdit}
+                        className="btn-ghost"
+                        style={{ padding: '6px 12px', gap: '6px', fontSize: '0.8rem', opacity: 0.8 }}
+                      >
+                        <Edit size={14} />
+                        Edit
+                      </button>
+                    )}
+                  </div>
                 </div>
               ) : (
-                <div className="flex column" style={{ gap: '2px' }}>
+                <div className="flex items-center">
                   <h2 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>{title}</h2>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>{sub}</span>
                 </div>
               )}
             </div>
 
+            {!headerData && stats && (
+              <div className="header-stats">
+                {stats.map((stat, idx) => {
+                  const content = (
+                    <>
+                      <span className="header-stat-label">{stat.label}</span>
+                      <div className="header-stat-value-group">
+                        <span className="header-stat-value">{stat.value}</span>
+                        <span className="header-stat-growth">{stat.growth}</span>
+                      </div>
+                    </>
+                  );
+
+                  return stat.path ? (
+                    <Link key={idx} to={stat.path} className="header-stat-card clickable" style={{ textDecoration: 'none' }}>
+                      {content}
+                    </Link>
+                  ) : (
+                    <div key={idx} className="header-stat-card">
+                      {content}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
             <div className="nav-actions">
+              {syncAction && (
+                <button
+                  onClick={syncAction.onSync}
+                  className="btn-ghost"
+                  style={{
+                    padding: '8px 16px',
+                    gap: '8px',
+                    fontSize: '0.85rem',
+                    opacity: 0.8,
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid var(--border-color)'
+                  }}
+                  title="Sync Data"
+                >
+                  <RefreshCw size={16} className={syncAction.loading ? 'animate-spin' : ''} />
+                  <span>Sync</span>
+                </button>
+              )}
               <div className="quick-create-wrapper">
                 <button className="btn-quick-create" onClick={() => openDrawer('user')}>
                   <Plus size={18} />
@@ -307,9 +385,9 @@ export default function App() {
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/restaurants" element={<Restaurants openDrawer={openDrawer} />} />
+              <Route path="/restaurants" element={<Restaurants openDrawer={openDrawer} setSyncAction={setSyncAction} />} />
               <Route path="/restaurants/:id" element={<RestaurantDetail setHeaderData={setHeaderData} />} />
-              <Route path="/users" element={<AdminPanel activeForm={activeForm} setActiveForm={setActiveForm} openDrawer={openDrawer} />} />
+              <Route path="/users" element={<AdminPanel activeForm={activeForm} setActiveForm={setActiveForm} openDrawer={openDrawer} setSyncAction={setSyncAction} />} />
               {/* Fallback to Dashboard */}
               <Route path="*" element={<Dashboard />} />
             </Routes>

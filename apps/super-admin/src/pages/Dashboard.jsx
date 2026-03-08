@@ -152,23 +152,8 @@ export default function Dashboard() {
         fetchRealStats();
     }, []);
 
-    const dashboardStats = [
-        { label: 'Total Restaurants', value: stats.totalRestaurants, change: '+12%', icon: Store, color: 'purple', path: '/restaurants' },
-        { label: 'Total Orders', value: stats.totalOrders, change: '+18%', icon: TrendingUp, color: 'blue' },
-        { label: 'Monthly Revenue', value: `₹${stats.totalRevenue.toLocaleString()}`, change: '+23%', icon: DollarSign, color: 'green' },
-        { label: 'Total Users', value: stats.totalUsers, change: '+8%', icon: Users, color: 'orange', path: '/users' },
-    ];
-
     return (
         <div className="animate-fade-in">
-
-            {/* Stats Grid */}
-            <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-                {dashboardStats.map((stat) => (
-                    <StatCard key={stat.label} {...stat} />
-                ))}
-            </div>
-
             {/* Charts Row */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '1.5rem', marginBottom: '2.5rem', width: '100%' }}>
                 <Card style={{ gridColumn: 'span 8', minWidth: 0 }}>

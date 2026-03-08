@@ -6,7 +6,7 @@ import { Card, CardHeader, CardTitle } from '../components/ui/Card';
 import { StatCard } from '../components/ui/StatCard';
 import { Badge } from '../components/ui/Badge';
 
-export default function Restaurants({ openDrawer }) {
+export default function Restaurants({ openDrawer, setSyncAction }) {
     const navigate = useNavigate();
     const [restaurants, setRestaurants] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -16,6 +16,15 @@ export default function Restaurants({ openDrawer }) {
     useEffect(() => {
         fetchRestaurants();
     }, []);
+
+    useEffect(() => {
+        if (setSyncAction) {
+            setSyncAction({
+                onSync: fetchRestaurants,
+                loading: loading
+            });
+        }
+    }, [loading, setSyncAction]);
 
     const fetchRestaurants = async () => {
         setLoading(true);
@@ -58,28 +67,8 @@ export default function Restaurants({ openDrawer }) {
         (res.contact_email && res.contact_email.toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
-    const stats = [
-        { label: 'Total Restaurants', value: restaurants.length, icon: Store, color: 'purple' },
-        { label: 'Active Status', value: restaurants.filter(r => r.status === 'active').length, icon: Globe, color: 'blue' },
-        {
-            label: 'Recently Added', value: restaurants.filter(r => {
-                const date = new Date(r.created_at);
-                const now = new Date();
-                const diffDays = (now - date) / (1000 * 60 * 60 * 24);
-                return diffDays <= 7;
-            }).length, icon: Calendar, color: 'orange'
-        }
-    ];
-
     return (
         <div className="space-y-8">
-            {/* Stats Row */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
-                {stats.map((stat, i) => (
-                    <StatCard key={i} {...stat} />
-                ))}
-            </div>
-
             {/* List Control */}
             <Card>
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
@@ -101,20 +90,6 @@ export default function Restaurants({ openDrawer }) {
                             }}
                         />
                     </div>
-                    <button
-                        onClick={fetchRestaurants}
-                        className="btn-refresh"
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            height: '46px',
-                            whiteSpace: 'nowrap'
-                        }}
-                    >
-                        <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
-                        Sync Fleet
-                    </button>
                 </div>
             </Card>
 
@@ -210,8 +185,8 @@ export default function Restaurants({ openDrawer }) {
                                             </a>
                                             <button
                                                 className="action-btn edit"
-                                                title="Edit Settings"
-                                                onClick={() => openDrawer('restaurant', res, fetchRestaurants)}
+                                                title="View Details & Edit"
+                                                onClick={() => navigate(`/restaurants/${res.id}`)}
                                             >
                                                 <Edit2 size={14} />
                                             </button>

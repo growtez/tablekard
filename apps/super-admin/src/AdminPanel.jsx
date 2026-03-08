@@ -2,12 +2,21 @@ import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
 import './AdminPanel.css'
 
-export default function AdminPanel({ activeForm, setActiveForm }) {
+export default function AdminPanel({ activeForm, setActiveForm, setSyncAction }) {
   const [users, setUsers] = useState([])
   const [restaurants, setRestaurants] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  // activeForm is now passed as a prop
+
+  useEffect(() => {
+    if (setSyncAction) {
+      setSyncAction({
+        onSync: fetchUsers,
+        loading: loading
+      });
+    }
+  }, [loading, setSyncAction]);
+
   const [formData, setFormData] = useState({ email: '', password: '', role: 'customer', restaurantId: '' })
   const [resFormData, setResFormData] = useState({ name: '', contact_email: '', contact_address: '', contact_phone: '' })
   const [editingUser, setEditingUser] = useState(null)
@@ -169,15 +178,7 @@ export default function AdminPanel({ activeForm, setActiveForm }) {
     <div className="admin-panel full-width">
       {/* Main Content: Users Table */}
       <section className="users-section">
-        <div className="section-header">
-          <div className="section-title">
-            <span className="count-badge">{users.length} Users</span>
-          </div>
-          <button onClick={fetchUsers} className="btn-refresh">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 4v6h-6" /><path d="M1 20v-6h6" /><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" /></svg>
-            Sync
-          </button>
-        </div>
+
 
         <div className="table-container">
           <table className="premium-table">
