@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { Store, Globe, Mail, Phone, Calendar, Search, RefreshCw, MoreVertical, ExternalLink, Edit2, Trash2 } from 'lucide-react';
 import { Card, CardHeader, CardTitle } from '../components/ui/Card';
@@ -6,6 +7,7 @@ import { StatCard } from '../components/ui/StatCard';
 import { Badge } from '../components/ui/Badge';
 
 export default function Restaurants({ openDrawer }) {
+    const navigate = useNavigate();
     const [restaurants, setRestaurants] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -144,7 +146,17 @@ export default function Restaurants({ openDrawer }) {
                             </tr>
                         ) : (
                             filteredRestaurants.map((res) => (
-                                <tr key={res.id}>
+                                <tr
+                                    key={res.id}
+                                    className="clickable-row"
+                                    onClick={(e) => {
+                                        // Don't navigate if clicking action buttons or the menu
+                                        if (e.target.closest('.actions-cell') || e.target.closest('.action-trigger') || e.target.closest('.actions-menu')) {
+                                            return;
+                                        }
+                                        navigate(`/restaurants/${res.id}`);
+                                    }}
+                                >
                                     <td>
                                         <div className="user-cell">
                                             <div className="user-avatar" style={{ borderRadius: '10px', background: 'var(--surface-hover)', border: '1px solid var(--border-color)' }}>

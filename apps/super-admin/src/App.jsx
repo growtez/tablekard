@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react'
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
+import { Routes, Route, useNavigate, useLocation, Link } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import Login from './Login'
 import AdminPanel from './AdminPanel'
 import Dashboard from './pages/Dashboard'
 import Restaurants from './pages/Restaurants'
+import RestaurantDetail from './pages/RestaurantDetail'
 import Sidebar from './components/Sidebar'
 import QuickCreateDrawer from './components/QuickCreateDrawer'
-import { Plus, UserPlus, FilePlus } from 'lucide-react'
+import { Plus, UserPlus, FilePlus, ChevronLeft } from 'lucide-react'
+import { Badge } from './components/ui/Badge'
 import './App.css'
 
 export default function App() {
@@ -16,11 +18,12 @@ export default function App() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [userRole, setUserRole] = useState(null)
   const [authError, setAuthError] = useState(null)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
   const [activeForm, setActiveForm] = useState('user')
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [editingData, setEditingData] = useState(null)
   const [refreshCallback, setRefreshCallback] = useState(null)
+  const [headerData, setHeaderData] = useState(null)
 
   const openDrawer = (formType, data = null, onRefresh = null) => {
     setActiveForm(formType)
@@ -238,6 +241,7 @@ export default function App() {
     <div className="app-shell">
       <Sidebar
         collapsed={sidebarCollapsed}
+        setCollapsed={setSidebarCollapsed}
         session={session}
         onLogout={handleLogout}
       />
@@ -246,17 +250,33 @@ export default function App() {
         <header className="top-nav">
           <div className="nav-container">
             <div className="flex items-center gap-4">
-              <button
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="btn-ghost"
-                style={{ padding: '8px', minWidth: 'auto', border: 'none' }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-              </button>
-              <div className="flex column" style={{ gap: '2px' }}>
-                <h2 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>{title}</h2>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>{sub}</span>
-              </div>
+              {headerData ? (
+                <div className="flex items-center gap-4 animate-fade-in">
+                  <Link to="/restaurants" className="btn-back-nav-icon" title="Back to Restaurants" onClick={() => setHeaderData(null)}>
+                    <ChevronLeft size={20} />
+                  </Link>
+                  <div className="h-6 w-[1px] bg-white/10 mx-1"></div>
+                  <div className="flex items-center gap-3">
+                    <div className="res-avatar-small">
+                      {headerData.logo_url ? <img src={headerData.logo_url} alt="" /> : <span>{headerData.name?.[0] || '?'}</span>}
+                    </div>
+                    <div className="flex column" style={{ gap: '0px' }}>
+                      <div className="flex items-center gap-2">
+                        <h2 style={{ fontSize: '0.95rem', fontWeight: 700, margin: 0 }}>{headerData.name}</h2>
+                        <Badge variant={headerData.status === 'active' ? 'success' : 'warning'} style={{ fontSize: '0.65rem', padding: '1px 6px' }}>
+                          {headerData.status?.toUpperCase()}
+                        </Badge>
+                      </div>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>ID: {headerData.id}</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex column" style={{ gap: '2px' }}>
+                  <h2 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>{title}</h2>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>{sub}</span>
+                </div>
+              )}
             </div>
 
             <div className="nav-actions">
@@ -288,6 +308,7 @@ export default function App() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/restaurants" element={<Restaurants openDrawer={openDrawer} />} />
+              <Route path="/restaurants/:id" element={<RestaurantDetail setHeaderData={setHeaderData} />} />
               <Route path="/users" element={<AdminPanel activeForm={activeForm} setActiveForm={setActiveForm} openDrawer={openDrawer} />} />
               {/* Fallback to Dashboard */}
               <Route path="*" element={<Dashboard />} />
