@@ -19,6 +19,21 @@ export default function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [activeForm, setActiveForm] = useState('user')
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+  const [editingData, setEditingData] = useState(null)
+  const [refreshCallback, setRefreshCallback] = useState(null)
+
+  const openDrawer = (formType, data = null, onRefresh = null) => {
+    setActiveForm(formType)
+    setEditingData(data)
+    setRefreshCallback(() => onRefresh)
+    setIsDrawerOpen(true)
+  }
+
+  const closeDrawer = () => {
+    setIsDrawerOpen(false)
+    setEditingData(null)
+    setRefreshCallback(null)
+  }
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -246,17 +261,17 @@ export default function App() {
 
             <div className="nav-actions">
               <div className="quick-create-wrapper">
-                <button className="btn-quick-create" onClick={() => setIsDrawerOpen(true)}>
+                <button className="btn-quick-create" onClick={() => openDrawer('user')}>
                   <Plus size={18} />
                   <span>Quick Create</span>
                 </button>
                 <div className="quick-create-menu">
                   <div className="menu-content">
-                    <button className="menu-item" onClick={() => { setActiveForm('user'); setIsDrawerOpen(true); }}>
+                    <button className="menu-item" onClick={() => openDrawer('user')}>
                       <UserPlus />
                       Add New User
                     </button>
-                    <button className="menu-item" onClick={() => { setActiveForm('restaurant'); setIsDrawerOpen(true); }}>
+                    <button className="menu-item" onClick={() => openDrawer('restaurant')}>
                       <FilePlus />
                       Add Restaurant
                     </button>
@@ -272,8 +287,8 @@ export default function App() {
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/restaurants" element={<Restaurants />} />
-              <Route path="/users" element={<AdminPanel activeForm={activeForm} setActiveForm={setActiveForm} />} />
+              <Route path="/restaurants" element={<Restaurants openDrawer={openDrawer} />} />
+              <Route path="/users" element={<AdminPanel activeForm={activeForm} setActiveForm={setActiveForm} openDrawer={openDrawer} />} />
               {/* Fallback to Dashboard */}
               <Route path="*" element={<Dashboard />} />
             </Routes>
@@ -287,9 +302,11 @@ export default function App() {
 
       <QuickCreateDrawer
         isOpen={isDrawerOpen}
-        onClose={() => setIsDrawerOpen(false)}
+        onClose={closeDrawer}
         activeForm={activeForm}
         setActiveForm={setActiveForm}
+        editingData={editingData}
+        onRefresh={refreshCallback}
       />
     </div>
   )

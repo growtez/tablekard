@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle } from '../components/ui/Card';
 import { StatCard } from '../components/ui/StatCard';
 import { Badge } from '../components/ui/Badge';
 
-export default function Restaurants() {
+export default function Restaurants({ openDrawer }) {
     const [restaurants, setRestaurants] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -196,7 +196,11 @@ export default function Restaurants() {
                                             >
                                                 <ExternalLink size={14} />
                                             </a>
-                                            <button className="action-btn edit" title="Edit Settings">
+                                            <button
+                                                className="action-btn edit"
+                                                title="Edit Settings"
+                                                onClick={() => openDrawer('restaurant', res, fetchRestaurants)}
+                                            >
                                                 <Edit2 size={14} />
                                             </button>
                                             <button
