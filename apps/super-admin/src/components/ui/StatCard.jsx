@@ -1,4 +1,9 @@
-export const StatCard = ({ label, value, icon: Icon, color = 'green', change = '+0%', ...props }) => {
+import { useNavigate } from 'react-router-dom';
+
+export const StatCard = ({ label, value, icon: Icon, color = 'green', change = '+0%', path, ...props }) => {
+    const navigate = useNavigate();
+    const isClickable = !!path;
+
     const getColors = () => {
         switch (color) {
             case 'purple': return { bg: 'hsla(260, 100%, 70%, 0.1)', text: 'hsl(260, 100%, 70%)' };
@@ -10,10 +15,23 @@ export const StatCard = ({ label, value, icon: Icon, color = 'green', change = '
 
     const colors = getColors();
 
+    const handleClick = () => {
+        if (path) {
+            navigate(path);
+        }
+    };
+
     return (
         <div
-            className="premium-card"
-            style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', ...props.style }}
+            className={`premium-card ${isClickable ? 'clickable-stat' : ''}`}
+            onClick={handleClick}
+            style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1.25rem',
+                cursor: isClickable ? 'pointer' : 'default',
+                ...props.style
+            }}
             {...props}
         >
             <div style={{

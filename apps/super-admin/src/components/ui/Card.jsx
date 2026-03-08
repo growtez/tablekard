@@ -4,10 +4,10 @@ export const Card = ({ children, className = '', ...props }) => (
     </div>
 );
 
-export const CardHeader = ({ children, className = '', ...props }) => (
+export const CardHeader = ({ children, className = '', style = {}, ...props }) => (
     <div
         className={`card-header-modern ${className}`}
-        style={{ marginBottom: '1.5rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border-color)' }}
+        style={{ marginBottom: '1.5rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border-color)', ...style }}
         {...props}
     >
         {children}

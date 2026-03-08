@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react'
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
+import { Routes, Route, useNavigate, useLocation, Link } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import Login from './Login'
 import AdminPanel from './AdminPanel'
 import Dashboard from './pages/Dashboard'
+import Restaurants from './pages/Restaurants'
+import RestaurantDetail from './pages/RestaurantDetail'
+import UserDetail from './pages/UserDetail'
 import Sidebar from './components/Sidebar'
 import QuickCreateDrawer from './components/QuickCreateDrawer'
-import { Plus, UserPlus, FilePlus } from 'lucide-react'
+import { Plus, UserPlus, FilePlus, ChevronLeft, Edit, Save, X, RefreshCw } from 'lucide-react'
+import { Badge } from './components/ui/Badge'
 import './App.css'
 
 export default function App() {
@@ -15,9 +19,62 @@ export default function App() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [userRole, setUserRole] = useState(null)
   const [authError, setAuthError] = useState(null)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
   const [activeForm, setActiveForm] = useState('user')
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+  const [editingData, setEditingData] = useState(null)
+  const [refreshCallback, setRefreshCallback] = useState(null)
+  const [headerData, setHeaderData] = useState(null)
+  const [syncAction, setSyncAction] = useState(null)
+  const [globalStats, setGlobalStats] = useState({
+    restaurants: { total: 0, active: 0, recent: 0 },
+    users: { total: 0, customers: 0, restAdmins: 0, restStaff: 0 }
+  });
+
+  const fetchGlobalStats = async () => {
+    try {
+      const [{ count: resCount }, { count: activeResCount }, { data: profiles }] = await Promise.all([
+        supabase.from('restaurants').select('*', { count: 'exact', head: true }),
+        supabase.from('restaurants').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+        supabase.from('profiles').select('role')
+      ]);
+
+      setGlobalStats({
+        restaurants: {
+          total: resCount || 0,
+          active: activeResCount || 0,
+          recent: resCount > 0 ? 1 : 0
+        },
+        users: {
+          total: profiles?.length || 0,
+          customers: profiles?.filter(p => p.role === 'customer').length || 0,
+          restAdmins: profiles?.filter(p => p.role === 'restaurant_admin').length || 0,
+          restStaff: profiles?.filter(p => p.role === 'restaurant_staff').length || 0
+        }
+      });
+    } catch (err) {
+      console.error('App: Global stats fetch failed:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (session && isAdmin) {
+      fetchGlobalStats();
+    }
+  }, [session, isAdmin]);
+
+  const openDrawer = (formType, data = null, onRefresh = null) => {
+    setActiveForm(formType)
+    setEditingData(data)
+    setRefreshCallback(() => onRefresh)
+    setIsDrawerOpen(true)
+  }
+
+  const closeDrawer = () => {
+    setIsDrawerOpen(false)
+    setEditingData(null)
+    setRefreshCallback(null)
+  }
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -208,52 +265,175 @@ export default function App() {
     )
   }
 
+  const getPageTitle = () => {
+    const path = location.pathname;
+    if (path === '/' || path === '/dashboard') return {
+      title: 'Dashboard',
+      stats: [
+        { label: 'Total Restaurants', value: String(globalStats.restaurants.total), path: '/restaurants' },
+        { label: 'Total Users', value: String(globalStats.users.total), path: '/users' }
+      ]
+    };
+    if (path === '/restaurants') return {
+      title: 'Restaurants',
+      stats: [
+        { label: 'Total Restaurants', value: String(globalStats.restaurants.total) },
+        { label: 'Active Status', value: String(globalStats.restaurants.active) },
+        { label: 'Recently Added', value: String(globalStats.restaurants.recent) }
+      ]
+    };
+    if (path === '/users') return {
+      title: 'Users',
+      stats: [
+        { label: 'Total Users', value: String(globalStats.users.total) },
+        { label: 'Total Customers', value: String(globalStats.users.customers) },
+        { label: 'Total Rest Admin', value: String(globalStats.users.restAdmins) },
+        { label: 'Total Rest Staff', value: String(globalStats.users.restStaff) }
+      ]
+    };
+    return { title: 'Command Center' };
+  };
+
+  const { title, stats } = getPageTitle();
+
   return (
     <div className="app-shell">
-      <Sidebar collapsed={sidebarCollapsed} />
+      <Sidebar
+        collapsed={sidebarCollapsed}
+        setCollapsed={setSidebarCollapsed}
+        session={session}
+        onLogout={handleLogout}
+      />
 
       <div className={`main-wrapper ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         <header className="top-nav">
           <div className="nav-container">
             <div className="flex items-center gap-4">
-              <button
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="btn-ghost"
-                style={{ padding: '8px', minWidth: 'auto', border: 'none' }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-              </button>
-              <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Command Center</h2>
+              {headerData ? (
+                <div className="flex items-center gap-4 animate-fade-in">
+                  <Link
+                    to={headerData.backPath || "/restaurants"}
+                    className="btn-back-nav-icon"
+                    title={headerData.backTitle || "Back"}
+                    onClick={() => setHeaderData(null)}
+                  >
+                    <ChevronLeft size={20} />
+                  </Link>
+                  <div className="h-6 w-[1px] bg-white/10 mx-1"></div>
+                  <div className="flex items-center gap-3">
+                    <div className="res-avatar-small">
+                      {headerData.logo_url ? <img src={headerData.logo_url} alt="" /> : <span>{headerData.name?.[0] || '?'}</span>}
+                    </div>
+                    <div className="flex column" style={{ gap: '0px' }}>
+                      <div className="flex items-center gap-2">
+                        <h2 style={{ fontSize: '0.95rem', fontWeight: 700, margin: 0 }}>{headerData.name}</h2>
+                        <Badge variant={headerData.status === 'active' ? 'success' : 'warning'} style={{ fontSize: '0.65rem', padding: '1px 6px' }}>
+                          {headerData.status?.toUpperCase()}
+                        </Badge>
+                      </div>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>ID: {headerData.id}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2" style={{ marginLeft: '1rem' }}>
+                    {headerData.isEditing ? (
+                      <>
+                        <button
+                          onClick={headerData.onSave}
+                          className="btn-save"
+                          disabled={headerData.saving}
+                          style={{ padding: '6px 16px', gap: '8px', fontSize: '0.85rem' }}
+                        >
+                          {headerData.saving ? <RefreshCw className="animate-spin" size={16} /> : <Save size={16} />}
+                          Save Changes
+                        </button>
+                        <button
+                          onClick={headerData.onCancel}
+                          className="btn-cancel"
+                          disabled={headerData.saving}
+                          style={{ padding: '6px 16px', gap: '8px', fontSize: '0.85rem' }}
+                        >
+                          <X size={16} />
+                          Cancel
+                        </button>
+                      </>
+                    ) : headerData.onEdit && (
+                      <button
+                        onClick={headerData.onEdit}
+                        className="btn-ghost"
+                        style={{ padding: '6px 12px', gap: '6px', fontSize: '0.8rem', opacity: 0.8 }}
+                      >
+                        <Edit size={14} />
+                        Edit
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center">
+                  <h2 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>{title}</h2>
+                </div>
+              )}
             </div>
 
-            <div className="nav-actions">
-              <div className="user-profile">
-                <div className="profile-img">
-                  {session.user.email[0].toUpperCase()}
-                </div>
-                <div className="profile-details">
-                  <span className="profile-email">{session.user.email}</span>
-                  <span className="profile-role">Super Admin</span>
-                </div>
+            {!headerData && stats && (
+              <div className="header-stats">
+                {stats.map((stat, idx) => {
+                  const content = (
+                    <>
+                      <span className="header-stat-label">{stat.label}</span>
+                      <div className="header-stat-value-group">
+                        <span className="header-stat-value">{stat.value}</span>
+                      </div>
+                    </>
+                  );
+
+                  return stat.path ? (
+                    <Link key={idx} to={stat.path} className="header-stat-card clickable" style={{ textDecoration: 'none' }}>
+                      {content}
+                    </Link>
+                  ) : (
+                    <div key={idx} className="header-stat-card">
+                      {content}
+                    </div>
+                  );
+                })}
               </div>
+            )}
 
-              <button onClick={handleLogout} className="logout-button">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
-                Logout
-              </button>
-
+            <div className="nav-actions">
+              {syncAction && (
+                <button
+                  onClick={() => {
+                    syncAction.onSync?.();
+                    fetchGlobalStats();
+                  }}
+                  className="btn-ghost"
+                  style={{
+                    padding: '8px 16px',
+                    gap: '8px',
+                    fontSize: '0.85rem',
+                    opacity: 0.8,
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid var(--border-color)'
+                  }}
+                  title="Sync Data"
+                >
+                  <RefreshCw size={16} className={syncAction.loading ? 'animate-spin' : ''} />
+                  <span>Sync</span>
+                </button>
+              )}
               <div className="quick-create-wrapper">
-                <button className="btn-quick-create" onClick={() => setIsDrawerOpen(true)}>
+                <button className="btn-quick-create" onClick={() => openDrawer('user')}>
                   <Plus size={18} />
                   <span>Quick Create</span>
                 </button>
                 <div className="quick-create-menu">
                   <div className="menu-content">
-                    <button className="menu-item" onClick={() => { setActiveForm('user'); setIsDrawerOpen(true); }}>
+                    <button className="menu-item" onClick={() => openDrawer('user')}>
                       <UserPlus />
                       Add New User
                     </button>
-                    <button className="menu-item" onClick={() => { setActiveForm('restaurant'); setIsDrawerOpen(true); }}>
+                    <button className="menu-item" onClick={() => openDrawer('restaurant')}>
                       <FilePlus />
                       Add Restaurant
                     </button>
@@ -267,11 +447,14 @@ export default function App() {
         <main className="main-content animate-fade-in">
           <div className="content-container">
             <Routes>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/" element={<AdminPanel activeForm={activeForm} setActiveForm={setActiveForm} />} />
-              <Route path="/users" element={<AdminPanel activeForm={activeForm} setActiveForm={setActiveForm} />} />
+              <Route path="/" element={<Dashboard setSyncAction={setSyncAction} />} />
+              <Route path="/dashboard" element={<Dashboard setSyncAction={setSyncAction} />} />
+              <Route path="/restaurants" element={<Restaurants openDrawer={openDrawer} setSyncAction={setSyncAction} />} />
+              <Route path="/restaurants/:id" element={<RestaurantDetail setHeaderData={setHeaderData} setSyncAction={setSyncAction} />} />
+              <Route path="/users" element={<AdminPanel activeForm={activeForm} setActiveForm={setActiveForm} openDrawer={openDrawer} setSyncAction={setSyncAction} />} />
+              <Route path="/users/:id" element={<UserDetail setHeaderData={setHeaderData} setSyncAction={setSyncAction} />} />
               {/* Fallback to Dashboard */}
-              <Route path="*" element={<Dashboard />} />
+              <Route path="*" element={<Dashboard setSyncAction={setSyncAction} />} />
             </Routes>
           </div>
         </main>
@@ -283,9 +466,11 @@ export default function App() {
 
       <QuickCreateDrawer
         isOpen={isDrawerOpen}
-        onClose={() => setIsDrawerOpen(false)}
+        onClose={closeDrawer}
         activeForm={activeForm}
         setActiveForm={setActiveForm}
+        editingData={editingData}
+        onRefresh={refreshCallback}
       />
     </div>
   )

@@ -8,13 +8,15 @@ import {
     Users,
     ChevronDown,
     ChevronRight,
-    Headphones
+    Headphones,
+    LogOut,
+    Menu
 } from 'lucide-react';
 
 const navItems = [
-    { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/restaurants', icon: Store, label: 'Restaurants' },
-    { path: '/', icon: Users, label: 'Users' }, // Pointed Users back to root for now
+    { path: '/users', icon: Users, label: 'Users' },
     {
         icon: CreditCard,
         label: 'Billing',
@@ -100,21 +102,58 @@ const NavItemComponent = ({ item, collapsed }) => {
     );
 };
 
-export default function Sidebar({ collapsed = false }) {
+export default function Sidebar({ collapsed: isLocked = true, setCollapsed: setIsLocked, session, onLogout }) {
+    const [isHovered, setIsHovered] = useState(false);
+    const effectiveCollapsed = isLocked && !isHovered;
+
     return (
-        <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
-            <div className="sidebar-header">
-                <div className="sidebar-logo">
-                    <div className="sidebar-logo-icon flex items-center justify-center">🍣</div>
-                    {!collapsed && <span className="sidebar-logo-text">TableKard</span>}
+        <aside
+            className={`sidebar ${effectiveCollapsed ? 'collapsed' : ''} ${!isLocked && !isHovered ? 'locked-open' : ''}`}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+        >
+            <div className="sidebar-header" style={{ padding: effectiveCollapsed ? '1.5rem 0' : '1.5rem 1.25rem' }}>
+                <div className="sidebar-logo-container flex items-center w-full" style={{ gap: effectiveCollapsed ? '0' : '0.75rem', justifyContent: effectiveCollapsed ? 'center' : 'flex-start' }}>
+                    <button
+                        className={`sidebar-toggle-btn ${!isLocked ? 'active' : ''}`}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setIsLocked(!isLocked);
+                        }}
+                        title={isLocked ? "Lock Sidebar Open" : "Unlock Sidebar (Hover Mode)"}
+                    >
+                        <Menu size={20} />
+                    </button>
+                    <div className="sidebar-logo flex items-center">
+                        {!effectiveCollapsed && <span className="sidebar-logo-text" style={{ fontSize: '1.25rem', fontWeight: 800, background: 'linear-gradient(135deg, white 0%, var(--text-muted) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.02em' }}>TableKard</span>}
+                    </div>
                 </div>
             </div>
 
             <nav className="sidebar-nav">
                 {navItems.map((item, idx) => (
-                    <NavItemComponent key={idx} item={item} collapsed={collapsed} />
+                    <NavItemComponent key={idx} item={item} collapsed={effectiveCollapsed} />
                 ))}
             </nav>
+
+            <div className="sidebar-footer">
+                <div className="sidebar-user">
+                    <div className="sidebar-user-avatar">
+                        {session?.user?.email?.[0]?.toUpperCase() || 'A'}
+                    </div>
+                    {!effectiveCollapsed && (
+                        <div className="sidebar-user-info">
+                            <span className="sidebar-user-email">{session?.user?.email}</span>
+                            <span className="sidebar-user-role">Super Admin</span>
+                        </div>
+                    )}
+                </div>
+
+                <button className="sidebar-logout-btn" onClick={onLogout} title="Logout">
+                    <LogOut size={20} />
+                    {!effectiveCollapsed && <span>Logout</span>}
+                </button>
+            </div>
         </aside>
     );
 }

@@ -44,9 +44,6 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Add password column to profiles
-ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS password TEXT;
-
 -- restaurants
 CREATE TABLE IF NOT EXISTS public.restaurants (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -240,11 +237,17 @@ RETURNS TRIGGER AS $$
 BEGIN
   INSERT INTO public.profiles (id, email, name, role)
   VALUES (
-      NEW.id,
-      NEW.email,
-      COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'name', 'Unknown User'),
-      'customer'::user_role -- default role
+    NEW.id,
+    NEW.email,
+    COALESCE(
+      NEW.raw_user_meta_data->>'full_name',
+      NEW.raw_user_meta_data->>'name',
+      split_part(NEW.email, '@', 1),
+      'User'
+    ),
+    'customer'
   );
+
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -297,6 +300,7 @@ ALTER TABLE public.platform_settings ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can read own profile" ON public.profiles FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "Super admins can manage all profiles" ON public.profiles FOR ALL USING (public.is_super_admin(auth.uid()));
 CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Allow profile creation" ON public.profiles FOR INSERT WITH CHECK (true);
 
 -- 2. restaurants
 CREATE POLICY "Anyone can read approved/active restaurants" ON public.restaurants FOR SELECT USING (status IN ('approved', 'active'));

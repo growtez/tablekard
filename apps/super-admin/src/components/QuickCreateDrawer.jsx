@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { X, UserPlus, FilePlus } from 'lucide-react'
 
-export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActiveForm, onRefresh }) {
+export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActiveForm, editingData, onRefresh }) {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
     const [restaurants, setRestaurants] = useState([])
@@ -19,8 +19,29 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
     useEffect(() => {
         if (isOpen) {
             fetchRestaurants()
+            if (editingData) {
+                if (activeForm === 'user') {
+                    setFormData({
+                        email: editingData.email || '',
+                        password: '', // Hidden for security, only changed if provided
+                        role: editingData.role || 'customer',
+                        restaurantId: '' // Would need more lookup for relations
+                    })
+                } else {
+                    setResFormData({
+                        name: editingData.name || '',
+                        contact_email: editingData.contact_email || '',
+                        contact_address: editingData.contact_address || '',
+                        contact_phone: editingData.contact_phone || ''
+                    })
+                }
+            } else {
+                // Reset for creation
+                setFormData({ email: '', password: '', role: 'customer', restaurantId: '' })
+                setResFormData({ name: '', contact_email: '', contact_address: '', contact_phone: '' })
+            }
         }
-    }, [isOpen])
+    }, [isOpen, editingData, activeForm])
 
     const fetchRestaurants = async () => {
         try {
@@ -41,35 +62,43 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
         setLoading(true)
 
         try {
-            const { data, error } = await supabase.auth.admin.createUser({
-                email: formData.email.trim().toLowerCase(),
-                password: formData.password,
-                email_confirm: true
-            })
-            if (error) throw error
+            if (editingData) {
+                // Update Profile
+                const { error: profileError } = await supabase
+                    .from('profiles')
+                    .update({ role: formData.role })
+                    .eq('id', editingData.id)
+                if (profileError) throw profileError
+            } else {
+                const { data, error } = await supabase.auth.admin.createUser({
+                    email: formData.email.trim().toLowerCase(),
+                    password: formData.password,
+                    email_confirm: true
+                })
+                if (error) throw error
 
-            await supabase
-                .from('profiles')
-                .update({ role: formData.role })
-                .eq('id', data.user.id)
-
-            if (['restaurant_admin', 'restaurant_staff'].includes(formData.role)) {
-                const restaurantRole = formData.role === 'restaurant_admin' ? 'admin' : 'staff'
                 await supabase
-                    .from('restaurant_users')
-                    .insert({
-                        restaurant_id: formData.restaurantId,
-                        profile_id: data.user.id,
-                        role: restaurantRole,
-                        active: true
-                    })
+                    .from('profiles')
+                    .update({ role: formData.role })
+                    .eq('id', data.user.id)
+
+                if (['restaurant_admin', 'restaurant_staff'].includes(formData.role)) {
+                    const restaurantRole = formData.role === 'restaurant_admin' ? 'admin' : 'staff'
+                    await supabase
+                        .from('restaurant_users')
+                        .insert({
+                            restaurant_id: formData.restaurantId,
+                            profile_id: data.user.id,
+                            role: restaurantRole,
+                            active: true
+                        })
+                }
             }
 
-            setFormData({ email: '', password: '', role: 'customer', restaurantId: '' })
             onRefresh && onRefresh()
             onClose()
         } catch (err) {
-            setError('Failed to create user: ' + err.message)
+            setError(`Failed to ${editingData ? 'update' : 'create'} user: ` + err.message)
         } finally {
             setLoading(false)
         }
@@ -83,26 +112,37 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
         const slug = resFormData.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
 
         try {
-            const { data, error } = await supabase
-                .from('restaurants')
-                .insert([
-                    {
+            if (editingData) {
+                const { error } = await supabase
+                    .from('restaurants')
+                    .update({
                         name: resFormData.name.trim(),
-                        slug: slug,
                         contact_email: resFormData.contact_email.trim(),
                         contact_address: resFormData.contact_address.trim(),
                         contact_phone: resFormData.contact_phone.trim(),
-                        status: 'active'
-                    }
-                ])
+                    })
+                    .eq('id', editingData.id)
+                if (error) throw error
+            } else {
+                const { error } = await supabase
+                    .from('restaurants')
+                    .insert([
+                        {
+                            name: resFormData.name.trim(),
+                            slug: slug,
+                            contact_email: resFormData.contact_email.trim(),
+                            contact_address: resFormData.contact_address.trim(),
+                            contact_phone: resFormData.contact_phone.trim(),
+                            status: 'active'
+                        }
+                    ])
+                if (error) throw error
+            }
 
-            if (error) throw error
-
-            setResFormData({ name: '', contact_email: '', contact_address: '', contact_phone: '' })
             onRefresh && onRefresh()
             onClose()
         } catch (err) {
-            setError('Failed to create restaurant: ' + err.message)
+            setError(`Failed to ${editingData ? 'update' : 'create'} restaurant: ` + err.message)
         } finally {
             setLoading(false)
         }
@@ -115,7 +155,7 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                 <div className="drawer-header">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                         {activeForm === 'user' ? <UserPlus size={20} className="text-primary" /> : <FilePlus size={20} className="text-primary" />}
-                        <h3>{activeForm === 'user' ? 'Add New User' : 'Create Restaurant'}</h3>
+                        <h3>{editingData ? 'Update' : (activeForm === 'user' ? 'Add New User' : 'Create Restaurant')}</h3>
                     </div>
                     <button className="btn-close-drawer" onClick={onClose}>
                         <X size={24} />
@@ -157,10 +197,10 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                                     <label>Password</label>
                                     <input
                                         type="password"
-                                        placeholder="Min 6 characters"
+                                        placeholder={editingData ? "Leave empty to keep current" : "Min 6 characters"}
                                         value={formData.password}
                                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                        required
+                                        required={!editingData}
                                     />
                                 </div>
                                 <div className="form-group-modern">
@@ -247,7 +287,7 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                             ) : (
                                 <>
                                     {activeForm === 'user' ? <UserPlus size={18} /> : <FilePlus size={18} />}
-                                    {activeForm === 'user' ? 'Add User Account' : 'Register Restaurant'}
+                                    {editingData ? 'Update Details' : (activeForm === 'user' ? 'Add User Account' : 'Register Restaurant')}
                                 </>
                             )}
                         </button>
