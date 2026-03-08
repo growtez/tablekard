@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import {
     ChevronLeft, Store, Globe, Mail, Phone, Calendar,
     Shield, Activity, CreditCard, MapPin, Settings as SettingsIcon,
-    Clock, Tag, Info, AlertTriangle, Edit, Save, X as CloseIcon, Loader2
+    Clock, Tag, Info, AlertTriangle, Edit, Save, X as CloseIcon, Loader2,
+    Utensils, Layers, List
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
@@ -31,57 +32,9 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
     const [formData, setFormData] = useState({});
     const [saving, setSaving] = useState(false);
 
-    useEffect(() => {
-        if (setSyncAction && !isEditing) {
-            setSyncAction({
-                onSync: fetchRestaurantDetails,
-                loading: loading
-            });
-        }
-    }, [loading, setSyncAction, isEditing]);
-
-    useEffect(() => {
-        if (restaurant && setHeaderData) {
-            setHeaderData({
-                id: restaurant.id,
-                name: restaurant.name,
-                logo_url: restaurant.logo_url,
-                status: restaurant.status,
-                onEdit: !isEditing ? () => setIsEditing(true) : null,
-                isEditing,
-                onSave: handleSave,
-                onCancel: handleCancel,
-                saving,
-                backPath: '/restaurants',
-                backTitle: 'Back to Restaurants'
-            });
-        }
-    }, [restaurant, setHeaderData, isEditing]);
-
-    useEffect(() => {
-        if (restaurant) {
-            setFormData(restaurant);
-        }
-    }, [restaurant]);
-
-    const fetchRestaurantDetails = async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const { data, error } = await supabase
-                .from('restaurants')
-                .select('*')
-                .eq('id', id)
-                .single();
-
-            if (error) throw error;
-            setRestaurant(data);
-        } catch (err) {
-            setError('Failed to fetch restaurant details: ' + err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
+    // Refs to handle stale closures in header actions
+    const saveRef = useRef();
+    const cancelRef = useRef();
 
     const handleSave = async () => {
         setSaving(true);
@@ -118,6 +71,85 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
         setFormData(restaurant);
         setIsEditing(false);
     };
+
+    // Update refs every render
+    useEffect(() => {
+        saveRef.current = handleSave;
+        cancelRef.current = handleCancel;
+    });
+
+    useEffect(() => {
+        if (setSyncAction && !isEditing) {
+            setSyncAction({
+                onSync: fetchRestaurantDetails,
+                loading: loading
+            });
+        }
+    }, [loading, setSyncAction, isEditing]);
+
+    useEffect(() => {
+        if (restaurant && setHeaderData) {
+            setHeaderData({
+                id: restaurant.id,
+                name: restaurant.name,
+                logo_url: restaurant.logo_url,
+                status: restaurant.status,
+                onEdit: !isEditing ? () => setIsEditing(true) : null,
+                isEditing,
+                onSave: () => saveRef.current?.(),
+                onCancel: () => cancelRef.current?.(),
+                saving,
+                backPath: '/restaurants',
+                backTitle: 'Back to Restaurants'
+            });
+        }
+    }, [restaurant, setHeaderData, isEditing, saving]);
+
+    const [categories, setCategories] = useState([]);
+    const [menuItems, setMenuItems] = useState([]);
+
+    const fetchMenuData = async () => {
+        try {
+            const [catRes, itemRes] = await Promise.all([
+                supabase.from('menu_categories').select('*').eq('restaurant_id', id).order('sort_order'),
+                supabase.from('menu_items').select('*').eq('restaurant_id', id)
+            ]);
+
+            if (catRes.error) throw catRes.error;
+            if (itemRes.error) throw itemRes.error;
+
+            setCategories(catRes.data || []);
+            setMenuItems(itemRes.data || []);
+        } catch (err) {
+            console.error('Failed to fetch menu data:', err);
+        }
+    };
+
+    const fetchRestaurantDetails = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const { data, error } = await supabase
+                .from('restaurants')
+                .select('*')
+                .eq('id', id)
+                .single();
+
+            if (error) throw error;
+            setRestaurant(data);
+            await fetchMenuData();
+        } catch (err) {
+            setError('Failed to fetch restaurant details: ' + err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (restaurant) {
+            setFormData(restaurant);
+        }
+    }, [restaurant]);
 
     const updateField = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -290,6 +322,99 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                         ],
                         { background: 'linear-gradient(90deg, rgba(99, 102, 241, 0.15) 0%, transparent 100%)', borderLeft: '4px solid #6366f1', color: '#6366f1' }
                     )}
+
+                    {renderDetailSection(
+                        "Menu & Catalog",
+                        <Utensils size={20} />,
+                        [
+                            { label: "Total Categories", type: "static", value: <Badge variant="info">{categories.length}</Badge> },
+                            { label: "Total Items", type: "static", value: <Badge variant="success">{menuItems.length}</Badge> },
+                            { label: "Active/Available", type: "static", value: menuItems.filter(i => i.is_available).length },
+                            { label: "Vegetarian Options", type: "static", value: menuItems.filter(i => i.is_veg).length }
+                        ],
+                        { background: 'linear-gradient(90deg, rgba(236, 72, 153, 0.15) 0%, transparent 100%)', borderLeft: '4px solid #ec4899', color: '#ec4899' }
+                    )}
+                </div>
+            </div>
+
+            {/* Added detailed lists for Menu Categories and Recently Added Items */}
+            <div style={{ marginTop: '2rem' }}>
+                <div className="detail-grid">
+                    <Card className="detail-section">
+                        <CardHeader style={{ padding: '0.4rem 1.25rem', borderBottom: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.02)' }}>
+                            <div className="section-header">
+                                <Layers size={18} style={{ color: 'var(--accent-primary)' }} />
+                                <CardTitle style={{ fontSize: '0.9rem' }}>Menu Categories</CardTitle>
+                            </div>
+                        </CardHeader>
+                        <div style={{ padding: '1rem' }}>
+                            {categories.length > 0 ? (
+                                <div className="flex" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
+                                    {categories.map(cat => (
+                                        <Badge key={cat.id} variant={cat.active ? 'success' : 'secondary'} style={{ padding: '4px 10px', fontSize: '0.75rem' }}>
+                                            {cat.name}
+                                        </Badge>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontStyle: 'italic' }}>No categories defined yet.</p>
+                            )}
+                        </div>
+                    </Card>
+
+                    <Card className="detail-section">
+                        <CardHeader style={{ padding: '0.4rem 1.25rem', borderBottom: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.02)' }}>
+                            <div className="section-header">
+                                <List size={18} style={{ color: 'hsl(150, 100%, 50%)' }} />
+                                <CardTitle style={{ fontSize: '0.9rem' }}>Recently Updated Items</CardTitle>
+                            </div>
+                        </CardHeader>
+                        <div style={{ padding: 0, overflow: 'hidden' }}>
+                            {menuItems.length > 0 ? (
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                    {menuItems
+                                        .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
+                                        .slice(0, 4)
+                                        .map((item, idx) => (
+                                            <div key={item.id} style={{
+                                                padding: '0.75rem',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between',
+                                                borderBottom: idx < 3 ? '1px solid rgba(255,255,255,0.05)' : 'none'
+                                            }} className="hover:bg-white/5 transition-colors">
+                                                <div className="flex items-center" style={{ gap: '0.75rem' }}>
+                                                    <div style={{
+                                                        width: '40px',
+                                                        height: '40px',
+                                                        borderRadius: '8px',
+                                                        background: 'var(--surface-hover)',
+                                                        border: '1px solid var(--border-color)',
+                                                        overflow: 'hidden',
+                                                        flexShrink: 0
+                                                    }}>
+                                                        {item.image_url ? <img src={item.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', opacity: 0.5 }}>IMG</div>}
+                                                    </div>
+                                                    <div>
+                                                        <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>{item.name}</div>
+                                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                            {item.is_veg && <span style={{ color: 'hsl(150, 100%, 50%)', fontWeight: 'bold' }}>●</span>}
+                                                            {categories.find(c => c.id === item.category_id)?.name || 'Uncategorized'}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div style={{ textAlign: 'right' }}>
+                                                    <div style={{ fontSize: '0.875rem', fontWeight: 700 }}>₹{item.price}</div>
+                                                    {!item.is_available && <Badge variant="warning" style={{ fontSize: '0.6rem', padding: '1px 4px' }}>Unavailable</Badge>}
+                                                </div>
+                                            </div>
+                                        ))}
+                                </div>
+                            ) : (
+                                <p style={{ padding: '1rem', color: 'var(--text-muted)', fontSize: '0.875rem', fontStyle: 'italic' }}>No items found in the menu.</p>
+                            )}
+                        </div>
+                    </Card>
                 </div>
             </div>
         </div>

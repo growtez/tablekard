@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import {
@@ -96,24 +96,6 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
         }
     };
 
-    useEffect(() => {
-        if (profile && setHeaderData) {
-            setHeaderData({
-                id: profile.id,
-                name: profile.name || profile.email,
-                logo_url: profile.avatar_url,
-                status: profile.role,
-                onEdit: !isEditing ? () => setIsEditing(true) : null,
-                isEditing,
-                onSave: handleSave,
-                onCancel: handleCancel,
-                saving,
-                backPath: '/users',
-                backTitle: 'Back to Users'
-            });
-        }
-    }, [profile, setHeaderData, isEditing]);
-
     const handleSave = async () => {
         if (['restaurant_admin', 'restaurant_staff'].includes(formData.role) && !formData.restaurant_id) {
             setError('Please select a restaurant for this member.');
@@ -192,6 +174,30 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
         setFormData({ ...profile, restaurant_id: profile.restaurant_id });
         setIsEditing(false);
     };
+
+    // Update refs every render
+    useEffect(() => {
+        saveRef.current = handleSave;
+        cancelRef.current = handleCancel;
+    });
+
+    useEffect(() => {
+        if (profile && setHeaderData) {
+            setHeaderData({
+                id: profile.id,
+                name: profile.name || profile.email,
+                logo_url: profile.avatar_url,
+                status: profile.role,
+                onEdit: !isEditing ? () => setIsEditing(true) : null,
+                isEditing,
+                onSave: () => saveRef.current?.(),
+                onCancel: () => cancelRef.current?.(),
+                saving,
+                backPath: '/users',
+                backTitle: 'Back to Users'
+            });
+        }
+    }, [profile, setHeaderData, isEditing, saving]);
 
     const updateField = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
