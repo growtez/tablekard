@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import {
     ChevronLeft, Store, Globe, Mail, Phone, Calendar,
@@ -12,6 +12,7 @@ import { Badge } from '../components/ui/Badge';
 export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const [restaurant, setRestaurant] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -26,7 +27,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
         };
     }, [id]);
 
-    const [isEditing, setIsEditing] = useState(false);
+    const [isEditing, setIsEditing] = useState(location.state?.edit || false);
     const [formData, setFormData] = useState({});
     const [saving, setSaving] = useState(false);
 
@@ -48,6 +49,9 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                 status: restaurant.status,
                 onEdit: !isEditing ? () => setIsEditing(true) : null,
                 isEditing,
+                onSave: handleSave,
+                onCancel: handleCancel,
+                saving,
                 backPath: '/restaurants',
                 backTitle: 'Back to Restaurants'
             });
@@ -195,21 +199,8 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
 
     return (
         <div className="restaurant-detail-page animate-fade-in" style={{ paddingTop: '1rem' }}>
-            {isEditing && (
-                <div className="edit-actions-bar animate-slide-up">
-                    <div className="flex items-center gap-4">
-                        <button className="btn-save" onClick={handleSave} disabled={saving}>
-                            {saving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-                            Save All Changes
-                        </button>
-                        <button className="btn-cancel" onClick={handleCancel} disabled={saving}>
-                            <CloseIcon size={18} />
-                            Cancel
-                        </button>
-                    </div>
-                    {error && <span className="text-error text-sm">{error}</span>}
-                </div>
-            )}
+            {error && !isEditing && <div className="p-4 mb-4 bg-error/10 text-error rounded-lg">{error}</div>}
+            {error && isEditing && <div className="fixed bottom-8 right-8 p-4 bg-error text-white rounded-lg shadow-lg z-50 animate-slide-up">{error}</div>}
 
             <div className="detail-grid">
                 <div className="detail-column">

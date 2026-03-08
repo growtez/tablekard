@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import { Store, Globe, Mail, Phone, Calendar, Search, RefreshCw, MoreVertical, ExternalLink, Edit2, Trash2, Filter, SlidersHorizontal } from 'lucide-react';
+import { Store, Globe, Mail, Phone, Calendar, Search, RefreshCw, MoreVertical, ExternalLink, Edit2, Trash2, Filter, SlidersHorizontal, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Card, CardHeader, CardTitle } from '../components/ui/Card';
 import { StatCard } from '../components/ui/StatCard';
 import { Badge } from '../components/ui/Badge';
@@ -78,8 +78,21 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
             if (sortBy === 'oldest') return new Date(a.created_at) - new Date(b.created_at);
             if (sortBy === 'name') return a.name.localeCompare(b.name);
             if (sortBy === 'status') return (a.status || '').localeCompare(b.status || '');
-            return 0;
         });
+
+    const toggleSort = (newSort) => {
+        if (sortBy === newSort) {
+            setSortBy(newSort === 'newest' ? 'oldest' : newSort === 'name' ? 'newest' : 'newest');
+        } else {
+            setSortBy(newSort);
+        }
+    };
+
+    const getSortIcon = (field) => {
+        if (sortBy === field) return <ArrowUp size={14} />;
+        if (field === 'newest' && sortBy === 'oldest') return <ArrowDown size={14} />;
+        return <ArrowUpDown size={14} style={{ opacity: 0.3 }} />;
+    };
 
     return (
         <div className="space-y-8">
@@ -140,10 +153,22 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                 <table className="premium-table">
                     <thead>
                         <tr>
-                            <th>Brand Identity</th>
-                            <th>Status & Plan</th>
-                            <th>Contact Direct</th>
-                            <th>Onboarded</th>
+                            <th className="sortable-header" onClick={() => toggleSort('name')}>
+                                <div className="flex items-center gap-2">
+                                    Name {getSortIcon('name')}
+                                </div>
+                            </th>
+                            <th className="sortable-header" onClick={() => toggleSort('status')}>
+                                <div className="flex items-center gap-2">
+                                    Status & Plan {getSortIcon('status')}
+                                </div>
+                            </th>
+                            <th>Contacts</th>
+                            <th className="sortable-header" onClick={() => toggleSort('newest')}>
+                                <div className="flex items-center gap-2">
+                                    Onboarded {getSortIcon('newest')}
+                                </div>
+                            </th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -187,10 +212,12 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                                     </td>
                                     <td>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                                            <Badge variant={res.status === 'active' ? 'success' : 'warning'}>
-                                                {res.status || 'Active'}
+                                            <Badge variant={res.status === 'active' ? 'success' : res.status === 'pending' ? 'warning' : 'error'}>
+                                                {(res.status || 'pending').toUpperCase()}
                                             </Badge>
-                                            <span style={{ fontSize: '0.7rem', color: 'var(--accent-primary)', opacity: 0.8, fontWeight: 600 }}>PREMIUM PLAN</span>
+                                            <span style={{ fontSize: '0.7rem', color: res.subscription_status ? 'var(--accent-primary)' : 'var(--text-muted)', opacity: 0.8, fontWeight: 600 }}>
+                                                {(res.subscription_type || (res.subscription_status ? 'PRO PLAN' : 'TRIAL PLAN')).toUpperCase()}
+                                            </span>
                                         </div>
                                     </td>
                                     <td>
@@ -228,7 +255,7 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                                             <button
                                                 className="action-btn edit"
                                                 title="View Details & Edit"
-                                                onClick={() => navigate(`/restaurants/${res.id}`)}
+                                                onClick={() => navigate(`/restaurants/${res.id}`, { state: { edit: true } })}
                                             >
                                                 <Edit2 size={14} />
                                             </button>

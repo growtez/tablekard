@@ -152,7 +152,7 @@
 
 .sidebar-toggle-btn:hover {
   background: rgba(255, 255, 255, 0.08);
-  color: var(--text-primary);
+  color: var(--text-main);
   transform: scale(1.05);
 }
 
@@ -222,7 +222,7 @@
 }
 
 .btn-back:hover {
-  color: var(--text-primary);
+  color: var(--text-main);
   transform: translateX(-4px);
 }
 
@@ -319,7 +319,7 @@
 
 .detail-value {
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text-main);
   text-align: right;
 }
 
@@ -867,12 +867,22 @@
 .edit-input {
   width: 100%;
   padding: 0.5rem 0.75rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-hover);
   border: 1px solid var(--border-color);
   border-radius: 6px;
-  color: var(--text-primary);
+  color: var(--text-main);
   font-size: 0.85rem;
   transition: all 0.2s;
+}
+
+select.edit-input {
+  background-color: var(--surface-color);
+  cursor: pointer;
+}
+
+select.edit-input option {
+  background-color: var(--surface-color);
+  color: var(--text-main);
 }
 
 .edit-input:focus {
@@ -914,7 +924,7 @@
 
 .btn-cancel:hover {
   background: rgba(255, 255, 255, 0.1);
-  color: var(--text-primary);
+  color: var(--text-main);
 }
 
 .animate-slide-up {
@@ -944,6 +954,13 @@
   height: 16px;
   border-radius: 50%;
   border: 1px solid var(--border-color);
-}. t r u n c a t e - u r l  
-   m a x - w i d t h :   2 5 0 p x ;   o v e r f l o w :   h i d d e n ;   t e x t - o v e r f l o w :   e l l i p s i s ;   w h i t e - s p a c e :   n o w r a p ;   f o n t - s i z e :   0 . 8 r e m ;   o p a c i t y :   0 . 7 ;    
- 
+}
+
+.truncate-url {
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  opacity: 0.7;
+}

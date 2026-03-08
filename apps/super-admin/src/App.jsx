@@ -26,6 +26,42 @@ export default function App() {
   const [refreshCallback, setRefreshCallback] = useState(null)
   const [headerData, setHeaderData] = useState(null)
   const [syncAction, setSyncAction] = useState(null)
+  const [globalStats, setGlobalStats] = useState({
+    restaurants: { total: 0, active: 0, recent: 0 },
+    users: { total: 0, customers: 0, restAdmins: 0, restStaff: 0 }
+  });
+
+  const fetchGlobalStats = async () => {
+    try {
+      const [{ count: resCount }, { count: activeResCount }, { data: profiles }] = await Promise.all([
+        supabase.from('restaurants').select('*', { count: 'exact', head: true }),
+        supabase.from('restaurants').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+        supabase.from('profiles').select('role')
+      ]);
+
+      setGlobalStats({
+        restaurants: {
+          total: resCount || 0,
+          active: activeResCount || 0,
+          recent: resCount > 0 ? 1 : 0
+        },
+        users: {
+          total: profiles?.length || 0,
+          customers: profiles?.filter(p => p.role === 'customer').length || 0,
+          restAdmins: profiles?.filter(p => p.role === 'restaurant_admin').length || 0,
+          restStaff: profiles?.filter(p => p.role === 'restaurant_staff').length || 0
+        }
+      });
+    } catch (err) {
+      console.error('App: Global stats fetch failed:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (session && isAdmin) {
+      fetchGlobalStats();
+    }
+  }, [session, isAdmin]);
 
   const openDrawer = (formType, data = null, onRefresh = null) => {
     setActiveForm(formType)
@@ -234,24 +270,25 @@ export default function App() {
     if (path === '/' || path === '/dashboard') return {
       title: 'Dashboard',
       stats: [
-        { label: 'Total Restaurants', value: '1', path: '/restaurants' },
-        { label: 'Total Users', value: '8', path: '/users' }
+        { label: 'Total Restaurants', value: String(globalStats.restaurants.total), path: '/restaurants' },
+        { label: 'Total Users', value: String(globalStats.users.total), path: '/users' }
       ]
     };
     if (path === '/restaurants') return {
       title: 'Restaurants',
       stats: [
-        { label: 'Total Restaurants', value: '1' },
-        { label: 'Active Status', value: '1' },
-        { label: 'Recently Added', value: '1' }
+        { label: 'Total Restaurants', value: String(globalStats.restaurants.total) },
+        { label: 'Active Status', value: String(globalStats.restaurants.active) },
+        { label: 'Recently Added', value: String(globalStats.restaurants.recent) }
       ]
     };
     if (path === '/users') return {
       title: 'Users',
       stats: [
-        { label: 'Total Users', value: '8' },
-        { label: 'Super Admins', value: '2' },
-        { label: 'Active Staff', value: '4' }
+        { label: 'Total Users', value: String(globalStats.users.total) },
+        { label: 'Total Customers', value: String(globalStats.users.customers) },
+        { label: 'Total Rest Admin', value: String(globalStats.users.restAdmins) },
+        { label: 'Total Rest Staff', value: String(globalStats.users.restStaff) }
       ]
     };
     return { title: 'Command Center' };
@@ -298,7 +335,28 @@ export default function App() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2" style={{ marginLeft: '1rem' }}>
-                    {headerData.onEdit && (
+                    {headerData.isEditing ? (
+                      <>
+                        <button
+                          onClick={headerData.onSave}
+                          className="btn-save"
+                          disabled={headerData.saving}
+                          style={{ padding: '6px 16px', gap: '8px', fontSize: '0.85rem' }}
+                        >
+                          {headerData.saving ? <RefreshCw className="animate-spin" size={16} /> : <Save size={16} />}
+                          Save Changes
+                        </button>
+                        <button
+                          onClick={headerData.onCancel}
+                          className="btn-cancel"
+                          disabled={headerData.saving}
+                          style={{ padding: '6px 16px', gap: '8px', fontSize: '0.85rem' }}
+                        >
+                          <X size={16} />
+                          Cancel
+                        </button>
+                      </>
+                    ) : headerData.onEdit && (
                       <button
                         onClick={headerData.onEdit}
                         className="btn-ghost"
@@ -345,7 +403,10 @@ export default function App() {
             <div className="nav-actions">
               {syncAction && (
                 <button
-                  onClick={syncAction.onSync}
+                  onClick={() => {
+                    syncAction.onSync?.();
+                    fetchGlobalStats();
+                  }}
                   className="btn-ghost"
                   style={{
                     padding: '8px 16px',

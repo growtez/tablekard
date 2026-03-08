@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from './supabaseClient'
-import { Filter, SlidersHorizontal, Search, RefreshCw, MoreVertical, Edit2, Trash2, Store } from 'lucide-react'
+import { Filter, SlidersHorizontal, Search, RefreshCw, MoreVertical, Edit2, Trash2, Store, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { Card } from './components/ui/Card'
 import './AdminPanel.css'
 
@@ -204,6 +204,20 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
       return 0;
     });
 
+  const toggleSort = (newSort) => {
+    if (sortBy === newSort) {
+      setSortBy(newSort === 'newest' ? 'oldest' : 'newest');
+    } else {
+      setSortBy(newSort);
+    }
+  };
+
+  const getSortIcon = (field) => {
+    if (sortBy === field) return <ArrowUp size={14} />;
+    if (field === 'newest' && sortBy === 'oldest') return <ArrowDown size={14} />;
+    return <ArrowUpDown size={14} style={{ opacity: 0.3 }} />;
+  };
+
   return (
     <div className="admin-panel full-width">
       {/* Main Content: Users Table */}
@@ -263,10 +277,22 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
           <table className="premium-table">
             <thead>
               <tr>
-                <th>User / Identity</th>
-                <th>Access Level</th>
+                <th className="sortable-header" onClick={() => toggleSort('name')}>
+                  <div className="flex items-center gap-2">
+                    User / Identity {getSortIcon('name')}
+                  </div>
+                </th>
+                <th className="sortable-header" onClick={() => toggleSort('role')}>
+                  <div className="flex items-center gap-2">
+                    Access Level {getSortIcon('role')}
+                  </div>
+                </th>
                 <th>Restaurant</th>
-                <th>Joined</th>
+                <th className="sortable-header" onClick={() => toggleSort('newest')}>
+                  <div className="flex items-center gap-2">
+                    Joined {getSortIcon('newest')}
+                  </div>
+                </th>
                 <th></th>
               </tr>
             </thead>
@@ -341,7 +367,7 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
                           <div className="actions-menu">
                             <button
                               className="action-btn edit"
-                              onClick={() => navigate(`/users/${user.id}`)}
+                              onClick={() => navigate(`/users/${user.id}`, { state: { edit: true } })}
                               title="View Profile Details"
                             >
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
