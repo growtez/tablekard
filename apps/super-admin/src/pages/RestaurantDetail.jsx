@@ -37,7 +37,9 @@ export default function RestaurantDetail({ setHeaderData }) {
                 logo_url: restaurant.logo_url,
                 status: restaurant.status,
                 onEdit: !isEditing ? () => setIsEditing(true) : null,
-                isEditing
+                isEditing,
+                backPath: '/restaurants',
+                backTitle: 'Back to Restaurants'
             });
         }
     }, [restaurant, setHeaderData, isEditing]);

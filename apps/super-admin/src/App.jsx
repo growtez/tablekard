@@ -6,6 +6,7 @@ import AdminPanel from './AdminPanel'
 import Dashboard from './pages/Dashboard'
 import Restaurants from './pages/Restaurants'
 import RestaurantDetail from './pages/RestaurantDetail'
+import UserDetail from './pages/UserDetail'
 import Sidebar from './components/Sidebar'
 import QuickCreateDrawer from './components/QuickCreateDrawer'
 import { Plus, UserPlus, FilePlus, ChevronLeft, Edit, Save, X, RefreshCw } from 'lucide-react'
@@ -233,26 +234,26 @@ export default function App() {
     if (path === '/' || path === '/dashboard') return {
       title: 'Dashboard',
       stats: [
-        { label: 'Total Restaurants', value: '1', growth: '+12%', path: '/restaurants' },
-        { label: 'Total Orders', value: '1247', growth: '+18%' },
-        { label: 'Monthly Revenue', value: '₹85,000', growth: '+23%' },
-        { label: 'Total Users', value: '8', growth: '+8%', path: '/users' }
+        { label: 'Total Restaurants', value: '1', path: '/restaurants' },
+        { label: 'Total Orders', value: '1247' },
+        { label: 'Monthly Revenue', value: '₹85,000' },
+        { label: 'Total Users', value: '8', path: '/users' }
       ]
     };
     if (path === '/restaurants') return {
       title: 'Restaurants',
       stats: [
-        { label: 'Total Restaurants', value: '1', growth: '+0%' },
-        { label: 'Active Status', value: '1', growth: '+0%' },
-        { label: 'Recently Added', value: '1', growth: '+0%' }
+        { label: 'Total Restaurants', value: '1' },
+        { label: 'Active Status', value: '1' },
+        { label: 'Recently Added', value: '1' }
       ]
     };
     if (path === '/users') return {
       title: 'Users',
       stats: [
-        { label: 'Total Users', value: '8', growth: '+8%' },
-        { label: 'Super Admins', value: '2', growth: '+0%' },
-        { label: 'Active Staff', value: '4', growth: '+15%' }
+        { label: 'Total Users', value: '8' },
+        { label: 'Super Admins', value: '2' },
+        { label: 'Active Staff', value: '4' }
       ]
     };
     return { title: 'Command Center' };
@@ -275,7 +276,12 @@ export default function App() {
             <div className="flex items-center gap-4">
               {headerData ? (
                 <div className="flex items-center gap-4 animate-fade-in">
-                  <Link to="/restaurants" className="btn-back-nav-icon" title="Back to Restaurants" onClick={() => setHeaderData(null)}>
+                  <Link
+                    to={headerData.backPath || "/restaurants"}
+                    className="btn-back-nav-icon"
+                    title={headerData.backTitle || "Back"}
+                    onClick={() => setHeaderData(null)}
+                  >
                     <ChevronLeft size={20} />
                   </Link>
                   <div className="h-6 w-[1px] bg-white/10 mx-1"></div>
@@ -321,7 +327,6 @@ export default function App() {
                       <span className="header-stat-label">{stat.label}</span>
                       <div className="header-stat-value-group">
                         <span className="header-stat-value">{stat.value}</span>
-                        <span className="header-stat-growth">{stat.growth}</span>
                       </div>
                     </>
                   );
@@ -388,6 +393,7 @@ export default function App() {
               <Route path="/restaurants" element={<Restaurants openDrawer={openDrawer} setSyncAction={setSyncAction} />} />
               <Route path="/restaurants/:id" element={<RestaurantDetail setHeaderData={setHeaderData} />} />
               <Route path="/users" element={<AdminPanel activeForm={activeForm} setActiveForm={setActiveForm} openDrawer={openDrawer} setSyncAction={setSyncAction} />} />
+              <Route path="/users/:id" element={<UserDetail setHeaderData={setHeaderData} />} />
               {/* Fallback to Dashboard */}
               <Route path="*" element={<Dashboard />} />
             </Routes>

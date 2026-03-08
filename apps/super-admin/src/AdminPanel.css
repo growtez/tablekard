@@ -48,7 +48,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
 .section-title {
@@ -81,7 +81,7 @@
   background: var(--surface-color);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
-  padding: 1.5rem;
+  padding: 1rem;
   box-shadow: var(--shadow-sm);
 }
 
@@ -147,6 +147,14 @@
 
 .premium-table tr:hover {
   background: hsla(0, 0%, 100%, 0.02);
+}
+
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:hover {
+  background: hsla(0, 0%, 100%, 0.04) !important;
 }
 
 /* Table Cells */

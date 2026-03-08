@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import { Store, Globe, Mail, Phone, Calendar, Search, RefreshCw, MoreVertical, ExternalLink, Edit2, Trash2 } from 'lucide-react';
+import { Store, Globe, Mail, Phone, Calendar, Search, RefreshCw, MoreVertical, ExternalLink, Edit2, Trash2, Filter, SlidersHorizontal } from 'lucide-react';
 import { Card, CardHeader, CardTitle } from '../components/ui/Card';
 import { StatCard } from '../components/ui/StatCard';
 import { Badge } from '../components/ui/Badge';
@@ -11,6 +11,8 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
     const [restaurants, setRestaurants] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    const [filterStatus, setFilterStatus] = useState('all');
+    const [sortBy, setSortBy] = useState('newest');
     const [error, setError] = useState(null);
 
     useEffect(() => {
@@ -61,11 +63,23 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
         }
     };
 
-    const filteredRestaurants = restaurants.filter(res =>
-        res.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        res.slug.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (res.contact_email && res.contact_email.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
+    const filteredRestaurants = restaurants
+        .filter(res => {
+            const matchesSearch = res.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                res.slug.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (res.contact_email && res.contact_email.toLowerCase().includes(searchQuery.toLowerCase()));
+
+            const matchesFilter = filterStatus === 'all' || res.status === filterStatus;
+
+            return matchesSearch && matchesFilter;
+        })
+        .sort((a, b) => {
+            if (sortBy === 'newest') return new Date(b.created_at) - new Date(a.created_at);
+            if (sortBy === 'oldest') return new Date(a.created_at) - new Date(b.created_at);
+            if (sortBy === 'name') return a.name.localeCompare(b.name);
+            if (sortBy === 'status') return (a.status || '').localeCompare(b.status || '');
+            return 0;
+        });
 
     return (
         <div className="space-y-8">
@@ -89,6 +103,34 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                                 fontSize: '0.9rem'
                             }}
                         />
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.75rem' }}>
+                        <div className="dropdown-wrapper">
+                            <button className={`btn-ghost ${filterStatus !== 'all' ? 'active-filter' : ''}`} style={{ padding: '10px 16px', borderRadius: '12px', background: filterStatus !== 'all' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255,255,255,0.05)', border: `1px solid ${filterStatus !== 'all' ? 'var(--accent-primary)' : 'var(--border-color)'}`, gap: '8px', fontSize: '0.9rem', color: filterStatus !== 'all' ? 'var(--accent-primary)' : 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+                                <Filter size={18} />
+                                {filterStatus === 'all' ? 'Filter' : `Status: ${filterStatus}`}
+                            </button>
+                            <div className="dropdown-content">
+                                {['all', 'active', 'pending', 'suspended', 'approved'].map(status => (
+                                    <button key={status} onClick={() => setFilterStatus(status)} className={filterStatus === status ? 'active' : ''}>
+                                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="dropdown-wrapper">
+                            <button className="btn-ghost" style={{ padding: '10px 16px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', gap: '8px', fontSize: '0.9rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+                                <SlidersHorizontal size={18} />
+                                {sortBy === 'newest' ? 'Sort By' : `Sorted: ${sortBy}`}
+                            </button>
+                            <div className="dropdown-content">
+                                <button onClick={() => setSortBy('newest')} className={sortBy === 'newest' ? 'active' : ''}>Newest First</button>
+                                <button onClick={() => setSortBy('oldest')} className={sortBy === 'oldest' ? 'active' : ''}>Oldest First</button>
+                                <button onClick={() => setSortBy('name')} className={sortBy === 'name' ? 'active' : ''}>Brand Name (A-Z)</button>
+                                <button onClick={() => setSortBy('status')} className={sortBy === 'status' ? 'active' : ''}>Current Status</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </Card>
