@@ -235,8 +235,6 @@ export default function App() {
       title: 'Dashboard',
       stats: [
         { label: 'Total Restaurants', value: '1', path: '/restaurants' },
-        { label: 'Total Orders', value: '1247' },
-        { label: 'Monthly Revenue', value: '₹85,000' },
         { label: 'Total Users', value: '8', path: '/users' }
       ]
     };
@@ -388,14 +386,14 @@ export default function App() {
         <main className="main-content animate-fade-in">
           <div className="content-container">
             <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/" element={<Dashboard setSyncAction={setSyncAction} />} />
+              <Route path="/dashboard" element={<Dashboard setSyncAction={setSyncAction} />} />
               <Route path="/restaurants" element={<Restaurants openDrawer={openDrawer} setSyncAction={setSyncAction} />} />
-              <Route path="/restaurants/:id" element={<RestaurantDetail setHeaderData={setHeaderData} />} />
+              <Route path="/restaurants/:id" element={<RestaurantDetail setHeaderData={setHeaderData} setSyncAction={setSyncAction} />} />
               <Route path="/users" element={<AdminPanel activeForm={activeForm} setActiveForm={setActiveForm} openDrawer={openDrawer} setSyncAction={setSyncAction} />} />
-              <Route path="/users/:id" element={<UserDetail setHeaderData={setHeaderData} />} />
+              <Route path="/users/:id" element={<UserDetail setHeaderData={setHeaderData} setSyncAction={setSyncAction} />} />
               {/* Fallback to Dashboard */}
-              <Route path="*" element={<Dashboard />} />
+              <Route path="*" element={<Dashboard setSyncAction={setSyncAction} />} />
             </Routes>
           </div>
         </main>

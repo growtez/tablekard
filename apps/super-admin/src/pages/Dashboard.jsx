@@ -118,7 +118,7 @@ const CustomTooltip = ({ active, payload, label }) => {
     return null;
 };
 
-export default function Dashboard() {
+export default function Dashboard({ setSyncAction }) {
     const [stats, setStats] = useState({
         totalUsers: 0,
         totalRestaurants: 0,
@@ -127,30 +127,39 @@ export default function Dashboard() {
     });
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchRealStats = async () => {
-            try {
-                // Placeholder for real Supabase calls
-                // For now, we use a mix of real counts if possible and static for display
-                const [users, restaurants] = await Promise.all([
-                    supabase.from('profiles').select('*', { count: 'exact', head: true }),
-                    supabase.from('restaurants').select('*', { count: 'exact', head: true })
-                ]);
+    const fetchRealStats = async () => {
+        setLoading(true);
+        try {
+            const [users, restaurants] = await Promise.all([
+                supabase.from('profiles').select('*', { count: 'exact', head: true }),
+                supabase.from('restaurants').select('*', { count: 'exact', head: true })
+            ]);
 
-                setStats({
-                    totalUsers: users.count || 3284,
-                    totalRestaurants: restaurants.count || 70,
-                    totalOrders: 1247,
-                    totalRevenue: 85000
-                });
-            } catch (err) {
-                console.error('Stats fetch failed:', err);
-            } finally {
-                setLoading(false);
-            }
-        };
+            setStats({
+                totalUsers: users.count || 0,
+                totalRestaurants: restaurants.count || 0,
+                totalOrders: 1247,
+                totalRevenue: 85000
+            });
+        } catch (err) {
+            console.error('Stats fetch failed:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchRealStats();
     }, []);
+
+    useEffect(() => {
+        if (setSyncAction) {
+            setSyncAction({
+                onSync: fetchRealStats,
+                loading: loading
+            });
+        }
+    }, [loading, setSyncAction]);
 
     return (
         <div className="animate-fade-in">
@@ -175,7 +184,7 @@ export default function Dashboard() {
 
                 <Card style={{ gridColumn: 'span 4', minWidth: 0 }}>
                     <CardHeader>
-                        <CardTitle>Distribution</CardTitle>
+                        <CardTitle>Subcription Status</CardTitle>
                     </CardHeader>
                     <div style={{ height: '350px', width: '100%', minHeight: '350px' }}>
                         <ResponsiveContainer width="100%" height="100%">

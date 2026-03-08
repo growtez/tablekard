@@ -9,7 +9,7 @@ import {
 import { Card, CardHeader, CardTitle } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 
-export default function UserDetail({ setHeaderData }) {
+export default function UserDetail({ setHeaderData, setSyncAction }) {
     const { id } = useParams();
     const navigate = useNavigate();
     const [profile, setProfile] = useState(null);
@@ -27,8 +27,18 @@ export default function UserDetail({ setHeaderData }) {
         }
         return () => {
             setHeaderData && setHeaderData(null);
+            setSyncAction && setSyncAction(null);
         };
     }, [id]);
+
+    useEffect(() => {
+        if (setSyncAction && !isEditing) {
+            setSyncAction({
+                onSync: fetchInitialData,
+                loading: loading
+            });
+        }
+    }, [loading, setSyncAction, isEditing]);
 
     const fetchInitialData = async () => {
         setLoading(true);
@@ -326,7 +336,15 @@ export default function UserDetail({ setHeaderData }) {
                         "Profile Media",
                         <Camera size={20} />,
                         [
-                            { label: "Avatar URL", field: "avatar_url", value: profile.avatar_url || 'Default Placeholder' },
+                            {
+                                label: "Avatar URL",
+                                field: "avatar_url",
+                                value: profile.avatar_url ? (
+                                    <div className="truncate-url" title={profile.avatar_url}>
+                                        {profile.avatar_url}
+                                    </div>
+                                ) : 'Default Placeholder'
+                            },
                             {
                                 label: "Preview",
                                 type: "static",

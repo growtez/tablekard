@@ -9,7 +9,7 @@ import {
 import { Card, CardHeader, CardTitle } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 
-export default function RestaurantDetail({ setHeaderData }) {
+export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
     const { id } = useParams();
     const navigate = useNavigate();
     const [restaurant, setRestaurant] = useState(null);
@@ -22,12 +22,22 @@ export default function RestaurantDetail({ setHeaderData }) {
         }
         return () => {
             setHeaderData && setHeaderData(null);
+            setSyncAction && setSyncAction(null);
         };
     }, [id]);
 
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({});
     const [saving, setSaving] = useState(false);
+
+    useEffect(() => {
+        if (setSyncAction && !isEditing) {
+            setSyncAction({
+                onSync: fetchRestaurantDetails,
+                loading: loading
+            });
+        }
+    }, [loading, setSyncAction, isEditing]);
 
     useEffect(() => {
         if (restaurant && setHeaderData) {
