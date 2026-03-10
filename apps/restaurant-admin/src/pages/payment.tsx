@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { TrendingUp, Download, Calendar, CreditCard, CheckCircle, Eye, Trash2, X } from 'lucide-react';
 import './payment.css';
 import Sidebar from '../components/sidebar';
@@ -45,9 +45,37 @@ const Payment: React.FC = () => {
     return methodMatch && statusMatch;
   });
 
-  // Calculate totals
-  const todayRevenue = 125380;
-  const weekRevenue = 890000;
+  // Calculate totals dynamically
+  const stats = useMemo(() => {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+    const startOfLastWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay() - 7);
+
+    let todayRev = 0;
+    let yesterdayRev = 0;
+    let weekRev = 0;
+    let lastWeekRev = 0;
+
+    transactions.forEach(t => {
+      // Only count if paid/completed if logic requires, but since schema says 'pending/paid/failed/refunded',
+      // let's only count 'Paid' status transactions for completed revenue.
+      if (t.paymentStatus.toLowerCase() !== 'paid') return;
+
+      const tDate = new Date(t.createdAt);
+      if (tDate >= startOfToday) todayRev += t.amount;
+      else if (tDate >= startOfYesterday) yesterdayRev += t.amount;
+
+      if (tDate >= startOfWeek) weekRev += t.amount;
+      else if (tDate >= startOfLastWeek) lastWeekRev += t.amount;
+    });
+
+    const todayChange = yesterdayRev === 0 ? (todayRev > 0 ? 100 : 0) : Math.round(((todayRev - yesterdayRev) / yesterdayRev) * 100);
+    const weekChange = lastWeekRev === 0 ? (weekRev > 0 ? 100 : 0) : Math.round(((weekRev - lastWeekRev) / lastWeekRev) * 100);
+
+    return { todayRev, weekRev, todayChange, weekChange };
+  }, [transactions]);
 
   const handleExportReport = () => {
     console.log('Exporting report...');
@@ -100,20 +128,40 @@ const Payment: React.FC = () => {
           <div className="revenue-card">
             <div className="card-top-bar card-top-bar-green"></div>
             <h3 className="card-title">Revenue Today</h3>
-            <div className="revenue-amount">₹ {todayRevenue.toLocaleString()}</div>
+            <div className="revenue-amount">₹ {loading ? '...' : stats.todayRev.toLocaleString()}</div>
             <div className="revenue-change">
-              <span className="change-text change-positive">+15% vs yesterday</span>
-              <TrendingUp size={16} color="#68D391" className="trend-icon" />
+              <span
+                className={stats.todayChange >= 0 ? "change-text change-positive" : "change-text change-negative"}
+                style={{ color: stats.todayChange < 0 ? '#E53E3E' : undefined }}
+              >
+                {stats.todayChange > 0 ? '+' : ''}{stats.todayChange}% vs yesterday
+              </span>
+              <TrendingUp
+                size={16}
+                color={stats.todayChange >= 0 ? "#68D391" : "#E53E3E"}
+                className="trend-icon"
+                style={stats.todayChange < 0 ? { transform: 'rotate(180deg)' } : undefined}
+              />
             </div>
           </div>
 
           <div className="revenue-card">
             <div className="card-top-bar card-top-bar-blue"></div>
             <h3 className="card-title">Revenue This Week</h3>
-            <div className="revenue-amount">₹ {weekRevenue.toLocaleString()}</div>
+            <div className="revenue-amount">₹ {loading ? '...' : stats.weekRev.toLocaleString()}</div>
             <div className="revenue-change">
-              <span className="change-text change-blue">+8% vs last week</span>
-              <TrendingUp size={16} color="#7F9CF5" className="trend-icon" />
+              <span
+                className={stats.weekChange >= 0 ? "change-text change-blue" : "change-text change-negative"}
+                style={{ color: stats.weekChange < 0 ? '#E53E3E' : undefined }}
+              >
+                {stats.weekChange > 0 ? '+' : ''}{stats.weekChange}% vs last week
+              </span>
+              <TrendingUp
+                size={16}
+                color={stats.weekChange >= 0 ? "#7F9CF5" : "#E53E3E"}
+                className="trend-icon"
+                style={stats.weekChange < 0 ? { transform: 'rotate(180deg)' } : undefined}
+              />
             </div>
           </div>
         </div>

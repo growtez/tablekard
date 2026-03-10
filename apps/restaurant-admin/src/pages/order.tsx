@@ -16,6 +16,34 @@ const Order: React.FC = () => {
   const [orders, setOrders] = useState<DashboardOrder[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Stats calculation
+  const stats = useMemo(() => {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+    const startOfLastWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay() - 7);
+
+    let today = 0;
+    let yesterday = 0;
+    let week = 0;
+    let lastWeek = 0;
+
+    orders.forEach(order => {
+      const orderDate = new Date(order.createdAt);
+      if (orderDate >= startOfToday) today++;
+      else if (orderDate >= startOfYesterday) yesterday++;
+
+      if (orderDate >= startOfWeek) week++;
+      else if (orderDate >= startOfLastWeek) lastWeek++;
+    });
+
+    const todayChange = yesterday === 0 ? (today > 0 ? 100 : 0) : Math.round(((today - yesterday) / yesterday) * 100);
+    const weekChange = lastWeek === 0 ? (week > 0 ? 100 : 0) : Math.round(((week - lastWeek) / lastWeek) * 100);
+
+    return { today, week, todayChange, weekChange };
+  }, [orders]);
+
   useEffect(() => {
     if (activeRestaurantId) {
       fetchOrders();
@@ -97,20 +125,40 @@ const Order: React.FC = () => {
           <div className="order-stat-card">
             <div className="order-card-top-bar order-card-green"></div>
             <h3 className="order-stat-title">Total Orders Today</h3>
-            <div className="order-stat-number">{loading ? '...' : orders.length}</div>
+            <div className="order-stat-number">{loading ? '...' : stats.today}</div>
             <div className="order-stat-change">
-              <span className="order-change-positive">+12% vs yesterday</span>
-              <TrendingUp size={16} color="#68D391" className="order-trend-icon" />
+              <span
+                className={stats.todayChange >= 0 ? "order-change-positive" : "order-change-negative"}
+                style={{ color: stats.todayChange < 0 ? '#E53E3E' : undefined }}
+              >
+                {stats.todayChange > 0 ? '+' : ''}{stats.todayChange}% vs yesterday
+              </span>
+              <TrendingUp
+                size={16}
+                color={stats.todayChange >= 0 ? "#68D391" : "#E53E3E"}
+                className="order-trend-icon"
+                style={stats.todayChange < 0 ? { transform: 'rotate(180deg)' } : undefined}
+              />
             </div>
           </div>
 
           <div className="order-stat-card">
             <div className="order-card-top-bar order-card-blue"></div>
             <h3 className="order-stat-title">Total Orders This Week</h3>
-            <div className="order-stat-number">850</div>
+            <div className="order-stat-number">{loading ? '...' : stats.week}</div>
             <div className="order-stat-change">
-              <span className="order-change-blue">+8% vs last week</span>
-              <TrendingUp size={16} color="#7F9CF5" className="order-trend-icon" />
+              <span
+                className={stats.weekChange >= 0 ? "order-change-blue" : "order-change-negative"}
+                style={{ color: stats.weekChange < 0 ? '#E53E3E' : undefined }}
+              >
+                {stats.weekChange > 0 ? '+' : ''}{stats.weekChange}% vs last week
+              </span>
+              <TrendingUp
+                size={16}
+                color={stats.weekChange >= 0 ? "#7F9CF5" : "#E53E3E"}
+                className="order-trend-icon"
+                style={stats.weekChange < 0 ? { transform: 'rotate(180deg)' } : undefined}
+              />
             </div>
           </div>
         </div>
