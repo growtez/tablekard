@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Download, Calendar, TrendingUp, TrendingDown, DollarSign, ShoppingBag, Users, Clock, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Download, Calendar, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import Sidebar from '../components/sidebar';
 import './reports.css';
 
@@ -50,7 +50,7 @@ const Reports: React.FC = () => {
                 <div className="reports-header">
                     <h1 className="reports-page-title">Reports & Analytics</h1>
                     <div className="reports-header-right">
-                        <div className="user-avatar">👨‍💼</div>
+                        <div className="reports-user-avatar">👨‍💼</div>
                     </div>
                 </div>
 

@@ -1,17 +1,37 @@
+/* Reports.css */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
 .reports-container {
     display: flex;
     min-height: 100vh;
-    background-color: #F7FAFC;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #343A40;
+    /* Match sidebar background */
+    position: relative;
 }
 
 .reports-main-content {
+    margin-left: 240px;
+    /* Same width as sidebar */
     flex: 1;
-    padding: 32px;
-    margin-left: 260px;
-    /* Adjust based on Sidebar width */
+    padding: 24px;
+    padding-left: 32px;
+    /* Extra padding on left for visual separation */
     overflow-y: auto;
+    min-height: 100vh;
+    width: calc(100% - 240px);
+    background-color: #f7f8fa;
+    border-radius: 32px 0 0 32px;
+    /* Rounded corners on left side */
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12);
+    /* Shadow on left edge */
+    transition: all 0.3s ease;
 }
+
+.sidebar-collapsed .reports-main-content {
+    margin-left: 80px;
+    width: calc(100% - 80px);
+}
+
 
 /* Header */
 .reports-header {
@@ -22,10 +42,11 @@
 }
 
 .reports-page-title {
-    font-size: 28px;
-    font-weight: 700;
+    font-size: 32px;
+    font-weight: 600;
     color: #1A202C;
     margin: 0;
+    font-family: 'Poppins', sans-serif;
 }
 
 .reports-header-right {
@@ -34,60 +55,42 @@
     gap: 16px;
 }
 
-/* Top Filters */
-.reports-filters {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 32px;
-}
-
-.report-filter-btn {
+.reports-icon-button {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background-color: #FFFFFF;
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
-    background-color: white;
-    border: 1px solid #E2E8F0;
-    border-radius: 8px;
-    font-size: 14px;
-    color: #4A5568;
-    font-weight: 500;
+    justify-content: center;
     cursor: pointer;
-    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: transform 0.2s;
 }
 
-.report-filter-btn:hover {
-    background-color: #F7FAFC;
-    border-color: #CBD5E0;
+.reports-icon-button:hover {
+    transform: translateY(-2px);
 }
 
-.report-filter-btn.active {
-    background-color: #EBF8FF;
-    border-color: #4299E1;
-    color: #2B6CB0;
-}
-
-.report-export-btn {
+.reports-user-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background-color: #A0D9B4;
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
-    background-color: #3182CE;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    color: white;
-    font-weight: 600;
+    justify-content: center;
+    font-size: 20px;
     cursor: pointer;
-    margin-left: auto;
-    transition: background-color 0.2s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s;
 }
 
-.report-export-btn:hover {
-    background-color: #2B6CB0;
+.reports-user-avatar:hover {
+    transform: translateY(-2px);
 }
 
-/* Key Metrics Grid */
+/* Statistics Cards (Key Metrics) */
 .metrics-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -96,13 +99,18 @@
 }
 
 .metric-card {
-    background: white;
-    border-radius: 12px;
+    background-color: #FFFFFF;
     padding: 24px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    border: 1px solid #E2E8F0;
+    border-radius: 24px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06), inset 0 1px 2px rgba(0, 0, 0, 0.02);
     position: relative;
     overflow: hidden;
+    transition: transform 0.2s;
+}
+
+.metric-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
 .metric-card-top-bar {
@@ -110,37 +118,40 @@
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
+    height: 6px;
 }
 
 .metric-card-blue {
-    background-color: #4299E1;
+    background: linear-gradient(to right, #455689, #4C51BF);
 }
 
 .metric-card-green {
-    background-color: #48BB78;
+    background: linear-gradient(to right, #4f755c, #4f755c);
 }
 
 .metric-card-purple {
-    background-color: #9F7AEA;
+    background: linear-gradient(to right, #805AD5, #6B46C1);
 }
 
 .metric-card-orange {
-    background-color: #ED8936;
+    background: linear-gradient(to right, #ED8936, #DD6B20);
 }
 
 .metric-title {
     font-size: 14px;
     color: #718096;
+    margin-bottom: 12px;
     font-weight: 500;
-    margin: 0 0 12px 0;
+    margin-top: 4px;
+    font-family: 'Poppins', sans-serif;
 }
 
 .metric-value {
     font-size: 28px;
     font-weight: 700;
     color: #1A202C;
-    margin: 0 0 12px 0;
+    margin-bottom: 12px;
+    font-family: 'Poppins', sans-serif;
 }
 
 .metric-change {
@@ -148,22 +159,80 @@
     align-items: center;
     gap: 6px;
     font-size: 13px;
-    font-weight: 500;
+    font-family: 'Poppins', sans-serif;
 }
 
 .change-positive {
-    color: #38A169;
+    color: #68D391;
+    font-weight: 500;
 }
 
 .change-negative {
-    color: #E53E3E;
+    color: #F56565;
+    font-weight: 500;
 }
 
-.change-neutral {
-    color: #718096;
+/* Filters */
+.reports-filters {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-bottom: 24px;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
-/* Dashboard Grid for Charts & Tables */
+.report-filter-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background-color: #FFFFFF;
+    border: none;
+    border-radius: 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1A202C;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), inset 0 1px 2px rgba(0, 0, 0, 0.02);
+    transition: all 0.2s;
+    font-family: 'Poppins', sans-serif;
+}
+
+.report-filter-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.report-filter-btn.active {
+    background-color: #4C51BF;
+    color: white;
+}
+
+.report-export-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background-color: #4f755c;
+    border: none;
+    border-radius: 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(79, 117, 92, 0.2);
+    transition: all 0.2s;
+    font-family: 'Poppins', sans-serif;
+    margin-left: auto;
+}
+
+.report-export-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(79, 117, 92, 0.3);
+}
+
+/* Dashboard Cards */
 .dashboard-grid {
     display: grid;
     grid-template-columns: 2fr 1fr;
@@ -172,28 +241,25 @@
 }
 
 .dashboard-card {
-    background: white;
-    border-radius: 12px;
+    background-color: #FFFFFF;
     padding: 24px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    border: 1px solid #E2E8F0;
+    border-radius: 24px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06), inset 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .dashboard-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     margin-bottom: 24px;
 }
 
 .dashboard-card-title {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 600;
     color: #1A202C;
     margin: 0;
+    font-family: 'Poppins', sans-serif;
 }
 
-/* Simple CSS Bar Chart for Revenue */
+/* Chart */
 .chart-container {
     height: 250px;
     display: flex;
@@ -217,14 +283,15 @@
 .chart-bar {
     width: 100%;
     max-width: 40px;
-    background: linear-gradient(180deg, #4299E1 0%, #3182CE 100%);
+    background: linear-gradient(180deg, #4C51BF 0%, #434190 100%);
     border-radius: 4px 4px 0 0;
     min-height: 5%;
-    transition: height 0.5s ease;
+    transition: all 0.3s ease;
 }
 
 .chart-bar:hover {
-    background: linear-gradient(180deg, #3182CE 0%, #2B6CB0 100%);
+    background: linear-gradient(180deg, #5A67D8 0%, #4C51BF 100%);
+    transform: scaleX(1.1);
 }
 
 .chart-label {
@@ -233,6 +300,7 @@
     font-size: 12px;
     color: #718096;
     white-space: nowrap;
+    font-family: 'Poppins', sans-serif;
 }
 
 .chart-tooltip {
@@ -241,19 +309,22 @@
     background: #1A202C;
     color: white;
     padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 500;
     opacity: 0;
     transition: opacity 0.2s;
     pointer-events: none;
     white-space: nowrap;
+    font-family: 'Poppins', sans-serif;
+    z-index: 10;
 }
 
 .chart-bar-group:hover .chart-tooltip {
     opacity: 1;
 }
 
-/* Category Progress Bars */
+/* Category Sales */
 .category-list {
     display: flex;
     flex-direction: column;
@@ -270,6 +341,7 @@
     display: flex;
     justify-content: space-between;
     font-size: 14px;
+    font-family: 'Poppins', sans-serif;
 }
 
 .category-name {
@@ -279,65 +351,68 @@
 
 .category-value {
     color: #718096;
-    font-weight: 500;
+    font-weight: 600;
 }
 
 .category-progress-bg {
-    height: 8px;
+    height: 10px;
     background-color: #EDF2F7;
-    border-radius: 4px;
+    border-radius: 5px;
     overflow: hidden;
 }
 
 .category-progress-fill {
     height: 100%;
-    border-radius: 4px;
+    border-radius: 5px;
+    transition: width 1s ease-out;
 }
 
 /* Top Items Table */
 .top-items-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0 8px;
+    font-family: 'Poppins', sans-serif;
 }
 
 .top-items-table th {
     text-align: left;
     padding: 12px 16px;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
     color: #718096;
-    text-transform: uppercase;
-    border-bottom: 1px solid #E2E8F0;
+    border-bottom: 2px solid #F7FAFC;
+    white-space: nowrap;
 }
 
 .top-items-table td {
     padding: 16px;
     font-size: 14px;
-    color: #2D3748;
-    border-bottom: 1px solid #EDF2F7;
+    color: #1A202C;
+    background-color: #FFFFFF;
 }
 
-.top-items-table tr:last-child td {
-    border-bottom: none;
+.top-items-table tbody tr:hover td {
+    background-color: #F7FAFC;
 }
 
 .item-name-cell {
     display: flex;
     align-items: center;
     gap: 12px;
-    font-weight: 500;
+    font-weight: 600;
 }
 
 .item-rank {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     background-color: #EDF2F7;
     border-radius: 50%;
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 700;
     color: #4A5568;
 }
 
@@ -357,17 +432,21 @@
 }
 
 .trend-up {
-    color: #38A169;
+    color: #68D391;
     display: flex;
     align-items: center;
     gap: 4px;
+    font-weight: 600;
+    font-size: 13px;
 }
 
 .trend-down {
-    color: #E53E3E;
+    color: #F56565;
     display: flex;
     align-items: center;
     gap: 4px;
+    font-weight: 600;
+    font-size: 13px;
 }
 
 /* Responsive Design */
@@ -379,24 +458,17 @@
     .dashboard-grid {
         grid-template-columns: 1fr;
     }
-
-    .report-export-btn {
-        width: 100%;
-        margin-left: 0;
-        justify-content: center;
-    }
-
-    .reports-filters {
-        flex-wrap: wrap;
-    }
 }
 
 @media (max-width: 768px) {
-    .reports-main-content {
+
+    .reports-main-content,
+    .sidebar-collapsed .reports-main-content {
         margin-left: 0;
+        width: 100%;
+        border-radius: 0;
         padding: 16px;
         padding-top: 72px;
-        /* Space for mobile hamburger menu */
     }
 
     .reports-header {
@@ -405,46 +477,23 @@
         gap: 16px;
     }
 
-    .reports-header-right {
-        width: 100%;
-        justify-content: flex-end;
+    .reports-filters {
+        flex-direction: column;
+        align-items: stretch;
     }
 
     .report-filter-btn {
-        flex: 1;
+        width: 100%;
         justify-content: center;
-        min-width: calc(33.333% - 8px);
+    }
+
+    .report-export-btn {
+        width: 100%;
+        margin-left: 0;
+        justify-content: center;
     }
 
     .metrics-grid {
         grid-template-columns: 1fr;
-        gap: 16px;
-    }
-
-    .chart-container {
-        height: 200px;
-    }
-
-    .top-items-table {
-        font-size: 12px;
-    }
-
-    .top-items-table th,
-    .top-items-table td {
-        padding: 12px 8px;
-    }
-}
-
-@media (max-width: 480px) {
-    .reports-page-title {
-        font-size: 24px;
-    }
-
-    .metric-value {
-        font-size: 24px;
-    }
-
-    .report-filter-btn {
-        min-width: calc(50% - 6px);
     }
 }

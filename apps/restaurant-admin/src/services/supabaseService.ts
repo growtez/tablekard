@@ -284,6 +284,7 @@ export interface DashboardOrder {
     statusColor: string;
     paymentMethod: string;
     items: string;
+    createdAt: string;
 }
 
 export const getDashboardOrders = async (restaurantId: string): Promise<DashboardOrder[]> => {
@@ -323,7 +324,8 @@ export const getDashboardOrders = async (restaurantId: string): Promise<Dashboar
             status: (row.status || 'New').charAt(0).toUpperCase() + (row.status || 'New').slice(1),
             statusColor: statusColor,
             paymentMethod: row.payment_method || 'Cash',
-            items: itemsStr
+            items: itemsStr,
+            createdAt: row.created_at
         };
     });
 };
@@ -355,6 +357,7 @@ export interface PaymentTransaction {
         quantity: number;
         price: number;
     }>;
+    createdAt: string;
 }
 
 export const getPaymentTransactions = async (restaurantId: string): Promise<PaymentTransaction[]> => {
@@ -393,7 +396,8 @@ export const getPaymentTransactions = async (restaurantId: string): Promise<Paym
             paymentStatus: (row.payment_status || 'pending').charAt(0).toUpperCase() + (row.payment_status || 'pending').slice(1),
             statusColor: (row.payment_status || 'pending').toLowerCase(),
             amount: Number(row.total) || 0,
-            orderItems: Array.isArray(row.order_items) ? row.order_items : []
+            orderItems: Array.isArray(row.order_items) ? row.order_items : [],
+            createdAt: row.created_at
         };
     });
 };
@@ -459,9 +463,9 @@ export const createRestaurantTable = async (
         })
         .select('id, table_number, capacity, active, qr_code_url')
         .single();
-    
+
     if (error) throw error;
-    
+
     return {
         id: data.id,
         table_number: data.table_number,
@@ -487,7 +491,7 @@ export const updateRestaurantTable = async (
         .from('restaurant_tables')
         .update(tableData)
         .eq('id', tableId);
-    
+
     if (error) throw error;
 };
 
@@ -499,7 +503,7 @@ export const deleteRestaurantTable = async (tableId: string): Promise<void> => {
         .from('restaurant_tables')
         .delete()
         .eq('id', tableId);
-    
+
     if (error) throw error;
 };
 
@@ -511,6 +515,6 @@ export const toggleTableActiveStatus = async (tableId: string, active: boolean):
         .from('restaurant_tables')
         .update({ active })
         .eq('id', tableId);
-    
+
     if (error) throw error;
 };
