@@ -1,12 +1,12 @@
 // Login Page for Restaurant Admin
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './login.css';
 
 const LoginPage: React.FC = () => {
     const navigate = useNavigate();
-    const { signIn, resetPassword, isAuthenticated, loading } = useAuth();
+    const { signIn, resetPassword, isAuthenticated, loading, clearStoredSession } = useAuth();
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -16,13 +16,7 @@ const LoginPage: React.FC = () => {
     const [showResetModal, setShowResetModal] = useState(false);
     const [resetEmail, setResetEmail] = useState('');
     const [resetMessage, setResetMessage] = useState('');
-
-    // Redirect if already logged in
-    useEffect(() => {
-        if (!loading && isAuthenticated) {
-            navigate('/dashboard');
-        }
-    }, [isAuthenticated, loading, navigate]);
+    const [isClearingSession, setIsClearingSession] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -66,11 +60,56 @@ const LoginPage: React.FC = () => {
         }
     };
 
+    const handleClearSession = async () => {
+        setIsClearingSession(true);
+        setError('');
+        try {
+            await clearStoredSession();
+            setPassword('');
+            setResetMessage('Saved session cleared. Sign in again with an admin account.');
+        } catch (err: any) {
+            setError(err?.message || 'Failed to clear saved session');
+        } finally {
+            setIsClearingSession(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="login-loading">
                 <div className="spinner"></div>
                 <p>Loading...</p>
+            </div>
+        );
+    }
+
+    if (isAuthenticated) {
+        return (
+            <div className="login-page">
+                <div className="login-container">
+                    <div className="login-header">
+                        <div className="logo">TK</div>
+                        <h1>Restaurant Admin</h1>
+                        <p>An admin session is already active on this device.</p>
+                    </div>
+
+                    {resetMessage && <div className="success-message">{resetMessage}</div>}
+                    {error && <div className="error-message">{error}</div>}
+
+                    <div className="login-form">
+                        <button type="button" className="login-button" onClick={() => navigate('/dashboard')}>
+                            Continue to Dashboard
+                        </button>
+                        <button
+                            type="button"
+                            className="forgot-password-link"
+                            onClick={handleClearSession}
+                            disabled={isClearingSession}
+                        >
+                            {isClearingSession ? 'Clearing session...' : 'Sign out and use different account'}
+                        </button>
+                    </div>
+                </div>
             </div>
         );
     }
@@ -143,6 +182,15 @@ const LoginPage: React.FC = () => {
                         }}
                     >
                         Forgot Password?
+                    </button>
+
+                    <button
+                        type="button"
+                        className="forgot-password-link"
+                        onClick={handleClearSession}
+                        disabled={isClearingSession}
+                    >
+                        {isClearingSession ? 'Clearing session...' : 'Use different account'}
                     </button>
                 </form>
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { 
     Download, 
@@ -22,6 +22,7 @@ import {
     updateRestaurantTable, 
     deleteRestaurantTable 
 } from '../services/supabaseService';
+import { useTabVisibilityRefetch } from '../hooks/useTabVisibilityRefetch';
 import type { RestaurantTable } from '../services/supabaseService';
 import './table_management.css';
 
@@ -39,6 +40,7 @@ const TableManagementPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [qrSize, setQrSize] = useState(160);
+    const [initialLoad, setInitialLoad] = useState(true);
     
     // Modal states
     const [showAddModal, setShowAddModal] = useState(false);
@@ -55,15 +57,9 @@ const TableManagementPage: React.FC = () => {
     const [formErrors, setFormErrors] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
 
-    useEffect(() => {
-        if (activeRestaurantId) {
-            fetchTables();
-        }
-    }, [activeRestaurantId]);
-
-    const fetchTables = async () => {
+    const fetchTables = useCallback(async () => {
         if (!activeRestaurantId) return;
-        setLoading(true);
+        if (initialLoad) setLoading(true);
         setError(null);
         try {
             const data = await getRestaurantTables(activeRestaurantId);
@@ -73,8 +69,23 @@ const TableManagementPage: React.FC = () => {
             setError('Failed to load tables. Please try again.');
         } finally {
             setLoading(false);
+            setInitialLoad(false);
         }
-    };
+    }, [activeRestaurantId, initialLoad]);
+
+    const { refetch: refetchTables, refetching } = useTabVisibilityRefetch(fetchTables, {
+        enabled: !!activeRestaurantId,
+        autoRefreshInterval: 30000,
+        refetchOnMount: true,
+    });
+
+    useEffect(() => {
+        if (activeRestaurantId) {
+            refetchTables(true);
+        } else {
+            setLoading(false);
+        }
+    }, [activeRestaurantId, refetchTables]);
 
     const buildQrUrl = (_tableId: string, tableNumber: number) =>
         `${BASE_URL}?restaurant_id=${activeRestaurantId}&table_id=${tableNumber}`;
@@ -223,7 +234,7 @@ const TableManagementPage: React.FC = () => {
     const handleToggleActive = async (table: RestaurantTable) => {
         try {
             await updateRestaurantTable(table.id, { active: !table.active });
-            await fetchTables();
+            await refetchTables(true);
         } catch (err: any) {
             console.error('Failed to toggle table status:', err);
             setError('Failed to update table status.');
@@ -244,7 +255,7 @@ const TableManagementPage: React.FC = () => {
                         </p>
                     </div>
                     <div className="tm-header-actions">
-                        <button className="tm-refresh-btn" onClick={fetchTables} disabled={loading}>
+                        <button className="tm-refresh-btn" onClick={() => refetchTables(true)} disabled={loading}>
                             <RefreshCw size={16} className={loading ? 'spin' : ''} />
                             Refresh
                         </button>
@@ -278,11 +289,11 @@ const TableManagementPage: React.FC = () => {
                     <div className="tm-stats">
                         <div className="tm-count-badge">
                             <Table2 size={16} />
-                            {loading ? '...' : `${tables.length} Tables`}
+                            {loading && !refetching ? '...' : `${tables.length} Tables`}
                         </div>
                         <div className="tm-count-badge active">
                             <CheckCircle size={16} />
-                            {loading ? '...' : `${tables.filter(t => t.active).length} Active`}
+                            {loading && !refetching ? '...' : `${tables.filter(t => t.active).length} Active`}
                         </div>
                     </div>
                 </div>
@@ -297,14 +308,14 @@ const TableManagementPage: React.FC = () => {
                 )}
 
                 {/* States */}
-                {loading && (
+                {loading && !refetching && (
                     <div className="tm-state-center">
                         <div className="tm-spinner"></div>
                         <p>Loading tables...</p>
                     </div>
                 )}
 
-                {!loading && tables.length === 0 && (
+                {(!loading || refetching) && tables.length === 0 && (
                     <div className="tm-state-center">
                         <QrCode size={64} color="#CBD5E0" />
                         <p className="tm-empty-title">No tables found</p>
@@ -317,7 +328,7 @@ const TableManagementPage: React.FC = () => {
                 )}
 
                 {/* Tables Grid */}
-                {!loading && tables.length > 0 && (
+                {(!loading || refetching) && tables.length > 0 && (
                     <div className="tm-grid">
                         {tables.map((table) => {
                             const url = buildQrUrl(table.id, table.table_number);

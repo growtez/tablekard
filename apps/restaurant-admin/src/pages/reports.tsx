@@ -1,46 +1,81 @@
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Download, Calendar, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import Sidebar from '../components/sidebar';
+import { useAuth } from '../context/AuthContext';
+import { useTabVisibilityRefetch } from '../hooks/useTabVisibilityRefetch';
+import { getReportsSummary, type ReportsSummary } from '../services/supabaseService';
 import './reports.css';
 
-// --- Sample Data ---
-const metrics = {
-    revenue: { value: 124500, change: 12.5, isPositive: true },
-    orders: { value: 342, change: 8.2, isPositive: true },
-    avgOrderValue: { value: 364, change: 2.4, isPositive: true },
-    activeTables: { value: 18, change: -5.0, isPositive: false },
+const emptySummary: ReportsSummary = {
+    metrics: {
+        revenue: { value: 0, change: 0, isPositive: true },
+        orders: { value: 0, change: 0, isPositive: true },
+        avgOrderValue: { value: 0, change: 0, isPositive: true },
+        activeTables: { value: 0, change: 0, isPositive: true },
+    },
+    revenueData: [],
+    categorySales: [],
+    topItems: [],
 };
 
-const revenueData = [
-    { day: 'Mon', amount: 12000 },
-    { day: 'Tue', amount: 15500 },
-    { day: 'Wed', amount: 14200 },
-    { day: 'Thu', amount: 18000 },
-    { day: 'Fri', amount: 24500 },
-    { day: 'Sat', amount: 32000 },
-    { day: 'Sun', amount: 28000 },
-];
-const maxRevenue = Math.max(...revenueData.map(d => d.amount));
-
-const categorySales = [
-    { name: 'Main Course', percentage: 45, color: '#4299E1' },
-    { name: 'Starters', percentage: 25, color: '#48BB78' },
-    { name: 'Beverages', percentage: 15, color: '#ED8936' },
-    { name: 'Desserts', percentage: 15, color: '#9F7AEA' },
-];
-
-const topItems = [
-    { rank: 1, name: 'Butter Chicken', sold: 124, revenue: 47120, trend: 'up' },
-    { rank: 2, name: 'Chicken Biryani', sold: 98, revenue: 31360, trend: 'up' },
-    { rank: 3, name: 'Paneer Tikka', sold: 85, revenue: 21250, trend: 'down' },
-    { rank: 4, name: 'Garlic Naan', sold: 210, revenue: 12600, trend: 'up' },
-    { rank: 5, name: 'Mango Lassi', sold: 76, revenue: 9120, trend: 'up' },
-];
-
 const Reports: React.FC = () => {
-    const [timeframe, setTimeframe] = useState('week');
+    const { activeRestaurantId } = useAuth();
+    const [timeframe, setTimeframe] = useState<'today' | 'week' | 'month'>('week');
+    const [summary, setSummary] = useState<ReportsSummary>(emptySummary);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [initialLoad, setInitialLoad] = useState(true);
 
-    const formatCurrency = (val: number) => `₹${val.toLocaleString()}`;
+    const fetchReports = useCallback(async () => {
+        if (!activeRestaurantId) {
+            setSummary(emptySummary);
+            setLoading(false);
+            return;
+        }
+
+        if (initialLoad) setLoading(true);
+        setError(null);
+
+        try {
+            const data = await getReportsSummary(activeRestaurantId, timeframe);
+            setSummary(data);
+        } catch (err) {
+            console.error('Failed to load reports', err);
+            setError('Failed to load report data.');
+        } finally {
+            setLoading(false);
+            setInitialLoad(false);
+        }
+    }, [activeRestaurantId, timeframe, initialLoad]);
+
+    const { refetching } = useTabVisibilityRefetch(fetchReports, {
+        enabled: !!activeRestaurantId,
+        autoRefreshInterval: 45000,
+        refetchOnMount: true,
+    });
+
+    const maxRevenue = useMemo(
+        () => Math.max(...summary.revenueData.map(d => d.amount), 1),
+        [summary.revenueData]
+    );
+
+    const formatCurrency = (val: number) => `Rs ${val.toLocaleString()}`;
+
+    const exportReport = () => {
+        const payload = {
+            timeframe,
+            generatedAt: new Date().toISOString(),
+            summary,
+        };
+
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `tablekard-report-${timeframe}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+    };
 
     return (
         <div className="reports-container">
@@ -50,95 +85,83 @@ const Reports: React.FC = () => {
                 <div className="reports-header">
                     <h1 className="reports-page-title">Reports & Analytics</h1>
                     <div className="reports-header-right">
-                        <div className="reports-user-avatar">👨‍💼</div>
+                        <div className="reports-user-avatar">RA</div>
                     </div>
                 </div>
 
-                {/* Filters */}
+                {error && <div style={{ color: '#F56565', marginBottom: '16px' }}>{error}</div>}
+
                 <div className="reports-filters">
-                    <button
-                        className={`report-filter-btn ${timeframe === 'today' ? 'active' : ''}`}
-                        onClick={() => setTimeframe('today')}
-                    >
+                    <button className={`report-filter-btn ${timeframe === 'today' ? 'active' : ''}`} onClick={() => setTimeframe('today')}>
                         Today
                     </button>
-                    <button
-                        className={`report-filter-btn ${timeframe === 'week' ? 'active' : ''}`}
-                        onClick={() => setTimeframe('week')}
-                    >
+                    <button className={`report-filter-btn ${timeframe === 'week' ? 'active' : ''}`} onClick={() => setTimeframe('week')}>
                         This Week
                     </button>
-                    <button
-                        className={`report-filter-btn ${timeframe === 'month' ? 'active' : ''}`}
-                        onClick={() => setTimeframe('month')}
-                    >
+                    <button className={`report-filter-btn ${timeframe === 'month' ? 'active' : ''}`} onClick={() => setTimeframe('month')}>
                         This Month
                     </button>
-                    <button className="report-filter-btn">
+                    <button className="report-filter-btn" disabled>
                         <Calendar size={16} /> Custom Range
                     </button>
 
-                    <button className="report-export-btn">
+                    <button className="report-export-btn" onClick={exportReport}>
                         <Download size={16} /> Export Report
                     </button>
                 </div>
 
-                {/* Key Metrics */}
                 <div className="metrics-grid">
                     <div className="metric-card">
                         <div className="metric-card-top-bar metric-card-blue"></div>
                         <h3 className="metric-title">Total Revenue</h3>
-                        <div className="metric-value">{formatCurrency(metrics.revenue.value)}</div>
-                        <div className={`metric-change ${metrics.revenue.isPositive ? 'change-positive' : 'change-negative'}`}>
-                            {metrics.revenue.isPositive ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
-                            {metrics.revenue.change}% vs last {timeframe}
+                        <div className="metric-value">{loading && !refetching ? '...' : formatCurrency(summary.metrics.revenue.value)}</div>
+                        <div className={`metric-change ${summary.metrics.revenue.isPositive ? 'change-positive' : 'change-negative'}`}>
+                            {summary.metrics.revenue.isPositive ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
+                            {summary.metrics.revenue.change}% vs last {timeframe}
                         </div>
                     </div>
 
                     <div className="metric-card">
                         <div className="metric-card-top-bar metric-card-green"></div>
                         <h3 className="metric-title">Total Orders</h3>
-                        <div className="metric-value">{metrics.orders.value}</div>
-                        <div className={`metric-change ${metrics.orders.isPositive ? 'change-positive' : 'change-negative'}`}>
-                            {metrics.orders.isPositive ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
-                            {metrics.orders.change}% vs last {timeframe}
+                        <div className="metric-value">{loading && !refetching ? '...' : summary.metrics.orders.value}</div>
+                        <div className={`metric-change ${summary.metrics.orders.isPositive ? 'change-positive' : 'change-negative'}`}>
+                            {summary.metrics.orders.isPositive ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
+                            {summary.metrics.orders.change}% vs last {timeframe}
                         </div>
                     </div>
 
                     <div className="metric-card">
                         <div className="metric-card-top-bar metric-card-purple"></div>
                         <h3 className="metric-title">Avg. Order Value</h3>
-                        <div className="metric-value">{formatCurrency(metrics.avgOrderValue.value)}</div>
-                        <div className={`metric-change ${metrics.avgOrderValue.isPositive ? 'change-positive' : 'change-negative'}`}>
-                            {metrics.avgOrderValue.isPositive ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
-                            {metrics.avgOrderValue.change}% vs last {timeframe}
+                        <div className="metric-value">{loading && !refetching ? '...' : formatCurrency(summary.metrics.avgOrderValue.value)}</div>
+                        <div className={`metric-change ${summary.metrics.avgOrderValue.isPositive ? 'change-positive' : 'change-negative'}`}>
+                            {summary.metrics.avgOrderValue.isPositive ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
+                            {summary.metrics.avgOrderValue.change}% vs last {timeframe}
                         </div>
                     </div>
 
                     <div className="metric-card">
                         <div className="metric-card-top-bar metric-card-orange"></div>
                         <h3 className="metric-title">Active Tables</h3>
-                        <div className="metric-value">{metrics.activeTables.value}</div>
-                        <div className={`metric-change ${metrics.activeTables.isPositive ? 'change-positive' : 'change-negative'}`}>
-                            {metrics.activeTables.isPositive ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
-                            {Math.abs(metrics.activeTables.change)}% vs last {timeframe}
+                        <div className="metric-value">{loading && !refetching ? '...' : summary.metrics.activeTables.value}</div>
+                        <div className={`metric-change ${summary.metrics.activeTables.isPositive ? 'change-positive' : 'change-negative'}`}>
+                            {summary.metrics.activeTables.isPositive ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
+                            {Math.abs(summary.metrics.activeTables.change)}% vs last {timeframe}
                         </div>
                     </div>
                 </div>
 
-                {/* Charts & Categorical Data */}
                 <div className="dashboard-grid">
-
-                    {/* Revenue Chart */}
                     <div className="dashboard-card">
                         <div className="dashboard-card-header">
                             <h3 className="dashboard-card-title">Revenue Overview</h3>
                         </div>
                         <div className="chart-container">
-                            {revenueData.map((data, index) => {
-                                const heightPercentage = (data.amount / maxRevenue) * 100;
+                            {(loading && !refetching ? [] : summary.revenueData).map((data) => {
+                                const heightPercentage = maxRevenue ? (data.amount / maxRevenue) * 100 : 0;
                                 return (
-                                    <div key={index} className="chart-bar-group">
+                                    <div key={data.day} className="chart-bar-group">
                                         <div className="chart-tooltip">{formatCurrency(data.amount)}</div>
                                         <div className="chart-bar" style={{ height: `${heightPercentage}%` }}></div>
                                         <span className="chart-label">{data.day}</span>
@@ -148,32 +171,35 @@ const Reports: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Sales by Category */}
                     <div className="dashboard-card">
                         <div className="dashboard-card-header">
                             <h3 className="dashboard-card-title">Sales by Category</h3>
                         </div>
                         <div className="category-list">
-                            {categorySales.map((cat, index) => (
-                                <div key={index} className="category-item">
-                                    <div className="category-info">
-                                        <span className="category-name">{cat.name}</span>
-                                        <span className="category-value">{cat.percentage}%</span>
+                            {loading ? (
+                                <div style={{ color: '#A0AEC0' }}>Loading categories...</div>
+                            ) : summary.categorySales.length === 0 ? (
+                                <div style={{ color: '#A0AEC0' }}>No category sales available</div>
+                            ) : (
+                                summary.categorySales.map((cat) => (
+                                    <div key={cat.name} className="category-item">
+                                        <div className="category-info">
+                                            <span className="category-name">{cat.name}</span>
+                                            <span className="category-value">{cat.percentage}%</span>
+                                        </div>
+                                        <div className="category-progress-bg">
+                                            <div
+                                                className="category-progress-fill"
+                                                style={{ width: `${cat.percentage}%`, backgroundColor: cat.color }}
+                                            ></div>
+                                        </div>
                                     </div>
-                                    <div className="category-progress-bg">
-                                        <div
-                                            className="category-progress-fill"
-                                            style={{ width: `${cat.percentage}%`, backgroundColor: cat.color }}
-                                        ></div>
-                                    </div>
-                                </div>
-                            ))}
+                                ))
+                            )}
                         </div>
                     </div>
-
                 </div>
 
-                {/* Top Selling Items */}
                 <div className="dashboard-grid" style={{ gridTemplateColumns: '1fr' }}>
                     <div className="dashboard-card">
                         <div className="dashboard-card-header">
@@ -189,30 +215,35 @@ const Reports: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {topItems.map((item, index) => (
-                                    <tr key={index}>
-                                        <td>
-                                            <div className="item-name-cell">
-                                                <span className={`item-rank rank-${item.rank}`}>{item.rank}</span>
-                                                {item.name}
-                                            </div>
-                                        </td>
-                                        <td>{item.sold}</td>
-                                        <td>{formatCurrency(item.revenue)}</td>
-                                        <td>
-                                            {item.trend === 'up' ? (
-                                                <span className="trend-up"><TrendingUp size={16} /> Up</span>
-                                            ) : (
-                                                <span className="trend-down"><TrendingDown size={16} /> Down</span>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))}
+                                {loading && !refetching ? (
+                                    <tr><td colSpan={4} style={{ textAlign: 'center', padding: '24px' }}>Loading items...</td></tr>
+                                ) : summary.topItems.length === 0 ? (
+                                    <tr><td colSpan={4} style={{ textAlign: 'center', padding: '24px' }}>No item sales yet</td></tr>
+                                ) : (
+                                    summary.topItems.map((item) => (
+                                        <tr key={item.name}>
+                                            <td>
+                                                <div className="item-name-cell">
+                                                    <span className={`item-rank rank-${item.rank}`}>{item.rank}</span>
+                                                    {item.name}
+                                                </div>
+                                            </td>
+                                            <td>{item.sold}</td>
+                                            <td>{formatCurrency(item.revenue)}</td>
+                                            <td>
+                                                {item.trend === 'up' ? (
+                                                    <span className="trend-up"><TrendingUp size={16} /> Up</span>
+                                                ) : (
+                                                    <span className="trend-down"><TrendingDown size={16} /> Down</span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
                             </tbody>
                         </table>
                     </div>
                 </div>
-
             </div>
         </div>
     );

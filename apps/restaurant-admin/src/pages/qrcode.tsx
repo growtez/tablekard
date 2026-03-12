@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Download, RefreshCw, QrCode, Table2, CheckCircle, AlertCircle } from 'lucide-react';
 import Sidebar from '../components/sidebar';
 import { useAuth } from '../context/AuthContext';
 import { getRestaurantTables } from '../services/supabaseService';
+import { useTabVisibilityRefetch } from '../hooks/useTabVisibilityRefetch';
 import type { RestaurantTable } from '../services/supabaseService';
 import './qrcode.css';
 
@@ -15,16 +16,11 @@ const QRCodePage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [qrSize, setQrSize] = useState(160);
+    const [initialLoad, setInitialLoad] = useState(true);
 
-    useEffect(() => {
-        if (activeRestaurantId) {
-            fetchTables();
-        }
-    }, [activeRestaurantId]);
-
-    const fetchTables = async () => {
+    const fetchTables = useCallback(async () => {
         if (!activeRestaurantId) return;
-        setLoading(true);
+        if (initialLoad) setLoading(true);
         setError(null);
         try {
             const data = await getRestaurantTables(activeRestaurantId);
@@ -34,8 +30,21 @@ const QRCodePage: React.FC = () => {
             setError('Failed to load tables. Please try again.');
         } finally {
             setLoading(false);
+            setInitialLoad(false);
         }
-    };
+    }, [activeRestaurantId, initialLoad]);
+
+    const { refetch: refetchTables, refetching } = useTabVisibilityRefetch(fetchTables, {
+        enabled: !!activeRestaurantId,
+        autoRefreshInterval: 30000,
+        refetchOnMount: true,
+    });
+
+    useEffect(() => {
+        if (activeRestaurantId) {
+            refetchTables(true);
+        }
+    }, [activeRestaurantId, refetchTables]);
 
     const buildQrUrl = (_tableId: string, tableNumber: number) =>
         `${BASE_URL}?restaurant_id=${activeRestaurantId}&table_id=${tableNumber}`;
@@ -83,8 +92,8 @@ const QRCodePage: React.FC = () => {
                         </p>
                     </div>
                     <div className="qr-header-actions">
-                        <button className="qr-refresh-btn" onClick={fetchTables} disabled={loading}>
-                            <RefreshCw size={16} className={loading ? 'spin' : ''} />
+                        <button className="qr-refresh-btn" onClick={() => refetchTables(true)} disabled={loading && !refetching}>
+                            <RefreshCw size={16} className={loading && !refetching ? 'spin' : ''} />
                             Refresh
                         </button>
                         {tables.length > 0 && (
@@ -124,7 +133,7 @@ const QRCodePage: React.FC = () => {
                     </div>
                 )}
 
-                {!loading && error && (
+                {( !loading || refetching) && error && (
                     <div className="qr-error-state">
                         <AlertCircle size={40} color="#E53E3E" />
                         <p>{error}</p>
@@ -132,7 +141,7 @@ const QRCodePage: React.FC = () => {
                     </div>
                 )}
 
-                {!loading && !error && tables.length === 0 && (
+                {( !loading || refetching) && !error && tables.length === 0 && (
                     <div className="qr-state-center">
                         <QrCode size={64} color="#CBD5E0" />
                         <p className="qr-empty-title">No tables found</p>
@@ -141,7 +150,7 @@ const QRCodePage: React.FC = () => {
                 )}
 
                 {/* QR Grid */}
-                {!loading && !error && tables.length > 0 && (
+                {( !loading || refetching) && !error && tables.length > 0 && (
                     <div className="qr-grid">
                         {tables.map((table) => {
                             const url = buildQrUrl(table.id, table.table_number);

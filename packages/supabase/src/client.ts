@@ -29,7 +29,7 @@ function getOrCreateClient(): SupabaseClient<Database> {
                 // Use a unique storage key per app to avoid cross-tab conflicts
                 storageKey: 'tablekard-admin-auth',
                 // Avoid navigator.locks deadlock on tab focus / HMR
-                lock: async (name: string, acquireTimeout: number, fn: () => Promise<any>) => {
+                lock: async (_name: string, _acquireTimeout: number, fn: () => Promise<any>) => {
                     return await fn();
                 }
             }

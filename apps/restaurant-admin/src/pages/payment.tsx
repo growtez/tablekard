@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { TrendingUp, Download, Calendar, CreditCard, CheckCircle, Eye, Trash2, X } from 'lucide-react';
 import './payment.css';
 import Sidebar from '../components/sidebar';
 import { useAuth } from '../context/AuthContext';
+import { useTabVisibilityRefetch } from '../hooks/useTabVisibilityRefetch';
 import { getPaymentTransactions, updatePaymentStatus } from '../services/supabaseService';
 import type { PaymentTransaction } from '../services/supabaseService';
 
@@ -17,16 +18,11 @@ const Payment: React.FC = () => {
 
   const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [initialLoad, setInitialLoad] = useState<boolean>(true);
 
-  useEffect(() => {
-    if (activeRestaurantId) {
-      fetchTransactions();
-    }
-  }, [activeRestaurantId]);
-
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     if (!activeRestaurantId) return;
-    setLoading(true);
+    if (initialLoad) setLoading(true);
     try {
       const data = await getPaymentTransactions(activeRestaurantId);
       setTransactions(data);
@@ -35,8 +31,15 @@ const Payment: React.FC = () => {
       alert('Failed to load payment transactions.');
     } finally {
       setLoading(false);
+      setInitialLoad(false);
     }
-  };
+  }, [activeRestaurantId, initialLoad]);
+
+  const { refetch: refetchTransactions, refetching } = useTabVisibilityRefetch(fetchTransactions, {
+    enabled: !!activeRestaurantId,
+    autoRefreshInterval: 30000,
+    refetchOnMount: true,
+  });
 
   // Filter transactions based on selected filters
   const filteredTransactions = transactions.filter(transaction => {
@@ -78,8 +81,14 @@ const Payment: React.FC = () => {
   }, [transactions]);
 
   const handleExportReport = () => {
-    console.log('Exporting report...');
-    // Implementation for exporting report
+    const payload = JSON.stringify(filteredTransactions, null, 2);
+    const blob = new Blob([payload], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'payment-report.json';
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleView = (id: string) => {
@@ -90,7 +99,7 @@ const Payment: React.FC = () => {
     }
   };
 
-  const handleMarkPaid = async (id: string) => {
+  const handleMarkPaid = useCallback(async (id: string) => {
     try {
       await updatePaymentStatus(id, 'paid');
       setTransactions(transactions.map(transaction =>
@@ -98,11 +107,12 @@ const Payment: React.FC = () => {
           ? { ...transaction, paymentStatus: 'Paid', statusColor: 'paid' }
           : transaction
       ));
+      await refetchTransactions(true);
     } catch (err) {
       console.error(err);
       alert('Failed to mark as paid');
     }
-  };
+  }, [refetchTransactions, transactions]);
 
   const handleDelete = (id: string) => {
     if (window.confirm('Are you sure you want to delete this transaction from view? (Not deleted from DB)')) {
@@ -128,7 +138,7 @@ const Payment: React.FC = () => {
           <div className="revenue-card">
             <div className="card-top-bar card-top-bar-green"></div>
             <h3 className="card-title">Revenue Today</h3>
-            <div className="revenue-amount">₹ {loading ? '...' : stats.todayRev.toLocaleString()}</div>
+            <div className="revenue-amount">₹ {loading && !refetching ? '...' : stats.todayRev.toLocaleString()}</div>
             <div className="revenue-change">
               <span
                 className={stats.todayChange >= 0 ? "change-text change-positive" : "change-text change-negative"}
@@ -148,7 +158,7 @@ const Payment: React.FC = () => {
           <div className="revenue-card">
             <div className="card-top-bar card-top-bar-blue"></div>
             <h3 className="card-title">Revenue This Week</h3>
-            <div className="revenue-amount">₹ {loading ? '...' : stats.weekRev.toLocaleString()}</div>
+            <div className="revenue-amount">₹ {loading && !refetching ? '...' : stats.weekRev.toLocaleString()}</div>
             <div className="revenue-change">
               <span
                 className={stats.weekChange >= 0 ? "change-text change-blue" : "change-text change-negative"}
@@ -240,7 +250,7 @@ const Payment: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {loading ? (
+              {loading && !refetching ? (
                 <tr>
                   <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>
                     Loading transactions...

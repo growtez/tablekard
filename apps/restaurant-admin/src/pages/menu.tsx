@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Bell, Plus, Edit3, Trash2, Layers } from 'lucide-react';
 import Sidebar from '../components/sidebar';
 import MenuDialog from '../components/menu_dialog';
@@ -16,6 +16,7 @@ import {
   updateMenuCategory,
   deleteMenuCategory
 } from '../services/supabaseService';
+import { useTabVisibilityRefetch } from '../hooks/useTabVisibilityRefetch';
 import type { MenuItem, MenuCategory } from '@restaurant-saas/types';
 import './menu.css';
 
@@ -28,6 +29,7 @@ const Menu: React.FC = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [loading, setLoading] = useState(false);
+  const [initialLoad, setInitialLoad] = useState(true); // first-time flag
 
   // Offers (mock data for now)
   const [offers, setOffers] = useState([
@@ -72,15 +74,10 @@ const Menu: React.FC = () => {
   const [selectedOffer, setSelectedOffer] = useState<any>(null);
   const [dialogMode, setDialogMode] = useState<'add' | 'edit'>('add');
 
-  useEffect(() => {
-    if (activeRestaurantId) {
-      fetchMenuData();
-    }
-  }, [activeRestaurantId]);
-
-  const fetchMenuData = async () => {
+  const fetchMenuData = useCallback(async () => {
     if (!activeRestaurantId) return;
-    setLoading(true);
+    // only show full‑page loading on first request
+    if (initialLoad) setLoading(true);
     try {
       const [fetchedCategories, fetchedItems] = await Promise.all([
         getMenuCategories(activeRestaurantId),
@@ -93,8 +90,21 @@ const Menu: React.FC = () => {
       alert('Failed to load menu data. Please try again.');
     } finally {
       setLoading(false);
+      setInitialLoad(false);
     }
-  };
+  }, [activeRestaurantId, initialLoad]);
+
+  const { refetch: refetchMenu, refetching } = useTabVisibilityRefetch(fetchMenuData, {
+    enabled: !!activeRestaurantId,
+    autoRefreshInterval: 30000,
+    refetchOnMount: true,
+  });
+
+  useEffect(() => {
+    if (activeRestaurantId) {
+      refetchMenu(true);
+    }
+  }, [activeRestaurantId, refetchMenu]);
 
   const filteredMenuItems = selectedCategoryId === 'all'
     ? menuItems
@@ -278,14 +288,14 @@ const Menu: React.FC = () => {
           <div className="stats-card">
             <div className="card-top-bar card-top-bar-green"></div>
             <h3 className="card-title">Active Menu Items</h3>
-            <div className="stats-number">{loading ? '...' : activeItems}</div>
+            <div className="stats-number">{loading && !refetching ? '...' : activeItems}</div>
             <div className="stats-subtitle">Currently available</div>
           </div>
 
           <div className="stats-card">
             <div className="card-top-bar card-top-bar-red"></div>
             <h3 className="card-title">Out of Stock Items</h3>
-            <div className="stats-number">{loading ? '...' : outOfStockItems}</div>
+            <div className="stats-number">{loading && !refetching ? '...' : outOfStockItems}</div>
             <div className="stats-subtitle">Need restocking</div>
           </div>
 
@@ -293,7 +303,7 @@ const Menu: React.FC = () => {
             <div className="card-top-bar card-top-bar-blue"></div>
             <h3 className="card-title">Top Selling Items (This Week)</h3>
             <div className="top-selling-item">
-              <span className="top-selling-name">{loading ? '...' : topSellingItem}</span>
+              <span className="top-selling-name">{loading && !refetching ? '...' : topSellingItem}</span>
             </div>
             <div className="stats-subtitle">Calculated dynamically</div>
           </div>
@@ -361,7 +371,7 @@ const Menu: React.FC = () => {
               ))}
             </div>
 
-            {loading ? (
+            {loading && !refetching ? (
               <div style={{ padding: '40px', textAlign: 'center', color: '#718096' }}>Loading menu...</div>
             ) : filteredMenuItems.length === 0 ? (
               <div style={{ padding: '40px', textAlign: 'center', color: '#718096' }}>No menu items found. Add one to get started!</div>

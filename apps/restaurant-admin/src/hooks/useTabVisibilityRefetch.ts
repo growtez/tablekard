@@ -1,31 +1,12 @@
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useRef, useState } from 'react';
 
-/**
- * Hook to handle automatic data refetching when:
- * 1. Tab becomes visible after being hidden
- * 2. At regular intervals (optional)
- * 
- * Usage:
- * ```typescript
- * const fetchData = useCallback(async () => {
- *   const data = await someApiCall();
- *   setData(data);
- * }, [dependencies]);
- * 
- * useTabVisibilityRefetch(fetchData, {
- *   enabled: true,
- *   autoRefreshInterval: 30000, // 30 seconds
- *   refetchOnMount: true
- * });
- * ```
- */
 export const useTabVisibilityRefetch = (
   fetchFn: () => Promise<void>,
   options: {
     enabled?: boolean;
-    autoRefreshInterval?: number; // in milliseconds, 0 to disable
+    autoRefreshInterval?: number;
     refetchOnMount?: boolean;
-    debounceMs?: number; // prevent rapid refetches
+    debounceMs?: number;
   } = {}
 ) => {
   const {
@@ -37,54 +18,55 @@ export const useTabVisibilityRefetch = (
 
   const fetchingRef = useRef(false);
   const lastFetchRef = useRef<number>(0);
+  const fetchFnRef = useRef(fetchFn);
+  const [refetching, setRefetching] = useState(false);
+
+  useEffect(() => {
+    fetchFnRef.current = fetchFn;
+  }, [fetchFn]);
 
   const safeFetch = useCallback(
     async (force = false) => {
       if (!enabled) return;
+      if (fetchingRef.current && !force) return;
 
-      // Prevent duplicate simultaneous fetches
-      if (fetchingRef.current && !force) {
-        console.log('[useTabVisibilityRefetch] Already fetching, skipping...');
-        return;
-      }
-
-      // Debounce rapid refetches (unless forced)
       const now = Date.now();
-      if (!force && now - lastFetchRef.current < debounceMs) {
-        console.log('[useTabVisibilityRefetch] Debouncing refetch');
-        return;
-      }
+      if (!force && now - lastFetchRef.current < debounceMs) return;
 
       fetchingRef.current = true;
+      setRefetching(true);
 
       try {
-        await fetchFn();
+        await fetchFnRef.current();
         lastFetchRef.current = Date.now();
       } catch (error) {
         console.error('[useTabVisibilityRefetch] Fetch failed:', error);
       } finally {
         fetchingRef.current = false;
+        setRefetching(false);
       }
     },
-    [fetchFn, enabled, debounceMs]
+    [enabled, debounceMs]
   );
 
-  // Initial fetch on mount
   useEffect(() => {
     if (refetchOnMount && enabled) {
       safeFetch(true);
     }
-  }, [enabled]); // Only run on mount or when enabled changes
+  }, [enabled, refetchOnMount, safeFetch]);
 
-  // Handle tab visibility changes
   useEffect(() => {
     if (!enabled) return;
 
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        console.log('[useTabVisibilityRefetch] Tab became visible, refetching...');
-        // Small delay to ensure Supabase connection is restored
-        setTimeout(() => {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+
+        timeoutId = setTimeout(() => {
           safeFetch(true);
         }, 100);
       }
@@ -93,17 +75,18 @@ export const useTabVisibilityRefetch = (
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [enabled, safeFetch]);
 
-  // Auto-refresh interval (only when tab is visible)
   useEffect(() => {
     if (!enabled || autoRefreshInterval <= 0) return;
 
     const intervalId = setInterval(() => {
       if (document.visibilityState === 'visible') {
-        console.log('[useTabVisibilityRefetch] Auto-refresh triggered');
         safeFetch();
       }
     }, autoRefreshInterval);
@@ -111,6 +94,5 @@ export const useTabVisibilityRefetch = (
     return () => clearInterval(intervalId);
   }, [enabled, autoRefreshInterval, safeFetch]);
 
-  // Return the safeFetch function for manual refetching
-  return safeFetch;
+  return { refetch: safeFetch, refetching };
 };

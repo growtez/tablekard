@@ -1,0 +1,144 @@
+.system-status-panel {
+  background: linear-gradient(135deg, #f8fafc, #eef2ff);
+  border: 1px solid #dbe4ff;
+  border-radius: 24px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+}
+
+.system-status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.system-status-header h2 {
+  margin: 0 0 6px;
+  font-size: 20px;
+  color: #0f172a;
+}
+
+.system-status-header p {
+  margin: 0;
+  color: #475569;
+  font-size: 14px;
+}
+
+.system-status-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 14px;
+  background: #0f172a;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.system-status-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.system-status-card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  min-height: 132px;
+}
+
+.system-status-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.system-status-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 10px;
+}
+
+.system-status-card p {
+  margin: 0;
+  color: #0f172a;
+  font-size: 13px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.tone-ok .system-status-chip {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.tone-warn .system-status-chip {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.tone-error .system-status-chip {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.tone-info .system-status-chip {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.system-status-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 16px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.spin {
+  animation: system-status-spin 1s linear infinite;
+}
+
+@keyframes system-status-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 1200px) {
+  .system-status-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .system-status-header {
+    flex-direction: column;
+  }
+
+  .system-status-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .system-status-meta {
+    flex-direction: column;
+  }
+}

@@ -1,11 +1,9 @@
-// Sidebar.tsx
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import './Sidebar.css';
+import { useAuth } from '../context/AuthContext';
+import './sidebar.css';
 
-// Using URL instead of local asset to avoid missing file error
-const pizzaLogo = "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=100&h=100&fit=crop";
-
+const pizzaLogo = 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=100&h=100&fit=crop';
 
 interface NavItem {
   icon: string;
@@ -17,6 +15,7 @@ interface NavItem {
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { userProfile, signOut } = useAuth();
 
   // Set active tab based on current path
   const getActiveTab = () => {
@@ -26,12 +25,13 @@ const Sidebar: React.FC = () => {
     if (path.includes('/menu')) return 'menu';
     if (path.includes('/payments')) return 'payment';
     if (path.includes('/reports')) return 'report';
-    if (path.includes('/qr-menu')) return 'qr-menu';
+    if (path.includes('/qrcode')) return 'qr-menu';
     if (path.includes('/table-management')) return 'table-management';
+    if (path.includes('/profile')) return 'profile';
     return 'dashboard';
   };
 
-  const [activeTab, setActiveTab] = useState(getActiveTab());
+  const activeTab = getActiveTab();
 
   // Collapse state - default to collapsed on mobile
   const [isCollapsed, setIsCollapsed] = useState(() => {
@@ -80,14 +80,17 @@ const Sidebar: React.FC = () => {
   ];
 
   const handleNavClick = (item: NavItem) => {
-    setActiveTab(item.id);
     navigate(item.path);
     if (window.innerWidth <= 768) {
-      setIsCollapsed(true); // Auto close on mobile when navigating
+      setIsCollapsed(true);
     }
   };
 
-  // Check if we are showing labels (on mobile, we always show labels when open, on desktop it depends on isCollapsed)
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/login', { replace: true });
+  };
+
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
   const showLabels = isMobile ? true : !isCollapsed;
 
@@ -108,16 +111,15 @@ const Sidebar: React.FC = () => {
       />
 
       <div className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
-
         <div className="sidebar-toggle" onClick={() => setIsCollapsed(!isCollapsed)}>
-          {isCollapsed ? '»' : '«'}
+          {isCollapsed ? '>>' : '<<'}
         </div>
 
         <div className="profile">
           <div className="profile-avatar">
-            <img src={pizzaLogo} alt="log" className="avatar-img" />
+            <img src={pizzaLogo} alt="restaurant" className="avatar-img" />
           </div>
-          {showLabels && <div className="profile-name">Pizza Hut</div>}
+          {showLabels && <div className="profile-name">{userProfile?.name || 'Restaurant Admin'}</div>}
         </div>
 
         <nav className="nav">
@@ -134,9 +136,22 @@ const Sidebar: React.FC = () => {
           ))}
         </nav>
 
-        <div className="help-button" onClick={() => navigate('/profile')} title={isCollapsed && !isMobile ? "Profile" : undefined}>
-          <span className="help-icon">👤</span>
+        <div
+          className={`help-button ${activeTab === 'profile' ? 'nav-item-active' : ''}`}
+          onClick={() => navigate('/profile')}
+          title={isCollapsed && !isMobile ? 'Profile' : undefined}
+        >
+          <span className="help-icon">Me</span>
           {showLabels && <span className="help-text">Profile</span>}
+        </div>
+
+        <div
+          className="help-button"
+          onClick={handleSignOut}
+          title={isCollapsed && !isMobile ? 'Sign Out' : undefined}
+        >
+          <span className="help-icon">Out</span>
+          {showLabels && <span className="help-text">Sign Out</span>}
         </div>
       </div>
     </>

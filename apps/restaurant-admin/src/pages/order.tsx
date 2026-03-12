@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Search, Bell, TrendingUp, Filter } from 'lucide-react';
 import Sidebar from '../components/sidebar';
 import { useAuth } from '../context/AuthContext';
+import { useTabVisibilityRefetch } from '../hooks/useTabVisibilityRefetch';
 import { getDashboardOrders, updateOrderStatus } from '../services/supabaseService';
 import type { DashboardOrder } from '../services/supabaseService';
 import './order.css';
@@ -15,6 +16,7 @@ const Order: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [orders, setOrders] = useState<DashboardOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
 
   // Stats calculation
   const stats = useMemo(() => {
@@ -44,15 +46,9 @@ const Order: React.FC = () => {
     return { today, week, todayChange, weekChange };
   }, [orders]);
 
-  useEffect(() => {
-    if (activeRestaurantId) {
-      fetchOrders();
-    }
-  }, [activeRestaurantId]);
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     if (!activeRestaurantId) return;
-    setLoading(true);
+    if (initialLoad) setLoading(true);
     try {
       const data = await getDashboardOrders(activeRestaurantId);
       setOrders(data);
@@ -61,10 +57,17 @@ const Order: React.FC = () => {
       alert('Failed to load orders.');
     } finally {
       setLoading(false);
+      setInitialLoad(false);
     }
-  };
+  }, [activeRestaurantId, initialLoad]);
 
-  const handleStatusChange = async (orderId: string, currentStatus: string) => {
+  const { refetch: refetchOrders, refetching } = useTabVisibilityRefetch(fetchOrders, {
+    enabled: !!activeRestaurantId,
+    autoRefreshInterval: 30000,
+    refetchOnMount: true,
+  });
+
+  const handleStatusChange = useCallback(async (orderId: string, currentStatus: string) => {
     // Basic cycle example: Pending -> Preparing -> Ready -> Served -> Completed
     const cycle = ['Pending', 'Preparing', 'Ready', 'Served', 'Completed'];
     const idx = cycle.indexOf(currentStatus);
@@ -72,12 +75,12 @@ const Order: React.FC = () => {
       const nextStatus = cycle[idx + 1];
       try {
         await updateOrderStatus(orderId, nextStatus.toLowerCase() as any);
-        fetchOrders(); // refresh
+        await refetchOrders(true);
       } catch (err) {
         console.error('Failed to update status', err);
       }
     }
-  };
+  }, [refetchOrders]);
 
   const filteredOrders = useMemo(() => {
     return orders.filter(o => {
@@ -90,7 +93,7 @@ const Order: React.FC = () => {
     });
   }, [orders, searchQuery, selectedTable, selectedPayment, selectedStatus]);
 
-  const getStatusClass = (color) => {
+  const getStatusClass = (color: string) => {
     return `status-${color}`;
   };
 
@@ -125,7 +128,7 @@ const Order: React.FC = () => {
           <div className="order-stat-card">
             <div className="order-card-top-bar order-card-green"></div>
             <h3 className="order-stat-title">Total Orders Today</h3>
-            <div className="order-stat-number">{loading ? '...' : stats.today}</div>
+            <div className="order-stat-number">{loading && !refetching ? '...' : stats.today}</div>
             <div className="order-stat-change">
               <span
                 className={stats.todayChange >= 0 ? "order-change-positive" : "order-change-negative"}
@@ -145,7 +148,7 @@ const Order: React.FC = () => {
           <div className="order-stat-card">
             <div className="order-card-top-bar order-card-blue"></div>
             <h3 className="order-stat-title">Total Orders This Week</h3>
-            <div className="order-stat-number">{loading ? '...' : stats.week}</div>
+            <div className="order-stat-number">{loading && !refetching ? '...' : stats.week}</div>
             <div className="order-stat-change">
               <span
                 className={stats.weekChange >= 0 ? "order-change-blue" : "order-change-negative"}
@@ -227,7 +230,7 @@ const Order: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {loading ? (
+                {loading && !refetching ? (
                   <tr>
                     <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>
                       Loading orders...
