@@ -90,7 +90,7 @@ const Order: React.FC = () => {
     });
   }, [orders, searchQuery, selectedTable, selectedPayment, selectedStatus]);
 
-  const getStatusClass = (color) => {
+  const getStatusClass = (color: string) => {
     return `status-${color}`;
   };
 

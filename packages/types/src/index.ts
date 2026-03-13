@@ -8,54 +8,62 @@ export type IsoDateString = string;
 // Enums
 // ==========================================
 
-export enum UserRole {
-  SUPER_ADMIN = 'SUPER_ADMIN',
-  RESTAURANT_ADMIN = 'RESTAURANT_ADMIN',
-  RESTAURANT_STAFF = 'RESTAURANT_STAFF',
-  CUSTOMER = 'CUSTOMER',
-}
+export const UserRole = {
+  SUPER_ADMIN: 'SUPER_ADMIN',
+  RESTAURANT_ADMIN: 'RESTAURANT_ADMIN',
+  RESTAURANT_STAFF: 'RESTAURANT_STAFF',
+  CUSTOMER: 'CUSTOMER',
+} as const;
+export type UserRole = typeof UserRole[keyof typeof UserRole];
 
-export enum SubscriptionPlan {
-  QR = 'QR',
-}
+export const SubscriptionPlan = {
+  QR: 'QR',
+} as const;
+export type SubscriptionPlan = typeof SubscriptionPlan[keyof typeof SubscriptionPlan];
 
-export enum OrderType {
-  DINE_IN = 'DINE_IN',
-  TAKEAWAY = 'TAKEAWAY',
-}
+export const OrderType = {
+  DINE_IN: 'DINE_IN',
+  TAKEAWAY: 'TAKEAWAY',
+} as const;
+export type OrderType = typeof OrderType[keyof typeof OrderType];
 
-export enum OrderStatus {
-  PENDING = 'PENDING',
-  CONFIRMED = 'CONFIRMED',
-  PREPARING = 'PREPARING',
-  READY = 'READY',
-  SERVED = 'SERVED',
-  CANCELLED = 'CANCELLED',
-}
+export const OrderStatus = {
+  PENDING: 'PENDING',
+  CONFIRMED: 'CONFIRMED',
+  PREPARING: 'PREPARING',
+  READY: 'READY',
+  SERVED: 'SERVED',
+  CANCELLED: 'CANCELLED',
+} as const;
+export type OrderStatus = typeof OrderStatus[keyof typeof OrderStatus];
 
-export enum PaymentMethod {
-  ONLINE = 'ONLINE',
-  PAY_AT_COUNTER = 'PAY_AT_COUNTER',
-}
+export const PaymentMethod = {
+  ONLINE: 'ONLINE',
+  PAY_AT_COUNTER: 'PAY_AT_COUNTER',
+} as const;
+export type PaymentMethod = typeof PaymentMethod[keyof typeof PaymentMethod];
 
-export enum PaymentStatus {
-  PENDING = 'PENDING',
-  PAID = 'PAID',
-  FAILED = 'FAILED',
-  REFUNDED = 'REFUNDED',
-}
+export const PaymentStatus = {
+  PENDING: 'PENDING',
+  PAID: 'PAID',
+  FAILED: 'FAILED',
+  REFUNDED: 'REFUNDED',
+} as const;
+export type PaymentStatus = typeof PaymentStatus[keyof typeof PaymentStatus];
 
-export enum SubscriptionStatus {
-  ACTIVE = 'ACTIVE',
-  SUSPENDED = 'SUSPENDED',
-  TRIAL = 'TRIAL',
-  EXPIRED = 'EXPIRED',
-}
+export const SubscriptionStatus = {
+  ACTIVE: 'ACTIVE',
+  SUSPENDED: 'SUSPENDED',
+  TRIAL: 'TRIAL',
+  EXPIRED: 'EXPIRED',
+} as const;
+export type SubscriptionStatus = typeof SubscriptionStatus[keyof typeof SubscriptionStatus];
 
-export enum RestaurantStatus {
-  OPEN = 'OPEN',
-  CLOSED = 'CLOSED',
-}
+export const RestaurantStatus = {
+  OPEN: 'OPEN',
+  CLOSED: 'CLOSED',
+} as const;
+export type RestaurantStatus = typeof RestaurantStatus[keyof typeof RestaurantStatus];
 
 // ==========================================
 // User Types
@@ -121,6 +129,7 @@ export interface Restaurant {
   };
   subscriptionStatus?: boolean;
   subscriptionType?: string | null;
+  profileUrls?: string[] | null;
   location?: {
     latitude?: number | null;
     longitude?: number | null;
@@ -364,6 +373,7 @@ export interface Database {
           logo_url: string | null;
           primary_color: string | null;
           secondary_color: string | null;
+          profile_urls: string[] | null;
           settings: Record<string, unknown> | null;
           subscription_status: boolean;
           subscription_type: string | null;
@@ -385,6 +395,7 @@ export interface Database {
           logo_url?: string | null;
           primary_color?: string | null;
           secondary_color?: string | null;
+          profile_urls?: string[] | null;
           settings?: Record<string, unknown> | null;
           subscription_status?: boolean;
           subscription_type?: string | null;
@@ -405,6 +416,7 @@ export interface Database {
           logo_url?: string | null;
           primary_color?: string | null;
           secondary_color?: string | null;
+          profile_urls?: string[] | null;
           settings?: Record<string, unknown> | null;
           subscription_status?: boolean;
           subscription_type?: string | null;

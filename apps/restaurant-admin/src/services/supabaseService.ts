@@ -13,7 +13,7 @@
  */
 
 import { supabase } from '@restaurant-saas/supabase';
-import type { MenuItem, MenuCategory, Restaurant, Order, OrderStatus } from '@restaurant-saas/types';
+import type { MenuItem, MenuCategory, Restaurant, Order, OrderStatus, Profile } from '@restaurant-saas/types';
 
 // Shorthand to avoid the generic type conflict in supabase-js v2.95+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -27,7 +27,15 @@ interface RestaurantRow {
     id: string; name: string; slug: string; status: string; status_reason: string | null;
     contact_email: string | null; contact_phone: string | null; contact_address: string | null;
     logo_url: string | null; primary_color: string | null; secondary_color: string | null;
-    settings: Record<string, unknown> | null; created_at: string; updated_at: string;
+    profile_urls: string[] | null; settings: Record<string, unknown> | null;
+    subscription_status: boolean; subscription_type: string | null;
+    latitude: number | null; longitude: number | null; allowed_radius: number | null;
+    created_at: string; updated_at: string;
+}
+
+interface ProfileRow {
+    id: string; email: string; name: string | null; role: Profile['role'];
+    avatar_url: string | null; created_at: string; updated_at: string;
 }
 
 interface MenuItemRow {
@@ -54,6 +62,72 @@ interface OrderRow {
     transaction_id: string | null; created_at: string; updated_at: string;
 }
 
+export interface RestaurantProfileUpdateInput {
+    name: string;
+    contactEmail: string;
+    contactPhone?: string | null;
+    contactAddress?: string | null;
+    logoUrl?: string | null;
+    primaryColor?: string | null;
+    secondaryColor?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+    allowedRadius?: number | null;
+    profileUrls?: string[];
+}
+
+export interface AdministratorProfileUpdateInput {
+    currentEmail: string;
+    email: string;
+    name: string;
+    avatarUrl?: string | null;
+}
+
+export interface AdministratorProfileUpdateResult {
+    profile: Profile;
+    emailChangePending: boolean;
+    pendingEmail?: string;
+}
+
+const mapRestaurantRow = (row: RestaurantRow): Restaurant => ({
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    status: row.status as Restaurant['status'],
+    statusReason: row.status_reason,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    contact: {
+        email: row.contact_email,
+        phone: row.contact_phone,
+        address: row.contact_address
+    },
+    branding: {
+        logoUrl: row.logo_url,
+        primaryColor: row.primary_color,
+        secondaryColor: row.secondary_color
+    },
+    settings: row.settings ?? undefined,
+    subscriptionStatus: row.subscription_status,
+    subscriptionType: row.subscription_type,
+    profileUrls: row.profile_urls ?? [],
+    location: {
+        latitude: row.latitude,
+        longitude: row.longitude,
+        allowedRadius: row.allowed_radius
+    }
+});
+
+const mapProfileRow = (row: ProfileRow): Profile => ({
+    id: row.id,
+    email: row.email,
+    name: row.name,
+    role: row.role,
+    avatarUrl: row.avatar_url,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+});
+
 // ==========================================
 // Restaurant
 // ==========================================
@@ -66,26 +140,78 @@ export const getRestaurantById = async (restaurantId: string): Promise<Restauran
         .maybeSingle();
     if (error) throw error;
     if (!data) return null;
-    const row = data as RestaurantRow;
+    return mapRestaurantRow(data as RestaurantRow);
+};
+
+export const updateRestaurantProfile = async (
+    restaurantId: string,
+    input: RestaurantProfileUpdateInput
+): Promise<Restaurant> => {
+    const { data, error } = await db
+        .from('restaurants')
+        .update({
+            name: input.name,
+            contact_email: input.contactEmail,
+            contact_phone: input.contactPhone ?? null,
+            contact_address: input.contactAddress ?? null,
+            logo_url: input.logoUrl ?? null,
+            primary_color: input.primaryColor ?? null,
+            secondary_color: input.secondaryColor ?? null,
+            latitude: input.latitude ?? null,
+            longitude: input.longitude ?? null,
+            allowed_radius: input.allowedRadius ?? null,
+            profile_urls: input.profileUrls ?? []
+        })
+        .eq('id', restaurantId)
+        .select('*')
+        .single();
+
+    if (error) throw error;
+    return mapRestaurantRow(data as RestaurantRow);
+};
+
+export const updateAdministratorProfile = async (
+    userId: string,
+    input: AdministratorProfileUpdateInput
+): Promise<AdministratorProfileUpdateResult> => {
+    const normalizedEmail = input.email.trim().toLowerCase();
+    const normalizedCurrentEmail = input.currentEmail.trim().toLowerCase();
+    let emailChangePending = false;
+
+    if (normalizedEmail !== normalizedCurrentEmail) {
+        const { data, error } = await supabase.auth.updateUser({ email: normalizedEmail });
+        if (error) throw error;
+
+        const authUser = data.user as { email?: string | null } | null;
+        emailChangePending = authUser?.email?.toLowerCase() !== normalizedEmail;
+    }
+
+    const profilePatch: {
+        email?: string;
+        name: string;
+        avatar_url: string | null;
+    } = {
+        name: input.name,
+        avatar_url: input.avatarUrl ?? null
+    };
+
+    if (!emailChangePending) {
+        profilePatch.email = normalizedEmail;
+    }
+
+    const { data, error } = await db
+        .from('profiles')
+        .update(profilePatch)
+        .eq('id', userId)
+        .select('id, email, name, role, avatar_url, created_at, updated_at')
+        .single();
+
+    if (error) throw error;
+
     return {
-        id: row.id,
-        name: row.name,
-        slug: row.slug,
-        status: row.status as Restaurant['status'],
-        statusReason: row.status_reason,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
-        contact: {
-            email: row.contact_email,
-            phone: row.contact_phone,
-            address: row.contact_address
-        },
-        branding: {
-            logoUrl: row.logo_url,
-            primaryColor: row.primary_color,
-            secondaryColor: row.secondary_color
-        },
-        settings: row.settings ?? undefined
+        profile: mapProfileRow(data as ProfileRow),
+        emailChangePending,
+        pendingEmail: emailChangePending ? normalizedEmail : undefined
     };
 };
 
