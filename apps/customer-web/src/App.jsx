@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "r
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
+import { RestaurantProvider } from "./context/RestaurantContext";
 
 // Lazy load pages for faster initial startup
 const HomePage = lazy(() => import("./pages/home"));
@@ -77,35 +78,38 @@ function RequireAuth({ children }) {
 
 function AppRoutes() {
   return (
-    <Routes>
-      {/* Public Customer Routes */}
-      <Route path="/" element={<HomePage />} />
-      <Route path="/menu" element={<MenuPage />} />
-      <Route path="/orders" element={<MyOrdersPage />} />
-      <Route path="/search" element={<SearchPage />} />
-      <Route path="/popular" element={<MostPopularPage />} />
-      <Route path="/offers" element={<OffersPage />} />
-      <Route path="/onboarding" element={<OnboardingPage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/about" element={<AboutPage />} />
+    <RestaurantProvider>
+      <Routes>
+        {/* QR Code Entry Route – captures restaurantId and tableId */}
+        <Route path="/order/:restaurantId/:tableId" element={<MenuPage />} />
 
-      {/* Protected Customer Routes */}
-      <Route path="/profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
-      <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
-      <Route path="/likes" element={<RequireAuth><LikesPage /></RequireAuth>} />
-      <Route path="/recent" element={<RequireAuth><RecentOrdersPage /></RequireAuth>} />
-      <Route path="/live-queue" element={<RequireAuth><LiveQueuePage /></RequireAuth>} />
-      <Route path="/feedback" element={<RequireAuth><FeedbackPage /></RequireAuth>} />
-      <Route path="/feedback/:orderId" element={<RequireAuth><FeedbackPage /></RequireAuth>} />
-      <Route path="/order-history" element={<RequireAuth><OrderHistoryPage /></RequireAuth>} />
+        {/* Public Customer Routes */}
+        <Route path="/" element={<HomePage />} />
+        <Route path="/menu" element={<MenuPage />} />
+        <Route path="/orders" element={<MyOrdersPage />} />
+        <Route path="/search" element={<SearchPage />} />
+        <Route path="/popular" element={<MostPopularPage />} />
+        <Route path="/offers" element={<OffersPage />} />
+        <Route path="/onboarding" element={<OnboardingPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/about" element={<AboutPage />} />
 
+        {/* Protected Customer Routes */}
+        <Route path="/profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
+        <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
+        <Route path="/likes" element={<RequireAuth><LikesPage /></RequireAuth>} />
+        <Route path="/recent" element={<RequireAuth><RecentOrdersPage /></RequireAuth>} />
+        <Route path="/live-queue" element={<RequireAuth><LiveQueuePage /></RequireAuth>} />
+        <Route path="/feedback" element={<RequireAuth><FeedbackPage /></RequireAuth>} />
+        <Route path="/feedback/:orderId" element={<RequireAuth><FeedbackPage /></RequireAuth>} />
+        <Route path="/order-history" element={<RequireAuth><OrderHistoryPage /></RequireAuth>} />
 
+        {/* Developer Demo Route */}
+        <Route path="/test-webhook" element={<TestWebhookPage />} />
 
-      {/* Developer Demo Route */}
-      <Route path="/test-webhook" element={<TestWebhookPage />} />
-
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </RestaurantProvider>
   );
 }
 

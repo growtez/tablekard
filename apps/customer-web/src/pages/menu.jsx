@@ -1,13 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Heart, Home, ShoppingBag, User, Star, Plus, Minus, Filter, ShoppingCart, X, Grid, Clock, Hourglass, ArrowRight, Users, Loader2 } from 'lucide-react';
+import { Search, Heart, Home, ShoppingBag, User, Star, Plus, Minus, Filter, ShoppingCart, X, Grid, Clock, Hourglass, ArrowRight, Users, Loader2, QrCode } from 'lucide-react';
 import { NavLink, useNavigate } from "react-router-dom";
 import { useCart } from '../context/CartContext';
+import { useRestaurant } from '../context/RestaurantContext';
 import { supabase } from '@restaurant-saas/supabase';
 import './menu.css';
 import Hamburger from '../components/hamburger';
 
 const MenuPage = () => {
   const navigate = useNavigate();
+  const { restaurantId } = useRestaurant();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Starters');
   const [favorites, setFavorites] = useState([]);
@@ -27,6 +29,7 @@ const MenuPage = () => {
 
   // Load real menu items from database
   useEffect(() => {
+    if (!restaurantId) return; // Don't fetch if no restaurant context
     const loadMenu = async () => {
       // 1. Check Cache First
       const cachedMenu = sessionStorage.getItem('menuData');
@@ -38,12 +41,10 @@ const MenuPage = () => {
       }
 
       try {
-        const restaurantId = 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d';
-
         // 2. Parallel Fetch
         const [catsRes, itemsRes] = await Promise.all([
           supabase.from('menu_categories').select('id, name').eq('restaurant_id', restaurantId).eq('active', true).order('sort_order'),
-          supabase.from('menu_items').select('*').eq('restaurant_id', restaurantId).eq('is_available', true)
+          supabase.from('menu_items').select('*, menu_item_images(id, image_url, sort_order)').eq('restaurant_id', restaurantId).eq('is_available', true)
         ]);
 
         if (catsRes.data && itemsRes.data) {
@@ -53,19 +54,24 @@ const MenuPage = () => {
           catsRes.data.forEach(cat => {
             grouped[cat.name] = itemsRes.data
               .filter(item => item.category_id === cat.id)
-              .map(item => ({
-                id: item.id,
-                name: item.name,
-                shortDesc: item.description?.substring(0, 80) || '',
-                description: item.description || '',
-                price: item.discount_price || item.price,
-                originalPrice: item.discount_price ? item.price : null,
-                time: item.preparation_time ? `${item.preparation_time}min` : '15min',
-                rating: parseFloat((4.5 + Math.random() * 0.4).toFixed(1)),
-                serves: item.serves || 'Serves 1',
-                image: item.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
-                dietType: item.is_veg ? 'veg' : 'non-veg',
-              }));
+              .map(item => {
+                const images = (item.menu_item_images || []).sort((a, b) => a.sort_order - b.sort_order);
+                const primaryImage = images.length > 0 ? images[0].image_url : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop';
+                return {
+                  id: item.id,
+                  name: item.name,
+                  shortDesc: item.short_description || item.description?.substring(0, 80) || '',
+                  description: item.long_description || item.description || '',
+                  price: item.discount_price || item.price,
+                  originalPrice: item.discount_price ? item.price : null,
+                  time: item.preparation_time ? `${item.preparation_time}min` : '15min',
+                  rating: parseFloat((4.5 + Math.random() * 0.4).toFixed(1)),
+                  serves: item.serves || 'Serves 1',
+                  image: primaryImage,
+                  images: images.map(img => img.image_url),
+                  dietType: item.is_veg ? 'veg' : 'non-veg',
+                };
+              });
           });
 
           // 3. Update State & Cache
@@ -85,7 +91,7 @@ const MenuPage = () => {
       }
     };
     loadMenu();
-  }, []);
+  }, [restaurantId]);
 
   const toggleFavorite = (itemId) => {
     setFavorites(prev =>
@@ -109,7 +115,31 @@ const MenuPage = () => {
 
   return (
     <div className="menu-container">
-      {/* Header with Nav Buttons */}
+      {/* No Restaurant Context – fallback for direct /menu access */}
+      {!restaurantId && (
+        <div style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '16px',
+          padding: '32px',
+          textAlign: 'center',
+          background: 'var(--bg-primary, #fff)'
+        }}>
+          <QrCode size={72} color="#8B3A1E" strokeWidth={1.5} />
+          <h2 style={{ color: '#8B3A1E', fontSize: '1.5rem', fontWeight: 700 }}>
+            Scan the QR Code
+          </h2>
+          <p style={{ color: '#666', maxWidth: '280px', lineHeight: 1.6 }}>
+            Please scan the QR code on your table to view the restaurant menu.
+          </p>
+        </div>
+      )}
+
+      {/* Main menu content – only renders when restaurantId exists */}
+      {restaurantId && (<>
       <header className="menu-header-nav">
         <Hamburger />
         <div className="header-nav-right">
@@ -394,6 +424,7 @@ const MenuPage = () => {
           </NavLink>
         </nav>
       )}
+    </>)}
     </div>
   );
 };
