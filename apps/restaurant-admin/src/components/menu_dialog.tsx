@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Upload, Image, Plus, Minus, Tag, ChevronDown } from 'lucide-react';
+import { X, Plus, Minus, Tag, ChevronDown } from 'lucide-react';
 import type { MenuCategory } from '@restaurant-saas/types';
 import './menu_dialog.css';
 
@@ -39,7 +39,7 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
     price: '',
     discount_price: '',
     category_id: categories.length > 0 ? categories[0].id : '',
-    image_url: null as string | null,
+    images: [] as { id?: string, file?: File, url: string, sortOrder: number, isDeleted?: boolean }[],
     is_available: true,
     is_veg: true,
     preparation_time: '',
@@ -48,7 +48,6 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
     addons: [] as Addon[],
   });
 
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [newTag, setNewTag] = useState('');
   const [newVariant, setNewVariant] = useState<Variant>({ name: '', price: 0 });
   const [newAddon, setNewAddon] = useState<Addon>({ name: '', price: 0 });
@@ -63,7 +62,7 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
         price: item.price?.toString() ?? '',
         discount_price: item.discount_price?.toString() ?? '',
         category_id: item.category_id ?? item.categoryId ?? (categories[0]?.id ?? ''),
-        image_url: item.image_url ?? null,
+        images: item.images ? item.images.map((img: any) => ({ id: img.id, url: img.url, sortOrder: img.sortOrder })) : [],
         is_available: item.is_available ?? item.available ?? true,
         is_veg: item.is_veg ?? item.isVeg ?? true,
         preparation_time: item.preparation_time?.toString() ?? '',
@@ -71,18 +70,16 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
         variants: Array.isArray(item.variants) ? item.variants : [],
         addons: Array.isArray(item.addons) ? item.addons : [],
       });
-      setImagePreview(item.image_url ?? null);
     } else {
       setFormData({
         name: '', short_description: '', long_description: '',
         price: '', discount_price: '',
         category_id: categories[0]?.id ?? '',
-        image_url: null,
+        images: [],
         is_available: true, is_veg: true,
         preparation_time: '',
         tags: [], variants: [], addons: []
       });
-      setImagePreview(null);
     }
   }, [mode, item, isOpen, categories]);
 
@@ -94,16 +91,32 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
     }));
   };
 
-  const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const result = reader.result as string;
-      setImagePreview(result);
-      setFormData(prev => ({ ...prev, image_url: result }));
-    };
-    reader.readAsDataURL(file);
+  const handleImageFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    setFormData(prev => {
+      let currentOrder = prev.images.filter(img => !img.isDeleted).length;
+      const newImages = files.map(file => {
+        currentOrder += 1;
+        return {
+          file,
+          url: URL.createObjectURL(file), // Provide immediate preview
+          sortOrder: currentOrder
+        };
+      });
+      return { ...prev, images: [...prev.images, ...newImages] };
+    });
+    
+    // reset input
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleRemoveImage = (urlToRemove: string) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.map(img => img.url === urlToRemove ? { ...img, isDeleted: true } : img)
+    }));
   };
 
   const toggleTag = (tag: string) => {
@@ -172,7 +185,7 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
       discount_price: formData.discount_price ? parseFloat(formData.discount_price) : null,
       category_id: formData.category_id,
       categoryId: formData.category_id, // keep backward compat
-      image_url: formData.image_url,
+      images: formData.images,
       is_available: formData.is_available,
       is_veg: formData.is_veg,
       preparation_time: formData.preparation_time ? parseInt(formData.preparation_time) : null,
@@ -293,25 +306,34 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
 
           {/* Image Upload */}
           <div className="menu-form-group">
-            <label className="menu-form-label">Item Image</label>
-            <div className="menu-image-upload-area" onClick={() => fileInputRef.current?.click()}>
-              {imagePreview ? (
-                <div className="menu-image-preview-wrap">
-                  <img src={imagePreview} alt="preview" className="menu-image-preview" />
-                  <div className="menu-image-overlay">
-                    <Upload size={20} />
-                    <span>Change Image</span>
-                  </div>
+            <label className="menu-form-label">Item Images</label>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '12px' }}>
+              {formData.images.filter(img => !img.isDeleted).map((img, idx) => (
+                <div key={img.url} style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #E2E8F0' }}>
+                  <img src={img.url} alt={`Preview ${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <button 
+                    type="button" 
+                    onClick={() => handleRemoveImage(img.url)}
+                    style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                  >
+                    <X size={12} />
+                  </button>
+                  {idx === 0 && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(56, 161, 105, 0.9)', color: 'white', fontSize: '10px', textAlign: 'center', padding: '2px 0' }}>Primary</div>}
                 </div>
-              ) : (
-                <div className="menu-image-placeholder">
-                  <Image size={32} color="#A0AEC0" />
-                  <span>Click to upload image</span>
-                  <small>PNG, JPG up to 2MB</small>
+              ))}
+              
+              <div 
+                className="menu-image-upload-area" 
+                style={{ width: '80px', height: '80px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 0, minHeight: '80px' }}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#A0AEC0' }}>
+                  <Plus size={24} />
+                  <span style={{ fontSize: '10px', marginTop: '4px' }}>Add</span>
                 </div>
-              )}
+              </div>
             </div>
-            <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageFile} />
+            <input ref={fileInputRef} type="file" multiple accept="image/*" style={{ display: 'none' }} onChange={handleImageFiles} />
           </div>
 
           {/* Preparation Time */}

@@ -20,12 +20,14 @@ import {
     getRestaurantTables, 
     createRestaurantTable, 
     updateRestaurantTable, 
-    deleteRestaurantTable 
+    deleteRestaurantTable,
+    getRestaurantById
 } from '../services/supabaseService';
 import type { RestaurantTable } from '../services/supabaseService';
+import { paintQrTemplate } from '../utils/qrTemplatePainter';
 import './table_management.css';
 
-const BASE_URL = 'https://tablekard.com/menu';
+const BASE_URL = import.meta.env.VITE_CUSTOMER_APP_URL || window.location.origin;
 
 interface TableFormData {
     table_number: number;
@@ -39,6 +41,7 @@ const TableManagementPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [qrSize, setQrSize] = useState(160);
+    const [restaurantName, setRestaurantName] = useState<string>('Restaurant');
     
     // Modal states
     const [showAddModal, setShowAddModal] = useState(false);
@@ -58,6 +61,10 @@ const TableManagementPage: React.FC = () => {
     useEffect(() => {
         if (activeRestaurantId) {
             fetchTables();
+            // Fetch restaurant name for the QR download template
+            getRestaurantById(activeRestaurantId)
+                .then(r => { if (r?.name) setRestaurantName(r.name); })
+                .catch(() => { /* silently fallback to 'Restaurant' */ });
         }
     }, [activeRestaurantId]);
 
@@ -76,30 +83,27 @@ const TableManagementPage: React.FC = () => {
         }
     };
 
-    const buildQrUrl = (_tableId: string, tableNumber: number) =>
-        `${BASE_URL}?restaurant_id=${activeRestaurantId}&table_id=${tableNumber}`;
+    const buildQrUrl = (tableId: string, _tableNumber: number) =>
+        `${BASE_URL}/order/${activeRestaurantId}/${tableId}`;
 
-    const downloadQR = (tableId: string, tableNumber: number) => {
-        const svgEl = document.getElementById(`qr-svg-${tableId}`) as SVGElement | null;
-        if (!svgEl) return;
-
-        const svgData = new XMLSerializer().serializeToString(svgEl);
-        const canvas = document.createElement('canvas');
-        const size = qrSize + 40;
-        canvas.width = size;
-        canvas.height = size;
-        const ctx = canvas.getContext('2d')!;
-        const img = new Image();
-        img.onload = () => {
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, size, size);
-            ctx.drawImage(img, 20, 20, qrSize, qrSize);
+    const downloadQR = async (tableId: string, tableNumber: number) => {
+        const url = buildQrUrl(tableId, tableNumber);
+        try {
+            const canvas = await paintQrTemplate({
+                qrSvgElementId: `qr-svg-${tableId}`,
+                restaurantName,
+                tableNumber,
+                qrUrl: url,
+                qrSize: 200,
+            });
             const link = document.createElement('a');
             link.download = `table-${tableNumber}-qr.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
-        };
-        img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+        } catch (err) {
+            console.error('QR download failed:', err);
+            setError('Failed to generate QR download. Please try again.');
+        }
     };
 
     const downloadAll = () => {

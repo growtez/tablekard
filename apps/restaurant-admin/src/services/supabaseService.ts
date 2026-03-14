@@ -32,11 +32,12 @@ interface RestaurantRow {
 
 interface MenuItemRow {
     id: string; restaurant_id: string; category_id: string | null; name: string;
-    description: string | null; price: number; discount_price: number | null;
-    image_url: string | null; is_available: boolean; is_veg: boolean;
+    short_description: string | null; long_description: string | null; price: number; discount_price: number | null;
+    is_available: boolean; is_veg: boolean;
     preparation_time: number | null; tags: string[] | null;
     variants: unknown[] | null; addons: unknown[] | null;
     created_at: string; updated_at: string;
+    menu_item_images?: { id: string; image_url: string; sort_order: number }[];
 }
 
 interface MenuCategoryRow {
@@ -98,10 +99,18 @@ const mapMenuItemRow = (row: MenuItemRow): MenuItem => ({
     restaurantId: row.restaurant_id,
     categoryId: row.category_id ?? '',
     name: row.name,
-    description: row.description,
+    description: row.short_description || row.long_description, // fallback to match existing type, or adjust type later
     price: row.price,
     discountPrice: row.discount_price,
-    image: row.image_url,
+    images: row.menu_item_images 
+        ? row.menu_item_images.map(img => ({
+            id: img.id,
+            menuItemId: row.id,
+            restaurantId: row.restaurant_id,
+            url: img.image_url,
+            sortOrder: img.sort_order
+          })).sort((a, b) => a.sortOrder - b.sortOrder)
+        : [],
     available: row.is_available,
     isVeg: row.is_veg,
     preparationTime: row.preparation_time,
@@ -113,7 +122,14 @@ const mapMenuItemRow = (row: MenuItemRow): MenuItem => ({
 export const getMenuItems = async (restaurantId: string): Promise<MenuItem[]> => {
     const { data, error } = await db
         .from('menu_items')
-        .select('*')
+        .select(`
+            *,
+            menu_item_images (
+                id,
+                image_url,
+                sort_order
+            )
+        `)
         .eq('restaurant_id', restaurantId)
         .order('created_at', { ascending: false });
     if (error) throw error;
@@ -126,19 +142,46 @@ export const addMenuItem = async (
         name: string;
         price: number;
         category_id: string;
-        description?: string;
-        image_url?: string;
+        short_description?: string;
+        long_description?: string;
         is_available?: boolean;
         is_veg?: boolean;
+        menu_item_images?: { url: string; sortOrder: number }[];
     }
 ): Promise<MenuItem> => {
-    const { data, error } = await db
+    // 1. Insert the main item
+    const { menu_item_images, ...itemData } = item;
+    const { data: insertedItem, error } = await db
         .from('menu_items')
-        .insert({ restaurant_id: restaurantId, ...item })
+        .insert({ restaurant_id: restaurantId, ...itemData })
         .select()
         .single();
     if (error) throw error;
-    return mapMenuItemRow(data as MenuItemRow);
+
+    // 2. Insert images if any
+    let uploadedImages: any[] = [];
+    if (menu_item_images && menu_item_images.length > 0) {
+        const imagesToInsert = menu_item_images.map(img => ({
+            menu_item_id: insertedItem.id,
+            restaurant_id: restaurantId,
+            image_url: img.url,
+            sort_order: img.sortOrder
+        }));
+
+        const { data: insertedImages, error: imgError } = await db
+            .from('menu_item_images')
+            .insert(imagesToInsert)
+            .select('id, image_url, sort_order');
+            
+        if (imgError) {
+            console.error('Failed to insert menu item images', imgError);
+            // Non-blocking error for main item creation
+        } else {
+            uploadedImages = insertedImages || [];
+        }
+    }
+
+    return mapMenuItemRow({ ...insertedItem, menu_item_images: uploadedImages } as MenuItemRow);
 };
 
 export const updateMenuItem = async (
@@ -147,17 +190,62 @@ export const updateMenuItem = async (
         name: string;
         price: number;
         category_id: string;
-        description: string | null;
-        image_url: string | null;
+        short_description: string | null;
+        long_description: string | null;
+        discount_price: number | null;
         is_available: boolean;
         is_veg: boolean;
-    }>
+        preparation_time: number | null;
+        tags: string[] | null;
+        variants: any[] | null;
+        addons: any[] | null;
+    }>,
+    images?: { id?: string; url: string; sortOrder: number; isDeleted?: boolean }[]
 ): Promise<void> => {
-    const { error } = await db
-        .from('menu_items')
-        .update(item)
-        .eq('id', itemId);
-    if (error) throw error;
+    // 1. Update main item
+    if (Object.keys(item).length > 0) {
+        const { error } = await db
+            .from('menu_items')
+            .update(item)
+            .eq('id', itemId);
+        if (error) throw error;
+    }
+
+    // 2. Handle images if provided
+    if (images) {
+        // Find existing restaurant_id for the item
+        const { data: itemData } = await db.from('menu_items').select('restaurant_id').eq('id', itemId).single();
+        if (!itemData) return;
+        
+        const restaurantId = itemData.restaurant_id;
+
+        // a) Delete removed images
+        const deletedImageIds = images.filter(img => img.isDeleted && img.id).map(img => img.id);
+        if (deletedImageIds.length > 0) {
+            await db.from('menu_item_images').delete().in('id', deletedImageIds);
+        }
+
+        // b) Insert new images
+        const newImages = images.filter(img => !img.id && !img.isDeleted);
+        if (newImages.length > 0) {
+            const imagesToInsert = newImages.map(img => ({
+                menu_item_id: itemId,
+                restaurant_id: restaurantId,
+                image_url: img.url,
+                sort_order: img.sortOrder
+            }));
+            await db.from('menu_item_images').insert(imagesToInsert);
+        }
+
+        // c) Update existing images (e.g. sort order changes)
+        // Since Supabase doesn't support bulk updates easily, we do it one by one or via an upsert
+        const existingImagesToUpdate = images.filter(img => img.id && !img.isDeleted);
+        for (const img of existingImagesToUpdate) {
+            await db.from('menu_item_images')
+               .update({ sort_order: img.sortOrder })
+               .eq('id', img.id);
+        }
+    }
 };
 
 export const deleteMenuItem = async (itemId: string): Promise<void> => {
