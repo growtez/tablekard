@@ -512,7 +512,7 @@ const ProfilePage: React.FC = () => {
                         </button>
                     </div>
 
-                    {restaurantForm.profileUrls.length > 0 ? (
+                    {/* {restaurantForm.profileUrls.length > 0 ? (
                         <div className="profile-url-list">
                             {restaurantForm.profileUrls.map((url, index) => (
                                 <div key={`${index}-${url}`} className="profile-url-row">
@@ -538,7 +538,7 @@ const ProfilePage: React.FC = () => {
                         <div className="profile-empty-state">
                             No profile URLs configured yet.
                         </div>
-                    )}
+                    )} */}
                 </div>
             </div>
         );
@@ -641,7 +641,7 @@ const ProfilePage: React.FC = () => {
                     )}
                 </div>
 
-                <div className="profile-info-item">
+                {/* <div className="profile-info-item">
                     <span className="profile-info-label">Profile URLs</span>
                     {restaurant.profileUrls && restaurant.profileUrls.length > 0 ? (
                         <div className="profile-link-list">
@@ -663,7 +663,7 @@ const ProfilePage: React.FC = () => {
                             No profile URLs configured
                         </span>
                     )}
-                </div>
+                </div> */}
 
                 <div className="profile-info-item">
                     <span className="profile-info-label">Subscription</span>
@@ -738,11 +738,10 @@ const ProfilePage: React.FC = () => {
                     <div className="profile-summary-card">
                         <span className="profile-info-label">Restaurant Access Role</span>
                         <span
-                            className={`status-badge ${
-                                String(activeMembership?.role || '').toLowerCase() === 'admin'
-                                    ? 'admin'
-                                    : 'active'
-                            }`}
+                            className={`status-badge ${String(activeMembership?.role || '').toLowerCase() === 'admin'
+                                ? 'admin'
+                                : 'active'
+                                }`}
                         >
                             {formatLabel(activeMembership?.role || 'staff')}
                         </span>
@@ -807,11 +806,10 @@ const ProfilePage: React.FC = () => {
                     <div className="profile-info-item">
                         <span className="profile-info-label">Restaurant Access Role</span>
                         <span
-                            className={`status-badge ${
-                                String(activeMembership.role).toLowerCase() === 'admin'
-                                    ? 'admin'
-                                    : 'active'
-                            }`}
+                            className={`status-badge ${String(activeMembership.role).toLowerCase() === 'admin'
+                                ? 'admin'
+                                : 'active'
+                                }`}
                         >
                             {formatLabel(activeMembership.role)}
                         </span>
