@@ -12,13 +12,13 @@ import TableManagement from "./pages/table_management";
 import ProfilePage from "./pages/profile/profile";
 
 
-console.log('🚀 App.tsx loaded');
+
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
 
-  console.log('🔒 ProtectedRoute - loading:', loading, 'authenticated:', isAuthenticated);
+
 
   if (loading) {
     return (
@@ -43,7 +43,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AppRoutes() {
-  console.log('🛤️ AppRoutes rendering');
+
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
@@ -77,7 +77,7 @@ function AppRoutes() {
 }
 
 export default function App() {
-  console.log('🔥 App component rendering');
+
   return (
     <AuthProvider>
       <AppRoutes />

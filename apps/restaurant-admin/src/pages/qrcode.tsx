@@ -1,41 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Download, RefreshCw, QrCode, Table2, CheckCircle, AlertCircle } from 'lucide-react';
 import Sidebar from '../components/sidebar';
 import { useAuth } from '../context/AuthContext';
-import { getRestaurantTables } from '../services/supabaseService';
-import type { RestaurantTable } from '../services/supabaseService';
+import { useRestaurantTables } from '../hooks/useSupabaseQuery';
 import './qrcode.css';
 
 const BASE_URL = 'https://tablekard.com/menu';
 
 const QRCodePage: React.FC = () => {
     const { activeRestaurantId } = useAuth();
-    const [tables, setTables] = useState<RestaurantTable[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const [qrSize, setQrSize] = useState(160);
 
-    useEffect(() => {
-        if (activeRestaurantId) {
-            fetchTables();
-        }
-    }, [activeRestaurantId]);
-
-    const fetchTables = async () => {
-        if (!activeRestaurantId) return;
-        setLoading(true);
-        setError(null);
-        try {
-            const data = await getRestaurantTables(activeRestaurantId);
-            setTables(data);
-        } catch (err: any) {
-            console.error('Failed to fetch tables:', err);
-            setError('Failed to load tables. Please try again.');
-        } finally {
-            setLoading(false);
-        }
-    };
+    // React Query: cached, auto-retries, refetches on tab focus
+    const { data: tables = [], isLoading: loading, error: queryError, refetch } = useRestaurantTables(activeRestaurantId);
+    const error = queryError ? 'Failed to load tables. Please try again.' : null;
 
     const buildQrUrl = (_tableId: string, tableNumber: number) =>
         `${BASE_URL}?restaurant_id=${activeRestaurantId}&table_id=${tableNumber}`;
@@ -83,7 +62,7 @@ const QRCodePage: React.FC = () => {
                         </p>
                     </div>
                     <div className="qr-header-actions">
-                        <button className="qr-refresh-btn" onClick={fetchTables} disabled={loading}>
+                        <button className="qr-refresh-btn" onClick={() => refetch()} disabled={loading}>
                             <RefreshCw size={16} className={loading ? 'spin' : ''} />
                             Refresh
                         </button>
@@ -128,7 +107,7 @@ const QRCodePage: React.FC = () => {
                     <div className="qr-error-state">
                         <AlertCircle size={40} color="#E53E3E" />
                         <p>{error}</p>
-                        <button className="qr-refresh-btn" onClick={fetchTables}>Try Again</button>
+                        <button className="qr-refresh-btn" onClick={() => refetch()}>Try Again</button>
                     </div>
                 )}
 

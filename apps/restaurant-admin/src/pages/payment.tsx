@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { TrendingUp, Download, Calendar, CreditCard, CheckCircle, Eye, Trash2, X } from 'lucide-react';
 import './payment.css';
 import Sidebar from '../components/sidebar';
 import { useAuth } from '../context/AuthContext';
-import { getPaymentTransactions, updatePaymentStatus } from '../services/supabaseService';
+import { updatePaymentStatus } from '../services/supabaseService';
 import type { PaymentTransaction } from '../services/supabaseService';
+import { usePaymentTransactions, useInvalidateQueries } from '../hooks/useSupabaseQuery';
 
 // Main Payment Component
 const Payment: React.FC = () => {
@@ -15,28 +16,18 @@ const Payment: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [selectedTransaction, setSelectedTransaction] = useState<PaymentTransaction | null>(null);
 
-  const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  // Hidden (locally removed) transaction IDs – for the "hide" button
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    if (activeRestaurantId) {
-      fetchTransactions();
-    }
-  }, [activeRestaurantId]);
+  // React Query: cached, auto-retries, refetches on tab focus
+  const { data: allTransactions = [], isLoading: loading } = usePaymentTransactions(activeRestaurantId);
+  const { invalidatePayments } = useInvalidateQueries();
 
-  const fetchTransactions = async () => {
-    if (!activeRestaurantId) return;
-    setLoading(true);
-    try {
-      const data = await getPaymentTransactions(activeRestaurantId);
-      setTransactions(data);
-    } catch (err) {
-      console.error('Failed to fetch transactions:', err);
-      alert('Failed to load payment transactions.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Filter out locally hidden rows
+  const transactions = useMemo(
+    () => allTransactions.filter(t => !hiddenIds.has(t.id)),
+    [allTransactions, hiddenIds]
+  );
 
   // Filter transactions based on selected filters
   const filteredTransactions = transactions.filter(transaction => {
@@ -59,8 +50,6 @@ const Payment: React.FC = () => {
     let lastWeekRev = 0;
 
     transactions.forEach(t => {
-      // Only count if paid/completed if logic requires, but since schema says 'pending/paid/failed/refunded',
-      // let's only count 'Paid' status transactions for completed revenue.
       if (t.paymentStatus.toLowerCase() !== 'paid') return;
 
       const tDate = new Date(t.createdAt);
@@ -79,7 +68,6 @@ const Payment: React.FC = () => {
 
   const handleExportReport = () => {
     console.log('Exporting report...');
-    // Implementation for exporting report
   };
 
   const handleView = (id: string) => {
@@ -93,11 +81,7 @@ const Payment: React.FC = () => {
   const handleMarkPaid = async (id: string) => {
     try {
       await updatePaymentStatus(id, 'paid');
-      setTransactions(transactions.map(transaction =>
-        transaction.id === id
-          ? { ...transaction, paymentStatus: 'Paid', statusColor: 'paid' }
-          : transaction
-      ));
+      if (activeRestaurantId) invalidatePayments(activeRestaurantId);
     } catch (err) {
       console.error(err);
       alert('Failed to mark as paid');
@@ -106,7 +90,7 @@ const Payment: React.FC = () => {
 
   const handleDelete = (id: string) => {
     if (window.confirm('Are you sure you want to delete this transaction from view? (Not deleted from DB)')) {
-      setTransactions(transactions.filter(transaction => transaction.id !== id));
+      setHiddenIds(prev => new Set(prev).add(id));
     }
   };
 
@@ -222,10 +206,6 @@ const Payment: React.FC = () => {
         <div className="table-card">
           <div className="table-header">
             <h2 className="table-title">Completed Payments</h2>
-            {/* <button className="view-all-btn" onClick={() => setShowAllPayments(true)}>View All</button> */}
-            {/* <div className="payment-summary">
-              Total: ₹{totalRevenue.toLocaleString()} ({filteredTransactions.length} transactions)
-            </div> */}
           </div>
 
           <table className="orders-table">
