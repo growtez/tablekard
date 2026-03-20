@@ -1,7 +1,6 @@
 -- ======================================================================================
 -- DB Schema & RLS for TableKard
 -- Features: Multi-tenant restaurant app with QR-based ordering
--- Generated based on required project context
 -- ======================================================================================
 
 -- 1. Enable Required Extensions
@@ -105,7 +104,7 @@ CREATE TABLE IF NOT EXISTS public.menu_categories (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- menu_items
+-- menu_items (image_url removed; images now live in menu_item_images)
 CREATE TABLE IF NOT EXISTS public.menu_items (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     restaurant_id UUID NOT NULL REFERENCES public.restaurants(id) ON DELETE CASCADE,
@@ -115,7 +114,6 @@ CREATE TABLE IF NOT EXISTS public.menu_items (
     long_description TEXT,
     price NUMERIC NOT NULL DEFAULT 0,
     discount_price NUMERIC,
-    image_url TEXT,
     is_available BOOLEAN DEFAULT true,
     is_veg BOOLEAN DEFAULT true,
     preparation_time INTEGER,
@@ -124,6 +122,16 @@ CREATE TABLE IF NOT EXISTS public.menu_items (
     addons JSONB DEFAULT '[]'::jsonb,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- menu_item_images (replaces single image_url on menu_items)
+CREATE TABLE IF NOT EXISTS public.menu_item_images (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    menu_item_id UUID NOT NULL REFERENCES public.menu_items(id) ON DELETE CASCADE,
+    restaurant_id UUID NOT NULL REFERENCES public.restaurants(id) ON DELETE CASCADE,
+    image_url TEXT NOT NULL,
+    sort_order INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- orders
@@ -222,8 +230,16 @@ ALTER TABLE public.restaurants
     ADD COLUMN IF NOT EXISTS profile_urls TEXT[] DEFAULT ARRAY[]::TEXT[];
 
 -- ======================================================================================
--- ADD TRIGGERS FOR TIMESTAMPS
+-- INDEXES
 -- ======================================================================================
+
+CREATE INDEX IF NOT EXISTS idx_menu_item_images_menu_item
+ON public.menu_item_images(menu_item_id);
+
+-- ======================================================================================
+-- TRIGGERS FOR TIMESTAMPS
+-- ======================================================================================
+
 CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
 CREATE TRIGGER update_restaurants_updated_at BEFORE UPDATE ON public.restaurants FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
 CREATE TRIGGER update_restaurant_users_updated_at BEFORE UPDATE ON public.restaurant_users FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
@@ -233,10 +249,10 @@ CREATE TRIGGER update_menu_items_updated_at BEFORE UPDATE ON public.menu_items F
 CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON public.orders FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
 CREATE TRIGGER update_platform_settings_updated_at BEFORE UPDATE ON public.platform_settings FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
 
-
 -- ======================================================================================
 -- AUTH TRIGGER FOR PROFILES
 -- ======================================================================================
+
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -252,22 +268,19 @@ BEGIN
     ),
     'customer'
   );
-
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Trigger to create profile when auth.user created
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
 
 -- ======================================================================================
--- RLS POLICIES & HELPER FUNCTIONS
+-- RLS HELPER FUNCTIONS
 -- ======================================================================================
 
--- Allow access to RLS functions inside policies
 CREATE OR REPLACE FUNCTION public.is_super_admin(user_id uuid DEFAULT auth.uid()) RETURNS boolean AS $$
 BEGIN
   RETURN EXISTS (
@@ -286,13 +299,17 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Enable RLS for all tables
+-- ======================================================================================
+-- ENABLE ROW LEVEL SECURITY
+-- ======================================================================================
+
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.restaurants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.restaurant_users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.restaurant_tables ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.menu_categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.menu_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.menu_item_images ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
@@ -300,6 +317,10 @@ ALTER TABLE public.payment_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.favorites ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.feedback ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.platform_settings ENABLE ROW LEVEL SECURITY;
+
+-- ======================================================================================
+-- RLS POLICIES
+-- ======================================================================================
 
 -- 1. profiles
 CREATE POLICY "Users can read own profile" ON public.profiles FOR SELECT USING (auth.uid() = id);
@@ -330,12 +351,16 @@ CREATE POLICY "Restaurant members manage their categories" ON public.menu_catego
 CREATE POLICY "Public can read active menu items" ON public.menu_items FOR SELECT USING (is_available = true);
 CREATE POLICY "Restaurant members manage their items" ON public.menu_items FOR ALL USING (public.is_restaurant_member(restaurant_id));
 
--- 7. orders
+-- 7. menu_item_images
+CREATE POLICY "Public can read menu item images" ON public.menu_item_images FOR SELECT USING (true);
+CREATE POLICY "Restaurant members manage their menu item images" ON public.menu_item_images FOR ALL USING (public.is_restaurant_member(restaurant_id));
+
+-- 8. orders
 CREATE POLICY "Customers can read own orders" ON public.orders FOR SELECT USING (customer_id = auth.uid());
 CREATE POLICY "Customers can create orders" ON public.orders FOR INSERT WITH CHECK (customer_id = auth.uid() OR customer_id IS NULL);
 CREATE POLICY "Restaurant members can manage restaurant orders" ON public.orders FOR ALL USING (public.is_restaurant_member(restaurant_id));
 
--- 8. order_items
+-- 9. order_items
 CREATE POLICY "Customers can read own order items" ON public.order_items FOR SELECT USING (
   EXISTS (SELECT 1 FROM public.orders o WHERE o.id = order_id AND o.customer_id = auth.uid())
 );
@@ -346,25 +371,25 @@ CREATE POLICY "Restaurant members can manage order items" ON public.order_items 
   EXISTS (SELECT 1 FROM public.orders o WHERE o.id = order_items.order_id AND public.is_restaurant_member(o.restaurant_id))
 );
 
--- 9. payments
+-- 10. payments
 CREATE POLICY "Customers can read their payments" ON public.payments FOR SELECT USING (user_id = auth.uid());
 CREATE POLICY "Customers can create payments" ON public.payments FOR INSERT WITH CHECK (user_id = auth.uid() OR user_id IS NULL);
 CREATE POLICY "Restaurant members can read their payments" ON public.payments FOR SELECT USING (public.is_restaurant_member(restaurant_id));
 
--- 10. payment_logs
+-- 11. payment_logs
 CREATE POLICY "Restaurant members can read payment logs" ON public.payment_logs FOR SELECT USING (
   EXISTS (SELECT 1 FROM public.payments p WHERE p.id = payment_id AND public.is_restaurant_member(p.restaurant_id))
 );
 
--- 11. favorites
+-- 12. favorites
 CREATE POLICY "Users can manage own favorites" ON public.favorites FOR ALL USING (user_id = auth.uid());
 
--- 12. feedback
+-- 13. feedback
 CREATE POLICY "Users can read/write own feedback" ON public.feedback FOR ALL USING (user_id = auth.uid());
 CREATE POLICY "Restaurant members can read feedback" ON public.feedback FOR SELECT USING (
   EXISTS (SELECT 1 FROM public.orders o WHERE o.id = feedback.order_id AND public.is_restaurant_member(o.restaurant_id))
 );
 
--- 13. platform_settings
+-- 14. platform_settings
 CREATE POLICY "Public can read platform settings" ON public.platform_settings FOR SELECT USING (true);
 CREATE POLICY "Super admins manage platform settings" ON public.platform_settings FOR ALL USING (public.is_super_admin());

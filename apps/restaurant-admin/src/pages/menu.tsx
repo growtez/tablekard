@@ -107,16 +107,38 @@ const Menu: React.FC = () => {
 
   const handleSaveMenuItem = async (itemData: any) => {
     if (!activeRestaurantId) return;
+    setLoading(true); // Optional: add simple loading state if you have one, or just trust the fast upload
     try {
+      // 1. Process images (Upload new ones)
+      const processedImages = [];
+      if (itemData.images && itemData.images.length > 0) {
+        for (const img of itemData.images) {
+           if (img.isDeleted) {
+               processedImages.push(img); // Pass it down to update logic to delete
+           } else if (img.file) {
+               // Upload new file
+               const { uploadMenuItemImage } = await import('../services/storageService');
+               const url = await uploadMenuItemImage(activeRestaurantId, img.file);
+               processedImages.push({ url, sortOrder: img.sortOrder });
+           } else {
+               // Existing image
+               processedImages.push({ id: img.id, url: img.url, sortOrder: img.sortOrder });
+           }
+        }
+      }
+
+      const activeImages = processedImages.filter(img => !img.isDeleted);
+
       if (dialogMode === 'add') {
         await addMenuItem(activeRestaurantId, {
           name: itemData.name,
           price: itemData.price,
           category_id: itemData.categoryId,
-          description: itemData.description,
-          image_url: itemData.image,
-          is_available: itemData.available,
-          is_veg: itemData.isVeg
+          short_description: itemData.short_description,
+          long_description: itemData.long_description,
+          is_available: itemData.is_available,
+          is_veg: itemData.is_veg,
+          menu_item_images: activeImages
         });
       } else {
         await updateMenuItem(itemData.id, {
@@ -128,11 +150,26 @@ const Menu: React.FC = () => {
           is_available: itemData.available,
           is_veg: itemData.isVeg
         });
+          short_description: itemData.short_description,
+          long_description: itemData.long_description,
+          is_available: itemData.is_available,
+          is_veg: itemData.is_veg
+        }, processedImages);
+        
+        // Optimistic UI update
+        const updatedItem = {
+           ...itemData,
+           categoryId: itemData.categoryId, // ensure mapping matches MenuItem interface
+           images: activeImages.map((img, idx) => ({ ...img, id: img.id || `temp-${idx}`, menuItemId: itemData.id, restaurantId: activeRestaurantId }))
+        };
+        setMenuItems(items => items.map(i => i.id === itemData.id ? ({ ...i, ...updatedItem }) : i));
       }
       invalidateMenu(activeRestaurantId);
     } catch (err) {
-      console.error(err);
+      console.error('Failed to save menu item', err);
       alert('Failed to save menu item');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -342,7 +379,11 @@ const Menu: React.FC = () => {
               <div className="menu-grid">
                 {filteredMenuItems.map((item) => (
                   <div key={item.id} className="menu-card">
-                    <div className="menu-image">{item.image ?? '🍽️'}</div>
+                    <div className="menu-image">
+                       {(item.images && item.images.length > 0) ? (
+                         <img src={item.images[0].url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                       ) : '🍽️'}
+                    </div>
                     <div className="menu-info">
                       <h3 className="menu-name">
                         <span style={{ fontSize: '12px', marginRight: '6px' }}>

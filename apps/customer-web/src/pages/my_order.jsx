@@ -3,6 +3,7 @@ import { Home, ShoppingBag, MessageCircle, User, Minus, Plus, Trash2, Clock, Che
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { useRestaurant } from '../context/RestaurantContext';
 import { processOnlinePayment } from '../services/paymentService';
 import { createOrder, getTodaysOrders } from '../services/supabaseService';
 import './my_order.css';
@@ -13,6 +14,7 @@ const MyOrderPage = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
   const { cartItems, updateQuantity, deleteFromCart, cartSubtotal, clearCart } = useCart();
+  const { restaurantId, tableId } = useRestaurant();
   const [activeTab, setActiveTab] = useState('cart');
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState('');
@@ -109,12 +111,9 @@ const MyOrderPage = () => {
     setError('');
 
     try {
-      // Restaurant ID — for single-restaurant setup
-      const restaurantId = 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d';
-
       const result = await processOnlinePayment({
         restaurantId,
-        tableId: null,
+        tableId,
         orderType: 'DINE_IN',
         items: cartItems,
         restaurantName: 'Tablekard',
@@ -162,15 +161,12 @@ const MyOrderPage = () => {
     setError('');
 
     try {
-      // Restaurant ID — for single-restaurant setup
-      const restaurantId = 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d';
-
       const result = await createOrder({
         restaurantId,
         customerId: user?.id,
         customerName: user?.user_metadata?.full_name || null,
         customerPhone: user?.phone || null,
-        tableNumber: null,
+        tableNumber: tableId,
         items: cartItems,
         paymentMethod: 'PAY_AT_COUNTER',
       });

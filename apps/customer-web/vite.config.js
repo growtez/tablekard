@@ -18,6 +18,7 @@ export default defineConfig({
     },
     server: {
         port: 3003,
+        host: '0.0.0.0', // Listen on all network interfaces (required for LAN/phone access)
         hmr: {
             overlay: true
         }

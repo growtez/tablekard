@@ -19,13 +19,16 @@ import { useAuth } from '../context/AuthContext';
 import { 
     createRestaurantTable, 
     updateRestaurantTable, 
-    deleteRestaurantTable 
+    deleteRestaurantTable,
+    getRestaurantById
 } from '../services/supabaseService';
 import type { RestaurantTable } from '../services/supabaseService';
 import { useRestaurantTables, useInvalidateQueries } from '../hooks/useSupabaseQuery';
+import { paintQrTemplate } from '../utils/qrTemplatePainter';
+
 import './table_management.css';
 
-const BASE_URL = 'https://tablekard.com/menu';
+const BASE_URL = import.meta.env.VITE_CUSTOMER_APP_URL || window.location.origin;
 
 interface TableFormData {
     table_number: number;
@@ -36,6 +39,7 @@ interface TableFormData {
 const TableManagementPage: React.FC = () => {
     const { activeRestaurantId } = useAuth();
     const [qrSize, setQrSize] = useState(160);
+    const [restaurantName, setRestaurantName] = useState<string>('Restaurant');
     
     // React Query: cached, auto-retries, refetches on tab focus
     const { data: tables = [], isLoading: loading, error: queryError, refetch } = useRestaurantTables(activeRestaurantId);
@@ -76,12 +80,52 @@ const TableManagementPage: React.FC = () => {
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, size, size);
             ctx.drawImage(img, 20, 20, qrSize, qrSize);
+    useEffect(() => {
+        if (activeRestaurantId) {
+            fetchTables();
+            // Fetch restaurant name for the QR download template
+            getRestaurantById(activeRestaurantId)
+                .then(r => { if (r?.name) setRestaurantName(r.name); })
+                .catch(() => { /* silently fallback to 'Restaurant' */ });
+        }
+    }, [activeRestaurantId]);
+
+    const fetchTables = async () => {
+        if (!activeRestaurantId) return;
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await getRestaurantTables(activeRestaurantId);
+            setTables(data);
+        } catch (err: any) {
+            console.error('Failed to fetch tables:', err);
+            setError('Failed to load tables. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const buildQrUrl = (tableId: string, _tableNumber: number) =>
+        `${BASE_URL}/order/${activeRestaurantId}/${tableId}`;
+
+    const downloadQR = async (tableId: string, tableNumber: number) => {
+        const url = buildQrUrl(tableId, tableNumber);
+        try {
+            const canvas = await paintQrTemplate({
+                qrSvgElementId: `qr-svg-${tableId}`,
+                restaurantName,
+                tableNumber,
+                qrUrl: url,
+                qrSize: 200,
+            });
             const link = document.createElement('a');
             link.download = `table-${tableNumber}-qr.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
-        };
-        img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+        } catch (err) {
+            console.error('QR download failed:', err);
+            setError('Failed to generate QR download. Please try again.');
+        }
     };
 
     const downloadAll = () => {

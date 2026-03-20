@@ -181,13 +181,21 @@ export interface MenuItem {
   description?: string | null;
   price: number;
   discountPrice?: number | null;
-  image?: string | null;
+  images?: MenuItemImage[];
   available: boolean;
   isVeg: boolean;
   preparationTime?: number | null; // in minutes
   tags?: string[] | null;
   variants?: MenuItemVariant[] | null;
   addons?: MenuItemAddon[] | null;
+}
+
+export interface MenuItemImage {
+  id: string;
+  menuItemId: string;
+  restaurantId: string;
+  url: string;
+  sortOrder: number;
 }
 
 export interface MenuItemVariant {
@@ -531,10 +539,10 @@ export interface Database {
           restaurant_id: string;
           category_id: string | null;
           name: string;
-          description: string | null;
+          short_description: string | null;
+          long_description: string | null;
           price: number;
           discount_price: number | null;
-          image_url: string | null;
           is_available: boolean;
           is_veg: boolean;
           preparation_time: number | null;
@@ -549,10 +557,10 @@ export interface Database {
           restaurant_id: string;
           category_id?: string | null;
           name: string;
-          description?: string | null;
+          short_description?: string | null;
+          long_description?: string | null;
           price: number;
           discount_price?: number | null;
-          image_url?: string | null;
           is_available?: boolean;
           is_veg?: boolean;
           preparation_time?: number | null;
@@ -565,10 +573,10 @@ export interface Database {
         Update: {
           category_id?: string | null;
           name?: string;
-          description?: string | null;
+          short_description?: string | null;
+          long_description?: string | null;
           price?: number;
           discount_price?: number | null;
-          image_url?: string | null;
           is_available?: boolean;
           is_veg?: boolean;
           preparation_time?: number | null;
@@ -576,6 +584,29 @@ export interface Database {
           variants?: Record<string, unknown>[] | null;
           addons?: Record<string, unknown>[] | null;
           updated_at?: IsoDateString;
+        };
+        Relationships: [];
+      };
+      menu_item_images: {
+        Row: {
+          id: string;
+          menu_item_id: string;
+          restaurant_id: string;
+          image_url: string;
+          sort_order: number;
+          created_at: IsoDateString;
+        };
+        Insert: {
+          id?: string;
+          menu_item_id: string;
+          restaurant_id: string;
+          image_url: string;
+          sort_order?: number;
+          created_at?: IsoDateString;
+        };
+        Update: {
+          image_url?: string;
+          sort_order?: number;
         };
         Relationships: [];
       };
