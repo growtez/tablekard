@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { 
     Download, 
@@ -17,14 +17,15 @@ import {
 import Sidebar from '../components/sidebar';
 import { useAuth } from '../context/AuthContext';
 import { 
-    getRestaurantTables, 
     createRestaurantTable, 
     updateRestaurantTable, 
     deleteRestaurantTable,
     getRestaurantById
 } from '../services/supabaseService';
 import type { RestaurantTable } from '../services/supabaseService';
+import { useRestaurantTables, useInvalidateQueries } from '../hooks/useSupabaseQuery';
 import { paintQrTemplate } from '../utils/qrTemplatePainter';
+
 import './table_management.css';
 
 const BASE_URL = import.meta.env.VITE_CUSTOMER_APP_URL || window.location.origin;
@@ -37,12 +38,15 @@ interface TableFormData {
 
 const TableManagementPage: React.FC = () => {
     const { activeRestaurantId } = useAuth();
-    const [tables, setTables] = useState<RestaurantTable[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const [qrSize, setQrSize] = useState(160);
     const [restaurantName, setRestaurantName] = useState<string>('Restaurant');
     
+    // React Query: cached, auto-retries, refetches on tab focus
+    const { data: tables = [], isLoading: loading, error: queryError, refetch } = useRestaurantTables(activeRestaurantId);
+    const { invalidateTables } = useInvalidateQueries();
+    const [error, setError] = useState<string | null>(null);
+    const displayError = error || (queryError ? 'Failed to load tables. Please try again.' : null);
+
     // Modal states
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -58,6 +62,24 @@ const TableManagementPage: React.FC = () => {
     const [formErrors, setFormErrors] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
 
+    const buildQrUrl = (_tableId: string, tableNumber: number) =>
+        `${BASE_URL}?restaurant_id=${activeRestaurantId}&table_id=${tableNumber}`;
+
+    const downloadQR = (tableId: string, tableNumber: number) => {
+        const svgEl = document.getElementById(`qr-svg-${tableId}`) as SVGElement | null;
+        if (!svgEl) return;
+
+        const svgData = new XMLSerializer().serializeToString(svgEl);
+        const canvas = document.createElement('canvas');
+        const size = qrSize + 40;
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d')!;
+        const img = new Image();
+        img.onload = () => {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, size, size);
+            ctx.drawImage(img, 20, 20, qrSize, qrSize);
     useEffect(() => {
         if (activeRestaurantId) {
             fetchTables();
@@ -127,7 +149,6 @@ const TableManagementPage: React.FC = () => {
         e.preventDefault();
         if (!activeRestaurantId) return;
 
-        // Validation
         if (formData.table_number < 1) {
             setFormErrors('Table number must be at least 1');
             return;
@@ -145,7 +166,7 @@ const TableManagementPage: React.FC = () => {
         setFormErrors(null);
         try {
             await createRestaurantTable(activeRestaurantId, formData);
-            await fetchTables();
+            invalidateTables(activeRestaurantId);
             setShowAddModal(false);
         } catch (err: any) {
             console.error('Failed to create table:', err);
@@ -169,9 +190,8 @@ const TableManagementPage: React.FC = () => {
 
     const handleSubmitEdit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!currentTable) return;
+        if (!currentTable || !activeRestaurantId) return;
 
-        // Validation
         if (formData.table_number < 1) {
             setFormErrors('Table number must be at least 1');
             return;
@@ -189,7 +209,7 @@ const TableManagementPage: React.FC = () => {
         setFormErrors(null);
         try {
             await updateRestaurantTable(currentTable.id, formData);
-            await fetchTables();
+            invalidateTables(activeRestaurantId);
             setShowEditModal(false);
             setCurrentTable(null);
         } catch (err: any) {
@@ -207,12 +227,12 @@ const TableManagementPage: React.FC = () => {
     };
 
     const handleConfirmDelete = async () => {
-        if (!currentTable) return;
+        if (!currentTable || !activeRestaurantId) return;
 
         setSubmitting(true);
         try {
             await deleteRestaurantTable(currentTable.id);
-            await fetchTables();
+            invalidateTables(activeRestaurantId);
             setShowDeleteModal(false);
             setCurrentTable(null);
         } catch (err: any) {
@@ -225,9 +245,10 @@ const TableManagementPage: React.FC = () => {
 
     // Quick toggle active status
     const handleToggleActive = async (table: RestaurantTable) => {
+        if (!activeRestaurantId) return;
         try {
             await updateRestaurantTable(table.id, { active: !table.active });
-            await fetchTables();
+            invalidateTables(activeRestaurantId);
         } catch (err: any) {
             console.error('Failed to toggle table status:', err);
             setError('Failed to update table status.');
@@ -248,7 +269,7 @@ const TableManagementPage: React.FC = () => {
                         </p>
                     </div>
                     <div className="tm-header-actions">
-                        <button className="tm-refresh-btn" onClick={fetchTables} disabled={loading}>
+                        <button className="tm-refresh-btn" onClick={() => refetch()} disabled={loading}>
                             <RefreshCw size={16} className={loading ? 'spin' : ''} />
                             Refresh
                         </button>
@@ -292,10 +313,10 @@ const TableManagementPage: React.FC = () => {
                 </div>
 
                 {/* Error Message */}
-                {error && (
+                {displayError && (
                     <div className="tm-error-banner">
                         <AlertCircle size={18} />
-                        <span>{error}</span>
+                        <span>{displayError}</span>
                         <button onClick={() => setError(null)}><X size={16} /></button>
                     </div>
                 )}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Search, Bell, Plus, Edit3, Trash2, Layers } from 'lucide-react';
 import Sidebar from '../components/sidebar';
 import MenuDialog from '../components/menu_dialog';
@@ -6,8 +6,6 @@ import CategoryDialog from '../components/category_dialog';
 import OfferDialog from '../components/offer_dialog';
 import { useAuth } from '../context/AuthContext';
 import {
-  getMenuItems,
-  getMenuCategories,
   addMenuItem,
   updateMenuItem,
   deleteMenuItem,
@@ -16,6 +14,7 @@ import {
   updateMenuCategory,
   deleteMenuCategory
 } from '../services/supabaseService';
+import { useMenuItems, useMenuCategories, useInvalidateQueries } from '../hooks/useSupabaseQuery';
 import type { MenuItem, MenuCategory } from '@restaurant-saas/types';
 import './menu.css';
 
@@ -25,9 +24,11 @@ const Menu: React.FC = () => {
   const [activeTab, setActiveTab] = useState('menu-items');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
 
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [categories, setCategories] = useState<MenuCategory[]>([]);
-  const [loading, setLoading] = useState(false);
+  // React Query: cached, auto-retries, refetches on tab focus
+  const { data: menuItems = [], isLoading: loadingItems } = useMenuItems(activeRestaurantId);
+  const { data: categories = [], isLoading: loadingCategories } = useMenuCategories(activeRestaurantId);
+  const loading = loadingItems || loadingCategories;
+  const { invalidateMenu } = useInvalidateQueries();
 
   // Offers (mock data for now)
   const [offers, setOffers] = useState([
@@ -72,30 +73,6 @@ const Menu: React.FC = () => {
   const [selectedOffer, setSelectedOffer] = useState<any>(null);
   const [dialogMode, setDialogMode] = useState<'add' | 'edit'>('add');
 
-  useEffect(() => {
-    if (activeRestaurantId) {
-      fetchMenuData();
-    }
-  }, [activeRestaurantId]);
-
-  const fetchMenuData = async () => {
-    if (!activeRestaurantId) return;
-    setLoading(true);
-    try {
-      const [fetchedCategories, fetchedItems] = await Promise.all([
-        getMenuCategories(activeRestaurantId),
-        getMenuItems(activeRestaurantId)
-      ]);
-      setCategories(fetchedCategories);
-      setMenuItems(fetchedItems);
-    } catch (err) {
-      console.error('Failed to fetch menu data:', err);
-      alert('Failed to load menu data. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const filteredMenuItems = selectedCategoryId === 'all'
     ? menuItems
     : menuItems.filter(item => item.categoryId === selectedCategoryId);
@@ -108,11 +85,10 @@ const Menu: React.FC = () => {
   // --- ITEM HANDLERS ---
   const toggleStock = async (item: MenuItem) => {
     try {
-      setMenuItems(items => items.map(i => i.id === item.id ? { ...i, available: !i.available } : i));
       await toggleMenuItemAvailability(item.id, !item.available);
+      if (activeRestaurantId) invalidateMenu(activeRestaurantId);
     } catch (err) {
       console.error(err);
-      setMenuItems(items => items.map(i => i.id === item.id ? { ...i, available: item.available } : i));
       alert('Failed to update availability');
     }
   };
@@ -154,7 +130,7 @@ const Menu: React.FC = () => {
       const activeImages = processedImages.filter(img => !img.isDeleted);
 
       if (dialogMode === 'add') {
-        const newItem = await addMenuItem(activeRestaurantId, {
+        await addMenuItem(activeRestaurantId, {
           name: itemData.name,
           price: itemData.price,
           category_id: itemData.categoryId,
@@ -164,12 +140,16 @@ const Menu: React.FC = () => {
           is_veg: itemData.is_veg,
           menu_item_images: activeImages
         });
-        setMenuItems([...menuItems, newItem]);
       } else {
         await updateMenuItem(itemData.id, {
           name: itemData.name,
           price: itemData.price,
           category_id: itemData.categoryId,
+          description: itemData.description,
+          image_url: itemData.image,
+          is_available: itemData.available,
+          is_veg: itemData.isVeg
+        });
           short_description: itemData.short_description,
           long_description: itemData.long_description,
           is_available: itemData.is_available,
@@ -184,6 +164,7 @@ const Menu: React.FC = () => {
         };
         setMenuItems(items => items.map(i => i.id === itemData.id ? ({ ...i, ...updatedItem }) : i));
       }
+      invalidateMenu(activeRestaurantId);
     } catch (err) {
       console.error('Failed to save menu item', err);
       alert('Failed to save menu item');
@@ -196,7 +177,7 @@ const Menu: React.FC = () => {
     if (!window.confirm('Are you sure you want to delete this menu item?')) return;
     try {
       await deleteMenuItem(id);
-      setMenuItems(items => items.filter(i => i.id !== id));
+      if (activeRestaurantId) invalidateMenu(activeRestaurantId);
     } catch (err) {
       console.error(err);
       alert('Failed to delete menu item');
@@ -220,13 +201,12 @@ const Menu: React.FC = () => {
     if (!activeRestaurantId) return;
     try {
       if (dialogMode === 'add') {
-        const newCat = await addMenuCategory(activeRestaurantId, {
+        await addMenuCategory(activeRestaurantId, {
           name: catData.name!,
           description: catData.description || undefined,
           sort_order: catData.order,
           active: catData.active
         });
-        setCategories([...categories, newCat].sort((a, b) => a.order - b.order));
       } else {
         await updateMenuCategory(catData.id!, {
           name: catData.name,
@@ -234,8 +214,8 @@ const Menu: React.FC = () => {
           sort_order: catData.order,
           active: catData.active
         });
-        setCategories(cats => cats.map(c => c.id === catData.id ? { ...c, ...catData } as MenuCategory : c).sort((a, b) => a.order - b.order));
       }
+      invalidateMenu(activeRestaurantId);
     } catch (err) {
       console.error(err);
       alert('Failed to save category');
@@ -245,7 +225,7 @@ const Menu: React.FC = () => {
   const handleDeleteCategory = async (id: string) => {
     try {
       await deleteMenuCategory(id);
-      setCategories(cats => cats.filter(c => c.id !== id));
+      if (activeRestaurantId) invalidateMenu(activeRestaurantId);
       if (selectedCategoryId === id) setSelectedCategoryId('all');
     } catch (err) {
       console.error(err);
@@ -277,7 +257,6 @@ const Menu: React.FC = () => {
   // --- STATS ---
   const activeItems = menuItems.filter(item => item.available).length;
   const outOfStockItems = menuItems.filter(item => !item.available).length;
-  // TODO: Fetch real top selling when analytics are active.
   const topSellingItem = menuItems.length > 0 ? menuItems[0].name : '-';
 
   return (

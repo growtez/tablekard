@@ -10,6 +10,7 @@ interface UserProfile {
     email: string;
     name: string | null;
     role: UserRole;
+    avatarUrl: string | null;
 }
 
 interface RestaurantMembership {
@@ -24,6 +25,7 @@ interface AuthContextType {
     memberships: RestaurantMembership[];
     activeRestaurantId: string | null;
     setActiveRestaurantId: (restaurantId: string) => void;
+    refreshSessionData: () => Promise<void>;
     loading: boolean;
     signIn: (email: string, password: string) => Promise<User>;
     signOut: () => Promise<void>;
@@ -41,7 +43,7 @@ interface AuthProviderProps {
 async function fetchProfile(userId: string): Promise<UserProfile | null> {
     const { data, error } = await supabase
         .from('profiles')
-        .select('id,email,name,role')
+        .select('id,email,name,role,avatar_url')
         .eq('id', userId)
         .maybeSingle();
     if (error) {
@@ -53,7 +55,8 @@ async function fetchProfile(userId: string): Promise<UserProfile | null> {
         id: data.id,
         email: data.email,
         name: data.name,
-        role: data.role as UserRole
+        role: data.role as UserRole,
+        avatarUrl: data.avatar_url
     };
 }
 
@@ -89,6 +92,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const syncMemberships = async (nextUser: User | null) => {
         if (!nextUser) {
+            setUserProfile(null);
             setMemberships([]);
             setActiveRestaurantIdState(null);
             return;
@@ -111,6 +115,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         } else {
             setActiveRestaurantIdState(null);
         }
+    };
+
+    const refreshSessionData = async (): Promise<void> => {
+        await syncMemberships(user);
     };
 
     useEffect(() => {
@@ -198,6 +206,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         memberships,
         activeRestaurantId,
         setActiveRestaurantId,
+        refreshSessionData,
         loading,
         signIn,
         signOut,

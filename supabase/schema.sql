@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS public.restaurants (
     logo_url TEXT,
     primary_color TEXT,
     secondary_color TEXT,
+    profile_urls TEXT[] DEFAULT ARRAY[]::TEXT[],
     settings JSONB DEFAULT '{}'::jsonb,
     subscription_status BOOLEAN DEFAULT false,
     subscription_type TEXT,
@@ -223,6 +224,10 @@ CREATE TABLE IF NOT EXISTS public.platform_settings (
     config JSONB DEFAULT '{}'::jsonb,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Backfill schema changes for existing databases
+ALTER TABLE public.restaurants
+    ADD COLUMN IF NOT EXISTS profile_urls TEXT[] DEFAULT ARRAY[]::TEXT[];
 
 -- ======================================================================================
 -- INDEXES

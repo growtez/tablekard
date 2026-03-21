@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Search, Bell, TrendingUp, Filter } from 'lucide-react';
 import Sidebar from '../components/sidebar';
 import { useAuth } from '../context/AuthContext';
-import { getDashboardOrders, updateOrderStatus } from '../services/supabaseService';
-import type { DashboardOrder } from '../services/supabaseService';
+import { updateOrderStatus } from '../services/supabaseService';
+import { useDashboardOrders, useInvalidateQueries } from '../hooks/useSupabaseQuery';
 import './order.css';
 
 const Order: React.FC = () => {
@@ -11,10 +11,11 @@ const Order: React.FC = () => {
   const [selectedTable, setSelectedTable] = useState('All Tables');
   const [selectedPayment, setSelectedPayment] = useState('Payment Method');
   const [selectedStatus, setSelectedStatus] = useState('Status');
-
   const [searchQuery, setSearchQuery] = useState('');
-  const [orders, setOrders] = useState<DashboardOrder[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  // React Query: cached, auto-retries, refetches on tab focus
+  const { data: orders = [], isLoading: loading } = useDashboardOrders(activeRestaurantId);
+  const { invalidateOrders } = useInvalidateQueries();
 
   // Stats calculation
   const stats = useMemo(() => {
@@ -44,35 +45,14 @@ const Order: React.FC = () => {
     return { today, week, todayChange, weekChange };
   }, [orders]);
 
-  useEffect(() => {
-    if (activeRestaurantId) {
-      fetchOrders();
-    }
-  }, [activeRestaurantId]);
-
-  const fetchOrders = async () => {
-    if (!activeRestaurantId) return;
-    setLoading(true);
-    try {
-      const data = await getDashboardOrders(activeRestaurantId);
-      setOrders(data);
-    } catch (err) {
-      console.error('Failed to fetch orders:', err);
-      alert('Failed to load orders.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleStatusChange = async (orderId: string, currentStatus: string) => {
-    // Basic cycle example: Pending -> Preparing -> Ready -> Served -> Completed
     const cycle = ['Pending', 'Preparing', 'Ready', 'Served', 'Completed'];
     const idx = cycle.indexOf(currentStatus);
     if (idx >= 0 && idx < cycle.length - 1) {
       const nextStatus = cycle[idx + 1];
       try {
         await updateOrderStatus(orderId, nextStatus.toLowerCase() as any);
-        fetchOrders(); // refresh
+        if (activeRestaurantId) invalidateOrders(activeRestaurantId);
       } catch (err) {
         console.error('Failed to update status', err);
       }
@@ -90,7 +70,7 @@ const Order: React.FC = () => {
     });
   }, [orders, searchQuery, selectedTable, selectedPayment, selectedStatus]);
 
-  const getStatusClass = (color) => {
+  const getStatusClass = (color: string) => {
     return `status-${color}`;
   };
 
