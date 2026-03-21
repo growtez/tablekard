@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { 
     Download, 
@@ -47,6 +47,14 @@ const TableManagementPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const displayError = error || (queryError ? 'Failed to load tables. Please try again.' : null);
 
+    useEffect(() => {
+        if (activeRestaurantId) {
+            getRestaurantById(activeRestaurantId)
+                .then(r => { if (r?.name) setRestaurantName(r.name); })
+                .catch(() => { /* silently fallback to 'Restaurant' */ });
+        }
+    }, [activeRestaurantId]);
+
     // Modal states
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -64,49 +72,6 @@ const TableManagementPage: React.FC = () => {
 
     const buildQrUrl = (_tableId: string, tableNumber: number) =>
         `${BASE_URL}?restaurant_id=${activeRestaurantId}&table_id=${tableNumber}`;
-
-    const downloadQR = (tableId: string, tableNumber: number) => {
-        const svgEl = document.getElementById(`qr-svg-${tableId}`) as SVGElement | null;
-        if (!svgEl) return;
-
-        const svgData = new XMLSerializer().serializeToString(svgEl);
-        const canvas = document.createElement('canvas');
-        const size = qrSize + 40;
-        canvas.width = size;
-        canvas.height = size;
-        const ctx = canvas.getContext('2d')!;
-        const img = new Image();
-        img.onload = () => {
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, size, size);
-            ctx.drawImage(img, 20, 20, qrSize, qrSize);
-    useEffect(() => {
-        if (activeRestaurantId) {
-            fetchTables();
-            // Fetch restaurant name for the QR download template
-            getRestaurantById(activeRestaurantId)
-                .then(r => { if (r?.name) setRestaurantName(r.name); })
-                .catch(() => { /* silently fallback to 'Restaurant' */ });
-        }
-    }, [activeRestaurantId]);
-
-    const fetchTables = async () => {
-        if (!activeRestaurantId) return;
-        setLoading(true);
-        setError(null);
-        try {
-            const data = await getRestaurantTables(activeRestaurantId);
-            setTables(data);
-        } catch (err: any) {
-            console.error('Failed to fetch tables:', err);
-            setError('Failed to load tables. Please try again.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const buildQrUrl = (tableId: string, _tableNumber: number) =>
-        `${BASE_URL}/order/${activeRestaurantId}/${tableId}`;
 
     const downloadQR = async (tableId: string, tableNumber: number) => {
         const url = buildQrUrl(tableId, tableNumber);

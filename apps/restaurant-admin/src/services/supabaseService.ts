@@ -74,7 +74,6 @@ export interface RestaurantProfileUpdateInput {
     latitude?: number | null;
     longitude?: number | null;
     allowedRadius?: number | null;
-    profileUrls?: string[];
 }
 
 export interface AdministratorProfileUpdateInput {
@@ -160,8 +159,7 @@ export const updateRestaurantProfile = async (
             secondary_color: input.secondaryColor ?? null,
             latitude: input.latitude ?? null,
             longitude: input.longitude ?? null,
-            allowed_radius: input.allowedRadius ?? null,
-            profile_urls: input.profileUrls ?? []
+            allowed_radius: input.allowedRadius ?? null
         })
         .eq('id', restaurantId)
         .select('*')

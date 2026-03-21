@@ -1,11 +1,8 @@
 // Sidebar.tsx
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import './Sidebar.css';
-
-// Using URL instead of local asset to avoid missing file error
-const pizzaLogo = "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=100&h=100&fit=crop";
-
 
 interface NavItem {
   icon: string;
@@ -17,10 +14,19 @@ interface NavItem {
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { activeRestaurantName, activeRestaurantLogo } = useAuth();
 
-  // Set active tab based on current path
+  const [logoError, setLogoError] = useState(false);
+
+  // Reset logo error when the logo URL changes
+  useEffect(() => {
+    setLogoError(false);
+  }, [activeRestaurantLogo]);
+
+  // Determine active tab based on current path (reactive to location changes)
   const getActiveTab = () => {
     const path = location.pathname;
+    if (path.includes('/profile')) return 'profile';
     if (path === '/' || path === '/dashboard') return 'dashboard';
     if (path.includes('/orders')) return 'order';
     if (path.includes('/menu')) return 'menu';
@@ -31,7 +37,7 @@ const Sidebar: React.FC = () => {
     return 'dashboard';
   };
 
-  const [activeTab, setActiveTab] = useState(getActiveTab());
+  const activeTab = getActiveTab();
 
   // Collapse state - default to collapsed on mobile
   const [isCollapsed, setIsCollapsed] = useState(() => {
@@ -42,7 +48,7 @@ const Sidebar: React.FC = () => {
   });
 
   // Apply class to body for global layout adjustments
-  React.useEffect(() => {
+  useEffect(() => {
     if (isCollapsed) {
       document.body.classList.add('sidebar-collapsed');
       if (window.innerWidth > 768) {
@@ -57,7 +63,7 @@ const Sidebar: React.FC = () => {
   }, [isCollapsed]);
 
   // Handle resize to auto-collapse on mobile
-  React.useEffect(() => {
+  useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth <= 768) {
         setIsCollapsed(true);
@@ -80,16 +86,17 @@ const Sidebar: React.FC = () => {
   ];
 
   const handleNavClick = (item: NavItem) => {
-    setActiveTab(item.id);
     navigate(item.path);
     if (window.innerWidth <= 768) {
-      setIsCollapsed(true); // Auto close on mobile when navigating
+      setIsCollapsed(true);
     }
   };
 
-  // Check if we are showing labels (on mobile, we always show labels when open, on desktop it depends on isCollapsed)
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
   const showLabels = isMobile ? true : !isCollapsed;
+
+  const showImage = activeRestaurantLogo && !logoError;
+  const initial = activeRestaurantName.charAt(0).toUpperCase() || 'R';
 
   return (
     <>
@@ -115,9 +122,18 @@ const Sidebar: React.FC = () => {
 
         <div className="profile">
           <div className="profile-avatar">
-            <img src={pizzaLogo} alt="log" className="avatar-img" />
+            {showImage ? (
+              <img
+                src={activeRestaurantLogo}
+                alt={`${activeRestaurantName} logo`}
+                className="avatar-img"
+                onError={() => setLogoError(true)}
+              />
+            ) : (
+              <span className="avatar-initial">{initial}</span>
+            )}
           </div>
-          {showLabels && <div className="profile-name">Pizza Hut</div>}
+          {showLabels && <div className="profile-name">{activeRestaurantName}</div>}
         </div>
 
         <nav className="nav">
@@ -134,7 +150,7 @@ const Sidebar: React.FC = () => {
           ))}
         </nav>
 
-        <div className="help-button" onClick={() => navigate('/profile')} title={isCollapsed && !isMobile ? "Profile" : undefined}>
+        <div className={`help-button ${activeTab === 'profile' ? 'help-button-active' : ''}`} onClick={() => { navigate('/profile'); if (window.innerWidth <= 768) setIsCollapsed(true); }} title={isCollapsed && !isMobile ? "Profile" : undefined}>
           <span className="help-icon">👤</span>
           {showLabels && <span className="help-text">Profile</span>}
         </div>

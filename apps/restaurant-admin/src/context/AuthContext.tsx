@@ -1,5 +1,5 @@
 // Authentication Context for Restaurant Admin (Supabase)
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { supabase } from '@restaurant-saas/supabase';
 import type { User } from '@supabase/supabase-js';
@@ -24,6 +24,8 @@ interface AuthContextType {
     userProfile: UserProfile | null;
     memberships: RestaurantMembership[];
     activeRestaurantId: string | null;
+    activeRestaurantName: string;
+    activeRestaurantLogo: string | null;
     setActiveRestaurantId: (restaurantId: string) => void;
     refreshSessionData: () => Promise<void>;
     loading: boolean;
@@ -83,6 +85,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [memberships, setMemberships] = useState<RestaurantMembership[]>([]);
     const [activeRestaurantId, setActiveRestaurantIdState] = useState<string | null>(null);
+    const [activeRestaurantName, setActiveRestaurantName] = useState('Restaurant');
+    const [activeRestaurantLogo, setActiveRestaurantLogo] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
     const setActiveRestaurantId = (restaurantId: string) => {
@@ -117,8 +121,35 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
     };
 
+    // Fetch restaurant branding whenever activeRestaurantId changes
+    const fetchRestaurantBranding = useCallback(async (restaurantId: string | null) => {
+        if (!restaurantId) {
+            setActiveRestaurantName('Restaurant');
+            setActiveRestaurantLogo(null);
+            return;
+        }
+        try {
+            const { data, error } = await supabase
+                .from('restaurants')
+                .select('name, logo_url')
+                .eq('id', restaurantId)
+                .maybeSingle();
+            if (!error && data) {
+                setActiveRestaurantName(data.name || 'Restaurant');
+                setActiveRestaurantLogo(data.logo_url || null);
+            }
+        } catch {
+            // silently ignore
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchRestaurantBranding(activeRestaurantId);
+    }, [activeRestaurantId, fetchRestaurantBranding]);
+
     const refreshSessionData = async (): Promise<void> => {
         await syncMemberships(user);
+        await fetchRestaurantBranding(activeRestaurantId);
     };
 
     useEffect(() => {
@@ -205,6 +236,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         userProfile,
         memberships,
         activeRestaurantId,
+        activeRestaurantName,
+        activeRestaurantLogo,
         setActiveRestaurantId,
         refreshSessionData,
         loading,
@@ -213,7 +246,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         resetPassword,
         isAuthenticated: !!user && memberships.length > 0,
         isRestaurantAdmin: memberships.some(m => String(m.role).toLowerCase() === 'admin') || String(userProfile?.role).toLowerCase() === 'super_admin'
-    }), [user, userProfile, memberships, activeRestaurantId, loading]);
+    }), [user, userProfile, memberships, activeRestaurantId, activeRestaurantName, activeRestaurantLogo, loading]);
 
     return (
         <AuthContext.Provider value={value}>

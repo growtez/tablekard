@@ -101,6 +101,14 @@
   object-fit: cover;
 }
 
+.avatar-initial {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1A202C;
+  line-height: 1;
+  user-select: none;
+}
+
 .profile-avatar:hover {
   transform: scale(1.05);
 }
@@ -184,6 +192,17 @@
 .help-button:hover {
   background-color: rgba(255, 255, 255, 0.12);
   transform: translateY(-2px);
+}
+
+.help-button-active {
+  background-color: #A0D9B4;
+  color: #1A202C;
+}
+
+.help-button-active:hover {
+  background-color: #A0D9B4;
+  color: #1A202C;
+  transform: none;
 }
 
 .help-icon {

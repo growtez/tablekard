@@ -574,6 +574,162 @@
   font-family: 'Poppins', sans-serif;
 }
 
+.order-user-avatar-img {
+  object-fit: cover;
+}
+
+.order-user-avatar-fallback.hidden {
+  display: none;
+}
+
+/* Locate Button */
+.profile-locate-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border: 2px dashed #4f755c;
+  border-radius: 14px;
+  background-color: #F0FFF4;
+  color: #4f755c;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'Poppins', sans-serif;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.profile-locate-btn:hover:not(:disabled) {
+  background-color: #C6F6D5;
+  border-color: #38A169;
+  transform: translateY(-1px);
+}
+
+.profile-locate-btn:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+@keyframes profileLocateSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.profile-locate-spin {
+  animation: profileLocateSpin 1s linear infinite;
+}
+
+/* Logo / Avatar Preview */
+.profile-logo-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profile-logo-img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  border-radius: 12px;
+  border: 1px solid #E2E8F0;
+  background-color: #F8FAFC;
+}
+
+.profile-avatar-img {
+  width: 52px;
+  height: 52px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid #E2E8F0;
+}
+
+/* Drag-and-Drop Upload Zone */
+.profile-dropzone {
+  border: 2px dashed #CBD5E0;
+  border-radius: 16px;
+  background-color: #F8FAFC;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
+}
+
+.profile-dropzone:hover {
+  border-color: #4f755c;
+  background-color: #F0FFF4;
+}
+
+.profile-dropzone-hover {
+  border-color: #38A169 !important;
+  background-color: #C6F6D5 !important;
+  box-shadow: 0 0 0 4px rgba(56, 161, 105, 0.12);
+}
+
+.profile-dropzone-uploading {
+  opacity: 0.7;
+  cursor: wait;
+  pointer-events: none;
+}
+
+.profile-dropzone-input {
+  display: none;
+}
+
+.profile-dropzone-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 16px;
+  color: #718096;
+  font-family: 'Poppins', sans-serif;
+  text-align: center;
+}
+
+.profile-dropzone-empty span {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.profile-dropzone-hint {
+  font-size: 11px !important;
+  color: #A0AEC0 !important;
+  font-weight: 400 !important;
+}
+
+.profile-dropzone-preview {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+}
+
+.profile-dropzone-thumb {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  border-radius: 10px;
+  border: 1px solid #E2E8F0;
+  background-color: #FFFFFF;
+  flex-shrink: 0;
+}
+
+.profile-dropzone-thumb-round {
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-dropzone-replace {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #4f755c;
+  font-family: 'Poppins', sans-serif;
+}
+
 /* Loading State */
 .profile-loading {
   display: flex;

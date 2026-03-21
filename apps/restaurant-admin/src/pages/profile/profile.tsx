@@ -1,16 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     Bell,
     BuildingIcon,
     CreditCardIcon,
+    Crosshair,
     Edit3,
     ExternalLink,
+    ImageIcon,
     MailIcon,
     MapPinIcon,
     PhoneIcon,
-    Plus,
     Save,
-    Trash2,
+    Upload,
     UserCircleIcon,
     X
 } from 'lucide-react';
@@ -22,6 +23,7 @@ import {
     updateAdministratorProfile,
     updateRestaurantProfile
 } from '../../services/supabaseService';
+import { uploadProfileImage } from '../../services/storageService';
 import './profile.css';
 
 interface RestaurantFormState {
@@ -35,7 +37,6 @@ interface RestaurantFormState {
     latitude: string;
     longitude: string;
     allowedRadius: string;
-    profileUrls: string[];
 }
 
 interface AdminFormState {
@@ -99,6 +100,15 @@ const isValidUrl = (value: string): boolean => {
     }
 };
 
+const getInitials = (name?: string | null): string => {
+    if (!name) return 'AD';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+};
+
 const formatLabel = (value?: string | null): string => {
     if (!value) {
         return 'N/A';
@@ -120,8 +130,7 @@ const createRestaurantFormState = (restaurant: Restaurant): RestaurantFormState 
     secondaryColor: restaurant.branding?.secondaryColor ?? '',
     latitude: restaurant.location?.latitude != null ? String(restaurant.location.latitude) : '',
     longitude: restaurant.location?.longitude != null ? String(restaurant.location.longitude) : '',
-    allowedRadius: restaurant.location?.allowedRadius != null ? String(restaurant.location.allowedRadius) : '',
-    profileUrls: restaurant.profileUrls?.filter(url => url.trim()) ?? []
+    allowedRadius: restaurant.location?.allowedRadius != null ? String(restaurant.location.allowedRadius) : ''
 });
 
 const createAdminFormState = (profile: {
@@ -159,10 +168,6 @@ const validateRestaurantForm = (form: RestaurantFormState): string | null => {
     if (latitude != null && (latitude < -90 || latitude > 90)) return 'Latitude must be between -90 and 90.';
     if (longitude != null && (longitude < -180 || longitude > 180)) return 'Longitude must be between -180 and 180.';
     if (radius != null && (Number.isNaN(radius) || radius <= 0)) return 'Access area radius must be a positive whole number.';
-
-    for (const url of form.profileUrls.map(value => value.trim()).filter(Boolean)) {
-        if (!isValidUrl(url)) return 'Every profile URL must start with http:// or https://.';
-    }
 
     return null;
 };
@@ -226,7 +231,7 @@ const ProfilePage: React.FC = () => {
         setAdminForm(createAdminFormState(userProfile));
     };
 
-    const handleRestaurantFieldChange = (field: keyof Omit<RestaurantFormState, 'profileUrls'>, value: string) => {
+    const handleRestaurantFieldChange = (field: keyof RestaurantFormState, value: string) => {
         setRestaurantForm(current => current ? { ...current, [field]: value } : current);
     };
 
@@ -234,25 +239,117 @@ const ProfilePage: React.FC = () => {
         setAdminForm(current => ({ ...current, [field]: value }));
     };
 
-    const handleProfileUrlChange = (index: number, value: string) => {
-        setRestaurantForm(current => {
-            if (!current) return current;
-            const nextUrls = [...current.profileUrls];
-            nextUrls[index] = value;
-            return { ...current, profileUrls: nextUrls };
-        });
+    const [isLocating, setIsLocating] = useState(false);
+
+    const handleUseMyLocation = () => {
+        if (!navigator.geolocation) {
+            setFeedback({ tone: 'error', message: 'Geolocation is not supported by your browser.' });
+            return;
+        }
+
+        setIsLocating(true);
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                setRestaurantForm(current => current ? {
+                    ...current,
+                    latitude: position.coords.latitude.toFixed(6),
+                    longitude: position.coords.longitude.toFixed(6)
+                } : current);
+                setIsLocating(false);
+                setFeedback({ tone: 'success', message: 'Location coordinates filled from your device.' });
+            },
+            (error) => {
+                setIsLocating(false);
+                let message = 'Failed to get your location.';
+                if (error.code === error.PERMISSION_DENIED) {
+                    message = 'Location permission denied. Please allow location access in your browser settings.';
+                } else if (error.code === error.POSITION_UNAVAILABLE) {
+                    message = 'Location information is unavailable.';
+                } else if (error.code === error.TIMEOUT) {
+                    message = 'Location request timed out. Please try again.';
+                }
+                setFeedback({ tone: 'error', message });
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
     };
 
-    const addProfileUrlField = () => {
-        setRestaurantForm(current => current ? { ...current, profileUrls: [...current.profileUrls, ''] } : current);
-    };
+    const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+    const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+    const logoInputRef = useRef<HTMLInputElement>(null);
+    const avatarInputRef = useRef<HTMLInputElement>(null);
 
-    const removeProfileUrlField = (index: number) => {
-        setRestaurantForm(current => current ? {
-            ...current,
-            profileUrls: current.profileUrls.filter((_, currentIndex) => currentIndex !== index)
-        } : current);
-    };
+    const handleImageUpload = useCallback(async (
+        file: File,
+        folder: string,
+        onSuccess: (url: string) => void,
+        setUploading: (v: boolean) => void
+    ) => {
+        setUploading(true);
+        setFeedback(null);
+        try {
+            const url = await uploadProfileImage(folder, file);
+            onSuccess(url);
+            setFeedback({ tone: 'success', message: 'Image uploaded successfully.' });
+        } catch (error: unknown) {
+            const msg = error instanceof Error ? error.message : 'Upload failed.';
+            setFeedback({ tone: 'error', message: msg });
+        } finally {
+            setUploading(false);
+        }
+    }, []);
+
+    const handleLogoDrop = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        if (file && activeRestaurantId) {
+            handleImageUpload(
+                file,
+                `logos/${activeRestaurantId}`,
+                (url) => handleRestaurantFieldChange('logoUrl', url),
+                setIsUploadingLogo
+            );
+        }
+    }, [activeRestaurantId, handleImageUpload]);
+
+    const handleLogoFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file && activeRestaurantId) {
+            handleImageUpload(
+                file,
+                `logos/${activeRestaurantId}`,
+                (url) => handleRestaurantFieldChange('logoUrl', url),
+                setIsUploadingLogo
+            );
+        }
+        e.target.value = '';
+    }, [activeRestaurantId, handleImageUpload]);
+
+    const handleAvatarDrop = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        if (file && userProfile) {
+            handleImageUpload(
+                file,
+                `avatars/${userProfile.id}`,
+                (url) => handleAdminFieldChange('avatarUrl', url),
+                setIsUploadingAvatar
+            );
+        }
+    }, [userProfile, handleImageUpload]);
+
+    const handleAvatarFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file && userProfile) {
+            handleImageUpload(
+                file,
+                `avatars/${userProfile.id}`,
+                (url) => handleAdminFieldChange('avatarUrl', url),
+                setIsUploadingAvatar
+            );
+        }
+        e.target.value = '';
+    }, [userProfile, handleImageUpload]);
 
     const startRestaurantEdit = () => { resetRestaurantForm(); setFeedback(null); setIsRestaurantEditing(true); };
     const cancelRestaurantEdit = () => { resetRestaurantForm(); setIsRestaurantEditing(false); };
@@ -286,8 +383,7 @@ const ProfilePage: React.FC = () => {
                 secondaryColor: emptyToNull(restaurantForm.secondaryColor),
                 latitude: parseOptionalNumber(restaurantForm.latitude),
                 longitude: parseOptionalNumber(restaurantForm.longitude),
-                allowedRadius: parseOptionalInteger(restaurantForm.allowedRadius),
-                profileUrls: restaurantForm.profileUrls.map(url => url.trim()).filter(Boolean)
+                allowedRadius: parseOptionalInteger(restaurantForm.allowedRadius)
             });
 
             setRestaurant(updatedRestaurant);
@@ -405,16 +501,51 @@ const ProfilePage: React.FC = () => {
                         />
                     </label>
 
-                    <label className="profile-field">
-                        <span className="profile-field-label">Logo URL</span>
+                    <div className="profile-field">
+                        <span className="profile-field-label">Logo</span>
+                        <div
+                            className={`profile-dropzone ${isUploadingLogo ? 'profile-dropzone-uploading' : ''}`}
+                            onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('profile-dropzone-hover'); }}
+                            onDragLeave={(e) => { e.currentTarget.classList.remove('profile-dropzone-hover'); }}
+                            onDrop={(e) => { e.currentTarget.classList.remove('profile-dropzone-hover'); handleLogoDrop(e); }}
+                            onClick={() => !isUploadingLogo && logoInputRef.current?.click()}
+                        >
+                            <input
+                                ref={logoInputRef}
+                                type="file"
+                                accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif"
+                                className="profile-dropzone-input"
+                                onChange={handleLogoFileSelect}
+                            />
+                            {restaurantForm.logoUrl ? (
+                                <div className="profile-dropzone-preview">
+                                    <img
+                                        src={restaurantForm.logoUrl}
+                                        alt="Logo preview"
+                                        className="profile-dropzone-thumb"
+                                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                    />
+                                    <span className="profile-dropzone-replace">
+                                        <Upload size={14} />
+                                        {isUploadingLogo ? 'Uploading…' : 'Drop or click to replace'}
+                                    </span>
+                                </div>
+                            ) : (
+                                <div className="profile-dropzone-empty">
+                                    <ImageIcon size={28} strokeWidth={1.5} />
+                                    <span>{isUploadingLogo ? 'Uploading…' : 'Drop image here or click to browse'}</span>
+                                    <span className="profile-dropzone-hint">PNG, JPG, WebP, SVG • Max 2 MB</span>
+                                </div>
+                            )}
+                        </div>
                         <input
                             className="profile-input"
                             type="url"
                             value={restaurantForm.logoUrl}
                             onChange={(event) => handleRestaurantFieldChange('logoUrl', event.target.value)}
-                            placeholder="https://cdn.example.com/logo.png"
+                            placeholder="Or paste a URL: https://cdn.example.com/logo.png"
                         />
-                    </label>
+                    </div>
 
                     <label className="profile-field">
                         <span className="profile-field-label">Access Area Radius (meters)</span>
@@ -457,6 +588,21 @@ const ProfilePage: React.FC = () => {
                         />
                     </label>
 
+                    <div className="profile-field profile-field-span-2">
+                        <button
+                            type="button"
+                            className="profile-locate-btn"
+                            onClick={handleUseMyLocation}
+                            disabled={isLocating}
+                        >
+                            <Crosshair size={16} className={isLocating ? 'profile-locate-spin' : ''} />
+                            {isLocating ? 'Locating…' : 'Use My Current Location'}
+                        </button>
+                        <span className="profile-field-help">
+                            Auto-fill latitude and longitude from your device's GPS.
+                        </span>
+                    </div>
+
                     <label className="profile-field">
                         <span className="profile-field-label">Primary Color</span>
                         <div className="profile-color-field">
@@ -494,51 +640,6 @@ const ProfilePage: React.FC = () => {
                             />
                         </div>
                     </label>
-                </div>
-
-                <div className="profile-section">
-                    <div className="profile-section-header">
-                        <div>
-                            <h3>Profile URLs</h3>
-                            <p>Add website, social, or public brand URLs.</p>
-                        </div>
-                        <button
-                            type="button"
-                            className="profile-add-link"
-                            onClick={addProfileUrlField}
-                        >
-                            <Plus size={16} />
-                            Add URL
-                        </button>
-                    </div>
-
-                    {/* {restaurantForm.profileUrls.length > 0 ? (
-                        <div className="profile-url-list">
-                            {restaurantForm.profileUrls.map((url, index) => (
-                                <div key={`${index}-${url}`} className="profile-url-row">
-                                    <input
-                                        className="profile-input"
-                                        type="url"
-                                        value={url}
-                                        onChange={(event) => handleProfileUrlChange(index, event.target.value)}
-                                        placeholder="https://example.com/brand-profile"
-                                    />
-                                    <button
-                                        type="button"
-                                        className="profile-icon-action"
-                                        onClick={() => removeProfileUrlField(index)}
-                                        aria-label={`Remove profile URL ${index + 1}`}
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="profile-empty-state">
-                            No profile URLs configured yet.
-                        </div>
-                    )} */}
                 </div>
             </div>
         );
@@ -625,45 +726,29 @@ const ProfilePage: React.FC = () => {
                 </div>
 
                 <div className="profile-info-item">
-                    <span className="profile-info-label">Logo URL</span>
+                    <span className="profile-info-label">Logo</span>
                     {restaurant.branding?.logoUrl ? (
-                        <a
-                            href={restaurant.branding.logoUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="profile-link"
-                        >
-                            <span>{restaurant.branding.logoUrl}</span>
-                            <ExternalLink size={14} />
-                        </a>
+                        <div className="profile-logo-preview">
+                            <img
+                                src={restaurant.branding.logoUrl}
+                                alt={`${restaurant.name} logo`}
+                                className="profile-logo-img"
+                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                            />
+                            <a
+                                href={restaurant.branding.logoUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="profile-link"
+                            >
+                                <span>{restaurant.branding.logoUrl}</span>
+                                <ExternalLink size={14} />
+                            </a>
+                        </div>
                     ) : (
                         <span className="profile-info-value profile-muted">Not set</span>
                     )}
                 </div>
-
-                {/* <div className="profile-info-item">
-                    <span className="profile-info-label">Profile URLs</span>
-                    {restaurant.profileUrls && restaurant.profileUrls.length > 0 ? (
-                        <div className="profile-link-list">
-                            {restaurant.profileUrls.map(url => (
-                                <a
-                                    key={url}
-                                    href={url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="profile-link"
-                                >
-                                    <span>{url}</span>
-                                    <ExternalLink size={14} />
-                                </a>
-                            ))}
-                        </div>
-                    ) : (
-                        <span className="profile-info-value profile-muted">
-                            No profile URLs configured
-                        </span>
-                    )}
-                </div> */}
 
                 <div className="profile-info-item">
                     <span className="profile-info-label">Subscription</span>
@@ -716,16 +801,51 @@ const ProfilePage: React.FC = () => {
                         </span>
                     </label>
 
-                    <label className="profile-field profile-field-span-2">
-                        <span className="profile-field-label">Avatar URL</span>
+                    <div className="profile-field profile-field-span-2">
+                        <span className="profile-field-label">Avatar</span>
+                        <div
+                            className={`profile-dropzone ${isUploadingAvatar ? 'profile-dropzone-uploading' : ''}`}
+                            onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('profile-dropzone-hover'); }}
+                            onDragLeave={(e) => { e.currentTarget.classList.remove('profile-dropzone-hover'); }}
+                            onDrop={(e) => { e.currentTarget.classList.remove('profile-dropzone-hover'); handleAvatarDrop(e); }}
+                            onClick={() => !isUploadingAvatar && avatarInputRef.current?.click()}
+                        >
+                            <input
+                                ref={avatarInputRef}
+                                type="file"
+                                accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif"
+                                className="profile-dropzone-input"
+                                onChange={handleAvatarFileSelect}
+                            />
+                            {adminForm.avatarUrl ? (
+                                <div className="profile-dropzone-preview">
+                                    <img
+                                        src={adminForm.avatarUrl}
+                                        alt="Avatar preview"
+                                        className="profile-dropzone-thumb profile-dropzone-thumb-round"
+                                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                    />
+                                    <span className="profile-dropzone-replace">
+                                        <Upload size={14} />
+                                        {isUploadingAvatar ? 'Uploading…' : 'Drop or click to replace'}
+                                    </span>
+                                </div>
+                            ) : (
+                                <div className="profile-dropzone-empty">
+                                    <ImageIcon size={28} strokeWidth={1.5} />
+                                    <span>{isUploadingAvatar ? 'Uploading…' : 'Drop image here or click to browse'}</span>
+                                    <span className="profile-dropzone-hint">PNG, JPG, WebP, SVG • Max 2 MB</span>
+                                </div>
+                            )}
+                        </div>
                         <input
                             className="profile-input"
                             type="url"
                             value={adminForm.avatarUrl}
                             onChange={(event) => handleAdminFieldChange('avatarUrl', event.target.value)}
-                            placeholder="https://cdn.example.com/admin-avatar.png"
+                            placeholder="Or paste a URL: https://cdn.example.com/avatar.png"
                         />
-                    </label>
+                    </div>
                 </div>
 
                 <div className="profile-summary-grid">
@@ -779,17 +899,25 @@ const ProfilePage: React.FC = () => {
                 </div>
 
                 <div className="profile-info-item">
-                    <span className="profile-info-label">Avatar URL</span>
+                    <span className="profile-info-label">Avatar</span>
                     {userProfile.avatarUrl ? (
-                        <a
-                            href={userProfile.avatarUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="profile-link"
-                        >
-                            <span>{userProfile.avatarUrl}</span>
-                            <ExternalLink size={14} />
-                        </a>
+                        <div className="profile-logo-preview">
+                            <img
+                                src={userProfile.avatarUrl}
+                                alt={`${userProfile.name || 'Admin'} avatar`}
+                                className="profile-avatar-img"
+                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                            />
+                            <a
+                                href={userProfile.avatarUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="profile-link"
+                            >
+                                <span>{userProfile.avatarUrl}</span>
+                                <ExternalLink size={14} />
+                            </a>
+                        </div>
                     ) : (
                         <span className="profile-info-value profile-muted">Not set</span>
                     )}
@@ -857,7 +985,20 @@ const ProfilePage: React.FC = () => {
                         <div className="profile-icon-button">
                             <Bell size={20} color="#718096" />
                         </div>
-                        <div className="order-user-avatar">ADM</div>
+                        {userProfile?.avatarUrl ? (
+                            <img
+                                src={userProfile.avatarUrl}
+                                alt="Admin avatar"
+                                className="order-user-avatar order-user-avatar-img"
+                                onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = 'none';
+                                    (e.target as HTMLImageElement).parentElement?.querySelector('.order-user-avatar-fallback')?.classList.remove('hidden');
+                                }}
+                            />
+                        ) : null}
+                        <div className={`order-user-avatar order-user-avatar-fallback ${userProfile?.avatarUrl ? 'hidden' : ''}`}>
+                            {getInitials(userProfile?.name)}
+                        </div>
                     </div>
                 </div>
 

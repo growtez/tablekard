@@ -107,7 +107,6 @@ const Menu: React.FC = () => {
 
   const handleSaveMenuItem = async (itemData: any) => {
     if (!activeRestaurantId) return;
-    setLoading(true); // Optional: add simple loading state if you have one, or just trust the fast upload
     try {
       // 1. Process images (Upload new ones)
       const processedImages = [];
@@ -145,31 +144,16 @@ const Menu: React.FC = () => {
           name: itemData.name,
           price: itemData.price,
           category_id: itemData.categoryId,
-          description: itemData.description,
-          image_url: itemData.image,
-          is_available: itemData.available,
-          is_veg: itemData.isVeg
-        });
           short_description: itemData.short_description,
           long_description: itemData.long_description,
           is_available: itemData.is_available,
           is_veg: itemData.is_veg
         }, processedImages);
-        
-        // Optimistic UI update
-        const updatedItem = {
-           ...itemData,
-           categoryId: itemData.categoryId, // ensure mapping matches MenuItem interface
-           images: activeImages.map((img, idx) => ({ ...img, id: img.id || `temp-${idx}`, menuItemId: itemData.id, restaurantId: activeRestaurantId }))
-        };
-        setMenuItems(items => items.map(i => i.id === itemData.id ? ({ ...i, ...updatedItem }) : i));
       }
       invalidateMenu(activeRestaurantId);
     } catch (err) {
       console.error('Failed to save menu item', err);
       alert('Failed to save menu item');
-    } finally {
-      setLoading(false);
     }
   };
 
