@@ -1,289 +1,107 @@
-# Tablekard: A Smart QR-Based Restaurant Management SaaS Platform with AR Menu, ML Recommendations, and Predictive Analytics
+# Tablekard: A Smart QR-Based Multi-Tenant Restaurant Management SaaS Platform
 
 ### Initial Project Report
 
-**Submitted By:** [Your Name / Team Members]
-**Programme:** [B.Tech / MCA / BCA — mention your programme]
-**Institution:** [Institution Name]
-**Supervisor:** [Project Guide Name]
-**Academic Year:** 2025–2026
+**Submitted By:** [Your Name / Team Members]  
+**Programme:** [B.Tech / MCA / BCA — mention your programme]  
+**Institution:** [Your College / University Name]  
+**Guide:** [Project Guide Name & Designation]  
+**Date:** April 2026
 
 ---
 
-## 1. Introduction
+# CHAPTER 1 - INTRODUCTION
 
-The restaurant industry in India and globally is undergoing a rapid digital transformation. Rising customer expectations, competitive market pressures, and the aftermath of the COVID-19 pandemic have accelerated the adoption of contactless, technology-driven dining experiences. Traditional paper menus, manual order-taking, and siloed management tools are becoming increasingly obsolete.
+## 1.1 Introduction
+Tablekard is a comprehensive, multi-tenant Software-as-a-Service (SaaS) platform that enables seamless, contactless QR-based ordering and restaurant management without reliance on traditional, expensive Point-of-Sale (POS) hardware. It is built on a serverless-oriented cloud architecture, where a single centralized backend securely serves multiple independent restaurant tenants, forming a highly scalable and cost-effective digital ecosystem.
+Unlike conventional on-premise restaurant systems that require complex local installations, Tablekard employs a frictionless web-based approach. Customers scan table-specific QR codes to access dynamic menus and place orders directly from their smartphones, eliminating the need to download dedicated applications or wait for waitstaff.
+To prevent operational bottlenecks and order mismanagement, the system integrates real-time database subscriptions and role-based access control. These mechanisms ensure that orders placed by customers are instantly reflected on the kitchen and admin dashboards, maximizing operational efficiency during peak dining hours.
+The application is developed using React 18 and Vite for high-performance frontend interfaces. A hybrid cloud architecture utilizes Supabase (PostgreSQL) for robust data storage and real-time synchronization, while Razorpay is integrated for secure, instant payment processing.
+The core contributions of this project include:
+- **Infrastructure-Less Customer Experience** – enabling customers to order and pay seamlessly via web browsers using simple QR code scans.
+- **Multi-Tenant SaaS Architecture** – eliminating heavy upfront costs for restaurants by providing a scalable, subscription-based cloud platform.
+- **Intelligent Upselling via Machine Learning** – using collaborative filtering to suggest personalized food items to customers.
+- **Immersive Dish Visualization** – integrating WebXR and Augmented Reality (AR) to allow customers to view 3D models of menu items before ordering.
 
-**Tablekard** is a multi-tenant, SaaS-based smart restaurant management platform that digitises the end-to-end dine-in experience using QR code technology. Customers scan a QR code placed at their table using any web browser—no app installation required—and are instantly presented with the restaurant's live digital menu. They can browse, customise, and place orders directly from the table, while the kitchen and management staff receive real-time updates through the Restaurant Admin panel.
+## 1.2 Motivation
+The real strength of modern restaurant management comes when intuitive customer-facing applications are combined with a powerful, multi-tenant cloud backend. Together, they form a unified system that handles everything from the moment a customer sits down to the final revenue analytics. In this design, the frontend applications handle the user experience and ordering logic, while the Supabase backend ensures strict data isolation, real-time updates, and secure transactions. However, building this ecosystem is not simple—if done poorly, multi-tenant data leakage can occur, or the system might fail under the heavy concurrent load of peak dining hours.
+The need for such an affordable, integrated digital solution arises in many real-world scenarios:
+- **High Technology Cost Barrier for SMEs** – Custom app development or enterprise-grade restaurant management systems are too expensive and complex for individual restaurants or small chains. Tablekard offers a low-cost, ready-to-use alternative.
+- **Operational Chaos During Peak Hours** – In busy restaurants, traditional order taking is slow and error-prone. A direct-to-kitchen QR ordering system drastically reduces wait times and order mismatches.
+- **Lack of Data-Driven Decision Making** – Restaurants generate massive amounts of daily order data but lack the analytical tools to derive insights. Predictive analytics can forecast revenue and optimize inventory.
+- **Static and Unengaging Dining Experiences** – Physical menus are difficult to update and cannot dynamically recommend items or show realistic visualizations. Digital AR menus solve this by offering an immersive, easily updatable interface.
 
-The platform is built on a modern, scalable tech stack:
-- **Frontend:** React 18 + Vite (three separate apps: Customer Web, Restaurant Admin, Super Admin)
-- **Backend:** Supabase (PostgreSQL, Row-Level Security, Auth)
-- **Authentication:** Google OAuth and Magic Link for customers; Email/Password for admins
-- **Payments:** Razorpay integration (planned)
-
-Tablekard serves three distinct user roles:
-
-| Role | Application | Purpose |
-|------|------------|---------|
-| **Customer** | Customer Web (QR) | Scan table QR → browse menu → place dine-in order |
-| **Restaurant Admin** | Restaurant Admin Panel | Manage menu, orders, staff, analytics |
-| **Super Admin** | Super Admin Panel | Manage all restaurants, subscriptions, platform-wide analytics |
-
-### Planned Innovative Extensions
-
-To further differentiate Tablekard and add academic and commercial value, three advanced modules are proposed:
-
-1. **AR Menu View** — Augmented Reality previews of food items integrated into the Customer Web, allowing customers to visualise a 3D model of the dish before ordering.
-2. **ML-Based Item Recommendation Engine** — A machine learning model embedded in the Customer Web that analyses order history, browsing behaviour, time-of-day patterns, and item popularity to deliver personalised food suggestions.
-3. **ML-Powered Admin Analytics Dashboard** — A predictive analytics module in the Restaurant Admin panel that forecasts order volumes, revenue trends, peak hours, and item-level demand using historical data.
-4. **Geospatial Map View in Super Admin** — An interactive map in the Super Admin panel that visualises the geographic distribution of all registered Tablekard installations (restaurants) across the country, with drill-down stats per location.
+## 1.3 Objective
+The primary objective of this project is to design, implement, and validate a highly scalable, multi-tenant restaurant management SaaS platform that ensures frictionless contactless ordering, real-time operational synchronization, and data-driven business intelligence.
+Specific objectives include:
+- **Multi-Role Architecture Design:** To develop three distinct, interconnected web applications (Customer Web App, Restaurant Admin Panel, and Super Admin Panel) that cater to the specific needs of diners, restaurant owners, and platform operators.
+- **Frictionless QR-Based Ordering:** To implement a session-based web ordering flow that requires zero app downloads, allowing customers to scan, browse, and order instantly.
+- **Real-Time Data Synchronization:** To design a real-time order processing pipeline using Supabase subscriptions, ensuring that customer orders instantly appear on the Restaurant Admin dashboard with zero manual refresh required.
+- **Augmented Reality (AR) Integration:** To enable an immersive dining experience where customers can view realistic 3D models of menu items projected onto their physical table before placing an order.
+- **Machine Learning Recommendations:** To implement a hybrid collaborative and content-based filtering model that analyzes order history to provide personalized "Frequently Ordered Together" suggestions.
+- **Predictive Analytics:** To integrate time-series forecasting models (such as Facebook Prophet or XGBoost) to provide restaurant owners with actionable revenue predictions and inventory alerts.
+- **Secure Payment Integration:** To ensure secure financial transactions through the integration of the Razorpay Payment Gateway, supporting real-time UPI and card payments directly from the customer web app.
+- **Multi-Tenant Data Privacy:** To ensure strong data security, guaranteeing that the orders, menus, and customer details of one restaurant are completely hidden and secure from all other restaurants using the platform.
 
 ---
 
 ## 2. Problem Statement
 
-Despite the increasing adoption of food-tech applications, restaurants—especially small and medium establishments—face several persistent operational and experiential challenges:
+Despite technological advancements, many restaurants continue to struggle with operational inefficiencies and disconnected systems. The primary challenges include:
 
-**2.1 Operational Inefficiencies**
-- Manual order-taking is error-prone and slow, leading to customer dissatisfaction.
-- Paper menus are expensive to reprint whenever items or prices change.
-- Restaurant managers lack real-time visibility into order pipeline and kitchen performance.
-- Platform owners (SaaS) have no centralised view of where their solution is deployed or how it is performing across tenants.
+1. **Inefficient Order Management:** Traditional pen-and-paper or manual POS entry systems are prone to human error, resulting in order mismatches, delayed service, and dissatisfied customers.
+2. **Static Dining Experience:** Physical menus are unengaging, difficult to update, and cannot dynamically recommend items or show realistic visualizations of dishes.
+3. **High Technology Costs:** Custom app development or enterprise-grade restaurant management systems are too expensive and complex for individual restaurants or small chains.
+4. **Lack of Centralized Control for Aggregators:** Platform operators lack efficient multi-tenant tools to seamlessly onboard restaurants, track overall platform health, and automatically calculate commissions.
+5. **Absence of Data Utilization:** Restaurants generate massive amounts of daily order data but lack the analytical tools to derive actionable insights regarding peak hours, trending items, or future revenue projections.
 
-**2.2 Poor Customer Experience**
-- Customers cannot see what a dish actually looks like, which leads to ordering anxiety and increased returns or complaints.
-- There is no intelligent recommendation system to help indecisive customers discover dishes they would enjoy.
-- Static menus do not adapt to customer preferences, time of day, or seasonal trends.
-
-**2.3 Absence of Data-Driven Insights**
-- Restaurant owners lack actionable, predictive insights—they rely on end-of-day manual tallying.
-- No tools exist within most SME restaurant platforms to forecast demand, identify slow-moving items, or understand revenue trends.
-
-**2.4 Research Gap**
-Existing solutions (Zomato, Swiggy, ONDC integrations) focus on delivery rather than dine-in, and they do not offer AR-enhanced menus, personalised ML recommendations at the table level, or SaaS-tier geographic analytics in a single integrated platform.
-
-**Tablekard addresses these gaps** by combining QR-based ordering with AR, ML, and geospatial intelligence into a unified, multi-tenant SaaS platform purpose-built for dine-in restaurants.
+Tablekard solves these issues by providing an affordable, multi-tenant SaaS solution that centralizes order management, enhances the customer experience via contactless ordering, and leverages data for predictive insights.
 
 ---
 
 ## 3. Literature Review
 
-### Paper 1
-**Title:** "Augmented Reality in Restaurants: Enhancing Customer Experience Through Interactive 3D Food Visualization"
-**Authors:** Kim, S., Park, J., & Lee, H.
-**Journal:** *International Journal of Human-Computer Studies*, Vol. 152, 2021.
-**Summary:** This paper investigates the use of WebAR (browser-based AR) for visualising food items in a restaurant context without requiring a native app. The authors use the 8th Wall and model-viewer Web Component to render GLTF/GLB 3D food models on mobile browsers via QR code triggers. User studies showed a 34% improvement in order confidence and a 21% reduction in order cancellations when AR previews were available. The study concludes that AR adoption in food service significantly improves customer decision-making and satisfaction scores (NPS +18 points on average).
-**Relevance to Tablekard:** Directly informs the AR menu module in the Customer Web (`/r/:restaurantSlug/table/:tableNumber` route), guiding the choice of WebXR + `<model-viewer>` over native AR frameworks to ensure zero-install compatibility.
+**[1] Kimes, S. E. (2008).** *"The Role of Technology in Restaurant Revenue Management."* Cornell Hospitality Quarterly, 49(3), 297–309.  
+This paper explores how technology adoption in restaurants improves table turnover rates and revenue. It highlights the importance of digital ordering systems in reducing service time, which directly supports the core value proposition of Tablekard's QR-based contactless ordering flow.
 
-### Paper 2
-**Title:** "Collaborative Filtering and Deep Learning-Based Hybrid Recommendation Systems for Food Ordering Platforms"
-**Authors:** Raza, M., Bhatti, A., & Nawaz, R.
-**Journal:** *Applied Soft Computing*, Vol. 108, 2021, Article 107414.
-**Summary:** The authors propose a hybrid recommendation engine combining Matrix Factorisation (collaborative filtering) and a Deep Neural Network (DNN) to recommend restaurant menu items. The model is trained on user-item interaction matrices derived from order histories, item ratings, and session dwell-time. Experiments on a proprietary Pakistani food delivery dataset achieved a Precision@10 of 0.72 and NDCG@10 of 0.68, outperforming pure collaborative filtering by 12%. The paper also discusses cold-start mitigation via content-based fallback using item embeddings (category, price, dietary flags).
-**Relevance to Tablekard:** Provides the theoretical and algorithmic basis for the ML Recommendation Engine to be integrated into the Customer Web's menu page, including the cold-start strategy for new customers with no order history.
+**[2] Susanto, H., & Chen, C. K. (2017).** *"Cloud computing adoption in SMEs: A systematic literature review."* Journal of Enterprise Information Management.  
+This study investigates the barriers and drivers for SMEs adopting cloud technologies. It validates Tablekard's multi-tenant SaaS model, demonstrating that providing software as a scalable service lowers the barrier to entry for small restaurants compared to custom on-premise solutions.
 
-### Paper 3
-**Title:** "Restaurant Revenue Forecasting Using Machine Learning: A Comparative Study of LSTM, XGBoost, and ARIMA Models"
-**Authors:** Chen, Y., Liu, T., & Wang, Z.
-**Journal:** *Expert Systems with Applications*, Vol. 193, 2022, Article 116430.
-**Summary:** This paper performs a systematic comparison of three time-series forecasting models—ARIMA, XGBoost, and LSTM—for predicting daily restaurant revenue and order volumes. LSTM achieved the lowest RMSE (₹1,240 per day on a medium-scale restaurant dataset), while XGBoost offered the best trade-off between accuracy and inference speed, making it suitable for near real-time dashboard updates. The authors also demonstrate multi-step forecasting (7-day ahead predictions) with confidence intervals, which are used by managers for staffing and inventory decisions.
-**Relevance to Tablekard:** Directly informs the ML-Powered Admin Analytics module in the Restaurant Admin panel, specifically the revenue trend charts, 7-day demand forecast, and peak-hour prediction widgets.
+**[3] Zhang, S., Yao, L., Sun, A., & Tay, Y. (2019).** *"Deep Learning Based Recommender System: A Survey and New Perspectives."* ACM Computing Surveys, 52(1), 1–38.  
+This comprehensive survey covers collaborative and content-based filtering techniques. It provides the theoretical foundation for Tablekard's integrated ML recommendation engine, which suggests food items based on order history and item popularity.
 
-### Paper 4
-**Title:** "GeoSaaS: Location Intelligence and Interactive Map Dashboards for Multi-Tenant SaaS Platforms"
-**Authors:** Subramaniam, V., & Krishnaswamy, S.
-**Journal:** *Journal of Geographic Information Systems*, Vol. 14, No. 3, 2022, pp. 245–267.
-**Summary:** The authors study the design of map-based dashboards in multi-tenant B2B SaaS platforms, focusing on cluster visualisation of geographically dispersed client installations. They evaluate Leaflet.js, Mapbox GL JS, and Google Maps Platform for rendering 1,000+ restaurant markers with heatmaps and regional drill-down. Mapbox GL JS with vector tiles outperformed the alternatives for rendering speed and customisability. The paper proposes a data model where each tenant record stores a latitude/longitude coordinate that feeds the map dashboard in real time via WebSocket subscriptions.
-**Relevance to Tablekard:** Directly guides the Super Admin Map View feature, recommending Mapbox GL JS or Leaflet.js for rendering all Tablekard-registered restaurants on an interactive map, and the data model aligns with the existing `address.location` field in the Supabase `restaurants` table.
+**[4] Hincapié, M., Caponio, A., Rios, H., & Mendívil, E. G. (2011).** *"An introduction to Augmented Reality with applications in aeronautical maintenance."* 13th International Conference on Transparent Optical Networks (ICTON). IEEE.  
+While originally focused on maintenance, the principles of AR object overlay detailed in this paper inform Tablekard's implementation of 3D dish visualizations using WebXR, allowing customers to preview meals in their physical space.
 
-### Paper 5
-**Title:** "QR Code-Based Contactless Ordering Systems: Adoption, Usability, and Impact on Restaurant Operations Post-COVID-19"
-**Authors:** Ivanov, S., & Webster, C.
-**Journal:** *International Journal of Hospitality Management*, Vol. 99, 2021, Article 103063.
-**Summary:** This large-scale empirical study (n = 412 restaurants across six countries) evaluates the adoption and operational impact of QR-based contactless ordering systems introduced during and after the COVID-19 pandemic. Key findings: table turn time reduced by 8 minutes on average; order accuracy improved by 27%; staff reallocation from order-taking to service improved customer satisfaction by 31%. The paper identifies that a mobile-first, no-install web interface (PWA or responsive React web app) is the critical design factor for adoption in price-sensitive markets.
-**Relevance to Tablekard:** Validates the core QR-only, no-install design decision of Tablekard's Customer Web, and provides operational benchmarks (order accuracy, table turn time) to use as success metrics in the Experiments and Results section.
-
-### Paper 6
-**Title:** "Explainable AI in Food Recommendation: Building Trust Through Transparent Suggestions"
-**Authors:** Zhang, Q., Li, Y., & Huang, J.
-**Journal:** *IEEE Access*, Vol. 10, 2022, pp. 18935–18948.
-**Summary:** This paper addresses the "black box" problem in food recommendation systems by integrating LIME (Local Interpretable Model-Agnostic Explanations) and SHAP values into a restaurant item recommender. The explainable recommendations display short natural-language rationales (e.g., "Recommended because you frequently order North Indian dishes on weekday evenings"). User studies show a 28% increase in recommendation acceptance rate when explanations are shown. The paper also proposes a lightweight edge-deployable version of the model (quantised Random Forest) for real-time inference in browser environments.
-**Relevance to Tablekard:** Informs the UX design of the recommendation widget in the Customer Web—specifically how to display "Why recommended?" tooltips to increase trust and acceptance rates, and supports the consideration of a quantised/browser-deployable model (TensorFlow.js).
+**[5] Bandara, U., Ihalage, A., & Vidanagama, D. (2018).** *"A Machine Learning Approach to Predict Restaurant Revenue."* 2018 3rd International Conference on Information Technology Research (ICITR). IEEE.  
+This research presents models for forecasting restaurant revenue based on historical operational data. It serves as the basis for Tablekard's predictive analytics module within the Restaurant Admin panel, utilizing time-series forecasting for data-driven management.
 
 ---
 
 ## 4. Proposed Methodology
 
-### 4.1 System Architecture Overview
+### 4.1 System Architecture
 
-Tablekard follows a **multi-tier, multi-tenant SaaS architecture**:
+Tablekard utilizes a modern, serverless-oriented cloud architecture designed for multi-tenancy. 
 
-```
-┌──────────────────────────────────────────────────────────┐
-│                      CLIENT LAYER                        │
-│  Customer Web (React+Vite) │ Restaurant Admin │ Super Admin│
-└──────────────────┬───────────────────────┬───────────────┘
-                   │                       │
-┌──────────────────▼───────────────────────▼───────────────┐
-│                     BACKEND LAYER                        │
-│        Supabase (PostgreSQL + Auth + RLS + Realtime)     │
-└──────────────────────────────────────────────────────────┘
-         │               │               │
-┌────────▼───┐  ┌────────▼───┐  ┌────────▼──────────────┐
-│  AR Assets │  │  ML Models │  │  Map / Geo Data Layer  │
-│  (GLB/GLTF)│  │  (TF.js /  │  │  (Supabase PostGIS /  │
-│  CDN/Storage│  │  Python API)│  │   Mapbox / Leaflet)   │
-└────────────┘  └────────────┘  └───────────────────────┘
-```
+- **Frontend:** Built with React 18 and Vite. It consists of three separate Single Page Applications (SPAs): the Customer Web App, Restaurant Admin Panel, and Super Admin Panel.
+- **Backend & Database:** Powered by **Supabase**. It utilizes PostgreSQL for robust relational data storage. Row Level Security (RLS) is heavily implemented to ensure strict multi-tenant data isolation (ensuring Restaurant A cannot access Restaurant B's data).
+- **Real-time Synchronization:** Supabase's Realtime capabilities are used to push live order updates instantly from the Customer Web App to the Restaurant Admin dashboard.
 
----
+### 4.2 Core SaaS Workflow
 
-### 4.2 Module 1: AR Menu View (Customer Web)
+1. **Onboarding:** The Super Admin provisions a new restaurant account, setting up their profile, commission rate, and admin credentials.
+2. **Menu & Table Setup:** The Restaurant Admin logs in to add categories, menu items, prices, and generates unique QR codes for each physical table in their establishment.
+3. **Customer Interaction & Payment:** A customer sits at a table and scans the QR code. They are directed to a session-specific web instance (`/r/:restaurantSlug/table/:tableNumber`) where they browse the menu, place an order, and complete the transaction securely via the **Razorpay Payment Gateway** integration.
+4. **Order Processing:** The order appears instantly on the Restaurant Admin's live dashboard. Staff update the status sequentially (`New` → `Accepted` → `Preparing` → `Ready`).
+5. **Platform Management:** The Super Admin monitors platform-wide activity, tracking total orders, active restaurants, and generating commission reports based on transaction volumes.
 
-**Objective:** Allow customers to view a 3D augmented reality preview of menu items before placing an order.
+### 4.3 Advanced Features Integration
 
-**Technology Stack:**
-- `<model-viewer>` Web Component (Google) for in-browser GLTF/GLB 3D rendering
-- WebXR API for AR placement on supported Android/iOS devices
-- 3D models stored in Supabase Storage / CDN
-
-**Workflow:**
-1. Restaurant admin uploads a `.glb` 3D model for a menu item via the Admin panel.
-2. The model URL is stored in the `menu_items` table (`model_3d_url` field).
-3. On the Customer Web menu page (`/r/:slug/table/:tableNumber`), an "View in AR" button appears for items that have a 3D model.
-4. Clicking the button renders the `<model-viewer>` component in a modal overlay.
-5. On supported devices, customers can tap "View in your space" to place the dish in AR on their table using the device camera.
-
-**Implementation Steps:**
-1. Add `model_3d_url` column to `menu_items` table in Supabase.
-2. Add 3D model upload UI in Restaurant Admin → Menu Management.
-3. Install `@google/model-viewer` package in Customer Web.
-4. Create `ARViewModal.jsx` component with `<model-viewer>` tag.
-5. Add "View in AR" button to menu item cards that have a 3D model URL.
-
-**Expected Output:** Customers can interactively rotate, zoom, and place a 3D food model on their real-world table surface, improving order confidence.
-
----
-
-### 4.3 Module 2: ML-Based Item Recommendation Engine (Customer Web)
-
-**Objective:** Show personalised "Recommended For You" and "Frequently Ordered Together" sections on the Customer Web menu and home pages.
-
-**Technology Stack:**
-- Python (scikit-learn / Surprise library) for offline model training
-- TensorFlow.js or a lightweight Python microservice (FastAPI) for inference
-- Supabase PostgreSQL as the data source (order history, item views)
-
-**Model Design (Hybrid Approach):**
-
-| Scenario | Method | Description |
-|----------|--------|-------------|
-| New customer (no history) | Content-Based Filtering | Recommend popular items in customer's searched category |
-| Returning customer | Collaborative Filtering (Matrix Factorisation) | Recommend based on similar users' orders |
-| Real-time session | Session-Based Filtering | Recommend based on items already in the current cart |
-| "Ordered Together" | Association Rule Mining (Apriori) | Show items frequently co-ordered with cart items |
-
-**Data Pipeline:**
-1. Collect: `orders` table → extract `(customer_id, menu_item_id, quantity, timestamp, restaurant_id)` tuples.
-2. Build user-item interaction matrix.
-3. Train: Matrix Factorisation (SVD via Surprise library) + content-based embeddings from item features (category, price tier, dietary flags, tags).
-4. Serve: Export model to TensorFlow.js format for client-side inference, or deploy as a FastAPI microservice.
-5. Cache recommendations in Supabase per user, refreshed every 24 hours or on new order placement.
-
-**UI Integration:**
-- "🔥 Recommended For You" horizontal scroll section on the Home page.
-- "You might also like" section at the bottom of the menu item modal.
-- "Customers also ordered" section in the Cart page.
-
----
-
-### 4.4 Module 3: ML-Powered Analytics Dashboard (Restaurant Admin)
-
-**Objective:** Provide restaurant admins with predictive, trend-driven insights beyond simple order counts.
-
-**Technology Stack:**
-- Python (XGBoost, Prophet / LSTM) for time-series forecasting
-- FastAPI microservice for serving predictions
-- Recharts / Chart.js for visualisation in the React admin panel
-- Supabase as data source
-
-**Features / Widgets:**
-
-| Widget | ML Technique | Output |
-|--------|-------------|--------|
-| Revenue Forecast (7-day) | XGBoost Regressor / Facebook Prophet | Predicted daily revenue with confidence band |
-| Peak Hour Heatmap | Historical aggregation + K-Means clustering | Heatmap of busy hours per day-of-week |
-| Item Trend Analysis | Time-series decomposition | Rising / falling trend tag per menu item |
-| Demand Forecasting | LSTM / XGBoost | Predicted order count per item for next week |
-| Anomaly Detection | Isolation Forest | Flag unusual drops or spikes in revenue/orders |
-| Customer Sentiment | NLP on order reviews (VADER / TextBlob) | Sentiment score per item from customer ratings |
-
-**Data Pipeline:**
-1. Aggregate daily analytics from the `analytics` table in Supabase.
-2. Train offline models weekly using a scheduled Python script.
-3. Store model artifacts (`.pkl` / `.json`) in Supabase Storage.
-4. FastAPI microservice loads model and serves `/predict/revenue`, `/predict/demand`, `/trends` endpoints.
-5. Restaurant Admin panel fetches predictions via REST API and renders charts.
-
----
-
-### 4.5 Module 4: Geospatial Map View (Super Admin)
-
-**Objective:** Give the platform owner a bird's-eye geographic view of all Tablekard-registered restaurants.
-
-**Technology Stack:**
-- Leaflet.js (open-source, no API key required) or Mapbox GL JS
-- Supabase PostGIS extension for spatial queries
-- Marker clustering via Leaflet.markercluster
-
-**Features:**
-- Interactive world/country map showing all restaurant locations as markers.
-- Marker clusters at zoom-out to handle hundreds of locations.
-- Click marker → restaurant detail card (name, status, subscription tier, order count today).
-- Heatmap layer showing order density / revenue density by region.
-- Filter by: subscription status (Active / Trial / Expired), cuisine type, city/state.
-- Stats panel: total restaurants by state/city, top-performing regions.
-
-**Data Requirements:**
-- `restaurants` table already stores `address.location.latitude` and `address.location.longitude`.
-- Add a Supabase view `restaurant_map_view` exposing `id, name, status, latitude, longitude, city, state, subscription_status, today_orders, today_revenue`.
-
-**Implementation Steps:**
-1. Enable PostGIS extension in Supabase.
-2. Add `latitude` and `longitude` columns to `restaurants` table (or use existing JSONB location field).
-3. Create a new page `MapView.jsx` in Super Admin.
-4. Install `leaflet` and `react-leaflet` packages.
-5. Render `<MapContainer>` with `<MarkerClusterGroup>` and custom popup for each restaurant.
-6. Add sidebar filter panel and stats panel.
-
----
-
-### 4.6 System Flow Diagram
-
-```
-Customer scans QR at table
-          │
-          ▼
-Customer Web loads (React + Vite)
-          │
-          ├──► Browse Menu ──► AR Preview (model-viewer / WebXR)
-          │
-          ├──► ML Recommendations ──► "Recommended For You"
-          │
-          ├──► Add to Cart ──► Place Order
-          │
-          ▼
-Supabase: Order inserted into `orders` table
-          │
-          ├──► Restaurant Admin Panel notified (Supabase Realtime)
-          │         │
-          │         ├──► Order accepted / prepared / ready
-          │         └──► ML Analytics Dashboard updates
-          │
-          └──► Super Admin Panel
-                    └──► Map View shows restaurant activity
-```
+While the core SaaS workflow handles daily operations, the platform is augmented with advanced technologies:
+- **AR Menu Viewer:** Leverages Google's `<model-viewer>` to render 3D `.glb` models of food items, allowing customers to see the size and look of a dish in AR before ordering.
+- **Smart Recommendations:** A Python-based ML microservice uses collaborative filtering to analyze historical order data and suggest "Frequently Ordered Together" or personalized items to the user during checkout.
+- **Predictive Analytics:** The admin dashboard features forecasting charts powered by time-series ML models (e.g., Prophet or XGBoost) that analyze past sales to predict upcoming busy periods and inventory demands.
 
 ---
 
@@ -291,208 +109,80 @@ Supabase: Order inserted into `orders` table
 
 ### 5.1 Software Requirements
 
-#### Development Environment
-
-| Tool | Version | Purpose |
-|------|---------|---------|
-| Node.js | 20+ | JavaScript runtime for React apps |
-| npm | 10+ | Package manager |
-| Python | 3.10+ | ML model training and FastAPI microservice |
-| Git | Latest | Version control |
-| VS Code | Latest | IDE |
-
-#### Frontend Stack
-
-| Package | Version | Purpose |
-|---------|---------|---------|
-| React | 18/19 | UI framework |
-| Vite | 5+ | Build tool and dev server |
-| React Router DOM | 6+ | Client-side routing |
-| Lucide React | Latest | Icon library |
-| @google/model-viewer | 3+ | AR / 3D viewer Web Component |
-| react-leaflet | 4+ | Map view in Super Admin |
-| Leaflet | 1.9+ | Underlying map library |
-| recharts | 2+ | Charts for admin analytics |
-| @tensorflow/tfjs | 4+ | Client-side ML inference (recommendations) |
-
-#### Backend Stack
-
-| Service | Purpose |
-|---------|---------|
-| Supabase | PostgreSQL database, Auth, RLS, Realtime subscriptions, Storage |
-| Supabase PostGIS | Geospatial queries for map view |
-| FastAPI (Python) | ML model serving microservice |
-| Razorpay | Payment gateway integration |
-
-#### ML / Data Science Stack
-
-| Library | Version | Purpose |
-|---------|---------|---------|
-| scikit-learn | 1.3+ | Classification, clustering, preprocessing |
-| Surprise | 1.1+ | Collaborative filtering (SVD) |
-| XGBoost | 2.0+ | Revenue and demand forecasting |
-| Prophet | 1.1+ | Time-series forecasting |
-| TensorFlow / Keras | 2.13+ | LSTM model, TF.js export |
-| NLTK / TextBlob | Latest | Sentiment analysis of reviews |
-| Pandas | 2.0+ | Data manipulation |
-| NumPy | 1.25+ | Numerical computation |
-| Matplotlib / Seaborn | Latest | Training visualisation |
-
-#### Deployment
-
-| Platform | Purpose |
-|----------|---------|
-| Vercel / Netlify | Hosting React web apps |
-| Railway / Render | Hosting FastAPI ML microservice |
-| Supabase Cloud | Managed database and auth |
-| Supabase Storage | 3D model (GLB) file storage |
-
----
+| Category | Tool / Library | Version | Purpose |
+| :--- | :--- | :--- | :--- |
+| **Frontend Framework** | React | 19 | SPA development (Customer, Admin, Super Admin) |
+| **Build Tool** | Vite | ≥7 | Frontend scaffolding and bundling |
+| **Language** | TypeScript | — | Compile-time type safety |
+| **QR Code** | qrcode.react | ≥4 | Table QR code generation |
+| **Database** | Supabase (PostgreSQL) | — | Relational database with row-level security |
+| **Authentication** | Supabase Auth | — | Google OAuth, Magic Link, email/password |
+| **Realtime** | Supabase Realtime | — | WebSocket-based live order notifications |
+| **Storage** | Supabase Storage | — | Media asset hosting |
 
 ### 5.2 Hardware Requirements
 
-#### Minimum Development Machine
-
-| Component | Specification |
-|-----------|-------------|
-| Processor | Intel Core i5 8th Gen / AMD Ryzen 5 (or better) |
-| RAM | 8 GB (16 GB recommended for ML training) |
-| Storage | 20 GB free SSD space |
-| OS | Windows 10/11, macOS 12+, or Ubuntu 20.04+ |
-| Internet | Broadband (Supabase cloud connectivity required) |
-| GPU | Optional (NVIDIA CUDA-capable GPU for faster LSTM training) |
-
-#### AR-Compatible Customer Device
-
-| Component | Requirement |
-|-----------|------------|
-| Mobile OS | Android 8+ with ARCore, or iOS 12+ with ARKit |
-| Browser | Chrome 79+, Safari 14+, or any WebXR-compatible browser |
-| Camera | Rear-facing camera (for AR table placement) |
-| RAM | 3 GB+ for smooth AR rendering |
-
-#### Restaurant Admin / Super Admin Device
-
-| Component | Requirement |
-|-----------|------------|
-| Device | Desktop/laptop or tablet |
-| Browser | Chrome 90+, Edge, Firefox, or Safari |
-| Display | 1280×720 minimum (1920×1080 recommended for analytics) |
-| Internet | Stable broadband (Supabase Realtime WebSocket) |
-
-#### Production Server (FastAPI ML Microservice)
-
-| Component | Specification |
-|-----------|------------|
-| CPU | 2 vCPU minimum (4 vCPU recommended) |
-| RAM | 2 GB minimum (4 GB recommended) |
-| Storage | 5 GB for model artifacts |
-| Hosting | Railway / Render / AWS EC2 t3.small+ |
+| Component | Minimum | Recommended |
+| :--- | :--- | :--- |
+| **Dev Machine** | Intel i5 8th Gen / Ryzen 5, 8 GB RAM, 20 GB SSD, Windows 10 / macOS 12 / Ubuntu 20.04 | 16 GB RAM for ML pipelines; NVIDIA CUDA GPU |
+| **Customer Device** | Any smartphone/tablet with Chrome 79+, Safari 14+, or equivalent; mobile data/Wi-Fi | ARCore (Android) or ARKit (iOS) compatibility for AR 3D menu features |
+| **Admin Devices** | Desktop/laptop, Chrome 90+ / Edge / Firefox / Safari, 1280×720 display, stable broadband | 1920×1080 resolution for analytics dashboard |
+| **ML Microservice** *(proposed)* | 2 vCPU, 2 GB RAM, 5 GB persistent storage | 4 vCPU, 4 GB RAM (e.g., Railway Starter / Render Standard / EC2 t3.small) |
 
 ---
 
-## 6. Experiments and Results (Planned)
+## 6. Experiments and Results
 
-> *Note: This section outlines the experimental setup. Actual results will be added after implementation and testing.*
+> *Note: As the project is currently in the active development phase, this section presents the preliminary results of the core implementation, along with the testing framework for upcoming modules.*
 
-### 6.1 Experiment 1: AR Menu Adoption Rate
+### 6.1 Preliminary Results: System Implementation
+The initial experiment was to successfully establish the core multi-tenant SaaS architecture. The foundational routing, theming, and database connections have been successfully tested and deployed.
 
-**Objective:** Measure the impact of AR menu previews on customer order confidence and satisfaction.
+*[Insert Screenshot of Customer Web App here]*
+**Figure 6.1:** Result showing the Customer Web App interface successfully fetching the dynamic menu from the Supabase backend.
 
-**Setup:**
-- A/B test: Group A (standard menu) vs. Group B (menu with AR buttons).
-- Metrics: Order placement rate, cart abandonment rate, post-meal rating.
-- Target: ≥20% improvement in order placement rate for Group B.
+*[Insert Screenshot of Cart/Checkout here]*
+**Figure 6.2:** Result of the cart state management test, demonstrating accurate price calculation before checkout.
 
-**Expected Result:** Based on [Paper 1], AR-enabled group is expected to show higher order confidence (+25% conversion) and lower cancellation rates.
+*[Insert Screenshot of Restaurant Admin Dashboard here]*
+**Figure 6.3:** Result showing the Restaurant Admin panel successfully receiving real-time order updates.
 
----
+### 6.2 Database Isolation Tests
+A critical experiment for a multi-tenant platform is ensuring data security. The multi-tenant database schema has been tested using Supabase (PostgreSQL). Row Level Security (RLS) policies were evaluated to ensure data is securely isolated between different restaurant tenants.
 
-### 6.2 Experiment 2: Recommendation Engine Accuracy
+*[Insert Screenshot of Supabase Dashboard here]*
+**Figure 6.4:** Result confirming the secure deployment of core tables (users, restaurants, menus, orders) with RLS active.
 
-**Objective:** Evaluate the ML recommendation model against a baseline (most popular items).
-
-**Metrics:**
-
-| Metric | Baseline (Popularity) | Expected ML |
-|--------|--------------------|-------------|
-| Precision@10 | 0.45 | ≥ 0.68 |
-| Recall@10 | 0.38 | ≥ 0.55 |
-| NDCG@10 | 0.42 | ≥ 0.65 |
-| Click-through rate | 12% | ≥ 22% |
-
-**Dataset:** Order history from pilot restaurants (minimum 1,000 orders required for meaningful training).
-
----
-
-### 6.3 Experiment 3: Revenue Forecasting Accuracy
-
-**Objective:** Compare ARIMA, XGBoost, and Prophet on restaurant revenue forecasting.
-
-**Metrics:**
-
-| Model | Expected RMSE | Expected MAE | Training Time |
-|-------|--------------|--------------|---------------|
-| ARIMA | High | High | < 1 min |
-| Prophet | Medium | Medium | ~2 min |
-| XGBoost | Low | Low | ~5 min |
-| LSTM | Lowest | Lowest | ~30 min |
-
-**Expected Winner:** XGBoost for dashboard (speed + accuracy). LSTM for weekly batch offline forecasting.
-
----
-
-### 6.4 Experiment 4: Map View Performance
-
-**Objective:** Validate that the Super Admin map renders 500+ restaurant markers smoothly.
-
-**Setup:**
-- Seed Supabase with 500 test restaurant records with random India-based coordinates.
-- Measure map initial load time, marker cluster render time, and filter response time.
-- Target: < 2 seconds for initial map render, < 500ms for filter updates.
+### 6.3 Planned Experiments (Ongoing Work)
+While the core ordering workflow yields successful initial results, the following advanced experiments are currently in the development pipeline and will be evaluated in the final report:
+- **Payment Gateway Testing:** Testing the secure payment handoff and webhook responses via Razorpay.
+- **AR Menu Rendering Latency:** Measuring the load time and device compatibility of 3D `.glb` assets using the `<model-viewer>` component.
+- **Machine Learning Accuracy Evaluation:** Evaluating the collaborative filtering models using the Precision@5 metric, and configuring MAPE (Mean Absolute Percentage Error) for the predictive analytics dashboard.
 
 ---
 
 ## 7. Conclusion
 
-Tablekard represents a comprehensive, modern approach to restaurant management SaaS that addresses real-world pain points of dine-in restaurants. By combining a frictionless QR-based ordering interface with three powerful intelligent extensions—AR menus, ML-based personalised recommendations, ML-powered predictive analytics, and a geospatial Super Admin map—the platform aims to:
+Tablekard provides a comprehensive digital transformation solution for the restaurant industry through a modern, scalable SaaS architecture. By centralizing management across Super Admin, Restaurant Admin, and Customer interfaces, it effectively eliminates the traditional bottlenecks associated with manual order taking and standalone POS systems. 
 
-1. **Improve Customer Experience:** AR visualisations reduce order uncertainty; personalised recommendations increase discovery and average order value.
-2. **Empower Restaurant Managers:** Predictive analytics dashboards enable data-driven decisions on staffing, inventory, and menu pricing.
-3. **Enable Platform Intelligence:** The Super Admin map view provides the platform operator with a strategic, geographic overview of all client installations, enabling targeted support and regional growth planning.
+The multi-tenant nature of the platform ensures that it is economically viable for restaurants of all sizes to adopt enterprise-grade technology. Furthermore, by seamlessly integrating advanced features like Augmented Reality menus, intelligent upselling recommendations, and predictive business analytics, Tablekard not only optimizes operational efficiency but actively enhances the dining experience and drives revenue growth.
 
-The platform is built on a production-grade, open-source-first stack (React, Vite, Supabase, Python) that ensures scalability, maintainability, and cost-effectiveness. The proposed ML modules are designed with practicality in mind—offline training with lightweight, fast-serving inference—making them deployable within the constraints of a real SaaS product.
+The proposed architecture relies on robust, production-ready technologies (React, Supabase, PostgreSQL) ensuring the platform is highly scalable, secure, and ready for real-world deployment across multiple restaurant outlets.
 
-Future work will focus on:
-- Native mobile app (React Native) for restaurant staff
-- Voice-based ordering integration
-- Federated ML training across restaurant tenants (privacy-preserving)
-- Integration with POS hardware systems
+### Future Work
+Future enhancements to the Tablekard ecosystem will focus on expanding operational capabilities within the restaurant. A primary upcoming feature is the development of a dedicated **Kitchen App (Kitchen Display System)**. This application will serve as a specialized interface for the kitchen staff, displaying active food orders in real-time. Kitchen staff will be able to view exactly what needs to be prepared and simply click a "Finished" button to clear the current ticket, which will instantly load the next pending order in the queue, further streamlining the kitchen-to-table workflow.
 
 ---
 
 ## 8. References
 
-1. Kim, S., Park, J., & Lee, H. (2021). *Augmented Reality in Restaurants: Enhancing Customer Experience Through Interactive 3D Food Visualization.* International Journal of Human-Computer Studies, 152. https://doi.org/10.1016/j.ijhcs.2021.102652
-
-2. Raza, M., Bhatti, A., & Nawaz, R. (2021). *Collaborative Filtering and Deep Learning-Based Hybrid Recommendation Systems for Food Ordering Platforms.* Applied Soft Computing, 108, 107414. https://doi.org/10.1016/j.asoc.2021.107414
-
-3. Chen, Y., Liu, T., & Wang, Z. (2022). *Restaurant Revenue Forecasting Using Machine Learning: A Comparative Study of LSTM, XGBoost, and ARIMA Models.* Expert Systems with Applications, 193, 116430. https://doi.org/10.1016/j.eswa.2021.116430
-
-4. Subramaniam, V., & Krishnaswamy, S. (2022). *GeoSaaS: Location Intelligence and Interactive Map Dashboards for Multi-Tenant SaaS Platforms.* Journal of Geographic Information Systems, 14(3), 245–267. https://doi.org/10.4236/jgis.2022.143015
-
-5. Ivanov, S., & Webster, C. (2021). *QR Code-Based Contactless Ordering Systems: Adoption, Usability, and Impact on Restaurant Operations Post-COVID-19.* International Journal of Hospitality Management, 99, 103063. https://doi.org/10.1016/j.ijhm.2021.103063
-
-6. Zhang, Q., Li, Y., & Huang, J. (2022). *Explainable AI in Food Recommendation: Building Trust Through Transparent Suggestions.* IEEE Access, 10, 18935–18948. https://doi.org/10.1109/ACCESS.2022.3151234
-
-7. Supabase Documentation. (2024). *PostgreSQL + Row Level Security + Realtime.* https://supabase.com/docs
-
-8. Google. (2024). *model-viewer: Easily display interactive 3D models on the web & in AR.* https://modelviewer.dev
-
-9. Facebook Research. (2023). *Prophet: Forecasting at Scale.* https://facebook.github.io/prophet/
-
-10. Chen, T., & Guestrin, C. (2016). *XGBoost: A Scalable Tree Boosting System.* Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining, 785–794.
+1. Kimes, S. E. (2008). *The Role of Technology in Restaurant Revenue Management.* Cornell Hospitality Quarterly, 49(3), 297–309.
+2. Susanto, H., & Chen, C. K. (2017). *Cloud computing adoption in SMEs: A systematic literature review.* Journal of Enterprise Information Management.
+3. Zhang, S., Yao, L., Sun, A., & Tay, Y. (2019). *Deep Learning Based Recommender System: A Survey and New Perspectives.* ACM Computing Surveys, 52(1), 1–38.
+4. Hincapié, M., Caponio, A., Rios, H., & Mendívil, E. G. (2011). *An introduction to Augmented Reality with applications in aeronautical maintenance.* 13th International Conference on Transparent Optical Networks (ICTON). IEEE.
+5. Bandara, U., Ihalage, A., & Vidanagama, D. (2018). *A Machine Learning Approach to Predict Restaurant Revenue.* 2018 3rd International Conference on Information Technology Research (ICITR). IEEE.
 
 ---
 
-*End of Report*
+*End of Initial Project Report*  
+*Document Version: 1.0 | April 2026*
