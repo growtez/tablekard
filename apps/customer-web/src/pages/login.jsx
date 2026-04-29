@@ -22,15 +22,15 @@ const LoginPage = () => {
     }
   }, [isAuthenticated, navigate, redirectTo]);
 
+  // Use the env-var redirect URL so Google OAuth always bounces back to
+  // app.tablekard.com — the canonical whitelisted address in Google & Supabase.
+  const oauthRedirectUrl = import.meta.env.VITE_SUPABASE_REDIRECT_URL || window.location.origin;
+
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     setError('');
     try {
-      // Always redirect to origin base URL so Supabase can detect the 
-      // access_token in the URL hash before any route guard kicks in.
-      // The internal redirect to the intended page happens via the 
-      // useEffect that watches isAuthenticated.
-      await signInWithGoogle(window.location.origin);
+      await signInWithGoogle(oauthRedirectUrl);
     } catch (err) {
       console.error('Google sign-in error:', err);
       setError('Sign in failed. Please try again.');
@@ -47,7 +47,7 @@ const LoginPage = () => {
     setIsLoading(true);
     setError('');
     try {
-      await sendMagicLink(email, window.location.origin);
+      await sendMagicLink(email, oauthRedirectUrl);
       setMagicLinkSent(true);
     } catch (err) {
       console.error('Magic link error:', err);
