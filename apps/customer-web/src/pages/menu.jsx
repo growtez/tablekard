@@ -66,10 +66,13 @@ const MenuPage = () => {
                   originalPrice: item.discount_price ? item.price : null,
                   time: item.preparation_time ? `${item.preparation_time}min` : '15min',
                   rating: parseFloat((4.5 + Math.random() * 0.4).toFixed(1)),
-                  serves: item.serves || 'Serves 1',
+                  serves: item.serves ? `Serves ${item.serves}` : 'Serves 1',
                   image: primaryImage,
                   images: images.map(img => img.image_url),
                   dietType: item.is_veg ? 'veg' : 'non-veg',
+                  tags: item.tags || [],
+                  variants: item.variants || [],
+                  addons: item.addons || [],
                 };
               });
           });
@@ -210,8 +213,18 @@ const MenuPage = () => {
           {filteredItems.map(item => (
             <div key={item.id} className="menu-item" onClick={() => handleItemClick(item)}>
               <div className="menu-image-container">
-                <div className="image-bg-wrapper">
-                  <img src={item.image} alt={item.name} />
+                <div className="image-scroll-wrapper">
+                  {item.images && item.images.length > 0 ? (
+                    item.images.map((imgUrl, idx) => (
+                      <div key={idx} className="image-bg-wrapper">
+                        <img src={imgUrl} alt={`${item.name} - ${idx}`} loading="lazy" />
+                      </div>
+                    ))
+                  ) : (
+                    <div className="image-bg-wrapper">
+                      <img src={item.image} alt={item.name} loading="lazy" />
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -246,7 +259,7 @@ const MenuPage = () => {
                     <span>{item.time}</span>
                   </div>
                   <div className="serves-pill">
-                    <Users size={12} /> {item.serves || '8 pcs'}
+                    <Users size={12} /> {item.serves}
                   </div>
                 </div>
 
@@ -326,8 +339,18 @@ const MenuPage = () => {
 
             {/* Centered Dish Image */}
             <div className="modal-dish-showcase">
-              <div className="dish-image-frame">
-                <img src={selectedItem.image} alt={selectedItem.name} />
+              <div className="dish-image-frame-scrollable">
+                {selectedItem.images && selectedItem.images.length > 0 ? (
+                  selectedItem.images.map((imgUrl, idx) => (
+                    <div key={idx} className="dish-image-frame">
+                      <img src={imgUrl} alt={`${selectedItem.name} - ${idx}`} loading="lazy" />
+                    </div>
+                  ))
+                ) : (
+                  <div className="dish-image-frame">
+                    <img src={selectedItem.image} alt={selectedItem.name} loading="lazy" />
+                  </div>
+                )}
               </div>
               <button
                 className="modal-fav-floating"

@@ -114,6 +114,7 @@ CREATE TABLE IF NOT EXISTS public.menu_items (
     long_description TEXT,
     price NUMERIC NOT NULL DEFAULT 0,
     discount_price NUMERIC,
+    serves INTEGER DEFAULT 1 CHECK (serves > 0),
     is_available BOOLEAN DEFAULT true,
     is_veg BOOLEAN DEFAULT true,
     preparation_time INTEGER,
@@ -228,6 +229,9 @@ CREATE TABLE IF NOT EXISTS public.platform_settings (
 -- Backfill schema changes for existing databases
 ALTER TABLE public.restaurants
     ADD COLUMN IF NOT EXISTS profile_urls TEXT[] DEFAULT ARRAY[]::TEXT[];
+
+ALTER TABLE public.menu_items
+    ADD COLUMN IF NOT EXISTS serves INTEGER DEFAULT 1 CHECK (serves > 0);
 
 -- ======================================================================================
 -- INDEXES

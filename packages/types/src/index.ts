@@ -178,13 +178,15 @@ export interface MenuItem {
   restaurantId: string;
   categoryId: string;
   name: string;
-  description?: string | null;
+  shortDescription?: string | null;
+  longDescription?: string | null;
   price: number;
   discountPrice?: number | null;
   images?: MenuItemImage[];
   available: boolean;
   isVeg: boolean;
   preparationTime?: number | null; // in minutes
+  serves: number;
   tags?: string[] | null;
   variants?: MenuItemVariant[] | null;
   addons?: MenuItemAddon[] | null;
@@ -546,6 +548,7 @@ export interface Database {
           is_available: boolean;
           is_veg: boolean;
           preparation_time: number | null;
+          serves: number;
           tags: string[] | null;
           variants: Record<string, unknown>[] | null;
           addons: Record<string, unknown>[] | null;
@@ -564,6 +567,7 @@ export interface Database {
           is_available?: boolean;
           is_veg?: boolean;
           preparation_time?: number | null;
+          serves?: number;
           tags?: string[] | null;
           variants?: Record<string, unknown>[] | null;
           addons?: Record<string, unknown>[] | null;
@@ -580,6 +584,7 @@ export interface Database {
           is_available?: boolean;
           is_veg?: boolean;
           preparation_time?: number | null;
+          serves?: number;
           tags?: string[] | null;
           variants?: Record<string, unknown>[] | null;
           addons?: Record<string, unknown>[] | null;
