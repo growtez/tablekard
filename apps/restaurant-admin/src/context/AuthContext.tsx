@@ -225,9 +225,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
 
     const resetPassword = async (email: string): Promise<void> => {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.origin
-        });
+        const redirectTo = import.meta.env.VITE_SUPABASE_REDIRECT_URL || window.location.origin;
+        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
         if (error) throw error;
     };
 
