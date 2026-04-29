@@ -40,9 +40,11 @@ interface ProfileRow {
 
 interface MenuItemRow {
     id: string; restaurant_id: string; category_id: string | null; name: string;
-    short_description: string | null; long_description: string | null; price: number; discount_price: number | null;
-    is_available: boolean; is_veg: boolean;
-    preparation_time: number | null; tags: string[] | null;
+    short_description: string | null; long_description: string | null; price: number; is_available: boolean; is_veg: boolean;
+    discount_price: number | null;
+    preparation_time: number | null;
+    serves: number;
+    tags: string[] | null;
     variants: unknown[] | null; addons: unknown[] | null;
     created_at: string; updated_at: string;
     menu_item_images?: { id: string; image_url: string; sort_order: number }[];
@@ -223,7 +225,8 @@ const mapMenuItemRow = (row: MenuItemRow): MenuItem => ({
     restaurantId: row.restaurant_id,
     categoryId: row.category_id ?? '',
     name: row.name,
-    description: row.short_description || row.long_description, // fallback to match existing type, or adjust type later
+    shortDescription: row.short_description,
+    longDescription: row.long_description,
     price: row.price,
     discountPrice: row.discount_price,
     images: row.menu_item_images 
@@ -238,6 +241,7 @@ const mapMenuItemRow = (row: MenuItemRow): MenuItem => ({
     available: row.is_available,
     isVeg: row.is_veg,
     preparationTime: row.preparation_time,
+    serves: row.serves,
     tags: row.tags,
     variants: (row.variants as any) ?? undefined,
     addons: (row.addons as any) ?? undefined
@@ -266,10 +270,16 @@ export const addMenuItem = async (
         name: string;
         price: number;
         category_id: string;
-        short_description?: string;
-        long_description?: string;
+        short_description?: string | null;
+        long_description?: string | null;
+        discount_price?: number | null;
         is_available?: boolean;
         is_veg?: boolean;
+        preparation_time?: number | null;
+        serves?: number;
+        tags?: string[] | null;
+        variants?: any[] | null;
+        addons?: any[] | null;
         menu_item_images?: { url: string; sortOrder: number }[];
     }
 ): Promise<MenuItem> => {
@@ -320,6 +330,7 @@ export const updateMenuItem = async (
         is_available: boolean;
         is_veg: boolean;
         preparation_time: number | null;
+        serves: number;
         tags: string[] | null;
         variants: any[] | null;
         addons: any[] | null;
