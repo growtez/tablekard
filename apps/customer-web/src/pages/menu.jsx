@@ -4,6 +4,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useCart } from '../context/CartContext';
 import { useRestaurant } from '../context/RestaurantContext';
 import { supabase } from '@restaurant-saas/supabase';
+import { Scanner } from '@yudiel/react-qr-scanner';
 import './menu.css';
 import Hamburger from '../components/hamburger';
 
@@ -17,6 +18,7 @@ const MenuPage = () => {
   const cartIconRef = useRef(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [showItemModal, setShowItemModal] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
   const [modalQuantity, setModalQuantity] = useState(0);
   const [menuItems, setMenuItems] = useState({});
   const [categories, setCategories] = useState([]);
@@ -116,25 +118,90 @@ const MenuPage = () => {
   return (
     <div className="menu-container">
       {/* No Restaurant Context – fallback for direct /menu access */}
-      {!restaurantId && (
+      {/* Global Scanner Modal overlay */}
+      {showScanner && (
+        <div style={{ 
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+          background: 'var(--bg-primary, #fff)', zIndex: 9999,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px'
+        }}>
+            <div style={{ width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center' }}>
+              <div style={{ width: '100%', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                <Scanner 
+                  onScan={(result) => {
+                    const text = Array.isArray(result) ? result[0].rawValue : (result?.text || result);
+                    if (text) {
+                      setShowScanner(false);
+                      if (text.startsWith('http')) {
+                        window.location.href = text;
+                      } else {
+                        navigate(text);
+                      }
+                    }
+                  }}
+                  onError={(error) => console.log(error?.message)}
+                />
+              </div>
+              <button 
+                onClick={() => setShowScanner(false)}
+                style={{ 
+                  padding: '12px 24px', 
+                  borderRadius: '24px', 
+                  border: '1px solid #8B3A1E', 
+                  color: '#8B3A1E', 
+                  background: 'transparent',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Close Scanner
+              </button>
+            </div>
+        </div>
+      )}
+
+      {/* No Restaurant Context – fallback for direct /menu access */}
+      {!restaurantId && !showScanner && (
         <div style={{
           minHeight: '100vh',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '16px',
+          gap: '24px',
           padding: '32px',
           textAlign: 'center',
           background: 'var(--bg-primary, #fff)'
         }}>
-          <QrCode size={72} color="#8B3A1E" strokeWidth={1.5} />
-          <h2 style={{ color: '#8B3A1E', fontSize: '1.5rem', fontWeight: 700 }}>
-            Scan the QR Code
-          </h2>
-          <p style={{ color: '#666', maxWidth: '280px', lineHeight: 1.6 }}>
-            Please scan the QR code on your table to view the restaurant menu.
-          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+            <QrCode size={72} color="#8B3A1E" strokeWidth={1.5} />
+            <h2 style={{ color: '#8B3A1E', fontSize: '1.5rem', fontWeight: 700 }}>
+              Scan the QR Code
+            </h2>
+            <p style={{ color: '#666', maxWidth: '280px', lineHeight: 1.6 }}>
+              Please scan the QR code on your table to view the restaurant menu.
+            </p>
+          </div>
+          <button 
+            onClick={() => setShowScanner(true)}
+            style={{ 
+              padding: '14px 28px', 
+              borderRadius: '30px', 
+              background: '#8B3A1E', 
+              color: '#FFF', 
+              fontWeight: 600,
+              fontSize: '1rem',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: '0 4px 12px rgba(139, 58, 30, 0.2)'
+            }}
+          >
+            <QrCode size={20} />
+            Scan Table QR
+          </button>
         </div>
       )}
 
@@ -172,8 +239,8 @@ const MenuPage = () => {
       </section>
 
       {/* Search Bar Redirect */}
-      <div className="menu-search-section">
-        <div className="menu-search-container" onClick={() => navigate('/search')}>
+      <div className="menu-search-section" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+        <div className="menu-search-container" onClick={() => navigate('/search')} style={{ flex: 1, margin: 0 }}>
           <Search className="search-icon" size={20} />
           <input
             type="text"
@@ -182,6 +249,24 @@ const MenuPage = () => {
             className="search-input"
           />
         </div>
+        <button 
+          onClick={() => setShowScanner(true)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '48px',
+            height: '48px',
+            borderRadius: '16px',
+            background: '#8B3A1E',
+            color: 'white',
+            border: 'none',
+            cursor: 'pointer',
+            boxShadow: '0 4px 12px rgba(139, 58, 30, 0.15)'
+          }}
+        >
+          <QrCode size={20} />
+        </button>
       </div>
 
       {/* Categories */}
@@ -401,8 +486,10 @@ const MenuPage = () => {
         </div>
       )}
 
-      {/* Bottom Navigation - Hidden when modal is open */}
-      {!showItemModal && (
+    </>)}
+
+      {/* Bottom Navigation - Hidden when modal or scanner is open */}
+      {!showItemModal && !showScanner && (
         <nav className="bottom-nav">
           <NavLink to="/" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
             <Home size={22} />
@@ -411,8 +498,6 @@ const MenuPage = () => {
           <NavLink to="/menu" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
             <ShoppingBag size={22} />
           </NavLink>
-
-
 
           <NavLink to="/orders" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
             <ShoppingCart size={22} />
@@ -424,7 +509,6 @@ const MenuPage = () => {
           </NavLink>
         </nav>
       )}
-    </>)}
     </div>
   );
 };
