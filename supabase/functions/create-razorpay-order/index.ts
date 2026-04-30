@@ -233,7 +233,7 @@ serve(async (req: Request) => {
                 restaurant_id,
                 restaurant_name: restaurant.name,
                 table_id: table_id || null,
-                order_type: order_type || "DINE_IN",
+                order_type: order_type?.toLowerCase() || "dine_in",
                 customer_id: user.id,
                 items: validatedItems,  // Store validated cart items for later
             },

@@ -114,7 +114,7 @@ const MyOrderPage = () => {
       const result = await processOnlinePayment({
         restaurantId,
         tableId,
-        orderType: 'DINE_IN',
+        orderType: 'dine_in',
         items: cartItems,
         restaurantName: 'Tablekard',
         userName: user?.user_metadata?.full_name || '',

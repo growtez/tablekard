@@ -198,10 +198,10 @@ serve(async (req: Request) => {
                 customer_id: user.id,
                 restaurant_id: cartData.restaurant_id,
                 order_number: orderNumber,
-                type: cartData.order_type || "DINE_IN",
+                type: cartData.order_type?.toLowerCase() || "dine_in",
                 status: "confirmed",                    // ✅ Immediately CONFIRMED (paid!)
                 table_id: cartData.table_id || null,
-                payment_method: "ONLINE",
+                payment_method: "online",
                 payment_status: "paid",                  // ✅ Already paid
                 subtotal: cartData.subtotal,
                 taxes: cartData.taxes,
