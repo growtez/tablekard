@@ -72,11 +72,14 @@
 
 .brand-main-title {
     font-family: 'Syncopate', sans-serif;
-    font-size: 38px;
+    font-size: 32px;
     font-weight: 700;
-    letter-spacing: 10px;
+    letter-spacing: 2px;
     color: #1A1A1A;
     margin-bottom: 16px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
 }
 
 .brand-philosophy {

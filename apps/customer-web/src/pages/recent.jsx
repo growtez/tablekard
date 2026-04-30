@@ -9,8 +9,8 @@ const RecentOrdersPage = () => {
   return (
     <div className="recent-container">
       <header className="header">
-        <button onClick={() => navigate(-1)} className="back-btn">
-          <ArrowLeft size={24} />
+        <button onClick={() => navigate(-1)} className="global-back-btn">
+          <ArrowLeft size={22} />
         </button>
         <h1>Recent Orders</h1>
       </header>

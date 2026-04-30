@@ -60,8 +60,8 @@ const LoginPage = () => {
   return (
     <div className="login-container">
       <header className="login-header">
-        <NavLink to="/" className="back-button" title="Go back">
-          <ArrowLeft size={24} />
+        <NavLink to="/" className="global-back-btn" title="Go back">
+          <ArrowLeft size={22} />
         </NavLink>
       </header>
 
