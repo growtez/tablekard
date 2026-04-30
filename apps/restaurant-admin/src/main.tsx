@@ -8,11 +8,11 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       // Show cached data instantly, refetch in background when stale
-      staleTime: 30_000,
-      // Keep unused cache entries for 5 minutes
-      gcTime: 5 * 60 * 1000,
-      // Refetch when the tab / window regains focus
-      refetchOnWindowFocus: true,
+      staleTime: 60_000, // 1 minute
+      // Keep unused cache entries for 10 minutes
+      gcTime: 10 * 60 * 1000,
+      // DISABLE refetch when the tab / window regains focus to avoid "hangs"
+      refetchOnWindowFocus: false,
       // Retry up to 3 times on failure (with exponential backoff)
       retry: 3,
       retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10_000),
