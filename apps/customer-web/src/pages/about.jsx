@@ -41,7 +41,7 @@ const AboutPage = () => {
         <div className="about-journal-container">
             {/* Elegant Header */}
             <header className="about-journal-header">
-                <button className="journal-back-btn" onClick={() => navigate(-1)}>
+                <button className="global-back-btn" onClick={() => navigate(-1)}>
                     <ArrowLeft size={22} />
                 </button>
                 <div className="journal-header-title">OUR STORY</div>
@@ -73,26 +73,7 @@ const AboutPage = () => {
                     </div>
                 </section>
 
-                {/* Stats / Highlights */}
-                <section className="journal-section highlights">
-                    <div className="highlights-grid">
-                        <div className="highlight-item">
-                            <div className="highlight-icon-box"><Award size={20} /></div>
-                            <div className="highlight-value">12+</div>
-                            <div className="highlight-label">Awards</div>
-                        </div>
-                        <div className="highlight-item">
-                            <div className="highlight-icon-box"><Users size={20} /></div>
-                            <div className="highlight-value">50k</div>
-                            <div className="highlight-label">Guests</div>
-                        </div>
-                        <div className="highlight-item">
-                            <div className="highlight-icon-box"><Heart size={20} /></div>
-                            <div className="highlight-value">Pure</div>
-                            <div className="highlight-label">Passion</div>
-                        </div>
-                    </div>
-                </section>
+
 
                 {/* Operating Hours - Modern Timeline Design */}
                 <section className="journal-section hours">

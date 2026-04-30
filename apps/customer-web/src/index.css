@@ -115,3 +115,23 @@ a,
 button {
   transition: color 0.3s ease;
 }
+
+/* Global Back Button (Our Story Design) */
+.global-back-btn {
+    background: #FFF0EC;
+    border: none;
+    color: #8B3A1E;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.global-back-btn:active {
+    transform: scale(0.9);
+}

@@ -132,8 +132,8 @@ const DiscountsPage = () => {
     return (
         <div className="discounts-page-container">
             <header className="discounts-header">
-                <button className="back-btn" onClick={() => navigate(-1)}>
-                    <ArrowLeft size={24} />
+                <button className="global-back-btn" onClick={() => navigate(-1)}>
+                    <ArrowLeft size={22} />
                 </button>
                 <h1>Discounts</h1>
             </header>
