@@ -28,7 +28,7 @@ import { paintQrTemplate } from '../utils/qrTemplatePainter';
 
 import './table_management.css';
 
-const BASE_URL = import.meta.env.VITE_CUSTOMER_APP_URL || window.location.origin;
+const BASE_URL = import.meta.env.VITE_CUSTOMER_APP_URL || 'https://app.tablekard.com';
 
 interface TableFormData {
     table_number: number;
