@@ -168,7 +168,7 @@ const MyOrderPage = () => {
         customerPhone: user?.phone || null,
         tableNumber: tableId,
         items: cartItems,
-        paymentMethod: 'PAY_AT_COUNTER',
+        paymentMethod: 'cash',
       });
 
       const newOrder = {
