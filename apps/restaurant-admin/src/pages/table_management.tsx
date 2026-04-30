@@ -70,7 +70,7 @@ const TableManagementPage: React.FC = () => {
     const [formErrors, setFormErrors] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
 
-    const buildQrUrl = (_tableId: string, tableNumber: number) =>
+    const buildQrUrl = (_tableId: string, _tableNumber: number) =>
         `${BASE_URL}?restaurant_id=${activeRestaurantId}&table_id=${_tableId}`;
 
     const downloadQR = async (tableId: string, tableNumber: number) => {
