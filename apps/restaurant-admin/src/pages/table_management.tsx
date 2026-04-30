@@ -1,24 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { 
-    Download, 
-    RefreshCw, 
-    QrCode, 
-    Table2, 
-    CheckCircle, 
-    AlertCircle, 
-    Plus, 
-    Edit2, 
-    Trash2, 
-    X, 
+import {
+    Download,
+    RefreshCw,
+    QrCode,
+    Table2,
+    CheckCircle,
+    AlertCircle,
+    Plus,
+    Edit2,
+    Trash2,
+    X,
     Save,
     Users
 } from 'lucide-react';
 import Sidebar from '../components/sidebar';
 import { useAuth } from '../context/AuthContext';
-import { 
-    createRestaurantTable, 
-    updateRestaurantTable, 
+import {
+    createRestaurantTable,
+    updateRestaurantTable,
     deleteRestaurantTable,
     getRestaurantById
 } from '../services/supabaseService';
@@ -40,7 +40,7 @@ const TableManagementPage: React.FC = () => {
     const { activeRestaurantId } = useAuth();
     const [qrSize, setQrSize] = useState(160);
     const [restaurantName, setRestaurantName] = useState<string>('Restaurant');
-    
+
     // React Query: cached, auto-retries, refetches on tab focus
     const { data: tables = [], isLoading: loading, error: queryError, refetch } = useRestaurantTables(activeRestaurantId);
     const { invalidateTables } = useInvalidateQueries();
@@ -60,7 +60,7 @@ const TableManagementPage: React.FC = () => {
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [currentTable, setCurrentTable] = useState<RestaurantTable | null>(null);
-    
+
     // Form states
     const [formData, setFormData] = useState<TableFormData>({
         table_number: 1,
@@ -316,15 +316,15 @@ const TableManagementPage: React.FC = () => {
                                     <div className="tm-card-header">
                                         <span className="tm-table-label">Table {table.table_number}</span>
                                         <div className="tm-card-actions">
-                                            <button 
-                                                className="tm-icon-btn edit" 
+                                            <button
+                                                className="tm-icon-btn edit"
                                                 onClick={() => handleEditTable(table)}
                                                 title="Edit table"
                                             >
                                                 <Edit2 size={14} />
                                             </button>
-                                            <button 
-                                                className="tm-icon-btn delete" 
+                                            <button
+                                                className="tm-icon-btn delete"
                                                 onClick={() => handleDeleteTable(table)}
                                                 title="Delete table"
                                             >
@@ -333,7 +333,7 @@ const TableManagementPage: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    <div 
+                                    <div
                                         className={`tm-status-badge ${table.active ? 'active' : 'inactive'}`}
                                         onClick={() => handleToggleActive(table)}
                                         title="Click to toggle status"
@@ -430,17 +430,17 @@ const TableManagementPage: React.FC = () => {
                                 </div>
                             </div>
                             <div className="tm-modal-footer">
-                                <button 
-                                    type="button" 
-                                    className="tm-btn-secondary" 
+                                <button
+                                    type="button"
+                                    className="tm-btn-secondary"
                                     onClick={() => setShowAddModal(false)}
                                     disabled={submitting}
                                 >
                                     Cancel
                                 </button>
-                                <button 
-                                    type="submit" 
-                                    className="tm-btn-primary" 
+                                <button
+                                    type="submit"
+                                    className="tm-btn-primary"
                                     disabled={submitting}
                                 >
                                     {submitting ? 'Creating...' : 'Create Table'}
@@ -501,17 +501,17 @@ const TableManagementPage: React.FC = () => {
                                 </div>
                             </div>
                             <div className="tm-modal-footer">
-                                <button 
-                                    type="button" 
-                                    className="tm-btn-secondary" 
+                                <button
+                                    type="button"
+                                    className="tm-btn-secondary"
                                     onClick={() => setShowEditModal(false)}
                                     disabled={submitting}
                                 >
                                     Cancel
                                 </button>
-                                <button 
-                                    type="submit" 
-                                    className="tm-btn-primary" 
+                                <button
+                                    type="submit"
+                                    className="tm-btn-primary"
                                     disabled={submitting}
                                 >
                                     <Save size={16} />
@@ -542,17 +542,17 @@ const TableManagementPage: React.FC = () => {
                             </p>
                         </div>
                         <div className="tm-modal-footer">
-                            <button 
-                                type="button" 
-                                className="tm-btn-secondary" 
+                            <button
+                                type="button"
+                                className="tm-btn-secondary"
                                 onClick={() => setShowDeleteModal(false)}
                                 disabled={submitting}
                             >
                                 Cancel
                             </button>
-                            <button 
-                                type="button" 
-                                className="tm-btn-danger" 
+                            <button
+                                type="button"
+                                className="tm-btn-danger"
                                 onClick={handleConfirmDelete}
                                 disabled={submitting}
                             >
