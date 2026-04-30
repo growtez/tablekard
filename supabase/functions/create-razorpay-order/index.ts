@@ -205,7 +205,7 @@ serve(async (req: Request) => {
                 currency: "INR",
                 gateway: "razorpay",
                 razorpay_order_id: razorpayOrder.id,
-                status: "PENDING",
+                status: "pending",
             })
             .select("id")
             .single();

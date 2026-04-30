@@ -105,7 +105,7 @@ serve(async (req: Request) => {
                     webhook_event_id: webhookData.event_id || null,
                     razorpay_payment_id: razorpayPaymentId,
                     method: method,
-                    status: "PAID",                                // Confirm payment
+                    status: "paid",                                // Confirm payment
                     paid_at: new Date().toISOString(),
                 })
                 .eq("id", payment.id);
@@ -115,13 +115,13 @@ serve(async (req: Request) => {
             if (payment.order_id) {
                 await supabaseAdmin
                     .from("orders")
-                    .update({ payment_status: "PAID" })
+                    .update({ payment_status: "paid" })
                     .eq("id", payment.order_id);
             }
 
             // If verify function DIDN'T run (browser crashed), we need to
             // create the order now using the stored cart data
-            if (!payment.order_id && payment.status !== "PAID") {
+            if (!payment.order_id && payment.status !== "paid") {
                 console.log("Frontend verify did not run — creating order from webhook");
 
                 // Fetch cart data from payment_logs
@@ -150,10 +150,10 @@ serve(async (req: Request) => {
                             restaurant_id: cartData.restaurant_id,
                             order_number: orderNumber,
                             type: cartData.order_type || "DINE_IN",
-                            status: "CONFIRMED",
+                            status: "confirmed",
                             table_id: cartData.table_id || null,
                             payment_method: "ONLINE",
-                            payment_status: "PAID",
+                            payment_status: "paid",
                             subtotal: cartData.subtotal,
                             taxes: cartData.taxes,
                             discount: 0,
@@ -219,7 +219,7 @@ serve(async (req: Request) => {
                 await supabaseAdmin
                     .from("payments")
                     .update({
-                        status: "FAILED",
+                        status: "failed",
                         failure_reason: errorDescription,
                         failure_code: errorCode,
                         webhook_verified: true,
@@ -261,7 +261,7 @@ serve(async (req: Request) => {
                     await supabaseAdmin
                         .from("payments")
                         .update({
-                            status: "REFUNDED",
+                            status: "refunded",
                             refund_id: refundEntity.id,
                             refund_amount: refundEntity.amount / 100,  // Convert paise to rupees
                             webhook_verified: true,
@@ -271,7 +271,7 @@ serve(async (req: Request) => {
                     if (payment.order_id) {
                         await supabaseAdmin
                             .from("orders")
-                            .update({ payment_status: "REFUNDED" })
+                            .update({ payment_status: "refunded" })
                             .eq("id", payment.order_id);
                     }
                 }
