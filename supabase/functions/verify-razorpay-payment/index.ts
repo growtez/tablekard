@@ -200,7 +200,7 @@ serve(async (req: Request) => {
                 order_number: orderNumber,
                 type: cartData.order_type?.toLowerCase() || "dine_in",
                 status: "confirmed",                    // ✅ Immediately CONFIRMED (paid!)
-                table_id: cartData.table_id || null,
+                table_id: (typeof cartData.table_id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cartData.table_id)) ? cartData.table_id : null,
                 payment_method: "online",
                 payment_status: "paid",                  // ✅ Already paid
                 subtotal: cartData.subtotal,
