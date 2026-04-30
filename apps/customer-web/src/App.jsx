@@ -16,7 +16,7 @@ const SearchPage = lazy(() => import("./pages/search"));
 const LikesPage = lazy(() => import("./pages/likes"));
 const MostPopularPage = lazy(() => import("./pages/popular"));
 const RecentOrdersPage = lazy(() => import("./pages/recent"));
-const OffersPage = lazy(() => import("./pages/offers"));
+const DiscountsPage = lazy(() => import("./pages/discounts"));
 const OnboardingPage = lazy(() => import("./pages/onboarding"));
 const LoginPage = lazy(() => import("./pages/login"));
 const LiveQueuePage = lazy(() => import("./pages/live_queue"));
@@ -89,7 +89,7 @@ function AppRoutes() {
         <Route path="/orders" element={<MyOrdersPage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/popular" element={<MostPopularPage />} />
-        <Route path="/offers" element={<OffersPage />} />
+        <Route path="/discounts" element={<DiscountsPage />} />
         <Route path="/onboarding" element={<OnboardingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/about" element={<AboutPage />} />

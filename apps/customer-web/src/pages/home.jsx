@@ -113,7 +113,7 @@ const HomePage = () => {
     const filters = [
         { id: 'popular', label: 'Popular this week' },
         { id: 'all', label: 'Most selling' },
-        { id: 'expensive', label: 'Most expensive' },
+        { id: 'rated', label: 'Most rated' },
         { id: 'budget', label: 'Under ₹200' }
     ];
 
@@ -219,9 +219,9 @@ const HomePage = () => {
             case 'all':
                 // Most selling - show all items (simulated)
                 return popularItems;
-            case 'expensive':
-                // Sort by price (highest first)
-                return [...popularItems].sort((a, b) => b.price - a.price);
+            case 'rated':
+                // Sort by rating (highest first)
+                return [...popularItems].sort((a, b) => b.rating - a.rating);
             case 'budget':
                 // Filter items under ₹200
                 return popularItems.filter(item => item.price < 200);
@@ -344,10 +344,6 @@ const HomePage = () => {
                     <h2 className="section-title">
                         {filters.find(f => f.id === activeFilter)?.label || 'Popular this week'}
                     </h2>
-                    <NavLink to="/popular" className="view-all-link">
-                        View all
-                        <span className="arrow-square">→</span>
-                    </NavLink>
                 </div>
                 <div className="food-grid">
                     {filteredItems.map(item => (
@@ -388,7 +384,7 @@ const HomePage = () => {
                     <h2 className="section-title">
                         Discounts for you
                     </h2>
-                    <NavLink to="/offers" className="view-all-link">
+                    <NavLink to="/discounts" className="view-all-link">
                         View all
                         <span className="arrow-square">→</span>
                     </NavLink>
@@ -442,7 +438,7 @@ const HomePage = () => {
             <section className="section">
                 <div className="section-header">
                     <h2 className="section-title">Recent Orders</h2>
-                    <NavLink to="/recent" className="view-all-link">
+                    <NavLink to="/order-history" className="view-all-link">
                         View all
                         <span className="arrow-square">→</span>
                     </NavLink>
