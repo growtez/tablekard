@@ -181,7 +181,7 @@ const MyOrderPage = () => {
         statusLabel: 'Order Placed'
       };
       setOrders(prev => [newOrder, ...prev]);
-      setCartItems([]);
+      clearCart();
       setActiveTab('orders');
     } catch (err) {
       console.error('Order error:', err);
