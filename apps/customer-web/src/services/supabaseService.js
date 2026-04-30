@@ -54,7 +54,7 @@ export const createOrder = async ({
             restaurant_id: restaurantId,
             customer_id: customerId,
             order_number: orderNumber,
-            type: 'DINE_IN',
+            type: 'dine_in',
             table_number: tableNumber ? Number(tableNumber) : null,
             customer_name: customerName ?? null,
             customer_phone: customerPhone ?? null,

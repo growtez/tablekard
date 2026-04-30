@@ -173,7 +173,7 @@ CREATE TABLE IF NOT EXISTS public.order_items (
 -- payments
 CREATE TABLE IF NOT EXISTS public.payments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    order_id UUID NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
+    order_id UUID REFERENCES public.orders(id) ON DELETE CASCADE,
     restaurant_id UUID NOT NULL REFERENCES public.restaurants(id) ON DELETE CASCADE,
     user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
     amount NUMERIC NOT NULL,
