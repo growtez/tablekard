@@ -36,11 +36,9 @@ export const getMenuItems = async (restaurantId) => {
 export const createOrder = async ({
     restaurantId,
     customerId,
-    customerName,
-    customerPhone,
     tableNumber,
     items,
-    paymentMethod = 'PAY_AT_COUNTER',
+    paymentMethod = 'cash',
     taxRate = 0.05
 }) => {
     const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -55,9 +53,7 @@ export const createOrder = async ({
             customer_id: customerId,
             order_number: orderNumber,
             type: 'dine_in',
-            table_number: tableNumber ? Number(tableNumber) : null,
-            customer_name: customerName ?? null,
-            customer_phone: customerPhone ?? null,
+            table_id: (typeof tableNumber === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tableNumber)) ? tableNumber : null,
             status: 'pending',
             payment_method: paymentMethod,
             payment_status: 'pending',
