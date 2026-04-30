@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import './Sidebar.css';
+import './sidebar.css';
 
 interface NavItem {
   icon: string;
