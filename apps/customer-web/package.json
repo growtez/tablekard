@@ -12,6 +12,7 @@
         "@restaurant-saas/supabase": "*",
         "@restaurant-saas/types": "*",
         "@yudiel/react-qr-scanner": "^2.5.1",
+        "webrtc-adapter": "^9.0.0",
         "axios": "^1.12.2",
         "jspdf": "^4.2.0",
         "lucide-react": "^0.544.0",
