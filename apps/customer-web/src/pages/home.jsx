@@ -460,7 +460,7 @@ const HomePage = () => {
                                 <div className="recent-meta">
                                     <span>{item.time}</span>
                                     <span className="rating">
-                                        <Star size={10} fill="#F2B84B" color="#F2B84B" />
+                                        <Star size={10} fill="#8B3A1E" color="#8B3A1E" />
                                         {item.rating}
                                     </span>
                                 </div>
