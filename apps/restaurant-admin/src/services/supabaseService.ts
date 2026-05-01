@@ -30,6 +30,9 @@ interface RestaurantRow {
     profile_urls: string[] | null; settings: Record<string, unknown> | null;
     subscription_status: boolean; subscription_type: string | null;
     latitude: number | null; longitude: number | null; allowed_radius: number | null;
+    opening_date: string | null; tagline: string | null; manifesto: string | null;
+    operating_hours_weekdays: string | null; operating_hours_weekends: string | null;
+    instagram_url: string | null; facebook_url: string | null; website_url: string | null;
     created_at: string; updated_at: string;
 }
 
@@ -76,6 +79,14 @@ export interface RestaurantProfileUpdateInput {
     latitude?: number | null;
     longitude?: number | null;
     allowedRadius?: number | null;
+    openingDate?: string | null;
+    tagline?: string | null;
+    manifesto?: string | null;
+    operatingHoursWeekdays?: string | null;
+    operatingHoursWeekends?: string | null;
+    instagramUrl?: string | null;
+    facebookUrl?: string | null;
+    websiteUrl?: string | null;
 }
 
 export interface AdministratorProfileUpdateInput {
@@ -117,7 +128,15 @@ const mapRestaurantRow = (row: RestaurantRow): Restaurant => ({
         latitude: row.latitude,
         longitude: row.longitude,
         allowedRadius: row.allowed_radius
-    }
+    },
+    openingDate: row.opening_date,
+    tagline: row.tagline,
+    manifesto: row.manifesto,
+    operatingHoursWeekdays: row.operating_hours_weekdays,
+    operatingHoursWeekends: row.operating_hours_weekends,
+    instagramUrl: row.instagram_url,
+    facebookUrl: row.facebook_url,
+    websiteUrl: row.website_url
 });
 
 const mapProfileRow = (row: ProfileRow): Profile => ({
@@ -161,7 +180,15 @@ export const updateRestaurantProfile = async (
             secondary_color: input.secondaryColor ?? null,
             latitude: input.latitude ?? null,
             longitude: input.longitude ?? null,
-            allowed_radius: input.allowedRadius ?? null
+            allowed_radius: input.allowedRadius ?? null,
+            opening_date: input.openingDate ?? null,
+            tagline: input.tagline ?? null,
+            manifesto: input.manifesto ?? null,
+            operating_hours_weekdays: input.operatingHoursWeekdays ?? null,
+            operating_hours_weekends: input.operatingHoursWeekends ?? null,
+            instagram_url: input.instagramUrl ?? null,
+            facebook_url: input.facebookUrl ?? null,
+            website_url: input.websiteUrl ?? null
         })
         .eq('id', restaurantId)
         .select('*')

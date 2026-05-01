@@ -80,9 +80,10 @@
 
 /* Content Grid */
 .profile-content-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  max-width: 1100px;
 }
 
 /* Profile Cards */
@@ -774,9 +775,6 @@
 
 /* Responsive Design */
 @media (max-width: 1200px) {
-  .profile-content-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 768px) {
@@ -821,10 +819,6 @@
   .profile-url-row {
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .profile-content-grid {
-    grid-template-columns: 1fr;
   }
 }
 
