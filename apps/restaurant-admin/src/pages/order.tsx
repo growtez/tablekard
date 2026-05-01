@@ -1,23 +1,61 @@
-import React, { useState, useMemo } from 'react';
-import { Search, Bell, TrendingUp, Filter } from 'lucide-react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { Search, Bell, TrendingUp, Filter, RefreshCw, Calendar } from 'lucide-react';
 import Sidebar from '../components/sidebar';
 import { useAuth } from '../context/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
 import { updateOrderStatus } from '../services/supabaseService';
-import { useDashboardOrders, useInvalidateQueries } from '../hooks/useSupabaseQuery';
+import { useDashboardOrders, useInvalidateQueries, queryKeys } from '../hooks/useSupabaseQuery';
 import './order.css';
+
+const REFRESH_INTERVAL_MS = 5_000; // must match refetchInterval in the hook
 
 const Order: React.FC = () => {
   const { activeRestaurantId } = useAuth();
   const [selectedTable, setSelectedTable] = useState('All Tables');
   const [selectedPayment, setSelectedPayment] = useState('Payment Method');
   const [selectedStatus, setSelectedStatus] = useState('Status');
+  const [selectedDate, setSelectedDate] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [countdown, setCountdown] = useState(REFRESH_INTERVAL_MS / 1000);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // React Query: cached, auto-retries, refetches on tab focus
-  const { data: orders = [], isLoading: loading } = useDashboardOrders(activeRestaurantId);
+  // React Query: cached, auto-retries, refetches every 30s
+  const { data: orders = [], isLoading: loading, refetch, isFetching } = useDashboardOrders(activeRestaurantId);
   const { invalidateOrders } = useInvalidateQueries();
+  const queryClient = useQueryClient();
 
-  // Stats calculation
+  // ── Countdown timer ───────────────────────────────────────────────
+  const resetCountdown = () => setCountdown(REFRESH_INTERVAL_MS / 1000);
+
+  useEffect(() => {
+    resetCountdown();
+    countdownRef.current = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) { resetCountdown(); return REFRESH_INTERVAL_MS / 1000; }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
+  }, []);
+
+  // Reset countdown when data actually refreshes
+  useEffect(() => {
+    if (!isFetching) resetCountdown();
+  }, [isFetching]);
+
+  const handleManualRefresh = () => {
+    refetch();
+    resetCountdown();
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    countdownRef.current = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) { resetCountdown(); return REFRESH_INTERVAL_MS / 1000; }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  // ── Stats calculation ─────────────────────────────────────────────
   const stats = useMemo(() => {
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -25,16 +63,12 @@ const Order: React.FC = () => {
     const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
     const startOfLastWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay() - 7);
 
-    let today = 0;
-    let yesterday = 0;
-    let week = 0;
-    let lastWeek = 0;
+    let today = 0, yesterday = 0, week = 0, lastWeek = 0;
 
     orders.forEach(order => {
       const orderDate = new Date(order.createdAt);
       if (orderDate >= startOfToday) today++;
       else if (orderDate >= startOfYesterday) yesterday++;
-
       if (orderDate >= startOfWeek) week++;
       else if (orderDate >= startOfLastWeek) lastWeek++;
     });
@@ -45,34 +79,78 @@ const Order: React.FC = () => {
     return { today, week, todayChange, weekChange };
   }, [orders]);
 
-  const handleStatusChange = async (orderId: string, currentStatus: string) => {
-    const cycle = ['Pending', 'Preparing', 'Ready', 'Served', 'Completed'];
-    const idx = cycle.indexOf(currentStatus);
-    if (idx >= 0 && idx < cycle.length - 1) {
-      const nextStatus = cycle[idx + 1];
-      try {
-        await updateOrderStatus(orderId, nextStatus.toLowerCase() as any);
-        if (activeRestaurantId) invalidateOrders(activeRestaurantId);
-      } catch (err) {
-        console.error('Failed to update status', err);
+  const handleStatusChange = async (orderId: string, nextStatus: string) => {
+    if (!activeRestaurantId) return;
+
+    const queryKey = queryKeys.dashboardOrders(activeRestaurantId);
+    const previousOrders = queryClient.getQueryData<any[]>(queryKey);
+
+    // 1. Optimistically update the cache
+    queryClient.setQueryData(queryKey, (old: any[] | undefined) => {
+      if (!old) return [];
+      return old.map(order => {
+        if (order.id === orderId) {
+          // Map status color locally for immediate feedback
+          let statusColor = 'yellow';
+          const st = nextStatus.toLowerCase();
+          if (st === 'preparing') statusColor = 'blue';
+          else if (st === 'ready') statusColor = 'green';
+          else if (st === 'cancelled') statusColor = 'red';
+
+          return {
+            ...order,
+            status: nextStatus.charAt(0).toUpperCase() + nextStatus.slice(1),
+            statusColor
+          };
+        }
+        return order;
+      });
+    });
+
+    try {
+      await updateOrderStatus(orderId, nextStatus.toLowerCase() as any);
+      // Optional: refetch in background to ensure sync
+      invalidateOrders(activeRestaurantId);
+    } catch (err) {
+      console.error('Failed to update status', err);
+      // 2. Rollback if failed
+      if (previousOrders) {
+        queryClient.setQueryData(queryKey, previousOrders);
       }
     }
   };
 
   const filteredOrders = useMemo(() => {
     return orders.filter(o => {
-      const matchesSearch = o.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      const matchesSearch =
+        o.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
         o.items.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesTable = selectedTable === 'All Tables' || o.table === selectedTable;
-      const matchesPayment = selectedPayment === 'Payment Method' || o.paymentMethod.toLowerCase() === selectedPayment.toLowerCase();
-      const matchesStatus = selectedStatus === 'Status' || o.status.toLowerCase() === selectedStatus.toLowerCase();
-      return matchesSearch && matchesTable && matchesPayment && matchesStatus;
+      const matchesPayment =
+        selectedPayment === 'Payment Method' ||
+        o.paymentMethod.toLowerCase() === selectedPayment.toLowerCase();
+      const matchesStatus =
+        selectedStatus === 'Status' ||
+        o.status.toLowerCase() === selectedStatus.toLowerCase();
+      const matchesDate = (() => {
+        if (!selectedDate) return true;
+        const orderDay = new Date(o.createdAt).toISOString().slice(0, 10);
+        return orderDay === selectedDate;
+      })();
+      return matchesSearch && matchesTable && matchesPayment && matchesStatus && matchesDate;
     });
-  }, [orders, searchQuery, selectedTable, selectedPayment, selectedStatus]);
+  }, [orders, searchQuery, selectedTable, selectedPayment, selectedStatus, selectedDate]);
 
-  const getStatusClass = (color: string) => {
-    return `status-${color}`;
-  };
+  // Total orders on the selected date (ignoring other filters – true daily total)
+  const dateOrderCount = useMemo(() => {
+    if (!selectedDate) return 0;
+    return orders.filter(o => new Date(o.createdAt).toISOString().slice(0, 10) === selectedDate).length;
+  }, [orders, selectedDate]);
+
+  const getStatusClass = (color: string) => `status-${color}`;
+
+  // Progress bar width (0–100%)
+  const progressPct = Math.round(((REFRESH_INTERVAL_MS / 1000 - countdown) / (REFRESH_INTERVAL_MS / 1000)) * 100);
 
   return (
     <div className="order-container">
@@ -83,6 +161,29 @@ const Order: React.FC = () => {
         <div className="order-header">
           <h1 className="order-page-title">Order Management</h1>
           <div className="order-header-right">
+            {/* Auto-refresh indicator */}
+            <div className="order-refresh-badge" title={`Auto-refreshes every 30s`}>
+              <div className="order-refresh-ring">
+                <svg viewBox="0 0 36 36" className="order-refresh-svg">
+                  <circle cx="18" cy="18" r="15.9155" className="order-refresh-bg" />
+                  <circle
+                    cx="18" cy="18" r="15.9155"
+                    className="order-refresh-progress"
+                    strokeDasharray={`${progressPct} ${100 - progressPct}`}
+                    strokeDashoffset="25"
+                  />
+                </svg>
+                <span className="order-refresh-countdown">{countdown}s</span>
+              </div>
+              <button
+                className={`order-refresh-btn${isFetching ? ' spinning' : ''}`}
+                onClick={handleManualRefresh}
+                title="Refresh now"
+              >
+                <RefreshCw size={16} />
+              </button>
+            </div>
+
             <div className="order-search-bar">
               <Search size={18} color="#718096" />
               <input
@@ -108,14 +209,14 @@ const Order: React.FC = () => {
             <div className="order-stat-number">{loading ? '...' : stats.today}</div>
             <div className="order-stat-change">
               <span
-                className={stats.todayChange >= 0 ? "order-change-positive" : "order-change-negative"}
+                className={stats.todayChange >= 0 ? 'order-change-positive' : 'order-change-negative'}
                 style={{ color: stats.todayChange < 0 ? '#E53E3E' : undefined }}
               >
                 {stats.todayChange > 0 ? '+' : ''}{stats.todayChange}% vs yesterday
               </span>
               <TrendingUp
                 size={16}
-                color={stats.todayChange >= 0 ? "#68D391" : "#E53E3E"}
+                color={stats.todayChange >= 0 ? '#68D391' : '#E53E3E'}
                 className="order-trend-icon"
                 style={stats.todayChange < 0 ? { transform: 'rotate(180deg)' } : undefined}
               />
@@ -128,14 +229,14 @@ const Order: React.FC = () => {
             <div className="order-stat-number">{loading ? '...' : stats.week}</div>
             <div className="order-stat-change">
               <span
-                className={stats.weekChange >= 0 ? "order-change-blue" : "order-change-negative"}
+                className={stats.weekChange >= 0 ? 'order-change-blue' : 'order-change-negative'}
                 style={{ color: stats.weekChange < 0 ? '#E53E3E' : undefined }}
               >
                 {stats.weekChange > 0 ? '+' : ''}{stats.weekChange}% vs last week
               </span>
               <TrendingUp
                 size={16}
-                color={stats.weekChange >= 0 ? "#7F9CF5" : "#E53E3E"}
+                color={stats.weekChange >= 0 ? '#7F9CF5' : '#E53E3E'}
                 className="order-trend-icon"
                 style={stats.weekChange < 0 ? { transform: 'rotate(180deg)' } : undefined}
               />
@@ -146,44 +247,62 @@ const Order: React.FC = () => {
         {/* Filter Section */}
         <div className="order-filter-section">
           <div className="order-filter-buttons">
+            {/* Date filter */}
+            <div className="order-date-filter-wrapper">
+              <Calendar size={15} className="order-date-icon" />
+              <input
+                type="date"
+                className="order-filter-btn order-date-input"
+                value={selectedDate}
+                onChange={e => setSelectedDate(e.target.value)}
+                title="Filter by date"
+              />
+              {selectedDate && (
+                <button
+                  className="order-date-clear"
+                  onClick={() => setSelectedDate('')}
+                  title="Clear date filter"
+                >×</button>
+              )}
+            </div>
+
+            {/* Table filter */}
             <select
               className="order-filter-btn"
               value={selectedTable}
               onChange={e => setSelectedTable(e.target.value)}
-              style={{ paddingRight: '24px', cursor: 'pointer', appearance: 'none' }}
             >
               <option value="All Tables">All Tables</option>
               {Array.from(new Set(orders.map(o => o.table))).map(table => (
                 table !== 'N/A' && <option key={table} value={table}>{table}</option>
               ))}
             </select>
+
+            {/* Payment filter — Cash & Online only */}
             <select
               className="order-filter-btn"
               value={selectedPayment}
               onChange={e => setSelectedPayment(e.target.value)}
-              style={{ paddingRight: '24px', cursor: 'pointer', appearance: 'none' }}
             >
               <option value="Payment Method">All Payment</option>
               <option value="cash">Cash</option>
-              <option value="upi">UPI</option>
-              <option value="card">Card</option>
+              <option value="online">Online</option>
             </select>
+
+            {/* Status filter — Placed (Pending), Preparing, Ready, Cancelled only */}
             <select
               className="order-filter-btn"
               value={selectedStatus}
               onChange={e => setSelectedStatus(e.target.value)}
-              style={{ paddingRight: '24px', cursor: 'pointer', appearance: 'none' }}
             >
               <option value="Status">All Status</option>
-              <option value="pending">Pending</option>
+              <option value="pending">Placed</option>
               <option value="preparing">Preparing</option>
               <option value="ready">Ready</option>
-              <option value="served">Served</option>
-              <option value="completed">Completed</option>
               <option value="cancelled">Cancelled</option>
             </select>
-
           </div>
+
           <button className="order-filter-icon-btn">
             <Filter size={18} color="#718096" />
           </button>
@@ -193,6 +312,14 @@ const Order: React.FC = () => {
         <div className="order-table-card">
           <div className="order-table-header">
             <h2 className="order-table-title">Order History</h2>
+            {selectedDate && (
+              <div className="order-date-tag-group">
+                <span className="order-date-tag">
+                  📅 {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                </span>
+                <span className="order-date-count-badge">{dateOrderCount} order{dateOrderCount !== 1 ? 's' : ''}</span>
+              </div>
+            )}
           </div>
           <div className="order-table-wrapper">
             <table className="order-history-table">
@@ -200,6 +327,7 @@ const Order: React.FC = () => {
                 <tr>
                   <th>Order ID</th>
                   <th>Table</th>
+                  <th>Date</th>
                   <th>Time</th>
                   <th>Status</th>
                   <th>Payment Method</th>
@@ -224,16 +352,20 @@ const Order: React.FC = () => {
                     <tr key={order.id}>
                       <td className="order-id-cell">{order.orderNumber}</td>
                       <td>{order.table}</td>
+                      <td>{new Date(order.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</td>
                       <td>{order.time}</td>
                       <td>
-                        <span
-                          className={`order-status-pill ${getStatusClass(order.statusColor)}`}
-                          onClick={() => handleStatusChange(order.id, order.status)}
-                          style={{ cursor: 'pointer' }}
-                          title="Click to advance status"
+                        <select
+                          className={`order-status-select ${getStatusClass(order.statusColor)}`}
+                          value={order.status.toLowerCase() === 'pending' ? 'pending' : order.status.toLowerCase()}
+                          onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                          title="Change order status"
                         >
-                          {order.status}
-                        </span>
+                          <option value="pending">Placed</option>
+                          <option value="preparing">Preparing</option>
+                          <option value="ready">Ready</option>
+                          <option value="cancelled">Cancelled</option>
+                        </select>
                       </td>
                       <td>
                         <span className="order-payment-badge">
