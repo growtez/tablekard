@@ -62,6 +62,14 @@ CREATE TABLE IF NOT EXISTS public.restaurants (
     latitude NUMERIC,
     longitude NUMERIC,
     allowed_radius INTEGER,
+    opening_date DATE,
+    tagline TEXT,
+    manifesto TEXT,
+    operating_hours_weekdays TEXT,
+    operating_hours_weekends TEXT,
+    instagram_url TEXT,
+    facebook_url TEXT,
+    website_url TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
