@@ -37,6 +37,14 @@ interface RestaurantFormState {
     latitude: string;
     longitude: string;
     allowedRadius: string;
+    openingDate: string;
+    tagline: string;
+    manifesto: string;
+    operatingHoursWeekdays: string;
+    operatingHoursWeekends: string;
+    instagramUrl: string;
+    facebookUrl: string;
+    websiteUrl: string;
 }
 
 interface AdminFormState {
@@ -130,7 +138,15 @@ const createRestaurantFormState = (restaurant: Restaurant): RestaurantFormState 
     secondaryColor: restaurant.branding?.secondaryColor ?? '',
     latitude: restaurant.location?.latitude != null ? String(restaurant.location.latitude) : '',
     longitude: restaurant.location?.longitude != null ? String(restaurant.location.longitude) : '',
-    allowedRadius: restaurant.location?.allowedRadius != null ? String(restaurant.location.allowedRadius) : ''
+    allowedRadius: restaurant.location?.allowedRadius != null ? String(restaurant.location.allowedRadius) : '',
+    openingDate: restaurant.openingDate ?? '',
+    tagline: restaurant.tagline ?? '',
+    manifesto: restaurant.manifesto ?? '',
+    operatingHoursWeekdays: restaurant.operatingHoursWeekdays ?? '',
+    operatingHoursWeekends: restaurant.operatingHoursWeekends ?? '',
+    instagramUrl: restaurant.instagramUrl ?? '',
+    facebookUrl: restaurant.facebookUrl ?? '',
+    websiteUrl: restaurant.websiteUrl ?? ''
 });
 
 const createAdminFormState = (profile: {
@@ -240,6 +256,143 @@ const ProfilePage: React.FC = () => {
     };
 
     const [isLocating, setIsLocating] = useState(false);
+
+    const get24hTime = (text: string | undefined | null, type: 'open' | 'close') => {
+        if (!text) return type === 'open' ? '10:00' : '22:00';
+        const times = text.match(/(\d{1,2}:\d{2}\s*(?:AM|PM)?)/gi);
+        if (times && times.length >= 2) {
+            const timeStr = type === 'open' ? times[0] : times[1];
+            const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+            if (!match) return type === 'open' ? '10:00' : '22:00';
+            let [_, h, m, ampm] = match;
+            let hours = parseInt(h, 10);
+            if (ampm) {
+                if (ampm.toUpperCase() === 'PM' && hours < 12) hours += 12;
+                if (ampm.toUpperCase() === 'AM' && hours === 12) hours = 0;
+            }
+            return `${hours.toString().padStart(2, '0')}:${m}`;
+        }
+        return type === 'open' ? '10:00' : '22:00';
+    };
+
+    const handleTimeChange = (dayType: 'weekdays' | 'weekends', timeType: 'open' | 'close', val: string) => {
+        if (!restaurantForm) return;
+        const field = dayType === 'weekdays' ? 'operatingHoursWeekdays' : 'operatingHoursWeekends';
+        const prefix = dayType === 'weekdays' ? 'Mon-Fri' : 'Sat-Sun';
+        const currentText = restaurantForm[field];
+        const currentOpen24 = get24hTime(currentText, 'open');
+        const currentClose24 = get24hTime(currentText, 'close');
+        
+        const newOpen24 = timeType === 'open' ? val : currentOpen24;
+        const newClose24 = timeType === 'close' ? val : currentClose24;
+        
+        const formatTime12h = (t: string) => {
+            if (!t) return '';
+            const [h, m] = t.split(':');
+            let hours = parseInt(h, 10);
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12 || 12;
+            return `${hours}:${m} ${ampm}`;
+        };
+        
+        handleRestaurantFieldChange(field, `${prefix} ${formatTime12h(newOpen24)} - ${formatTime12h(newClose24)}`);
+    };
+
+    const mapInstanceRef = useRef<any>(null);
+    const mapMarkerRef = useRef<any>(null);
+
+    useEffect(() => {
+        if (isRestaurantEditing) {
+            const initMap = () => {
+                const L = (window as any).L;
+                if (!L) return;
+                const mapEl = document.getElementById('profile-map');
+                if (!mapEl) return;
+                
+                if (mapInstanceRef.current) return;
+                
+                const initialLat = parseFloat(restaurantForm?.latitude || '26.1445');
+                const initialLng = parseFloat(restaurantForm?.longitude || '91.7362');
+                
+                // Fix for leaflet marker icon
+                delete L.Icon.Default.prototype._getIconUrl;
+                L.Icon.Default.mergeOptions({
+                    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+                    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+                });
+                
+                const map = L.map('profile-map').setView([initialLat, initialLng], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap'
+                }).addTo(map);
+                
+                const marker = L.marker([initialLat, initialLng], { draggable: true }).addTo(map);
+                
+                marker.on('dragend', function () {
+                    const position = marker.getLatLng();
+                    setRestaurantForm(current => current ? {
+                        ...current,
+                        latitude: position.lat.toFixed(6),
+                        longitude: position.lng.toFixed(6)
+                    } : current);
+                });
+                
+                map.on('click', function (event: any) {
+                    const position = event.latlng;
+                    marker.setLatLng(position);
+                    map.setView(position);
+                    setRestaurantForm(current => current ? {
+                        ...current,
+                        latitude: position.lat.toFixed(6),
+                        longitude: position.lng.toFixed(6)
+                    } : current);
+                });
+                
+                mapInstanceRef.current = map;
+                mapMarkerRef.current = marker;
+            };
+
+            if (!(window as any).L) {
+                if (!document.getElementById('leaflet-css')) {
+                    const link = document.createElement('link');
+                    link.id = 'leaflet-css';
+                    link.rel = 'stylesheet';
+                    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+                    document.head.appendChild(link);
+                }
+
+                if (!document.getElementById('leaflet-script')) {
+                    const script = document.createElement('script');
+                    script.id = 'leaflet-script';
+                    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+                    script.onload = initMap;
+                    document.head.appendChild(script);
+                }
+            } else {
+                setTimeout(initMap, 100);
+            }
+        } else {
+            if (mapInstanceRef.current) {
+                mapInstanceRef.current.remove();
+                mapInstanceRef.current = null;
+                mapMarkerRef.current = null;
+            }
+        }
+    }, [isRestaurantEditing]);
+
+    useEffect(() => {
+        if (mapInstanceRef.current && mapMarkerRef.current && restaurantForm) {
+            const lat = parseFloat(restaurantForm.latitude || '0');
+            const lng = parseFloat(restaurantForm.longitude || '0');
+            const currentPos = mapMarkerRef.current.getLatLng();
+            if (Math.abs(currentPos.lat - lat) > 0.0001 || Math.abs(currentPos.lng - lng) > 0.0001) {
+                mapMarkerRef.current.setLatLng([lat, lng]);
+                mapInstanceRef.current.setView([lat, lng]);
+            }
+        }
+    }, [restaurantForm?.latitude, restaurantForm?.longitude]);
+
 
     const handleUseMyLocation = () => {
         if (!navigator.geolocation) {
@@ -383,7 +536,15 @@ const ProfilePage: React.FC = () => {
                 secondaryColor: emptyToNull(restaurantForm.secondaryColor),
                 latitude: parseOptionalNumber(restaurantForm.latitude),
                 longitude: parseOptionalNumber(restaurantForm.longitude),
-                allowedRadius: parseOptionalInteger(restaurantForm.allowedRadius)
+                allowedRadius: parseOptionalInteger(restaurantForm.allowedRadius),
+                openingDate: emptyToNull(restaurantForm.openingDate),
+                tagline: emptyToNull(restaurantForm.tagline),
+                manifesto: emptyToNull(restaurantForm.manifesto),
+                operatingHoursWeekdays: emptyToNull(restaurantForm.operatingHoursWeekdays),
+                operatingHoursWeekends: emptyToNull(restaurantForm.operatingHoursWeekends),
+                instagramUrl: emptyToNull(restaurantForm.instagramUrl),
+                facebookUrl: emptyToNull(restaurantForm.facebookUrl),
+                websiteUrl: emptyToNull(restaurantForm.websiteUrl)
             });
 
             setRestaurant(updatedRestaurant);
@@ -453,7 +614,14 @@ const ProfilePage: React.FC = () => {
 
         return (
             <div className="profile-form-layout">
-                <div className="profile-form-grid">
+                <div className="profile-section">
+                    <div className="profile-section-header">
+                        <div>
+                            <h3>Basic Details</h3>
+                            <p>Core identity and contact information.</p>
+                        </div>
+                    </div>
+                    <div className="profile-form-grid">
                     <label className="profile-field">
                         <span className="profile-field-label">Restaurant Name</span>
                         <input
@@ -500,8 +668,18 @@ const ProfilePage: React.FC = () => {
                             rows={3}
                         />
                     </label>
-
-                    <div className="profile-field">
+                    </div>
+                </div>
+                
+                <div className="profile-section">
+                    <div className="profile-section-header">
+                        <div>
+                            <h3>Location & Branding</h3>
+                            <p>Where to find you and your visual identity.</p>
+                        </div>
+                    </div>
+                    <div className="profile-form-grid">
+                        <div className="profile-field profile-field-span-2">
                         <span className="profile-field-label">Logo</span>
                         <div
                             className={`profile-dropzone ${isUploadingLogo ? 'profile-dropzone-uploading' : ''}`}
@@ -560,47 +738,53 @@ const ProfilePage: React.FC = () => {
                         />
                     </label>
 
-                    <label className="profile-field">
-                        <span className="profile-field-label">Latitude</span>
-                        <input
-                            className="profile-input"
-                            type="number"
-                            min="-90"
-                            max="90"
-                            step="0.000001"
-                            value={restaurantForm.latitude}
-                            onChange={(event) => handleRestaurantFieldChange('latitude', event.target.value)}
-                            placeholder="26.144516"
-                        />
-                    </label>
-
-                    <label className="profile-field">
-                        <span className="profile-field-label">Longitude</span>
-                        <input
-                            className="profile-input"
-                            type="number"
-                            min="-180"
-                            max="180"
-                            step="0.000001"
-                            value={restaurantForm.longitude}
-                            onChange={(event) => handleRestaurantFieldChange('longitude', event.target.value)}
-                            placeholder="91.736237"
-                        />
-                    </label>
-
                     <div className="profile-field profile-field-span-2">
-                        <button
-                            type="button"
-                            className="profile-locate-btn"
-                            onClick={handleUseMyLocation}
-                            disabled={isLocating}
-                        >
-                            <Crosshair size={16} className={isLocating ? 'profile-locate-spin' : ''} />
-                            {isLocating ? 'Locating…' : 'Use My Current Location'}
-                        </button>
-                        <span className="profile-field-help">
-                            Auto-fill latitude and longitude from your device's GPS.
-                        </span>
+                        <span className="profile-field-label">Location Coordinates</span>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                            <label className="profile-field" style={{ gap: '4px' }}>
+                                <span className="profile-field-label" style={{ fontSize: '10px', color: '#718096' }}>Latitude</span>
+                                <input
+                                    className="profile-input"
+                                    type="number"
+                                    min="-90"
+                                    max="90"
+                                    step="0.000001"
+                                    value={restaurantForm.latitude}
+                                    onChange={(event) => handleRestaurantFieldChange('latitude', event.target.value)}
+                                    placeholder="26.144516"
+                                />
+                            </label>
+                            <label className="profile-field" style={{ gap: '4px' }}>
+                                <span className="profile-field-label" style={{ fontSize: '10px', color: '#718096' }}>Longitude</span>
+                                <input
+                                    className="profile-input"
+                                    type="number"
+                                    min="-180"
+                                    max="180"
+                                    step="0.000001"
+                                    value={restaurantForm.longitude}
+                                    onChange={(event) => handleRestaurantFieldChange('longitude', event.target.value)}
+                                    placeholder="91.736237"
+                                />
+                            </label>
+                        </div>
+                        
+                        <div id="profile-map" style={{ height: '300px', width: '100%', borderRadius: '14px', marginTop: '12px', zIndex: 1, backgroundColor: '#E2E8F0', border: '1px solid #CBD5E0' }}></div>
+                        
+                        <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                            <button
+                                type="button"
+                                className="profile-locate-btn"
+                                onClick={handleUseMyLocation}
+                                disabled={isLocating}
+                            >
+                                <Crosshair size={16} className={isLocating ? 'profile-locate-spin' : ''} />
+                                {isLocating ? 'Locating…' : 'Use My Current Location'}
+                            </button>
+                            <span className="profile-field-help">
+                                Drag the pin or click on the map to set location accurately.
+                            </span>
+                        </div>
                     </div>
 
                     <label className="profile-field">
@@ -640,6 +824,132 @@ const ProfilePage: React.FC = () => {
                             />
                         </div>
                     </label>
+                    </div>
+                </div>
+
+                {/* Our Story & Additional Info */}
+                <div className="profile-section">
+                    <div className="profile-section-header">
+                        <div>
+                            <h3>Our Story & Socials</h3>
+                            <p>Tell your customers about your restaurant.</p>
+                        </div>
+                    </div>
+                    <div className="profile-form-grid">
+
+                    <label className="profile-field">
+                        <span className="profile-field-label">Opening Date</span>
+                        <input
+                            className="profile-input"
+                            type="date"
+                            value={restaurantForm.openingDate}
+                            onChange={(event) => handleRestaurantFieldChange('openingDate', event.target.value)}
+                        />
+                    </label>
+
+                    <label className="profile-field">
+                        <span className="profile-field-label">Tagline</span>
+                        <input
+                            className="profile-input"
+                            type="text"
+                            value={restaurantForm.tagline}
+                            onChange={(event) => handleRestaurantFieldChange('tagline', event.target.value)}
+                            placeholder="A short catchy phrase"
+                        />
+                    </label>
+
+                    <label className="profile-field profile-field-span-2">
+                        <span className="profile-field-label">Manifesto / Our Story</span>
+                        <textarea
+                            className="profile-input profile-textarea"
+                            value={restaurantForm.manifesto}
+                            onChange={(event) => handleRestaurantFieldChange('manifesto', event.target.value)}
+                            placeholder="Tell the story of your restaurant..."
+                            rows={4}
+                        />
+                    </label>
+
+                    <div className="profile-field">
+                        <span className="profile-field-label">Operating Hours (Weekdays)</span>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                            <div className="profile-field" style={{ gap: '4px' }}>
+                                <span style={{ fontSize: '10px', color: '#718096', textTransform: 'uppercase', fontWeight: 600 }}>Opening Time</span>
+                                <input
+                                    className="profile-input"
+                                    type="time"
+                                    value={get24hTime(restaurantForm.operatingHoursWeekdays, 'open')}
+                                    onChange={(event) => handleTimeChange('weekdays', 'open', event.target.value)}
+                                />
+                            </div>
+                            <div className="profile-field" style={{ gap: '4px' }}>
+                                <span style={{ fontSize: '10px', color: '#718096', textTransform: 'uppercase', fontWeight: 600 }}>Closing Time</span>
+                                <input
+                                    className="profile-input"
+                                    type="time"
+                                    value={get24hTime(restaurantForm.operatingHoursWeekdays, 'close')}
+                                    onChange={(event) => handleTimeChange('weekdays', 'close', event.target.value)}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="profile-field">
+                        <span className="profile-field-label">Operating Hours (Weekends)</span>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                            <div className="profile-field" style={{ gap: '4px' }}>
+                                <span style={{ fontSize: '10px', color: '#718096', textTransform: 'uppercase', fontWeight: 600 }}>Opening Time</span>
+                                <input
+                                    className="profile-input"
+                                    type="time"
+                                    value={get24hTime(restaurantForm.operatingHoursWeekends, 'open')}
+                                    onChange={(event) => handleTimeChange('weekends', 'open', event.target.value)}
+                                />
+                            </div>
+                            <div className="profile-field" style={{ gap: '4px' }}>
+                                <span style={{ fontSize: '10px', color: '#718096', textTransform: 'uppercase', fontWeight: 600 }}>Closing Time</span>
+                                <input
+                                    className="profile-input"
+                                    type="time"
+                                    value={get24hTime(restaurantForm.operatingHoursWeekends, 'close')}
+                                    onChange={(event) => handleTimeChange('weekends', 'close', event.target.value)}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <label className="profile-field">
+                        <span className="profile-field-label">Instagram URL</span>
+                        <input
+                            className="profile-input"
+                            type="url"
+                            value={restaurantForm.instagramUrl}
+                            onChange={(event) => handleRestaurantFieldChange('instagramUrl', event.target.value)}
+                            placeholder="https://instagram.com/yourrestaurant"
+                        />
+                    </label>
+
+                    <label className="profile-field">
+                        <span className="profile-field-label">Facebook URL</span>
+                        <input
+                            className="profile-input"
+                            type="url"
+                            value={restaurantForm.facebookUrl}
+                            onChange={(event) => handleRestaurantFieldChange('facebookUrl', event.target.value)}
+                            placeholder="https://facebook.com/yourrestaurant"
+                        />
+                    </label>
+
+                    <label className="profile-field profile-field-span-2">
+                        <span className="profile-field-label">Website URL</span>
+                        <input
+                            className="profile-input"
+                            type="url"
+                            value={restaurantForm.websiteUrl}
+                            onChange={(event) => handleRestaurantFieldChange('websiteUrl', event.target.value)}
+                            placeholder="https://yourrestaurant.com"
+                        />
+                    </label>
+                    </div>
                 </div>
             </div>
         );
@@ -654,39 +964,58 @@ const ProfilePage: React.FC = () => {
         }
 
         return (
-            <div className="profile-info-list">
-                <div className="profile-info-item">
-                    <span className="profile-info-label">Restaurant Name</span>
-                    <span className="profile-info-value">{restaurant.name}</span>
+            <div className="profile-form-layout">
+                <div className="profile-section">
+                    <div className="profile-section-header">
+                        <div>
+                            <h3>Basic Details</h3>
+                            <p>Core identity and contact information.</p>
+                        </div>
+                    </div>
+                    <div className="profile-form-grid">
+                        <div className="profile-info-item">
+                            <span className="profile-info-label">Restaurant Name</span>
+                            <span className="profile-info-value">{restaurant.name}</span>
+                        </div>
+
+                        <div className="profile-info-item">
+                            <span className="profile-info-label">Status</span>
+                            <span className={`status-badge ${String(restaurant.status || '').toLowerCase()}`}>
+                                {formatLabel(String(restaurant.status || 'unknown'))}
+                            </span>
+                        </div>
+
+                        <div className="profile-info-item">
+                            <span className="profile-info-label">Contact Email</span>
+                            <span className="profile-info-value profile-value-inline">
+                                <MailIcon size={15} />
+                                {restaurant.contact.email || 'N/A'}
+                            </span>
+                        </div>
+
+                        <div className="profile-info-item">
+                            <span className="profile-info-label">Contact Phone</span>
+                            <span className="profile-info-value profile-value-inline">
+                                <PhoneIcon size={15} />
+                                {restaurant.contact.phone || 'N/A'}
+                            </span>
+                        </div>
+
+                        <div className="profile-info-item profile-field-span-2">
+                            <span className="profile-info-label">Address</span>
+                            <span className="profile-info-value">{restaurant.contact.address || 'N/A'}</span>
+                        </div>
+                    </div>
                 </div>
 
-                <div className="profile-info-item">
-                    <span className="profile-info-label">Status</span>
-                    <span className={`status-badge ${String(restaurant.status || '').toLowerCase()}`}>
-                        {formatLabel(String(restaurant.status || 'unknown'))}
-                    </span>
-                </div>
-
-                <div className="profile-info-item">
-                    <span className="profile-info-label">Contact Email</span>
-                    <span className="profile-info-value profile-value-inline">
-                        <MailIcon size={15} />
-                        {restaurant.contact.email || 'N/A'}
-                    </span>
-                </div>
-
-                <div className="profile-info-item">
-                    <span className="profile-info-label">Contact Phone</span>
-                    <span className="profile-info-value profile-value-inline">
-                        <PhoneIcon size={15} />
-                        {restaurant.contact.phone || 'N/A'}
-                    </span>
-                </div>
-
-                <div className="profile-info-item">
-                    <span className="profile-info-label">Address</span>
-                    <span className="profile-info-value">{restaurant.contact.address || 'N/A'}</span>
-                </div>
+                <div className="profile-section">
+                    <div className="profile-section-header">
+                        <div>
+                            <h3>Location & Branding</h3>
+                            <p>Where to find you and your visual identity.</p>
+                        </div>
+                    </div>
+                    <div className="profile-form-grid">
 
                 <div className="profile-info-item">
                     <span className="profile-info-label">Location</span>
@@ -725,7 +1054,7 @@ const ProfilePage: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="profile-info-item">
+                <div className="profile-info-item profile-field-span-2">
                     <span className="profile-info-label">Logo</span>
                     {restaurant.branding?.logoUrl ? (
                         <div className="profile-logo-preview">
@@ -758,6 +1087,78 @@ const ProfilePage: React.FC = () => {
                         {restaurant.subscriptionType ? ` (${restaurant.subscriptionType})` : ''}
                     </span>
                 </div>
+                </div>
+                </div>
+
+                {/* Our Story & Socials (Read-Only) */}
+                <div className="profile-section">
+                    <div className="profile-section-header">
+                        <div>
+                            <h3>Our Story & Socials</h3>
+                            <p>Tell your customers about your restaurant.</p>
+                        </div>
+                    </div>
+                    <div className="profile-form-grid">
+
+                <div className="profile-info-item">
+                    <span className="profile-info-label">Opening Date</span>
+                    <span className="profile-info-value">{restaurant.openingDate || 'Not set'}</span>
+                </div>
+
+                <div className="profile-info-item">
+                    <span className="profile-info-label">Tagline</span>
+                    <span className="profile-info-value">{restaurant.tagline || 'Not set'}</span>
+                </div>
+
+                <div className="profile-info-item">
+                    <span className="profile-info-label">Manifesto</span>
+                    <span className="profile-info-value">{restaurant.manifesto || 'Not set'}</span>
+                </div>
+
+                <div className="profile-info-item">
+                    <span className="profile-info-label">Operating Hours (Weekdays)</span>
+                    <span className="profile-info-value">{restaurant.operatingHoursWeekdays || 'Not set'}</span>
+                </div>
+
+                <div className="profile-info-item">
+                    <span className="profile-info-label">Operating Hours (Weekends)</span>
+                    <span className="profile-info-value">{restaurant.operatingHoursWeekends || 'Not set'}</span>
+                </div>
+
+                <div className="profile-info-item">
+                    <span className="profile-info-label">Instagram</span>
+                    <span className="profile-info-value">
+                        {restaurant.instagramUrl ? (
+                            <a href={restaurant.instagramUrl} target="_blank" rel="noopener noreferrer" className="profile-link">
+                                {restaurant.instagramUrl} <ExternalLink size={14} />
+                            </a>
+                        ) : 'Not set'}
+                    </span>
+                </div>
+
+                <div className="profile-info-item">
+                    <span className="profile-info-label">Facebook</span>
+                    <span className="profile-info-value">
+                        {restaurant.facebookUrl ? (
+                            <a href={restaurant.facebookUrl} target="_blank" rel="noopener noreferrer" className="profile-link">
+                                {restaurant.facebookUrl} <ExternalLink size={14} />
+                            </a>
+                        ) : 'Not set'}
+                    </span>
+                </div>
+
+                <div className="profile-info-item profile-field-span-2">
+                    <span className="profile-info-label">Website</span>
+                    <span className="profile-info-value">
+                        {restaurant.websiteUrl ? (
+                            <a href={restaurant.websiteUrl} target="_blank" rel="noopener noreferrer" className="profile-link">
+                                {restaurant.websiteUrl} <ExternalLink size={14} />
+                            </a>
+                        ) : 'Not set'}
+                    </span>
+                </div>
+                </div>
+                </div>
             </div>
         );
     }
@@ -772,7 +1173,14 @@ const ProfilePage: React.FC = () => {
 
         return (
             <div className="profile-form-layout">
-                <div className="profile-form-grid">
+                <div className="profile-section">
+                    <div className="profile-section-header">
+                        <div>
+                            <h3>Personal Information</h3>
+                            <p>Your personal details and profile picture.</p>
+                        </div>
+                    </div>
+                    <div className="profile-form-grid">
                     <label className="profile-field">
                         <span className="profile-field-label">Full Name</span>
                         <input
@@ -846,6 +1254,7 @@ const ProfilePage: React.FC = () => {
                             placeholder="Or paste a URL: https://cdn.example.com/avatar.png"
                         />
                     </div>
+                    </div>
                 </div>
 
                 <div className="profile-summary-grid">
@@ -887,68 +1296,80 @@ const ProfilePage: React.FC = () => {
         }
 
         return (
-            <div className="profile-info-list">
-                <div className="profile-info-item">
-                    <span className="profile-info-label">Full Name</span>
-                    <span className="profile-info-value">{userProfile.name || 'Admin User'}</span>
-                </div>
-
-                <div className="profile-info-item">
-                    <span className="profile-info-label">Email Address</span>
-                    <span className="profile-info-value">{userProfile.email || 'N/A'}</span>
-                </div>
-
-                <div className="profile-info-item">
-                    <span className="profile-info-label">Avatar</span>
-                    {userProfile.avatarUrl ? (
-                        <div className="profile-logo-preview">
-                            <img
-                                src={userProfile.avatarUrl}
-                                alt={`${userProfile.name || 'Admin'} avatar`}
-                                className="profile-avatar-img"
-                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                            />
-                            <a
-                                href={userProfile.avatarUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="profile-link"
-                            >
-                                <span>{userProfile.avatarUrl}</span>
-                                <ExternalLink size={14} />
-                            </a>
+            <div className="profile-form-layout">
+                <div className="profile-section">
+                    <div className="profile-section-header">
+                        <div>
+                            <h3>Personal Information</h3>
+                            <p>Your personal details and profile picture.</p>
                         </div>
-                    ) : (
-                        <span className="profile-info-value profile-muted">Not set</span>
-                    )}
+                    </div>
+                    <div className="profile-form-grid">
+                        <div className="profile-info-item">
+                            <span className="profile-info-label">Full Name</span>
+                            <span className="profile-info-value">{userProfile.name || 'Admin User'}</span>
+                        </div>
+
+                        <div className="profile-info-item">
+                            <span className="profile-info-label">Email Address</span>
+                            <span className="profile-info-value">{userProfile.email || 'N/A'}</span>
+                        </div>
+
+                        <div className="profile-info-item profile-field-span-2">
+                            <span className="profile-info-label">Avatar</span>
+                            {userProfile.avatarUrl ? (
+                                <div className="profile-logo-preview">
+                                    <img
+                                        src={userProfile.avatarUrl}
+                                        alt={`${userProfile.name || 'Admin'} avatar`}
+                                        className="profile-avatar-img"
+                                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                    />
+                                    <a
+                                        href={userProfile.avatarUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="profile-link"
+                                    >
+                                        <span>{userProfile.avatarUrl}</span>
+                                        <ExternalLink size={14} />
+                                    </a>
+                                </div>
+                            ) : (
+                                <span className="profile-info-value profile-muted">Not set</span>
+                            )}
+                        </div>
+                    </div>
                 </div>
 
-                <div className="profile-info-item">
-                    <span className="profile-info-label">Global Role</span>
-                    <span className="status-badge admin">
-                        {formatLabel(userProfile.role)}
-                    </span>
-                </div>
-
-                {activeMembership && (
-                    <div className="profile-info-item">
-                        <span className="profile-info-label">Restaurant Access Role</span>
-                        <span
-                            className={`status-badge ${String(activeMembership.role).toLowerCase() === 'admin'
-                                ? 'admin'
-                                : 'active'
-                                }`}
-                        >
-                            {formatLabel(activeMembership.role)}
+                <div className="profile-summary-grid">
+                    <div className="profile-summary-card">
+                        <span className="profile-info-label">Global Role</span>
+                        <span className="status-badge admin">
+                            {formatLabel(userProfile.role)}
                         </span>
                     </div>
-                )}
 
-                <div className="profile-info-item">
-                    <span className="profile-info-label">Account ID</span>
-                    <span className="profile-info-mono" title={userProfile.id}>
-                        {userProfile.id}
-                    </span>
+                    {activeMembership && (
+                        <div className="profile-summary-card">
+                            <span className="profile-info-label">Restaurant Access Role</span>
+                            <span
+                                className={`status-badge ${String(activeMembership.role).toLowerCase() === 'admin'
+                                    ? 'admin'
+                                    : 'active'
+                                    }`}
+                            >
+                                {formatLabel(activeMembership.role)}
+                            </span>
+                        </div>
+                    )}
+
+                    <div className="profile-summary-card profile-summary-card-wide">
+                        <span className="profile-info-label">Account ID</span>
+                        <span className="profile-info-mono" title={userProfile.id}>
+                            {userProfile.id}
+                        </span>
+                    </div>
                 </div>
             </div>
         );
