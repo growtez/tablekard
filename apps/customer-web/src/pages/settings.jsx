@@ -18,8 +18,8 @@ const SettingsPage = () => {
         <div className="settings-container" style={{ backgroundColor: theme.background }}>
             {/* Header */}
             <header className="settings-header" style={{ backgroundColor: theme.background }}>
-                <NavLink to="/profile" className="back-btn" style={{ backgroundColor: theme.inputBg }}>
-                    <ArrowLeft size={24} color={theme.text} />
+                <NavLink to="/profile" className="global-back-btn">
+                    <ArrowLeft size={22} />
                 </NavLink>
                 <h1 className="header-title" style={{ color: theme.text }}>Settings</h1>
                 <div style={{ width: 44 }}></div>

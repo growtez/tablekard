@@ -73,7 +73,7 @@ const LikesPage = () => {
         <div className="likes-page-container">
             {/* Header */}
             <header className="likes-page-header">
-                <button className="likes-page-back-btn" onClick={() => navigate(-1)}>
+                <button className="global-back-btn" onClick={() => navigate(-1)}>
                     <ArrowLeft size={22} />
                 </button>
                 <h1 className="likes-page-title">Favourites</h1>

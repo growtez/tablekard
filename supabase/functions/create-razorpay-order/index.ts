@@ -205,7 +205,7 @@ serve(async (req: Request) => {
                 currency: "INR",
                 gateway: "razorpay",
                 razorpay_order_id: razorpayOrder.id,
-                status: "PENDING",
+                status: "pending",
             })
             .select("id")
             .single();
@@ -232,8 +232,8 @@ serve(async (req: Request) => {
                 tax_percentage: taxPercentage,
                 restaurant_id,
                 restaurant_name: restaurant.name,
-                table_id: table_id || null,
-                order_type: order_type || "DINE_IN",
+                table_id: (typeof table_id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(table_id)) ? table_id : null,
+                order_type: order_type?.toLowerCase() || "dine_in",
                 customer_id: user.id,
                 items: validatedItems,  // Store validated cart items for later
             },

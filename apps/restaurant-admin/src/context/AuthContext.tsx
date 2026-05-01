@@ -166,10 +166,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         init();
 
-        const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
             const nextUser = session?.user ?? null;
-            setUser(nextUser);
-            await syncMemberships(nextUser);
+            
+            // Optimization: Only sync memberships if user changed or it's an explicit SIGNED_IN event
+            // This prevents redundant fetches on TOKEN_REFRESHED or focus events
+            setUser(prev => {
+                if (prev?.id !== nextUser?.id || event === 'SIGNED_IN') {
+                    syncMemberships(nextUser);
+                }
+                return nextUser;
+            });
+            
             setLoading(false);
         });
 
@@ -225,9 +233,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
 
     const resetPassword = async (email: string): Promise<void> => {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.origin
-        });
+        const redirectTo = import.meta.env.VITE_SUPABASE_REDIRECT_URL || window.location.origin;
+        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
         if (error) throw error;
     };
 

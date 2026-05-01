@@ -9,8 +9,8 @@ const MostPopularPage = () => {
   return (
     <div className="popular-container">
       <header className="header">
-        <button onClick={() => navigate(-1)} className="back-btn">
-          <ArrowLeft size={24} />
+        <button onClick={() => navigate(-1)} className="global-back-btn">
+          <ArrowLeft size={22} />
         </button>
         <h1>Most Popular</h1>
       </header>

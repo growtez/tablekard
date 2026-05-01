@@ -6,7 +6,8 @@ import { useAuth } from '../context/AuthContext';
 import { useRestaurantTables } from '../hooks/useSupabaseQuery';
 import './qrcode.css';
 
-const BASE_URL = 'https://tablekard.com/menu';
+// The base URL of the customer web app (e.g., http://192.168.1.16:3003)
+const CUSTOMER_APP_URL = (import.meta.env.VITE_CUSTOMER_APP_URL || 'https://tablekard.com').replace(/\/$/, '');
 
 const QRCodePage: React.FC = () => {
     const { activeRestaurantId } = useAuth();
@@ -17,7 +18,7 @@ const QRCodePage: React.FC = () => {
     const error = queryError ? 'Failed to load tables. Please try again.' : null;
 
     const buildQrUrl = (_tableId: string, tableNumber: number) =>
-        `${BASE_URL}?restaurant_id=${activeRestaurantId}&table_id=${tableNumber}`;
+        `${CUSTOMER_APP_URL}/order/${activeRestaurantId}/${tableNumber}`;
 
     const downloadQR = (tableId: string, tableNumber: number) => {
         const svgEl = document.getElementById(`qr-svg-${tableId}`) as SVGElement | null;

@@ -23,6 +23,8 @@ const MyOrderPage = () => {
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
 
+  const [showPayCounterPopup, setShowPayCounterPopup] = useState(false);
+
   useEffect(() => {
     const fetchOrders = async () => {
       if (!isAuthenticated || !user) return;
@@ -114,7 +116,7 @@ const MyOrderPage = () => {
       const result = await processOnlinePayment({
         restaurantId,
         tableId,
-        orderType: 'DINE_IN',
+        orderType: 'dine_in',
         items: cartItems,
         restaurantName: 'Tablekard',
         userName: user?.user_metadata?.full_name || '',
@@ -157,6 +159,11 @@ const MyOrderPage = () => {
       return;
     }
 
+    setShowPayCounterPopup(true);
+  };
+
+  const confirmPayAtCounter = async () => {
+    setShowPayCounterPopup(false);
     setPaymentLoading(true);
     setError('');
 
@@ -168,7 +175,7 @@ const MyOrderPage = () => {
         customerPhone: user?.phone || null,
         tableNumber: tableId,
         items: cartItems,
-        paymentMethod: 'PAY_AT_COUNTER',
+        paymentMethod: 'cash',
       });
 
       const newOrder = {
@@ -181,7 +188,7 @@ const MyOrderPage = () => {
         statusLabel: 'Order Placed'
       };
       setOrders(prev => [newOrder, ...prev]);
-      setCartItems([]);
+      clearCart();
       setActiveTab('orders');
     } catch (err) {
       console.error('Order error:', err);
@@ -568,6 +575,32 @@ const MyOrderPage = () => {
           <User size={22} />
         </NavLink>
       </nav>
+      {/* Pay at Counter Modal */}
+      {showPayCounterPopup && (
+        <div className="pay-counter-modal-overlay">
+          <div className="pay-counter-modal">
+            <div className="modal-icon">
+              <Wallet size={36} color="#8B3A1E" />
+            </div>
+            <h3>Pay at Counter</h3>
+            <p>Are you sure you want to place your order and pay at the counter?</p>
+            <div className="modal-actions">
+              <button 
+                className="modal-btn-cancel" 
+                onClick={() => setShowPayCounterPopup(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="modal-btn-confirm" 
+                onClick={confirmPayAtCounter}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

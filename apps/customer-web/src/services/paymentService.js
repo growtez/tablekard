@@ -38,7 +38,7 @@ export const createRazorpayOrder = async ({ restaurantId, tableId, orderType, it
         body: {
             restaurant_id: restaurantId,
             table_id: tableId || null,
-            order_type: orderType || 'DINE_IN',
+            order_type: orderType || 'dine_in',
             items: items.map(item => ({
                 menu_item_id: item.id,
                 quantity: item.quantity,
@@ -79,6 +79,7 @@ export const createRazorpayOrder = async ({ restaurantId, tableId, orderType, it
  */
 export const openRazorpayCheckout = ({
     razorpayOrderId,
+    razorpayKeyId,
     amount,
     currency = 'INR',
     restaurantName = 'Tablekard',
@@ -93,7 +94,7 @@ export const openRazorpayCheckout = ({
         }
 
         const options = {
-            key: RAZORPAY_KEY_ID,
+            key: razorpayKeyId || RAZORPAY_KEY_ID,
             amount: amount,         // Already in paise from Edge Function
             currency: currency,
             name: restaurantName,
@@ -199,6 +200,7 @@ export const processOnlinePayment = async ({
 
         const paymentResponse = await openRazorpayCheckout({
             razorpayOrderId: orderData.razorpay_order_id,
+            razorpayKeyId: orderData.razorpay_key_id,
             amount: orderData.amount,
             currency: orderData.currency,
             restaurantName,

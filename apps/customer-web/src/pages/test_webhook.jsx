@@ -118,8 +118,8 @@ const TestWebhookPage = () => {
     return (
         <div style={{ minHeight: '100vh', background: 'var(--color-background)', color: 'var(--color-text)', padding: '20px' }}>
             <header style={{ display: 'flex', alignItems: 'center', marginBottom: '30px' }}>
-                <button onClick={goBack} style={{ background: 'transparent', border: 'none', color: 'var(--color-primary)', cursor: 'pointer', marginRight: '16px' }}>
-                    <ArrowLeft size={24} />
+                <button className="global-back-btn" onClick={goBack} style={{ marginRight: '16px' }}>
+                    <ArrowLeft size={22} />
                 </button>
                 <h1 style={{ fontSize: '24px', margin: 0 }}>Webhook Demo Tool</h1>
             </header>

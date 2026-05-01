@@ -114,6 +114,7 @@ CREATE TABLE IF NOT EXISTS public.menu_items (
     long_description TEXT,
     price NUMERIC NOT NULL DEFAULT 0,
     discount_price NUMERIC,
+    serves INTEGER DEFAULT 1 CHECK (serves > 0),
     is_available BOOLEAN DEFAULT true,
     is_veg BOOLEAN DEFAULT true,
     preparation_time INTEGER,
@@ -172,7 +173,7 @@ CREATE TABLE IF NOT EXISTS public.order_items (
 -- payments
 CREATE TABLE IF NOT EXISTS public.payments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    order_id UUID NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
+    order_id UUID REFERENCES public.orders(id) ON DELETE CASCADE,
     restaurant_id UUID NOT NULL REFERENCES public.restaurants(id) ON DELETE CASCADE,
     user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
     amount NUMERIC NOT NULL,
@@ -228,6 +229,9 @@ CREATE TABLE IF NOT EXISTS public.platform_settings (
 -- Backfill schema changes for existing databases
 ALTER TABLE public.restaurants
     ADD COLUMN IF NOT EXISTS profile_urls TEXT[] DEFAULT ARRAY[]::TEXT[];
+
+ALTER TABLE public.menu_items
+    ADD COLUMN IF NOT EXISTS serves INTEGER DEFAULT 1 CHECK (serves > 0);
 
 -- ======================================================================================
 -- INDEXES

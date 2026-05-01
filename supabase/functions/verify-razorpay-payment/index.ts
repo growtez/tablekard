@@ -141,7 +141,7 @@ serve(async (req: Request) => {
             await supabaseAdmin
                 .from("payments")
                 .update({
-                    status: "FAILED",
+                    status: "failed",
                     razorpay_payment_id,
                     failure_reason: "Signature verification failed — possible tampering",
                 })
@@ -198,11 +198,11 @@ serve(async (req: Request) => {
                 customer_id: user.id,
                 restaurant_id: cartData.restaurant_id,
                 order_number: orderNumber,
-                type: cartData.order_type || "DINE_IN",
-                status: "CONFIRMED",                    // ✅ Immediately CONFIRMED (paid!)
-                table_id: cartData.table_id || null,
-                payment_method: "ONLINE",
-                payment_status: "PAID",                  // ✅ Already paid
+                type: cartData.order_type?.toLowerCase() || "dine_in",
+                status: "confirmed",                    // ✅ Immediately CONFIRMED (paid!)
+                table_id: (typeof cartData.table_id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cartData.table_id)) ? cartData.table_id : null,
+                payment_method: "online",
+                payment_status: "paid",                  // ✅ Already paid
                 subtotal: cartData.subtotal,
                 taxes: cartData.taxes,
                 discount: 0,
@@ -249,7 +249,7 @@ serve(async (req: Request) => {
                 order_id: order.id,                // Link payment to order
                 razorpay_payment_id,
                 razorpay_signature,
-                status: "PAID",
+                status: "paid",
                 paid_at: new Date().toISOString(),
             })
             .eq("id", payment_id);
@@ -279,7 +279,7 @@ serve(async (req: Request) => {
                 success: true,
                 order_id: order.id,
                 order_number: order.order_number,
-                payment_status: "PAID",
+                payment_status: "paid",
                 message: "Payment verified and order confirmed!",
             }),
             {

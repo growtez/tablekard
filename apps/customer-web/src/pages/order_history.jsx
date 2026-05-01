@@ -67,7 +67,7 @@ const OrderHistoryPage = () => {
         return (
             <div className="order-history-page-container">
                 <header className="order-history-page-header">
-                    <button className="order-history-page-back-btn" onClick={() => navigate(-1)}>
+                    <button className="global-back-btn" onClick={() => navigate(-1)}>
                         <ArrowLeft size={22} />
                     </button>
                     <h1>Order History</h1>
@@ -87,7 +87,7 @@ const OrderHistoryPage = () => {
         <div className="order-history-page-container">
             {/* Header */}
             <header className="order-history-page-header">
-                <button className="order-history-page-back-btn" onClick={() => navigate(-1)}>
+                <button className="global-back-btn" onClick={() => navigate(-1)}>
                     <ArrowLeft size={22} />
                 </button>
                 <h1>Order History</h1>
