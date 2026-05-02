@@ -469,6 +469,19 @@ const ProfilePage: React.FC = () => {
         }
     }, [activeRestaurantId, handleImageUpload]);
 
+    const handleAvatarDrop = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                setCropImage(reader.result as string);
+                setCropType('avatar');
+            };
+            reader.readAsDataURL(file);
+        }
+    }, []);
+
     const handleLogoFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
