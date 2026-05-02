@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { ArrowLeft, MapPin, Phone, Mail, Clock, Instagram, Facebook, Globe, Utensils, Award, Users, Heart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useRestaurant } from '../context/RestaurantContext';
@@ -9,8 +9,6 @@ const AboutPage = () => {
     const navigate = useNavigate();
     const { restaurantId } = useRestaurant();
     const [restaurant, setRestaurant] = useState(null);
-    const [activeHourIndex, setActiveHourIndex] = useState(0);
-    const scrollerRef = useRef(null);
 
     React.useEffect(() => {
         if (restaurantId) {
@@ -20,34 +18,67 @@ const AboutPage = () => {
         }
     }, [restaurantId]);
 
-    const handleScroll = () => {
-        if (scrollerRef.current) {
-            const container = scrollerRef.current;
-            const scrollLeft = container.scrollLeft;
-            const scrollWidth = container.scrollWidth;
-            const clientWidth = container.clientWidth;
-            const cardWidth = 232; // min-width (220px) + gap (12px)
+    const checkOperatingStatus = () => {
+        const date = new Date();
+        const day = date.getDay(); // 0 is Sunday, 6 is Saturday
+        const isWeekendToday = day === 0 || day === 6;
 
-            // Check if scrolled to the end (for last dot)
-            if (scrollLeft + clientWidth >= scrollWidth - 10) {
-                setActiveHourIndex(2); // Last card
-            } else {
-                const index = Math.round(scrollLeft / cardWidth);
-                setActiveHourIndex(Math.min(index, 2));
+        const checkOpen = (hoursString) => {
+            if (!hoursString) return false;
+            try {
+                // Try parsing both formats: "11:00 AM - 10:00 PM" and "11:00 AM — 10:00 PM"
+                let parts = hoursString.split('-');
+                if (parts.length < 2) parts = hoursString.split('—');
+                if (parts.length < 2) return false;
+                
+                const [openStr, closeStr] = parts.map(s => s.trim());
+
+                const parseTime = (timeStr) => {
+                    const [time, modifier] = timeStr.split(' ');
+                    if (!time || !modifier) return null;
+                    let [hours, minutes] = time.split(':').map(Number);
+                    
+                    if (hours === 12) {
+                        hours = modifier.toUpperCase() === 'AM' ? 0 : 12;
+                    } else if (modifier.toUpperCase() === 'PM') {
+                        hours += 12;
+                    }
+                    
+                    const d = new Date();
+                    d.setHours(hours, minutes || 0, 0, 0);
+                    return d;
+                };
+
+                const openTime = parseTime(openStr);
+                const closeTime = parseTime(closeStr);
+                if (!openTime || !closeTime) return false;
+                
+                const now = new Date();
+
+                if (closeTime <= openTime) {
+                    closeTime.setDate(closeTime.getDate() + 1);
+                    if (now.getHours() < openTime.getHours()) {
+                        now.setDate(now.getDate() + 1);
+                    }
+                }
+
+                return now >= openTime && now <= closeTime;
+            } catch (e) {
+                return false;
             }
-        }
+        };
+
+        const isWeekdaysOpen = checkOpen(restaurant?.operating_hours_weekdays || '11:00 AM - 10:00 PM');
+        const isWeekendsOpen = checkOpen(restaurant?.operating_hours_weekends || '10:00 AM - 11:30 PM');
+
+        return {
+            isWeekendToday,
+            isWeekdaysOpen,
+            isWeekendsOpen
+        };
     };
 
-    const scrollToCard = (index) => {
-        if (scrollerRef.current) {
-            const cardWidth = 232;
-            scrollerRef.current.scrollTo({
-                left: index * cardWidth,
-                behavior: 'smooth'
-            });
-            setActiveHourIndex(index);
-        }
-    };
+    const status = checkOperatingStatus();
 
     return (
         <div className="about-journal-container">
@@ -90,36 +121,25 @@ const AboutPage = () => {
                         <Clock size={16} />
                         <span>OPERATING HOURS</span>
                     </div>
-                    <div
-                        className="hours-modern-scroller"
-                        ref={scrollerRef}
-                        onScroll={handleScroll}
-                    >
-                        <div className="hour-pill active">
-                            <span className="hour-day">WEEKDAYS</span>
+                    <div className="hours-stacked-container">
+                        <div className={`hour-pill ${!status.isWeekendToday ? 'active' : ''}`}>
+                            <span className="hour-day">MON-FRI</span>
                             <span className="hour-time">{restaurant?.operating_hours_weekdays || '11:00 AM — 10:00 PM'}</span>
-                            <div className="hour-status">Open Now</div>
+                            {!status.isWeekendToday && (
+                                <div className={`hour-status ${status.isWeekdaysOpen ? 'open' : 'closed'}`}>
+                                    {status.isWeekdaysOpen ? 'Open Now' : 'Closed'}
+                                </div>
+                            )}
                         </div>
-                        <div className="hour-pill">
-                            <span className="hour-day">WEEKENDS</span>
+                        <div className={`hour-pill ${status.isWeekendToday ? 'active' : ''}`}>
+                            <span className="hour-day">SAT-SUN</span>
                             <span className="hour-time">{restaurant?.operating_hours_weekends || '10:00 AM — 11:30 PM'}</span>
+                            {status.isWeekendToday && (
+                                <div className={`hour-status ${status.isWeekendsOpen ? 'open' : 'closed'}`}>
+                                    {status.isWeekendsOpen ? 'Open Now' : 'Closed'}
+                                </div>
+                            )}
                         </div>
-                        {(!restaurant?.operating_hours_weekdays && !restaurant?.operating_hours_weekends) && (
-                            <div className="hour-pill">
-                                <span className="hour-day">SUNDAY</span>
-                                <span className="hour-time">10:00 AM — 09:00 PM</span>
-                            </div>
-                        )}
-                    </div>
-                    {/* Pagination Dots */}
-                    <div className="hours-pagination-dots">
-                        {[0, 1, 2].map((index) => (
-                            <span
-                                key={index}
-                                className={`dot ${activeHourIndex === index ? 'active' : ''}`}
-                                onClick={() => scrollToCard(index)}
-                            ></span>
-                        ))}
                     </div>
                 </section>
 
