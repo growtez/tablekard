@@ -129,6 +129,7 @@ export interface Restaurant {
   };
   subscriptionStatus?: boolean;
   subscriptionType?: string | null;
+  subscriptionEndAt?: IsoDateString | null;
   profileUrls?: string[] | null;
   location?: {
     latitude?: number | null;
@@ -385,6 +386,7 @@ export interface Database {
           settings: Record<string, unknown> | null;
           subscription_status: boolean;
           subscription_type: string | null;
+          subscription_end_at: string | null;
           latitude: number | null;
           longitude: number | null;
           allowed_radius: number | null;
@@ -407,6 +409,7 @@ export interface Database {
           settings?: Record<string, unknown> | null;
           subscription_status?: boolean;
           subscription_type?: string | null;
+          subscription_end_at?: string | null;
           latitude?: number | null;
           longitude?: number | null;
           allowed_radius?: number | null;
@@ -428,6 +431,7 @@ export interface Database {
           settings?: Record<string, unknown> | null;
           subscription_status?: boolean;
           subscription_type?: string | null;
+          subscription_end_at?: string | null;
           latitude?: number | null;
           longitude?: number | null;
           allowed_radius?: number | null;

@@ -28,7 +28,7 @@ interface RestaurantRow {
     contact_email: string | null; contact_phone: string | null; contact_address: string | null;
     logo_url: string | null; primary_color: string | null; secondary_color: string | null;
     profile_urls: string[] | null; settings: Record<string, unknown> | null;
-    subscription_status: boolean; subscription_type: string | null;
+    subscription_status: boolean; subscription_type: string | null; subscription_end_at: string | null;
     latitude: number | null; longitude: number | null; allowed_radius: number | null;
     created_at: string; updated_at: string;
 }
@@ -110,6 +110,7 @@ const mapRestaurantRow = (row: RestaurantRow): Restaurant => ({
     settings: row.settings ?? undefined,
     subscriptionStatus: row.subscription_status,
     subscriptionType: row.subscription_type,
+    subscriptionEndAt: row.subscription_end_at,
     profileUrls: row.profile_urls ?? [],
     location: {
         latitude: row.latitude,
@@ -729,4 +730,38 @@ export const toggleTableActiveStatus = async (tableId: string, active: boolean):
         .eq('id', tableId);
 
     if (error) throw error;
+};
+
+// ==========================================
+// Subscription Payments
+// ==========================================
+
+export interface SubscriptionPaymentRecord {
+    id: string;
+    planDuration: number;
+    amount: number;
+    status: string;
+    paidAt: string | null;
+    startsAt: string | null;
+    endsAt: string | null;
+    createdAt: string;
+}
+
+export const getSubscriptionPayments = async (restaurantId: string): Promise<SubscriptionPaymentRecord[]> => {
+    const { data, error } = await db
+        .from('subscription_payments')
+        .select('id, plan_duration, amount, status, paid_at, starts_at, ends_at, created_at')
+        .eq('restaurant_id', restaurantId)
+        .order('created_at', { ascending: false });
+    if (error) throw error;
+    return ((data ?? []) as any[]).map(row => ({
+        id: row.id,
+        planDuration: row.plan_duration,
+        amount: Number(row.amount),
+        status: row.status,
+        paidAt: row.paid_at,
+        startsAt: row.starts_at,
+        endsAt: row.ends_at,
+        createdAt: row.created_at
+    }));
 };
