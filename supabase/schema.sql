@@ -234,10 +234,33 @@ CREATE TABLE IF NOT EXISTS public.platform_settings (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- subscription_payments (SaaS billing — separate from customer-order payments)
+CREATE TABLE IF NOT EXISTS public.subscription_payments (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    restaurant_id UUID NOT NULL REFERENCES public.restaurants(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+    plan_duration INTEGER NOT NULL,
+    amount NUMERIC NOT NULL,
+    currency TEXT DEFAULT 'INR',
+    razorpay_order_id TEXT,
+    razorpay_payment_id TEXT,
+    razorpay_signature TEXT,
+    status TEXT NOT NULL DEFAULT 'pending'
+        CHECK (status IN ('pending', 'paid', 'failed')),
+    paid_at TIMESTAMPTZ,
+    starts_at TIMESTAMPTZ,
+    ends_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Backfill schema changes for existing databases
 ALTER TABLE public.restaurants
     ADD COLUMN IF NOT EXISTS profile_urls TEXT[] DEFAULT ARRAY[]::TEXT[];
 
+ALTER TABLE public.restaurants
+    ADD COLUMN IF NOT EXISTS subscription_end_at TIMESTAMPTZ;
+
+ALTER TABLE public.payments ALTER COLUMN order_id DROP NOT NULL;
 ALTER TABLE public.menu_items
     ADD COLUMN IF NOT EXISTS serves INTEGER DEFAULT 1 CHECK (serves > 0);
 
@@ -329,6 +352,7 @@ ALTER TABLE public.payment_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.favorites ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.feedback ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.platform_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.subscription_payments ENABLE ROW LEVEL SECURITY;
 
 -- ======================================================================================
 -- RLS POLICIES
@@ -405,3 +429,7 @@ CREATE POLICY "Restaurant members can read feedback" ON public.feedback FOR SELE
 -- 14. platform_settings
 CREATE POLICY "Public can read platform settings" ON public.platform_settings FOR SELECT USING (true);
 CREATE POLICY "Super admins manage platform settings" ON public.platform_settings FOR ALL USING (public.is_super_admin());
+
+-- 15. subscription_payments
+CREATE POLICY "Restaurant members can read subscription payments" ON public.subscription_payments FOR SELECT USING (public.is_restaurant_member(restaurant_id));
+CREATE POLICY "Super admins manage subscription payments" ON public.subscription_payments FOR ALL USING (public.is_super_admin());
