@@ -45,15 +45,17 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0; /* Allow children to truncate */
 }
 
 .header-brand-name {
-  font-size: 18px;
   font-weight: 700;
   color: #8B3A1E;
   letter-spacing: 5px;
   font-family: 'Syncopate', sans-serif;
   text-transform: uppercase;
+  line-height: 1.2;
+  /* Font size is now handled dynamically in JSX */
 }
 
 .header-nav-right {

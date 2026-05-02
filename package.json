@@ -30,6 +30,7 @@
         "node": ">=18.0.0"
     },
     "dependencies": {
+        "react-easy-crop": "^5.5.7",
         "supabase": "^2.96.0"
     }
 }

@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import type { Restaurant } from '@restaurant-saas/types';
 import Sidebar from '../../components/sidebar';
+import ImageCropper from '../../components/ImageCropper';
 import { useAuth } from '../../context/AuthContext';
 import {
     getRestaurantById,
@@ -206,6 +207,10 @@ const ProfilePage: React.FC = () => {
     const [isAdminEditing, setIsAdminEditing] = useState(false);
     const [isRestaurantSaving, setIsRestaurantSaving] = useState(false);
     const [isAdminSaving, setIsAdminSaving] = useState(false);
+
+    // Cropping state
+    const [cropImage, setCropImage] = useState<string | null>(null);
+    const [cropType, setCropType] = useState<'logo' | 'avatar' | null>(null);
 
     const activeMembership = memberships.find(membership => membership.restaurantId === activeRestaurantId);
 
@@ -466,42 +471,58 @@ const ProfilePage: React.FC = () => {
 
     const handleLogoFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file && activeRestaurantId) {
-            handleImageUpload(
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                setCropImage(reader.result as string);
+                setCropType('logo');
+            };
+            reader.readAsDataURL(file);
+        }
+        e.target.value = '';
+    }, []);
+
+    const handleAvatarFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                setCropImage(reader.result as string);
+                setCropType('avatar');
+            };
+            reader.readAsDataURL(file);
+        }
+        e.target.value = '';
+    }, []);
+
+    const handleCropComplete = async (croppedBlob: Blob) => {
+        if (!cropType || !activeRestaurantId || !userProfile) {
+            setCropImage(null);
+            setCropType(null);
+            return;
+        }
+
+        const file = new File([croppedBlob], cropType === 'logo' ? 'logo.jpg' : 'avatar.jpg', { type: 'image/jpeg' });
+        
+        if (cropType === 'logo') {
+            await handleImageUpload(
                 file,
                 `logos/${activeRestaurantId}`,
                 (url) => handleRestaurantFieldChange('logoUrl', url),
                 setIsUploadingLogo
             );
-        }
-        e.target.value = '';
-    }, [activeRestaurantId, handleImageUpload]);
-
-    const handleAvatarDrop = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        const file = e.dataTransfer.files[0];
-        if (file && userProfile) {
-            handleImageUpload(
+        } else {
+            await handleImageUpload(
                 file,
                 `avatars/${userProfile.id}`,
                 (url) => handleAdminFieldChange('avatarUrl', url),
                 setIsUploadingAvatar
             );
         }
-    }, [userProfile, handleImageUpload]);
-
-    const handleAvatarFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file && userProfile) {
-            handleImageUpload(
-                file,
-                `avatars/${userProfile.id}`,
-                (url) => handleAdminFieldChange('avatarUrl', url),
-                setIsUploadingAvatar
-            );
-        }
-        e.target.value = '';
-    }, [userProfile, handleImageUpload]);
+        
+        setCropImage(null);
+        setCropType(null);
+    };
 
     const startRestaurantEdit = () => { resetRestaurantForm(); setFeedback(null); setIsRestaurantEditing(true); };
     const cancelRestaurantEdit = () => { resetRestaurantForm(); setIsRestaurantEditing(false); };
@@ -1513,6 +1534,17 @@ const ProfilePage: React.FC = () => {
                     </form>
                 </div>
             </div>
+            
+            {/* Image Cropper Modal */}
+            {cropImage && (
+                <ImageCropper
+                    image={cropImage}
+                    onCropComplete={handleCropComplete}
+                    onCancel={() => { setCropImage(null); setCropType(null); }}
+                    circular={cropType === 'avatar'}
+                    aspect={cropType === 'logo' ? 1 : 1}
+                />
+            )}
         </div>
     );
 };
