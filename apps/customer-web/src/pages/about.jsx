@@ -132,14 +132,27 @@ const AboutPage = () => {
 
                     {/* Location Card with Map Preview */}
                     <div className="visit-location-card">
-                        <div className="location-map-placeholder">
-                            <MapPin size={32} className="map-icon-pulse" />
-                            <span className="map-label">Bongaigaon</span>
+                        <div className="location-map-placeholder" style={{ padding: 0, overflow: 'hidden' }}>
+                            {restaurant?.latitude && restaurant?.longitude ? (
+                                <iframe
+                                    width="100%"
+                                    height="100%"
+                                    frameBorder="0"
+                                    style={{ border: 0, minHeight: '120px' }}
+                                    src={`https://www.openstreetmap.org/export/embed.html?bbox=${restaurant.longitude - 0.005},${restaurant.latitude - 0.005},${restaurant.longitude + 0.005},${restaurant.latitude + 0.005}&layer=mapnik&marker=${restaurant.latitude},${restaurant.longitude}`}
+                                    allowFullScreen
+                                ></iframe>
+                            ) : (
+                                <>
+                                    <MapPin size={32} className="map-icon-pulse" />
+                                    <span className="map-label">Location</span>
+                                </>
+                            )}
                         </div>
                         <div className="location-details">
                             <h3 className="location-name">{restaurant?.name?.toUpperCase() || 'TABLEKARD'}</h3>
-                            <p className="location-address">{restaurant?.contact?.address || 'BOC Gate, Chapaguri Rd, Bongaigaon, Assam 783380'}</p>
-                            <a href={`https://maps.google.com/?q=${encodeURIComponent(restaurant?.contact?.address || 'BOC Gate, Chapaguri Rd, Bongaigaon, Assam 783380')}`} target="_blank" rel="noopener noreferrer" className="directions-btn">
+                            <p className="location-address">{restaurant?.contact_address || 'BOC Gate, Chapaguri Rd, Bongaigaon, Assam 783380'}</p>
+                            <a href={`https://maps.google.com/?q=${encodeURIComponent(restaurant?.contact_address || 'BOC Gate, Chapaguri Rd, Bongaigaon, Assam 783380')}`} target="_blank" rel="noopener noreferrer" className="directions-btn">
                                 <MapPin size={14} /> Get Directions
                             </a>
                         </div>
@@ -147,19 +160,19 @@ const AboutPage = () => {
 
                     {/* Contact Actions - Minimal Centered Icons */}
                     <div className="contact-icons-row">
-                        <a href={`tel:${restaurant?.contact?.phone || '+911234567890'}`} className="contact-icon-item">
+                        <a href={`tel:${restaurant?.contact_phone || '+911234567890'}`} className="contact-icon-item">
                             <div className="icon-circle call">
                                 <Phone size={24} />
                             </div>
                             <span className="icon-label">Call</span>
                         </a>
-                        <a href={`mailto:${restaurant?.contact?.email || 'delishbngaigaonhere@gmail.com'}`} className="contact-icon-item">
+                        <a href={`mailto:${restaurant?.contact_email || 'delishbngaigaonhere@gmail.com'}`} className="contact-icon-item">
                             <div className="icon-circle email">
                                 <Mail size={24} />
                             </div>
                             <span className="icon-label">Email</span>
                         </a>
-                        <a href={`https://wa.me/${(restaurant?.contact?.phone || '911234567890').replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="contact-icon-item">
+                        <a href={`https://wa.me/${(restaurant?.contact_phone || '911234567890').replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="contact-icon-item">
                             <div className="icon-circle whatsapp">
                                 <Phone size={24} />
                             </div>
