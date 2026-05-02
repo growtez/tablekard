@@ -23,6 +23,8 @@ const AboutPage = () => {
                     console.error("Failed to fetch restaurant", err);
                     setIsLoading(false);
                 });
+        } else {
+            setIsLoading(false);
         }
     }, [restaurantId]);
 
@@ -90,8 +92,24 @@ const AboutPage = () => {
 
     if (isLoading) {
         return (
-            <div className="about-journal-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-                <Loader2 size={32} className="map-icon-pulse" style={{ color: '#8B3A1E' }} />
+            <div className="about-journal-container">
+                <header className="about-journal-header" style={{ padding: '20px' }}>
+                     <div className="skeleton-pulse" style={{ width: '42px', height: '42px', borderRadius: '12px' }}></div>
+                     <div className="skeleton-pulse" style={{ width: '120px', height: '24px', margin: '0 auto' }}></div>
+                </header>
+                <div style={{ padding: '30px 20px' }}>
+                    <div className="skeleton-pulse" style={{ width: '80px', height: '24px', borderRadius: '20px', marginBottom: '16px' }}></div>
+                    <div className="skeleton-pulse" style={{ width: '100%', height: '40px', marginBottom: '12px' }}></div>
+                    <div className="skeleton-pulse" style={{ width: '80%', height: '40px', marginBottom: '24px' }}></div>
+                    <div className="skeleton-pulse" style={{ width: '60px', height: '4px', marginBottom: '40px' }}></div>
+
+                    <div className="skeleton-pulse" style={{ width: '100%', height: '200px', borderRadius: '24px', marginBottom: '40px' }}></div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                        <div className="skeleton-pulse" style={{ width: '100%', height: '120px', borderRadius: '16px' }}></div>
+                        <div className="skeleton-pulse" style={{ width: '100%', height: '120px', borderRadius: '16px' }}></div>
+                    </div>
+                </div>
             </div>
         );
     }

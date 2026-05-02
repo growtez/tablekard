@@ -289,9 +289,21 @@ const MenuPage = () => {
 
       {/* Menu Items */}
       {menuLoading && Object.keys(menuItems).length === 0 ? (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 0' }}>
-          <Loader2 size={40} color="#8B3A1E" style={{ animation: 'spin 1s linear infinite' }} />
-          <p style={{ marginTop: '16px', color: '#666', fontWeight: 500 }}>Fetching menu...</p>
+        <div className="menu-items">
+          {[1, 2, 3, 4, 5].map(i => (
+            <div key={i} className="skeleton-item">
+              <div className="skeleton-pulse skeleton-image"></div>
+              <div className="skeleton-content">
+                <div className="skeleton-pulse skeleton-text title"></div>
+                <div className="skeleton-pulse skeleton-text"></div>
+                <div className="skeleton-pulse skeleton-text short"></div>
+                <div className="skeleton-footer">
+                  <div className="skeleton-pulse skeleton-price"></div>
+                  <div className="skeleton-pulse skeleton-btn"></div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
         <div className="menu-items">

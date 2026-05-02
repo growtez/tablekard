@@ -477,9 +477,21 @@ const MyOrderPage = () => {
       {activeTab === 'orders' && (
         <div className="orders-content">
           {ordersLoading ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 0' }}>
-              <Loader2 size={40} color="#8B3A1E" style={{ animation: 'spin 1s linear infinite' }} />
-              <p style={{ marginTop: '16px', color: '#666', fontWeight: 500 }}>Fetching today's orders...</p>
+            <div className="orders-list">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="skeleton-item" style={{ flexDirection: 'column', height: '140px' }}>
+                   <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                      <div className="skeleton-pulse skeleton-text title" style={{ width: '40%' }}></div>
+                      <div className="skeleton-pulse skeleton-text" style={{ width: '80px', borderRadius: '20px' }}></div>
+                   </div>
+                   <div className="skeleton-pulse skeleton-text short" style={{ marginTop: '12px' }}></div>
+                   <div className="skeleton-pulse skeleton-text" style={{ width: '30%', marginTop: 'auto' }}></div>
+                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px', borderTop: '1px solid #f0f0f0', paddingTop: '16px' }}>
+                      <div className="skeleton-pulse skeleton-text" style={{ width: '80px', height: '24px', borderRadius: '12px' }}></div>
+                      <div className="skeleton-pulse skeleton-text title" style={{ width: '60px' }}></div>
+                   </div>
+                </div>
+              ))}
             </div>
           ) : orders.length === 0 ? (
             <div className="empty-state">
