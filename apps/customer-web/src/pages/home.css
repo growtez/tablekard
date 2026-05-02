@@ -475,50 +475,50 @@ body {
 
 .discount-badge {
   position: absolute;
-  top: -15px;
-  right: -15px;
-  width: 64px;
-  height: 64px;
-  background: #8B3A1E;
-  /* Burgundy background */
+  top: 0;
+  right: 0;
+  background: #D90429;
+  padding: 8px 16px 8px 14px;
+  border-radius: 0 22px 0 16px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  filter: drop-shadow(0 2px 4px rgba(139, 58, 30, 0.3));
-  /* Starburst clip-path */
-  clip-path: polygon(50% 0%, 55% 15%, 70% 10%, 70% 25%, 85% 25%, 80% 40%, 95% 45%, 85% 55%, 95% 65%, 80% 70%, 85% 85%, 70% 80%, 70% 95%, 55% 90%, 50% 100%, 45% 90%, 30% 95%, 30% 80%, 15% 85%, 20% 70%, 5% 65%, 15% 55%, 5% 45%, 20% 40%, 15% 25%, 30% 25%, 30% 10%, 45% 15%);
   z-index: 10;
 }
 
-.discount-badge-inner * {
-  color: #FFFFFF !important;
-}
-
-.discount-badge-inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  line-height: 1.1;
-  transform: rotate(-5deg);
-}
-
-.discount-text {
-  color: #FFFFFF !important;
-  font-weight: 800;
-  font-size: 14px;
-}
-
-.discount-value {
-  font-size: 14px;
-  font-weight: 800;
+.discount-badge-text {
   color: #FFFFFF;
-}
-
-.discount-off {
+  font-weight: 800;
   font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.discount-timer {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  background: #FFFFFF;
+  padding: 6px 12px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1.5px solid #000000;
+  z-index: 10;
+}
+
+.discount-timer-icon {
+  color: #1A1A1A;
+}
+
+.discount-timer-text {
+  color: #1A1A1A;
   font-weight: 700;
-  color: #FFFFFF;
+  font-size: 10px;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 .discount-info {

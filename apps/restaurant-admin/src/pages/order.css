@@ -55,6 +55,82 @@
   gap: 16px;
 }
 
+/* Auto-refresh badge */
+.order-refresh-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #FFFFFF;
+  border-radius: 20px;
+  padding: 6px 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.order-refresh-ring {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.order-refresh-svg {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  transform: rotate(-90deg);
+}
+
+.order-refresh-bg {
+  fill: none;
+  stroke: #E2E8F0;
+  stroke-width: 3;
+}
+
+.order-refresh-progress {
+  fill: none;
+  stroke: #4f755c;
+  stroke-width: 3;
+  stroke-linecap: round;
+  transition: stroke-dasharray 1s linear;
+}
+
+.order-refresh-countdown {
+  position: relative;
+  font-size: 9px;
+  font-weight: 600;
+  color: #4f755c;
+  font-family: 'Poppins', sans-serif;
+  z-index: 1;
+}
+
+.order-refresh-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: #718096;
+  padding: 2px;
+  border-radius: 50%;
+  transition: color 0.2s, transform 0.2s;
+}
+
+.order-refresh-btn:hover {
+  color: #4f755c;
+  transform: rotate(15deg);
+}
+
+.order-refresh-btn.spinning svg {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
 .order-search-bar {
   display: flex;
   align-items: center;
@@ -188,6 +264,11 @@
   font-weight: 500;
 }
 
+.order-change-negative {
+  color: #E53E3E;
+  font-weight: 500;
+}
+
 .order-trend-icon {
   margin-left: auto;
 }
@@ -205,13 +286,61 @@
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Date filter pill */
+.order-date-filter-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.order-date-icon {
+  position: absolute;
+  left: 14px;
+  color: #718096;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.order-date-input {
+  padding-left: 36px !important;
+  padding-right: 36px !important;
+  min-width: 160px;
+  color: #1A202C;
+  background-image: none;
+}
+
+.order-date-input::-webkit-calendar-picker-indicator {
+  opacity: 0.5;
+  cursor: pointer;
+}
+
+.order-date-clear {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: #718096;
+  line-height: 1;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+}
+
+.order-date-clear:hover {
+  color: #E53E3E;
 }
 
 .order-filter-btn {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 20px;
+  padding: 12px 36px 12px 20px;
   background-color: #FFFFFF;
   border: none;
   border-radius: 16px;
@@ -222,6 +351,10 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), inset 0 1px 2px rgba(0, 0, 0, 0.02);
   transition: all 0.2s;
   font-family: 'Poppins', sans-serif;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
 }
 
 .order-filter-btn:hover {
@@ -272,6 +405,40 @@
   color: #1A202C;
   margin: 0;
   font-family: 'Poppins', sans-serif;
+}
+
+.order-date-tag-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.order-date-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #EBF4F0;
+  color: #2F6B4F;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-family: 'Poppins', sans-serif;
+  border: 1px solid #C6E0D5;
+}
+
+.order-date-count-badge {
+  display: inline-flex;
+  align-items: center;
+  background: #4f755c;
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 12px;
+  font-family: 'Poppins', sans-serif;
+  letter-spacing: 0.2px;
+  box-shadow: 0 2px 6px rgba(79, 117, 92, 0.3);
 }
 
 .order-table-wrapper {
@@ -326,14 +493,34 @@
 }
 
 /* Status Pills */
-.order-status-pill {
+/* Status Pills & Selects */
+.order-status-pill,
+.order-status-select {
   display: inline-block;
-  padding: 6px 14px;
+  padding: 6px 30px 6px 14px;
   border-radius: 12px;
   font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
   font-family: 'Poppins', sans-serif;
+  border: none;
+  cursor: pointer;
+  appearance: none;
+  transition: all 0.2s;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+.order-status-select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.5);
+}
+
+.order-status-select option {
+  background-color: #FFFFFF;
+  color: #1A202C;
+  font-weight: normal;
 }
 
 .status-yellow {

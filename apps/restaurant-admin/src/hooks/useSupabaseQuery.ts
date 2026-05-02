@@ -76,7 +76,7 @@ export function useDashboardOrders(restaurantId: string | null) {
     enabled: !!restaurantId,
     staleTime: STALE_30S,
     refetchOnWindowFocus: false,
-    refetchInterval: 30_000,  // auto-poll every 30s for a real-time feel
+    refetchInterval: 5_000,  // auto-poll every 30s for a real-time feel
     retry: 3,
   });
 }
