@@ -162,7 +162,7 @@ const Order: React.FC = () => {
           <h1 className="order-page-title">Order Management</h1>
           <div className="order-header-right">
             {/* Auto-refresh indicator */}
-            <div className="order-refresh-badge" title={`Auto-refreshes every 30s`}>
+            {/* <div className="order-refresh-badge" title={`Auto-refreshes every 30s`}>
               <div className="order-refresh-ring">
                 <svg viewBox="0 0 36 36" className="order-refresh-svg">
                   <circle cx="18" cy="18" r="15.9155" className="order-refresh-bg" />
@@ -182,7 +182,7 @@ const Order: React.FC = () => {
               >
                 <RefreshCw size={16} />
               </button>
-            </div>
+            </div> */}
 
             <div className="order-search-bar">
               <Search size={18} color="#718096" />
@@ -194,9 +194,9 @@ const Order: React.FC = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <div className="order-icon-button">
+            {/* <div className="order-icon-button">
               <Bell size={20} color="#718096" />
-            </div>
+            </div> */}
             <div className="order-user-avatar">👨‍💼</div>
           </div>
         </div>
