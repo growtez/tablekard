@@ -115,3 +115,92 @@ a,
 button {
   transition: color 0.3s ease;
 }
+
+/* Global Back Button (Our Story Design) */
+.global-back-btn {
+    background: #FFF0EC;
+    border: none;
+    color: #8B3A1E;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.global-back-btn:active {
+    transform: scale(0.9);
+}
+
+/* Skeleton Loaders */
+.skeleton-pulse {
+  background: linear-gradient(90deg, #FFF0EC 25%, #FFD6C9 50%, #FFF0EC 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-item {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  background: #FFFFFF;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  border: 1.5px solid #F0F0F0;
+}
+
+.skeleton-image {
+  width: 100px;
+  height: 100px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.skeleton-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.skeleton-text {
+  height: 14px;
+  width: 100%;
+}
+.skeleton-text.short {
+  width: 60%;
+}
+.skeleton-text.title {
+  height: 20px;
+  width: 80%;
+}
+
+.skeleton-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: auto;
+}
+.skeleton-price {
+  height: 20px;
+  width: 50px;
+}
+.skeleton-btn {
+  height: 32px;
+  width: 80px;
+  border-radius: 20px;
+}

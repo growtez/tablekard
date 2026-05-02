@@ -67,7 +67,7 @@ const OrderHistoryPage = () => {
         return (
             <div className="order-history-page-container">
                 <header className="order-history-page-header">
-                    <button className="order-history-page-back-btn" onClick={() => navigate(-1)}>
+                    <button className="global-back-btn" onClick={() => navigate(-1)}>
                         <ArrowLeft size={22} />
                     </button>
                     <h1>Order History</h1>
@@ -87,7 +87,7 @@ const OrderHistoryPage = () => {
         <div className="order-history-page-container">
             {/* Header */}
             <header className="order-history-page-header">
-                <button className="order-history-page-back-btn" onClick={() => navigate(-1)}>
+                <button className="global-back-btn" onClick={() => navigate(-1)}>
                     <ArrowLeft size={22} />
                 </button>
                 <h1>Order History</h1>
@@ -127,8 +127,23 @@ const OrderHistoryPage = () => {
             {/* List */}
             <div className="order-history-list">
                 {loading ? (
-                    <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
-                        <Loader2 className="animate-spin" size={32} color="#8B3A1E" />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="skeleton-item" style={{ flexDirection: 'column', padding: '20px', height: '160px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                                    <div className="skeleton-pulse skeleton-text title" style={{ width: '40%' }}></div>
+                                    <div className="skeleton-pulse skeleton-text" style={{ width: '80px', borderRadius: '16px' }}></div>
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+                                    <div className="skeleton-pulse skeleton-text" style={{ width: '60px', height: '24px', borderRadius: '16px' }}></div>
+                                    <div className="skeleton-pulse skeleton-text" style={{ width: '80px', height: '24px', borderRadius: '16px' }}></div>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid #f0f0f0' }}>
+                                    <div className="skeleton-pulse skeleton-text title" style={{ width: '80px' }}></div>
+                                    <div className="skeleton-pulse skeleton-text" style={{ width: '40px', height: '40px', borderRadius: '50%' }}></div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 ) : filteredOrders.length === 0 ? (
                     <div className="history-empty">

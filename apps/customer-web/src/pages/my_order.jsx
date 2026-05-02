@@ -23,6 +23,8 @@ const MyOrderPage = () => {
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
 
+  const [showPayCounterPopup, setShowPayCounterPopup] = useState(false);
+
   useEffect(() => {
     const fetchOrders = async () => {
       if (!isAuthenticated || !user) return;
@@ -157,6 +159,11 @@ const MyOrderPage = () => {
       return;
     }
 
+    setShowPayCounterPopup(true);
+  };
+
+  const confirmPayAtCounter = async () => {
+    setShowPayCounterPopup(false);
     setPaymentLoading(true);
     setError('');
 
@@ -470,9 +477,21 @@ const MyOrderPage = () => {
       {activeTab === 'orders' && (
         <div className="orders-content">
           {ordersLoading ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 0' }}>
-              <Loader2 size={40} color="#8B3A1E" style={{ animation: 'spin 1s linear infinite' }} />
-              <p style={{ marginTop: '16px', color: '#666', fontWeight: 500 }}>Fetching today's orders...</p>
+            <div className="orders-list">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="skeleton-item" style={{ flexDirection: 'column', height: '140px' }}>
+                   <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                      <div className="skeleton-pulse skeleton-text title" style={{ width: '40%' }}></div>
+                      <div className="skeleton-pulse skeleton-text" style={{ width: '80px', borderRadius: '20px' }}></div>
+                   </div>
+                   <div className="skeleton-pulse skeleton-text short" style={{ marginTop: '12px' }}></div>
+                   <div className="skeleton-pulse skeleton-text" style={{ width: '30%', marginTop: 'auto' }}></div>
+                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px', borderTop: '1px solid #f0f0f0', paddingTop: '16px' }}>
+                      <div className="skeleton-pulse skeleton-text" style={{ width: '80px', height: '24px', borderRadius: '12px' }}></div>
+                      <div className="skeleton-pulse skeleton-text title" style={{ width: '60px' }}></div>
+                   </div>
+                </div>
+              ))}
             </div>
           ) : orders.length === 0 ? (
             <div className="empty-state">
@@ -568,6 +587,32 @@ const MyOrderPage = () => {
           <User size={22} />
         </NavLink>
       </nav>
+      {/* Pay at Counter Modal */}
+      {showPayCounterPopup && (
+        <div className="pay-counter-modal-overlay">
+          <div className="pay-counter-modal">
+            <div className="modal-icon">
+              <Wallet size={36} color="#8B3A1E" />
+            </div>
+            <h3>Pay at Counter</h3>
+            <p>Are you sure you want to place your order and pay at the counter?</p>
+            <div className="modal-actions">
+              <button 
+                className="modal-btn-cancel" 
+                onClick={() => setShowPayCounterPopup(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="modal-btn-confirm" 
+                onClick={confirmPayAtCounter}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

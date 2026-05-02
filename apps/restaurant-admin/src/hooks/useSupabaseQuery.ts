@@ -43,7 +43,6 @@ export function useRestaurant(restaurantId: string | null) {
     queryFn: () => getRestaurantById(restaurantId!),
     enabled: !!restaurantId,
     staleTime: STALE_2M,
-    refetchOnWindowFocus: true,
     retry: 3,
   });
 }
@@ -55,7 +54,6 @@ export function useMenuItems(restaurantId: string | null) {
     queryFn: () => getMenuItems(restaurantId!),
     enabled: !!restaurantId,
     staleTime: STALE_2M,
-    refetchOnWindowFocus: true,
     retry: 3,
   });
 }
@@ -66,7 +64,6 @@ export function useMenuCategories(restaurantId: string | null) {
     queryFn: () => getMenuCategories(restaurantId!),
     enabled: !!restaurantId,
     staleTime: STALE_2M,
-    refetchOnWindowFocus: true,
     retry: 3,
   });
 }
@@ -78,8 +75,8 @@ export function useDashboardOrders(restaurantId: string | null) {
     queryFn: () => getDashboardOrders(restaurantId!),
     enabled: !!restaurantId,
     staleTime: STALE_30S,
-    refetchOnWindowFocus: true,
-    refetchInterval: 30_000,  // auto-poll every 30s for a real-time feel
+    refetchOnWindowFocus: false,
+    refetchInterval: 5_000,  // auto-poll every 30s for a real-time feel
     retry: 3,
   });
 }
@@ -90,7 +87,6 @@ export function useOrders(restaurantId: string | null, limit?: number) {
     queryFn: () => getOrders(restaurantId!, limit),
     enabled: !!restaurantId,
     staleTime: STALE_30S,
-    refetchOnWindowFocus: true,
     retry: 3,
   });
 }
@@ -102,7 +98,6 @@ export function usePaymentTransactions(restaurantId: string | null) {
     queryFn: () => getPaymentTransactions(restaurantId!),
     enabled: !!restaurantId,
     staleTime: STALE_30S,
-    refetchOnWindowFocus: true,
     retry: 3,
   });
 }
@@ -114,7 +109,6 @@ export function useRestaurantTables(restaurantId: string | null) {
     queryFn: () => getRestaurantTables(restaurantId!),
     enabled: !!restaurantId,
     staleTime: STALE_2M,
-    refetchOnWindowFocus: true,
     retry: 3,
   });
 }

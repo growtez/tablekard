@@ -103,8 +103,8 @@ const SearchPage = () => {
         <div className="search-page-container">
             {/* Search Header */}
             <header className="search-header">
-                <button className="back-btn" onClick={() => navigate(-1)}>
-                    <ArrowLeft size={24} color="#1A1A1A" />
+                <button className="global-back-btn" onClick={() => navigate(-1)}>
+                    <ArrowLeft size={22} />
                 </button>
                 <div className="search-bar-wrapper">
                     <Search className="search-icon" size={20} color="#B8ADA9" />

@@ -13,8 +13,10 @@ import Hamburger from '../components/hamburger';
 const ProfilePage = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  // Start as loading only if user isn't yet available, to avoid flash
+  const [isProfileLoading, setIsProfileLoading] = useState(!user);
   const [userProfile, setUserProfile] = useState({
-    name: 'Loading...',
+    name: '',
     email: '',
     phone: '',
     avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&h=120&fit=crop&crop=face',
@@ -41,6 +43,7 @@ const ProfilePage = () => {
         }
       }));
     }
+    setIsProfileLoading(false);
   }, [user]);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -123,6 +126,70 @@ const ProfilePage = () => {
       to: "/about",
     },
   ];
+
+  if (isProfileLoading) {
+    return (
+      <div className="profile-container">
+        <style>{`
+          @keyframes _prof_shimmer {
+            0%   { background-position: -200% 0; }
+            100% { background-position:  200% 0; }
+          }
+          .prof-sk {
+            background: linear-gradient(90deg, #FFF0EC 25%, #FFD6C9 50%, #FFF0EC 75%);
+            background-size: 200% 100%;
+            animation: _prof_shimmer 1.5s infinite;
+            border-radius: 8px;
+          }
+        `}</style>
+
+        {/* Skeleton Hero */}
+        <div className="profile-hero" style={{ minHeight: 220 }}>
+          <div className="hero-pattern" />
+          <div className="hero-header">
+            <div className="prof-sk" style={{ width: 42, height: 42, borderRadius: 12 }} />
+            <div className="prof-sk" style={{ width: 42, height: 42, borderRadius: 12 }} />
+          </div>
+          <div className="hero-avatar-section">
+            <div className="prof-sk" style={{ width: 90, height: 90, borderRadius: '50%' }} />
+          </div>
+          <div className="hero-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, paddingBottom: 20 }}>
+            <div className="prof-sk" style={{ width: 140, height: 22 }} />
+            <div className="prof-sk" style={{ width: 190, height: 14, marginTop: 4 }} />
+          </div>
+        </div>
+
+        {/* Skeleton Stats */}
+        <div className="profile-content">
+          <div className="stats-row">
+            {[1, 2, 3].map(i => (
+              <React.Fragment key={i}>
+                <div className="stat-item">
+                  <div className="prof-sk" style={{ width: 40, height: 24, margin: '0 auto 6px' }} />
+                  <div className="prof-sk" style={{ width: 70, height: 12 }} />
+                </div>
+                {i < 3 && <div className="stat-divider" />}
+              </React.Fragment>
+            ))}
+          </div>
+
+          {/* Skeleton Menu Items */}
+          <div className="menu-section" style={{ marginTop: 20 }}>
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 0', borderBottom: '1px solid #f5ede9' }}>
+                <div className="prof-sk" style={{ width: 36, height: 36, borderRadius: 10 }} />
+                <div style={{ flex: 1 }}>
+                  <div className="prof-sk" style={{ width: '55%', height: 14, marginBottom: 6 }} />
+                  <div className="prof-sk" style={{ width: '75%', height: 11 }} />
+                </div>
+                <div className="prof-sk" style={{ width: 20, height: 20, borderRadius: 4 }} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="profile-container">

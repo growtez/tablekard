@@ -135,8 +135,14 @@ const Menu: React.FC = () => {
           category_id: itemData.categoryId,
           short_description: itemData.short_description,
           long_description: itemData.long_description,
+          discount_price: itemData.discount_price,
           is_available: itemData.is_available,
           is_veg: itemData.is_veg,
+          preparation_time: itemData.preparation_time,
+          serves: itemData.serves,
+          tags: itemData.tags,
+          variants: itemData.variants,
+          addons: itemData.addons,
           menu_item_images: activeImages
         });
       } else {
@@ -146,8 +152,14 @@ const Menu: React.FC = () => {
           category_id: itemData.categoryId,
           short_description: itemData.short_description,
           long_description: itemData.long_description,
+          discount_price: itemData.discount_price,
           is_available: itemData.is_available,
-          is_veg: itemData.is_veg
+          is_veg: itemData.is_veg,
+          preparation_time: itemData.preparation_time,
+          serves: itemData.serves,
+          tags: itemData.tags,
+          variants: itemData.variants,
+          addons: itemData.addons
         }, processedImages);
       }
       invalidateMenu(activeRestaurantId);
@@ -376,7 +388,10 @@ const Menu: React.FC = () => {
                         {item.name}
                       </h3>
                       <p className="menu-category">{getCategoryName(item.categoryId)}</p>
-                      <div className="menu-price">₹{item.price}</div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div className="menu-price">₹{item.price}</div>
+                        <div style={{ fontSize: '12px', color: '#718096' }}>👥 Serves {item.serves}</div>
+                      </div>
                     </div>
                     <div className="menu-actions" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '12px' }}>
                       <div className="stock-toggle">

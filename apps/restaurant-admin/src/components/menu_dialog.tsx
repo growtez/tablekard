@@ -43,6 +43,7 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
     is_available: true,
     is_veg: true,
     preparation_time: '',
+    serves: '1',
     tags: [] as string[],
     variants: [] as Variant[],
     addons: [] as Addon[],
@@ -57,15 +58,20 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
     if (mode === 'edit' && item) {
       setFormData({
         name: item.name ?? '',
-        short_description: item.short_description ?? '',
-        long_description: item.long_description ?? '',
+        short_description: item.shortDescription ?? '',
+        long_description: item.longDescription ?? '',
         price: item.price?.toString() ?? '',
-        discount_price: item.discount_price?.toString() ?? '',
+        discount_price: item.discountPrice?.toString() ?? '',
         category_id: item.category_id ?? item.categoryId ?? (categories[0]?.id ?? ''),
-        images: item.images ? item.images.map((img: any) => ({ id: img.id, url: img.url, sortOrder: img.sortOrder })) : [],
-        is_available: item.is_available ?? item.available ?? true,
-        is_veg: item.is_veg ?? item.isVeg ?? true,
-        preparation_time: item.preparation_time?.toString() ?? '',
+        images: item.images ? item.images.map((img: any) => ({ 
+          id: img.id, 
+          url: img.url, 
+          sortOrder: img.sortOrder || 0 
+        })) : [],
+        is_available: item.available ?? item.is_available ?? true,
+        is_veg: item.isVeg ?? item.is_veg ?? true,
+        preparation_time: (item.preparationTime ?? item.preparation_time)?.toString() ?? '',
+        serves: item.serves?.toString() ?? '1',
         tags: Array.isArray(item.tags) ? item.tags : [],
         variants: Array.isArray(item.variants) ? item.variants : [],
         addons: Array.isArray(item.addons) ? item.addons : [],
@@ -78,6 +84,7 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
         images: [],
         is_available: true, is_veg: true,
         preparation_time: '',
+        serves: '1',
         tags: [], variants: [], addons: []
       });
     }
@@ -96,13 +103,14 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
     if (files.length === 0) return;
 
     setFormData(prev => {
-      let currentOrder = prev.images.filter(img => !img.isDeleted).length;
-      const newImages = files.map(file => {
-        currentOrder += 1;
+      // Find the max sort order among non-deleted images
+      const maxOrder = prev.images.reduce((max, img) => (!img.isDeleted && img.sortOrder > max ? img.sortOrder : max), 0);
+      
+      const newImages = files.map((file, index) => {
         return {
           file,
           url: URL.createObjectURL(file), // Provide immediate preview
-          sortOrder: currentOrder
+          sortOrder: maxOrder + index + 1
         };
       });
       return { ...prev, images: [...prev.images, ...newImages] };
@@ -189,6 +197,7 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
       is_available: formData.is_available,
       is_veg: formData.is_veg,
       preparation_time: formData.preparation_time ? parseInt(formData.preparation_time) : null,
+      serves: formData.serves ? parseInt(formData.serves) : 1,
       tags: formData.tags,
       variants: formData.variants,
       addons: formData.addons,
@@ -304,48 +313,43 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
             </div>
           </div>
 
-          {/* Image Upload */}
           <div className="menu-form-group">
             <label className="menu-form-label">Item Images</label>
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '12px' }}>
+            <div className="menu-image-previews-container">
               {formData.images.filter(img => !img.isDeleted).map((img, idx) => (
-                <div key={img.url} style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #E2E8F0' }}>
-                  <img src={img.url} alt={`Preview ${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <div key={img.id || img.url || idx} className="menu-image-preview-card">
+                  <img src={img.url} alt={`Preview ${idx}`} className="menu-image-preview-img" />
                   <button 
                     type="button" 
                     onClick={() => handleRemoveImage(img.url)}
-                    style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                    className="menu-image-remove-btn"
                   >
                     <X size={12} />
                   </button>
-                  {idx === 0 && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(56, 161, 105, 0.9)', color: 'white', fontSize: '10px', textAlign: 'center', padding: '2px 0' }}>Primary</div>}
+                  {idx === 0 && <div className="menu-image-primary-badge">Primary</div>}
                 </div>
               ))}
               
               <div 
-                className="menu-image-upload-area" 
-                style={{ width: '80px', height: '80px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 0, minHeight: '80px' }}
+                className="menu-image-add-trigger" 
                 onClick={() => fileInputRef.current?.click()}
               >
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#A0AEC0' }}>
-                  <Plus size={24} />
-                  <span style={{ fontSize: '10px', marginTop: '4px' }}>Add</span>
-                </div>
+                <Plus size={24} />
+                <span>Add</span>
               </div>
             </div>
             <input ref={fileInputRef} type="file" multiple accept="image/*" style={{ display: 'none' }} onChange={handleImageFiles} />
           </div>
 
-          {/* Preparation Time */}
           <div className="menu-form-group">
-            <label className="menu-form-label">Preparation Time (minutes)</label>
+            <label className="menu-form-label">Serves (number of people)</label>
             <input
               type="number"
-              name="preparation_time"
-              value={formData.preparation_time}
+              name="serves"
+              value={formData.serves}
               onChange={handleChange}
               className="menu-form-input"
-              placeholder="e.g. 20"
+              placeholder="e.g. 2"
               min="1"
             />
           </div>

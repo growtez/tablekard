@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Heart, Home, User, ShoppingBag, Grid, ShoppingCart, Clock, Star, MessageSquare, Plus, Minus, X, ArrowRight, Users } from 'lucide-react';
+import { Search, Heart, Home, User, ShoppingBag, Grid, ShoppingCart, Clock, Star, MessageSquare, Plus, Minus, X, ArrowRight, Users, Timer } from 'lucide-react';
 import { NavLink, useNavigate } from "react-router-dom";
 import './home.css';
 import Hamburger from '../components/hamburger';
@@ -113,7 +113,7 @@ const HomePage = () => {
     const filters = [
         { id: 'popular', label: 'Popular this week' },
         { id: 'all', label: 'Most selling' },
-        { id: 'expensive', label: 'Most expensive' },
+        { id: 'rated', label: 'Most rated' },
         { id: 'budget', label: 'Under ₹200' }
     ];
 
@@ -124,7 +124,8 @@ const HomePage = () => {
             price: 12.99,
             time: '15 min',
             rating: 4.8,
-            discount: '20% OFF',
+            discount: 'Buy 1, Get 1 Free',
+            timer: 'Ends in 02:45',
             subtitle: 'Special sushi selection',
             serves: 'Serves 1-2',
             image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400&h=400&fit=crop',
@@ -138,6 +139,7 @@ const HomePage = () => {
             time: '15 min',
             rating: 4.8,
             discount: '20% OFF',
+            timer: 'Ends in 05:12',
             subtitle: 'Premium grilled salmon',
             serves: 'Serves 1',
             image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=400&h=400&fit=crop',
@@ -151,6 +153,7 @@ const HomePage = () => {
             time: '12 min',
             rating: 4.7,
             discount: '20% OFF',
+            timer: 'Ends in 12:30',
             subtitle: 'Classic rolls',
             serves: 'Serves 1',
             image: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=400&fit=crop',
@@ -219,9 +222,9 @@ const HomePage = () => {
             case 'all':
                 // Most selling - show all items (simulated)
                 return popularItems;
-            case 'expensive':
-                // Sort by price (highest first)
-                return [...popularItems].sort((a, b) => b.price - a.price);
+            case 'rated':
+                // Sort by rating (highest first)
+                return [...popularItems].sort((a, b) => b.rating - a.rating);
             case 'budget':
                 // Filter items under ₹200
                 return popularItems.filter(item => item.price < 200);
@@ -344,10 +347,6 @@ const HomePage = () => {
                     <h2 className="section-title">
                         {filters.find(f => f.id === activeFilter)?.label || 'Popular this week'}
                     </h2>
-                    <NavLink to="/popular" className="view-all-link">
-                        View all
-                        <span className="arrow-square">→</span>
-                    </NavLink>
                 </div>
                 <div className="food-grid">
                     {filteredItems.map(item => (
@@ -388,7 +387,7 @@ const HomePage = () => {
                     <h2 className="section-title">
                         Discounts for you
                     </h2>
-                    <NavLink to="/offers" className="view-all-link">
+                    <NavLink to="/discounts" className="view-all-link">
                         View all
                         <span className="arrow-square">→</span>
                     </NavLink>
@@ -404,11 +403,14 @@ const HomePage = () => {
                                 <div className="discount-image-container">
                                     <img src={offer.image} alt={offer.name} />
                                     <div className="discount-badge">
-                                        <div className="discount-badge-inner">
-                                            <span className="discount-value">{offer.discount.split(' ')[0]}</span>
-                                            <span className="discount-off">{offer.discount.split(' ')[1]}</span>
-                                        </div>
+                                        <span className="discount-badge-text">{offer.discount}</span>
                                     </div>
+                                    {offer.timer && (
+                                        <div className="discount-timer">
+                                            <Timer size={12} className="discount-timer-icon" />
+                                            <span className="discount-timer-text">{offer.timer}</span>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="discount-info">
                                     <h3 className="discount-name">{offer.name}</h3>
@@ -442,7 +444,7 @@ const HomePage = () => {
             <section className="section">
                 <div className="section-header">
                     <h2 className="section-title">Recent Orders</h2>
-                    <NavLink to="/recent" className="view-all-link">
+                    <NavLink to="/order-history" className="view-all-link">
                         View all
                         <span className="arrow-square">→</span>
                     </NavLink>
@@ -458,7 +460,7 @@ const HomePage = () => {
                                 <div className="recent-meta">
                                     <span>{item.time}</span>
                                     <span className="rating">
-                                        <Star size={10} fill="#F2B84B" color="#F2B84B" />
+                                        <Star size={10} fill="#8B3A1E" color="#8B3A1E" />
                                         {item.rating}
                                     </span>
                                 </div>

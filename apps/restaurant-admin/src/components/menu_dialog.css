@@ -150,6 +150,116 @@
 }
 
 /* Image Upload */
+.menu-image-previews-container {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 4px;
+  margin-bottom: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: #CBD5E0 transparent;
+  min-height: 90px;
+  align-items: center;
+}
+
+.menu-image-previews-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.menu-image-previews-container::-webkit-scrollbar-thumb {
+  background-color: #CBD5E0;
+  border-radius: 10px;
+}
+
+.menu-image-preview-card {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #E2E8F0;
+  flex-shrink: 0;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s;
+}
+
+.menu-image-preview-card:hover {
+  transform: scale(1.05);
+}
+
+.menu-image-preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.menu-image-remove-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(229, 62, 62, 0.9);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.menu-image-remove-btn:hover {
+  background: #E53E3E;
+  transform: scale(1.1);
+}
+
+.menu-image-primary-badge {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(55, 114, 78, 0.9);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+  padding: 2px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.menu-image-add-trigger {
+  width: 80px;
+  height: 80px;
+  border: 2px dashed #CBD5E0;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: #718096;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  background-color: #F7FAFC;
+}
+
+.menu-image-add-trigger:hover {
+  border-color: #37724e;
+  background-color: #F0FFF4;
+  color: #37724e;
+}
+
+.menu-image-add-trigger span {
+  font-size: 10px;
+  font-weight: 500;
+}
+
 .menu-image-upload-area {
   border: 2px dashed #CBD5E0;
   border-radius: 12px;

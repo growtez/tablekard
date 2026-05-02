@@ -72,11 +72,14 @@
 
 .brand-main-title {
     font-family: 'Syncopate', sans-serif;
-    font-size: 38px;
+    font-size: 32px;
     font-weight: 700;
-    letter-spacing: 10px;
+    letter-spacing: 2px;
     color: #1A1A1A;
     margin-bottom: 16px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
 }
 
 .brand-philosophy {
@@ -191,29 +194,23 @@
 }
 
 /* Modern Hours Scroller */
-.hours-modern-scroller {
-    display: flex;
-    gap: 12px;
-    overflow-x: auto;
-    padding: 15px 0 16px;
-    /* Increased top padding to prevent badge clipping */
-    scrollbar-width: none;
-}
-
-.hours-modern-scroller::-webkit-scrollbar {
-    display: none;
+.hours-stacked-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 15px 0 0;
 }
 
 .hour-pill {
-    flex-shrink: 0;
     background: #FFFFFF;
     border: 1.5px solid #F0F0F0;
-    border-radius: 20px;
-    padding: 20px;
-    min-width: 220px;
+    border-radius: 16px;
+    padding: 16px 10px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    align-items: center;
+    text-align: center;
+    gap: 6px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.03);
     position: relative;
     transition: all 0.3s ease;
@@ -228,7 +225,7 @@
 .hour-day {
     font-size: 10px;
     font-weight: 800;
-    letter-spacing: 2px;
+    letter-spacing: 1px;
     color: #888;
 }
 
@@ -237,7 +234,7 @@
 }
 
 .hour-time {
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 700;
     color: #1A1A1A;
 }
@@ -250,36 +247,24 @@
     font-weight: 800;
     text-transform: uppercase;
     color: #FFFFFF;
-    background: #8B3A1E;
     padding: 3px 12px;
     border-radius: 50px;
-    box-shadow: 4px 4px 12px rgba(139, 58, 30, 0.4);
     z-index: 99;
     /* Boosted z-index for maximum layering */
 }
 
-/* Pagination Dots */
-.hours-pagination-dots {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    margin-top: 8px;
-}
-
-.hours-pagination-dots .dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #E0E0E0;
-    transition: all 0.3s ease;
-    cursor: pointer;
-}
-
-.hours-pagination-dots .dot.active {
-    width: 24px;
-    border-radius: 10px;
+.hour-status.open {
     background: #8B3A1E;
+    box-shadow: 4px 4px 12px rgba(139, 58, 30, 0.4);
 }
+
+.hour-status.closed {
+    background: #888888;
+    box-shadow: 4px 4px 12px rgba(136, 136, 136, 0.4);
+}
+
+/* Pagination Dots */
+
 
 /* Visit Us - Redesigned */
 .visit-location-card {
@@ -432,7 +417,7 @@
 
 /* Footer Signature */
 .about-journal-footer {
-    padding: 40px 20px;
+    padding: 20px 20px;
     text-align: center;
 }
 
@@ -440,7 +425,7 @@
     display: flex;
     justify-content: center;
     gap: 20px;
-    margin-bottom: 30px;
+    margin-bottom: 15px;
 }
 
 .social-row a {

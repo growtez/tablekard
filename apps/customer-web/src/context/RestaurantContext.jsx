@@ -11,9 +11,14 @@ export function RestaurantProvider({ children }) {
 
     // Check if current path matches the QR route pattern
     const match = matchPath('/order/:restaurantId/:tableId', location.pathname);
+    
+    // Also support query parameters as fallback (?restaurant_id=...&table_id=...)
+    const searchParams = new URLSearchParams(location.search);
+    const queryRestaurantId = searchParams.get('restaurant_id');
+    const queryTableId = searchParams.get('table_id');
 
-    const urlRestaurantId = match?.params?.restaurantId || null;
-    const urlTableId = match?.params?.tableId || null;
+    const urlRestaurantId = match?.params?.restaurantId || queryRestaurantId || null;
+    const urlTableId = match?.params?.tableId || queryTableId || null;
 
     // Priority: URL params > sessionStorage > null
     const [restaurantId, setRestaurantId] = useState(() => {
@@ -26,10 +31,12 @@ export function RestaurantProvider({ children }) {
 
     // Whenever the URL contains new params, update state and persist to sessionStorage
     useEffect(() => {
-        if (urlRestaurantId && urlTableId) {
+        if (urlRestaurantId) {
             setRestaurantId(urlRestaurantId);
-            setTableId(urlTableId);
             sessionStorage.setItem(SESSION_KEY_RESTAURANT, urlRestaurantId);
+        }
+        if (urlTableId) {
+            setTableId(urlTableId);
             sessionStorage.setItem(SESSION_KEY_TABLE, urlTableId);
         }
     }, [urlRestaurantId, urlTableId]);

@@ -136,6 +136,14 @@ export interface Restaurant {
     longitude?: number | null;
     allowedRadius?: number | null;
   };
+  openingDate?: IsoDateString | null;
+  tagline?: string | null;
+  manifesto?: string | null;
+  operatingHoursWeekdays?: string | null;
+  operatingHoursWeekends?: string | null;
+  instagramUrl?: string | null;
+  facebookUrl?: string | null;
+  websiteUrl?: string | null;
 }
 
 export interface RestaurantSubscription {
@@ -179,13 +187,15 @@ export interface MenuItem {
   restaurantId: string;
   categoryId: string;
   name: string;
-  description?: string | null;
+  shortDescription?: string | null;
+  longDescription?: string | null;
   price: number;
   discountPrice?: number | null;
   images?: MenuItemImage[];
   available: boolean;
   isVeg: boolean;
   preparationTime?: number | null; // in minutes
+  serves: number;
   tags?: string[] | null;
   variants?: MenuItemVariant[] | null;
   addons?: MenuItemAddon[] | null;
@@ -390,6 +400,14 @@ export interface Database {
           latitude: number | null;
           longitude: number | null;
           allowed_radius: number | null;
+          opening_date: IsoDateString | null;
+          tagline: string | null;
+          manifesto: string | null;
+          operating_hours_weekdays: string | null;
+          operating_hours_weekends: string | null;
+          instagram_url: string | null;
+          facebook_url: string | null;
+          website_url: string | null;
           created_at: IsoDateString;
           updated_at: IsoDateString;
         };
@@ -413,6 +431,14 @@ export interface Database {
           latitude?: number | null;
           longitude?: number | null;
           allowed_radius?: number | null;
+          opening_date?: IsoDateString | null;
+          tagline?: string | null;
+          manifesto?: string | null;
+          operating_hours_weekdays?: string | null;
+          operating_hours_weekends?: string | null;
+          instagram_url?: string | null;
+          facebook_url?: string | null;
+          website_url?: string | null;
           created_at?: IsoDateString;
           updated_at?: IsoDateString;
         };
@@ -435,6 +461,14 @@ export interface Database {
           latitude?: number | null;
           longitude?: number | null;
           allowed_radius?: number | null;
+          opening_date?: IsoDateString | null;
+          tagline?: string | null;
+          manifesto?: string | null;
+          operating_hours_weekdays?: string | null;
+          operating_hours_weekends?: string | null;
+          instagram_url?: string | null;
+          facebook_url?: string | null;
+          website_url?: string | null;
           updated_at?: IsoDateString;
         };
         Relationships: [];
@@ -550,6 +584,7 @@ export interface Database {
           is_available: boolean;
           is_veg: boolean;
           preparation_time: number | null;
+          serves: number;
           tags: string[] | null;
           variants: Record<string, unknown>[] | null;
           addons: Record<string, unknown>[] | null;
@@ -568,6 +603,7 @@ export interface Database {
           is_available?: boolean;
           is_veg?: boolean;
           preparation_time?: number | null;
+          serves?: number;
           tags?: string[] | null;
           variants?: Record<string, unknown>[] | null;
           addons?: Record<string, unknown>[] | null;
@@ -584,6 +620,7 @@ export interface Database {
           is_available?: boolean;
           is_veg?: boolean;
           preparation_time?: number | null;
+          serves?: number;
           tags?: string[] | null;
           variants?: Record<string, unknown>[] | null;
           addons?: Record<string, unknown>[] | null;

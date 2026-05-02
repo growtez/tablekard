@@ -62,6 +62,14 @@ CREATE TABLE IF NOT EXISTS public.restaurants (
     latitude NUMERIC,
     longitude NUMERIC,
     allowed_radius INTEGER,
+    opening_date DATE,
+    tagline TEXT,
+    manifesto TEXT,
+    operating_hours_weekdays TEXT,
+    operating_hours_weekends TEXT,
+    instagram_url TEXT,
+    facebook_url TEXT,
+    website_url TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -114,6 +122,7 @@ CREATE TABLE IF NOT EXISTS public.menu_items (
     long_description TEXT,
     price NUMERIC NOT NULL DEFAULT 0,
     discount_price NUMERIC,
+    serves INTEGER DEFAULT 1 CHECK (serves > 0),
     is_available BOOLEAN DEFAULT true,
     is_veg BOOLEAN DEFAULT true,
     preparation_time INTEGER,
@@ -252,6 +261,8 @@ ALTER TABLE public.restaurants
     ADD COLUMN IF NOT EXISTS subscription_end_at TIMESTAMPTZ;
 
 ALTER TABLE public.payments ALTER COLUMN order_id DROP NOT NULL;
+ALTER TABLE public.menu_items
+    ADD COLUMN IF NOT EXISTS serves INTEGER DEFAULT 1 CHECK (serves > 0);
 
 -- ======================================================================================
 -- INDEXES

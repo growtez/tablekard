@@ -139,7 +139,7 @@ const FeedbackPage = () => {
         return (
             <div className="feedback-page-container">
                 <header className="feedback-page-header">
-                    <button className="feedback-page-back-btn" onClick={() => navigate(-1)}>
+                    <button className="global-back-btn" onClick={() => navigate(-1)}>
                         <ArrowLeft size={22} />
                     </button>
                     <h1>Order Feedback</h1>
@@ -198,7 +198,7 @@ const FeedbackPage = () => {
     return (
         <div className="feedback-page-container">
             <header className="feedback-page-header">
-                <button className="feedback-page-back-btn" onClick={() => setSelectedOrderId(null)}>
+                <button className="global-back-btn" onClick={() => setSelectedOrderId(null)}>
                     <ArrowLeft size={22} />
                 </button>
                 <h1>{showSummary ? 'Review Details' : 'Rate Order'}</h1>
@@ -228,14 +228,7 @@ const FeedbackPage = () => {
 
                         <p className="feedback-page-review-text">"{feedback}"</p>
 
-                        <div className="feedback-page-review-categories">
-                            {categories.map(cat => (
-                                <div key={cat.id} className="feedback-page-review-chip">
-                                    <span>{cat.emoji}</span>
-                                    <span>{cat.label}: {categoryRatings[cat.id] || 0}/5</span>
-                                </div>
-                            ))}
-                        </div>
+
 
                         <button
                             className="feedback-page-edit-btn"
@@ -267,37 +260,7 @@ const FeedbackPage = () => {
                             </div>
                         </section>
 
-                        <section className="feedback-page-section">
-                            <h2 className="feedback-page-section-title">Rate Categories</h2>
-                            <div className="feedback-page-categories">
-                                {categories.map((category) => (
-                                    <div key={category.id} className="feedback-page-category-card">
-                                        <div className="feedback-page-category-info">
-                                            <span className="feedback-page-category-emoji">{category.emoji}</span>
-                                            <span className="feedback-page-category-label">{category.label}</span>
-                                        </div>
-                                        <div className="feedback-page-category-stars">
-                                            {[1, 2, 3, 4, 5].map((star) => (
-                                                <button
-                                                    key={star}
-                                                    className="feedback-page-mini-star"
-                                                    onClick={() => {
-                                                        const newRatings = { ...categoryRatings, [category.id]: star };
-                                                        setCategoryRatings(newRatings);
-                                                    }}
-                                                >
-                                                    <Star
-                                                        size={18}
-                                                        fill={(categoryRatings[category.id] || 0) >= star ? '#8B3A1E' : 'transparent'}
-                                                        color="#8B3A1E"
-                                                    />
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
+
 
                         <section className="feedback-page-section">
                             <h2 className="feedback-page-section-title">Your Comments</h2>

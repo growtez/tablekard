@@ -40,7 +40,7 @@ const LiveQueuePage = () => {
         <div className="live-queue-container">
             {/* Header */}
             <header className="queue-header">
-                <button className="back-btn" onClick={() => navigate(-1)}>
+                <button className="global-back-btn" onClick={() => navigate(-1)}>
                     <ArrowLeft size={22} />
                 </button>
                 <div className="header-title">

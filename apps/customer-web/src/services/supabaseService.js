@@ -11,6 +11,17 @@ export const getRestaurantBySlug = async (slug) => {
     return data;
 };
 
+export const getRestaurantById = async (id) => {
+    const { data, error } = await supabase
+        .from('restaurants')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
+    return data;
+};
+
 export const getMenuCategories = async (restaurantId) => {
     const { data, error } = await supabase
         .from('menu_categories')
