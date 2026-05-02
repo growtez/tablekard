@@ -119,7 +119,7 @@ const MenuPage = () => {
   );
 
   return (
-    <div className="menu-container">
+    <div className={`menu-container${cartTotal > 0 ? ' has-cart' : ''}`}>
       {/* No Restaurant Context – fallback for direct /menu access */}
       {/* Global Scanner Modal overlay */}
       {showScanner && (
@@ -306,7 +306,7 @@ const MenuPage = () => {
           ))}
         </div>
       ) : (
-        <div className="menu-items">
+        <div className="menu-items" style={cartTotal > 0 ? { paddingBottom: '100px' } : {}}>
           {filteredItems.map(item => (
             <div key={item.id} className="menu-item" onClick={() => handleItemClick(item)}>
               <div className="menu-image-container">

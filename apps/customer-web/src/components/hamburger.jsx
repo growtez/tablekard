@@ -1,129 +1,142 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { NavLink } from 'react-router-dom';
-import { Home, ShoppingBag, Star, ListOrdered, User, Info, LogOut } from 'lucide-react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import {
+  Home, ShoppingBag, Star, ListOrdered, User,
+  Info, LogOut, LogIn, Menu as MenuIcon,
+} from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useRestaurant } from '../context/RestaurantContext';
 import './hamburger.css';
 
 const Hamburger = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const { isAuthenticated, loading: authLoading, logout } = useAuth();
+  const { restaurant } = useRestaurant();
+
+  // Derived display values – fall back gracefully when no restaurant is loaded
+  const restaurantName = restaurant?.name  || 'Tablekard';
+  const restaurantTag  = restaurant?.tagline || 'The Art of Fine Dining';
+  const logoSrc        = restaurant?.logo_url || '/assets/delish_logo.png';
 
   // Lock body scroll when sidebar is open
   useEffect(() => {
-    if (isSidebarOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'auto';
-    }
-
-    return () => {
-      document.body.style.overflow = 'auto';
-    };
+    document.body.style.overflow = isSidebarOpen ? 'hidden' : 'auto';
+    return () => { document.body.style.overflow = 'auto'; };
   }, [isSidebarOpen]);
 
-  // Sidebar content to be rendered via portal
+  const close = () => setIsSidebarOpen(false);
+
+  const handleLogout = async () => {
+    close();
+    try {
+      await logout();
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
+    navigate('/login');
+  };
+
+  const handleLogin = () => {
+    close();
+    navigate('/login');
+  };
+
   const sidebarContent = (
     <>
-      {/* Sidebar */}
+      {/* Sidebar panel */}
       <div className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
+
+        {/* ── Header: restaurant logo + name ── */}
         <div className="sidebar-header">
           <div className="company-section">
             <div className="company-logo">
-              <img src="/assets/delish_logo.png" alt="Tablekard Logo" />
+              <img
+                src={logoSrc}
+                alt={restaurantName}
+                onError={e => { e.currentTarget.src = '/assets/delish_logo.png'; }}
+              />
             </div>
             <div className="company-info">
-              <h3>Tablekard</h3>
-              <p>The Art of Fine Dining</p>
+              <h3>{restaurantName}</h3>
+              <p>{restaurantTag}</p>
             </div>
           </div>
-          <button className="close-btn" onClick={() => setIsSidebarOpen(false)}>
-            ×
-          </button>
+          <button className="close-btn" onClick={close} aria-label="Close menu">×</button>
         </div>
 
+        {/* ── Nav links ── */}
         <div className="sidebar-content">
-          <NavLink
-            to="/"
-            className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
-            onClick={() => setIsSidebarOpen(false)}
-          >
-            <Home size={20} />
-            <span>Home</span>
+          <NavLink to="/"            className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`} onClick={close} end>
+            <Home size={20} /><span>Home</span>
           </NavLink>
 
-          <NavLink
-            to="/orders"
-            className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
-            onClick={() => setIsSidebarOpen(false)}
-          >
-            <ShoppingBag size={20} />
-            <span>My Orders</span>
+          <NavLink to="/orders"      className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`} onClick={close}>
+            <ShoppingBag size={20} /><span>My Orders</span>
           </NavLink>
 
-          <NavLink
-            to="/likes"
-            className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
-            onClick={() => setIsSidebarOpen(false)}
-          >
-            <Star size={20} />
-            <span>Favourites</span>
+          <NavLink to="/likes"       className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`} onClick={close}>
+            <Star size={20} /><span>Favourites</span>
           </NavLink>
 
-          <NavLink
-            to="/live-queue"
-            className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
-            onClick={() => setIsSidebarOpen(false)}
-          >
-            <ListOrdered size={20} />
-            <span>Live Queue</span>
+          <NavLink to="/live-queue"  className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`} onClick={close}>
+            <ListOrdered size={20} /><span>Live Queue</span>
           </NavLink>
 
-          <NavLink
-            to="/profile"
-            className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
-            onClick={() => setIsSidebarOpen(false)}
-          >
-            <User size={20} />
-            <span>Profile</span>
+          <NavLink to="/profile"     className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`} onClick={close}>
+            <User size={20} /><span>Profile</span>
           </NavLink>
 
-          <NavLink
-            to="/about"
-            className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
-            onClick={() => setIsSidebarOpen(false)}
-          >
-            <Info size={20} />
-            <span>About</span>
+          <NavLink to="/about"       className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`} onClick={close}>
+            <Info size={20} /><span>About</span>
           </NavLink>
 
-          <button className="sidebar-item logout-btn" onClick={() => setIsSidebarOpen(false)}>
-            <LogOut size={20} />
-            <span>Logout</span>
-          </button>
+          {/* ── Auth action ── */}
+          {!authLoading && (
+            isAuthenticated ? (
+              <button className="sidebar-item logout-btn" onClick={handleLogout}>
+                <LogOut size={20} />
+                <span>Logout</span>
+              </button>
+            ) : (
+              <button className="sidebar-item login-btn" onClick={handleLogin}>
+                <LogIn size={20} />
+                <span>Login</span>
+              </button>
+            )
+          )}
         </div>
       </div>
 
-      {/* Overlay */}
+      {/* Backdrop */}
       {isSidebarOpen && (
-        <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)} />
+        <div className="sidebar-overlay" onClick={close} />
       )}
     </>
   );
 
   return (
     <>
-      {/* Hamburger Button (only visible when sidebar is closed) */}
+      {/* Hamburger trigger button */}
       {!isSidebarOpen && (
-        <div className="hamburger-btn" onClick={() => setIsSidebarOpen(true)}>
-          <div className="hamburger"></div>
-          <div className="hamburger"></div>
+        <div
+          className="hamburger-btn"
+          onClick={() => setIsSidebarOpen(true)}
+          role="button"
+          aria-label="Open menu"
+          tabIndex={0}
+          onKeyDown={e => e.key === 'Enter' && setIsSidebarOpen(true)}
+        >
+          <div className="hamburger" />
+          <div className="hamburger" />
         </div>
       )}
 
-      {/* Render sidebar via portal to document.body */}
       {ReactDOM.createPortal(sidebarContent, document.body)}
     </>
   );
 };
 
 export default Hamburger;
-

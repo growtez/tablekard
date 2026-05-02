@@ -219,6 +219,24 @@
   color: #B71C1C;
 }
 
+.login-btn {
+  margin-top: auto;
+  margin-bottom: 24px;
+  color: #2E7D32;
+  border-top: 1px solid #F5F5F5;
+  padding-top: 24px;
+  border-radius: 0;
+}
+
+.login-btn svg {
+  color: #2E7D32;
+}
+
+.login-btn:hover {
+  background: #E8F5E9;
+  color: #1B5E20;
+}
+
 /* Add a floating pattern */
 .sidebar::before {
   content: '';
