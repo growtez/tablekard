@@ -135,6 +135,14 @@ export interface Restaurant {
     longitude?: number | null;
     allowedRadius?: number | null;
   };
+  openingDate?: IsoDateString | null;
+  tagline?: string | null;
+  manifesto?: string | null;
+  operatingHoursWeekdays?: string | null;
+  operatingHoursWeekends?: string | null;
+  instagramUrl?: string | null;
+  facebookUrl?: string | null;
+  websiteUrl?: string | null;
 }
 
 export interface RestaurantSubscription {
@@ -390,6 +398,14 @@ export interface Database {
           latitude: number | null;
           longitude: number | null;
           allowed_radius: number | null;
+          opening_date: IsoDateString | null;
+          tagline: string | null;
+          manifesto: string | null;
+          operating_hours_weekdays: string | null;
+          operating_hours_weekends: string | null;
+          instagram_url: string | null;
+          facebook_url: string | null;
+          website_url: string | null;
           created_at: IsoDateString;
           updated_at: IsoDateString;
         };
@@ -412,6 +428,14 @@ export interface Database {
           latitude?: number | null;
           longitude?: number | null;
           allowed_radius?: number | null;
+          opening_date?: IsoDateString | null;
+          tagline?: string | null;
+          manifesto?: string | null;
+          operating_hours_weekdays?: string | null;
+          operating_hours_weekends?: string | null;
+          instagram_url?: string | null;
+          facebook_url?: string | null;
+          website_url?: string | null;
           created_at?: IsoDateString;
           updated_at?: IsoDateString;
         };
@@ -433,6 +457,14 @@ export interface Database {
           latitude?: number | null;
           longitude?: number | null;
           allowed_radius?: number | null;
+          opening_date?: IsoDateString | null;
+          tagline?: string | null;
+          manifesto?: string | null;
+          operating_hours_weekdays?: string | null;
+          operating_hours_weekends?: string | null;
+          instagram_url?: string | null;
+          facebook_url?: string | null;
+          website_url?: string | null;
           updated_at?: IsoDateString;
         };
         Relationships: [];
