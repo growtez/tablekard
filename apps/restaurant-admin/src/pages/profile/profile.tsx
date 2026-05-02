@@ -142,8 +142,8 @@ const createRestaurantFormState = (restaurant: Restaurant): RestaurantFormState 
     openingDate: restaurant.openingDate ?? '',
     tagline: restaurant.tagline ?? '',
     manifesto: restaurant.manifesto ?? '',
-    operatingHoursWeekdays: restaurant.operatingHoursWeekdays ?? '',
-    operatingHoursWeekends: restaurant.operatingHoursWeekends ?? '',
+    operatingHoursWeekdays: restaurant.operatingHoursWeekdays || '10:00 AM - 10:00 PM',
+    operatingHoursWeekends: restaurant.operatingHoursWeekends || '10:00 AM - 10:00 PM',
     instagramUrl: restaurant.instagramUrl ?? '',
     facebookUrl: restaurant.facebookUrl ?? '',
     websiteUrl: restaurant.websiteUrl ?? ''
@@ -278,7 +278,6 @@ const ProfilePage: React.FC = () => {
     const handleTimeChange = (dayType: 'weekdays' | 'weekends', timeType: 'open' | 'close', val: string) => {
         if (!restaurantForm) return;
         const field = dayType === 'weekdays' ? 'operatingHoursWeekdays' : 'operatingHoursWeekends';
-        const prefix = dayType === 'weekdays' ? 'Mon-Fri' : 'Sat-Sun';
         const currentText = restaurantForm[field];
         const currentOpen24 = get24hTime(currentText, 'open');
         const currentClose24 = get24hTime(currentText, 'close');
@@ -295,7 +294,7 @@ const ProfilePage: React.FC = () => {
             return `${hours}:${m} ${ampm}`;
         };
         
-        handleRestaurantFieldChange(field, `${prefix} ${formatTime12h(newOpen24)} - ${formatTime12h(newClose24)}`);
+        handleRestaurantFieldChange(field, `${formatTime12h(newOpen24)} - ${formatTime12h(newClose24)}`);
     };
 
     const mapInstanceRef = useRef<any>(null);
@@ -679,7 +678,7 @@ const ProfilePage: React.FC = () => {
                         </div>
                     </div>
                     <div className="profile-form-grid">
-                        <div className="profile-field profile-field-span-2">
+                    <div className="profile-field">
                         <span className="profile-field-label">Logo</span>
                         <div
                             className={`profile-dropzone ${isUploadingLogo ? 'profile-dropzone-uploading' : ''}`}
@@ -716,15 +715,18 @@ const ProfilePage: React.FC = () => {
                                 </div>
                             )}
                         </div>
-                        <input
-                            className="profile-input"
-                            type="url"
-                            value={restaurantForm.logoUrl}
-                            onChange={(event) => handleRestaurantFieldChange('logoUrl', event.target.value)}
-                            placeholder="Or paste a URL: https://cdn.example.com/logo.png"
-                        />
                     </div>
-
+                    
+                    <div className="profile-field">
+                        <span className="profile-field-label">Subscription Status</span>
+                        <div className="profile-input" style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#F7FAFC', cursor: 'not-allowed', color: '#4A5568', height: '100%', minHeight: '120px', justifyContent: 'center' }}>
+                            <CreditCardIcon size={20} style={{ color: restaurant?.subscriptionStatus ? '#48BB78' : '#A0AEC0' }} />
+                            <span style={{ fontWeight: 600, fontSize: '15px' }}>
+                                {restaurant?.subscriptionStatus ? 'Active' : 'Inactive'}
+                                {restaurant?.subscriptionType ? ` (${restaurant.subscriptionType})` : ''}
+                            </span>
+                        </div>
+                    </div>
                     <label className="profile-field">
                         <span className="profile-field-label">Access Area Radius (meters)</span>
                         <input
@@ -1054,7 +1056,7 @@ const ProfilePage: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="profile-info-item profile-field-span-2">
+                <div className="profile-info-item">
                     <span className="profile-info-label">Logo</span>
                     {restaurant.branding?.logoUrl ? (
                         <div className="profile-logo-preview">
@@ -1064,15 +1066,6 @@ const ProfilePage: React.FC = () => {
                                 className="profile-logo-img"
                                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                             />
-                            <a
-                                href={restaurant.branding.logoUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="profile-link"
-                            >
-                                <span>{restaurant.branding.logoUrl}</span>
-                                <ExternalLink size={14} />
-                            </a>
                         </div>
                     ) : (
                         <span className="profile-info-value profile-muted">Not set</span>
@@ -1246,16 +1239,9 @@ const ProfilePage: React.FC = () => {
                                 </div>
                             )}
                         </div>
-                        <input
-                            className="profile-input"
-                            type="url"
-                            value={adminForm.avatarUrl}
-                            onChange={(event) => handleAdminFieldChange('avatarUrl', event.target.value)}
-                            placeholder="Or paste a URL: https://cdn.example.com/avatar.png"
-                        />
-                    </div>
                     </div>
                 </div>
+            </div>
 
                 <div className="profile-summary-grid">
                     <div className="profile-summary-card">
@@ -1325,15 +1311,6 @@ const ProfilePage: React.FC = () => {
                                         className="profile-avatar-img"
                                         onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                     />
-                                    <a
-                                        href={userProfile.avatarUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="profile-link"
-                                    >
-                                        <span>{userProfile.avatarUrl}</span>
-                                        <ExternalLink size={14} />
-                                    </a>
                                 </div>
                             ) : (
                                 <span className="profile-info-value profile-muted">Not set</span>
