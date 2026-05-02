@@ -13,14 +13,16 @@
     flex: 1;
     padding: 2rem 2.5rem;
     margin-left: 240px;
-    max-width: 1200px;
+    width: calc(100% - 240px);
+    min-height: 100vh;
     background-color: #f7f8fa;
     box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12);
-    transition: margin-left 0.3s ease;
+    transition: all 0.3s ease;
 }
 
 body.sidebar-collapsed .subscription-main {
-    margin-left: 72px;
+    margin-left: 80px;
+    width: calc(100% - 80px);
 }
 
 /* ── Header ── */

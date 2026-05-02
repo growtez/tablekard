@@ -14,9 +14,15 @@
   /* Removed border-radius to make it edge-to-edge */
   box-shadow: none;
   overflow-y: auto;
+  scrollbar-width: none;        /* Firefox */
+  -ms-overflow-style: none;     /* IE / Edge */
   z-index: 100;
   font-family: 'Poppins', sans-serif;
   transition: width 0.3s ease;
+}
+
+.sidebar::-webkit-scrollbar {
+  display: none;                /* Chrome, Edge, Safari */
 }
 
 .sidebar.collapsed {
