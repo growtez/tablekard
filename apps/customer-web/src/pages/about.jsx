@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, MapPin, Phone, Mail, Clock, Instagram, Facebook, Globe, Utensils, Award, Users, Heart } from 'lucide-react';
+import { ArrowLeft, MapPin, Phone, Mail, Clock, Instagram, Facebook, Globe, Utensils, Award, Users, Heart, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useRestaurant } from '../context/RestaurantContext';
 import { getRestaurantById } from '../services/supabaseService';
@@ -9,12 +9,20 @@ const AboutPage = () => {
     const navigate = useNavigate();
     const { restaurantId } = useRestaurant();
     const [restaurant, setRestaurant] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     React.useEffect(() => {
         if (restaurantId) {
+            setIsLoading(true);
             getRestaurantById(restaurantId)
-                .then(data => setRestaurant(data))
-                .catch(err => console.error("Failed to fetch restaurant", err));
+                .then(data => {
+                    setRestaurant(data);
+                    setIsLoading(false);
+                })
+                .catch(err => {
+                    console.error("Failed to fetch restaurant", err);
+                    setIsLoading(false);
+                });
         }
     }, [restaurantId]);
 
@@ -79,6 +87,14 @@ const AboutPage = () => {
     };
 
     const status = checkOperatingStatus();
+
+    if (isLoading) {
+        return (
+            <div className="about-journal-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <Loader2 size={32} className="map-icon-pulse" style={{ color: '#8B3A1E' }} />
+            </div>
+        );
+    }
 
     return (
         <div className="about-journal-container">
