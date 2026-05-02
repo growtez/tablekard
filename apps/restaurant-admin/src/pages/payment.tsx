@@ -343,7 +343,7 @@ const Payment: React.FC = () => {
           <div className="modal-overlay" onClick={closeModal}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
-                <h3 className="modal-title">Transaction Details</h3>
+                <h3 className="modal-title">Transaction Detail</h3>
                 <button className="modal-close-btn" onClick={closeModal}>
                   <X size={20} />
                 </button>
