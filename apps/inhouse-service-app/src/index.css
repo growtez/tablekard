@@ -1,0 +1,173 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;700;900&display=swap');
+
+:root {
+  --bg-white: #ffffff;
+  --border-color: #000000;
+  --preparing-bg: #ffa500;
+  --queue-bg: #ff0000;
+  --btn-green-bg: #d5e8d4;
+  --btn-green-border: #82b366;
+  --btn-red-bg: #f8cecc;
+  --btn-red-border: #b85450;
+  
+  font-family: 'Roboto', sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #2b2b2b; /* Dark outer background */
+}
+
+#root {
+  background-color: var(--bg-white);
+  width: 100%;
+  max-width: 375px; /* Mobile width */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 50px rgba(0,0,0,0.5);
+}
+
+.header {
+  padding: 10px 15px;
+  background: #fff;
+}
+
+.logo {
+  font-size: 20px;
+  font-weight: 300;
+  color: #555;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.section-bar {
+  padding: 8px 15px;
+  font-weight: 900;
+  font-size: 18px;
+  text-transform: uppercase;
+  color: #000;
+  letter-spacing: 0.5px;
+}
+
+.section-preparing {
+  background-color: var(--preparing-bg);
+}
+
+.section-queue {
+  background-color: var(--queue-bg);
+}
+
+.orders-container {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.order-card {
+  border: 1px solid var(--border-color);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.order-info {
+  display: flex;
+  gap: 15px;
+  align-items: flex-start;
+}
+
+.order-number-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.order-number {
+  border: 2.5px solid var(--border-color);
+  border-radius: 100px;
+  padding: 8px 12px;
+  font-size: 26px;
+  font-weight: 900;
+  min-width: 85px;
+  text-align: center;
+  line-height: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.order-time {
+  font-size: 9px;
+  color: #333;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.order-items {
+  flex: 1;
+  font-size: 13.5px;
+  line-height: 1.25;
+  font-weight: 400;
+  color: #000;
+}
+
+.order-item {
+  margin-bottom: 1px;
+}
+
+.item-detail {
+  color: #555;
+  font-size: 12px;
+}
+
+.order-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn {
+  flex: 1;
+  padding: 8px;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  outline: none;
+}
+
+.btn:active {
+  opacity: 0.7;
+}
+
+.btn-check {
+  background-color: var(--btn-green-bg);
+  border: 1.5px solid var(--btn-green-border);
+}
+
+.btn-up {
+  background-color: var(--btn-green-bg);
+  border: 1.5px solid var(--btn-green-border);
+}
+
+.btn-remove {
+  background-color: var(--btn-red-bg);
+  border: 1.5px solid var(--btn-red-border);
+}
+
+.icon {
+  stroke-width: 3px; /* Make icons bolder like in screenshot */
+}
