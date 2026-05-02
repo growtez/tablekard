@@ -132,22 +132,11 @@ const AboutPage = () => {
 
                     {/* Location Card with Map Preview */}
                     <div className="visit-location-card">
-                        <div className="location-map-placeholder" style={{ padding: 0, overflow: 'hidden' }}>
-                            {restaurant?.latitude && restaurant?.longitude ? (
-                                <iframe
-                                    width="100%"
-                                    height="100%"
-                                    frameBorder="0"
-                                    style={{ border: 0, minHeight: '120px' }}
-                                    src={`https://www.openstreetmap.org/export/embed.html?bbox=${restaurant.longitude - 0.005},${restaurant.latitude - 0.005},${restaurant.longitude + 0.005},${restaurant.latitude + 0.005}&layer=mapnik&marker=${restaurant.latitude},${restaurant.longitude}`}
-                                    allowFullScreen
-                                ></iframe>
-                            ) : (
-                                <>
-                                    <MapPin size={32} className="map-icon-pulse" />
-                                    <span className="map-label">Location</span>
-                                </>
-                            )}
+                        <div className="location-map-placeholder">
+                            <MapPin size={32} className="map-icon-pulse" />
+                            <span className="map-label">
+                                {restaurant?.contact_address?.split(',').slice(-2, -1)[0]?.trim() || 'Location'}
+                            </span>
                         </div>
                         <div className="location-details">
                             <h3 className="location-name">{restaurant?.name?.toUpperCase() || 'TABLEKARD'}</h3>
