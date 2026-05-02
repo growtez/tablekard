@@ -49,7 +49,7 @@ body.sidebar-collapsed .subscription-main {
     align-items: center;
     gap: 0.75rem;
     padding: 0.875rem 1.25rem;
-    border-radius: 10px;
+    border-radius: 24px;
     margin-bottom: 1.5rem;
     font-size: 0.9rem;
     font-weight: 500;
@@ -89,7 +89,7 @@ body.sidebar-collapsed .subscription-main {
 .subscription-status-card {
     background: #FFFFFF;
     border: 1px solid #E2E8F0;
-    border-radius: 16px;
+    border-radius: 24px;
     padding: 1.75rem 2rem;
     margin-bottom: 2rem;
     display: flex;
@@ -109,7 +109,7 @@ body.sidebar-collapsed .subscription-main {
 .subscription-status-icon {
     width: 56px;
     height: 56px;
-    border-radius: 14px;
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -211,7 +211,7 @@ body.sidebar-collapsed .subscription-main {
 .subscription-plan-card {
     background: #FFFFFF;
     border: 2px solid #E2E8F0;
-    border-radius: 14px;
+    border-radius: 24px;
     padding: 1.5rem;
     cursor: pointer;
     transition: all 0.25s ease;
@@ -323,7 +323,7 @@ body.sidebar-collapsed .subscription-main {
     font-size: 1rem;
     font-weight: 600;
     border: none;
-    border-radius: 12px;
+    border-radius: 16px;
     cursor: pointer;
     transition: all 0.25s ease;
     box-shadow: 0 4px 16px rgba(79, 117, 92, 0.3);
@@ -364,7 +364,7 @@ body.sidebar-collapsed .subscription-main {
 .subscription-history-card {
     background: #FFFFFF;
     border: 1px solid #E2E8F0;
-    border-radius: 14px;
+    border-radius: 24px;
     overflow: hidden;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
 }
