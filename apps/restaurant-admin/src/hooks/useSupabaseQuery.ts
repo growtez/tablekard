@@ -17,9 +17,10 @@ import {
   getPaymentTransactions,
   getRestaurantTables,
   getRestaurantById,
+  getRevenueData,
 } from '../services/supabaseService';
 import type { MenuItem, MenuCategory, Restaurant, Order } from '@restaurant-saas/types';
-import type { DashboardOrder, PaymentTransaction, RestaurantTable } from '../services/supabaseService';
+import type { DashboardOrder, PaymentTransaction, RestaurantTable, RevenueRecord } from '../services/supabaseService';
 
 // ─── Stale times ────────────────────────────────────────────────────
 const STALE_30S = 30 * 1000;   // data pages (orders, payments)
@@ -34,6 +35,7 @@ export const queryKeys = {
   orders: (restaurantId: string) => ['orders', restaurantId] as const,
   payments: (restaurantId: string) => ['payments', restaurantId] as const,
   tables: (restaurantId: string) => ['tables', restaurantId] as const,
+  revenue: (restaurantId: string) => ['revenue', restaurantId] as const,
 };
 
 // ─── Restaurant ─────────────────────────────────────────────────────
@@ -96,6 +98,17 @@ export function usePaymentTransactions(restaurantId: string | null) {
   return useQuery<PaymentTransaction[]>({
     queryKey: queryKeys.payments(restaurantId ?? ''),
     queryFn: () => getPaymentTransactions(restaurantId!),
+    enabled: !!restaurantId,
+    staleTime: STALE_30S,
+    retry: 3,
+  });
+}
+
+// ─── Revenue ────────────────────────────────────────────────────────
+export function useRevenueData(restaurantId: string | null) {
+  return useQuery<RevenueRecord[]>({
+    queryKey: queryKeys.revenue(restaurantId ?? ''),
+    queryFn: () => getRevenueData(restaurantId!),
     enabled: !!restaurantId,
     staleTime: STALE_30S,
     retry: 3,

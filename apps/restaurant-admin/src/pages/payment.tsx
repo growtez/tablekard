@@ -1,11 +1,11 @@
 import React, { useState, useMemo } from 'react';
-import { TrendingUp, Download, Calendar, CreditCard, CheckCircle, Eye, Trash2, X, Search, User, Hash, Clock, Utensils } from 'lucide-react';
+import {  Download, Calendar, CreditCard, CheckCircle, Eye, Trash2, X, Search, User, Hash, Clock, Utensils } from 'lucide-react';
 import './payment.css';
 import Sidebar from '../components/sidebar';
 import { useAuth } from '../context/AuthContext';
 import { updatePaymentStatus } from '../services/supabaseService';
 import type { PaymentTransaction } from '../services/supabaseService';
-import { usePaymentTransactions, useInvalidateQueries } from '../hooks/useSupabaseQuery';
+import { usePaymentTransactions, useInvalidateQueries, useRevenueData } from '../hooks/useSupabaseQuery';
 
 // Main Payment Component
 const Payment: React.FC = () => {
@@ -23,7 +23,11 @@ const Payment: React.FC = () => {
 
   // React Query: cached, auto-retries, refetches on tab focus
   const { data: allTransactions = [], isLoading: loading } = usePaymentTransactions(activeRestaurantId);
+  const { data: revenueData = [], isLoading: loadingRevenue } = useRevenueData(activeRestaurantId);
   const { invalidatePayments } = useInvalidateQueries();
+  
+  const [revenuePeriod, setRevenuePeriod] = useState<string>('today');
+  const [revenueCustomDate, setRevenueCustomDate] = useState<string>('');
 
   // Filter out locally hidden rows
   const transactions = useMemo(
@@ -63,35 +67,46 @@ const Payment: React.FC = () => {
     return matchesSearch && methodMatch && statusMatch && dateMatch;
   });
 
-  // Calculate totals dynamically
-  const stats = useMemo(() => {
+  const filteredRevenue = useMemo(() => {
+    let totalRevenue = 0;
+    let totalOrders = 0;
+
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
     const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
-    const startOfLastWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay() - 7);
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    let todayRev = 0;
-    let yesterdayRev = 0;
-    let weekRev = 0;
-    let lastWeekRev = 0;
+    revenueData.forEach(r => {
+      // parse YYYY-MM-DD
+      const [year, month, day] = r.revenueDate.split('-');
+      const rDate = new Date(Number(year), Number(month) - 1, Number(day));
+      
+      let match = false;
+      if (revenuePeriod === 'today') {
+        match = rDate.getTime() === startOfToday.getTime();
+      } else if (revenuePeriod === 'yesterday') {
+        match = rDate.getTime() === startOfYesterday.getTime();
+      } else if (revenuePeriod === 'this-week') {
+        match = rDate >= startOfWeek;
+      } else if (revenuePeriod === 'this-month') {
+        match = rDate >= startOfMonth;
+      } else if (revenuePeriod === 'custom' && revenueCustomDate) {
+        const [cy, cm, cd] = revenueCustomDate.split('-');
+        if (cy && cm && cd) {
+          const cDate = new Date(Number(cy), Number(cm) - 1, Number(cd));
+          match = rDate.getTime() === cDate.getTime();
+        }
+      }
 
-    transactions.forEach(t => {
-      if (t.paymentStatus.toLowerCase() !== 'paid') return;
-
-      const tDate = new Date(t.createdAt);
-      if (tDate >= startOfToday) todayRev += t.amount;
-      else if (tDate >= startOfYesterday) yesterdayRev += t.amount;
-
-      if (tDate >= startOfWeek) weekRev += t.amount;
-      else if (tDate >= startOfLastWeek) lastWeekRev += t.amount;
+      if (match) {
+        totalRevenue += r.totalRevenue;
+        totalOrders += r.totalOrders;
+      }
     });
 
-    const todayChange = yesterdayRev === 0 ? (todayRev > 0 ? 100 : 0) : Math.round(((todayRev - yesterdayRev) / yesterdayRev) * 100);
-    const weekChange = lastWeekRev === 0 ? (weekRev > 0 ? 100 : 0) : Math.round(((weekRev - lastWeekRev) / lastWeekRev) * 100);
-
-    return { todayRev, weekRev, todayChange, weekChange };
-  }, [transactions]);
+    return { totalRevenue, totalOrders };
+  }, [revenueData, revenuePeriod, revenueCustomDate]);
 
   const handleExportReport = () => {
     console.log('Exporting report...');
@@ -148,45 +163,43 @@ const Payment: React.FC = () => {
           </div>
         </div>
 
+        <div className="revenue-section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', marginTop: '24px' }}>
+          <h2 className="section-title" style={{ margin: 0 }}>Revenue Overview</h2>
+          <div className="filter-group" style={{ margin: 0 }}>
+            <Calendar size={16} color="#718096" />
+            <select
+              className="filter-select"
+              value={revenuePeriod}
+              onChange={(e) => setRevenuePeriod(e.target.value)}
+            >
+              <option value="today">Today</option>
+              <option value="yesterday">Yesterday</option>
+              <option value="this-week">This Week</option>
+              <option value="this-month">This Month</option>
+              <option value="custom">Custom Range</option>
+            </select>
+            {revenuePeriod === 'custom' && (
+              <input 
+                type="date" 
+                className="custom-date-picker"
+                value={revenueCustomDate}
+                onChange={(e) => setRevenueCustomDate(e.target.value)}
+              />
+            )}
+          </div>
+        </div>
+
         <div className="revenue-grid">
           <div className="revenue-card">
             <div className="card-top-bar card-top-bar-green"></div>
-            <h3 className="card-title">Revenue Today</h3>
-            <div className="revenue-amount">₹ {loading ? '...' : stats.todayRev.toLocaleString()}</div>
-            <div className="revenue-change">
-              <span
-                className={stats.todayChange >= 0 ? "change-text change-positive" : "change-text change-negative"}
-                style={{ color: stats.todayChange < 0 ? '#E53E3E' : undefined }}
-              >
-                {stats.todayChange > 0 ? '+' : ''}{stats.todayChange}% vs yesterday
-              </span>
-              <TrendingUp
-                size={16}
-                color={stats.todayChange >= 0 ? "#68D391" : "#E53E3E"}
-                className="trend-icon"
-                style={stats.todayChange < 0 ? { transform: 'rotate(180deg)' } : undefined}
-              />
-            </div>
+            <h3 className="card-title">Total Revenue</h3>
+            <div className="revenue-amount">₹ {loadingRevenue ? '...' : filteredRevenue.totalRevenue.toLocaleString()}</div>
           </div>
 
           <div className="revenue-card">
             <div className="card-top-bar card-top-bar-blue"></div>
-            <h3 className="card-title">Revenue This Week</h3>
-            <div className="revenue-amount">₹ {loading ? '...' : stats.weekRev.toLocaleString()}</div>
-            <div className="revenue-change">
-              <span
-                className={stats.weekChange >= 0 ? "change-text change-blue" : "change-text change-negative"}
-                style={{ color: stats.weekChange < 0 ? '#E53E3E' : undefined }}
-              >
-                {stats.weekChange > 0 ? '+' : ''}{stats.weekChange}% vs last week
-              </span>
-              <TrendingUp
-                size={16}
-                color={stats.weekChange >= 0 ? "#7F9CF5" : "#E53E3E"}
-                className="trend-icon"
-                style={stats.weekChange < 0 ? { transform: 'rotate(180deg)' } : undefined}
-              />
-            </div>
+            <h3 className="card-title">Total Orders</h3>
+            <div className="revenue-amount">{loadingRevenue ? '...' : filteredRevenue.totalOrders.toLocaleString()}</div>
           </div>
         </div>
 

@@ -62,10 +62,10 @@ interface MenuCategoryRow {
 interface OrderRow {
     id: string; restaurant_id: string; order_number: string; type: string;
     table_number: number | null; customer_id: string | null;
-    customer_name: string | null; customer_phone: string | null;
     subtotal: number; taxes: number; discount: number; total: number;
     status: string; payment_method: string; payment_status: string;
     transaction_id: string | null; created_at: string; updated_at: string;
+    profiles?: { name?: string; email?: string } | { name?: string; email?: string }[];
 }
 
 export interface RestaurantProfileUpdateInput {
@@ -496,34 +496,40 @@ export const deleteMenuCategory = async (categoryId: string): Promise<void> => {
 export const getOrders = async (restaurantId: string, limitCount: number = 50): Promise<Order[]> => {
     const { data, error } = await db
         .from('orders')
-        .select('*')
+        .select(`
+            *,
+            profiles(name)
+        `)
         .eq('restaurant_id', restaurantId)
         .order('created_at', { ascending: false })
         .limit(limitCount);
     if (error) throw error;
-    return ((data ?? []) as OrderRow[]).map(row => ({
-        id: row.id,
-        restaurantId: row.restaurant_id,
-        orderNumber: row.order_number,
-        type: row.type as Order['type'],
-        tableNumber: row.table_number ?? undefined,
-        customerId: row.customer_id ?? undefined,
-        customerName: row.customer_name ?? undefined,
-        customerPhone: row.customer_phone ?? undefined,
-        items: [],
-        subtotal: row.subtotal,
-        taxes: row.taxes,
-        discount: row.discount,
-        total: row.total,
-        status: row.status as OrderStatus,
-        payment: {
-            method: row.payment_method as Order['payment']['method'],
-            status: row.payment_status as Order['payment']['status'],
-            transactionId: row.transaction_id ?? undefined
-        },
-        createdAt: row.created_at,
-        updatedAt: row.updated_at
-    }));
+    return ((data ?? []) as OrderRow[]).map(row => {
+        const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
+        return {
+            id: row.id,
+            restaurantId: row.restaurant_id,
+            orderNumber: row.order_number,
+            type: row.type as Order['type'],
+            tableNumber: row.table_number ?? undefined,
+            customerId: row.customer_id ?? undefined,
+            customerName: profile?.name ?? undefined,
+            customerPhone: undefined,
+            items: [],
+            subtotal: row.subtotal,
+            taxes: row.taxes,
+            discount: row.discount,
+            total: row.total,
+            status: row.status as OrderStatus,
+            payment: {
+                method: row.payment_method as Order['payment']['method'],
+                status: row.payment_status as Order['payment']['status'],
+                transactionId: row.transaction_id ?? undefined
+            },
+            createdAt: row.created_at,
+            updatedAt: row.updated_at
+        };
+    });
 };
 
 export interface DashboardOrder {
@@ -659,6 +665,42 @@ export const updatePaymentStatus = async (orderId: string, paymentStatus: string
         .update({ payment_status: paymentStatus.toLowerCase(), updated_at: new Date().toISOString() })
         .eq('id', orderId);
     if (error) throw error;
+};
+
+// ==========================================
+// Revenue
+// ==========================================
+
+export interface RevenueRecord {
+    id: string;
+    restaurantId: string;
+    revenueDate: string;
+    totalOrders: number;
+    totalRevenue: number;
+    totalTax: number;
+    totalDiscount: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export const getRevenueData = async (restaurantId: string): Promise<RevenueRecord[]> => {
+    const { data, error } = await db
+        .from('revenue')
+        .select('*')
+        .eq('restaurant_id', restaurantId)
+        .order('revenue_date', { ascending: false });
+    if (error) throw error;
+    return (data || []).map((row: any) => ({
+        id: row.id,
+        restaurantId: row.restaurant_id,
+        revenueDate: row.revenue_date,
+        totalOrders: row.total_orders,
+        totalRevenue: Number(row.total_revenue),
+        totalTax: Number(row.total_tax),
+        totalDiscount: Number(row.total_discount),
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+    }));
 };
 
 // ==========================================

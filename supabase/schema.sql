@@ -208,6 +208,20 @@ CREATE TABLE IF NOT EXISTS public.payment_logs (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- revenue (Analytics & Reporting)
+CREATE TABLE IF NOT EXISTS public.revenue (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    restaurant_id UUID NOT NULL REFERENCES public.restaurants(id) ON DELETE CASCADE,
+    revenue_date DATE NOT NULL,
+    total_orders INTEGER DEFAULT 0,
+    total_revenue NUMERIC NOT NULL DEFAULT 0,
+    total_tax NUMERIC DEFAULT 0,
+    total_discount NUMERIC DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (restaurant_id, revenue_date)
+);
+
 -- favorites
 CREATE TABLE IF NOT EXISTS public.favorites (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -271,6 +285,9 @@ ALTER TABLE public.menu_items
 CREATE INDEX IF NOT EXISTS idx_menu_item_images_menu_item
 ON public.menu_item_images(menu_item_id);
 
+CREATE INDEX IF NOT EXISTS idx_revenue_restaurant_date
+ON public.revenue(restaurant_id, revenue_date);
+
 -- ======================================================================================
 -- TRIGGERS FOR TIMESTAMPS
 -- ======================================================================================
@@ -282,6 +299,7 @@ CREATE TRIGGER update_restaurant_tables_updated_at BEFORE UPDATE ON public.resta
 CREATE TRIGGER update_menu_categories_updated_at BEFORE UPDATE ON public.menu_categories FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
 CREATE TRIGGER update_menu_items_updated_at BEFORE UPDATE ON public.menu_items FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
 CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON public.orders FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
+CREATE TRIGGER update_revenue_updated_at BEFORE UPDATE ON public.revenue FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
 CREATE TRIGGER update_platform_settings_updated_at BEFORE UPDATE ON public.platform_settings FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
 
 -- ======================================================================================
@@ -349,6 +367,7 @@ ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.payment_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.revenue ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.favorites ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.feedback ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.platform_settings ENABLE ROW LEVEL SECURITY;
@@ -363,6 +382,12 @@ CREATE POLICY "Users can read own profile" ON public.profiles FOR SELECT USING (
 CREATE POLICY "Super admins can manage all profiles" ON public.profiles FOR ALL USING (public.is_super_admin(auth.uid()));
 CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
 CREATE POLICY "Allow profile creation" ON public.profiles FOR INSERT WITH CHECK (true);
+CREATE POLICY "Restaurant members can read customer profiles" ON public.profiles FOR SELECT USING (
+  EXISTS (
+    SELECT 1 FROM public.orders o
+    WHERE o.customer_id = profiles.id AND public.is_restaurant_member(o.restaurant_id)
+  )
+);
 
 -- 2. restaurants
 CREATE POLICY "Anyone can read approved/active restaurants" ON public.restaurants FOR SELECT USING (status IN ('approved', 'active'));
@@ -417,19 +442,23 @@ CREATE POLICY "Restaurant members can read payment logs" ON public.payment_logs 
   EXISTS (SELECT 1 FROM public.payments p WHERE p.id = payment_id AND public.is_restaurant_member(p.restaurant_id))
 );
 
--- 12. favorites
+-- 12. revenue
+CREATE POLICY "Restaurant members can manage revenue" ON public.revenue FOR ALL USING (public.is_restaurant_member(restaurant_id));
+CREATE POLICY "Super admins can manage all revenue" ON public.revenue FOR ALL USING (public.is_super_admin());
+
+-- 13. favorites
 CREATE POLICY "Users can manage own favorites" ON public.favorites FOR ALL USING (user_id = auth.uid());
 
--- 13. feedback
+-- 14. feedback
 CREATE POLICY "Users can read/write own feedback" ON public.feedback FOR ALL USING (user_id = auth.uid());
 CREATE POLICY "Restaurant members can read feedback" ON public.feedback FOR SELECT USING (
   EXISTS (SELECT 1 FROM public.orders o WHERE o.id = feedback.order_id AND public.is_restaurant_member(o.restaurant_id))
 );
 
--- 14. platform_settings
+-- 15. platform_settings
 CREATE POLICY "Public can read platform settings" ON public.platform_settings FOR SELECT USING (true);
 CREATE POLICY "Super admins manage platform settings" ON public.platform_settings FOR ALL USING (public.is_super_admin());
 
--- 15. subscription_payments
+-- 16. subscription_payments
 CREATE POLICY "Restaurant members can read subscription payments" ON public.subscription_payments FOR SELECT USING (public.is_restaurant_member(restaurant_id));
 CREATE POLICY "Super admins manage subscription payments" ON public.subscription_payments FOR ALL USING (public.is_super_admin());
