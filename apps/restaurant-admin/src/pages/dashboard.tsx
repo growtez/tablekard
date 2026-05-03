@@ -206,7 +206,7 @@ const Dashboard: React.FC = () => {
 
   const handlePaymentComplete = async (paymentId: string) => {
     try {
-      await updatePaymentStatus(paymentId, 'completed');
+      await updatePaymentStatus(paymentId, 'paid');
       if (activeRestaurantId) invalidateOrders(activeRestaurantId);
     } catch (err) {
       console.error(err);

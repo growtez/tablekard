@@ -592,7 +592,7 @@ export const getDashboardOrders = async (restaurantId: string): Promise<Dashboar
             items: itemsStr,
             rawItems: itemsList,
             total: Number(row.total) || 0,
-            isPaid: row.payment_status === 'completed',
+            isPaid: row.payment_status === 'paid',
             customer: profile?.name || 'Guest',
             createdAt: row.created_at
         };
@@ -602,7 +602,7 @@ export const getDashboardOrders = async (restaurantId: string): Promise<Dashboar
 export const updateOrderStatus = async (orderId: string, status: OrderStatus): Promise<void> => {
     const { error } = await db
         .from('orders')
-        .update({ status, updated_at: new Date().toISOString() })
+        .update({ status: status.toLowerCase(), updated_at: new Date().toISOString() })
         .eq('id', orderId);
     if (error) throw error;
 };
@@ -750,7 +750,7 @@ export const getBestSellingDishes = async (restaurantId: string): Promise<BestSe
             orders!inner(restaurant_id, status)
         `)
         .eq('orders.restaurant_id', restaurantId)
-        .in('orders.status', ['SERVED', 'COMPLETED', 'READY']);
+        .in('orders.status', ['served', 'completed', 'ready', 'SERVED', 'COMPLETED', 'READY']);
 
     if (error) {
         console.error("Error fetching best selling:", error);
