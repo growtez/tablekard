@@ -4,18 +4,10 @@ import './dashboard.css';
 import Sidebar from '../components/sidebar';
 
 import { useAuth } from '../context/AuthContext';
-import { useDashboardOrders, useInvalidateQueries, useRevenueData } from '../hooks/useSupabaseQuery';
+import { useDashboardOrders, useInvalidateQueries, useRevenueData, useBestSellingDishes } from '../hooks/useSupabaseQuery';
 import { updateOrderStatus, updatePaymentStatus } from '../services/supabaseService';
 import type { DashboardOrder } from '../services/supabaseService';
 
-// Type Definitions
-interface BestSellingDish {
-  name: string;
-  sold: number;
-  trend: string;
-  revenue: number;
-  image: string;
-}
 
 // Component Props Interfaces
 interface OrderDetailsDialogProps {
@@ -201,10 +193,11 @@ const AllOrdersDialog: React.FC<AllOrdersDialogProps & { showAction?: boolean }>
 // Main Dashboard Component
 const Dashboard: React.FC = () => {
   const { activeRestaurantId } = useAuth();
-  
+
   // React Query cached orders
   const { data: orders = [], isLoading } = useDashboardOrders(activeRestaurantId);
   const { data: revenueData = [], isLoading: loadingRevenue } = useRevenueData(activeRestaurantId);
+  const { data: bestSelling = [], isLoading: loadingBestSelling } = useBestSellingDishes(activeRestaurantId);
   const { invalidateOrders } = useInvalidateQueries();
 
   const [selectedOrder, setSelectedOrder] = useState<DashboardOrder | null>(null);
@@ -213,7 +206,7 @@ const Dashboard: React.FC = () => {
 
   const handlePaymentComplete = async (paymentId: string) => {
     try {
-      await updatePaymentStatus(paymentId, 'completed');
+      await updatePaymentStatus(paymentId, 'paid');
       if (activeRestaurantId) invalidateOrders(activeRestaurantId);
     } catch (err) {
       console.error(err);
@@ -236,39 +229,47 @@ const Dashboard: React.FC = () => {
   const completedOrders = orders.filter(order => order.status === 'Served' || order.status === 'Completed');
   const pendingPayments = orders.filter(order => !order.isPaid && order.status !== 'Cancelled');
 
-  // Revenue calc
-  const todayDate = new Date().toISOString().split('T')[0];
-  const yesterdayDate = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-  
-  const revenueToday = revenueData.find(r => r.revenueDate === todayDate)?.totalRevenue || 0;
-  const revenueYesterday = revenueData.find(r => r.revenueDate === yesterdayDate)?.totalRevenue || 0;
-  const todayChange = revenueYesterday === 0 ? (revenueToday > 0 ? 100 : 0) : Math.round(((revenueToday - revenueYesterday) / revenueYesterday) * 100);
-
+  // Revenue calc from raw orders (more robust and uses local timezone)
   const now = new Date();
+  
+  const isSameDay = (d1: Date, d2: Date) => 
+    d1.getFullYear() === d2.getFullYear() && 
+    d1.getMonth() === d2.getMonth() && 
+    d1.getDate() === d2.getDate();
+
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+
   const startOfThisWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
   const startOfLastWeek = new Date(startOfThisWeek.getTime() - 7 * 86400000);
-  
+
+  let revenueToday = 0;
+  let revenueYesterday = 0;
   let revenueThisWeek = 0;
   let revenueLastWeek = 0;
-  
-  revenueData.forEach(r => {
-      const [year, month, day] = r.revenueDate.split('-');
-      const rDate = new Date(Number(year), Number(month) - 1, Number(day));
-      if (rDate >= startOfThisWeek) {
-          revenueThisWeek += r.totalRevenue;
-      } else if (rDate >= startOfLastWeek && rDate < startOfThisWeek) {
-          revenueLastWeek += r.totalRevenue;
-      }
+
+  orders.forEach(order => {
+    if (order.status !== 'Served' && order.status !== 'Completed' && !order.isPaid) return;
+
+    const orderDate = new Date(order.createdAt);
+    
+    if (isSameDay(orderDate, now)) {
+        revenueToday += order.total;
+    } else if (isSameDay(orderDate, yesterday)) {
+        revenueYesterday += order.total;
+    }
+
+    if (orderDate >= startOfThisWeek) {
+        revenueThisWeek += order.total;
+    } else if (orderDate >= startOfLastWeek && orderDate < startOfThisWeek) {
+        revenueLastWeek += order.total;
+    }
   });
-  
+
+  const todayChange = revenueYesterday === 0 ? (revenueToday > 0 ? 100 : 0) : Math.round(((revenueToday - revenueYesterday) / revenueYesterday) * 100);
   const weekChange = revenueLastWeek === 0 ? (revenueThisWeek > 0 ? 100 : 0) : Math.round(((revenueThisWeek - revenueLastWeek) / revenueLastWeek) * 100);
 
-  const bestSelling: BestSellingDish[] = [
-    { name: 'Butter Chicken', sold: 45, trend: '+12%', revenue: 20250, image: '🍗' },
-    { name: 'Paneer Tikka', sold: 38, trend: '+8%', revenue: 14440, image: '🧀' },
-    { name: 'Masala Dosa', sold: 35, trend: '+15%', revenue: 4200, image: '🥘' },
-    { name: 'Biryani', sold: 32, trend: '+5%', revenue: 13440, image: '🍛' }
-  ];
+
 
   const totalPending: number = pendingPayments.reduce((sum, payment) => sum + payment.total, 0);
 
@@ -285,7 +286,7 @@ const Dashboard: React.FC = () => {
           <div className="revenue-card">
             <div className="card-top-bar card-top-bar-green"></div>
             <h3 className="card-title">Revenue Today</h3>
-            <div className="revenue-amount">₹ {loadingRevenue ? '...' : revenueToday.toLocaleString()}</div>
+            <div className="revenue-amount">₹ {isLoading ? '...' : revenueToday.toLocaleString()}</div>
             <div className="revenue-change">
               <span className={`change-text ${todayChange >= 0 ? 'change-positive' : 'change-negative'}`} style={{ color: todayChange < 0 ? '#E53E3E' : undefined }}>
                 {todayChange > 0 ? '+' : ''}{todayChange}% vs yesterday
@@ -297,7 +298,7 @@ const Dashboard: React.FC = () => {
           <div className="revenue-card">
             <div className="card-top-bar card-top-bar-blue"></div>
             <h3 className="card-title">Revenue This Week</h3>
-            <div className="revenue-amount">₹ {loadingRevenue ? '...' : revenueThisWeek.toLocaleString()}</div>
+            <div className="revenue-amount">₹ {isLoading ? '...' : revenueThisWeek.toLocaleString()}</div>
             <div className="revenue-change">
               <span className={`change-text ${weekChange >= 0 ? 'change-blue' : 'change-negative'}`} style={{ color: weekChange < 0 ? '#E53E3E' : undefined }}>
                 {weekChange > 0 ? '+' : ''}{weekChange}% vs last week
@@ -327,9 +328,9 @@ const Dashboard: React.FC = () => {
                   </thead>
                   <tbody>
                     {isLoading ? (
-                      <tr><td colSpan={5} style={{textAlign: 'center', padding: '32px', color: '#A0AEC0'}}>Loading active orders...</td></tr>
+                      <tr><td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>Loading active orders...</td></tr>
                     ) : activeOrders.length === 0 ? (
-                      <tr><td colSpan={5} style={{textAlign: 'center', padding: '32px', color: '#A0AEC0'}}>No active orders</td></tr>
+                      <tr><td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>No active orders</td></tr>
                     ) : activeOrders.slice(0, 5).map((order, idx) => (
                       <tr key={idx}>
                         <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
@@ -382,7 +383,7 @@ const Dashboard: React.FC = () => {
                   </thead>
                   <tbody>
                     {isLoading ? (
-                      <tr><td colSpan={5} style={{textAlign: 'center', padding: '32px', color: '#A0AEC0'}}>Loading completed orders...</td></tr>
+                      <tr><td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>Loading completed orders...</td></tr>
                     ) : completedOrders.length === 0 ? (
                       <tr>
                         <td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>
@@ -422,7 +423,11 @@ const Dashboard: React.FC = () => {
             <div className="widget-card">
               <h3 className="widget-title">🔥 Best-Selling Dishes</h3>
               <div className="dish-list">
-                {bestSelling.map((dish, idx) => (
+                {loadingBestSelling ? (
+                  <div style={{ textAlign: 'center', padding: '16px', color: '#A0AEC0', fontSize: '13px' }}>Loading...</div>
+                ) : bestSelling.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '16px', color: '#A0AEC0', fontSize: '13px' }}>No data available</div>
+                ) : bestSelling.map((dish, idx) => (
                   <div key={idx} className="dish-item">
                     <div className="dish-image">{dish.image}</div>
                     <div className="dish-info">
@@ -444,9 +449,9 @@ const Dashboard: React.FC = () => {
               <h3 className="widget-title">⚠️ Pending Payments</h3>
               <div className="pending-payments-list">
                 {isLoading ? (
-                  <div style={{textAlign: 'center', padding: '16px', color: '#A0AEC0', fontSize: '13px'}}>Loading...</div>
+                  <div style={{ textAlign: 'center', padding: '16px', color: '#A0AEC0', fontSize: '13px' }}>Loading...</div>
                 ) : pendingPayments.length === 0 ? (
-                  <div style={{textAlign: 'center', padding: '16px', color: '#A0AEC0', fontSize: '13px'}}>No pending payments</div>
+                  <div style={{ textAlign: 'center', padding: '16px', color: '#A0AEC0', fontSize: '13px' }}>No pending payments</div>
                 ) : pendingPayments.map((payment) => (
                   <div key={payment.id} className="payment-item">
                     <div className="payment-info">
