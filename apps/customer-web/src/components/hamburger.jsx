@@ -27,6 +27,26 @@ const Hamburger = () => {
     return () => { document.body.style.overflow = 'auto'; };
   }, [isSidebarOpen]);
 
+  // Dynamic font size based on name length
+  const getDynamicFontSize = (name) => {
+    const len = name.length;
+    if (len > 25) return '11px';
+    if (len > 15) return '13px';
+    return '16px';
+  };
+
+  const getDynamicLetterSpacing = (name) => {
+    const len = name.length;
+    if (len > 20) return '1px';
+    if (len > 12) return '2px';
+    return '4px';
+  };
+
+  const dynamicStyles = {
+    fontSize: getDynamicFontSize(restaurantName),
+    letterSpacing: getDynamicLetterSpacing(restaurantName)
+  };
+
   const close = () => setIsSidebarOpen(false);
 
   const handleLogout = async () => {
@@ -60,7 +80,7 @@ const Hamburger = () => {
               />
             </div>
             <div className="company-info">
-              <h3>{restaurantName}</h3>
+              <h3 style={dynamicStyles}>{restaurantName}</h3>
               <p>{restaurantTag}</p>
             </div>
           </div>

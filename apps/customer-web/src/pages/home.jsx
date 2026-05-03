@@ -16,11 +16,20 @@ const HomePage = () => {
     // Dynamic font size based on name length
     const getDynamicFontSize = (name) => {
         const len = name.length;
-        if (len > 25) return '13px';
-        if (len > 15) return '15px';
-        return '18px';
+        if (len > 25) return '11px';
+        if (len > 15) return '13px';
+        return '15px';
     };
-    const dynamicFontSize = getDynamicFontSize(restaurantName);
+    const getDynamicLetterSpacing = (name) => {
+        const len = name.length;
+        if (len > 20) return '1px';
+        if (len > 12) return '2px';
+        return '4px';
+    };
+    const dynamicHeaderStyles = {
+        fontSize: getDynamicFontSize(restaurantName),
+        letterSpacing: getDynamicLetterSpacing(restaurantName)
+    };
     const [searchTerm, setSearchTerm] = useState('');
     const [activeOfferIndex, setActiveOfferIndex] = useState(0);
     const [favorites, setFavorites] = useState([]);
@@ -294,7 +303,7 @@ const HomePage = () => {
             <header className="menu-header-nav">
                 <div className="header-left">
                     <Hamburger />
-                    <span className="header-brand-name" style={{ fontSize: dynamicFontSize }}>{restaurantName}</span>
+                    <span className="header-brand-name" style={dynamicHeaderStyles}>{restaurantName}</span>
                 </div>
                 <div className="header-nav-right" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <NavLink to="/likes" className="header-nav-btn">
