@@ -4,7 +4,7 @@ import Sidebar from '../components/sidebar';
 import { useAuth } from '../context/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { updateOrderStatus } from '../services/supabaseService';
-import { useDashboardOrders, useInvalidateQueries, queryKeys } from '../hooks/useSupabaseQuery';
+import { useDashboardOrders, useInvalidateQueries, queryKeys, useRevenueData } from '../hooks/useSupabaseQuery';
 import './order.css';
 
 const Order: React.FC = () => {
@@ -17,6 +17,7 @@ const Order: React.FC = () => {
 
   // React Query: cached, auto-retries, refetches every 5s (defined in hook)
   const { data: orders = [], isLoading: loading } = useDashboardOrders(activeRestaurantId);
+  const { data: revenueData = [], isLoading: loadingRevenue } = useRevenueData(activeRestaurantId);
   const { invalidateOrders } = useInvalidateQueries();
   const queryClient = useQueryClient();
 
@@ -30,19 +31,30 @@ const Order: React.FC = () => {
 
     let today = 0, yesterday = 0, week = 0, lastWeek = 0;
 
-    orders.forEach(order => {
-      const orderDate = new Date(order.createdAt);
-      if (orderDate >= startOfToday) today++;
-      else if (orderDate >= startOfYesterday) yesterday++;
-      if (orderDate >= startOfWeek) week++;
-      else if (orderDate >= startOfLastWeek) lastWeek++;
+    revenueData.forEach(r => {
+      // parse YYYY-MM-DD
+      const [year, month, day] = r.revenueDate.split('-');
+      const rDate = new Date(Number(year), Number(month) - 1, Number(day));
+      const rTime = rDate.getTime();
+
+      if (rTime === startOfToday.getTime()) {
+        today += r.totalOrders;
+      } else if (rTime === startOfYesterday.getTime()) {
+        yesterday += r.totalOrders;
+      }
+
+      if (rDate >= startOfWeek) {
+        week += r.totalOrders;
+      } else if (rDate >= startOfLastWeek && rDate < startOfWeek) {
+        lastWeek += r.totalOrders;
+      }
     });
 
     const todayChange = yesterday === 0 ? (today > 0 ? 100 : 0) : Math.round(((today - yesterday) / yesterday) * 100);
     const weekChange = lastWeek === 0 ? (week > 0 ? 100 : 0) : Math.round(((week - lastWeek) / lastWeek) * 100);
 
     return { today, week, todayChange, weekChange };
-  }, [orders]);
+  }, [revenueData]);
 
   const handleStatusChange = async (orderId: string, nextStatus: string) => {
     if (!activeRestaurantId) return;
@@ -142,7 +154,7 @@ const Order: React.FC = () => {
           <div className="order-stat-card">
             <div className="order-card-top-bar order-card-green"></div>
             <h3 className="order-stat-title">Total Orders Today</h3>
-            <div className="order-stat-number">{loading ? '...' : stats.today}</div>
+            <div className="order-stat-number">{loadingRevenue ? '...' : stats.today}</div>
             <div className="order-stat-change">
               <span
                 className={stats.todayChange >= 0 ? 'order-change-positive' : 'order-change-negative'}
@@ -162,7 +174,7 @@ const Order: React.FC = () => {
           <div className="order-stat-card">
             <div className="order-card-top-bar order-card-blue"></div>
             <h3 className="order-stat-title">Total Orders This Week</h3>
-            <div className="order-stat-number">{loading ? '...' : stats.week}</div>
+            <div className="order-stat-number">{loadingRevenue ? '...' : stats.week}</div>
             <div className="order-stat-change">
               <span
                 className={stats.weekChange >= 0 ? 'order-change-blue' : 'order-change-negative'}

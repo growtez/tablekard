@@ -33,5 +33,9 @@
     "dependencies": {
         "react-easy-crop": "^5.5.7",
         "supabase": "^2.96.0"
+    },
+    "optionalDependencies": {
+        "@esbuild/linux-x64": "^0.21.5",
+        "@esbuild/linux-arm64": "^0.21.5"
     }
 }

@@ -83,8 +83,7 @@ const Sidebar: React.FC = () => {
     { icon: '💰', label: 'Payment Management', id: 'payment', path: '/payments' },
     { icon: '📈', label: 'Report and Analytics', id: 'report', path: '/reports' },
     // { icon: '📋', label: "QR Menu", id: "qr-menu", path: "/qrcode" },
-    { icon: '📦', label: "Table Management", id: "table-management", path: "/table-management" },
-    { icon: '💳', label: "Subscription", id: "subscription", path: "/subscription" }
+    { icon: '📦', label: "Table Management", id: "table-management", path: "/table-management" }
   ];
 
   const handleNavClick = (item: NavItem) => {
