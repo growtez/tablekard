@@ -16,8 +16,8 @@ const HomePage = () => {
     // Dynamic font size based on name length
     const getDynamicFontSize = (name) => {
         const len = name.length;
-        if (len > 20) return '10px';
-        if (len > 12) return '12px';
+        if (len > 20) return '12px';
+        if (len > 12) return '13px';
         return '14px';
     };
     const getDynamicLetterSpacing = (name) => {
