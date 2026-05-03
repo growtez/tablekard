@@ -229,31 +229,44 @@ const Dashboard: React.FC = () => {
   const completedOrders = orders.filter(order => order.status === 'Served' || order.status === 'Completed');
   const pendingPayments = orders.filter(order => !order.isPaid && order.status !== 'Cancelled');
 
-  // Revenue calc
-  const todayDate = new Date().toISOString().split('T')[0];
-  const yesterdayDate = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-
-  const revenueToday = revenueData.find(r => r.revenueDate === todayDate)?.totalRevenue || 0;
-  const revenueYesterday = revenueData.find(r => r.revenueDate === yesterdayDate)?.totalRevenue || 0;
-  const todayChange = revenueYesterday === 0 ? (revenueToday > 0 ? 100 : 0) : Math.round(((revenueToday - revenueYesterday) / revenueYesterday) * 100);
-
+  // Revenue calc from raw orders (more robust and uses local timezone)
   const now = new Date();
+  
+  const isSameDay = (d1: Date, d2: Date) => 
+    d1.getFullYear() === d2.getFullYear() && 
+    d1.getMonth() === d2.getMonth() && 
+    d1.getDate() === d2.getDate();
+
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+
   const startOfThisWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
   const startOfLastWeek = new Date(startOfThisWeek.getTime() - 7 * 86400000);
 
+  let revenueToday = 0;
+  let revenueYesterday = 0;
   let revenueThisWeek = 0;
   let revenueLastWeek = 0;
 
-  revenueData.forEach(r => {
-    const [year, month, day] = r.revenueDate.split('-');
-    const rDate = new Date(Number(year), Number(month) - 1, Number(day));
-    if (rDate >= startOfThisWeek) {
-      revenueThisWeek += r.totalRevenue;
-    } else if (rDate >= startOfLastWeek && rDate < startOfThisWeek) {
-      revenueLastWeek += r.totalRevenue;
+  orders.forEach(order => {
+    if (order.status !== 'Served' && order.status !== 'Completed' && !order.isPaid) return;
+
+    const orderDate = new Date(order.createdAt);
+    
+    if (isSameDay(orderDate, now)) {
+        revenueToday += order.total;
+    } else if (isSameDay(orderDate, yesterday)) {
+        revenueYesterday += order.total;
+    }
+
+    if (orderDate >= startOfThisWeek) {
+        revenueThisWeek += order.total;
+    } else if (orderDate >= startOfLastWeek && orderDate < startOfThisWeek) {
+        revenueLastWeek += order.total;
     }
   });
 
+  const todayChange = revenueYesterday === 0 ? (revenueToday > 0 ? 100 : 0) : Math.round(((revenueToday - revenueYesterday) / revenueYesterday) * 100);
   const weekChange = revenueLastWeek === 0 ? (revenueThisWeek > 0 ? 100 : 0) : Math.round(((revenueThisWeek - revenueLastWeek) / revenueLastWeek) * 100);
 
 
@@ -273,7 +286,7 @@ const Dashboard: React.FC = () => {
           <div className="revenue-card">
             <div className="card-top-bar card-top-bar-green"></div>
             <h3 className="card-title">Revenue Today</h3>
-            <div className="revenue-amount">₹ {loadingRevenue ? '...' : revenueToday.toLocaleString()}</div>
+            <div className="revenue-amount">₹ {isLoading ? '...' : revenueToday.toLocaleString()}</div>
             <div className="revenue-change">
               <span className={`change-text ${todayChange >= 0 ? 'change-positive' : 'change-negative'}`} style={{ color: todayChange < 0 ? '#E53E3E' : undefined }}>
                 {todayChange > 0 ? '+' : ''}{todayChange}% vs yesterday
@@ -285,7 +298,7 @@ const Dashboard: React.FC = () => {
           <div className="revenue-card">
             <div className="card-top-bar card-top-bar-blue"></div>
             <h3 className="card-title">Revenue This Week</h3>
-            <div className="revenue-amount">₹ {loadingRevenue ? '...' : revenueThisWeek.toLocaleString()}</div>
+            <div className="revenue-amount">₹ {isLoading ? '...' : revenueThisWeek.toLocaleString()}</div>
             <div className="revenue-change">
               <span className={`change-text ${weekChange >= 0 ? 'change-blue' : 'change-negative'}`} style={{ color: weekChange < 0 ? '#E53E3E' : undefined }}>
                 {weekChange > 0 ? '+' : ''}{weekChange}% vs last week
