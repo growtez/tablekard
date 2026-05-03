@@ -16,15 +16,15 @@ const HomePage = () => {
     // Dynamic font size based on name length
     const getDynamicFontSize = (name) => {
         const len = name.length;
-        if (len > 25) return '11px';
-        if (len > 15) return '13px';
-        return '15px';
+        if (len > 20) return '10px';
+        if (len > 12) return '12px';
+        return '14px';
     };
     const getDynamicLetterSpacing = (name) => {
         const len = name.length;
-        if (len > 20) return '1px';
-        if (len > 12) return '2px';
-        return '4px';
+        if (len > 18) return '0.5px';
+        if (len > 10) return '1.5px';
+        return '3px';
     };
     const dynamicHeaderStyles = {
         fontSize: getDynamicFontSize(restaurantName),
