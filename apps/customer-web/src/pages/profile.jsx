@@ -13,7 +13,7 @@ import Hamburger from '../components/hamburger';
 
 const ProfilePage = () => {
   const { user, logout } = useAuth();
-  const { restaurant, tableId } = useRestaurant();
+  const { restaurant, tableId, tableNumber } = useRestaurant();
   const navigate = useNavigate();
   // Start as loading only if user isn't yet available, to avoid flash
   const [isProfileLoading, setIsProfileLoading] = useState(!user);
@@ -22,7 +22,7 @@ const ProfilePage = () => {
     email: '',
     phone: '',
     avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&h=120&fit=crop&crop=face',
-    tableNumber: 'T-12',
+    tableNumber: '',
     stats: {
       todaysOrders: 0,
       totalSpent: 0,
@@ -33,11 +33,11 @@ const ProfilePage = () => {
   useEffect(() => {
     if (user) {
       setUserProfile(prev => ({
-        ...prev,
         name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Member',
         email: user?.email || '',
         phone: user?.phone || '+91 98XXX XXXXX',
         avatar: user?.user_metadata?.avatar_url || prev.avatar,
+        tableNumber: tableNumber ? `Table No-${tableNumber}` : 'N/A',
         stats: {
           todaysOrders: 3,
           totalSpent: 2450,
@@ -46,7 +46,7 @@ const ProfilePage = () => {
       }));
     }
     setIsProfileLoading(false);
-  }, [user]);
+  }, [user, tableNumber]);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({ ...userProfile });
@@ -229,7 +229,7 @@ const ProfilePage = () => {
           <p className="hero-email">{userProfile.email}</p>
           <div className="table-indicator">
             <MapPin size={14} />
-            <span>Table {userProfile.tableNumber}</span>
+            <span>{userProfile.tableNumber}</span>
           </div>
         </div>
       </div>
@@ -340,22 +340,12 @@ const ProfilePage = () => {
           <div className="restaurant-header">
             <Star size={16} fill="#8B3A1E" color="#8B3A1E" />
             <span>{restaurant?.name || 'Restaurant'}</span>
-            {tableId && (
-              <span style={{
-                marginLeft: 'auto', fontSize: '12px', fontWeight: 600,
-                background: '#FFF0EC', color: '#8B3A1E',
-                padding: '2px 10px', borderRadius: 20,
-                border: '1px solid #FFD6C9'
-              }}>
-                Table {tableId}
-              </span>
-            )}
           </div>
           <div className="restaurant-contact">
-            {restaurant?.phone ? (
-              <a href={`tel:${restaurant.phone}`} className="contact-link">
+            {restaurant?.contact_phone ? (
+              <a href={`tel:${restaurant.contact_phone}`} className="contact-link">
                 <Phone size={16} />
-                <span>{restaurant.phone}</span>
+                <span>{restaurant.contact_phone}</span>
               </a>
             ) : (
               <span className="contact-link" style={{ opacity: 0.4, cursor: 'default' }}>
@@ -363,10 +353,10 @@ const ProfilePage = () => {
                 <span>Phone not available</span>
               </span>
             )}
-            {restaurant?.email ? (
-              <a href={`mailto:${restaurant.email}`} className="contact-link">
+            {restaurant?.contact_email ? (
+              <a href={`mailto:${restaurant.contact_email}`} className="contact-link">
                 <Mail size={16} />
-                <span>{restaurant.email}</span>
+                <span>{restaurant.contact_email}</span>
               </a>
             ) : (
               <span className="contact-link" style={{ opacity: 0.4, cursor: 'default' }}>

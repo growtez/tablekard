@@ -22,6 +22,16 @@ export const getRestaurantById = async (id) => {
     return data;
 };
 
+export const getTableById = async (id) => {
+    const { data, error } = await supabase
+        .from('restaurant_tables')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+    if (error) throw error;
+    return data;
+};
+
 export const getMenuCategories = async (restaurantId) => {
     const { data, error } = await supabase
         .from('menu_categories')
