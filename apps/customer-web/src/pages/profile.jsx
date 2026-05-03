@@ -6,12 +6,14 @@ import {
 } from 'lucide-react';
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from '../context/AuthContext';
+import { useRestaurant } from '../context/RestaurantContext';
 import './profile.css';
 import Hamburger from '../components/hamburger';
 
 
 const ProfilePage = () => {
   const { user, logout } = useAuth();
+  const { restaurant, tableId } = useRestaurant();
   const navigate = useNavigate();
   // Start as loading only if user isn't yet available, to avoid flash
   const [isProfileLoading, setIsProfileLoading] = useState(!user);
@@ -333,21 +335,45 @@ const ProfilePage = () => {
           </div>
         </div>
 
-        {/* Restaurant Info Card */}
+        {/* Restaurant Info Card — live data from DB */}
         <div className="restaurant-card">
           <div className="restaurant-header">
             <Star size={16} fill="#8B3A1E" color="#8B3A1E" />
-            <span>Tablekard</span>
+            <span>{restaurant?.name || 'Restaurant'}</span>
+            {tableId && (
+              <span style={{
+                marginLeft: 'auto', fontSize: '12px', fontWeight: 600,
+                background: '#FFF0EC', color: '#8B3A1E',
+                padding: '2px 10px', borderRadius: 20,
+                border: '1px solid #FFD6C9'
+              }}>
+                Table {tableId}
+              </span>
+            )}
           </div>
           <div className="restaurant-contact">
-            <a href="tel:+911234567890" className="contact-link">
-              <Phone size={16} />
-              <span>+91 123 456 7890</span>
-            </a>
-            <a href="mailto:support@delish.com" className="contact-link">
-              <Mail size={16} />
-              <span>support@delish.com</span>
-            </a>
+            {restaurant?.phone ? (
+              <a href={`tel:${restaurant.phone}`} className="contact-link">
+                <Phone size={16} />
+                <span>{restaurant.phone}</span>
+              </a>
+            ) : (
+              <span className="contact-link" style={{ opacity: 0.4, cursor: 'default' }}>
+                <Phone size={16} />
+                <span>Phone not available</span>
+              </span>
+            )}
+            {restaurant?.email ? (
+              <a href={`mailto:${restaurant.email}`} className="contact-link">
+                <Mail size={16} />
+                <span>{restaurant.email}</span>
+              </a>
+            ) : (
+              <span className="contact-link" style={{ opacity: 0.4, cursor: 'default' }}>
+                <Mail size={16} />
+                <span>Email not available</span>
+              </span>
+            )}
           </div>
         </div>
 

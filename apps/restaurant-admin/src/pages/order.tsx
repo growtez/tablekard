@@ -1,13 +1,11 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Search, Bell, TrendingUp, Filter, RefreshCw, Calendar } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Search, TrendingUp, Filter, Calendar } from 'lucide-react';
 import Sidebar from '../components/sidebar';
 import { useAuth } from '../context/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { updateOrderStatus } from '../services/supabaseService';
-import { useDashboardOrders, useInvalidateQueries, queryKeys } from '../hooks/useSupabaseQuery';
+import { useDashboardOrders, useInvalidateQueries, queryKeys, useRevenueData } from '../hooks/useSupabaseQuery';
 import './order.css';
-
-const REFRESH_INTERVAL_MS = 5_000; // must match refetchInterval in the hook
 
 const Order: React.FC = () => {
   const { activeRestaurantId } = useAuth();
@@ -16,44 +14,12 @@ const Order: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState('Status');
   const [selectedDate, setSelectedDate] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [countdown, setCountdown] = useState(REFRESH_INTERVAL_MS / 1000);
-  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // React Query: cached, auto-retries, refetches every 30s
-  const { data: orders = [], isLoading: loading, refetch, isFetching } = useDashboardOrders(activeRestaurantId);
+  // React Query: cached, auto-retries, refetches every 5s (defined in hook)
+  const { data: orders = [], isLoading: loading } = useDashboardOrders(activeRestaurantId);
+  const { data: revenueData = [], isLoading: loadingRevenue } = useRevenueData(activeRestaurantId);
   const { invalidateOrders } = useInvalidateQueries();
   const queryClient = useQueryClient();
-
-  // ── Countdown timer ───────────────────────────────────────────────
-  const resetCountdown = () => setCountdown(REFRESH_INTERVAL_MS / 1000);
-
-  useEffect(() => {
-    resetCountdown();
-    countdownRef.current = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) { resetCountdown(); return REFRESH_INTERVAL_MS / 1000; }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
-  }, []);
-
-  // Reset countdown when data actually refreshes
-  useEffect(() => {
-    if (!isFetching) resetCountdown();
-  }, [isFetching]);
-
-  const handleManualRefresh = () => {
-    refetch();
-    resetCountdown();
-    if (countdownRef.current) clearInterval(countdownRef.current);
-    countdownRef.current = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) { resetCountdown(); return REFRESH_INTERVAL_MS / 1000; }
-        return prev - 1;
-      });
-    }, 1000);
-  };
 
   // ── Stats calculation ─────────────────────────────────────────────
   const stats = useMemo(() => {
@@ -65,19 +31,30 @@ const Order: React.FC = () => {
 
     let today = 0, yesterday = 0, week = 0, lastWeek = 0;
 
-    orders.forEach(order => {
-      const orderDate = new Date(order.createdAt);
-      if (orderDate >= startOfToday) today++;
-      else if (orderDate >= startOfYesterday) yesterday++;
-      if (orderDate >= startOfWeek) week++;
-      else if (orderDate >= startOfLastWeek) lastWeek++;
+    revenueData.forEach(r => {
+      // parse YYYY-MM-DD
+      const [year, month, day] = r.revenueDate.split('-');
+      const rDate = new Date(Number(year), Number(month) - 1, Number(day));
+      const rTime = rDate.getTime();
+
+      if (rTime === startOfToday.getTime()) {
+        today += r.totalOrders;
+      } else if (rTime === startOfYesterday.getTime()) {
+        yesterday += r.totalOrders;
+      }
+
+      if (rDate >= startOfWeek) {
+        week += r.totalOrders;
+      } else if (rDate >= startOfLastWeek && rDate < startOfWeek) {
+        lastWeek += r.totalOrders;
+      }
     });
 
     const todayChange = yesterday === 0 ? (today > 0 ? 100 : 0) : Math.round(((today - yesterday) / yesterday) * 100);
     const weekChange = lastWeek === 0 ? (week > 0 ? 100 : 0) : Math.round(((week - lastWeek) / lastWeek) * 100);
 
     return { today, week, todayChange, weekChange };
-  }, [orders]);
+  }, [revenueData]);
 
   const handleStatusChange = async (orderId: string, nextStatus: string) => {
     if (!activeRestaurantId) return;
@@ -149,9 +126,6 @@ const Order: React.FC = () => {
 
   const getStatusClass = (color: string) => `status-${color}`;
 
-  // Progress bar width (0–100%)
-  const progressPct = Math.round(((REFRESH_INTERVAL_MS / 1000 - countdown) / (REFRESH_INTERVAL_MS / 1000)) * 100);
-
   return (
     <div className="order-container">
       <Sidebar />
@@ -161,29 +135,6 @@ const Order: React.FC = () => {
         <div className="order-header">
           <h1 className="order-page-title">Order Management</h1>
           <div className="order-header-right">
-            {/* Auto-refresh indicator */}
-            <div className="order-refresh-badge" title={`Auto-refreshes every 30s`}>
-              <div className="order-refresh-ring">
-                <svg viewBox="0 0 36 36" className="order-refresh-svg">
-                  <circle cx="18" cy="18" r="15.9155" className="order-refresh-bg" />
-                  <circle
-                    cx="18" cy="18" r="15.9155"
-                    className="order-refresh-progress"
-                    strokeDasharray={`${progressPct} ${100 - progressPct}`}
-                    strokeDashoffset="25"
-                  />
-                </svg>
-                <span className="order-refresh-countdown">{countdown}s</span>
-              </div>
-              <button
-                className={`order-refresh-btn${isFetching ? ' spinning' : ''}`}
-                onClick={handleManualRefresh}
-                title="Refresh now"
-              >
-                <RefreshCw size={16} />
-              </button>
-            </div>
-
             <div className="order-search-bar">
               <Search size={18} color="#718096" />
               <input
@@ -194,9 +145,6 @@ const Order: React.FC = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <div className="order-icon-button">
-              <Bell size={20} color="#718096" />
-            </div>
             <div className="order-user-avatar">👨‍💼</div>
           </div>
         </div>
@@ -206,7 +154,7 @@ const Order: React.FC = () => {
           <div className="order-stat-card">
             <div className="order-card-top-bar order-card-green"></div>
             <h3 className="order-stat-title">Total Orders Today</h3>
-            <div className="order-stat-number">{loading ? '...' : stats.today}</div>
+            <div className="order-stat-number">{loadingRevenue ? '...' : stats.today}</div>
             <div className="order-stat-change">
               <span
                 className={stats.todayChange >= 0 ? 'order-change-positive' : 'order-change-negative'}
@@ -226,7 +174,7 @@ const Order: React.FC = () => {
           <div className="order-stat-card">
             <div className="order-card-top-bar order-card-blue"></div>
             <h3 className="order-stat-title">Total Orders This Week</h3>
-            <div className="order-stat-number">{loading ? '...' : stats.week}</div>
+            <div className="order-stat-number">{loadingRevenue ? '...' : stats.week}</div>
             <div className="order-stat-change">
               <span
                 className={stats.weekChange >= 0 ? 'order-change-blue' : 'order-change-negative'}
@@ -337,13 +285,13 @@ const Order: React.FC = () => {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>
+                    <td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>
                       Loading orders...
                     </td>
                   </tr>
                 ) : filteredOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>
+                    <td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>
                       No orders found
                     </td>
                   </tr>

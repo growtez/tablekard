@@ -34,6 +34,7 @@ const Sidebar: React.FC = () => {
     if (path.includes('/reports')) return 'report';
     if (path.includes('/qr-menu')) return 'qr-menu';
     if (path.includes('/table-management')) return 'table-management';
+    if (path.includes('/subscription')) return 'subscription';
     return 'dashboard';
   };
 

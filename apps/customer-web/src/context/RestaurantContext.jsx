@@ -1,35 +1,34 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useLocation, matchPath } from 'react-router-dom';
+import { getRestaurantById } from '../services/supabaseService';
 
 const RestaurantContext = createContext(null);
 
 const SESSION_KEY_RESTAURANT = 'tablekard_restaurant_id';
-const SESSION_KEY_TABLE = 'tablekard_table_id';
+const SESSION_KEY_TABLE      = 'tablekard_table_id';
 
 export function RestaurantProvider({ children }) {
     const location = useLocation();
 
-    // Check if current path matches the QR route pattern
-    const match = matchPath('/order/:restaurantId/:tableId', location.pathname);
-    
-    // Also support query parameters as fallback (?restaurant_id=...&table_id=...)
-    const searchParams = new URLSearchParams(location.search);
-    const queryRestaurantId = searchParams.get('restaurant_id');
-    const queryTableId = searchParams.get('table_id');
+    // Parse IDs from URL path or query-string
+    const match          = matchPath('/order/:restaurantId/:tableId', location.pathname);
+    const searchParams   = new URLSearchParams(location.search);
+    const urlRestaurantId = match?.params?.restaurantId || searchParams.get('restaurant_id') || null;
+    const urlTableId      = match?.params?.tableId      || searchParams.get('table_id')      || null;
 
-    const urlRestaurantId = match?.params?.restaurantId || queryRestaurantId || null;
-    const urlTableId = match?.params?.tableId || queryTableId || null;
+    // Priority: URL > sessionStorage > null
+    const [restaurantId, setRestaurantId] = useState(
+        () => urlRestaurantId || sessionStorage.getItem(SESSION_KEY_RESTAURANT) || null
+    );
+    const [tableId, setTableId] = useState(
+        () => urlTableId || sessionStorage.getItem(SESSION_KEY_TABLE) || null
+    );
 
-    // Priority: URL params > sessionStorage > null
-    const [restaurantId, setRestaurantId] = useState(() => {
-        return urlRestaurantId || sessionStorage.getItem(SESSION_KEY_RESTAURANT) || null;
-    });
+    // Restaurant data fetched from DB
+    const [restaurant, setRestaurant] = useState(null);
+    const [restaurantLoading, setRestaurantLoading] = useState(false);
 
-    const [tableId, setTableId] = useState(() => {
-        return urlTableId || sessionStorage.getItem(SESSION_KEY_TABLE) || null;
-    });
-
-    // Whenever the URL contains new params, update state and persist to sessionStorage
+    // Persist new URL params to sessionStorage
     useEffect(() => {
         if (urlRestaurantId) {
             setRestaurantId(urlRestaurantId);
@@ -41,8 +40,34 @@ export function RestaurantProvider({ children }) {
         }
     }, [urlRestaurantId, urlTableId]);
 
+    // Fetch restaurant info whenever restaurantId changes
+    useEffect(() => {
+        if (!restaurantId) {
+            setRestaurant(null);
+            return;
+        }
+        let cancelled = false;
+        setRestaurantLoading(true);
+        getRestaurantById(restaurantId)
+            .then(data => {
+                if (!cancelled) setRestaurant(data);
+            })
+            .catch(err => {
+                if (!cancelled) console.warn('[RestaurantContext] fetch error:', err.message);
+            })
+            .finally(() => {
+                if (!cancelled) setRestaurantLoading(false);
+            });
+        return () => { cancelled = true; };
+    }, [restaurantId]);
+
     return (
-        <RestaurantContext.Provider value={{ restaurantId, tableId }}>
+        <RestaurantContext.Provider value={{
+            restaurantId,
+            tableId,
+            restaurant,          // full row: { name, logo_url, phone, email, ... }
+            restaurantLoading,
+        }}>
             {children}
         </RestaurantContext.Provider>
     );

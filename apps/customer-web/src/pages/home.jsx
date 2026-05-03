@@ -3,12 +3,24 @@ import { Search, Heart, Home, User, ShoppingBag, Grid, ShoppingCart, Clock, Star
 import { NavLink, useNavigate } from "react-router-dom";
 import './home.css';
 import Hamburger from '../components/hamburger';
+import { useRestaurant } from '../context/RestaurantContext';
 
 
 const HomePage = () => {
 
     const navigate = useNavigate();
     const scrollRef = useRef(null);
+    const { restaurant } = useRestaurant();
+    const restaurantName = restaurant?.name || 'Tablekard';
+    
+    // Dynamic font size based on name length
+    const getDynamicFontSize = (name) => {
+        const len = name.length;
+        if (len > 25) return '13px';
+        if (len > 15) return '15px';
+        return '18px';
+    };
+    const dynamicFontSize = getDynamicFontSize(restaurantName);
     const [searchTerm, setSearchTerm] = useState('');
     const [activeOfferIndex, setActiveOfferIndex] = useState(0);
     const [favorites, setFavorites] = useState([]);
@@ -282,7 +294,7 @@ const HomePage = () => {
             <header className="menu-header-nav">
                 <div className="header-left">
                     <Hamburger />
-                    <span className="header-brand-name">Tablekard</span>
+                    <span className="header-brand-name" style={{ fontSize: dynamicFontSize }}>{restaurantName}</span>
                 </div>
                 <div className="header-nav-right" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <NavLink to="/likes" className="header-nav-btn">

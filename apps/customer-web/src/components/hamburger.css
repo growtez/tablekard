@@ -98,7 +98,7 @@
   box-shadow: 0 10px 25px rgba(139, 58, 30, 0.1);
   border: 2px solid #8B3A1E;
   background: white;
-  padding: 2px;
+  padding: 0; /* Remove padding to cover fully */
 }
 
 .company-logo img {
@@ -119,14 +119,18 @@
 }
 
 .company-info p {
-  font-size: 11px;
+  font-size: 10px; /* Smaller font */
   font-weight: 600;
   margin: 4px 0 0;
   color: #8B3A1E;
   text-transform: uppercase;
-  letter-spacing: 1.5px;
+  letter-spacing: 1px;
   opacity: 0.8;
   text-align: left;
+  white-space: nowrap; /* One line */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px; /* Constraint for one line */
 }
 
 .close-btn {
@@ -217,6 +221,24 @@
 .logout-btn:hover {
   background: #FFEBEE;
   color: #B71C1C;
+}
+
+.login-btn {
+  margin-top: auto;
+  margin-bottom: 24px;
+  color: #2E7D32;
+  border-top: 1px solid #F5F5F5;
+  padding-top: 24px;
+  border-radius: 0;
+}
+
+.login-btn svg {
+  color: #2E7D32;
+}
+
+.login-btn:hover {
+  background: #E8F5E9;
+  color: #1B5E20;
 }
 
 /* Add a floating pattern */
