@@ -8,7 +8,7 @@ import {
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
-import { RestaurantProvider } from "./context/RestaurantContext";
+import { RestaurantProvider, useRestaurant } from "./context/RestaurantContext";
 
 import "./App.css";
 
@@ -170,6 +170,8 @@ function PageSkeleton() {
   );
 }
 
+const ScanQRPage    = lazy(() => import("./pages/scan_qr"));
+
 // ─── Auth guard ───────────────────────────────────────────────────────────────
 function RequireAuth({ children }) {
   const { isAuthenticated, loading } = useAuth();
@@ -182,6 +184,19 @@ function RequireAuth({ children }) {
     return <Navigate to={`/login?redirect=${redirect}`} replace />;
   }
 
+  return children;
+}
+
+// ─── Restaurant guard ─────────────────────────────────────────────────────────
+function RequireRestaurant({ children }) {
+  const { restaurantId, restaurantLoading } = useRestaurant();
+  
+  if (restaurantLoading) return <PageSkeleton />;
+  
+  if (!restaurantId) {
+    return <ScanQRPage />;
+  }
+  
   return children;
 }
 
@@ -199,36 +214,38 @@ function AppRoutes() {
         Result: the skeleton appears instantly when navigating, not after a delay.
       */}
       <Suspense key={location.pathname} fallback={<PageSkeleton />}>
-        <Routes location={location}>
-          {/* QR Entry */}
-          <Route path="/order/:restaurantId/:tableId" element={<MenuPage />} />
+        <RequireRestaurant>
+          <Routes location={location}>
+            {/* QR Entry */}
+            <Route path="/order/:restaurantId/:tableId" element={<MenuPage />} />
 
-          {/* Public */}
-          <Route path="/"           element={<HomePage />} />
-          <Route path="/menu"       element={<MenuPage />} />
-          <Route path="/orders"     element={<MyOrdersPage />} />
-          <Route path="/search"     element={<SearchPage />} />
-          <Route path="/popular"    element={<MostPopularPage />} />
-          <Route path="/discounts"  element={<DiscountsPage />} />
-          <Route path="/onboarding" element={<OnboardingPage />} />
-          <Route path="/login"      element={<LoginPage />} />
-          <Route path="/about"      element={<AboutPage />} />
+            {/* Public */}
+            <Route path="/"           element={<HomePage />} />
+            <Route path="/menu"       element={<MenuPage />} />
+            <Route path="/orders"     element={<MyOrdersPage />} />
+            <Route path="/search"     element={<SearchPage />} />
+            <Route path="/popular"    element={<MostPopularPage />} />
+            <Route path="/discounts"  element={<DiscountsPage />} />
+            <Route path="/onboarding" element={<OnboardingPage />} />
+            <Route path="/login"      element={<LoginPage />} />
+            <Route path="/about"      element={<AboutPage />} />
 
-          {/* Protected */}
-          <Route path="/profile"       element={<RequireAuth><ProfilePage /></RequireAuth>} />
-          <Route path="/settings"      element={<RequireAuth><SettingsPage /></RequireAuth>} />
-          <Route path="/likes"         element={<RequireAuth><LikesPage /></RequireAuth>} />
-          <Route path="/recent"        element={<RequireAuth><RecentOrdersPage /></RequireAuth>} />
-          <Route path="/live-queue"    element={<RequireAuth><LiveQueuePage /></RequireAuth>} />
-          <Route path="/feedback"      element={<RequireAuth><FeedbackPage /></RequireAuth>} />
-          <Route path="/feedback/:orderId" element={<RequireAuth><FeedbackPage /></RequireAuth>} />
-          <Route path="/order-history" element={<RequireAuth><OrderHistoryPage /></RequireAuth>} />
+            {/* Protected */}
+            <Route path="/profile"       element={<RequireAuth><ProfilePage /></RequireAuth>} />
+            <Route path="/settings"      element={<RequireAuth><SettingsPage /></RequireAuth>} />
+            <Route path="/likes"         element={<RequireAuth><LikesPage /></RequireAuth>} />
+            <Route path="/recent"        element={<RequireAuth><RecentOrdersPage /></RequireAuth>} />
+            <Route path="/live-queue"    element={<RequireAuth><LiveQueuePage /></RequireAuth>} />
+            <Route path="/feedback"      element={<RequireAuth><FeedbackPage /></RequireAuth>} />
+            <Route path="/feedback/:orderId" element={<RequireAuth><FeedbackPage /></RequireAuth>} />
+            <Route path="/order-history" element={<RequireAuth><OrderHistoryPage /></RequireAuth>} />
 
-          {/* Dev */}
-          <Route path="/test-webhook" element={<TestWebhookPage />} />
+            {/* Dev */}
+            <Route path="/test-webhook" element={<TestWebhookPage />} />
 
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </RequireRestaurant>
       </Suspense>
     </RestaurantProvider>
   );
