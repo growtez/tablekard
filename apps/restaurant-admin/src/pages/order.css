@@ -421,7 +421,8 @@
 /* Status Pills */
 /* Status Pills & Selects */
 .order-status-pill,
-.order-status-select {
+.order-status-select,
+.payment-status-pill {
   display: inline-block;
   padding: 6px 30px 6px 14px;
   border-radius: 12px;
@@ -438,15 +439,57 @@
   background-position: right 10px center;
 }
 
-.order-status-select:focus {
+.order-status-select:focus,
+.payment-status-pill:focus {
   outline: none;
   box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.5);
 }
 
-.order-status-select option {
+.order-status-select option,
+.payment-status-pill option {
   background-color: #FFFFFF;
   color: #1A202C;
   font-weight: normal;
+}
+
+.view-order-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background-color: #F1F5F9;
+  color: #64748B;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.view-order-btn:hover {
+  background-color: #E2E8F0;
+  color: #1E293B;
+  transform: scale(1.05);
+}
+
+.status-paid {
+  background-color: #C6F6D5;
+  color: #22543D;
+}
+
+.status-pending {
+  background-color: #FEEA9A;
+  color: #744210;
+}
+
+.status-failed {
+  background-color: #FED7D7;
+  color: #742A2A;
+}
+
+.status-refunded {
+  background-color: #E9D8FD;
+  color: #553C9A;
 }
 
 .status-yellow {

@@ -102,6 +102,8 @@ export function usePaymentTransactions(restaurantId: string | null) {
     queryFn: () => getPaymentTransactions(restaurantId!),
     enabled: !!restaurantId,
     staleTime: STALE_30S,
+    refetchOnWindowFocus: false,
+    refetchInterval: 5_000,
     retry: 3,
   });
 }
@@ -113,6 +115,8 @@ export function useRevenueData(restaurantId: string | null) {
     queryFn: () => getRevenueData(restaurantId!),
     enabled: !!restaurantId,
     staleTime: STALE_30S,
+    refetchOnWindowFocus: false,
+    refetchInterval: 5_000,
     retry: 3,
   });
 }
