@@ -640,18 +640,30 @@ export const getPaymentTransactions = async (restaurantId: string): Promise<Paym
         const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
         const table = Array.isArray(row.restaurant_tables) ? row.restaurant_tables[0] : row.restaurant_tables;
 
+        let pStatus = (row.payment_status || 'pending').toLowerCase();
+        const createdDate = new Date(row.created_at);
+        const hoursSinceCreation = (Date.now() - createdDate.getTime()) / (1000 * 60 * 60);
+
+        if (pStatus === 'pending' && hoursSinceCreation > 6) {
+            pStatus = 'failed';
+            // Lazily update the database in the background so the failure is persisted
+            updatePaymentStatus(row.id, 'failed').catch(err => 
+                console.error('Failed to auto-cancel old pending payment:', err)
+            );
+        }
+
         return {
             id: row.id,
             orderNumber: row.order_number || 'UNKNOWN',
             customerName: profile?.name || 'Guest',
             tableNo: table?.table_number ? `Table ${table.table_number}` : 'N/A',
-            dateTime: new Date(row.created_at).toLocaleString('en-US', {
+            dateTime: createdDate.toLocaleString('en-US', {
                 month: 'short', day: '2-digit', year: 'numeric',
                 hour: '2-digit', minute: '2-digit'
             }),
             paymentMethod: row.payment_method || 'Cash',
-            paymentStatus: (row.payment_status || 'pending').charAt(0).toUpperCase() + (row.payment_status || 'pending').slice(1),
-            statusColor: (row.payment_status || 'pending').toLowerCase(),
+            paymentStatus: pStatus.charAt(0).toUpperCase() + pStatus.slice(1),
+            statusColor: pStatus,
             amount: Number(row.total) || 0,
             orderItems: Array.isArray(row.order_items) ? row.order_items : [],
             createdAt: row.created_at
