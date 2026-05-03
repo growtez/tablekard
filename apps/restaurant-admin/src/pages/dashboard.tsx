@@ -3,33 +3,12 @@ import { TrendingUp, X, User, Clock } from 'lucide-react';
 import './dashboard.css';
 import Sidebar from '../components/sidebar';
 
+import { useAuth } from '../context/AuthContext';
+import { useDashboardOrders, useInvalidateQueries, useRevenueData } from '../hooks/useSupabaseQuery';
+import { updateOrderStatus, updatePaymentStatus } from '../services/supabaseService';
+import type { DashboardOrder } from '../services/supabaseService';
+
 // Type Definitions
-interface OrderItem {
-  name: string;
-  quantity: number;
-  price: number;
-}
-
-interface Order {
-  id: string;
-  table: string;
-  orderedTime: string;
-  status: string;
-  statusColor: string;
-  customer: string;
-  items: OrderItem[];
-  total: number;
-  isPaid: boolean;
-}
-
-interface Payment {
-  id: number;
-  table: string;
-  customer: string;
-  amount: number;
-  time: string;
-}
-
 interface BestSellingDish {
   name: string;
   sold: number;
@@ -40,15 +19,15 @@ interface BestSellingDish {
 
 // Component Props Interfaces
 interface OrderDetailsDialogProps {
-  order: Order | null;
+  order: DashboardOrder | null;
   onClose: () => void;
   onMarkServed: (orderId: string) => void;
 }
 
 interface AllOrdersDialogProps {
-  orders: Order[];
+  orders: DashboardOrder[];
   onClose: () => void;
-  onSelectOrder: (order: Order) => void;
+  onSelectOrder: (order: DashboardOrder) => void;
   onMarkServed: (orderId: string) => void;
 }
 
@@ -70,7 +49,7 @@ const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({ order, onClose,
           <div className="order-summary">
             <div className="order-id-section">
               <div className="order-label">Order ID</div>
-              <div className="order-value">{order.id}</div>
+              <div className="order-value">{order.orderNumber}</div>
             </div>
             <div className="order-status-section">
               <div className="order-label">Status</div>
@@ -87,7 +66,7 @@ const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({ order, onClose,
             </div>
             <div>
               <div className="order-label">Ordered Time</div>
-              <div className="order-value">{order.orderedTime}</div>
+              <div className="order-value">{order.time}</div>
             </div>
             <div>
               <div className="order-label">Customer</div>
@@ -98,13 +77,13 @@ const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({ order, onClose,
           <div className="order-items-section">
             <div className="order-label">Items Ordered</div>
             <div className="order-items-list">
-              {order.items.map((item, idx) => (
+              {order.rawItems && order.rawItems.map((item, idx) => (
                 <div key={idx} className="order-item">
                   <div>
                     <div className="order-item-name">{item.name}</div>
                     <div className="order-item-qty">Qty: {item.quantity}</div>
                   </div>
-                  <div className="order-item-price">₹{item.price}</div>
+                  <div className="order-item-price">₹{item.price || 0}</div>
                 </div>
               ))}
             </div>
@@ -115,7 +94,7 @@ const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({ order, onClose,
             <div className="order-total-amount">₹{order.total}</div>
           </div>
 
-          {order.status !== 'Served' && (
+          {order.status !== 'Served' && order.status !== 'Completed' && (
             <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
               <button
                 className="served-action-btn"
@@ -165,7 +144,7 @@ const AllOrdersDialog: React.FC<AllOrdersDialogProps & { showAction?: boolean }>
                   onClose();
                   onSelectOrder(order);
                 }} style={{ cursor: 'pointer' }}>
-                  {order.id}
+                  {order.orderNumber}
                 </td>
                 <td onClick={() => {
                   onClose();
@@ -177,7 +156,7 @@ const AllOrdersDialog: React.FC<AllOrdersDialogProps & { showAction?: boolean }>
                   onClose();
                   onSelectOrder(order);
                 }} style={{ cursor: 'pointer' }}>
-                  {order.orderedTime}
+                  {order.time}
                 </td>
                 <td onClick={() => {
                   onClose();
@@ -195,7 +174,7 @@ const AllOrdersDialog: React.FC<AllOrdersDialogProps & { showAction?: boolean }>
                 </td>
                 {showAction && (
                   <td>
-                    {order.status !== 'Served' ? (
+                    {order.status !== 'Served' && order.status !== 'Completed' ? (
                       <button
                         className="served-action-btn"
                         onClick={(e) => {
@@ -221,290 +200,68 @@ const AllOrdersDialog: React.FC<AllOrdersDialogProps & { showAction?: boolean }>
 
 // Main Dashboard Component
 const Dashboard: React.FC = () => {
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const { activeRestaurantId } = useAuth();
+  
+  // React Query cached orders
+  const { data: orders = [], isLoading } = useDashboardOrders(activeRestaurantId);
+  const { data: revenueData = [], isLoading: loadingRevenue } = useRevenueData(activeRestaurantId);
+  const { invalidateOrders } = useInvalidateQueries();
+
+  const [selectedOrder, setSelectedOrder] = useState<DashboardOrder | null>(null);
   const [showAllOrders, setShowAllOrders] = useState<boolean>(false);
   const [showAllCompleted, setShowAllCompleted] = useState<boolean>(false);
-  const [orders, setOrders] = useState<Order[]>([
-    {
-      id: 'ORDER-234',
-      table: 'Table 7',
-      orderedTime: '12:35 PM - Oct 02, 2025',
-      status: 'Preparing',
-      statusColor: 'preparing',
-      customer: 'Rajesh Kumar',
-      items: [
-        { name: 'Butter Chicken', quantity: 2, price: 450 },
-        { name: 'Garlic Naan', quantity: 4, price: 160 },
-        { name: 'Dal Makhani', quantity: 1, price: 280 }
-      ],
-      total: 890,
-      isPaid: false
-    },
-    {
-      id: 'ORDER-235',
-      table: 'Table 3',
-      orderedTime: '12:30 PM - Oct 02, 2025',
-      status: 'Ready',
-      statusColor: 'ready',
-      customer: 'Priya Sharma',
-      items: [
-        { name: 'Paneer Tikka', quantity: 1, price: 380 },
-        { name: 'Tandoori Roti', quantity: 3, price: 90 }
-      ],
-      total: 470,
-      isPaid: true
-    },
-    {
-      id: 'ORDER-237',
-      table: 'Table 10',
-      orderedTime: '12:25 PM - Oct 02, 2025',
-      status: 'Preparing',
-      statusColor: 'preparing',
-      customer: 'Sneha Reddy',
-      items: [
-        { name: 'Biryani', quantity: 1, price: 420 },
-        { name: 'Raita', quantity: 1, price: 80 }
-      ],
-      total: 500,
-      isPaid: false
-    },
-    {
-      id: 'ORDER-238',
-      table: 'Table 2',
-      orderedTime: '12:20 PM - Oct 02, 2025',
-      status: 'Ready',
-      statusColor: 'ready',
-      customer: 'Vikram Singh',
-      items: [
-        { name: 'Chole Bhature', quantity: 2, price: 320 }
-      ],
-      total: 320,
-      isPaid: false
-    },
-    {
-      id: 'ORDER-239',
-      table: 'Table 8',
-      orderedTime: '12:18 PM - Oct 02, 2025',
-      status: 'Preparing',
-      statusColor: 'preparing',
-      customer: 'Ananya Gupta',
-      items: [
-        { name: 'Paneer Butter Masala', quantity: 1, price: 340 },
-        { name: 'Butter Naan', quantity: 2, price: 80 }
-      ],
-      total: 420,
-      isPaid: true
-    },
-    {
-      id: 'ORDER-240',
-      table: 'Table 15',
-      orderedTime: '12:15 PM - Oct 02, 2025',
-      status: 'Ready',
-      statusColor: 'ready',
-      customer: 'Karan Malhotra',
-      items: [
-        { name: 'Tandoori Chicken', quantity: 1, price: 480 }
-      ],
-      total: 480,
-      isPaid: false
-    },
-    {
-      id: 'ORDER-241',
-      table: 'Table 6',
-      orderedTime: '12:12 PM - Oct 02, 2025',
-      status: 'Preparing',
-      statusColor: 'preparing',
-      customer: 'Divya Nair',
-      items: [
-        { name: 'Veg Thali', quantity: 1, price: 350 }
-      ],
-      total: 350,
-      isPaid: false
-    },
-    {
-      id: 'ORDER-242',
-      table: 'Table 11',
-      orderedTime: '12:10 PM - Oct 02, 2025',
-      status: 'Ready',
-      statusColor: 'ready',
-      customer: 'Rohit Desai',
-      items: [
-        { name: 'Chicken Tikka', quantity: 1, price: 400 },
-        { name: 'Jeera Rice', quantity: 1, price: 180 }
-      ],
-      total: 580,
-      isPaid: true
-    }
-  ]);
-  const [completedOrders, setCompletedOrders] = useState<Order[]>([
-    {
-      id: 'ORDER-220',
-      table: 'Table 5',
-      orderedTime: '11:45 AM - Oct 02, 2025',
-      status: 'Served',
-      statusColor: 'served',
-      customer: 'Amit Patel',
-      items: [
-        { name: 'Paneer Tikka Masala', quantity: 1, price: 380 },
-        { name: 'Butter Naan', quantity: 3, price: 120 }
-      ],
-      total: 500,
-      isPaid: true
-    },
-    {
-      id: 'ORDER-219',
-      table: 'Table 12',
-      orderedTime: '11:30 AM - Oct 02, 2025',
-      status: 'Served',
-      statusColor: 'served',
-      customer: 'Sanjay Khanna',
-      items: [
-        { name: 'Chicken Biryani', quantity: 2, price: 840 },
-        { name: 'Raita', quantity: 2, price: 160 }
-      ],
-      total: 1000,
-      isPaid: true
-    },
-    {
-      id: 'ORDER-218',
-      table: 'Table 8',
-      orderedTime: '11:20 AM - Oct 02, 2025',
-      status: 'Served',
-      statusColor: 'served',
-      customer: 'Neha Kapoor',
-      items: [
-        { name: 'Dal Makhani', quantity: 1, price: 280 },
-        { name: 'Jeera Rice', quantity: 1, price: 180 },
-        { name: 'Garlic Naan', quantity: 2, price: 80 }
-      ],
-      total: 540,
-      isPaid: true
-    },
-    {
-      id: 'ORDER-217',
-      table: 'Table 3',
-      orderedTime: '11:10 AM - Oct 02, 2025',
-      status: 'Served',
-      statusColor: 'served',
-      customer: 'Ravi Mehta',
-      items: [
-        { name: 'Tandoori Chicken', quantity: 1, price: 480 },
-        { name: 'Mint Chutney', quantity: 1, price: 40 }
-      ],
-      total: 520,
-      isPaid: true
-    },
-    {
-      id: 'ORDER-216',
-      table: 'Table 14',
-      orderedTime: '10:55 AM - Oct 02, 2025',
-      status: 'Served',
-      statusColor: 'served',
-      customer: 'Pooja Singh',
-      items: [
-        { name: 'Masala Dosa', quantity: 2, price: 240 },
-        { name: 'Filter Coffee', quantity: 2, price: 120 }
-      ],
-      total: 360,
-      isPaid: true
-    },
-    {
-      id: 'ORDER-215',
-      table: 'Table 9',
-      orderedTime: '10:40 AM - Oct 02, 2025',
-      status: 'Served',
-      statusColor: 'served',
-      customer: 'Arjun Reddy',
-      items: [
-        { name: 'Veg Thali', quantity: 1, price: 350 }
-      ],
-      total: 350,
-      isPaid: false
-    },
-    {
-      id: 'ORDER-214',
-      table: 'Table 6',
-      orderedTime: '10:25 AM - Oct 02, 2025',
-      status: 'Served',
-      statusColor: 'served',
-      customer: 'Kavita Sharma',
-      items: [
-        { name: 'Chole Bhature', quantity: 1, price: 160 },
-        { name: 'Lassi', quantity: 1, price: 80 }
-      ],
-      total: 240,
-      isPaid: true
-    },
-    {
-      id: 'ORDER-213',
-      table: 'Table 11',
-      orderedTime: '10:15 AM - Oct 02, 2025',
-      status: 'Served',
-      statusColor: 'served',
-      customer: 'Manish Gupta',
-      items: [
-        { name: 'Butter Chicken', quantity: 1, price: 450 },
-        { name: 'Garlic Naan', quantity: 2, price: 80 },
-        { name: 'Raita', quantity: 1, price: 80 }
-      ],
-      total: 610,
-      isPaid: true
-    },
-    {
-      id: 'ORDER-212',
-      table: 'Table 4',
-      orderedTime: '10:00 AM - Oct 02, 2025',
-      status: 'Served',
-      statusColor: 'served',
-      customer: 'Deepika Iyer',
-      items: [
-        { name: 'Paneer Butter Masala', quantity: 1, price: 340 },
-        { name: 'Tandoori Roti', quantity: 4, price: 120 }
-      ],
-      total: 460,
-      isPaid: true
-    },
-    {
-      id: 'ORDER-211',
-      table: 'Table 7',
-      orderedTime: '09:45 AM - Oct 02, 2025',
-      status: 'Served',
-      statusColor: 'served',
-      customer: 'Rahul Verma',
-      items: [
-        { name: 'Chicken Tikka', quantity: 1, price: 400 },
-        { name: 'Butter Naan', quantity: 3, price: 120 },
-        { name: 'Green Salad', quantity: 1, price: 100 }
-      ],
-      total: 620,
-      isPaid: true
-    }
-  ]);
-  const [pendingPayments, setPendingPayments] = useState<Payment[]>([
-    { id: 1, table: 'Table 7', customer: 'Rajesh Kumar', amount: 890, time: '15 mins ago' },
-    { id: 2, table: 'Table 12', customer: 'Meera Iyer', amount: 1250, time: '8 mins ago' },
-    { id: 3, table: 'Table 4', customer: 'Arun Verma', amount: 675, time: '5 mins ago' }
-  ]);
 
-  const handlePaymentComplete = (paymentId: number): void => {
-    setPendingPayments(pendingPayments.filter(payment => payment.id !== paymentId));
+  const handlePaymentComplete = async (paymentId: string) => {
+    try {
+      await updatePaymentStatus(paymentId, 'completed');
+      if (activeRestaurantId) invalidateOrders(activeRestaurantId);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to update payment status');
+    }
   };
 
-  const handleMarkServed = (orderId: string): void => {
-    const servedOrder = orders.find(order => order.id === orderId);
-    if (servedOrder) {
-      const completedOrder = {
-        ...servedOrder,
-        status: 'Served',
-        statusColor: 'served'
-      };
-      setCompletedOrders([completedOrder, ...completedOrders]);
+  const handleMarkServed = async (orderId: string) => {
+    try {
+      await updateOrderStatus(orderId, 'SERVED');
+      if (activeRestaurantId) invalidateOrders(activeRestaurantId);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to mark order as served');
     }
-    setOrders(orders.filter(order => order.id !== orderId));
   };
 
-  // Filter out served orders for active orders display
-  const activeOrders = orders.filter(order => order.status !== 'Served');
+  // Filter orders
+  const activeOrders = orders.filter(order => order.status !== 'Served' && order.status !== 'Completed' && order.status !== 'Cancelled');
+  const completedOrders = orders.filter(order => order.status === 'Served' || order.status === 'Completed');
+  const pendingPayments = orders.filter(order => !order.isPaid && order.status !== 'Cancelled');
+
+  // Revenue calc
+  const todayDate = new Date().toISOString().split('T')[0];
+  const yesterdayDate = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+  
+  const revenueToday = revenueData.find(r => r.revenueDate === todayDate)?.totalRevenue || 0;
+  const revenueYesterday = revenueData.find(r => r.revenueDate === yesterdayDate)?.totalRevenue || 0;
+  const todayChange = revenueYesterday === 0 ? (revenueToday > 0 ? 100 : 0) : Math.round(((revenueToday - revenueYesterday) / revenueYesterday) * 100);
+
+  const now = new Date();
+  const startOfThisWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+  const startOfLastWeek = new Date(startOfThisWeek.getTime() - 7 * 86400000);
+  
+  let revenueThisWeek = 0;
+  let revenueLastWeek = 0;
+  
+  revenueData.forEach(r => {
+      const [year, month, day] = r.revenueDate.split('-');
+      const rDate = new Date(Number(year), Number(month) - 1, Number(day));
+      if (rDate >= startOfThisWeek) {
+          revenueThisWeek += r.totalRevenue;
+      } else if (rDate >= startOfLastWeek && rDate < startOfThisWeek) {
+          revenueLastWeek += r.totalRevenue;
+      }
+  });
+  
+  const weekChange = revenueLastWeek === 0 ? (revenueThisWeek > 0 ? 100 : 0) : Math.round(((revenueThisWeek - revenueLastWeek) / revenueLastWeek) * 100);
 
   const bestSelling: BestSellingDish[] = [
     { name: 'Butter Chicken', sold: 45, trend: '+12%', revenue: 20250, image: '🍗' },
@@ -513,7 +270,7 @@ const Dashboard: React.FC = () => {
     { name: 'Biryani', sold: 32, trend: '+5%', revenue: 13440, image: '🍛' }
   ];
 
-  const totalPending: number = pendingPayments.reduce((sum, payment) => sum + payment.amount, 0);
+  const totalPending: number = pendingPayments.reduce((sum, payment) => sum + payment.total, 0);
 
   return (
     <div className="dashboard-container">
@@ -528,20 +285,24 @@ const Dashboard: React.FC = () => {
           <div className="revenue-card">
             <div className="card-top-bar card-top-bar-green"></div>
             <h3 className="card-title">Revenue Today</h3>
-            <div className="revenue-amount">₹ 1,25,300</div>
+            <div className="revenue-amount">₹ {loadingRevenue ? '...' : revenueToday.toLocaleString()}</div>
             <div className="revenue-change">
-              <span className="change-text change-positive">+15% vs yesterday</span>
-              <TrendingUp size={16} color="#68D391" className="trend-icon" />
+              <span className={`change-text ${todayChange >= 0 ? 'change-positive' : 'change-negative'}`} style={{ color: todayChange < 0 ? '#E53E3E' : undefined }}>
+                {todayChange > 0 ? '+' : ''}{todayChange}% vs yesterday
+              </span>
+              <TrendingUp size={16} color={todayChange >= 0 ? "#68D391" : "#E53E3E"} className="trend-icon" style={todayChange < 0 ? { transform: 'rotate(180deg)' } : undefined} />
             </div>
           </div>
 
           <div className="revenue-card">
             <div className="card-top-bar card-top-bar-blue"></div>
             <h3 className="card-title">Revenue This Week</h3>
-            <div className="revenue-amount">₹ 8,90,000</div>
+            <div className="revenue-amount">₹ {loadingRevenue ? '...' : revenueThisWeek.toLocaleString()}</div>
             <div className="revenue-change">
-              <span className="change-text change-blue">+8% vs last week</span>
-              <TrendingUp size={16} color="#7F9CF5" className="trend-icon" />
+              <span className={`change-text ${weekChange >= 0 ? 'change-blue' : 'change-negative'}`} style={{ color: weekChange < 0 ? '#E53E3E' : undefined }}>
+                {weekChange > 0 ? '+' : ''}{weekChange}% vs last week
+              </span>
+              <TrendingUp size={16} color={weekChange >= 0 ? "#7F9CF5" : "#E53E3E"} className="trend-icon" style={weekChange < 0 ? { transform: 'rotate(180deg)' } : undefined} />
             </div>
           </div>
         </div>
@@ -565,16 +326,20 @@ const Dashboard: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {activeOrders.slice(0, 5).map((order, idx) => (
+                    {isLoading ? (
+                      <tr><td colSpan={5} style={{textAlign: 'center', padding: '32px', color: '#A0AEC0'}}>Loading active orders...</td></tr>
+                    ) : activeOrders.length === 0 ? (
+                      <tr><td colSpan={5} style={{textAlign: 'center', padding: '32px', color: '#A0AEC0'}}>No active orders</td></tr>
+                    ) : activeOrders.slice(0, 5).map((order, idx) => (
                       <tr key={idx}>
                         <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
-                          {order.id}
+                          {order.orderNumber}
                         </td>
                         <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
                           {order.table}
                         </td>
                         <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
-                          {order.orderedTime}
+                          {order.time}
                         </td>
                         <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
                           <span className={`status-pill status-${order.statusColor}`}>
@@ -616,7 +381,9 @@ const Dashboard: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {completedOrders.length === 0 ? (
+                    {isLoading ? (
+                      <tr><td colSpan={5} style={{textAlign: 'center', padding: '32px', color: '#A0AEC0'}}>Loading completed orders...</td></tr>
+                    ) : completedOrders.length === 0 ? (
                       <tr>
                         <td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>
                           No completed orders yet
@@ -626,13 +393,13 @@ const Dashboard: React.FC = () => {
                       completedOrders.slice(0, 5).map((order, idx) => (
                         <tr key={idx}>
                           <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
-                            {order.id}
+                            {order.orderNumber}
                           </td>
                           <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
                             {order.table}
                           </td>
                           <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
-                            {order.orderedTime}
+                            {order.time}
                           </td>
                           <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
                             <span className={`status-pill status-${order.statusColor}`}>
@@ -676,7 +443,11 @@ const Dashboard: React.FC = () => {
             <div className="widget-card">
               <h3 className="widget-title">⚠️ Pending Payments</h3>
               <div className="pending-payments-list">
-                {pendingPayments.map((payment) => (
+                {isLoading ? (
+                  <div style={{textAlign: 'center', padding: '16px', color: '#A0AEC0', fontSize: '13px'}}>Loading...</div>
+                ) : pendingPayments.length === 0 ? (
+                  <div style={{textAlign: 'center', padding: '16px', color: '#A0AEC0', fontSize: '13px'}}>No pending payments</div>
+                ) : pendingPayments.map((payment) => (
                   <div key={payment.id} className="payment-item">
                     <div className="payment-info">
                       <div className="payment-table">{payment.table}</div>
@@ -690,7 +461,7 @@ const Dashboard: React.FC = () => {
                       </div>
                     </div>
                     <div className="payment-action">
-                      <div className="payment-amount">₹{payment.amount}</div>
+                      <div className="payment-amount">₹{payment.total}</div>
                       <button
                         className="mark-paid-btn"
                         onClick={() => handlePaymentComplete(payment.id)}
