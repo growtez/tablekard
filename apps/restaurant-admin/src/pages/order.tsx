@@ -1,12 +1,14 @@
 import React, { useState, useMemo } from 'react';
-import { Search, TrendingUp, Filter, Calendar } from 'lucide-react';
+import { Search, TrendingUp, Filter, Calendar, Eye } from 'lucide-react';
 import Sidebar from '../components/sidebar';
 import { useAuth } from '../context/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
-import { updateOrderStatus } from '../services/supabaseService';
+import { updateOrderStatus, updatePaymentStatus } from '../services/supabaseService';
+import type { DashboardOrder } from '../services/supabaseService';
 import { useDashboardOrders, useInvalidateQueries, queryKeys, useRevenueData } from '../hooks/useSupabaseQuery';
+import OrderDetailModal from '../components/OrderDetailModal';
 import './order.css';
-
+ 
 const Order: React.FC = () => {
   const { activeRestaurantId } = useAuth();
   const [selectedTable, setSelectedTable] = useState('All Tables');
@@ -14,6 +16,7 @@ const Order: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState('Status');
   const [selectedDate, setSelectedDate] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedOrder, setSelectedOrder] = useState<DashboardOrder | null>(null);
 
   // React Query: cached, auto-retries, refetches every 5s (defined in hook)
   const { data: orders = [], isLoading: loading } = useDashboardOrders(activeRestaurantId);
@@ -91,6 +94,38 @@ const Order: React.FC = () => {
     } catch (err) {
       console.error('Failed to update status', err);
       // 2. Rollback if failed
+      if (previousOrders) {
+        queryClient.setQueryData(queryKey, previousOrders);
+      }
+    }
+  };
+
+  const handlePaymentStatusChange = async (orderId: string, newStatus: string) => {
+    if (!activeRestaurantId) return;
+
+    const queryKey = queryKeys.dashboardOrders(activeRestaurantId);
+    const previousOrders = queryClient.getQueryData<any[]>(queryKey);
+
+    // 1. Optimistically update the cache
+    queryClient.setQueryData(queryKey, (old: any[] | undefined) => {
+      if (!old) return [];
+      return old.map(order => {
+        if (order.id === orderId) {
+          return {
+            ...order,
+            paymentStatus: newStatus.charAt(0).toUpperCase() + newStatus.slice(1),
+            paymentStatusColor: newStatus.toLowerCase()
+          };
+        }
+        return order;
+      });
+    });
+
+    try {
+      await updatePaymentStatus(orderId, newStatus);
+      invalidateOrders(activeRestaurantId);
+    } catch (err) {
+      console.error('Failed to update payment status', err);
       if (previousOrders) {
         queryClient.setQueryData(queryKey, previousOrders);
       }
@@ -274,24 +309,27 @@ const Order: React.FC = () => {
               <thead>
                 <tr>
                   <th>Order ID</th>
+                  <th>Customer Name</th>
                   <th>Table</th>
-                  <th>Date</th>
-                  <th>Time</th>
-                  <th>Status</th>
+                  <th>Date & Time</th>
+                  <th> Order Status</th>
                   <th>Payment Method</th>
+                  <th>Payment Status</th>
+                  <th>Order Type</th>
                   <th>Items</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>
+                    <td colSpan={10} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>
                       Loading orders...
                     </td>
                   </tr>
                 ) : filteredOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>
+                    <td colSpan={10} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>
                       No orders found
                     </td>
                   </tr>
@@ -299,9 +337,12 @@ const Order: React.FC = () => {
                   filteredOrders.map((order) => (
                     <tr key={order.id}>
                       <td className="order-id-cell">{order.orderNumber}</td>
+                      <td>{order.customerName}</td>
                       <td>{order.table}</td>
-                      <td>{new Date(order.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</td>
-                      <td>{order.time}</td>
+                      <td>
+                        <div style={{ fontSize: '14px', fontWeight: '500' }}>{new Date(order.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                        <div style={{ fontSize: '12px', color: '#718096' }}>{order.time}</div>
+                      </td>
                       <td>
                         <select
                           className={`order-status-select ${getStatusClass(order.statusColor)}`}
@@ -320,7 +361,30 @@ const Order: React.FC = () => {
                           {order.paymentMethod}
                         </span>
                       </td>
+                      <td>
+                        <select
+                          className={`payment-status-pill status-${order.paymentStatusColor}`}
+                          value={order.paymentStatus}
+                          onChange={(e) => handlePaymentStatusChange(order.id, e.target.value)}
+                          title="Change payment status"
+                        >
+                          <option value="Paid">Paid</option>
+                          <option value="Pending">Pending</option>
+                          <option value="Failed">Failed</option>
+                          <option value="Refunded">Refunded</option>
+                        </select>
+                      </td>
+                      <td style={{ textTransform: 'capitalize' }}>{order.orderType?.replace('_', ' ')}</td>
                       <td className="order-items-cell">{order.items}</td>
+                      <td>
+                        <button 
+                          className="view-order-btn" 
+                          onClick={() => setSelectedOrder(order)}
+                          title="View Details"
+                        >
+                          <Eye size={18} />
+                        </button>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -329,6 +393,12 @@ const Order: React.FC = () => {
           </div>
         </div>
       </div>
+      {selectedOrder && (
+        <OrderDetailModal 
+          order={selectedOrder} 
+          onClose={() => setSelectedOrder(null)} 
+        />
+      )}
     </div>
   );
 };
