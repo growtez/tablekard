@@ -18,9 +18,10 @@ import {
   getRestaurantTables,
   getRestaurantById,
   getRevenueData,
+  getBestSellingDishes,
 } from '../services/supabaseService';
 import type { MenuItem, MenuCategory, Restaurant, Order } from '@restaurant-saas/types';
-import type { DashboardOrder, PaymentTransaction, RestaurantTable, RevenueRecord } from '../services/supabaseService';
+import type { DashboardOrder, PaymentTransaction, RestaurantTable, RevenueRecord, BestSellingDish } from '../services/supabaseService';
 
 // ─── Stale times ────────────────────────────────────────────────────
 const STALE_30S = 30 * 1000;   // data pages (orders, payments)
@@ -36,6 +37,7 @@ export const queryKeys = {
   payments: (restaurantId: string) => ['payments', restaurantId] as const,
   tables: (restaurantId: string) => ['tables', restaurantId] as const,
   revenue: (restaurantId: string) => ['revenue', restaurantId] as const,
+  bestSelling: (restaurantId: string) => ['bestSelling', restaurantId] as const,
 };
 
 // ─── Restaurant ─────────────────────────────────────────────────────
@@ -111,6 +113,17 @@ export function useRevenueData(restaurantId: string | null) {
     queryFn: () => getRevenueData(restaurantId!),
     enabled: !!restaurantId,
     staleTime: STALE_30S,
+    retry: 3,
+  });
+}
+
+// ─── Best Selling ───────────────────────────────────────────────────
+export function useBestSellingDishes(restaurantId: string | null) {
+  return useQuery<BestSellingDish[]>({
+    queryKey: queryKeys.bestSelling(restaurantId ?? ''),
+    queryFn: () => getBestSellingDishes(restaurantId!),
+    enabled: !!restaurantId,
+    staleTime: STALE_2M,
     retry: 3,
   });
 }
