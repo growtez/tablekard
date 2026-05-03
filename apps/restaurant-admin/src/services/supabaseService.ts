@@ -28,7 +28,7 @@ interface RestaurantRow {
     contact_email: string | null; contact_phone: string | null; contact_address: string | null;
     logo_url: string | null; primary_color: string | null; secondary_color: string | null;
     profile_urls: string[] | null; settings: Record<string, unknown> | null;
-    subscription_status: boolean; subscription_type: string | null;
+    subscription_status: boolean; subscription_type: string | null; subscription_end_at: string | null;
     latitude: number | null; longitude: number | null; allowed_radius: number | null;
     opening_date: string | null; tagline: string | null; manifesto: string | null;
     operating_hours_weekdays: string | null; operating_hours_weekends: string | null;
@@ -62,10 +62,10 @@ interface MenuCategoryRow {
 interface OrderRow {
     id: string; restaurant_id: string; order_number: string; type: string;
     table_number: number | null; customer_id: string | null;
-    customer_name: string | null; customer_phone: string | null;
     subtotal: number; taxes: number; discount: number; total: number;
     status: string; payment_method: string; payment_status: string;
     transaction_id: string | null; created_at: string; updated_at: string;
+    profiles?: { name?: string; email?: string } | { name?: string; email?: string }[];
 }
 
 export interface RestaurantProfileUpdateInput {
@@ -123,6 +123,7 @@ const mapRestaurantRow = (row: RestaurantRow): Restaurant => ({
     settings: row.settings ?? undefined,
     subscriptionStatus: row.subscription_status,
     subscriptionType: row.subscription_type,
+    subscriptionEndAt: row.subscription_end_at,
     profileUrls: row.profile_urls ?? [],
     location: {
         latitude: row.latitude,
@@ -495,34 +496,40 @@ export const deleteMenuCategory = async (categoryId: string): Promise<void> => {
 export const getOrders = async (restaurantId: string, limitCount: number = 50): Promise<Order[]> => {
     const { data, error } = await db
         .from('orders')
-        .select('*')
+        .select(`
+            *,
+            profiles(name)
+        `)
         .eq('restaurant_id', restaurantId)
         .order('created_at', { ascending: false })
         .limit(limitCount);
     if (error) throw error;
-    return ((data ?? []) as OrderRow[]).map(row => ({
-        id: row.id,
-        restaurantId: row.restaurant_id,
-        orderNumber: row.order_number,
-        type: row.type as Order['type'],
-        tableNumber: row.table_number ?? undefined,
-        customerId: row.customer_id ?? undefined,
-        customerName: row.customer_name ?? undefined,
-        customerPhone: row.customer_phone ?? undefined,
-        items: [],
-        subtotal: row.subtotal,
-        taxes: row.taxes,
-        discount: row.discount,
-        total: row.total,
-        status: row.status as OrderStatus,
-        payment: {
-            method: row.payment_method as Order['payment']['method'],
-            status: row.payment_status as Order['payment']['status'],
-            transactionId: row.transaction_id ?? undefined
-        },
-        createdAt: row.created_at,
-        updatedAt: row.updated_at
-    }));
+    return ((data ?? []) as OrderRow[]).map(row => {
+        const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
+        return {
+            id: row.id,
+            restaurantId: row.restaurant_id,
+            orderNumber: row.order_number,
+            type: row.type as Order['type'],
+            tableNumber: row.table_number ?? undefined,
+            customerId: row.customer_id ?? undefined,
+            customerName: profile?.name ?? undefined,
+            customerPhone: undefined,
+            items: [],
+            subtotal: row.subtotal,
+            taxes: row.taxes,
+            discount: row.discount,
+            total: row.total,
+            status: row.status as OrderStatus,
+            payment: {
+                method: row.payment_method as Order['payment']['method'],
+                status: row.payment_status as Order['payment']['status'],
+                transactionId: row.transaction_id ?? undefined
+            },
+            createdAt: row.created_at,
+            updatedAt: row.updated_at
+        };
+    });
 };
 
 export interface DashboardOrder {
@@ -661,6 +668,42 @@ export const updatePaymentStatus = async (orderId: string, paymentStatus: string
 };
 
 // ==========================================
+// Revenue
+// ==========================================
+
+export interface RevenueRecord {
+    id: string;
+    restaurantId: string;
+    revenueDate: string;
+    totalOrders: number;
+    totalRevenue: number;
+    totalTax: number;
+    totalDiscount: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export const getRevenueData = async (restaurantId: string): Promise<RevenueRecord[]> => {
+    const { data, error } = await db
+        .from('revenue')
+        .select('*')
+        .eq('restaurant_id', restaurantId)
+        .order('revenue_date', { ascending: false });
+    if (error) throw error;
+    return (data || []).map((row: any) => ({
+        id: row.id,
+        restaurantId: row.restaurant_id,
+        revenueDate: row.revenue_date,
+        totalOrders: row.total_orders,
+        totalRevenue: Number(row.total_revenue),
+        totalTax: Number(row.total_tax),
+        totalDiscount: Number(row.total_discount),
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+    }));
+};
+
+// ==========================================
 // Restaurant Tables (Full CRUD Operations)
 // ==========================================
 
@@ -767,4 +810,38 @@ export const toggleTableActiveStatus = async (tableId: string, active: boolean):
         .eq('id', tableId);
 
     if (error) throw error;
+};
+
+// ==========================================
+// Subscription Payments
+// ==========================================
+
+export interface SubscriptionPaymentRecord {
+    id: string;
+    planDuration: number;
+    amount: number;
+    status: string;
+    paidAt: string | null;
+    startsAt: string | null;
+    endsAt: string | null;
+    createdAt: string;
+}
+
+export const getSubscriptionPayments = async (restaurantId: string): Promise<SubscriptionPaymentRecord[]> => {
+    const { data, error } = await db
+        .from('subscription_payments')
+        .select('id, plan_duration, amount, status, paid_at, starts_at, ends_at, created_at')
+        .eq('restaurant_id', restaurantId)
+        .order('created_at', { ascending: false });
+    if (error) throw error;
+    return ((data ?? []) as any[]).map(row => ({
+        id: row.id,
+        planDuration: row.plan_duration,
+        amount: Number(row.amount),
+        status: row.status,
+        paidAt: row.paid_at,
+        startsAt: row.starts_at,
+        endsAt: row.ends_at,
+        createdAt: row.created_at
+    }));
 };

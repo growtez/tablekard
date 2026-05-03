@@ -10,6 +10,7 @@ import Reports from "./pages/reports";
 import QRCodePage from "./pages/qrcode";
 import TableManagement from "./pages/table_management";
 import ProfilePage from "./pages/profile/profile";
+import SubscriptionPage from "./pages/subscription/subscription";
 
 
 
@@ -71,6 +72,9 @@ function AppRoutes() {
       } />
       <Route path="/profile" element={
         <ProtectedRoute><ProfilePage /></ProtectedRoute>
+      } />
+      <Route path="/subscription" element={
+        <ProtectedRoute><SubscriptionPage /></ProtectedRoute>
       } />
     </Routes>
   );

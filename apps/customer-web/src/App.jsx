@@ -12,6 +12,20 @@ import { RestaurantProvider } from "./context/RestaurantContext";
 
 import "./App.css";
 
+// ─── Scroll-to-top on every route change ─────────────────────────────────────
+// React Router does not reset scroll position on navigation.
+// This component listens to pathname changes and snaps the page to the top.
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    // Reset both window and any scrollable document element
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [pathname]);
+  return null;
+}
+
 // ─── Lazy pages ───────────────────────────────────────────────────────────────
 const HomePage        = lazy(() => import("./pages/home"));
 const MenuPage        = lazy(() => import("./pages/menu"));
@@ -259,6 +273,7 @@ function App() {
       <CartProvider>
         <ThemeProvider>
           <Router>
+            <ScrollToTop />
             <MobileOnlyWrapper>
               <div className="App">
                 <AppRoutes />

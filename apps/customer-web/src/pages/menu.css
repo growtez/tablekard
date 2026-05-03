@@ -29,6 +29,11 @@ body {
   padding-bottom: 90px;
 }
 
+/* Extra bottom room when the floating "View Cart" popup is visible */
+.menu-container.has-cart {
+  padding-bottom: 200px;
+}
+
 /* Header Styles */
 .menu-header-nav {
   padding: 16px 20px;

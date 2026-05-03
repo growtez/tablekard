@@ -208,6 +208,20 @@ CREATE TABLE IF NOT EXISTS public.payment_logs (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- revenue (Analytics & Reporting)
+CREATE TABLE IF NOT EXISTS public.revenue (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    restaurant_id UUID NOT NULL REFERENCES public.restaurants(id) ON DELETE CASCADE,
+    revenue_date DATE NOT NULL,
+    total_orders INTEGER DEFAULT 0,
+    total_revenue NUMERIC NOT NULL DEFAULT 0,
+    total_tax NUMERIC DEFAULT 0,
+    total_discount NUMERIC DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (restaurant_id, revenue_date)
+);
+
 -- favorites
 CREATE TABLE IF NOT EXISTS public.favorites (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -234,10 +248,33 @@ CREATE TABLE IF NOT EXISTS public.platform_settings (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- subscription_payments (SaaS billing — separate from customer-order payments)
+CREATE TABLE IF NOT EXISTS public.subscription_payments (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    restaurant_id UUID NOT NULL REFERENCES public.restaurants(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+    plan_duration INTEGER NOT NULL,
+    amount NUMERIC NOT NULL,
+    currency TEXT DEFAULT 'INR',
+    razorpay_order_id TEXT,
+    razorpay_payment_id TEXT,
+    razorpay_signature TEXT,
+    status TEXT NOT NULL DEFAULT 'pending'
+        CHECK (status IN ('pending', 'paid', 'failed')),
+    paid_at TIMESTAMPTZ,
+    starts_at TIMESTAMPTZ,
+    ends_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Backfill schema changes for existing databases
 ALTER TABLE public.restaurants
     ADD COLUMN IF NOT EXISTS profile_urls TEXT[] DEFAULT ARRAY[]::TEXT[];
 
+ALTER TABLE public.restaurants
+    ADD COLUMN IF NOT EXISTS subscription_end_at TIMESTAMPTZ;
+
+ALTER TABLE public.payments ALTER COLUMN order_id DROP NOT NULL;
 ALTER TABLE public.menu_items
     ADD COLUMN IF NOT EXISTS serves INTEGER DEFAULT 1 CHECK (serves > 0);
 
@@ -247,6 +284,9 @@ ALTER TABLE public.menu_items
 
 CREATE INDEX IF NOT EXISTS idx_menu_item_images_menu_item
 ON public.menu_item_images(menu_item_id);
+
+CREATE INDEX IF NOT EXISTS idx_revenue_restaurant_date
+ON public.revenue(restaurant_id, revenue_date);
 
 -- ======================================================================================
 -- TRIGGERS FOR TIMESTAMPS
@@ -259,7 +299,85 @@ CREATE TRIGGER update_restaurant_tables_updated_at BEFORE UPDATE ON public.resta
 CREATE TRIGGER update_menu_categories_updated_at BEFORE UPDATE ON public.menu_categories FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
 CREATE TRIGGER update_menu_items_updated_at BEFORE UPDATE ON public.menu_items FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
 CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON public.orders FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
+CREATE TRIGGER update_revenue_updated_at BEFORE UPDATE ON public.revenue FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
 CREATE TRIGGER update_platform_settings_updated_at BEFORE UPDATE ON public.platform_settings FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
+
+-- ======================================================================================
+-- REVENUE AGGREGATION TRIGGER
+-- ======================================================================================
+
+CREATE OR REPLACE FUNCTION maintain_revenue_aggregation()
+RETURNS TRIGGER AS $$
+DECLARE
+    order_date DATE;
+BEGIN
+    -- Handle UPDATE
+    IF TG_OP = 'UPDATE' THEN
+        -- If order became paid
+        IF NEW.payment_status = 'paid' AND OLD.payment_status != 'paid' THEN
+            order_date := DATE(NEW.created_at);
+            
+            INSERT INTO public.revenue (restaurant_id, revenue_date, total_orders, total_revenue, total_tax, total_discount)
+            VALUES (NEW.restaurant_id, order_date, 1, NEW.total, NEW.taxes, NEW.discount)
+            ON CONFLICT (restaurant_id, revenue_date)
+            DO UPDATE SET 
+                total_orders = public.revenue.total_orders + 1,
+                total_revenue = public.revenue.total_revenue + NEW.total,
+                total_tax = public.revenue.total_tax + NEW.taxes,
+                total_discount = public.revenue.total_discount + NEW.discount;
+                
+        -- If order was paid and became unpaid/failed/refunded
+        ELSIF OLD.payment_status = 'paid' AND NEW.payment_status != 'paid' THEN
+            order_date := DATE(OLD.created_at);
+            
+            UPDATE public.revenue
+            SET total_orders = GREATEST(0, total_orders - 1),
+                total_revenue = GREATEST(0::numeric, total_revenue - OLD.total),
+                total_tax = GREATEST(0::numeric, total_tax - OLD.taxes),
+                total_discount = GREATEST(0::numeric, total_discount - OLD.discount)
+            WHERE restaurant_id = OLD.restaurant_id AND revenue_date = order_date;
+        END IF;
+
+    -- Handle INSERT
+    ELSIF TG_OP = 'INSERT' THEN
+        IF NEW.payment_status = 'paid' THEN
+            order_date := DATE(NEW.created_at);
+            
+            INSERT INTO public.revenue (restaurant_id, revenue_date, total_orders, total_revenue, total_tax, total_discount)
+            VALUES (NEW.restaurant_id, order_date, 1, NEW.total, NEW.taxes, NEW.discount)
+            ON CONFLICT (restaurant_id, revenue_date)
+            DO UPDATE SET 
+                total_orders = public.revenue.total_orders + 1,
+                total_revenue = public.revenue.total_revenue + NEW.total,
+                total_tax = public.revenue.total_tax + NEW.taxes,
+                total_discount = public.revenue.total_discount + NEW.discount;
+        END IF;
+        
+    -- Handle DELETE (if paid order is deleted)
+    ELSIF TG_OP = 'DELETE' THEN
+        IF OLD.payment_status = 'paid' THEN
+            order_date := DATE(OLD.created_at);
+            
+            UPDATE public.revenue
+            SET total_orders = GREATEST(0, total_orders - 1),
+                total_revenue = GREATEST(0::numeric, total_revenue - OLD.total),
+                total_tax = GREATEST(0::numeric, total_tax - OLD.taxes),
+                total_discount = GREATEST(0::numeric, total_discount - OLD.discount)
+            WHERE restaurant_id = OLD.restaurant_id AND revenue_date = order_date;
+        END IF;
+    END IF;
+
+    IF TG_OP = 'DELETE' THEN
+        RETURN OLD;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trigger_maintain_revenue ON public.orders;
+CREATE TRIGGER trigger_maintain_revenue
+    AFTER INSERT OR UPDATE OR DELETE ON public.orders
+    FOR EACH ROW EXECUTE PROCEDURE maintain_revenue_aggregation();
 
 -- ======================================================================================
 -- AUTH TRIGGER FOR PROFILES
@@ -326,9 +444,11 @@ ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.payment_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.revenue ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.favorites ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.feedback ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.platform_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.subscription_payments ENABLE ROW LEVEL SECURITY;
 
 -- ======================================================================================
 -- RLS POLICIES
@@ -339,6 +459,12 @@ CREATE POLICY "Users can read own profile" ON public.profiles FOR SELECT USING (
 CREATE POLICY "Super admins can manage all profiles" ON public.profiles FOR ALL USING (public.is_super_admin(auth.uid()));
 CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
 CREATE POLICY "Allow profile creation" ON public.profiles FOR INSERT WITH CHECK (true);
+CREATE POLICY "Restaurant members can read customer profiles" ON public.profiles FOR SELECT USING (
+  EXISTS (
+    SELECT 1 FROM public.orders o
+    WHERE o.customer_id = profiles.id AND public.is_restaurant_member(o.restaurant_id)
+  )
+);
 
 -- 2. restaurants
 CREATE POLICY "Anyone can read approved/active restaurants" ON public.restaurants FOR SELECT USING (status IN ('approved', 'active'));
@@ -393,15 +519,23 @@ CREATE POLICY "Restaurant members can read payment logs" ON public.payment_logs 
   EXISTS (SELECT 1 FROM public.payments p WHERE p.id = payment_id AND public.is_restaurant_member(p.restaurant_id))
 );
 
--- 12. favorites
+-- 12. revenue
+CREATE POLICY "Restaurant members can manage revenue" ON public.revenue FOR ALL USING (public.is_restaurant_member(restaurant_id));
+CREATE POLICY "Super admins can manage all revenue" ON public.revenue FOR ALL USING (public.is_super_admin());
+
+-- 13. favorites
 CREATE POLICY "Users can manage own favorites" ON public.favorites FOR ALL USING (user_id = auth.uid());
 
--- 13. feedback
+-- 14. feedback
 CREATE POLICY "Users can read/write own feedback" ON public.feedback FOR ALL USING (user_id = auth.uid());
 CREATE POLICY "Restaurant members can read feedback" ON public.feedback FOR SELECT USING (
   EXISTS (SELECT 1 FROM public.orders o WHERE o.id = feedback.order_id AND public.is_restaurant_member(o.restaurant_id))
 );
 
--- 14. platform_settings
+-- 15. platform_settings
 CREATE POLICY "Public can read platform settings" ON public.platform_settings FOR SELECT USING (true);
 CREATE POLICY "Super admins manage platform settings" ON public.platform_settings FOR ALL USING (public.is_super_admin());
+
+-- 16. subscription_payments
+CREATE POLICY "Restaurant members can read subscription payments" ON public.subscription_payments FOR SELECT USING (public.is_restaurant_member(restaurant_id));
+CREATE POLICY "Super admins manage subscription payments" ON public.subscription_payments FOR ALL USING (public.is_super_admin());

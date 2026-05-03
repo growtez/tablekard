@@ -57,13 +57,15 @@ export function CartProvider({ children }) {
 
     const updateQuantity = (itemId, increment) => {
         setCartItems(prev =>
-            prev.map(item => {
-                if (item.id === itemId) {
-                    const newQty = item.quantity + increment;
-                    return newQty > 0 ? { ...item, quantity: newQty } : item;
-                }
-                return item;
-            }).filter(item => item.quantity > 0)
+            prev
+                .map(item => {
+                    if (item.id === itemId) {
+                        return { ...item, quantity: item.quantity + increment };
+                    }
+                    return item;
+                })
+                // Remove item if quantity drops to 0 or below
+                .filter(item => item.quantity > 0)
         );
     };
 
