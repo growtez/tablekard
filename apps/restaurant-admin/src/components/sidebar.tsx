@@ -69,6 +69,14 @@ const ProfileIcon = ({ active }: { active: boolean }) => (
   </svg>
 );
 
+const SubscriptionIcon = ({ active }: { active: boolean }) => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2v20M2 12h20" fill={active ? 'currentColor' : 'none'} stroke={active ? 'var(--icon-stripe, #A0D9B4)' : 'currentColor'} strokeWidth="1" />
+    <path d="M20.88 18.09A5 5 0 0018 9h-1.26A8 8 0 103 16.29" fill={active ? 'currentColor' : 'none'} />
+    <path d="M16 14l-4 4-4-4M12 18V9" stroke={active ? 'var(--icon-stripe, #A0D9B4)' : 'currentColor'} />
+  </svg>
+);
+
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -92,6 +100,7 @@ const Sidebar: React.FC = () => {
     if (path.includes('/reports')) return 'report';
     if (path.includes('/qr-menu')) return 'qr-menu';
     if (path.includes('/table-management')) return 'table-management';
+    if (path.includes('/subscription')) return 'subscription';
     return 'dashboard';
   };
 
@@ -140,7 +149,8 @@ const Sidebar: React.FC = () => {
     { icon: (active) => <PaymentIcon active={active} />, label: 'Payment Management', id: 'payment', path: '/payments' },
     { icon: (active) => <ReportIcon active={active} />, label: 'Report and Analytics', id: 'report', path: '/reports' },
     // { icon: (active) => <MenuIcon active={active} />, label: "QR Menu", id: "qr-menu", path: "/qrcode" },
-    { icon: (active) => <TableIcon active={active} />, label: "Table Management", id: "table-management", path: "/table-management" }
+    { icon: (active) => <TableIcon active={active} />, label: "Table Management", id: "table-management", path: "/table-management" },
+    { icon: (active) => <SubscriptionIcon active={active} />, label: 'Subscription', id: 'subscription', path: '/subscription' }
   ];
 
   const handleNavClick = (item: NavItem) => {

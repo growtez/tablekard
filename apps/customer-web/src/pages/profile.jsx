@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import { useRestaurant } from '../context/RestaurantContext';
 import './profile.css';
 import Hamburger from '../components/hamburger';
+import { getUserStats } from '../services/supabaseService';
 
 
 const ProfilePage = () => {
@@ -16,7 +17,7 @@ const ProfilePage = () => {
   const { restaurant, tableId, tableNumber } = useRestaurant();
   const navigate = useNavigate();
   // Start as loading only if user isn't yet available, to avoid flash
-  const [isProfileLoading, setIsProfileLoading] = useState(!user);
+  const [isProfileLoading, setIsProfileLoading] = useState(true);
   const [userProfile, setUserProfile] = useState({
     name: '',
     email: '',
@@ -31,21 +32,30 @@ const ProfilePage = () => {
   });
 
   useEffect(() => {
-    if (user) {
-      setUserProfile(prev => ({
-        name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Member',
-        email: user?.email || '',
-        phone: user?.phone || '+91 98XXX XXXXX',
-        avatar: user?.user_metadata?.avatar_url || prev.avatar,
-        tableNumber: tableNumber ? `Table No-${tableNumber}` : 'N/A',
-        stats: {
-          todaysOrders: 3,
-          totalSpent: 2450,
-          favoriteItems: 8
-        }
-      }));
-    }
-    setIsProfileLoading(false);
+    const loadProfileData = async () => {
+      if (!user) {
+        setIsProfileLoading(false);
+        return;
+      }
+
+      try {
+        const stats = await getUserStats(user.id);
+        setUserProfile(prev => ({
+          name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Member',
+          email: user?.email || '',
+          phone: user?.phone || '+91 98XXX XXXXX',
+          avatar: user?.user_metadata?.avatar_url || prev.avatar,
+          tableNumber: tableNumber ? `Table No-${tableNumber}` : 'N/A',
+          stats: stats
+        }));
+      } catch (err) {
+        console.error('Failed to load profile stats:', err);
+      } finally {
+        setIsProfileLoading(false);
+      }
+    };
+
+    loadProfileData();
   }, [user, tableNumber]);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -287,7 +297,11 @@ const ProfilePage = () => {
           </div>
           <div className="stat-divider"></div>
           <div className="stat-item featured">
-            <div className="stat-value">₹{userProfile.stats.totalSpent}</div>
+            <div className="stat-value">
+              ₹{Number(userProfile.stats.totalSpent) % 1 === 0
+                ? Number(userProfile.stats.totalSpent)
+                : Number(userProfile.stats.totalSpent).toFixed(1)}
+            </div>
             <div className="stat-label">Total Spent</div>
           </div>
           <div className="stat-divider"></div>

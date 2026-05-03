@@ -60,7 +60,8 @@ export const createOrder = async ({
     tableNumber,
     items,
     paymentMethod = 'cash',
-    taxRate = 0.05
+    taxRate = 0.05,
+    type = 'dine_in'
 }) => {
     const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const taxes = Math.round(subtotal * taxRate);
@@ -73,7 +74,7 @@ export const createOrder = async ({
             restaurant_id: restaurantId,
             customer_id: customerId,
             order_number: orderNumber,
-            type: 'dine_in',
+            type: type,
             table_id: (typeof tableNumber === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tableNumber)) ? tableNumber : null,
             status: 'pending',
             payment_method: paymentMethod,
@@ -138,4 +139,110 @@ export const getTodaysOrders = async (userId) => {
 
     if (error) throw error;
     return data ?? [];
+};
+
+export const cancelOrder = async (orderId) => {
+    const { data, error } = await supabase
+        .from('orders')
+        .update({ status: 'cancelled' })
+        .eq('id', orderId)
+        .select();
+    if (error) throw error;
+    return data && data.length > 0 ? data[0] : null;
+};
+
+export const updateOrderType = async (orderId, type) => {
+    const { data, error } = await supabase
+        .from('orders')
+        .update({ type: type })
+        .eq('id', orderId)
+        .select();
+    if (error) throw error;
+    return data && data.length > 0 ? data[0] : null;
+};
+
+// Favorites
+export const getFavorites = async (userId) => {
+    const { data, error } = await supabase
+        .from('favorites')
+        .select(`
+            menu_item_id,
+            menu_items (
+                *,
+                menu_item_images (image_url, sort_order)
+            )
+        `)
+        .eq('user_id', userId);
+    
+    if (error) throw error;
+    return data.map(f => f.menu_items);
+};
+
+export const addFavorite = async (userId, menuItemId) => {
+    const { data, error } = await supabase
+        .from('favorites')
+        .insert({ user_id: userId, menu_item_id: menuItemId })
+        .select()
+        .single();
+    if (error) throw error;
+    return data;
+};
+
+export const removeFavoriteFromDB = async (userId, menuItemId) => {
+    const { error } = await supabase
+        .from('favorites')
+        .delete()
+        .eq('user_id', userId)
+        .eq('menu_item_id', menuItemId);
+    if (error) throw error;
+    return true;
+};
+
+export const getUserStats = async (userId) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const isoToday = today.toISOString();
+
+    try {
+        // 1. Fetch Today's Orders
+        const { count: todaysOrders, error: err1 } = await supabase
+            .from('orders')
+            .select('*', { count: 'exact', head: true })
+            .eq('customer_id', userId)
+            .gte('created_at', isoToday);
+
+        if (err1) throw err1;
+
+        // 2. Fetch Total Spent (Sum of 'total' column)
+        const { data: orders, error: err2 } = await supabase
+            .from('orders')
+            .select('total')
+            .eq('customer_id', userId)
+            .not('status', 'eq', 'cancelled'); // Don't count cancelled orders
+
+        if (err2) throw err2;
+
+        const totalSpent = (orders || []).reduce((sum, order) => sum + (parseFloat(order.total) || 0), 0);
+
+        // 3. Fetch Favorites Count
+        const { count: favoriteItems, error: err3 } = await supabase
+            .from('favorites')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', userId);
+
+        if (err3) throw err3;
+
+        return {
+            todaysOrders: todaysOrders || 0,
+            totalSpent: totalSpent || 0,
+            favoriteItems: favoriteItems || 0
+        };
+    } catch (err) {
+        console.error('Error fetching user stats:', err);
+        return {
+            todaysOrders: 0,
+            totalSpent: 0,
+            favoriteItems: 0
+        };
+    }
 };
