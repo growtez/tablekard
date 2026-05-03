@@ -153,6 +153,9 @@ export function useInvalidateQueries() {
     invalidateOrders: (restaurantId: string) => {
       qc.invalidateQueries({ queryKey: queryKeys.dashboardOrders(restaurantId) });
       qc.invalidateQueries({ queryKey: queryKeys.orders(restaurantId) });
+      qc.invalidateQueries({ queryKey: queryKeys.bestSelling(restaurantId) });
+      qc.invalidateQueries({ queryKey: queryKeys.revenue(restaurantId) });
+      qc.invalidateQueries({ queryKey: queryKeys.payments(restaurantId) });
     },
     invalidatePayments: (restaurantId: string) => {
       qc.invalidateQueries({ queryKey: queryKeys.payments(restaurantId) });
