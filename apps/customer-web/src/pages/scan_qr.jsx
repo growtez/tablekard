@@ -10,22 +10,34 @@ const ScanQRPage = () => {
 
     const handleScan = (result) => {
         if (result?.[0]?.rawValue) {
-            const scannedUrl = result[0].rawValue;
-            try {
-                const url = new URL(scannedUrl);
-                // Check if it's our domain or a relative path
-                if (url.pathname.includes('/order/')) {
-                    setShowScanner(false);
-                    navigate(url.pathname);
-                } else {
-                    console.warn('Invalid QR Code: Not a Tablekard order URL');
+            const scannedValue = result[0].rawValue;
+            console.log('Scanned Value:', scannedValue);
+
+            let targetPath = '';
+
+            // Handle full URLs
+            if (scannedValue.startsWith('http')) {
+                try {
+                    const url = new URL(scannedValue);
+                    targetPath = url.pathname + url.search;
+                } catch (e) {
+                    console.error('URL Parsing Error:', e);
                 }
-            } catch (e) {
-                // Try treating as relative path if not a full URL
-                if (scannedUrl.startsWith('/order/')) {
-                    setShowScanner(false);
-                    navigate(scannedUrl);
-                }
+            } 
+            // Handle relative paths or URLs without protocol
+            else {
+                targetPath = scannedValue.startsWith('/') ? scannedValue : '/' + scannedValue;
+            }
+
+            // If we found a valid order path, navigate to it
+            if (targetPath.includes('/order/')) {
+                setShowScanner(false);
+                // Use a slight delay to ensure the modal closes smoothly before navigation
+                setTimeout(() => {
+                    navigate(targetPath);
+                }, 100);
+            } else {
+                console.warn('Scanned value does not contain a valid order path:', targetPath);
             }
         }
     };
