@@ -779,7 +779,7 @@ export const getBestSellingDishes = async (restaurantId: string): Promise<BestSe
         .select(`
             name, 
             quantity, 
-            total,
+            price,
             orders!inner(restaurant_id, status)
         `)
         .eq('orders.restaurant_id', restaurantId)
@@ -815,7 +815,7 @@ export const getBestSellingDishes = async (restaurantId: string): Promise<BestSe
             };
         }
         aggregation[dishName].sold += item.quantity;
-        aggregation[dishName].revenue += Number(item.total);
+        aggregation[dishName].revenue += (Number(item.price) || 0) * item.quantity;
     });
 
     const results = Object.values(aggregation)

@@ -542,3 +542,28 @@ CREATE POLICY "Super admins manage platform settings" ON public.platform_setting
 -- 16. subscription_payments
 CREATE POLICY "Restaurant members can read subscription payments" ON public.subscription_payments FOR SELECT USING (public.is_restaurant_member(restaurant_id));
 CREATE POLICY "Super admins manage subscription payments" ON public.subscription_payments FOR ALL USING (public.is_super_admin());
+
+-- ======================================================================================
+-- STORAGE POLICIES
+-- ======================================================================================
+
+-- 17. storage.objects (ar-files bucket)
+-- Note: These policies target the storage.objects table which is in a different schema
+
+CREATE POLICY "Public Access"
+ON storage.objects FOR SELECT
+USING ( bucket_id = 'ar-files' );
+
+CREATE POLICY "Authenticated Insert"
+ON storage.objects FOR INSERT
+WITH CHECK (
+  bucket_id = 'ar-files' AND
+  auth.role() = 'authenticated'
+);
+
+CREATE POLICY "Authenticated Management"
+ON storage.objects FOR ALL
+USING (
+  bucket_id = 'ar-files' AND
+  auth.role() = 'authenticated'
+);
