@@ -54,7 +54,21 @@ export const uploadProfileImage = async (folder: string, file: File): Promise<st
  * @param file The File object from an input
  * @returns The public URL of the uploaded image
  */
+/**
+ * Uploads a menu item image to Supabase Storage.
+ * Generates a unique filename and places it inside a folder named by restaurantId.
+ * 
+ * @param restaurantId The restaurant UUID
+ * @param file The File object from an input
+ * @returns The public URL of the uploaded image
+ */
 export const uploadMenuItemImage = async (restaurantId: string, file: File): Promise<string> => {
+    // Validate file size (max 5MB)
+    const MAX_SIZE = 5 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+        throw new Error('Image must be under 5 MB.');
+    }
+
     // Generate a secure random file name: restaurantId/timestamp-random.ext
     const ext = file.name.split('.').pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${ext}`;
@@ -69,7 +83,7 @@ export const uploadMenuItemImage = async (restaurantId: string, file: File): Pro
 
     if (uploadError) {
         console.error('Storage upload error:', uploadError);
-        throw new Error(`Failed to upload ${file.name}`);
+        throw new Error(`Failed to upload ${file.name}: ${uploadError.message}`);
     }
 
     const { data } = supabase.storage
@@ -87,7 +101,6 @@ export const uploadMenuItemImage = async (restaurantId: string, file: File): Pro
 export const deleteMenuItemImageFromStorage = async (publicUrl: string): Promise<void> => {
     try {
         // Extract the file path from the public URL
-        // Example URL: https://[project].supabase.co/storage/v1/object/public/menu-images/[restaurantId]/[filename]
         const urlObj = new URL(publicUrl);
         const pathParts = urlObj.pathname.split(`/public/${BUCKET_NAME}/`);
         
@@ -115,11 +128,11 @@ export const deleteMenuItemImageFromStorage = async (publicUrl: string): Promise
 // AR Model (.glb) Upload / Delete
 // ==========================================
 
-const AR_MODELS_FOLDER = 'ar-models';
+const AR_BUCKET = 'ar-files';
 
 /**
  * Uploads a .glb 3D model file for AR viewing.
- * Stored under: menu-images/ar-models/{restaurantId}/{timestamp}-{random}.glb
+ * Stored under: ar-files/{restaurantId}/{timestamp}-{random}.glb
  *
  * @param restaurantId The restaurant UUID
  * @param file The .glb File object
@@ -136,14 +149,14 @@ export const uploadARModel = async (restaurantId: string, file: File): Promise<s
     // Validate file size (max 50MB)
     const MAX_SIZE = 50 * 1024 * 1024;
     if (file.size > MAX_SIZE) {
-        throw new Error('3D model must be under 50 MB.');
+        throw new Error('3D model must be under 50 MB. Check your Supabase bucket limits if this fails.');
     }
 
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}${ext}`;
-    const filePath = `${AR_MODELS_FOLDER}/${restaurantId}/${fileName}`;
+    const filePath = `${restaurantId}/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
-        .from(BUCKET_NAME)
+        .from(AR_BUCKET)
         .upload(filePath, file, {
             cacheControl: '3600',
             upsert: false
@@ -151,11 +164,14 @@ export const uploadARModel = async (restaurantId: string, file: File): Promise<s
 
     if (uploadError) {
         console.error('AR model upload error:', uploadError);
+        if (uploadError.message.includes('size')) {
+            throw new Error(`The 3D model is too large for the current bucket settings. Please increase the "Maximum File Size" for the "${AR_BUCKET}" bucket in your Supabase Dashboard.`);
+        }
         throw new Error(`Failed to upload 3D model: ${uploadError.message}`);
     }
 
     const { data } = supabase.storage
-        .from(BUCKET_NAME)
+        .from(AR_BUCKET)
         .getPublicUrl(filePath);
 
     return data.publicUrl;
@@ -169,7 +185,7 @@ export const uploadARModel = async (restaurantId: string, file: File): Promise<s
 export const deleteARModel = async (publicUrl: string): Promise<void> => {
     try {
         const urlObj = new URL(publicUrl);
-        const pathParts = urlObj.pathname.split(`/public/${BUCKET_NAME}/`);
+        const pathParts = urlObj.pathname.split(`/public/${AR_BUCKET}/`);
 
         if (pathParts.length !== 2) {
             console.warn('Could not parse AR model path from URL:', publicUrl);
@@ -179,7 +195,7 @@ export const deleteARModel = async (publicUrl: string): Promise<void> => {
         const filePath = pathParts[1];
 
         const { error } = await supabase.storage
-            .from(BUCKET_NAME)
+            .from(AR_BUCKET)
             .remove([filePath]);
 
         if (error) {
