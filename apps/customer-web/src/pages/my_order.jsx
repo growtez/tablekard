@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useRestaurant } from '../context/RestaurantContext';
 import { processOnlinePayment } from '../services/paymentService';
-import { createOrder, getTodaysOrders } from '../services/supabaseService';
+import { createOrder, getTodaysOrders, cancelOrder, updateOrderType } from '../services/supabaseService';
 import './my_order.css';
 import Hamburger from '../components/hamburger';
 import { jsPDF } from 'jspdf';
@@ -19,6 +19,8 @@ const MyOrderPage = () => {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState('');
   const [error, setError] = useState('');
+  const [orderType, setOrderType] = useState('dine_in');
+
 
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
@@ -116,7 +118,7 @@ const MyOrderPage = () => {
       const result = await processOnlinePayment({
         restaurantId,
         tableId,
-        orderType: 'dine_in',
+        orderType: orderType,
         items: cartItems,
         restaurantName: 'Tablekard',
         userName: user?.user_metadata?.full_name || '',
@@ -133,7 +135,8 @@ const MyOrderPage = () => {
           total: getTotalPrice() + Math.round(getTotalPrice() * 0.05) + Math.round(getTotalPrice() * 0.18),
           orderDate: 'Just now',
           paymentStatus: 'Paid Online',
-          statusLabel: 'Order Placed'
+          statusLabel: 'Order Placed',
+          rawOrder: { id: result.orderId || result.order_id, type: orderType }
         };
         setOrders(prev => [newOrder, ...prev]);
         clearCart();
@@ -176,6 +179,7 @@ const MyOrderPage = () => {
         tableNumber: tableId,
         items: cartItems,
         paymentMethod: 'cash',
+        type: orderType,
       });
 
       const newOrder = {
@@ -185,7 +189,8 @@ const MyOrderPage = () => {
         total: getTotalPrice() + Math.round(getTotalPrice() * 0.05) + Math.round(getTotalPrice() * 0.18),
         orderDate: 'Just now',
         paymentStatus: 'Pay at Counter',
-        statusLabel: 'Order Placed'
+        statusLabel: 'Order Placed',
+        rawOrder: { id: result.orderId, type: orderType }
       };
       setOrders(prev => [newOrder, ...prev]);
       clearCart();
@@ -393,6 +398,27 @@ const MyOrderPage = () => {
                   </div>
                 ))}
               </div>
+              
+              {/* Order Type Selection - Premium Sliding Toggle */}
+              <div className="order-type-wrapper">
+                <div className="order-type-toggle">
+                  <div className={`toggle-slider ${orderType}`} />
+                  <button 
+                    className={`toggle-btn ${orderType === 'dine_in' ? 'active' : ''}`}
+                    onClick={() => setOrderType('dine_in')}
+                  >
+                    <Utensils size={18} />
+                    <span>Dine In</span>
+                  </button>
+                  <button 
+                    className={`toggle-btn ${orderType === 'takeaway' ? 'active' : ''}`}
+                    onClick={() => setOrderType('takeaway')}
+                  >
+                    <ShoppingBag size={18} />
+                    <span>Takeaway</span>
+                  </button>
+                </div>
+              </div>
 
               {/* Order Summary */}
               <h2 className="summary-title">Summary</h2>
@@ -476,6 +502,16 @@ const MyOrderPage = () => {
       {/* Orders Content */}
       {activeTab === 'orders' && (
         <div className="orders-content">
+          {error && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)',
+              padding: '10px 14px', borderRadius: '10px', marginBottom: '20px',
+            }}>
+              <AlertCircle size={16} color="#ef4444" />
+              <p style={{ color: '#ef4444', fontSize: '13px', margin: 0 }}>{error}</p>
+            </div>
+          )}
           {ordersLoading ? (
             <div className="orders-list">
               {[1, 2, 3].map(i => (
@@ -515,7 +551,12 @@ const MyOrderPage = () => {
                           </span>
                         </div>
                       </div>
-                      <span className="order-date">{order.orderDate}</span>
+                      <div className="order-meta-row">
+                        <span className="order-date">{order.orderDate}</span>
+                        <span className="order-type-badge">
+                          {(order.rawOrder?.type || '').toLowerCase() === 'takeaway' ? 'Takeaway' : 'Dine In'}
+                        </span>
+                      </div>
                     </div>
 
                     <div className="order-items">
