@@ -545,6 +545,10 @@ export interface DashboardOrder {
     statusColor: string;
     paymentMethod: string;
     items: string;
+    rawItems: { name: string; quantity: number; price: number }[];
+    customer: string;
+    total: number;
+    isPaid: boolean;
     createdAt: string;
 }
 
@@ -557,8 +561,11 @@ export const getDashboardOrders = async (restaurantId: string): Promise<Dashboar
             created_at,
             status,
             payment_method,
+            payment_status,
+            total,
+            profiles(name),
             restaurant_tables(table_number),
-            order_items(name, quantity)
+            order_items(name, quantity, price)
         `)
         .eq('restaurant_id', restaurantId)
         .order('created_at', { ascending: false });
@@ -567,6 +574,7 @@ export const getDashboardOrders = async (restaurantId: string): Promise<Dashboar
 
     return (data || []).map((row: any) => {
         const table = Array.isArray(row.restaurant_tables) ? row.restaurant_tables[0] : row.restaurant_tables;
+        const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
         const itemsList = Array.isArray(row.order_items) ? row.order_items : [];
         const itemsStr = itemsList.map((item: any) => `${item.name} x${item.quantity}`).join(', ');
 
@@ -586,6 +594,14 @@ export const getDashboardOrders = async (restaurantId: string): Promise<Dashboar
             statusColor: statusColor,
             paymentMethod: row.payment_method || 'Cash',
             items: itemsStr,
+            rawItems: itemsList.map((item: any) => ({
+                name: item.name,
+                quantity: item.quantity,
+                price: Number(item.price) || 0
+            })),
+            customer: profile?.name || 'Guest',
+            total: Number(row.total) || 0,
+            isPaid: (row.payment_status || '').toLowerCase() === 'paid',
             createdAt: row.created_at
         };
     });
