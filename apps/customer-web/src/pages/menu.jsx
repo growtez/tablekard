@@ -75,6 +75,7 @@ const MenuPage = () => {
                   tags: item.tags || [],
                   variants: item.variants || [],
                   addons: item.addons || [],
+                  modelUrl: item.model_url || null,
                 };
               });
           });
@@ -487,7 +488,7 @@ const MenuPage = () => {
               
               <button 
                 className="view-ar-btn"
-                onClick={() => navigate(`/ar/${selectedItem.id}`)}
+                onClick={() => navigate(`/ar/${selectedItem.id}`, { state: { modelUrl: selectedItem.modelUrl } })}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
