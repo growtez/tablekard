@@ -557,11 +557,6 @@ export interface DashboardOrder {
     discount: number;
     total: number;
     isPaid: boolean;
-    orderItems: { name: string; quantity: number; price: number; special_instructions?: string }[];
-    subtotal: number;
-    taxes: number;
-    discount: number;
-    total: number;
     createdAt: string;
 }
 
@@ -575,13 +570,6 @@ export const getDashboardOrders = async (restaurantId: string): Promise<Dashboar
             status,
             payment_method,
             payment_status,
-            subtotal,
-            taxes,
-            discount,
-            total,
-            profiles(name),
-            restaurant_tables(table_number),
-            order_items(name, quantity, price)
             subtotal,
             taxes,
             discount,
@@ -639,11 +627,6 @@ export const getDashboardOrders = async (restaurantId: string): Promise<Dashboar
             discount: Number(row.discount) || 0,
             total: Number(row.total) || 0,
             isPaid: (row.payment_status || '').toLowerCase() === 'paid',
-            orderItems: itemsList,
-            subtotal: Number(row.subtotal) || 0,
-            taxes: Number(row.taxes) || 0,
-            discount: Number(row.discount) || 0,
-            total: Number(row.total) || 0,
             createdAt: row.created_at
         };
     });
