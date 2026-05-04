@@ -199,6 +199,7 @@ export interface MenuItem {
   tags?: string[] | null;
   variants?: MenuItemVariant[] | null;
   addons?: MenuItemAddon[] | null;
+  modelUrl?: string | null; // AR 3D model URL (.glb)
 }
 
 export interface MenuItemImage {
@@ -588,6 +589,7 @@ export interface Database {
           tags: string[] | null;
           variants: Record<string, unknown>[] | null;
           addons: Record<string, unknown>[] | null;
+          model_url: string | null;
           created_at: IsoDateString;
           updated_at: IsoDateString;
         };
@@ -607,6 +609,7 @@ export interface Database {
           tags?: string[] | null;
           variants?: Record<string, unknown>[] | null;
           addons?: Record<string, unknown>[] | null;
+          model_url?: string | null;
           created_at?: IsoDateString;
           updated_at?: IsoDateString;
         };
@@ -624,6 +627,7 @@ export interface Database {
           tags?: string[] | null;
           variants?: Record<string, unknown>[] | null;
           addons?: Record<string, unknown>[] | null;
+          model_url?: string | null;
           updated_at?: IsoDateString;
         };
         Relationships: [];

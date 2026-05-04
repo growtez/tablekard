@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Plus, Minus, Tag, ChevronDown } from 'lucide-react';
+import { X, Plus, Minus, Tag, ChevronDown, Upload, Trash2 } from 'lucide-react';
 import type { MenuCategory } from '@restaurant-saas/types';
 import './menu_dialog.css';
 
@@ -53,6 +53,10 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
   const [newVariant, setNewVariant] = useState<Variant>({ name: '', price: 0 });
   const [newAddon, setNewAddon] = useState<Addon>({ name: '', price: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const arModelInputRef = useRef<HTMLInputElement>(null);
+  const [arModelFile, setArModelFile] = useState<File | null>(null);
+  const [existingModelUrl, setExistingModelUrl] = useState<string | null>(null);
+  const [removeModel, setRemoveModel] = useState(false);
 
   useEffect(() => {
     if (mode === 'edit' && item) {
@@ -76,6 +80,9 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
         variants: Array.isArray(item.variants) ? item.variants : [],
         addons: Array.isArray(item.addons) ? item.addons : [],
       });
+      setExistingModelUrl(item?.modelUrl || null);
+      setArModelFile(null);
+      setRemoveModel(false);
     } else {
       setFormData({
         name: '', short_description: '', long_description: '',
@@ -87,6 +94,9 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
         serves: '1',
         tags: [], variants: [], addons: []
       });
+      setExistingModelUrl(null);
+      setArModelFile(null);
+      setRemoveModel(false);
     }
   }, [mode, item, isOpen, categories]);
 
@@ -201,6 +211,9 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
       tags: formData.tags,
       variants: formData.variants,
       addons: formData.addons,
+      arModelFile: arModelFile,
+      existingModelUrl: existingModelUrl,
+      removeModel: removeModel,
     });
     onClose();
   };
@@ -352,6 +365,79 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
               placeholder="e.g. 2"
               min="1"
             />
+          </div>
+
+          {/* AR 3D Model Upload */}
+          <div className="menu-form-group">
+            <label className="menu-form-label">AR 3D Model (.glb)</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {(arModelFile || (existingModelUrl && !removeModel)) ? (
+                <div style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '10px 14px', borderRadius: '10px',
+                  background: '#F0FFF4', border: '1px solid #C6F6D5'
+                }}>
+                  <span style={{ fontSize: '13px', color: '#2D3748', fontWeight: 500 }}>
+                    {arModelFile ? arModelFile.name : '3D Model uploaded ✓'}
+                  </span>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      type="button"
+                      onClick={() => arModelInputRef.current?.click()}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '4px',
+                        padding: '4px 10px', borderRadius: '6px',
+                        background: '#EDF2F7', border: '1px solid #E2E8F0',
+                        color: '#4A5568', fontSize: '12px', cursor: 'pointer'
+                      }}
+                    >
+                      <Upload size={12} /> Replace
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setArModelFile(null); setRemoveModel(true); }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '4px',
+                        padding: '4px 10px', borderRadius: '6px',
+                        background: '#FFF5F5', border: '1px solid #FED7D7',
+                        color: '#E53E3E', fontSize: '12px', cursor: 'pointer'
+                      }}
+                    >
+                      <Trash2 size={12} /> Remove
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  onClick={() => arModelInputRef.current?.click()}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    gap: '8px', padding: '16px', borderRadius: '10px',
+                    border: '2px dashed #CBD5E0', color: '#718096',
+                    cursor: 'pointer', fontSize: '14px', transition: 'all 0.15s'
+                  }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#4A90D9'; (e.currentTarget as HTMLElement).style.color = '#4A90D9'; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#CBD5E0'; (e.currentTarget as HTMLElement).style.color = '#718096'; }}
+                >
+                  <Upload size={18} />
+                  <span>Upload .glb model for AR view</span>
+                </div>
+              )}
+              <input
+                ref={arModelInputRef}
+                type="file"
+                accept=".glb,.gltf"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setArModelFile(file);
+                    setRemoveModel(false);
+                  }
+                  if (arModelInputRef.current) arModelInputRef.current.value = '';
+                }}
+              />
+            </div>
           </div>
 
           {/* Toggles: Is Available & Is Veg */}
