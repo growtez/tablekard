@@ -457,6 +457,7 @@ body {
 .restaurant-header {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   font-size: 15px;
   font-weight: 700;

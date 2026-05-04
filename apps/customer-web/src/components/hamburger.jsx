@@ -30,9 +30,9 @@ const Hamburger = () => {
   // Dynamic font size based on name length
   const getDynamicFontSize = (name) => {
     const len = name.length;
-    if (len > 20) return '11px';
-    if (len > 12) return '13px';
-    return '14px';
+    if (len > 20) return '12px';
+    if (len > 12) return '14px';
+    return '15px';
   };
 
   const getDynamicLetterSpacing = (name) => {

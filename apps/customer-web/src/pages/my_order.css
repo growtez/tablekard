@@ -788,3 +788,127 @@ body {
   transform: scale(0.96);
   box-shadow: 0 4px 8px rgba(139, 58, 30, 0.2);
 }
+
+/* Order Type Selection - Premium Sliding Toggle */
+.order-type-wrapper {
+  margin-bottom: 24px;
+}
+
+.order-type-toggle {
+  display: flex;
+  position: relative;
+  background: #F0F0F0;
+  border-radius: 16px;
+  padding: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.toggle-slider {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  height: calc(100% - 8px);
+  background: #FFFFFF;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(139, 58, 30, 0.1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+
+.toggle-slider.takeaway {
+  transform: translateX(100%);
+}
+
+.toggle-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  padding: 12px;
+  position: relative;
+  z-index: 2;
+  font-size: 14px;
+  font-weight: 700;
+  color: #888888;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.toggle-btn.active {
+  color: #8B3A1E;
+}
+
+.toggle-btn svg {
+  color: #888888;
+  transition: all 0.3s ease;
+}
+
+.toggle-btn.active svg {
+  color: #8B3A1E;
+  transform: scale(1.1);
+}
+
+.order-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.order-type-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: #8B3A1E;
+  background: #FFF0EC;
+  padding: 2px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Order Actions */
+.order-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed rgba(0, 0, 0, 0.1);
+}
+
+.action-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.action-btn.cancel {
+  background: rgba(220, 53, 69, 0.1);
+  color: #DC3545;
+  border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+.action-btn.cancel:active {
+  background: rgba(220, 53, 69, 0.2);
+  transform: scale(0.96);
+}
+
+.action-btn.change-type {
+  background: rgba(139, 58, 30, 0.1);
+  color: #8B3A1E;
+  border: 1px solid rgba(139, 58, 30, 0.2);
+}
+
+.action-btn.change-type:active {
+  background: rgba(139, 58, 30, 0.2);
+  transform: scale(0.96);
+}
+

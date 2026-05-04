@@ -14,15 +14,18 @@
   /* Removed border-radius to make it edge-to-edge */
   box-shadow: none;
   overflow-y: auto;
-  scrollbar-width: none;        /* Firefox */
-  -ms-overflow-style: none;     /* IE / Edge */
   z-index: 100;
   font-family: 'Poppins', sans-serif;
   transition: width 0.3s ease;
+  
+  /* Hide scrollbar for IE, Edge and Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
+/* Hide scrollbar for Chrome, Safari and Opera */
 .sidebar::-webkit-scrollbar {
-  display: none;                /* Chrome, Edge, Safari */
+  display: none;
 }
 
 .sidebar.collapsed {
@@ -168,6 +171,10 @@
 
 .nav-icon {
   font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .nav-label {
@@ -213,6 +220,10 @@
 
 .help-icon {
   font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .help-text {

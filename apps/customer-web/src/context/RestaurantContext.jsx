@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useLocation, matchPath } from 'react-router-dom';
-import { getRestaurantById } from '../services/supabaseService';
+import { getRestaurantById, getTableById } from '../services/supabaseService';
 
 const RestaurantContext = createContext(null);
 
@@ -27,6 +27,10 @@ export function RestaurantProvider({ children }) {
     // Restaurant data fetched from DB
     const [restaurant, setRestaurant] = useState(null);
     const [restaurantLoading, setRestaurantLoading] = useState(false);
+
+    // Table data fetched from DB
+    const [table, setTable] = useState(null);
+    const [tableLoading, setTableLoading] = useState(false);
 
     // Persist new URL params to sessionStorage
     useEffect(() => {
@@ -61,12 +65,36 @@ export function RestaurantProvider({ children }) {
         return () => { cancelled = true; };
     }, [restaurantId]);
 
+    // Fetch table info whenever tableId changes
+    useEffect(() => {
+        if (!tableId) {
+            setTable(null);
+            return;
+        }
+        let cancelled = false;
+        setTableLoading(true);
+        getTableById(tableId)
+            .then(data => {
+                if (!cancelled) setTable(data);
+            })
+            .catch(err => {
+                if (!cancelled) console.warn('[RestaurantContext] table fetch error:', err.message);
+            })
+            .finally(() => {
+                if (!cancelled) setTableLoading(false);
+            });
+        return () => { cancelled = true; };
+    }, [tableId]);
+
     return (
         <RestaurantContext.Provider value={{
             restaurantId,
             tableId,
             restaurant,          // full row: { name, logo_url, phone, email, ... }
             restaurantLoading,
+            table,               // full row: { table_number, qr_code_url, ... }
+            tableLoading,
+            tableNumber: table?.table_number || null
         }}>
             {children}
         </RestaurantContext.Provider>
