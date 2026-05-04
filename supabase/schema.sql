@@ -129,6 +129,7 @@ CREATE TABLE IF NOT EXISTS public.menu_items (
     tags TEXT[],
     variants JSONB DEFAULT '[]'::jsonb,
     addons JSONB DEFAULT '[]'::jsonb,
+    model_url TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -277,6 +278,8 @@ ALTER TABLE public.restaurants
 ALTER TABLE public.payments ALTER COLUMN order_id DROP NOT NULL;
 ALTER TABLE public.menu_items
     ADD COLUMN IF NOT EXISTS serves INTEGER DEFAULT 1 CHECK (serves > 0);
+ALTER TABLE public.menu_items
+    ADD COLUMN IF NOT EXISTS model_url TEXT;
 
 -- ======================================================================================
 -- INDEXES

@@ -49,6 +49,7 @@ interface MenuItemRow {
     serves: number;
     tags: string[] | null;
     variants: unknown[] | null; addons: unknown[] | null;
+    model_url: string | null;
     created_at: string; updated_at: string;
     menu_item_images?: { id: string; image_url: string; sort_order: number }[];
 }
@@ -272,7 +273,8 @@ const mapMenuItemRow = (row: MenuItemRow): MenuItem => ({
     serves: row.serves,
     tags: row.tags,
     variants: (row.variants as any) ?? undefined,
-    addons: (row.addons as any) ?? undefined
+    addons: (row.addons as any) ?? undefined,
+    modelUrl: row.model_url
 });
 
 export const getMenuItems = async (restaurantId: string): Promise<MenuItem[]> => {
@@ -308,6 +310,7 @@ export const addMenuItem = async (
         tags?: string[] | null;
         variants?: any[] | null;
         addons?: any[] | null;
+        model_url?: string | null;
         menu_item_images?: { url: string; sortOrder: number }[];
     }
 ): Promise<MenuItem> => {
@@ -362,6 +365,7 @@ export const updateMenuItem = async (
         tags: string[] | null;
         variants: any[] | null;
         addons: any[] | null;
+        model_url: string | null;
     }>,
     images?: { id?: string; url: string; sortOrder: number; isDeleted?: boolean }[]
 ): Promise<void> => {
