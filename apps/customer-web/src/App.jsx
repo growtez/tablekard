@@ -44,6 +44,7 @@ const FeedbackPage    = lazy(() => import("./pages/feedback"));
 const OrderHistoryPage= lazy(() => import("./pages/order_history"));
 const AboutPage       = lazy(() => import("./pages/about"));
 const TestWebhookPage = lazy(() => import("./pages/test_webhook"));
+const ARViewerPage    = lazy(() => import("./pages/ar_viewer"));
 
 // ─── Skeleton shimmer CSS (injected once) ─────────────────────────────────────
 const SHIMMER_CSS = `
@@ -213,6 +214,7 @@ function AppRoutes() {
           <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/login"      element={<LoginPage />} />
           <Route path="/about"      element={<AboutPage />} />
+          <Route path="/ar/:slug"   element={<ARViewerPage />} />
 
           {/* Protected */}
           <Route path="/profile"       element={<RequireAuth><ProfilePage /></RequireAuth>} />

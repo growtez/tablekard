@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
-import { ArrowLeft, Clock, Star, Heart, X, Plus, Minus, Users } from 'lucide-react';
+import { ArrowLeft, Clock, Star, Heart, X, Plus, Minus, Users, View } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './discounts.css';
 
@@ -262,6 +262,30 @@ const DiscountsPage = () => {
                                 {selectedItem.dietType === 'non-veg' && <span className="meta-chip red">Non-Veg</span>}
                             </div>
                             <p className="dish-full-desc">{selectedItem.description}</p>
+                            
+                            <button 
+                                className="view-ar-btn"
+                                onClick={() => navigate(`/ar/${selectedItem.id}`)}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '8px',
+                                    width: '100%',
+                                    padding: '12px',
+                                    marginTop: '16px',
+                                    backgroundColor: '#f5ede9',
+                                    color: '#8B3A1E',
+                                    border: 'none',
+                                    borderRadius: '12px',
+                                    fontSize: '15px',
+                                    fontWeight: '600',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                <View size={18} />
+                                View in AR
+                            </button>
                         </div>
 
                         <div className="modal-bottom-bar">
