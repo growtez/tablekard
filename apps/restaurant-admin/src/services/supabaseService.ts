@@ -550,7 +550,11 @@ export interface DashboardOrder {
     paymentStatusColor: string;
     items: string;
     rawItems: { name: string; quantity: number; price: number }[];
+    orderItems: { name: string; quantity: number; price: number; special_instructions?: string }[];
     customer: string;
+    subtotal: number;
+    taxes: number;
+    discount: number;
     total: number;
     isPaid: boolean;
     orderItems: { name: string; quantity: number; price: number; special_instructions?: string }[];
@@ -571,6 +575,9 @@ export const getDashboardOrders = async (restaurantId: string): Promise<Dashboar
             status,
             payment_method,
             payment_status,
+            subtotal,
+            taxes,
+            discount,
             total,
             profiles(name),
             restaurant_tables(table_number),
@@ -620,7 +627,16 @@ export const getDashboardOrders = async (restaurantId: string): Promise<Dashboar
                 quantity: item.quantity,
                 price: Number(item.price) || 0
             })),
+            orderItems: itemsList.map((item: any) => ({
+                name: item.name,
+                quantity: item.quantity,
+                price: Number(item.price) || 0,
+                special_instructions: item.special_instructions || undefined
+            })),
             customer: profile?.name || 'Guest',
+            subtotal: Number(row.subtotal) || 0,
+            taxes: Number(row.taxes) || 0,
+            discount: Number(row.discount) || 0,
             total: Number(row.total) || 0,
             isPaid: (row.payment_status || '').toLowerCase() === 'paid',
             orderItems: itemsList,
