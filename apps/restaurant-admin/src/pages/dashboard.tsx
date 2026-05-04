@@ -196,7 +196,7 @@ const Dashboard: React.FC = () => {
 
   // React Query cached orders
   const { data: orders = [], isLoading } = useDashboardOrders(activeRestaurantId);
-  const { data: revenueData = [], isLoading: loadingRevenue } = useRevenueData(activeRestaurantId);
+  useRevenueData(activeRestaurantId);
   const { data: bestSelling = [], isLoading: loadingBestSelling } = useBestSellingDishes(activeRestaurantId);
   const { invalidateOrders } = useInvalidateQueries();
 
