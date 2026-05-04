@@ -3,7 +3,9 @@ import { Search, Heart, Home, ShoppingBag, User, Star, Plus, Minus, Filter, Shop
 import { NavLink, useNavigate } from "react-router-dom";
 import { useCart } from '../context/CartContext';
 import { useRestaurant } from '../context/RestaurantContext';
+import { useAuth } from '../context/AuthContext';
 import { supabase } from '@restaurant-saas/supabase';
+import { getFavorites, addFavorite, removeFavoriteFromDB } from '../services/supabaseService';
 import { Scanner } from '@yudiel/react-qr-scanner';
 import './menu.css';
 import Hamburger from '../components/hamburger';
@@ -11,6 +13,7 @@ import Hamburger from '../components/hamburger';
 const MenuPage = () => {
   const navigate = useNavigate();
   const { restaurantId } = useRestaurant();
+  const { user, isAuthenticated } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Starters');
   const [favorites, setFavorites] = useState([]);
@@ -97,14 +100,43 @@ const MenuPage = () => {
       }
     };
     loadMenu();
-  }, [restaurantId]);
 
-  const toggleFavorite = (itemId) => {
-    setFavorites(prev =>
-      prev.includes(itemId)
-        ? prev.filter(id => id !== itemId)
-        : [...prev, itemId]
-    );
+    // Load favorites from DB if logged in
+    const loadFavorites = async () => {
+      if (isAuthenticated && user) {
+        try {
+          const data = await getFavorites(user.id);
+          setFavorites(data.map(f => f.id));
+        } catch (err) {
+          console.error('Failed to load favorites:', err);
+        }
+      }
+    };
+    loadFavorites();
+  }, [restaurantId, isAuthenticated, user]);
+
+  const toggleFavorite = async (itemId) => {
+    if (!isAuthenticated || !user) {
+      // Fallback to local state if not logged in (optional, or just prompt login)
+      setFavorites(prev =>
+        prev.includes(itemId)
+          ? prev.filter(id => id !== itemId)
+          : [...prev, itemId]
+      );
+      return;
+    }
+
+    try {
+      if (favorites.includes(itemId)) {
+        await removeFavoriteFromDB(user.id, itemId);
+        setFavorites(prev => prev.filter(id => id !== itemId));
+      } else {
+        await addFavorite(user.id, itemId);
+        setFavorites(prev => [...prev, itemId]);
+      }
+    } catch (err) {
+      console.error('Failed to toggle favorite:', err);
+    }
   };
 
 
@@ -253,24 +285,6 @@ const MenuPage = () => {
             className="search-input"
           />
         </div>
-        <button 
-          onClick={() => setShowScanner(true)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '48px',
-            height: '48px',
-            borderRadius: '16px',
-            background: '#8B3A1E',
-            color: 'white',
-            border: 'none',
-            cursor: 'pointer',
-            boxShadow: '0 4px 12px rgba(139, 58, 30, 0.15)'
-          }}
-        >
-          <QrCode size={20} />
-        </button>
       </div>
 
       {/* Categories */}
