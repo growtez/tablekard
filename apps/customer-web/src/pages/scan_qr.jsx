@@ -9,13 +9,9 @@ const ScanQRPage = () => {
     // Extract the raw string from whatever shape the scanner library returns
     const extractRawValue = (result) => {
         if (!result) return null;
-        // Shape 1: Array of objects with rawValue  → [{rawValue: '...'}]
         if (Array.isArray(result) && result[0]?.rawValue) return result[0].rawValue;
-        // Shape 2: Array of objects with text        → [{text: '...'}]
         if (Array.isArray(result) && result[0]?.text)     return result[0].text;
-        // Shape 3: Plain string
         if (typeof result === 'string')                    return result;
-        // Shape 4: Single object
         if (result?.rawValue)                              return result.rawValue;
         if (result?.text)                                  return result.text;
         return null;
@@ -23,51 +19,63 @@ const ScanQRPage = () => {
 
     const handleScan = (result) => {
         const scannedValue = extractRawValue(result);
-        console.log('[QR] raw result object:', result);
-        console.log('[QR] extracted value:', scannedValue);
-
         if (!scannedValue) return;
 
-        let targetPath = '';
+        console.log('[QR] scanned:', scannedValue);
 
-        // Handle full URLs (http / https)
+        let targetPath = '';
+        let restaurantId = null;
+        let tableId = null;
+
         if (scannedValue.startsWith('http')) {
             try {
                 const url = new URL(scannedValue);
                 targetPath = url.pathname + url.search;
+
+                // ── Format 1: query-string params (?restaurant_id=&table_id=) ──
+                const rId = url.searchParams.get('restaurant_id');
+                const tId = url.searchParams.get('table_id');
+                if (rId && tId) {
+                    restaurantId = rId;
+                    tableId      = tId;
+                }
             } catch (e) {
                 console.error('[QR] URL parse error:', e);
+                return;
             }
         } else {
-            // Relative path — ensure leading slash
             targetPath = scannedValue.startsWith('/') ? scannedValue : '/' + scannedValue;
         }
 
-        console.log('[QR] resolved targetPath:', targetPath);
+        // ── Format 2: /order/:restaurantId/:tableId path ──
+        if (!restaurantId) {
+            const orderMatch = targetPath.match(/^\/order\/([^/?#]+)\/([^/?#]+)/);
+            if (orderMatch) {
+                restaurantId = orderMatch[1];
+                tableId      = orderMatch[2];
+            }
+        }
 
-        // Match /order/:restaurantId/:tableNumber
-        const orderMatch = targetPath.match(/^\/order\/([^/?#]+)\/([^/?#]+)/);
+        // ── Format 3: query-string in relative path ──
+        if (!restaurantId && targetPath.includes('restaurant_id')) {
+            const qs = new URLSearchParams(targetPath.split('?')[1] || '');
+            restaurantId = qs.get('restaurant_id');
+            tableId      = qs.get('table_id');
+        }
 
-        if (orderMatch) {
-            const restaurantId = orderMatch[1];
-            const tableNumber  = orderMatch[2];   // QR encodes table NUMBER, not UUID
-
-            // Pre-seed sessionStorage so RestaurantContext initialises with
-            // correct values on next mount, avoiding the null-guard loop.
+        if (restaurantId && tableId) {
+            // Pre-seed sessionStorage so RestaurantContext initialises correctly
             sessionStorage.setItem('tablekard_restaurant_id', restaurantId);
-            sessionStorage.setItem('tablekard_table_id', tableNumber);
+            sessionStorage.setItem('tablekard_table_id', tableId);
 
             setShowScanner(false);
 
-            // Full-page reload: ensures RestaurantContext re-mounts fresh
-            // with the URL params + sessionStorage — no stale-state race.
+            // Full-page navigation so RestaurantContext re-mounts fresh
             setTimeout(() => {
                 window.location.href = targetPath;
             }, 150);
         } else {
-            // ── Fallback: not a /order/ path – show what was scanned ──
-            alert(`QR scanned but path not recognised:\n${targetPath}\n\nFull value: ${scannedValue}`);
-            console.warn('[QR] no /order/ match in:', targetPath);
+            console.warn('[QR] Could not extract restaurant/table IDs from:', scannedValue);
         }
     };
 
