@@ -4,6 +4,10 @@ import { NavLink, useNavigate } from "react-router-dom";
 import './home.css';
 import Hamburger from '../components/hamburger';
 import { useRestaurant } from '../context/RestaurantContext';
+import { useAuth } from '../context/AuthContext';
+import { getRecentOrderedItems } from '../services/supabaseService';
+import PageSkeleton from '../components/PageSkeleton';
+import { showHomeLoader, hideHomeLoader } from '../utils/loader';
 
 
 const HomePage = () => {
@@ -11,6 +15,7 @@ const HomePage = () => {
     const navigate = useNavigate();
     const scrollRef = useRef(null);
     const { restaurant } = useRestaurant();
+    const { user } = useAuth();
     const restaurantName = restaurant?.name || 'Tablekard';
     
     // Dynamic font size based on name length
@@ -38,6 +43,8 @@ const HomePage = () => {
     const [selectedItem, setSelectedItem] = useState(null);
     const [showItemModal, setShowItemModal] = useState(false);
     const [modalQuantity, setModalQuantity] = useState(0);
+    const [recentOrders, setRecentOrders] = useState([]);
+    const [loadingRecent, setLoadingRecent] = useState(true);
 
     const handleScroll = () => {
         if (scrollRef.current) {
@@ -78,6 +85,64 @@ const HomePage = () => {
             document.body.style.overflow = 'unset';
         };
     }, [showItemModal]);
+
+    useEffect(() => {
+        const fetchRecent = async () => {
+            const isFirstLoad = !sessionStorage.getItem('homeAnimationShown');
+            
+            // Force a minimum delay of 3 seconds only on first load so animation completes
+            const minDelay = isFirstLoad 
+                ? new Promise(resolve => setTimeout(resolve, 3000))
+                : Promise.resolve();
+            
+            if (isFirstLoad) {
+                showHomeLoader();
+                sessionStorage.setItem('homeAnimationShown', 'true');
+            }
+            
+            if (user?.id) {
+                try {
+                    setLoadingRecent(true);
+                    const [data] = await Promise.all([
+                        getRecentOrderedItems(user.id, 3),
+                        minDelay
+                    ]);
+                    setRecentOrders(data);
+                } catch (err) {
+                    console.error('Error fetching recent items:', err);
+                } finally {
+                    setLoadingRecent(false);
+                    if (isFirstLoad) hideHomeLoader();
+                }
+            } else {
+                setLoadingRecent(true);
+                await minDelay;
+                setLoadingRecent(false);
+                if (isFirstLoad) hideHomeLoader();
+            }
+        };
+        fetchRecent();
+
+        // Inject lottie-player script
+        if (!document.getElementById('lottie-player-script')) {
+            const script = document.createElement('script');
+            script.id = 'lottie-player-script';
+            script.src = 'https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js';
+            script.async = true;
+            document.body.appendChild(script);
+        }
+    }, [user?.id]);
+
+    if (loadingRecent) {
+        // If it's the first load, the showHomeLoader covers the screen, so returning null is fine.
+        // On subsequent loads, we show the skeleton.
+        const loader = document.getElementById('global-home-loader');
+        const isLoaderVisible = loader && loader.style.display !== 'none';
+        
+        return sessionStorage.getItem('homeAnimationShown') === 'true' && !isLoaderVisible 
+            ? <PageSkeleton /> 
+            : null;
+    }
 
     const toggleFavorite = (itemId, e) => {
         e.stopPropagation();
@@ -256,44 +321,6 @@ const HomePage = () => {
 
     const filteredItems = getFilteredItems();
 
-    const recentOrders = [
-        {
-            id: 'recent1',
-            name: 'Pepperoni Pizza',
-            price: 148,
-            time: '20min',
-            rating: 4.6,
-            orderDate: '2 days ago',
-            serves: 'Serves 2',
-            image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300&h=300&fit=crop',
-            description: 'Our signature hand-tossed dough layered with zesty tomato sauce and melted mozzarella. Generously topped with spicy, crisp pepperoni slices. A perfect choice for meat lovers.',
-            dietType: 'non-veg'
-        },
-        {
-            id: 'recent2',
-            name: 'Grilled Salmon',
-            price: 228,
-            time: '25min',
-            rating: 4.8,
-            orderDate: '1 week ago',
-            serves: 'Serves 1',
-            image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=300&h=300&fit=crop',
-            description: 'Sustainably sourced salmon fillet, pan-seared for a crispy skin and tender, flaky interior. Seasoned with sea salt, pepper, and fresh dill. Served with a zesty lemon segment.',
-            dietType: 'non-veg'
-        },
-        {
-            id: 'recent3',
-            name: 'Vegan Burger',
-            price: 138,
-            time: '20min',
-            rating: 4.5,
-            orderDate: '1 week ago',
-            serves: 'Serves 1',
-            image: 'https://images.unsplash.com/photo-1520072959219-c595dc870360?w=300&h=300&fit=crop',
-            description: 'A hearty plant-based patty with a meaty texture. Topped with caramelized onions, vegan cheddar, organic arugula, and spicy vegan chipotle aioli on a toasted bun.',
-            dietType: 'vegan'
-        },
-    ];
 
     const cartTotal = cart.reduce((total, item) => total + item.quantity, 0);
 
@@ -471,48 +498,52 @@ const HomePage = () => {
                     </NavLink>
                 </div>
                 <div className="recent-list">
-                    {recentOrders.map(item => (
-                        <div key={item.id} className="recent-item" onClick={() => handleItemClick(item)}>
-                            <div className="recent-image">
-                                <img src={item.image} alt={item.name} />
-                            </div>
-                            <div className="recent-info">
-                                <div className="recent-name">{item.name}</div>
-                                <div className="recent-meta">
-                                    <span>{item.time}</span>
-                                    <span className="rating">
-                                        <Star size={10} fill="#8B3A1E" color="#8B3A1E" />
-                                        {item.rating}
-                                    </span>
+                    {recentOrders.length > 0 ? (
+                        recentOrders.map(item => (
+                            <div key={item.id} className="recent-item" onClick={() => handleItemClick(item)}>
+                                <div className="recent-image">
+                                    <img src={item.image} alt={item.name} />
                                 </div>
-                            </div>
-                            <div className="recent-price">₹{item.price}</div>
-                            {getItemQuantity(item.id) === 0 ? (
-                                <button
-                                    className="reorder-btn"
-                                    onClick={(e) => addToCart(item, e)}
-                                >
-                                    <Plus size={16} />
-                                </button>
-                            ) : (
-                                <div className="recent-qty-stepper" onClick={(e) => e.stopPropagation()}>
+                                <div className="recent-info">
+                                    <div className="recent-name">{item.name}</div>
+                                    <div className="recent-meta">
+                                        <span>{item.time}</span>
+                                        <span className="rating">
+                                            <Star size={10} fill="#8B3A1E" color="#8B3A1E" />
+                                            {item.rating}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="recent-price">₹{item.price}</div>
+                                {getItemQuantity(item.id) === 0 ? (
                                     <button
-                                        className="recent-stepper-btn"
-                                        onClick={(e) => removeFromCart(item.id, e)}
-                                    >
-                                        <Minus size={12} />
-                                    </button>
-                                    <span className="recent-stepper-value">{getItemQuantity(item.id)}</span>
-                                    <button
-                                        className="recent-stepper-btn"
+                                        className="reorder-btn"
                                         onClick={(e) => addToCart(item, e)}
                                     >
-                                        <Plus size={12} />
+                                        <Plus size={16} />
                                     </button>
-                                </div>
-                            )}
-                        </div>
-                    ))}
+                                ) : (
+                                    <div className="recent-qty-stepper" onClick={(e) => e.stopPropagation()}>
+                                        <button
+                                            className="recent-stepper-btn"
+                                            onClick={(e) => removeFromCart(item.id, e)}
+                                        >
+                                            <Minus size={12} />
+                                        </button>
+                                        <span className="recent-stepper-value">{getItemQuantity(item.id)}</span>
+                                        <button
+                                            className="recent-stepper-btn"
+                                            onClick={(e) => addToCart(item, e)}
+                                        >
+                                            <Plus size={12} />
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        ))
+                    ) : (
+                        <div className="no-orders-message">No recent orders yet</div>
+                    )}
                 </div>
             </section>
 

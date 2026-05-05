@@ -1278,3 +1278,15 @@ body {
     padding-bottom: calc(170px + env(safe-area-inset-bottom));
   }
 }
+
+.no-orders-message {
+  text-align: center;
+  padding: 30px 20px;
+  background: #FFF9F7;
+  border-radius: 16px;
+  border: 1.5px dashed #D4A59A;
+  color: #8B3A1E;
+  font-weight: 500;
+  font-size: 14px;
+  width: 100%;
+}
