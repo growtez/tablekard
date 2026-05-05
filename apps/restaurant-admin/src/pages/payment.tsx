@@ -5,7 +5,8 @@ import Sidebar from '../components/sidebar';
 import { useAuth } from '../context/AuthContext';
 import { updatePaymentStatus } from '../services/supabaseService';
 import type { PaymentTransaction } from '../services/supabaseService';
-import { usePaymentTransactions, useInvalidateQueries, useRevenueData } from '../hooks/useSupabaseQuery';
+import { usePaymentTransactions, useInvalidateQueries, useRevenueData, queryKeys } from '../hooks/useSupabaseQuery';
+import { useQueryClient } from '@tanstack/react-query';
 
 // Main Payment Component
 const Payment: React.FC = () => {
@@ -25,6 +26,7 @@ const Payment: React.FC = () => {
   const { data: allTransactions = [], isLoading: loading } = usePaymentTransactions(activeRestaurantId);
   const { data: revenueData = [], isLoading: loadingRevenue } = useRevenueData(activeRestaurantId);
   const { invalidatePayments } = useInvalidateQueries();
+  const queryClient = useQueryClient();
   
   const [revenuePeriod, setRevenuePeriod] = useState<string>('today');
   const [revenueCustomDate, setRevenueCustomDate] = useState<string>('');
@@ -121,11 +123,36 @@ const Payment: React.FC = () => {
   };
 
   const handleStatusChange = async (id: string, newStatus: string) => {
+    if (!activeRestaurantId) return;
+
+    const qKey = queryKeys.payments(activeRestaurantId);
+    const previousPayments = queryClient.getQueryData<any[]>(qKey);
+
+    // 1. Optimistically update the cache
+    queryClient.setQueryData(qKey, (old: any[] | undefined) => {
+      if (!old) return [];
+      return old.map(transaction => {
+        if (transaction.id === id) {
+          return {
+            ...transaction,
+            paymentStatus: newStatus.charAt(0).toUpperCase() + newStatus.slice(1),
+            statusColor: newStatus.toLowerCase()
+          };
+        }
+        return transaction;
+      });
+    });
+
     try {
       await updatePaymentStatus(id, newStatus);
-      if (activeRestaurantId) invalidatePayments(activeRestaurantId);
+      // Optional: refetch in background to ensure sync
+      invalidatePayments(activeRestaurantId);
     } catch (err) {
-      console.error(err);
+      console.error('Failed to update status', err);
+      // 2. Rollback if failed
+      if (previousPayments) {
+        queryClient.setQueryData(qKey, previousPayments);
+      }
       alert('Failed to update status');
     }
   };

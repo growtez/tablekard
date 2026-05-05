@@ -535,16 +535,21 @@ export const getOrders = async (restaurantId: string, limitCount: number = 50): 
 export interface DashboardOrder {
     id: string;
     orderNumber: string;
+    customerName: string;
+    orderType: string;
     table: string;
     time: string;
     status: string;
     statusColor: string;
     paymentMethod: string;
+    paymentStatus: string;
+    paymentStatusColor: string;
     items: string;
-    rawItems: Array<{ name: string; quantity: number; price: number }>;
+    orderItems: { name: string; quantity: number; price: number; special_instructions?: string }[];
+    subtotal: number;
+    taxes: number;
+    discount: number;
     total: number;
-    isPaid: boolean;
-    customer: string;
     createdAt: string;
 }
 
@@ -554,14 +559,18 @@ export const getDashboardOrders = async (restaurantId: string): Promise<Dashboar
         .select(`
             id,
             order_number,
-            created_at,
+            type,
             status,
             payment_method,
             payment_status,
+            subtotal,
+            taxes,
+            discount,
             total,
-            profiles(name),
+            created_at,
             restaurant_tables(table_number),
-            order_items(name, quantity, price)
+            profiles(name),
+            order_items(name, quantity, price, special_instructions)
         `)
         .eq('restaurant_id', restaurantId)
         .order('created_at', { ascending: false });
@@ -584,16 +593,21 @@ export const getDashboardOrders = async (restaurantId: string): Promise<Dashboar
         return {
             id: row.id,
             orderNumber: row.order_number || 'UNKNOWN',
+            customerName: profile?.name || 'Guest',
+            orderType: row.type || 'dine_in',
             table: table?.table_number ? `Table ${table.table_number}` : 'N/A',
             time: new Date(row.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
             status: (row.status || 'New').charAt(0).toUpperCase() + (row.status || 'New').slice(1),
             statusColor: statusColor,
             paymentMethod: row.payment_method || 'Cash',
+            paymentStatus: (row.payment_status || 'pending').charAt(0).toUpperCase() + (row.payment_status || 'pending').slice(1),
+            paymentStatusColor: (row.payment_status || 'pending').toLowerCase(),
             items: itemsStr,
-            rawItems: itemsList,
+            orderItems: itemsList,
+            subtotal: Number(row.subtotal) || 0,
+            taxes: Number(row.taxes) || 0,
+            discount: Number(row.discount) || 0,
             total: Number(row.total) || 0,
-            isPaid: row.payment_status === 'paid',
-            customer: profile?.name || 'Guest',
             createdAt: row.created_at
         };
     });
