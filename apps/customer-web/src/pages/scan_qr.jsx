@@ -1,70 +1,57 @@
 import React, { useState } from 'react';
-import { QrCode, Smartphone, ArrowRight, MapPin, X, Camera } from 'lucide-react';
+import { QrCode, MapPin, X, Camera } from 'lucide-react';
 import { Scanner } from '@yudiel/react-qr-scanner';
-import { useNavigate } from 'react-router-dom';
 import './scan_qr.css';
 
 const ScanQRPage = () => {
     const [showScanner, setShowScanner] = useState(false);
-    const [scanError, setScanError] = useState('');
-    const navigate = useNavigate();
 
     const handleScan = (result) => {
-        // Handle both array-based results (v2+) and potential single-string results
-        const rawValue = Array.isArray(result) ? result[0]?.rawValue : result?.rawValue || result;
-        
-        if (!rawValue || typeof rawValue !== 'string') return;
+        if (result?.[0]?.rawValue) {
+            const scannedValue = result[0].rawValue;
+            console.log('Scanned Value:', scannedValue);
 
-        console.log('Scanned Value Detected:', rawValue);
+            let targetPath = '';
 
-        let targetPath = '';
-
-        try {
-            // Case 1: Handle full URLs (e.g., https://tablekard.com/order/rest/table)
-            if (rawValue.toLowerCase().startsWith('http')) {
-                const url = new URL(rawValue);
-                targetPath = url.pathname + url.search;
-            } 
-            // Case 2: Handle domain-only URLs (e.g., tablekard.com/order/rest/table)
-            else if (rawValue.toLowerCase().includes('tablekard.com') || rawValue.toLowerCase().includes('vercel.app')) {
-                // Prepend protocol to help URL parser
-                const url = new URL('https://' + rawValue);
-                targetPath = url.pathname + url.search;
+            // Handle full URLs
+            if (scannedValue.startsWith('http')) {
+                try {
+                    const url = new URL(scannedValue);
+                    targetPath = url.pathname + url.search;
+                } catch (e) {
+                    console.error('URL Parsing Error:', e);
+                }
             }
-            // Case 3: Handle relative paths or just table IDs
+            // Handle relative paths or URLs without protocol
             else {
-                targetPath = rawValue.startsWith('/') ? rawValue : '/' + rawValue;
+                targetPath = scannedValue.startsWith('/') ? scannedValue : '/' + scannedValue;
             }
 
-            console.log('Parsed Target Path:', targetPath);
+            // Match /order/:restaurantId/:tableId pattern
+            const orderMatch = targetPath.match(/^\/order\/([^/?#]+)\/([^/?#]+)/);
 
-            // Validation: Ensure we are navigating to a valid order route
-            // We look for /order/ case-insensitively
-            const lowerPath = targetPath.toLowerCase();
-            const orderIndex = lowerPath.indexOf('/order/');
+            if (orderMatch) {
+                const restaurantId = orderMatch[1];
+                const tableId = orderMatch[2];
 
-            if (orderIndex !== -1) {
-                // Extract everything from /order/ onwards
-                const cleanPath = targetPath.substring(orderIndex);
-                
-                setScanError('');
+                // ✅ Pre-seed sessionStorage so RestaurantContext initializes
+                // correctly on the next render — without this, RequireRestaurant
+                // still sees restaurantId=null and re-renders ScanQRPage instead
+                // of MenuPage after navigate().
+                sessionStorage.setItem('tablekard_restaurant_id', restaurantId);
+                sessionStorage.setItem('tablekard_table_id', tableId);
+
                 setShowScanner(false);
-                // Subtle feedback before navigation
+
+                // Use a full page navigation so RestaurantContext re-mounts fresh
+                // with the IDs already in sessionStorage + the matched URL params.
                 setTimeout(() => {
-                    navigate(cleanPath);
+                    window.location.href = targetPath;
                 }, 150);
             } else {
-                console.warn('Scanned QR does not contain a valid /order/ path:', targetPath);
-                setScanError('Invalid QR code. Please scan a Tablekard QR code.');
+                console.warn('Scanned value does not contain a valid order path:', targetPath);
             }
-        } catch (err) {
-            console.error('Error processing scanned QR:', err);
         }
-    };
-
-    const toggleScanner = (show) => {
-        setScanError('');
-        setShowScanner(show);
     };
 
     return (
@@ -84,7 +71,7 @@ const ScanQRPage = () => {
                 </div>
 
                 <div className="main-action">
-                    <button className="scan-now-btn" onClick={() => toggleScanner(true)}>
+                    <button className="scan-now-btn" onClick={() => setShowScanner(true)}>
                         <Camera size={20} />
                         <span>Open QR Scanner</span>
                     </button>
@@ -115,22 +102,17 @@ const ScanQRPage = () => {
             {showScanner && (
                 <div className="scanner-overlay-modal">
                     <div className="scanner-modal-content">
-                        <button className="close-scanner" onClick={() => toggleScanner(false)}>
+                        <button className="close-scanner" onClick={() => setShowScanner(false)}>
                             <X size={24} />
                         </button>
                         <div className="scanner-frame">
                             <Scanner
                                 onScan={handleScan}
-                                onError={(err) => {
-                                    console.error(err);
-                                    setScanError('Camera error. Please ensure permissions are granted.');
-                                }}
+                                onError={(err) => console.error(err)}
                                 components={{
-                                    audio: true,
+                                    audio: false,
                                     torch: true,
                                 }}
-                                allowMultiple={false}
-                                scanDelay={2000}
                                 styles={{
                                     container: {
                                         width: '100%',
@@ -147,7 +129,6 @@ const ScanQRPage = () => {
                                 <div className="corner bottom-right"></div>
                             </div>
                         </div>
-                        {scanError && <p className="scanner-error-msg">{scanError}</p>}
                         <p className="scanner-hint">Align QR code within the frame</p>
                     </div>
                 </div>
