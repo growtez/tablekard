@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ArrowLeft, Heart, Star, Clock, X, Plus, Minus } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Search, ArrowLeft, Heart, Star, Clock, X, Plus, Minus, View } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import './search.css';
 
 const SearchPage = () => {
@@ -231,6 +231,30 @@ const SearchPage = () => {
 
                             <div className="modal-main-price">₹{selectedItem.price}</div>
                             <p className="modal-main-description">{selectedItem.description}</p>
+                            
+                            <button 
+                                className="view-ar-btn"
+                                onClick={() => navigate(`/ar/${selectedItem.id}`, { state: { modelUrl: selectedItem.modelUrl } })}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '8px',
+                                    width: '100%',
+                                    padding: '12px',
+                                    marginTop: '16px',
+                                    backgroundColor: '#f5ede9',
+                                    color: '#8B3A1E',
+                                    border: 'none',
+                                    borderRadius: '12px',
+                                    fontSize: '15px',
+                                    fontWeight: '600',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                <View size={18} />
+                                View in AR
+                            </button>
                         </div>
                     </div>
                 </div>

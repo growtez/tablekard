@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Heart, Home, User, ShoppingBag, Grid, ShoppingCart, Clock, Star, MessageSquare, Plus, Minus, X, ArrowRight, Users, Timer } from 'lucide-react';
+import { Search, Heart, Home, User, ShoppingBag, Grid, ShoppingCart, Clock, Star, MessageSquare, Plus, Minus, X, ArrowRight, Users, Timer, View } from 'lucide-react';
 import { NavLink, useNavigate } from "react-router-dom";
 import './home.css';
 import Hamburger from '../components/hamburger';
@@ -592,6 +592,30 @@ const HomePage = () => {
                             </div>
 
                             <p className="dish-full-desc">{selectedItem.description}</p>
+                            
+                            <button 
+                                className="view-ar-btn"
+                                onClick={() => navigate(`/ar/${selectedItem.id}`, { state: { modelUrl: selectedItem.modelUrl } })}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '8px',
+                                    width: '100%',
+                                    padding: '12px',
+                                    marginTop: '16px',
+                                    backgroundColor: '#f5ede9',
+                                    color: '#8B3A1E',
+                                    border: 'none',
+                                    borderRadius: '12px',
+                                    fontSize: '15px',
+                                    fontWeight: '600',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                <View size={18} />
+                                View in AR
+                            </button>
                         </div>
 
                         {/* Sticky Bottom Action Bar */}

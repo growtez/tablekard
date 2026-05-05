@@ -128,6 +128,25 @@ const Menu: React.FC = () => {
 
       const activeImages = processedImages.filter(img => !img.isDeleted);
 
+      // 2. Process AR model upload
+      let modelUrl: string | null | undefined = undefined; // undefined = no change
+      if (itemData.arModelFile) {
+        // New file uploaded — delete old one first if it exists
+        if (itemData.existingModelUrl) {
+          const { deleteARModel } = await import('../services/storageService');
+          await deleteARModel(itemData.existingModelUrl).catch(console.error);
+        }
+        const { uploadARModel } = await import('../services/storageService');
+        modelUrl = await uploadARModel(activeRestaurantId, itemData.arModelFile);
+      } else if (itemData.removeModel) {
+        // Explicit removal
+        if (itemData.existingModelUrl) {
+          const { deleteARModel } = await import('../services/storageService');
+          await deleteARModel(itemData.existingModelUrl).catch(console.error);
+        }
+        modelUrl = null;
+      }
+
       if (dialogMode === 'add') {
         await addMenuItem(activeRestaurantId, {
           name: itemData.name,
@@ -143,10 +162,11 @@ const Menu: React.FC = () => {
           tags: itemData.tags,
           variants: itemData.variants,
           addons: itemData.addons,
+          model_url: modelUrl ?? null,
           menu_item_images: activeImages
         });
       } else {
-        await updateMenuItem(itemData.id, {
+        const updatePayload: any = {
           name: itemData.name,
           price: itemData.price,
           category_id: itemData.categoryId,
@@ -160,7 +180,11 @@ const Menu: React.FC = () => {
           tags: itemData.tags,
           variants: itemData.variants,
           addons: itemData.addons
-        }, processedImages);
+        };
+        if (modelUrl !== undefined) {
+          updatePayload.model_url = modelUrl;
+        }
+        await updateMenuItem(itemData.id, updatePayload, processedImages);
       }
       invalidateMenu(activeRestaurantId);
     } catch (err) {

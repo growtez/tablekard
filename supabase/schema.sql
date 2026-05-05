@@ -129,6 +129,7 @@ CREATE TABLE IF NOT EXISTS public.menu_items (
     tags TEXT[],
     variants JSONB DEFAULT '[]'::jsonb,
     addons JSONB DEFAULT '[]'::jsonb,
+    model_url TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -277,6 +278,8 @@ ALTER TABLE public.restaurants
 ALTER TABLE public.payments ALTER COLUMN order_id DROP NOT NULL;
 ALTER TABLE public.menu_items
     ADD COLUMN IF NOT EXISTS serves INTEGER DEFAULT 1 CHECK (serves > 0);
+ALTER TABLE public.menu_items
+    ADD COLUMN IF NOT EXISTS model_url TEXT;
 
 -- ======================================================================================
 -- INDEXES
@@ -539,3 +542,28 @@ CREATE POLICY "Super admins manage platform settings" ON public.platform_setting
 -- 16. subscription_payments
 CREATE POLICY "Restaurant members can read subscription payments" ON public.subscription_payments FOR SELECT USING (public.is_restaurant_member(restaurant_id));
 CREATE POLICY "Super admins manage subscription payments" ON public.subscription_payments FOR ALL USING (public.is_super_admin());
+
+-- ======================================================================================
+-- STORAGE POLICIES
+-- ======================================================================================
+
+-- 17. storage.objects (ar-files bucket)
+-- Note: These policies target the storage.objects table which is in a different schema
+
+CREATE POLICY "Public Access"
+ON storage.objects FOR SELECT
+USING ( bucket_id = 'ar-files' );
+
+CREATE POLICY "Authenticated Insert"
+ON storage.objects FOR INSERT
+WITH CHECK (
+  bucket_id = 'ar-files' AND
+  auth.role() = 'authenticated'
+);
+
+CREATE POLICY "Authenticated Management"
+ON storage.objects FOR ALL
+USING (
+  bucket_id = 'ar-files' AND
+  auth.role() = 'authenticated'
+);

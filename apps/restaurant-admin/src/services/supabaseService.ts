@@ -49,6 +49,7 @@ interface MenuItemRow {
     serves: number;
     tags: string[] | null;
     variants: unknown[] | null; addons: unknown[] | null;
+    model_url: string | null;
     created_at: string; updated_at: string;
     menu_item_images?: { id: string; image_url: string; sort_order: number }[];
 }
@@ -272,7 +273,8 @@ const mapMenuItemRow = (row: MenuItemRow): MenuItem => ({
     serves: row.serves,
     tags: row.tags,
     variants: (row.variants as any) ?? undefined,
-    addons: (row.addons as any) ?? undefined
+    addons: (row.addons as any) ?? undefined,
+    modelUrl: row.model_url
 });
 
 export const getMenuItems = async (restaurantId: string): Promise<MenuItem[]> => {
@@ -308,6 +310,7 @@ export const addMenuItem = async (
         tags?: string[] | null;
         variants?: any[] | null;
         addons?: any[] | null;
+        model_url?: string | null;
         menu_item_images?: { url: string; sortOrder: number }[];
     }
 ): Promise<MenuItem> => {
@@ -362,6 +365,7 @@ export const updateMenuItem = async (
         tags: string[] | null;
         variants: any[] | null;
         addons: any[] | null;
+        model_url: string | null;
     }>,
     images?: { id?: string; url: string; sortOrder: number; isDeleted?: boolean }[]
 ): Promise<void> => {
@@ -545,11 +549,14 @@ export interface DashboardOrder {
     paymentStatus: string;
     paymentStatusColor: string;
     items: string;
+    rawItems: { name: string; quantity: number; price: number }[];
     orderItems: { name: string; quantity: number; price: number; special_instructions?: string }[];
+    customer: string;
     subtotal: number;
     taxes: number;
     discount: number;
     total: number;
+    isPaid: boolean;
     createdAt: string;
 }
 
@@ -603,11 +610,23 @@ export const getDashboardOrders = async (restaurantId: string): Promise<Dashboar
             paymentStatus: (row.payment_status || 'pending').charAt(0).toUpperCase() + (row.payment_status || 'pending').slice(1),
             paymentStatusColor: (row.payment_status || 'pending').toLowerCase(),
             items: itemsStr,
-            orderItems: itemsList,
+            rawItems: itemsList.map((item: any) => ({
+                name: item.name,
+                quantity: item.quantity,
+                price: Number(item.price) || 0
+            })),
+            orderItems: itemsList.map((item: any) => ({
+                name: item.name,
+                quantity: item.quantity,
+                price: Number(item.price) || 0,
+                special_instructions: item.special_instructions || undefined
+            })),
+            customer: profile?.name || 'Guest',
             subtotal: Number(row.subtotal) || 0,
             taxes: Number(row.taxes) || 0,
             discount: Number(row.discount) || 0,
             total: Number(row.total) || 0,
+            isPaid: (row.payment_status || '').toLowerCase() === 'paid',
             createdAt: row.created_at
         };
     });
@@ -760,7 +779,7 @@ export const getBestSellingDishes = async (restaurantId: string): Promise<BestSe
         .select(`
             name, 
             quantity, 
-            total,
+            price,
             orders!inner(restaurant_id, status)
         `)
         .eq('orders.restaurant_id', restaurantId)
@@ -796,7 +815,7 @@ export const getBestSellingDishes = async (restaurantId: string): Promise<BestSe
             };
         }
         aggregation[dishName].sold += item.quantity;
-        aggregation[dishName].revenue += Number(item.total);
+        aggregation[dishName].revenue += (Number(item.price) || 0) * item.quantity;
     });
 
     const results = Object.values(aggregation)
