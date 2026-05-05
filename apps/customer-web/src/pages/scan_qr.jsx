@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
-import { QrCode, Smartphone, ArrowRight, MapPin, X, Camera } from 'lucide-react';
+import { QrCode, MapPin, X, Camera } from 'lucide-react';
 import { Scanner } from '@yudiel/react-qr-scanner';
-import { useNavigate } from 'react-router-dom';
 import './scan_qr.css';
 
 const ScanQRPage = () => {
     const [showScanner, setShowScanner] = useState(false);
-    const navigate = useNavigate();
 
     const handleScan = (result) => {
         if (result?.[0]?.rawValue) {
@@ -23,19 +21,33 @@ const ScanQRPage = () => {
                 } catch (e) {
                     console.error('URL Parsing Error:', e);
                 }
-            } 
+            }
             // Handle relative paths or URLs without protocol
             else {
                 targetPath = scannedValue.startsWith('/') ? scannedValue : '/' + scannedValue;
             }
 
-            // If we found a valid order path, navigate to it
-            if (targetPath.includes('/order/')) {
+            // Match /order/:restaurantId/:tableId pattern
+            const orderMatch = targetPath.match(/^\/order\/([^/?#]+)\/([^/?#]+)/);
+
+            if (orderMatch) {
+                const restaurantId = orderMatch[1];
+                const tableId = orderMatch[2];
+
+                // ✅ Pre-seed sessionStorage so RestaurantContext initializes
+                // correctly on the next render — without this, RequireRestaurant
+                // still sees restaurantId=null and re-renders ScanQRPage instead
+                // of MenuPage after navigate().
+                sessionStorage.setItem('tablekard_restaurant_id', restaurantId);
+                sessionStorage.setItem('tablekard_table_id', tableId);
+
                 setShowScanner(false);
-                // Use a slight delay to ensure the modal closes smoothly before navigation
+
+                // Use a full page navigation so RestaurantContext re-mounts fresh
+                // with the IDs already in sessionStorage + the matched URL params.
                 setTimeout(() => {
-                    navigate(targetPath);
-                }, 100);
+                    window.location.href = targetPath;
+                }, 150);
             } else {
                 console.warn('Scanned value does not contain a valid order path:', targetPath);
             }
