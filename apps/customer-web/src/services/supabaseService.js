@@ -152,6 +152,50 @@ export const getTodaysOrders = async (userId) => {
     return data ?? [];
 };
 
+export const getRecentOrderedItems = async (userId, limit = 3) => {
+    const { data, error } = await supabase
+        .from('order_items')
+        .select(`
+            menu_item_id,
+            orders!inner(customer_id, created_at),
+            menu_items (
+                *,
+                menu_item_images (image_url, sort_order)
+            )
+        `)
+        .eq('orders.customer_id', userId)
+        .order('created_at', { foreignTable: 'orders', ascending: false })
+        .limit(20); // Fetch more to filter for unique items
+
+    if (error) throw error;
+    
+    // Process to get unique items and flatten structure
+    const items = [];
+    const seenIds = new Set();
+    
+    for (const row of data) {
+        if (row.menu_items && !seenIds.has(row.menu_item_id)) {
+            const m = row.menu_items;
+            const item = {
+                id: m.id,
+                name: m.name,
+                price: m.price,
+                time: m.preparation_time ? `${m.preparation_time}min` : '15min',
+                rating: 4.8, // Default rating
+                serves: `Serves ${m.serves || 1}`,
+                image: m.menu_item_images?.[0]?.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
+                description: m.long_description || m.short_description || '',
+                dietType: m.is_veg ? 'veg' : 'non-veg'
+            };
+            items.push(item);
+            seenIds.add(row.menu_item_id);
+        }
+        if (items.length >= limit) break;
+    }
+    
+    return items;
+};
+
 export const cancelOrder = async (orderId) => {
     const { data, error } = await supabase
         .from('orders')
