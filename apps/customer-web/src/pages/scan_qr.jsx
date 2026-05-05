@@ -6,40 +6,65 @@ import './scan_qr.css';
 
 const ScanQRPage = () => {
     const [showScanner, setShowScanner] = useState(false);
+    const [scanError, setScanError] = useState('');
     const navigate = useNavigate();
 
     const handleScan = (result) => {
-        if (result?.[0]?.rawValue) {
-            const scannedValue = result[0].rawValue;
-            console.log('Scanned Value:', scannedValue);
+        // Handle both array-based results (v2+) and potential single-string results
+        const rawValue = Array.isArray(result) ? result[0]?.rawValue : result?.rawValue || result;
+        
+        if (!rawValue || typeof rawValue !== 'string') return;
 
-            let targetPath = '';
+        console.log('Scanned Value Detected:', rawValue);
 
-            // Handle full URLs
-            if (scannedValue.startsWith('http')) {
-                try {
-                    const url = new URL(scannedValue);
-                    targetPath = url.pathname + url.search;
-                } catch (e) {
-                    console.error('URL Parsing Error:', e);
-                }
+        let targetPath = '';
+
+        try {
+            // Case 1: Handle full URLs (e.g., https://tablekard.com/order/rest/table)
+            if (rawValue.toLowerCase().startsWith('http')) {
+                const url = new URL(rawValue);
+                targetPath = url.pathname + url.search;
             } 
-            // Handle relative paths or URLs without protocol
+            // Case 2: Handle domain-only URLs (e.g., tablekard.com/order/rest/table)
+            else if (rawValue.toLowerCase().includes('tablekard.com') || rawValue.toLowerCase().includes('vercel.app')) {
+                // Prepend protocol to help URL parser
+                const url = new URL('https://' + rawValue);
+                targetPath = url.pathname + url.search;
+            }
+            // Case 3: Handle relative paths or just table IDs
             else {
-                targetPath = scannedValue.startsWith('/') ? scannedValue : '/' + scannedValue;
+                targetPath = rawValue.startsWith('/') ? rawValue : '/' + rawValue;
             }
 
-            // If we found a valid order path, navigate to it
-            if (targetPath.includes('/order/')) {
+            console.log('Parsed Target Path:', targetPath);
+
+            // Validation: Ensure we are navigating to a valid order route
+            // We look for /order/ case-insensitively
+            const lowerPath = targetPath.toLowerCase();
+            const orderIndex = lowerPath.indexOf('/order/');
+
+            if (orderIndex !== -1) {
+                // Extract everything from /order/ onwards
+                const cleanPath = targetPath.substring(orderIndex);
+                
+                setScanError('');
                 setShowScanner(false);
-                // Use a slight delay to ensure the modal closes smoothly before navigation
+                // Subtle feedback before navigation
                 setTimeout(() => {
-                    navigate(targetPath);
-                }, 100);
+                    navigate(cleanPath);
+                }, 150);
             } else {
-                console.warn('Scanned value does not contain a valid order path:', targetPath);
+                console.warn('Scanned QR does not contain a valid /order/ path:', targetPath);
+                setScanError('Invalid QR code. Please scan a Tablekard QR code.');
             }
+        } catch (err) {
+            console.error('Error processing scanned QR:', err);
         }
+    };
+
+    const toggleScanner = (show) => {
+        setScanError('');
+        setShowScanner(show);
     };
 
     return (
@@ -59,7 +84,7 @@ const ScanQRPage = () => {
                 </div>
 
                 <div className="main-action">
-                    <button className="scan-now-btn" onClick={() => setShowScanner(true)}>
+                    <button className="scan-now-btn" onClick={() => toggleScanner(true)}>
                         <Camera size={20} />
                         <span>Open QR Scanner</span>
                     </button>
@@ -90,17 +115,22 @@ const ScanQRPage = () => {
             {showScanner && (
                 <div className="scanner-overlay-modal">
                     <div className="scanner-modal-content">
-                        <button className="close-scanner" onClick={() => setShowScanner(false)}>
+                        <button className="close-scanner" onClick={() => toggleScanner(false)}>
                             <X size={24} />
                         </button>
                         <div className="scanner-frame">
                             <Scanner
                                 onScan={handleScan}
-                                onError={(err) => console.error(err)}
+                                onError={(err) => {
+                                    console.error(err);
+                                    setScanError('Camera error. Please ensure permissions are granted.');
+                                }}
                                 components={{
-                                    audio: false,
+                                    audio: true,
                                     torch: true,
                                 }}
+                                allowMultiple={false}
+                                scanDelay={2000}
                                 styles={{
                                     container: {
                                         width: '100%',
@@ -117,6 +147,7 @@ const ScanQRPage = () => {
                                 <div className="corner bottom-right"></div>
                             </div>
                         </div>
+                        {scanError && <p className="scanner-error-msg">{scanError}</p>}
                         <p className="scanner-hint">Align QR code within the frame</p>
                     </div>
                 </div>
