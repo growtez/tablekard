@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useLocation, matchPath } from 'react-router-dom';
-import { getRestaurantById, getTableById } from '../services/supabaseService';
+import { getRestaurantById, getTableById, getTableByNumber } from '../services/supabaseService';
 
 const RestaurantContext = createContext(null);
 
@@ -65,7 +65,11 @@ export function RestaurantProvider({ children }) {
         return () => { cancelled = true; };
     }, [restaurantId]);
 
-    // Fetch table info whenever tableId changes
+    // Fetch table info whenever tableId / restaurantId changes.
+    // The QR code encodes the table NUMBER (1, 2, 3…), not the UUID.
+    // Detect which one we have and use the right query.
+    const isUUID = (val) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+
     useEffect(() => {
         if (!tableId) {
             setTable(null);
@@ -73,7 +77,12 @@ export function RestaurantProvider({ children }) {
         }
         let cancelled = false;
         setTableLoading(true);
-        getTableById(tableId)
+
+        const fetchPromise = isUUID(tableId)
+            ? getTableById(tableId)                          // UUID → fetch by id
+            : getTableByNumber(restaurantId, Number(tableId)); // number → fetch by table_number
+
+        fetchPromise
             .then(data => {
                 if (!cancelled) setTable(data);
             })
@@ -84,7 +93,7 @@ export function RestaurantProvider({ children }) {
                 if (!cancelled) setTableLoading(false);
             });
         return () => { cancelled = true; };
-    }, [tableId]);
+    }, [tableId, restaurantId]);
 
     return (
         <RestaurantContext.Provider value={{
