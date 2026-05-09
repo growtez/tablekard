@@ -2,7 +2,7 @@
   "installCommand": "npm install --prefix ../.. && npm install",
   "rewrites": [
     {
-      "source": "/((?!favicon\\.ico|assets/|.*\\.(png|jpg|jpeg|gif|svg|ico|webp|js|css|woff|woff2|ttf|map)).*)",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ],
