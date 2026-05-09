@@ -768,6 +768,125 @@ export const getRevenueData = async (restaurantId: string): Promise<RevenueRecor
     }));
 };
 
+/**
+ * Analytics & Reports
+ */
+
+export interface AnalyticsSummary {
+    totalRevenue: number;
+    totalOrders: number;
+    revenueChange: number;
+    ordersChange: number;
+}
+
+export const getAnalyticsSummary = async (
+    restaurantId: string,
+    startDate: Date,
+    endDate: Date
+): Promise<AnalyticsSummary> => {
+    // 1. Fetch current period data from revenue table
+    const startStr = startDate.toISOString().split('T')[0];
+    const endStr = endDate.toISOString().split('T')[0];
+
+    const { data, error } = await db
+        .from('revenue')
+        .select('total_revenue, total_orders')
+        .eq('restaurant_id', restaurantId)
+        .gte('revenue_date', startStr)
+        .lte('revenue_date', endStr);
+
+    if (error) throw error;
+
+    const totalRevenue = (data || []).reduce((sum: number, row: any) => sum + Number(row.total_revenue), 0);
+    const totalOrders = (data || []).reduce((sum: number, row: any) => sum + Number(row.total_orders), 0);
+
+    // 2. Fetch previous period for comparison
+    const diff = endDate.getTime() - startDate.getTime();
+    const prevStartDate = new Date(startDate.getTime() - diff - 86400000);
+    const prevEndDate = new Date(startDate.getTime() - 86400000);
+
+    const prevStartStr = prevStartDate.toISOString().split('T')[0];
+    const prevEndStr = prevEndDate.toISOString().split('T')[0];
+
+    const { data: prevData, error: prevError } = await db
+        .from('revenue')
+        .select('total_revenue, total_orders')
+        .eq('restaurant_id', restaurantId)
+        .gte('revenue_date', prevStartStr)
+        .lte('revenue_date', prevEndStr);
+
+    if (prevError) throw prevError;
+
+    const prevRevenue = (prevData || []).reduce((sum: number, row: any) => sum + Number(row.total_revenue), 0);
+    const prevOrders = (prevData || []).reduce((sum: number, row: any) => sum + Number(row.total_orders), 0);
+
+    const revenueChange = prevRevenue === 0 ? (totalRevenue > 0 ? 100 : 0) : ((totalRevenue - prevRevenue) / prevRevenue) * 100;
+    const ordersChange = prevOrders === 0 ? (totalOrders > 0 ? 100 : 0) : ((totalOrders - prevOrders) / prevOrders) * 100;
+
+    return {
+        totalRevenue,
+        totalOrders,
+        revenueChange,
+        ordersChange
+    };
+};
+
+export const getActiveTablesCount = async (restaurantId: string): Promise<number> => {
+    // Fetch count of tables where active is true for this restaurant
+    const { count, error } = await db
+        .from('restaurant_tables')
+        .select('*', { count: 'exact', head: true })
+        .eq('restaurant_id', restaurantId)
+        .eq('active', true);
+
+    if (error) throw error;
+    return count || 0;
+};
+
+export const getTotalMenuItemsCount = async (restaurantId: string): Promise<number> => {
+    const { count, error } = await db
+        .from('menu_items')
+        .select('*', { count: 'exact', head: true })
+        .eq('restaurant_id', restaurantId);
+
+    if (error) throw error;
+    return count || 0;
+};
+
+// ==========================================
+// Peak Hour Heatmap
+// ==========================================
+
+// heatData[dayIndex][hourIndex] = order count (dayIndex: 0=Mon, hourIndex: 0=12am)
+export type PeakHourData = number[][];
+
+export const getPeakHourData = async (restaurantId: string): Promise<PeakHourData> => {
+    // Fetch created_at for all orders of this restaurant
+    const { data, error } = await db
+        .from('orders')
+        .select('created_at')
+        .eq('restaurant_id', restaurantId);
+
+    if (error) {
+        console.error('Error fetching peak hour data:', error);
+        return Array.from({ length: 7 }, () => Array(24).fill(0));
+    }
+
+    // Build a 7x24 grid initialised to 0
+    // Rows: Mon(0) … Sun(6)   Columns: hour 0-23
+    const grid: number[][] = Array.from({ length: 7 }, () => Array(24).fill(0));
+
+    (data || []).forEach((row: any) => {
+        const d = new Date(row.created_at);
+        // getDay() returns 0=Sun, 1=Mon … 6=Sat — remap to 0=Mon … 6=Sun
+        const dayOfWeek = (d.getDay() + 6) % 7;
+        const hour = d.getHours();
+        grid[dayOfWeek][hour] += 1;
+    });
+
+    return grid;
+};
+
 // ==========================================
 // Best Selling Dishes
 // ==========================================
@@ -781,20 +900,17 @@ export interface BestSellingDish {
 }
 
 export const getBestSellingDishes = async (restaurantId: string): Promise<BestSellingDish[]> => {
-    // For MVP, we fetch order items for completed/served orders and aggregate locally.
+    // Fetch top 5 items by sales_count from menu_items
     const { data, error } = await db
-        .from('order_items')
-        .select(`
-            name, 
-            quantity, 
-            price,
-            orders!inner(restaurant_id, status)
-        `)
-        .eq('orders.restaurant_id', restaurantId)
-        .in('orders.status', ['served', 'completed', 'ready', 'SERVED', 'COMPLETED', 'READY']);
+        .from('menu_items')
+        .select('name, sales_count, price')
+        .eq('restaurant_id', restaurantId)
+        .gt('sales_count', 0)
+        .order('sales_count', { ascending: false })
+        .limit(5);
 
     if (error) {
-        console.error("Error fetching best selling:", error);
+        console.error("Error fetching best selling from menu_items:", error);
         return [];
     }
 
@@ -802,41 +918,19 @@ export const getBestSellingDishes = async (restaurantId: string): Promise<BestSe
         const lower = name.toLowerCase();
         if (lower.includes('chicken') || lower.includes('meat')) return '🍗';
         if (lower.includes('paneer') || lower.includes('cheese')) return '🧀';
-        if (lower.includes('dosa') || lower.includes('thali')) return '🥘';
         if (lower.includes('biryani') || lower.includes('rice')) return '🍛';
         if (lower.includes('naan') || lower.includes('roti') || lower.includes('bread')) return '🫓';
         if (lower.includes('drink') || lower.includes('lassi') || lower.includes('coffee')) return '🥤';
         return '🍽️';
     };
 
-    const aggregation: Record<string, BestSellingDish> = {};
-
-    data?.forEach((item: any) => {
-        const dishName = item.name;
-        if (!aggregation[dishName]) {
-            aggregation[dishName] = {
-                name: dishName,
-                sold: 0,
-                trend: '+0%', // Placeholder trend
-                revenue: 0,
-                image: getEmojiForDish(dishName)
-            };
-        }
-        aggregation[dishName].sold += item.quantity;
-        aggregation[dishName].revenue += (Number(item.price) || 0) * item.quantity;
-    });
-
-    const results = Object.values(aggregation)
-        .sort((a, b) => b.sold - a.sold)
-        .slice(0, 4); // Top 4
-
-    // Add some mocked dynamic trend data for realism
-    results.forEach(item => {
-        const fakeTrend = Math.floor(Math.random() * 20) + 1;
-        item.trend = `+${fakeTrend}%`;
-    });
-
-    return results;
+    return (data || []).map((row: any) => ({
+        name: row.name,
+        sold: row.sales_count || 0,
+        trend: row.sales_count > 20 ? '🔥 Top Pick' : 'Trending',
+        revenue: (row.sales_count || 0) * (Number(row.price) || 0),
+        image: getEmojiForDish(row.name)
+    }));
 };
 
 // ==========================================

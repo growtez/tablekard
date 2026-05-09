@@ -110,129 +110,122 @@ body {
   gap: 12px;
 }
 
-/* ── Order card ──────────────────────────────────────────── */
+/* ── Order card (new layout) ─────────────────────────────── */
 
 .order-card {
-  border: 1px solid var(--border-color);
-  padding: 12px;
+  background: var(--bg-white);
+  border: 2px solid #1a1a1a;
+  border-radius: 16px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 14px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.order-info {
+.order-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* ── Card top row: table + right info ────────────────────── */
+
+.card-top {
   display: flex;
-  gap: 15px;
-  align-items: flex-start;
+  align-items: center;
+  gap: 16px;
 }
 
-.order-number-wrapper {
+/* ── Table number section ────────────────────────────────── */
+
+.table-section {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
+  flex-shrink: 0;
 }
 
-.order-number {
-  border: 2.5px solid var(--border-color);
-  border-radius: 100px;
-  padding: 8px 12px;
-  font-size: 22px;
+.table-label {
+  font-size: 11px;
   font-weight: 900;
-  min-width: 85px;
-  text-align: center;
-  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #1a1a1a;
+}
+
+.table-number-oval {
+  width: 72px;
+  height: 52px;
+  border: 2.5px solid #1a1a1a;
+  border-radius: 50%;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-.order-time {
-  font-size: 9px;
-  color: #333;
-  font-weight: 500;
-  text-transform: uppercase;
+.table-number-value {
+  font-size: 28px;
+  font-weight: 900;
+  color: #1a1a1a;
+  line-height: 1;
 }
 
-/* ── Order items ─────────────────────────────────────────── */
+/* ── Card right section ──────────────────────────────────── */
 
-.order-items {
+.card-right {
   flex: 1;
-  font-size: 13.5px;
-  line-height: 1.25;
-  font-weight: 400;
-  color: #000;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  align-items: flex-end;
+  gap: 4px;
 }
 
-.order-item {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
+.order-badge {
+  border: 1.5px solid #1a1a1a;
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #1a1a1a;
+  letter-spacing: 0.3px;
+  line-height: 1.3;
 }
 
-.order-item-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-}
-
-.item-name {
-  font-weight: 500;
-}
-
-.item-qty {
-  font-weight: 700;
-  color: #444;
-}
-
-.item-timestamp {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 9px;
-  color: #888;
-  white-space: nowrap;
-}
-
-.item-detail {
+.order-time {
+  font-size: 11px;
   color: #555;
-  font-size: 11.5px;
-  padding-left: 2px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
-.item-instructions {
+/* ── ORDER ITEMS trigger ─────────────────────────────────── */
+
+.order-items-trigger {
+  margin-top: 4px;
   display: flex;
   align-items: center;
-  gap: 3px;
-  font-size: 10.5px;
-  color: #c97000;
-  font-style: italic;
-  padding-left: 2px;
+  gap: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1a1a;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 4px 0;
+  transition: opacity 0.15s;
 }
 
-/* ── Order meta (date + item count) ──────────────────────── */
-
-.order-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 4px;
-  border-top: 1px dashed #ddd;
+.order-items-trigger:hover {
+  opacity: 0.65;
 }
 
-.order-date {
-  font-size: 10px;
-  color: #888;
-}
-
-.order-item-count {
-  font-size: 10px;
-  color: #888;
-  font-weight: 500;
+.order-items-trigger:active {
+  opacity: 0.5;
 }
 
 /* ── Action buttons ──────────────────────────────────────── */
@@ -244,38 +237,259 @@ body {
 
 .btn {
   flex: 1;
-  padding: 8px;
-  border-radius: 10px;
+  padding: 12px;
+  border-radius: 12px;
   display: flex;
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: all 0.15s ease;
   outline: none;
+  font-weight: 600;
 }
 
 .btn:active {
-  opacity: 0.7;
+  transform: scale(0.96);
 }
 
 .btn-check {
   background-color: var(--btn-green-bg);
   border: 1.5px solid var(--btn-green-border);
+  color: #1a1a1a;
+  box-shadow: 0 2px 8px rgba(130, 179, 102, 0.2);
+}
+.btn-check:hover {
+  background-color: #c7dfc6;
 }
 
 .btn-up {
   background-color: var(--btn-green-bg);
   border: 1.5px solid var(--btn-green-border);
+  box-shadow: 0 2px 8px rgba(130, 179, 102, 0.2);
+}
+.btn-up:hover {
+  background-color: #c7dfc6;
 }
 
 .btn-remove {
   background-color: var(--btn-red-bg);
   border: 1.5px solid var(--btn-red-border);
+  box-shadow: 0 2px 8px rgba(184, 84, 80, 0.2);
+}
+.btn-remove:hover {
+  background-color: #f1babb;
 }
 
 .icon {
-  stroke-width: 3px;
-  /* Make icons bolder like in screenshot */
+  stroke-width: 2.5px;
+}
+
+/* ── Dialog overlay ──────────────────────────────────────── */
+
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.dialog-content {
+  background: #fff;
+  width: 100%;
+  max-width: 375px;
+  max-height: 80vh;
+  border-radius: 20px 20px 0 0;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.25s ease;
+  overflow: hidden;
+}
+
+/* ── Dialog header ───────────────────────────────────────── */
+
+.dialog-header {
+  padding: 18px 20px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-bottom: 1px solid #eee;
+  position: relative;
+}
+
+.dialog-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-right: 36px;
+}
+
+.dialog-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #1a1a1a;
+}
+
+.dialog-order-badge {
+  border: 1.5px solid #1a1a1a;
+  border-radius: 6px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #1a1a1a;
+}
+
+.dialog-type-badge {
+  background: #1a1a1a;
+  border-radius: 6px;
+  padding: 2px 10px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.dialog-table-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #888;
+}
+
+.dialog-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: #f3f3f3;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  color: #555;
+  transition: background 0.15s;
+}
+
+.dialog-close:hover {
+  background: #e5e5e5;
+}
+
+/* ── Dialog items list ───────────────────────────────────── */
+
+.dialog-items {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dialog-empty {
+  text-align: center;
+  padding: 24px 0;
+  color: #aaa;
+  font-size: 13px;
+  font-style: italic;
+}
+
+.dialog-item {
+  padding: 12px 14px;
+  background: #fafafa;
+  border: 1px solid #f0f0f0;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dialog-item-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dialog-item-name {
+  font-weight: 700;
+  color: #1a1a1a;
+  font-size: 14px;
+}
+
+.dialog-item-qty {
+  font-weight: 800;
+  color: #8B3A1E;
+  background: rgba(139, 58, 30, 0.1);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.dialog-item-detail {
+  font-size: 12px;
+  color: #666;
+}
+
+.dialog-item-instructions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #c97000;
+  font-style: italic;
+  font-weight: 500;
+  background: rgba(201, 112, 0, 0.06);
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+
+.dialog-item-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #888;
+  font-weight: 600;
+}
+
+.dialog-item-time {
+  font-weight: 500;
+}
+
+/* ── Dialog footer ───────────────────────────────────────── */
+
+.dialog-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  border-top: 1px solid #eee;
+  background: #fafafa;
+}
+
+.dialog-total-items {
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+}
+
+.dialog-total-price {
+  font-size: 16px;
+  font-weight: 800;
+  color: #1a1a1a;
 }
 
 /* ── Loading / Error / Empty states ──────────────────────── */

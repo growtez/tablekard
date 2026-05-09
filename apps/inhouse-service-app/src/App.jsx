@@ -1,5 +1,5 @@
-import React from 'react';
-import { Check, ArrowUp, X, Loader2, RefreshCw, Clock, AlertTriangle, LogOut } from 'lucide-react';
+import React, { useState } from 'react';
+import { Check, ArrowUp, X, Loader2, RefreshCw, ChevronDown, AlertTriangle, LogOut } from 'lucide-react';
 import { useOrders } from './hooks/useOrders';
 import { useAuth } from './context/AuthContext';
 import LoginScreen from './components/LoginScreen';
@@ -14,19 +14,6 @@ function formatTime(isoString) {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
-    hour12: true,
-  });
-}
-
-/** Format an ISO timestamp into a date + time string */
-function formatDateTime(isoString) {
-  if (!isoString) return '';
-  const d = new Date(isoString);
-  return d.toLocaleString('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
     hour12: true,
   });
 }
@@ -59,26 +46,74 @@ function buildDetailString(item) {
   return parts.join(' · ');
 }
 
-/* ──────────────────── OrderItem component ─────────────── */
+/** Get table number from order's joined restaurant_tables */
+function getTableNumber(order) {
+  if (order.restaurant_tables && order.restaurant_tables.table_number != null) {
+    return String(order.restaurant_tables.table_number).padStart(2, '0');
+  }
+  return '--';
+}
 
-const OrderItem = ({ name, qty, details, specialInstructions, timestamp }) => (
-  <div className="order-item">
-    <div className="order-item-row">
-      <span className="item-name">
-        {name} <span className="item-qty">×{qty}</span>
-      </span>
-      {timestamp && (
-        <span className="item-timestamp">
-          <Clock size={10} /> {formatTime(timestamp)}
-        </span>
-      )}
-    </div>
-    {details && <div className="item-detail">{details}</div>}
-    {specialInstructions && (
-      <div className="item-instructions">
-        <AlertTriangle size={10} /> {specialInstructions}
+/* ──────────────── OrderItemsDialog component ──────────── */
+
+const OrderItemsDialog = ({ items, orderNumber, tableNumber, type, status, onAction, onClose }) => (
+  <div className="dialog-overlay" onClick={onClose}>
+    <div className="dialog-content" onClick={(e) => e.stopPropagation()}>
+      <div className="dialog-header">
+        <div className="dialog-title-row">
+          <span className="dialog-title">Order Items</span>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            {type && <span className="dialog-type-badge">{String(type).replace('_', ' ').toUpperCase()}</span>}
+            <span className="dialog-order-badge">#{String(orderNumber || '').slice(-4).toUpperCase()}</span>
+          </div>
+        </div>
+        {tableNumber !== '--' && (
+          <span className="dialog-table-label">Table {tableNumber}</span>
+        )}
+        <button className="dialog-close" onClick={onClose}>
+          <X size={20} strokeWidth={2.5} />
+        </button>
       </div>
-    )}
+
+      <div className="dialog-items">
+        {items.length === 0 ? (
+          <div className="dialog-empty">No items in this order</div>
+        ) : (
+          items.map((item) => {
+            const details = buildDetailString(item);
+            return (
+              <div key={item.id} className="dialog-item">
+                <div className="dialog-item-main">
+                  <span className="dialog-item-name">{item.name}</span>
+                  <span className="dialog-item-qty">×{item.quantity}</span>
+                </div>
+                {details && <div className="dialog-item-detail">{details}</div>}
+                {item.special_instructions && (
+                  <div className="dialog-item-instructions">
+                    <AlertTriangle size={11} /> {item.special_instructions}
+                  </div>
+                )}
+                <div className="dialog-item-meta" style={{ justifyContent: 'flex-end' }}>
+                  <span className="dialog-item-time">{formatTime(item.created_at)}</span>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      <div className="dialog-footer">
+        <span className="dialog-total-items">{items.length} item{items.length !== 1 ? 's' : ''}</span>
+        <button 
+          className={status === 'preparing' ? "btn btn-check" : "btn btn-up"} 
+          onClick={onAction} 
+          style={{ padding: '8px 16px', flex: 'none', display: 'flex', gap: '6px', alignItems: 'center' }}
+        >
+          {status === 'preparing' ? <Check size={20} strokeWidth={3} /> : <ArrowUp size={20} strokeWidth={3} />}
+          <span>{status === 'preparing' ? 'DONE' : 'PROCEED'}</span>
+        </button>
+      </div>
+    </div>
   </div>
 );
 
@@ -87,6 +122,8 @@ const OrderItem = ({ name, qty, details, specialInstructions, timestamp }) => (
 const OrderCard = ({
   id,
   orderNumber,
+  tableNumber,
+  type,
   createdAt,
   items,
   status,
@@ -94,47 +131,67 @@ const OrderCard = ({
   onPromote,
   onCancel,
 }) => {
+  const [dialogOpen, setDialogOpen] = useState(false);
+
   return (
-    <div className="order-card">
-      <div className="order-info">
-        <div className="order-number-wrapper">
-          <div className="order-number">{orderNumber}</div>
-          <div className="order-time">{formatTime(createdAt)}</div>
-        </div>
-        <div className="order-items">
-          {items.map((item) => (
-            <OrderItem
-              key={item.id}
-              name={item.name}
-              qty={item.quantity}
-              details={buildDetailString(item)}
-              specialInstructions={item.special_instructions}
-              timestamp={item.created_at}
-            />
-          ))}
-        </div>
-      </div>
-      <div className="order-meta">
-        <span className="order-date">{formatDateTime(createdAt)}</span>
-        <span className="order-item-count">{items.length} item{items.length !== 1 ? 's' : ''}</span>
-      </div>
-      <div className="order-actions">
-        {status === 'preparing' ? (
-          <button className="btn btn-check" onClick={() => onMarkReady(id)} title="Mark as Ready">
-            <Check className="icon" size={24} color="#000" strokeWidth={3} />
-          </button>
-        ) : (
-          <>
-            <button className="btn btn-up" onClick={() => onPromote(id)} title="Move to Preparing">
-              <ArrowUp className="icon" size={24} color="#000" strokeWidth={3} />
+    <>
+      <div className="order-card">
+        {/* Top row: table number + order info */}
+        <div className="card-top">
+          <div className="table-section">
+            <span className="table-label">TABLE NO.</span>
+            <div className="table-number-oval">
+              <span className="table-number-value">{tableNumber}</span>
+            </div>
+          </div>
+          <div className="card-right">
+            <div className="order-badge">#{String(orderNumber || '').slice(-4).toUpperCase()}</div>
+            <div className="order-time">{formatTime(createdAt)}</div>
+            <button className="order-items-trigger" onClick={() => setDialogOpen(true)}>
+              <span>ORDER ITEMS</span>
+              <ChevronDown size={18} strokeWidth={2.5} />
             </button>
-            <button className="btn btn-remove" onClick={() => onCancel(id)} title="Cancel Order">
-              <X className="icon" size={24} color="#000" strokeWidth={3} />
+          </div>
+        </div>
+
+        {/* Bottom row: action buttons */}
+        <div className="order-actions">
+          {status === 'preparing' ? (
+            <button className="btn btn-check" onClick={() => onMarkReady(id)} title="Mark as Ready">
+              <Check className="icon" size={20} color="#000" strokeWidth={3} />
+              <span style={{ marginLeft: '6px' }}>DONE</span>
             </button>
-          </>
-        )}
+          ) : (
+            <>
+              <button className="btn btn-up" onClick={() => onPromote(id)} title="Move to Preparing">
+                <ArrowUp className="icon" size={20} color="#000" strokeWidth={3} />
+                <span style={{ marginLeft: '6px' }}>PROCEED</span>
+              </button>
+              <button className="btn btn-remove" onClick={() => onCancel(id)} title="Cancel Order">
+                <X className="icon" size={20} color="#000" strokeWidth={3} />
+                <span style={{ marginLeft: '6px' }}>DENY</span>
+              </button>
+            </>
+          )}
+        </div>
       </div>
-    </div>
+
+      {dialogOpen && (
+        <OrderItemsDialog
+          items={items}
+          orderNumber={orderNumber}
+          tableNumber={tableNumber}
+          type={type}
+          status={status}
+          onAction={() => {
+            if (status === 'preparing') onMarkReady(id);
+            else onPromote(id);
+            setDialogOpen(false);
+          }}
+          onClose={() => setDialogOpen(false)}
+        />
+      )}
+    </>
   );
 };
 
@@ -222,6 +279,8 @@ function OrdersView({ onSignOut }) {
                   key={order.id}
                   id={order.id}
                   orderNumber={order.order_number}
+                  tableNumber={getTableNumber(order)}
+                  type={order.type}
                   createdAt={order.created_at}
                   items={order.order_items ?? []}
                   status={order.status}
@@ -244,6 +303,8 @@ function OrdersView({ onSignOut }) {
                   key={order.id}
                   id={order.id}
                   orderNumber={order.order_number}
+                  tableNumber={getTableNumber(order)}
+                  type={order.type}
                   createdAt={order.created_at}
                   items={order.order_items ?? []}
                   status={order.status}
