@@ -130,6 +130,7 @@ CREATE TABLE IF NOT EXISTS public.menu_items (
     variants JSONB DEFAULT '[]'::jsonb,
     addons JSONB DEFAULT '[]'::jsonb,
     model_url TEXT,
+    sales_count INTEGER DEFAULT 0 CHECK (sales_count >= 0),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -280,6 +281,8 @@ ALTER TABLE public.menu_items
     ADD COLUMN IF NOT EXISTS serves INTEGER DEFAULT 1 CHECK (serves > 0);
 ALTER TABLE public.menu_items
     ADD COLUMN IF NOT EXISTS model_url TEXT;
+ALTER TABLE public.menu_items
+    ADD COLUMN IF NOT EXISTS sales_count INTEGER DEFAULT 0 CHECK (sales_count >= 0);
 
 -- ======================================================================================
 -- INDEXES
@@ -290,6 +293,9 @@ ON public.menu_item_images(menu_item_id);
 
 CREATE INDEX IF NOT EXISTS idx_revenue_restaurant_date
 ON public.revenue(restaurant_id, revenue_date);
+
+CREATE INDEX IF NOT EXISTS idx_menu_items_sales_count
+ON public.menu_items(restaurant_id, sales_count DESC);
 
 -- ======================================================================================
 -- TRIGGERS FOR TIMESTAMPS
@@ -381,6 +387,83 @@ DROP TRIGGER IF EXISTS trigger_maintain_revenue ON public.orders;
 CREATE TRIGGER trigger_maintain_revenue
     AFTER INSERT OR UPDATE OR DELETE ON public.orders
     FOR EACH ROW EXECUTE PROCEDURE maintain_revenue_aggregation();
+
+-- ======================================================================================
+-- MENU ITEM SALES COUNT TRIGGER
+-- ======================================================================================
+
+CREATE OR REPLACE FUNCTION update_menu_item_sales_count()
+RETURNS TRIGGER AS $$
+DECLARE
+    item_record RECORD;
+BEGIN
+    -- Handle UPDATE: order became paid
+    IF TG_OP = 'UPDATE' THEN
+        IF NEW.payment_status = 'paid' AND OLD.payment_status != 'paid' THEN
+            -- Increment sales_count for all items in this order
+            FOR item_record IN 
+                SELECT menu_item_id, quantity 
+                FROM public.order_items 
+                WHERE order_id = NEW.id AND menu_item_id IS NOT NULL
+            LOOP
+                UPDATE public.menu_items
+                SET sales_count = sales_count + item_record.quantity
+                WHERE id = item_record.menu_item_id;
+            END LOOP;
+            
+        -- Handle refund/failed payment: decrement sales_count
+        ELSIF OLD.payment_status = 'paid' AND NEW.payment_status != 'paid' THEN
+            FOR item_record IN 
+                SELECT menu_item_id, quantity 
+                FROM public.order_items 
+                WHERE order_id = OLD.id AND menu_item_id IS NOT NULL
+            LOOP
+                UPDATE public.menu_items
+                SET sales_count = GREATEST(0, sales_count - item_record.quantity)
+                WHERE id = item_record.menu_item_id;
+            END LOOP;
+        END IF;
+
+    -- Handle INSERT: new order already paid
+    ELSIF TG_OP = 'INSERT' THEN
+        IF NEW.payment_status = 'paid' THEN
+            FOR item_record IN 
+                SELECT menu_item_id, quantity 
+                FROM public.order_items 
+                WHERE order_id = NEW.id AND menu_item_id IS NOT NULL
+            LOOP
+                UPDATE public.menu_items
+                SET sales_count = sales_count + item_record.quantity
+                WHERE id = item_record.menu_item_id;
+            END LOOP;
+        END IF;
+        
+    -- Handle DELETE: paid order is deleted
+    ELSIF TG_OP = 'DELETE' THEN
+        IF OLD.payment_status = 'paid' THEN
+            FOR item_record IN 
+                SELECT menu_item_id, quantity 
+                FROM public.order_items 
+                WHERE order_id = OLD.id AND menu_item_id IS NOT NULL
+            LOOP
+                UPDATE public.menu_items
+                SET sales_count = GREATEST(0, sales_count - item_record.quantity)
+                WHERE id = item_record.menu_item_id;
+            END LOOP;
+        END IF;
+    END IF;
+
+    IF TG_OP = 'DELETE' THEN
+        RETURN OLD;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trigger_update_sales_count ON public.orders;
+CREATE TRIGGER trigger_update_sales_count
+    AFTER INSERT OR UPDATE OR DELETE ON public.orders
+    FOR EACH ROW EXECUTE PROCEDURE update_menu_item_sales_count();
 
 -- ======================================================================================
 -- AUTH TRIGGER FOR PROFILES
@@ -567,3 +650,21 @@ USING (
   bucket_id = 'ar-files' AND
   auth.role() = 'authenticated'
 );
+
+-- ======================================================================================
+-- DATA BACKFILL (Run only once after migration)
+-- ======================================================================================
+
+-- Backfill sales_count for existing paid orders (OPTIONAL - run if you have existing data)
+-- Uncomment the line below to backfill existing data:
+-- UPDATE public.menu_items mi
+-- SET sales_count = COALESCE(
+--     (
+--         SELECT SUM(oi.quantity)
+--         FROM public.order_items oi
+--         JOIN public.orders o ON o.id = oi.order_id
+--         WHERE oi.menu_item_id = mi.id
+--         AND o.payment_status = 'paid'
+--     ),
+--     0
+-- );
