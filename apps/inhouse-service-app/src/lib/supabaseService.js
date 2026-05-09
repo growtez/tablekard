@@ -15,8 +15,13 @@ export async function fetchOrdersByStatus(statuses = [], restaurantId) {
       id,
       order_number,
       status,
+      type,
       created_at,
       updated_at,
+      table_id,
+      restaurant_tables (
+        table_number
+      ),
       order_items (
         id,
         menu_item_id,
