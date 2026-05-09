@@ -102,13 +102,13 @@ const NavItemComponent = ({ item, collapsed }) => {
     );
 };
 
-export default function Sidebar({ collapsed: isLocked = true, setCollapsed: setIsLocked, session, onLogout }) {
+export default function Sidebar({ collapsed: isLocked = true, setCollapsed: setIsLocked, session, onLogout, mobileOpen = false, setMobileOpen }) {
     const [isHovered, setIsHovered] = useState(false);
-    const effectiveCollapsed = isLocked && !isHovered;
+    const effectiveCollapsed = isLocked && !isHovered && !mobileOpen;
 
     return (
         <aside
-            className={`sidebar ${effectiveCollapsed ? 'collapsed' : ''} ${!isLocked && !isHovered ? 'locked-open' : ''}`}
+            className={`sidebar ${effectiveCollapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
