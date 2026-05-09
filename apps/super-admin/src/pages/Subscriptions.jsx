@@ -34,10 +34,30 @@ export default function Subscriptions({ setSyncAction }) {
                 .order('created_at', { ascending: false });
 
             if (err) throw err;
-            setData(rows || []);
-
-            // Compute summary from rows
             const r = rows || [];
+
+            // ── Authoritative 6-hour auto-cancel (super-admin only, service role key) ──
+            // Find all pending payments older than 6 hours and mark them failed in the DB.
+            const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
+            const staleIds = r
+                .filter(x => x.status === 'pending' && x.created_at < sixHoursAgo)
+                .map(x => x.id);
+
+            if (staleIds.length > 0) {
+                const { error: updateErr } = await supabase
+                    .from('subscription_payments')
+                    .update({ status: 'failed' })
+                    .in('id', staleIds)
+                    .eq('status', 'pending'); // guard: only update if still pending
+                if (updateErr) console.error('Auto-cancel write failed:', updateErr.message);
+                // Apply the change locally so UI reflects it immediately without a second fetch
+                staleIds.forEach(id => {
+                    const row = r.find(x => x.id === id);
+                    if (row) row.status = 'failed';
+                });
+            }
+
+            setData(r);
             setSummary({
                 total: r.length,
                 paid: r.filter(x => x.status === 'paid').length,
