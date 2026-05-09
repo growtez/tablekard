@@ -19,7 +19,7 @@ import type { MenuItem, MenuCategory } from '@restaurant-saas/types';
 import './menu.css';
 
 const Menu: React.FC = () => {
-  const { activeRestaurantId } = useAuth();
+  const { activeRestaurantId, activeRestaurantName } = useAuth();
 
   const [activeTab, setActiveTab] = useState('menu-items');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
@@ -114,10 +114,14 @@ const Menu: React.FC = () => {
         for (const img of itemData.images) {
            if (img.isDeleted) {
                processedImages.push(img); // Pass it down to update logic to delete
+               if (img.url) {
+                 const { deleteMenuItemImageFromStorage } = await import('../services/storageService');
+                 await deleteMenuItemImageFromStorage(img.url).catch(console.error);
+               }
            } else if (img.file) {
                // Upload new file
                const { uploadMenuItemImage } = await import('../services/storageService');
-               const url = await uploadMenuItemImage(activeRestaurantId, img.file);
+               const url = await uploadMenuItemImage(activeRestaurantId, activeRestaurantName, img.file);
                processedImages.push({ url, sortOrder: img.sortOrder });
            } else {
                // Existing image
@@ -196,6 +200,22 @@ const Menu: React.FC = () => {
   const handleDeleteMenuItem = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this menu item?')) return;
     try {
+      const itemToDelete = menuItems.find(i => i.id === id);
+      if (itemToDelete) {
+        // Delete associated images from storage
+        if (itemToDelete.images && itemToDelete.images.length > 0) {
+          const { deleteMenuItemImageFromStorage } = await import('../services/storageService');
+          for (const img of itemToDelete.images) {
+            await deleteMenuItemImageFromStorage(img.url).catch(console.error);
+          }
+        }
+        // Delete associated AR model from storage
+        if (itemToDelete.modelUrl) {
+          const { deleteARModel } = await import('../services/storageService');
+          await deleteARModel(itemToDelete.modelUrl).catch(console.error);
+        }
+      }
+
       await deleteMenuItem(id);
       if (activeRestaurantId) invalidateMenu(activeRestaurantId);
     } catch (err) {

@@ -242,6 +242,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                         [
                             { label: "Display Name", field: "name", value: restaurant.name },
                             { label: "Unique Slug", type: "static", value: `/${restaurant.slug}` },
+                            { label: "Tagline", field: "tagline", value: restaurant.tagline },
                             {
                                 label: "Status",
                                 field: "status",
@@ -255,6 +256,9 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                                     { value: 'rejected', label: 'Rejected' }
                                 ]
                             },
+                            { label: "Opening Date", field: "opening_date", type: "date", value: restaurant.opening_date ? new Date(restaurant.opening_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : null },
+                            { label: "Weekday Hours", field: "operating_hours_weekdays", value: restaurant.operating_hours_weekdays },
+                            { label: "Weekend Hours", field: "operating_hours_weekends", value: restaurant.operating_hours_weekends },
                             { label: "Created At", type: "static", value: new Date(restaurant.created_at).toLocaleString() },
                             { label: "Last Updated", type: "static", value: new Date(restaurant.updated_at).toLocaleString() }
                         ],
@@ -298,7 +302,23 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                         <CreditCard size={20} />,
                         [
                             { label: "Plan Status", type: "static", value: restaurant.subscription_status ? "Active (Paid)" : "Inactive (Trial/Free)" },
-                            { label: "Plan Type", type: "static", value: restaurant.subscription_type || "Lite Plan" }
+                            { label: "Plan Type", type: "static", value: restaurant.subscription_type || "Lite Plan" },
+                            {
+                                label: "Expires On",
+                                type: "static",
+                                value: restaurant.subscription_end_at
+                                    ? (() => {
+                                        const daysLeft = Math.ceil((new Date(restaurant.subscription_end_at) - new Date()) / 86400000);
+                                        return (
+                                            <span style={{ color: daysLeft <= 0 ? '#ef4444' : daysLeft <= 7 ? '#f59e0b' : '#10b981', fontWeight: 700 }}>
+                                                {new Date(restaurant.subscription_end_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                {' — '}
+                                                {daysLeft <= 0 ? 'Expired' : `${daysLeft} day${daysLeft !== 1 ? 's' : ''} left`}
+                                            </span>
+                                        );
+                                    })()
+                                    : <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Not set</span>
+                            }
                         ],
                         { background: 'linear-gradient(90deg, rgba(245, 158, 11, 0.15) 0%, transparent 100%)', borderLeft: '4px solid #f59e0b', color: '#f59e0b' }
                     )}

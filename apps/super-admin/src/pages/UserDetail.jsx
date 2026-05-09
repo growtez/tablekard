@@ -22,6 +22,10 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
     const [formData, setFormData] = useState({});
     const [saving, setSaving] = useState(false);
 
+    // Refs to handle stale closures in header actions
+    const saveRef = useRef();
+    const cancelRef = useRef();
+
     useEffect(() => {
         if (id) {
             fetchInitialData();
