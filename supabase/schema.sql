@@ -625,6 +625,9 @@ CREATE POLICY "Super admins manage platform settings" ON public.platform_setting
 -- 16. subscription_payments
 CREATE POLICY "Restaurant members can read subscription payments" ON public.subscription_payments FOR SELECT USING (public.is_restaurant_member(restaurant_id));
 CREATE POLICY "Super admins manage subscription payments" ON public.subscription_payments FOR ALL USING (public.is_super_admin());
+-- NOTE: Restaurant members have read-only access. Status updates (e.g. auto-cancel)
+-- must be performed by the super-admin service role only (see super-admin/Subscriptions.jsx).
+
 
 -- ======================================================================================
 -- STORAGE POLICIES

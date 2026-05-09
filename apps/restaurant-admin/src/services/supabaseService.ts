@@ -1064,28 +1064,16 @@ export const getSubscriptionPayments = async (restaurantId: string): Promise<Sub
         .eq('restaurant_id', restaurantId)
         .order('created_at', { ascending: false });
     if (error) throw error;
-    return ((data ?? []) as any[]).map(row => {
-        let status = row.status;
-        const createdDate = new Date(row.created_at);
-        const hoursSinceCreation = (Date.now() - createdDate.getTime()) / (1000 * 60 * 60);
-
-        if (status === 'pending' && hoursSinceCreation > 6) {
-            status = 'failed';
-            // Lazily update the database in the background
-            updateSubscriptionPaymentStatus(row.id, 'failed').catch(err => 
-                console.error('Failed to auto-cancel old pending subscription:', err)
-            );
-        }
-
-        return {
-            id: row.id,
-            planDuration: row.plan_duration,
-            amount: Number(row.amount),
-            status: status,
-            paidAt: row.paid_at,
-            startsAt: row.starts_at,
-            endsAt: row.ends_at,
-            createdAt: row.created_at
-        };
-    });
+    // Show raw DB status — 'failed' only appears after the super-admin
+    // has authorised the update via the service role key.
+    return ((data ?? []) as any[]).map(row => ({
+        id: row.id,
+        planDuration: row.plan_duration,
+        amount: Number(row.amount),
+        status: row.status,
+        paidAt: row.paid_at,
+        startsAt: row.starts_at,
+        endsAt: row.ends_at,
+        createdAt: row.created_at
+    }));
 };
