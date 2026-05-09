@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../../supabaseClient';
-import { Card, CardHeader, CardTitle } from '../../components/ui/Card';
-import { Badge } from '../../components/ui/Badge';
+import { supabase } from '../supabaseClient';
+import { Card, CardHeader, CardTitle } from '../components/ui/Card';
+import { Badge } from '../components/ui/Badge';
 import { CreditCard, Search, Filter, SlidersHorizontal, Calendar, Store, Clock, ArrowUpRight } from 'lucide-react';
 
 const STATUS_VARIANTS = { paid: 'success', pending: 'warning', failed: 'error' };
