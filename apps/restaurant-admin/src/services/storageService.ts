@@ -48,31 +48,31 @@ export const uploadProfileImage = async (folder: string, file: File): Promise<st
 
 /**
  * Uploads a menu item image to Supabase Storage.
- * Generates a unique filename and places it inside a folder named by restaurantId.
+ * Generates a unique filename and places it inside a folder named by a combination of restaurant name and ID.
  * 
  * @param restaurantId The restaurant UUID
+ * @param restaurantName The human-readable name of the restaurant
  * @param file The File object from an input
  * @returns The public URL of the uploaded image
  */
-/**
- * Uploads a menu item image to Supabase Storage.
- * Generates a unique filename and places it inside a folder named by restaurantId.
- * 
- * @param restaurantId The restaurant UUID
- * @param file The File object from an input
- * @returns The public URL of the uploaded image
- */
-export const uploadMenuItemImage = async (restaurantId: string, file: File): Promise<string> => {
+export const uploadMenuItemImage = async (restaurantId: string, restaurantName: string, file: File): Promise<string> => {
     // Validate file size (max 5MB)
     const MAX_SIZE = 5 * 1024 * 1024;
     if (file.size > MAX_SIZE) {
         throw new Error('Image must be under 5 MB.');
     }
 
-    // Generate a secure random file name: restaurantId/timestamp-random.ext
+    // Slugify restaurant name for clean storage paths
+    const slugName = restaurantName
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+
+    // Generate a secure random file name: menu_items/slug-restaurantId/timestamp-random.ext
     const ext = file.name.split('.').pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${ext}`;
-    const filePath = `${restaurantId}/${fileName}`;
+    const filePath = `menu_items/${slugName}-${restaurantId}/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
         .from(BUCKET_NAME)

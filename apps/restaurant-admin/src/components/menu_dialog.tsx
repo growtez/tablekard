@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Plus, Minus, Tag, ChevronDown, Upload, Trash2 } from 'lucide-react';
+import { X, Plus, Minus, Tag, ChevronDown, Upload, Trash2, Maximize2, Edit2, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { MenuCategory } from '@restaurant-saas/types';
 import './menu_dialog.css';
 
@@ -57,6 +57,8 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
   const [arModelFile, setArModelFile] = useState<File | null>(null);
   const [existingModelUrl, setExistingModelUrl] = useState<string | null>(null);
   const [removeModel, setRemoveModel] = useState(false);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [currentGalleryIndex, setCurrentGalleryIndex] = useState(0);
 
   useEffect(() => {
     if (mode === 'edit' && item) {
@@ -131,10 +133,29 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
   };
 
   const handleRemoveImage = (urlToRemove: string) => {
-    setFormData(prev => ({
-      ...prev,
-      images: prev.images.map(img => img.url === urlToRemove ? { ...img, isDeleted: true } : img)
-    }));
+    setFormData(prev => {
+      const updatedImages = prev.images.map(img => img.url === urlToRemove ? { ...img, isDeleted: true } : img);
+      
+      // If we are in gallery mode, adjust index if needed
+      if (isGalleryOpen) {
+        const visibleImagesCount = updatedImages.filter(img => !img.isDeleted).length;
+        if (visibleImagesCount === 0) {
+          setIsGalleryOpen(false);
+        } else if (currentGalleryIndex >= visibleImagesCount) {
+          setCurrentGalleryIndex(Math.max(0, visibleImagesCount - 1));
+        }
+      }
+      
+      return {
+        ...prev,
+        images: updatedImages
+      };
+    });
+  };
+
+  const openGallery = (index: number) => {
+    setCurrentGalleryIndex(index);
+    setIsGalleryOpen(true);
   };
 
   const toggleTag = (tag: string) => {
@@ -330,16 +351,19 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
             <label className="menu-form-label">Item Images</label>
             <div className="menu-image-previews-container">
               {formData.images.filter(img => !img.isDeleted).map((img, idx) => (
-                <div key={img.id || img.url || idx} className="menu-image-preview-card">
+                <div key={img.id || img.url || idx} className="menu-image-preview-card" onClick={() => openGallery(idx)}>
                   <img src={img.url} alt={`Preview ${idx}`} className="menu-image-preview-img" />
                   <button 
                     type="button" 
-                    onClick={() => handleRemoveImage(img.url)}
+                    onClick={(e) => { e.stopPropagation(); handleRemoveImage(img.url); }}
                     className="menu-image-remove-btn"
                   >
                     <X size={12} />
                   </button>
                   {idx === 0 && <div className="menu-image-primary-badge">Primary</div>}
+                  <div className="menu-image-card-overlay">
+                    <Maximize2 size={16} />
+                  </div>
                 </div>
               ))}
               
@@ -347,9 +371,20 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
                 className="menu-image-add-trigger" 
                 onClick={() => fileInputRef.current?.click()}
               >
-                <Plus size={24} />
+                <Plus size={20} />
                 <span>Add</span>
               </div>
+
+              {formData.images.filter(img => !img.isDeleted).length > 0 && (
+                <button 
+                  type="button"
+                  className="menu-image-edit-btn"
+                  onClick={() => openGallery(0)}
+                >
+                  <Edit2 size={16} />
+                  <span>Edit Gallery</span>
+                </button>
+              )}
             </div>
             <input ref={fileInputRef} type="file" multiple accept="image/*" style={{ display: 'none' }} onChange={handleImageFiles} />
           </div>
@@ -611,6 +646,79 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
           </div>
         </form>
       </div>
+
+      {/* Gallery Editor Overlay */}
+      {isGalleryOpen && (
+        <div className="gallery-overlay" onClick={() => setIsGalleryOpen(false)}>
+          <div className="gallery-container" onClick={(e) => e.stopPropagation()}>
+            <button className="gallery-close" onClick={() => setIsGalleryOpen(false)}>
+              <X size={24} />
+            </button>
+
+            <div className="gallery-main">
+              {(() => {
+                const visibleImages = formData.images.filter(img => !img.isDeleted);
+                const currentImg = visibleImages[currentGalleryIndex];
+                if (!currentImg) return null;
+
+                return (
+                  <>
+                    <button 
+                      className="gallery-nav gallery-prev" 
+                      disabled={currentGalleryIndex === 0}
+                      onClick={() => setCurrentGalleryIndex(prev => prev - 1)}
+                    >
+                      <ChevronLeft size={32} />
+                    </button>
+                    
+                    <div className="gallery-image-wrapper">
+                      <img src={currentImg.url} alt="Gallery view" className="gallery-image" />
+                      <div className="gallery-image-actions">
+                        <button 
+                          type="button"
+                          className="gallery-action-btn delete"
+                          onClick={() => handleRemoveImage(currentImg.url)}
+                        >
+                          <Trash2 size={18} />
+                          Delete Image
+                        </button>
+                        <button 
+                          type="button"
+                          className="gallery-action-btn add"
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          <Plus size={18} />
+                          Add More
+                        </button>
+                      </div>
+                    </div>
+
+                    <button 
+                      className="gallery-nav gallery-next" 
+                      disabled={currentGalleryIndex === visibleImages.length - 1}
+                      onClick={() => setCurrentGalleryIndex(prev => prev + 1)}
+                    >
+                      <ChevronRight size={32} />
+                    </button>
+                  </>
+                );
+              })()}
+            </div>
+
+            <div className="gallery-thumbnails">
+              {formData.images.filter(img => !img.isDeleted).map((img, idx) => (
+                <div 
+                  key={img.id || img.url || idx}
+                  className={`gallery-thumb ${idx === currentGalleryIndex ? 'active' : ''}`}
+                  onClick={() => setCurrentGalleryIndex(idx)}
+                >
+                  <img src={img.url} alt="Thumbnail" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
