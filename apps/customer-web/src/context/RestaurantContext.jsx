@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useLocation, matchPath } from 'react-router-dom';
-import { getRestaurantById, getTableById, getTableByNumber } from '../services/supabaseService';
+import { getRestaurantById, getTableById, getTableByNumber, getRecommendedItems } from '../services/supabaseService';
+import { supabase } from '@restaurant-saas/supabase';
+
 
 const RestaurantContext = createContext(null);
 
@@ -31,6 +33,25 @@ export function RestaurantProvider({ children }) {
     // Table data fetched from DB
     const [table, setTable] = useState(null);
     const [tableLoading, setTableLoading] = useState(false);
+
+    // ML Recommendations pre-loading
+    const [recommendations, setRecommendations] = useState([]);
+    const [recommendationsLoading, setRecommendationsLoading] = useState(false);
+    const [currentUserId, setCurrentUserId] = useState(null);
+
+    // Track Auth state for recommendations
+    useEffect(() => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            setCurrentUserId(session?.user?.id || null);
+        });
+        
+        // Initial check
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            setCurrentUserId(session?.user?.id || null);
+        });
+
+        return () => subscription.unsubscribe();
+    }, []);
 
     // Persist new URL params to sessionStorage
     useEffect(() => {
@@ -95,6 +116,17 @@ export function RestaurantProvider({ children }) {
         return () => { cancelled = true; };
     }, [tableId, restaurantId]);
 
+    // Pre-load ML Recommendations
+    useEffect(() => {
+        if (!restaurantId) return;
+
+        setRecommendationsLoading(true);
+        getRecommendedItems(currentUserId, restaurantId)
+            .then(data => setRecommendations(data))
+            .catch(err => console.error('[RestaurantContext] ML error:', err))
+            .finally(() => setRecommendationsLoading(false));
+    }, [restaurantId, currentUserId]);
+
     return (
         <RestaurantContext.Provider value={{
             restaurantId,
@@ -103,7 +135,9 @@ export function RestaurantProvider({ children }) {
             restaurantLoading,
             table,               // full row: { table_number, qr_code_url, ... }
             tableLoading,
-            tableNumber: table?.table_number || null
+            tableNumber: table?.table_number || null,
+            recommendations,
+            recommendationsLoading
         }}>
             {children}
         </RestaurantContext.Provider>

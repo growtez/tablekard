@@ -1,81 +1,44 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ArrowLeft, Heart, Star, Clock, X, Plus, Minus, View } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Search, ArrowLeft, Heart, Star, Clock, X, Plus, Minus, View, Zap, ShoppingBag, ShoppingCart, ArrowRight, Users } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { useRestaurant } from '../context/RestaurantContext';
+import { useCart } from '../context/CartContext';
+import { getMenuItems } from '../services/supabaseService';
 import './search.css';
+
 
 const SearchPage = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
+    const { restaurantId, recommendations, recommendationsLoading } = useRestaurant();
+    const { addToCart, removeFromCart, getItemQuantity, cartTotal, cartSubtotal } = useCart();
+
     const [searchTerm, setSearchTerm] = useState('');
     const [results, setResults] = useState([]);
-
-    // Dish Modal States
+    const [allItems, setAllItems] = useState([]);
     const [selectedItem, setSelectedItem] = useState(null);
     const [showItemModal, setShowItemModal] = useState(false);
     const [modalQuantity, setModalQuantity] = useState(0);
 
-    // Mock data for search
-    const allItems = [
-        {
-            id: 'popular1',
-            name: 'Margherita Pizza',
-            price: 168,
-            time: '25min',
-            rating: 4.9,
-            serves: 'Serves 2',
-            description: 'A timeless Italian masterpiece. Hand-stretched sourdough base topped with rich San Marzano tomato sauce, fresh buffalo mozzarella, and aromatic basil leaves.',
-            image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=400&fit=crop'
-        },
-        {
-            id: 'popular2',
-            name: 'Chicken Tikka Masala',
-            price: 198,
-            time: '30min',
-            rating: 4.8,
-            serves: 'Serves 1',
-            description: 'Experience a burst of authentic Indian spices. Succulent chicken pieces marinated in yogurt and spices, simmered in a creamy, mildly spicy tomato-based gravy.',
-            image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&h=400&fit=crop'
-        },
-        {
-            id: 'popular3',
-            name: 'Chocolate Lava Cake',
-            price: 568,
-            time: '15min',
-            rating: 4.9,
-            serves: 'Serves 1',
-            description: 'The ultimate dessert indulgence. A warm dark chocolate cake with a soft, gooey molten chocolate center that flows out with every bite.',
-            image: 'https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=400&h=400&fit=crop'
-        },
-        {
-            id: 'popular4',
-            name: 'Classic Caesar Salad',
-            price: 120,
-            time: '10min',
-            rating: 4.7,
-            serves: 'Serves 1',
-            description: 'Fresh, crisp heads of romaine lettuce tossed in our signature creamy Caesar dressing. Loaded with herb-infused croutons and generous shavings of aged Parmesan cheese.',
-            image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=400&fit=crop'
-        },
-        {
-            id: 'featured1',
-            name: 'Special Sushi Platter',
-            price: 24.99,
-            time: '20 min',
-            rating: 4.9,
-            serves: 'Serves 1-2',
-            description: 'A curated selection of premium seafood, including fresh Atlantic salmon nigiri, spicy tuna rolls, and delicate cucumber maki.',
-            image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400&h=400&fit=crop'
-        },
-        {
-            id: 'featured2',
-            name: 'Grilled Salmon Fillet',
-            price: 15.99,
-            time: '15 min',
-            rating: 4.8,
-            serves: 'Serves 1',
-            description: 'Heart-healthy Atlantic salmon fillet, seasoned with a blend of Mediterranean herbs and lemon zest.',
-            image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=400&h=400&fit=crop'
-        }
-    ];
+    useEffect(() => {
+        if (!restaurantId) return;
+        getMenuItems(restaurantId).then(items => {
+            const processedItems = items.map(m => ({
+                id: m.id,
+                name: m.name,
+                price: m.price,
+                time: m.preparation_time ? `${m.preparation_time}min` : '15min',
+                rating: 4.8,
+                serves: `Serves ${m.serves || 1}`,
+                image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
+                description: m.long_description || m.short_description || '',
+                dietType: m.is_veg ? 'veg' : 'non-veg',
+                modelUrl: m.model_url || null
+            }));
+            setAllItems(processedItems);
+        }).catch(err => console.error("Error fetching menu items:", err));
+    }, [restaurantId]);
 
     useEffect(() => {
         if (searchTerm.trim() === '') {
@@ -87,7 +50,7 @@ const SearchPage = () => {
             );
             setResults(filtered);
         }
-    }, [searchTerm]);
+    }, [searchTerm, allItems]);
 
     const handleItemClick = (item) => {
         setSelectedItem(item);
@@ -95,22 +58,21 @@ const SearchPage = () => {
         setShowItemModal(true);
     };
 
-    const closeItemModal = () => {
-        setShowItemModal(false);
-    };
+    const closeItemModal = () => setShowItemModal(false);
 
     return (
         <div className="search-page-container">
-            {/* Search Header */}
+
+            {/* ── Sticky Header ── */}
             <header className="search-header">
                 <button className="global-back-btn" onClick={() => navigate(-1)}>
-                    <ArrowLeft size={22} />
+                    <ArrowLeft size={20} />
                 </button>
                 <div className="search-bar-wrapper">
-                    <Search className="search-icon" size={20} color="#B8ADA9" />
+                    <Search size={18} color="#C4B8B4" />
                     <input
                         type="text"
-                        placeholder="Search your favourite food"
+                        placeholder="Search your favourite food…"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         autoFocus
@@ -118,119 +80,281 @@ const SearchPage = () => {
                     />
                     {searchTerm && (
                         <button className="clear-btn" onClick={() => setSearchTerm('')}>
-                            <X size={18} color="#B8ADA9" />
+                            <X size={16} color="#C4B8B4" />
                         </button>
                     )}
                 </div>
             </header>
 
-            {/* Results Section */}
+            {/* ── Main Content ── */}
             <main className="search-main">
                 {searchTerm === '' ? (
-                    <div className="search-placeholder">
-                        <div className="search-illustration">
-                            <img src="/assets/search-illustration.png" alt="Search for food" />
-                        </div>
-                        <h3>Search for your cravings</h3>
-                        <p>Try searching for "Pizza", "Sushi" or "Cake"</p>
-                    </div>
-                ) : results.length > 0 ? (
-                    <div className="results-grid">
-                        <p className="results-count">{results.length} results found for "{searchTerm}"</p>
-                        {results.map(item => (
-                            <div key={item.id} className="search-result-card" onClick={() => handleItemClick(item)}>
-                                <div className="result-image">
-                                    <img src={item.image} alt={item.name} />
-                                    <div className="result-rating">
-                                        <Star size={10} fill="#FFD700" color="#FFD700" />
-                                        <span>{item.rating}</span>
+                    <div className="search-empty-state">
+                        {recommendationsLoading ? (
+
+                            /* Loading skeleton shimmer */
+                            <div className="rec-loading-state">
+                                <div className="rec-hero-text-skeleton">
+                                    <div className="skeleton-pill" />
+                                    <div className="skeleton-heading" />
+                                    <div className="skeleton-subheading" />
+                                </div>
+                                <div className="rec-list">
+                                    {[1,2,3,4].map(i => (
+                                        <div key={i} className="skeleton-card">
+                                            <div className="skeleton-img" />
+                                            <div className="skeleton-line short" />
+                                            <div className="skeleton-line long" />
+                                            <div className="skeleton-line mid" />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                        ) : recommendations.length > 0 ? (
+
+                            /* ── Beautiful Recommendations ── */
+                            <div className="recommendations-section">
+
+                                {/* Section label */}
+                                <div className="rec-hero-block">
+                                    <div className="rec-eyebrow">
+                                        <span className="rec-eyebrow-dot" />
+                                        Recommended items for you
                                     </div>
                                 </div>
-                                <div className="result-info">
-                                    <div className="result-header">
-                                        <h3>{item.name}</h3>
-                                        <Heart size={18} color="#8B3A1E" />
+
+                                {/* Cards list */}
+                                <div className="rec-list">
+                                    {recommendations.slice(0, 4).map((item, idx) => (
+                                        <div
+                                            key={`rec-${item.id}`}
+                                            className="rec-card"
+                                            style={{ animationDelay: `${idx * 0.07}s` }}
+                                            onClick={() => handleItemClick(item)}
+                                        >
+                                            {/* Thumbnail */}
+                                            <div className="rec-thumb">
+                                                <img src={item.image} alt={item.name} loading="lazy" />
+
+                                                {/* Veg/Non-Veg badge on image */}
+                                                <div className={`rec-veg-badge ${item.dietType}`}>
+                                                    <div className="rec-veg-dot" />
+                                                </div>
+                                            </div>
+
+                                            {/* Info Column */}
+                                            <div className="rec-info">
+                                                {/* Name + Rating */}
+                                                <div className="rec-name-row">
+                                                    <h4 className="rec-name">{item.name}</h4>
+                                                    <div className="rec-star-pill">
+                                                        <Star size={10} fill="#8B3A1E" color="#8B3A1E" />
+                                                        <span>{item.rating}</span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Description */}
+                                                <p className="rec-desc">
+                                                    {item.description || 'A chef-curated delight'}
+                                                </p>
+
+                                                {/* Price + Time + Add */}
+                                                <div className="rec-bottom-row">
+                                                    <div className="rec-left-info">
+                                                        <span className="rec-price">₹{item.price}</span>
+                                                        {getItemQuantity(item.id) > 0 && (
+                                                            <Link to="/orders" className="rec-view-cart-link" onClick={(e) => e.stopPropagation()}>
+                                                                View Cart
+                                                            </Link>
+                                                        )}
+                                                    </div>
+
+                                                    {getItemQuantity(item.id) === 0 ? (
+                                                        <button
+                                                            className="rec-add-pill"
+                                                            onClick={(e) => { e.stopPropagation(); addToCart(item); }}
+                                                            aria-label={`Add ${item.name}`}
+                                                        >
+                                                            <Plus size={13} strokeWidth={3} />
+                                                            Add
+                                                        </button>
+                                                    ) : (
+                                                        <div className="rec-qty-stepper" onClick={(e) => e.stopPropagation()}>
+                                                            <button className="rec-stepper-btn" onClick={() => removeFromCart(item.id)}>
+                                                                <Minus size={11} strokeWidth={3} />
+                                                            </button>
+                                                            <span className="rec-stepper-value">{getItemQuantity(item.id)}</span>
+                                                            <button className="rec-stepper-btn" onClick={() => addToCart(item)}>
+                                                                <Plus size={11} strokeWidth={3} />
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                        ) : (
+
+                            /* Empty / no recommendations */
+                            <div className="search-placeholder">
+                                <div className="search-illustration">
+                                    <img src="/assets/search-illustration.png" alt="Search for food" />
+                                </div>
+                                <h3>Search your cravings</h3>
+                                <p>Try "Pizza", "Biryani" or "Dessert"</p>
+                            </div>
+
+                        )}
+                    </div>
+
+                ) : results.length > 0 ? (
+
+                    /* ── Search Results ── */
+                    <div className="results-grid">
+                        <p className="results-count">
+                            {results.length} result{results.length > 1 ? 's' : ''} for &ldquo;{searchTerm}&rdquo;
+                        </p>
+                        {results.map((item, idx) => (
+                            <div
+                                key={item.id}
+                                className="search-result-card rec-card"
+                                style={{ animationDelay: `${idx * 0.06}s` }}
+                                onClick={() => handleItemClick(item)}
+                            >
+                                {/* Thumbnail */}
+                                <div className="rec-thumb">
+                                    <img src={item.image} alt={item.name} loading="lazy" />
+
+                                    {/* Veg/Non-Veg badge on image */}
+                                    <div className={`rec-veg-badge ${item.dietType || 'veg'}`}>
+                                        <div className="rec-veg-dot" />
                                     </div>
-                                    <p className="result-desc">{item.description}</p>
-                                    <div className="result-footer">
-                                        <span className="result-price">₹{item.price}</span>
-                                        <span className="result-time">
-                                            <Clock size={12} /> {item.time}
-                                        </span>
+                                </div>
+
+                                {/* Info Column */}
+                                <div className="rec-info">
+                                    {/* Name + Rating */}
+                                    <div className="rec-name-row">
+                                        <h4 className="rec-name">{item.name}</h4>
+                                        <div className="rec-star-pill">
+                                            <Star size={10} fill="#8B3A1E" color="#8B3A1E" />
+                                            <span>{item.rating}</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Description */}
+                                    <p className="rec-desc">
+                                        {item.description || 'A chef-curated delight'}
+                                    </p>
+
+                                    {/* Price + Time + Add */}
+                                    <div className="rec-bottom-row">
+                                        <div className="rec-left-info">
+                                            <span className="rec-price">₹{item.price}</span>
+                                            {getItemQuantity(item.id) > 0 && (
+                                                <Link to="/orders" className="rec-view-cart-link" onClick={(e) => e.stopPropagation()}>
+                                                    View Cart
+                                                </Link>
+                                            )}
+                                        </div>
+
+                                        {getItemQuantity(item.id) === 0 ? (
+                                            <button
+                                                className="rec-add-pill"
+                                                onClick={(e) => { e.stopPropagation(); addToCart(item); }}
+                                                aria-label={`Add ${item.name}`}
+                                            >
+                                                <Plus size={13} strokeWidth={3} />
+                                                Add
+                                            </button>
+                                        ) : (
+                                            <div className="rec-qty-stepper" onClick={(e) => e.stopPropagation()}>
+                                                <button className="rec-stepper-btn" onClick={() => removeFromCart(item.id)}>
+                                                    <Minus size={11} strokeWidth={3} />
+                                                </button>
+                                                <span className="rec-stepper-value">{getItemQuantity(item.id)}</span>
+                                                <button className="rec-stepper-btn" onClick={() => addToCart(item)}>
+                                                    <Plus size={11} strokeWidth={3} />
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
                         ))}
                     </div>
+
                 ) : (
+
+                    /* ── No Results ── */
                     <div className="search-no-results">
                         <div className="search-illustration">
-                            <img src="/assets/no-results-illustration.png" alt="No results found" />
+                            <img src="/assets/no-results-illustration.png" alt="No results" />
                         </div>
-                        <h3>No results found</h3>
-                        <p>We couldn't find anything matching "{searchTerm}"</p>
+                        <h3>Nothing found</h3>
+                        <p>We couldn't find anything for<br />"{searchTerm}"</p>
                     </div>
+
                 )}
             </main>
 
-            {/* Dish Modal (Same design as home/menu) */}
+            {/* ── Item Detail Modal ── */}
             {showItemModal && selectedItem && (
-                <div className="item-modal-overlay" onClick={closeItemModal}>
-                    <div className="item-modal-content slide-up" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-header-info">
-                            <h2 className="modal-item-name">{selectedItem.name}</h2>
-                            <button className="modal-close-btn" onClick={closeItemModal}>
-                                <X size={20} />
-                            </button>
-                        </div>
+                <div className={`item-modal-overlay ${showItemModal ? 'show' : ''}`} onClick={closeItemModal}>
+                    <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
 
-                        <div className="modal-main-image">
-                            <img src={selectedItem.image} alt={selectedItem.name} />
-                        </div>
+                        {/* Drag Indicator */}
+                        <div className="modal-drag-bar"></div>
 
-                        <div className="modal-content-section">
-                            <div className="modal-serves-info">{selectedItem.serves}</div>
+                        {/* Close Button */}
+                        <button className="modal-x-btn" onClick={closeItemModal}>
+                            <X size={18} />
+                        </button>
 
-                            <div className="modal-time-rating-row">
-                                <div className="modal-time-rating-left">
-                                    <div className="modal-item-time">
-                                        <Clock size={16} />
-                                        <span>{selectedItem.time}</span>
-                                    </div>
-                                    <div className="modal-rating-section">
-                                        <Star size={16} fill="#FFD700" color="#FFD700" />
-                                        <span>{selectedItem.rating}</span>
-                                    </div>
-                                </div>
-
-                                {modalQuantity === 0 ? (
-                                    <button
-                                        className="modal-main-add-btn"
-                                        onClick={() => setModalQuantity(1)}
-                                    >
-                                        ADD
-                                    </button>
+                        {/* Centered Dish Image */}
+                        <div className="modal-dish-showcase">
+                            <div className="dish-image-frame-scrollable">
+                                {selectedItem.images && selectedItem.images.length > 0 ? (
+                                    selectedItem.images.map((imgUrl, idx) => (
+                                        <div key={idx} className="dish-image-frame">
+                                            <img src={imgUrl} alt={`${selectedItem.name} - ${idx}`} loading="lazy" />
+                                        </div>
+                                    ))
                                 ) : (
-                                    <div className="modal-quantity-controls">
-                                        <button
-                                            className="modal-qty-btn"
-                                            onClick={() => setModalQuantity(prev => Math.max(0, prev - 1))}
-                                        >
-                                            <Minus size={16} />
-                                        </button>
-                                        <span className="modal-qty-value">{modalQuantity}</span>
-                                        <button
-                                            className="modal-qty-btn"
-                                            onClick={() => setModalQuantity(prev => prev + 1)}
-                                        >
-                                            <Plus size={16} />
-                                        </button>
+                                    <div className="dish-image-frame">
+                                        <img src={selectedItem.image} alt={selectedItem.name} loading="lazy" />
                                     </div>
                                 )}
                             </div>
+                            <div className="dish-rating-pill">
+                                <Star size={12} fill="#8B3A1E" color="#8B3A1E" />
+                                <span>{selectedItem.rating}</span>
+                            </div>
+                        </div>
 
-                            <div className="modal-main-price">₹{selectedItem.price}</div>
-                            <p className="modal-main-description">{selectedItem.description}</p>
+                        {/* Dish Info */}
+                        <div className="modal-dish-info">
+                            <h2 className="dish-title">{selectedItem.name}</h2>
+
+                            <div className="dish-meta-chips">
+                                <span className="meta-chip"><Clock size={13} />{selectedItem.time}</span>
+                                <span className="meta-chip"><Users size={13} /> {selectedItem.serves}</span>
+                                {selectedItem.dietType === 'vegan' && (
+                                    <span className="meta-chip vegan">Vegan</span>
+                                )}
+                                {selectedItem.dietType === 'veg' && (
+                                    <span className="meta-chip green">Veg</span>
+                                )}
+                                {selectedItem.dietType === 'non-veg' && (
+                                    <span className="meta-chip red">Non-Veg</span>
+                                )}
+                            </div>
+
+                            <p className="dish-full-desc">{selectedItem.description}</p>
                             
                             <button 
                                 className="view-ar-btn"
@@ -256,8 +380,62 @@ const SearchPage = () => {
                                 View in AR
                             </button>
                         </div>
+
+                        {/* Sticky Bottom Action Bar */}
+                        <div className="modal-bottom-bar">
+                            <div className="price-display">
+                                <span className="price-rupee">₹{selectedItem.price}</span>
+                            </div>
+
+                            {getItemQuantity(selectedItem.id) === 0 ? (
+                                <button
+                                    className="add-to-order-btn"
+                                    onClick={() => addToCart(selectedItem)}
+                                >
+                                    Add to Order
+                                </button>
+                            ) : (
+                                <div className="qty-stepper">
+                                    <button
+                                        className="stepper-btn"
+                                        onClick={() => removeFromCart(selectedItem.id)}
+                                    >
+                                        <Minus size={18} />
+                                    </button>
+                                    <span className="stepper-count">{getItemQuantity(selectedItem.id)}</span>
+                                    <button
+                                        className="stepper-btn"
+                                        onClick={() => addToCart(selectedItem)}
+                                    >
+                                        <Plus size={18} />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
+            )}
+            {/* ── Modern Frosted Glow Cart Indicator ── */}
+            {cartTotal > 0 && !showItemModal && (
+                <Link to="/orders" className="cart-modern-glow">
+                    <div className="glow-content">
+                        <div className="glow-badge">
+                            <ShoppingCart size={16} strokeWidth={3} />
+                            <span className="glow-count">{cartTotal > 9 ? '9+' : cartTotal}</span>
+                        </div>
+                        <div className="glow-details">
+                            <span className="glow-label">Your Order</span>
+                            <span className="glow-total">₹{cartSubtotal}</span>
+                        </div>
+                        <div className="glow-cta">
+                            <span>View Cart</span>
+                            <div className="cta-icon">
+                                <ArrowRight size={18} strokeWidth={3} />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="glow-bg-blur"></div>
+                </Link>
             )}
         </div>
     );
