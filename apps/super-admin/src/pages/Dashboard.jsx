@@ -1,20 +1,16 @@
 import { useState, useEffect } from 'react';
 import {
     Store,
-    TrendingUp,
-    DollarSign,
     Users,
-    Plus,
+    CreditCard,
     Activity,
     Utensils,
     AlertCircle,
     CheckCircle,
-    Clock,
-    ArrowUpRight,
-    Zap,
     Server,
     Database,
-    CreditCard
+    TrendingUp,
+    ShoppingBag,
 } from 'lucide-react';
 import {
     BarChart,
@@ -35,59 +31,18 @@ import { StatCard } from '../components/ui/StatCard';
 import { Card, CardHeader, CardTitle } from '../components/ui/Card';
 import { supabase } from '../supabaseClient';
 
-// Static Data for Charts
-const revenueData = [
-    { month: 'Jan', revenue: 45000, orders: 320 },
-    { month: 'Feb', revenue: 52000, orders: 380 },
-    { month: 'Mar', revenue: 48000, orders: 350 },
-    { month: 'Apr', revenue: 61000, orders: 420 },
-    { month: 'May', revenue: 55000, orders: 390 },
-    { month: 'Jun', revenue: 67000, orders: 450 },
-    { month: 'Jul', revenue: 72000, orders: 480 },
-    { month: 'Aug', revenue: 69000, orders: 470 },
-    { month: 'Sep', revenue: 78000, orders: 520 },
-    { month: 'Oct', revenue: 85000, orders: 580 },
-    { month: 'Nov', revenue: 82000, orders: 560 },
-    { month: 'Dec', revenue: 91000, orders: 620 },
-];
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-const restaurantStatusData = [
-    { name: 'Active', value: 45, color: '#10B981' },
-    { name: 'Trial', value: 12, color: '#3B82F6' },
-    { name: 'Expired', value: 8, color: '#EF4444' },
-    { name: 'Suspended', value: 5, color: '#F59E0B' },
-];
-
-const weeklyOrderData = [
-    { day: 'Mon', orders: 145 },
-    { day: 'Tue', orders: 182 },
-    { day: 'Wed', orders: 165 },
-    { day: 'Thu', orders: 198 },
-    { day: 'Fri', orders: 234 },
-    { day: 'Sat', orders: 287 },
-    { day: 'Sun', orders: 256 },
-];
-
-const topRestaurants = [
-    { id: 1, name: 'Spice Garden', orders: 1245, revenue: 245000, rating: 4.8, trend: '+12%' },
-    { id: 2, name: 'Biryani House', orders: 1120, revenue: 198000, rating: 4.7, trend: '+8%' },
-    { id: 3, name: 'Tandoori Nights', orders: 980, revenue: 176000, rating: 4.6, trend: '+15%' },
-    { id: 4, name: 'Curry Palace', orders: 856, revenue: 154000, rating: 4.5, trend: '+5%' },
-    { id: 5, name: 'Masala Dhaba', orders: 743, revenue: 132000, rating: 4.4, trend: '+10%' },
-];
-
-const recentActivities = [
-    { id: 1, type: 'order', message: 'New order #ORD-4521 received from Spice Garden', time: '2 mins ago', icon: Utensils, color: 'blue' },
-    { id: 2, type: 'restaurant', message: 'Royal Kitchen joined the platform', time: '15 mins ago', icon: Store, color: 'green' },
-    { id: 3, type: 'payment', message: 'Payment of ₹12,450 received from Biryani House', time: '32 mins ago', icon: CreditCard, color: 'purple' },
-    { id: 4, type: 'alert', message: 'Curry Palace subscription expires in 3 days', time: '1 hour ago', icon: AlertCircle, color: 'orange' },
-    { id: 5, type: 'user', message: 'New user registered: Rahul Sharma', time: '2 hours ago', icon: Users, color: 'teal' },
-];
+const PIE_COLORS = {
+    paid: '#10B981',
+    pending: '#3B82F6',
+    failed: '#EF4444',
+};
 
 const systemHealth = [
-    { name: 'API Server', status: 'operational', uptime: '99.9%', icon: Server },
-    { name: 'Database', status: 'operational', uptime: '99.8%', icon: Database },
-    { name: 'Payment Gateway', status: 'operational', uptime: '100%', icon: CreditCard },
+    { name: 'API Server', uptime: '99.9%', icon: Server },
+    { name: 'Database', uptime: '99.8%', icon: Database },
+    { name: 'Payment Gateway', uptime: '100%', icon: CreditCard },
 ];
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -100,15 +55,14 @@ const CustomTooltip = ({ active, payload, label }) => {
                 backgroundColor: 'rgba(10, 10, 15, 0.95)',
                 backdropFilter: 'blur(8px)',
                 boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
-                zIndex: 100
             }}>
                 <p style={{ margin: '0 0 0.5rem 0', fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-main)' }}>{label}</p>
                 {payload.map((entry, index) => (
                     <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.25rem 0' }}>
-                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: entry.color || entry.fill || 'var(--accent-primary)' }}></div>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: entry.color || entry.fill || 'var(--accent-primary)' }} />
                         <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{entry.name}:</span>
                         <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-main)' }}>
-                            {entry.dataKey === 'revenue' ? `₹${entry.value.toLocaleString()}` : entry.value}
+                            {entry.dataKey === 'revenue' ? `₹${Number(entry.value).toLocaleString()}` : entry.value}
                         </span>
                     </div>
                 ))}
@@ -123,60 +77,148 @@ export default function Dashboard({ setSyncAction }) {
         totalUsers: 0,
         totalRestaurants: 0,
         totalOrders: 0,
-        totalRevenue: 0
+        totalRevenue: 0,
     });
+    const [revenueChartData, setRevenueChartData] = useState([]);
+    const [subscriptionPieData, setSubscriptionPieData] = useState([]);
+    const [recentOrders, setRecentOrders] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const fetchRealStats = async () => {
         setLoading(true);
         try {
-            const [users, restaurants] = await Promise.all([
+            // 1. Core counts from schema tables
+            const [usersRes, restaurantsRes, ordersRes, revenueRes] = await Promise.all([
                 supabase.from('profiles').select('*', { count: 'exact', head: true }),
-                supabase.from('restaurants').select('*', { count: 'exact', head: true })
+                supabase.from('restaurants').select('*', { count: 'exact', head: true }),
+                supabase.from('orders').select('*', { count: 'exact', head: true }),
+                supabase.from('revenue').select('total_revenue, total_orders, revenue_date').order('revenue_date', { ascending: true }),
             ]);
 
+            const totalRevenue = (revenueRes.data || []).reduce((sum, r) => sum + Number(r.total_revenue || 0), 0);
+
             setStats({
-                totalUsers: users.count || 0,
-                totalRestaurants: restaurants.count || 0,
-                totalOrders: 1247,
-                totalRevenue: 85000
+                totalUsers: usersRes.count || 0,
+                totalRestaurants: restaurantsRes.count || 0,
+                totalOrders: ordersRes.count || 0,
+                totalRevenue,
             });
+
+            // 2. Revenue chart — aggregate by month from revenue table
+            const monthlyMap = {};
+            for (const row of (revenueRes.data || [])) {
+                const d = new Date(row.revenue_date);
+                const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                if (!monthlyMap[key]) monthlyMap[key] = { revenue: 0, orders: 0, month: MONTH_NAMES[d.getMonth()] };
+                monthlyMap[key].revenue += Number(row.total_revenue || 0);
+                monthlyMap[key].orders += Number(row.total_orders || 0);
+            }
+            // Last 6 months
+            const now = new Date();
+            const chartData = [];
+            for (let i = 5; i >= 0; i--) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                chartData.push({ month: MONTH_NAMES[d.getMonth()], revenue: monthlyMap[key]?.revenue || 0, orders: monthlyMap[key]?.orders || 0 });
+            }
+            setRevenueChartData(chartData);
+
+            // 3. Subscription pie — from subscription_payments table
+            const { data: subData } = await supabase
+                .from('subscription_payments')
+                .select('status');
+            if (subData && subData.length > 0) {
+                const counts = subData.reduce((acc, s) => { acc[s.status] = (acc[s.status] || 0) + 1; return acc; }, {});
+                setSubscriptionPieData(Object.entries(counts).map(([name, value]) => ({
+                    name: name.charAt(0).toUpperCase() + name.slice(1),
+                    value,
+                    color: PIE_COLORS[name] || '#6366f1'
+                })));
+            } else {
+                // Fallback: use restaurants subscription_status boolean
+                const { data: restData } = await supabase.from('restaurants').select('subscription_status, subscription_type');
+                if (restData) {
+                    const active = restData.filter(r => r.subscription_status).length;
+                    const trial = restData.filter(r => !r.subscription_status).length;
+                    setSubscriptionPieData([
+                        { name: 'Active (Paid)', value: active, color: '#10B981' },
+                        { name: 'Trial / Free', value: trial, color: '#3B82F6' },
+                    ].filter(d => d.value > 0));
+                }
+            }
+
+            // 4. Recent orders — latest 5 from orders table joined with restaurants
+            const { data: ordersData } = await supabase
+                .from('orders')
+                .select('id, order_number, status, payment_status, total, created_at, restaurant_id, restaurants(name)')
+                .order('created_at', { ascending: false })
+                .limit(5);
+            setRecentOrders(ordersData || []);
+
         } catch (err) {
-            console.error('Stats fetch failed:', err);
+            console.error('Dashboard stats fetch failed:', err);
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => {
-        fetchRealStats();
-    }, []);
+    useEffect(() => { fetchRealStats(); }, []);
 
     useEffect(() => {
-        if (setSyncAction) {
-            setSyncAction({
-                onSync: fetchRealStats,
-                loading: loading
-            });
-        }
+        if (setSyncAction) setSyncAction({ onSync: fetchRealStats, loading });
     }, [loading, setSyncAction]);
+
+    const StatSkeleton = () => (
+        <div style={{ height: '1.5rem', width: '4rem', borderRadius: '6px', background: 'var(--surface-hover)', animation: 'pulse 1.5s infinite' }} />
+    );
 
     return (
         <div className="animate-fade-in">
-            {/* Charts Row */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '1.5rem', marginBottom: '2.5rem', width: '100%' }}>
+            {/* ── Stat Cards Row ── */}
+            <div className="dashboard-stat-grid">
+                <StatCard
+                    label="Total Restaurants"
+                    value={loading ? '—' : stats.totalRestaurants.toLocaleString()}
+                    icon={Store}
+                    color="green"
+                    path="/restaurants"
+                />
+                <StatCard
+                    label="Total Users"
+                    value={loading ? '—' : stats.totalUsers.toLocaleString()}
+                    icon={Users}
+                    color="blue"
+                    path="/users"
+                />
+                <StatCard
+                    label="Total Orders"
+                    value={loading ? '—' : stats.totalOrders.toLocaleString()}
+                    icon={ShoppingBag}
+                    color="purple"
+                />
+                <StatCard
+                    label="Platform Revenue"
+                    value={loading ? '—' : `₹${stats.totalRevenue.toLocaleString()}`}
+                    icon={TrendingUp}
+                    color="orange"
+                    path="/subscriptions"
+                />
+            </div>
+
+            {/* ── Charts Row ── */}
+            <div className="dashboard-chart-grid">
                 <Card style={{ gridColumn: 'span 8', minWidth: 0 }}>
                     <CardHeader>
-                        <CardTitle>Revenue Analytics</CardTitle>
+                        <CardTitle>Revenue Analytics (Last 6 Months)</CardTitle>
                     </CardHeader>
-                    <div style={{ height: '350px', width: '100%', minHeight: '350px' }}>
+                    <div style={{ height: '300px', width: '100%' }}>
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={revenueData}>
+                            <BarChart data={revenueChartData}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
                                 <XAxis dataKey="month" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
-                                <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v / 1000}k`} />
+                                <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => v === 0 ? '₹0' : `₹${(v / 1000).toFixed(0)}k`} />
                                 <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--surface-hover)' }} />
-                                <Bar dataKey="revenue" fill="var(--accent-primary)" radius={[6, 6, 0, 0]} maxBarSize={45} />
+                                <Bar dataKey="revenue" name="Revenue" fill="var(--accent-primary)" radius={[6, 6, 0, 0]} maxBarSize={45} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
@@ -184,43 +226,73 @@ export default function Dashboard({ setSyncAction }) {
 
                 <Card style={{ gridColumn: 'span 4', minWidth: 0 }}>
                     <CardHeader>
-                        <CardTitle>Subcription Status</CardTitle>
+                        <CardTitle>Subscription Status</CardTitle>
                     </CardHeader>
-                    <div style={{ height: '350px', width: '100%', minHeight: '350px' }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={restaurantStatusData}
-                                    cx="50%" cy="50%"
-                                    innerRadius={70} outerRadius={100}
-                                    paddingAngle={5} dataKey="value"
-                                >
-                                    {restaurantStatusData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                    ))}
-                                </Pie>
-                                <Tooltip content={<CustomTooltip />} />
-                                <Legend verticalAlign="bottom" align="center" iconType="circle" />
-                            </PieChart>
-                        </ResponsiveContainer>
+                    <div style={{ height: '300px', width: '100%' }}>
+                        {subscriptionPieData.length > 0 ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={subscriptionPieData}
+                                        cx="50%" cy="45%"
+                                        innerRadius={60} outerRadius={90}
+                                        paddingAngle={5} dataKey="value"
+                                    >
+                                        {subscriptionPieData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip content={<CustomTooltip />} />
+                                    <Legend verticalAlign="bottom" align="center" iconType="circle" />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                                <CreditCard size={32} style={{ marginBottom: '0.75rem', opacity: 0.3 }} />
+                                No subscription data yet
+                            </div>
+                        )}
                     </div>
                 </Card>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '1.5rem', width: '100%' }}>
+            {/* ── Recent Activity + System Health ── */}
+            <div className="dashboard-bottom-grid">
                 <Card style={{ gridColumn: 'span 7' }}>
                     <CardHeader>
-                        <CardTitle>Recent Activity</CardTitle>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <CardTitle>Recent Orders</CardTitle>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Live from DB</span>
+                        </div>
                     </CardHeader>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        {recentActivities.map(activity => (
-                            <div key={activity.id} style={{ display: 'flex', gap: '1rem', padding: '1rem', borderRadius: '12px', background: 'var(--surface-hover)' }}>
-                                <div style={{ color: `var(--accent-${activity.color || 'primary'})` }}>
-                                    <activity.icon size={20} />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        {loading ? (
+                            [...Array(4)].map((_, i) => (
+                                <div key={i} style={{ padding: '0.75rem', borderRadius: '10px', background: 'var(--surface-hover)', height: '56px', animation: 'pulse 1.5s infinite' }} />
+                            ))
+                        ) : recentOrders.length === 0 ? (
+                            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                                <Utensils size={28} style={{ marginBottom: '0.5rem', opacity: 0.3 }} />
+                                <p>No orders yet</p>
+                            </div>
+                        ) : recentOrders.map(order => (
+                            <div key={order.id} style={{ display: 'flex', gap: '1rem', padding: '0.75rem', borderRadius: '10px', background: 'var(--surface-hover)', alignItems: 'center' }}>
+                                <div style={{ color: order.payment_status === 'paid' ? 'var(--accent-primary)' : order.payment_status === 'failed' ? '#ef4444' : '#3b82f6' }}>
+                                    <ShoppingBag size={18} />
                                 </div>
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ fontSize: '0.9rem', fontWeight: 500 }}>{activity.message}</div>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>{activity.time}</div>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ fontSize: '0.875rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                        #{order.order_number} — {order.restaurants?.name || 'Unknown Restaurant'}
+                                    </div>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                                        {new Date(order.created_at).toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                                    <span style={{ fontSize: '0.875rem', fontWeight: 700 }}>₹{Number(order.total).toLocaleString()}</span>
+                                    <Badge variant={order.payment_status === 'paid' ? 'success' : order.payment_status === 'failed' ? 'error' : 'warning'} style={{ fontSize: '0.65rem', padding: '1px 6px' }}>
+                                        {order.payment_status?.toUpperCase()}
+                                    </Badge>
                                 </div>
                             </div>
                         ))}
@@ -240,10 +312,27 @@ export default function Dashboard({ setSyncAction }) {
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{service.uptime}</span>
-                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent-primary)', boxShadow: '0 0 8px var(--accent-primary)' }}></div>
+                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent-primary)', boxShadow: '0 0 8px var(--accent-primary)' }} />
                                 </div>
                             </div>
                         ))}
+
+                        <div style={{ marginTop: '0.5rem', padding: '1rem', borderRadius: '12px', background: 'var(--accent-primary-glow)', border: '1px solid hsla(155,100%,50%,0.15)' }}>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Quick Stats</div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                {[
+                                    { label: 'Restaurants', value: stats.totalRestaurants },
+                                    { label: 'Users', value: stats.totalUsers },
+                                    { label: 'Orders', value: stats.totalOrders },
+                                    { label: 'Revenue', value: `₹${(stats.totalRevenue / 1000).toFixed(1)}k` }
+                                ].map(item => (
+                                    <div key={item.label}>
+                                        <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{item.label}</div>
+                                        <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--accent-primary)' }}>{loading ? '—' : item.value}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 </Card>
             </div>
