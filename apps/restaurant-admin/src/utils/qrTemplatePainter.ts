@@ -20,6 +20,7 @@ interface QrTemplateOptions {
     qrSvgElementId: string;   // id of the <svg> tag already in the DOM
     restaurantName: string;
     tableNumber: number;
+    qrUrl?: string;            // encoded in the QR SVG itself; kept for API compat
     qrSize?: number;           // logical QR pixel size (default 200)
 }
 
