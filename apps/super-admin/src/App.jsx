@@ -10,13 +10,13 @@ import UserDetail from './pages/UserDetail'
 import Subscriptions from './pages/Subscriptions'
 import Transactions from './pages/billing/Transactions'
 import Plans from './pages/billing/Plans'
-import Complaints from './pages/support/Complaints'
-import Reviews from './pages/support/Reviews'
-import Announcements from './pages/support/Announcements'
-import General from './pages/settings/General'
-import Integrations from './pages/settings/Integrations'
-import Security from './pages/settings/Security'
-import EmailTemplates from './pages/settings/Email'
+// import Complaints from './pages/support/Complaints'
+// import Reviews from './pages/support/Reviews'
+// import Announcements from './pages/support/Announcements'
+// import General from './pages/settings/General'
+// import Integrations from './pages/settings/Integrations'
+// import Security from './pages/settings/Security'
+// import EmailTemplates from './pages/settings/Email'
 import Sidebar from './components/Sidebar'
 import QuickCreateDrawer from './components/QuickCreateDrawer'
 import { Plus, UserPlus, FilePlus, ChevronLeft, Edit, Save, X, RefreshCw, Menu } from 'lucide-react'
@@ -171,13 +171,13 @@ export default function App() {
     if (path === '/subscriptions') return { title: 'Subscriptions' };
     if (path === '/billing/transactions') return { title: 'Transactions & Refunds' };
     if (path === '/billing/plans') return { title: 'Pricing Plans' };
-    if (path === '/support/complaints') return { title: 'Complaints & Disputes' };
-    if (path === '/support/reviews') return { title: 'Reviews Moderation' };
-    if (path === '/support/announcements') return { title: 'Announcements' };
-    if (path === '/settings/general') return { title: 'General Settings' };
-    if (path === '/settings/integrations') return { title: 'Integrations & API' };
-    if (path === '/settings/security') return { title: 'Security & Backups' };
-    if (path === '/settings/email') return { title: 'Email Templates' };
+    // if (path === '/support/complaints') return { title: 'Complaints & Disputes' };
+    // if (path === '/support/reviews') return { title: 'Reviews Moderation' };
+    // if (path === '/support/announcements') return { title: 'Announcements' };
+    // if (path === '/settings/general') return { title: 'General Settings' };
+    // if (path === '/settings/integrations') return { title: 'Integrations & API' };
+    // if (path === '/settings/security') return { title: 'Security & Backups' };
+    // if (path === '/settings/email') return { title: 'Email Templates' };
     return { title: 'Command Center' };
   };
 
@@ -307,14 +307,14 @@ export default function App() {
               <Route path="/billing/transactions" element={<Transactions setSyncAction={setSyncAction} />} />
               <Route path="/billing/plans" element={<Plans />} />
               {/* Support */}
-              <Route path="/support/complaints" element={<Complaints setSyncAction={setSyncAction} />} />
+              {/* <Route path="/support/complaints" element={<Complaints setSyncAction={setSyncAction} />} />
               <Route path="/support/reviews" element={<Reviews setSyncAction={setSyncAction} />} />
-              <Route path="/support/announcements" element={<Announcements setSyncAction={setSyncAction} />} />
+              <Route path="/support/announcements" element={<Announcements setSyncAction={setSyncAction} />} /> */}
               {/* Settings */}
-              <Route path="/settings/general" element={<General setSyncAction={setSyncAction} />} />
+              {/* <Route path="/settings/general" element={<General setSyncAction={setSyncAction} />} />
               <Route path="/settings/integrations" element={<Integrations setSyncAction={setSyncAction} />} />
               <Route path="/settings/security" element={<Security setSyncAction={setSyncAction} />} />
-              <Route path="/settings/email" element={<EmailTemplates setSyncAction={setSyncAction} />} />
+              <Route path="/settings/email" element={<EmailTemplates setSyncAction={setSyncAction} />} /> */}
               {/* Fallback */}
               <Route path="*" element={<Dashboard setSyncAction={setSyncAction} />} />
             </Routes>

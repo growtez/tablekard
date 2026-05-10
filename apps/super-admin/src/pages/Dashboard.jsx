@@ -3,12 +3,12 @@ import {
     Store,
     Users,
     CreditCard,
-    Activity,
-    Utensils,
-    AlertCircle,
-    CheckCircle,
-    Server,
-    Database,
+    // Activity,
+    // Utensils,
+    // AlertCircle,
+    // CheckCircle,
+    // Server,
+    // Database,
     TrendingUp,
     ShoppingBag,
 } from 'lucide-react';
@@ -39,11 +39,11 @@ const PIE_COLORS = {
     failed: '#EF4444',
 };
 
-const systemHealth = [
-    { name: 'API Server', uptime: '99.9%', icon: Server },
-    { name: 'Database', uptime: '99.8%', icon: Database },
-    { name: 'Payment Gateway', uptime: '100%', icon: CreditCard },
-];
+// const systemHealth = [
+//     { name: 'API Server', uptime: '99.9%', icon: Server },
+//     { name: 'Database', uptime: '99.8%', icon: Database },
+//     { name: 'Payment Gateway', uptime: '100%', icon: CreditCard },
+// ];
 
 const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -81,37 +81,36 @@ export default function Dashboard({ setSyncAction }) {
     });
     const [revenueChartData, setRevenueChartData] = useState([]);
     const [subscriptionPieData, setSubscriptionPieData] = useState([]);
-    const [recentOrders, setRecentOrders] = useState([]);
+    const [recentSubscriptions, setRecentSubscriptions] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const fetchRealStats = async () => {
         setLoading(true);
         try {
             // 1. Core counts from schema tables
-            const [usersRes, restaurantsRes, ordersRes, revenueRes] = await Promise.all([
+            const [usersRes, restaurantsRes, subPaymentsRes] = await Promise.all([
                 supabase.from('profiles').select('*', { count: 'exact', head: true }),
                 supabase.from('restaurants').select('*', { count: 'exact', head: true }),
-                supabase.from('orders').select('*', { count: 'exact', head: true }),
-                supabase.from('revenue').select('total_revenue, total_orders, revenue_date').order('revenue_date', { ascending: true }),
+                supabase.from('subscription_payments').select('amount, created_at').eq('status', 'paid').order('created_at', { ascending: true }),
             ]);
 
-            const totalRevenue = (revenueRes.data || []).reduce((sum, r) => sum + Number(r.total_revenue || 0), 0);
+            const totalRevenue = (subPaymentsRes.data || []).reduce((sum, r) => sum + Number(r.amount || 0), 0);
 
             setStats({
                 totalUsers: usersRes.count || 0,
                 totalRestaurants: restaurantsRes.count || 0,
-                totalOrders: ordersRes.count || 0,
+                totalSubscriptions: (subPaymentsRes.data || []).length,
                 totalRevenue,
             });
 
-            // 2. Revenue chart — aggregate by month from revenue table
+            // 2. Revenue chart — aggregate by month from subscription_payments
             const monthlyMap = {};
-            for (const row of (revenueRes.data || [])) {
-                const d = new Date(row.revenue_date);
+            for (const row of (subPaymentsRes.data || [])) {
+                const d = new Date(row.created_at);
                 const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
                 if (!monthlyMap[key]) monthlyMap[key] = { revenue: 0, orders: 0, month: MONTH_NAMES[d.getMonth()] };
-                monthlyMap[key].revenue += Number(row.total_revenue || 0);
-                monthlyMap[key].orders += Number(row.total_orders || 0);
+                monthlyMap[key].revenue += Number(row.amount || 0);
+                monthlyMap[key].orders += 1; // Number of subscription payments
             }
             // Last 6 months
             const now = new Date();
@@ -147,13 +146,13 @@ export default function Dashboard({ setSyncAction }) {
                 }
             }
 
-            // 4. Recent orders — latest 5 from orders table joined with restaurants
-            const { data: ordersData } = await supabase
-                .from('orders')
-                .select('id, order_number, status, payment_status, total, created_at, restaurant_id, restaurants(name)')
+            // 4. Recent subscriptions — latest 5 from subscription_payments join restaurants
+            const { data: subsData } = await supabase
+                .from('subscription_payments')
+                .select('id, amount, status, plan_duration, created_at, restaurants(name)')
                 .order('created_at', { ascending: false })
                 .limit(5);
-            setRecentOrders(ordersData || []);
+            setRecentSubscriptions(subsData || []);
 
         } catch (err) {
             console.error('Dashboard stats fetch failed:', err);
@@ -191,10 +190,11 @@ export default function Dashboard({ setSyncAction }) {
                     path="/users"
                 />
                 <StatCard
-                    label="Total Orders"
-                    value={loading ? '—' : stats.totalOrders.toLocaleString()}
-                    icon={ShoppingBag}
+                    label="Total Subscriptions"
+                    value={loading ? '—' : stats.totalSubscriptions.toLocaleString()}
+                    icon={CreditCard}
                     color="purple"
+                    path="/subscriptions"
                 />
                 <StatCard
                     label="Platform Revenue"
@@ -209,7 +209,7 @@ export default function Dashboard({ setSyncAction }) {
             <div className="dashboard-chart-grid">
                 <Card style={{ gridColumn: 'span 8', minWidth: 0 }}>
                     <CardHeader>
-                        <CardTitle>Revenue Analytics (Last 6 Months)</CardTitle>
+                        <CardTitle>Subscription Revenue (Last 6 Months)</CardTitle>
                     </CardHeader>
                     <div style={{ height: '300px', width: '100%' }}>
                         <ResponsiveContainer width="100%" height="100%">
@@ -258,10 +258,10 @@ export default function Dashboard({ setSyncAction }) {
 
             {/* ── Recent Activity + System Health ── */}
             <div className="dashboard-bottom-grid">
-                <Card style={{ gridColumn: 'span 7' }}>
+                <Card style={{ gridColumn: 'span 12' }}>
                     <CardHeader>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <CardTitle>Recent Orders</CardTitle>
+                            <CardTitle>Recent Subscription Payments</CardTitle>
                             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Live from DB</span>
                         </div>
                     </CardHeader>
@@ -270,28 +270,28 @@ export default function Dashboard({ setSyncAction }) {
                             [...Array(4)].map((_, i) => (
                                 <div key={i} style={{ padding: '0.75rem', borderRadius: '10px', background: 'var(--surface-hover)', height: '56px', animation: 'pulse 1.5s infinite' }} />
                             ))
-                        ) : recentOrders.length === 0 ? (
+                        ) : recentSubscriptions.length === 0 ? (
                             <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                                <Utensils size={28} style={{ marginBottom: '0.5rem', opacity: 0.3 }} />
-                                <p>No orders yet</p>
+                                <CreditCard size={28} style={{ marginBottom: '0.5rem', opacity: 0.3 }} />
+                                <p>No subscriptions yet</p>
                             </div>
-                        ) : recentOrders.map(order => (
-                            <div key={order.id} style={{ display: 'flex', gap: '1rem', padding: '0.75rem', borderRadius: '10px', background: 'var(--surface-hover)', alignItems: 'center' }}>
-                                <div style={{ color: order.payment_status === 'paid' ? 'var(--accent-primary)' : order.payment_status === 'failed' ? '#ef4444' : '#3b82f6' }}>
-                                    <ShoppingBag size={18} />
+                        ) : recentSubscriptions.map(sub => (
+                            <div key={sub.id} style={{ display: 'flex', gap: '1rem', padding: '0.75rem', borderRadius: '10px', background: 'var(--surface-hover)', alignItems: 'center' }}>
+                                <div style={{ color: sub.status === 'paid' ? 'var(--accent-primary)' : sub.status === 'failed' ? '#ef4444' : '#3b82f6' }}>
+                                    <CreditCard size={18} />
                                 </div>
                                 <div style={{ flex: 1, minWidth: 0 }}>
                                     <div style={{ fontSize: '0.875rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                        #{order.order_number} — {order.restaurants?.name || 'Unknown Restaurant'}
+                                        {sub.restaurants?.name || 'Unknown Restaurant'}
                                     </div>
                                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
-                                        {new Date(order.created_at).toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                        {sub.plan_duration} Days Plan — {new Date(sub.created_at).toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                     </div>
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-                                    <span style={{ fontSize: '0.875rem', fontWeight: 700 }}>₹{Number(order.total).toLocaleString()}</span>
-                                    <Badge variant={order.payment_status === 'paid' ? 'success' : order.payment_status === 'failed' ? 'error' : 'warning'} style={{ fontSize: '0.65rem', padding: '1px 6px' }}>
-                                        {order.payment_status?.toUpperCase()}
+                                    <span style={{ fontSize: '0.875rem', fontWeight: 700 }}>₹{Number(sub.amount).toLocaleString()}</span>
+                                    <Badge variant={sub.status === 'paid' ? 'success' : sub.status === 'failed' ? 'error' : 'warning'} style={{ fontSize: '0.65rem', padding: '1px 6px' }}>
+                                        {sub.status?.toUpperCase()}
                                     </Badge>
                                 </div>
                             </div>
@@ -299,7 +299,7 @@ export default function Dashboard({ setSyncAction }) {
                     </div>
                 </Card>
 
-                <Card style={{ gridColumn: 'span 5' }}>
+                {/* <Card style={{ gridColumn: 'span 5' }}>
                     <CardHeader>
                         <CardTitle>System Health</CardTitle>
                     </CardHeader>
@@ -334,7 +334,7 @@ export default function Dashboard({ setSyncAction }) {
                             </div>
                         </div>
                     </div>
-                </Card>
+                </Card> */}
             </div>
         </div>
     );

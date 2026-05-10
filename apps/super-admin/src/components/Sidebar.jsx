@@ -4,11 +4,11 @@ import {
     LayoutDashboard,
     Store,
     CreditCard,
-    Settings,
+    // Settings,
     Users,
     ChevronDown,
     ChevronRight,
-    Headphones,
+    // Headphones,
     LogOut,
     Menu
 } from 'lucide-react';
@@ -26,25 +26,25 @@ const navItems = [
             { path: '/billing/plans', label: 'Pricing Plans' },
         ]
     },
-    {
-        icon: Headphones,
-        label: 'Support',
-        subItems: [
-            { path: '/support/complaints', label: 'Complaints & Disputes' },
-            { path: '/support/reviews', label: 'Reviews Moderation' },
-            { path: '/support/announcements', label: 'Announcements' },
-        ]
-    },
-    {
-        icon: Settings,
-        label: 'Settings',
-        subItems: [
-            { path: '/settings/general', label: 'General Settings' },
-            { path: '/settings/integrations', label: 'Integrations & API' },
-            { path: '/settings/security', label: 'Security & Backups' },
-            { path: '/settings/email', label: 'Email Templates' },
-        ]
-    }
+    // {
+    //     icon: Headphones,
+    //     label: 'Support',
+    //     subItems: [
+    //         { path: '/support/complaints', label: 'Complaints & Disputes' },
+    //         { path: '/support/reviews', label: 'Reviews Moderation' },
+    //         { path: '/support/announcements', label: 'Announcements' },
+    //     ]
+    // },
+    // {
+    //     icon: Settings,
+    //     label: 'Settings',
+    //     subItems: [
+    //         { path: '/settings/general', label: 'General Settings' },
+    //         { path: '/settings/integrations', label: 'Integrations & API' },
+    //         { path: '/settings/security', label: 'Security & Backups' },
+    //         { path: '/settings/email', label: 'Email Templates' },
+    //     ]
+    // }
 ];
 
 const NavItemComponent = ({ item, collapsed }) => {
