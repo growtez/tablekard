@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Calendar, ArrowUpRight, ArrowDownRight, Loader2 } from 'lucide-react';
+import { Download, Calendar, ArrowUpRight, ArrowDownRight, Loader2, Info } from 'lucide-react';
 import Sidebar from '../components/sidebar';
 import './reports.css';
 import { useAuth } from '../context/AuthContext';
 import { 
     getAnalyticsSummary, 
     getActiveTablesCount, 
-    getTotalMenuItemsCount,
     getBestSellingDishes,
     getRevenueData,
     getPeakHourData,
@@ -50,7 +49,6 @@ const Reports: React.FC = () => {
         ordersChange: 0
     });
     const [activeTables, setActiveTables] = useState(0);
-    const [totalMenuItems, setTotalMenuItems] = useState(0);
     const [topItems, setTopItems] = useState<BestSellingDish[]>([]);
     const [revenueHistory, setRevenueHistory] = useState<RevenueRecord[]>([]);
     const [peakData, setPeakData] = useState<PeakHourData>(
@@ -88,7 +86,6 @@ const Reports: React.FC = () => {
             const [
                 analyticsSummary,
                 tablesCount,
-                itemsCount,
                 bestDishes,
                 revenueData,
                 heatmap,
@@ -98,7 +95,6 @@ const Reports: React.FC = () => {
             ] = await Promise.all([
                 getAnalyticsSummary(activeRestaurantId, startDate, endDate),
                 getActiveTablesCount(activeRestaurantId),
-                getTotalMenuItemsCount(activeRestaurantId),
                 getBestSellingDishes(activeRestaurantId),
                 getRevenueData(activeRestaurantId),
                 getPeakHourData(activeRestaurantId),
@@ -109,9 +105,32 @@ const Reports: React.FC = () => {
 
             setSummary(analyticsSummary);
             setActiveTables(tablesCount);
-            setTotalMenuItems(itemsCount);
             setTopItems(bestDishes.slice(0, 5));
-            setRevenueHistory(revenueData.slice(0, 7).reverse());
+            // Process revenue history to include zero-revenue days for the last 7 days
+            const last7Days: RevenueRecord[] = [];
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(now.getDate() - i);
+                const dateStr = d.toISOString().split('T')[0];
+                
+                const existing = revenueData.find(record => record.revenueDate === dateStr);
+                if (existing) {
+                    last7Days.push(existing);
+                } else {
+                    last7Days.push({
+                        id: `zero-${dateStr}`,
+                        restaurantId: activeRestaurantId,
+                        revenueDate: dateStr,
+                        totalOrders: 0,
+                        totalRevenue: 0,
+                        totalTax: 0,
+                        totalDiscount: 0,
+                        createdAt: d.toISOString(),
+                        updatedAt: d.toISOString()
+                    });
+                }
+            }
+            setRevenueHistory(last7Days);
             setPeakData(heatmap);
             setAdvanced(advancedData);
             setBcgData(bcgMatrix);
@@ -138,6 +157,21 @@ const Reports: React.FC = () => {
         ...DAYS.map((_, di) => Math.max(...HOURS.map(h => peakData[di]?.[h] ?? 0))),
         1
     );
+
+    // ── Loading state ──
+    if (loading && summary.totalRevenue === 0) {
+        return (
+            <div className="reports-container">
+                <Sidebar />
+                <div className="reports-main-content">
+                    <div className="reports-loading-screen">
+                        <div className="reports-loading-spinner" />
+                        <p className="reports-loading-text">Generating your insights...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="reports-container">
@@ -180,7 +214,13 @@ const Reports: React.FC = () => {
                 <div className="metrics-grid">
                     <div className="metric-card">
                         <div className="metric-card-top-bar metric-card-blue"></div>
-                        <h3 className="metric-title">Total Revenue</h3>
+                        <h3 className="metric-title">
+                            Total Revenue
+                            <span className="info-icon">
+                                <Info size={14} />
+                                <span className="tooltip">Total earnings from all paid orders in the selected timeframe.</span>
+                            </span>
+                        </h3>
                         <div className="metric-value">{formatCurrency(summary.totalRevenue)}</div>
                         <div className={`metric-change ${summary.revenueChange >= 0 ? 'change-positive' : 'change-negative'}`}>
                             {summary.revenueChange >= 0 ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
@@ -189,7 +229,13 @@ const Reports: React.FC = () => {
                     </div>
                     <div className="metric-card">
                         <div className="metric-card-top-bar metric-card-green"></div>
-                        <h3 className="metric-title">Total Orders</h3>
+                        <h3 className="metric-title">
+                            Total Orders
+                            <span className="info-icon">
+                                <Info size={14} />
+                                <span className="tooltip">Number of successfully completed and paid orders.</span>
+                            </span>
+                        </h3>
                         <div className="metric-value">{summary.totalOrders}</div>
                         <div className={`metric-change ${summary.ordersChange >= 0 ? 'change-positive' : 'change-negative'}`}>
                             {summary.ordersChange >= 0 ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
@@ -198,7 +244,13 @@ const Reports: React.FC = () => {
                     </div>
                     <div className="metric-card">
                         <div className="metric-card-top-bar metric-card-purple"></div>
-                        <h3 className="metric-title">Average Order Value</h3>
+                        <h3 className="metric-title">
+                            Average Order Value
+                            <span className="info-icon">
+                                <Info size={14} />
+                                <span className="tooltip">Average amount spent per order (Total Revenue / Total Orders).</span>
+                            </span>
+                        </h3>
                         <div className="metric-value">{formatCurrency(advanced?.aov || 0)}</div>
                         <div className={`metric-change ${(advanced?.aovChange || 0) >= 0 ? 'change-positive' : 'change-negative'}`}>
                             {(advanced?.aovChange || 0) >= 0 ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
@@ -207,19 +259,37 @@ const Reports: React.FC = () => {
                     </div>
                     <div className="metric-card">
                         <div className="metric-card-top-bar metric-card-orange"></div>
-                        <h3 className="metric-title">Active Tables</h3>
+                        <h3 className="metric-title">
+                            Active Tables
+                            <span className="info-icon">
+                                <Info size={14} />
+                                <span className="tooltip">Total number of tables currently occupied by customers.</span>
+                            </span>
+                        </h3>
                         <div className="metric-value">{activeTables}</div>
                         <div className="metric-change" style={{ color: '#718096' }}>Currently Occupied</div>
                     </div>
                     <div className="metric-card">
                         <div className="metric-card-top-bar" style={{ background: 'linear-gradient(to right, #E53E3E, #C53030)' }}></div>
-                        <h3 className="metric-title">Discount Impact</h3>
+                        <h3 className="metric-title">
+                            Discount Impact
+                            <span className="info-icon">
+                                <Info size={14} />
+                                <span className="tooltip">Total value of discounts given and their percentage of the subtotal.</span>
+                            </span>
+                        </h3>
                         <div className="metric-value">{formatCurrency(advanced?.impactAnalysis?.totalDiscount || 0)}</div>
                         <div className="metric-change" style={{ color: '#718096' }}>{(advanced?.impactAnalysis?.discountRate || 0).toFixed(1)}% of subtotal</div>
                     </div>
                     <div className="metric-card">
                         <div className="metric-card-top-bar" style={{ background: 'linear-gradient(to right, #3182CE, #2B6CB0)' }}></div>
-                        <h3 className="metric-title">Tax Collected</h3>
+                        <h3 className="metric-title">
+                            Tax Collected
+                            <span className="info-icon">
+                                <Info size={14} />
+                                <span className="tooltip">Total taxes collected and the calculated effective tax rate.</span>
+                            </span>
+                        </h3>
                         <div className="metric-value">{formatCurrency(advanced?.impactAnalysis?.totalTax || 0)}</div>
                         <div className="metric-change" style={{ color: '#718096' }}>{(advanced?.impactAnalysis?.taxRate || 0).toFixed(1)}% effective rate</div>
                     </div>
@@ -229,7 +299,13 @@ const Reports: React.FC = () => {
                 <div className="dashboard-grid">
                     <div className="dashboard-card">
                         <div className="dashboard-card-header">
-                            <h3 className="dashboard-card-title">Revenue Overview (Last 7 Days)</h3>
+                            <h3 className="dashboard-card-title">
+                                Revenue Overview (Last 7 Days)
+                                <span className="info-icon">
+                                    <Info size={14} />
+                                    <span className="tooltip">Daily revenue trends over the past week.</span>
+                                </span>
+                            </h3>
                         </div>
                         <div className="chart-container">
                             {revenueHistory.length === 0 ? (
@@ -252,7 +328,13 @@ const Reports: React.FC = () => {
 
                     <div className="dashboard-card breakdown-card">
                         <div className="dashboard-card-header">
-                            <h3 className="dashboard-card-title">Order & Payment Breakdown</h3>
+                            <h3 className="dashboard-card-title">
+                                Order & Payment Breakdown
+                                <span className="info-icon">
+                                    <Info size={14} />
+                                    <span className="tooltip">Distribution of orders by type and payment method.</span>
+                                </span>
+                            </h3>
                         </div>
                         <div className="breakdown-container">
                             <div className="donut-section">
@@ -304,7 +386,13 @@ const Reports: React.FC = () => {
                     {/* Top Selling Items (shortened) */}
                     <div className="dashboard-card">
                         <div className="dashboard-card-header">
-                            <h3 className="dashboard-card-title">Top Selling Items</h3>
+                            <h3 className="dashboard-card-title">
+                                Top Selling Items
+                                <span className="info-icon">
+                                    <Info size={14} />
+                                    <span className="tooltip">Your most popular items ranked by sales volume.</span>
+                                </span>
+                            </h3>
                             <span className="card-subtitle">All-time sales</span>
                         </div>
                         <table className="top-items-table">
@@ -323,7 +411,6 @@ const Reports: React.FC = () => {
                                         <tr key={index}>
                                             <td>
                                                 <div className="item-name-cell">
-                                                    <span className="item-emoji-box">{item.image}</span>
                                                     <span className={`item-rank-tag rank-${index + 1}`}>#{index + 1}</span>
                                                     <span className="item-name-text">{item.name}</span>
                                                 </div>
@@ -340,7 +427,13 @@ const Reports: React.FC = () => {
                     {/* Peak Hour Heatmap */}
                     <div className="dashboard-card heatmap-card">
                         <div className="dashboard-card-header">
-                            <h3 className="dashboard-card-title">Peak Hour Heatmap</h3>
+                            <h3 className="dashboard-card-title">
+                                Peak Hour Heatmap
+                                <span className="info-icon">
+                                    <Info size={14} />
+                                    <span className="tooltip">Visual distribution of order density by day and hour.</span>
+                                </span>
+                            </h3>
                             <span className="card-subtitle">Orders by day & hour</span>
                         </div>
 
@@ -389,49 +482,129 @@ const Reports: React.FC = () => {
                     {/* BCG Matrix */}
                     <div className="dashboard-card">
                         <div className="dashboard-card-header">
-                            <h3 className="dashboard-card-title">Menu Item Performance</h3>
+                            <h3 className="dashboard-card-title">
+                                Menu Item Performance
+                                <span className="info-icon">
+                                    <Info size={14} />
+                                    <span className="tooltip">Classification of menu items based on their revenue and volume performance.</span>
+                                </span>
+                            </h3>
                             <span className="card-subtitle">BCG Matrix (Revenue vs. Volume)</span>
                         </div>
-                        <div className="bcg-wrapper">
-                            <div className="bcg-axis bcg-y-axis">Revenue ➔</div>
-                            <div className="bcg-axis bcg-x-axis">Sales Volume ➔</div>
-                            <div className="bcg-grid">
-                                <div className="bcg-quadrant bcg-star">
-                                    <h4 className="bcg-title">Stars <span className="bcg-desc">(High Volume, High Revenue)</span></h4>
-                                    <div className="bcg-items">
-                                        {bcgData.filter(i => i.category === 'star').map(i => <span key={i.id} className="bcg-pill">{i.name}</span>)}
-                                        {bcgData.filter(i => i.category === 'star').length === 0 && <span className="bcg-empty">None yet</span>}
-                                    </div>
+                        {/* BCG Matrix Container */}
+                        <div className="bcg-container">
+
+                            {/* Y-Axis Label */}
+                            <div className="bcg-y-label">
+                                <span>▲ Revenue</span>
+                            </div>
+
+                            {/* Main matrix area */}
+                            <div className="bcg-inner">
+
+                                {/* High / Low Revenue labels on left */}
+                                <div className="bcg-rev-labels">
+                                    <span className="bcg-rev-high">High</span>
+                                    <span className="bcg-rev-low">Low</span>
                                 </div>
-                                <div className="bcg-quadrant bcg-gem">
-                                    <h4 className="bcg-title">Hidden Gems <span className="bcg-desc">(Low Volume, High Revenue)</span></h4>
-                                    <div className="bcg-items">
-                                        {bcgData.filter(i => i.category === 'gem').map(i => <span key={i.id} className="bcg-pill">{i.name}</span>)}
-                                        {bcgData.filter(i => i.category === 'gem').length === 0 && <span className="bcg-empty">None yet</span>}
+
+                                {/* The grid itself */}
+                                <div className="bcg-grid">
+                                    {/* TOP-LEFT: High Volume, High Revenue → Stars */}
+                                    <div className="bcg-quadrant bcg-star">
+                                        <div className="bcg-q-header">
+                                            {/* <span className="bcg-q-icon">⭐</span> */}
+                                            <div>
+                                                <div className="bcg-title">Stars</div>
+                                                <div className="bcg-desc">High Volume · High Revenue</div>
+                                            </div>
+                                        </div>
+                                        <div className="bcg-items">
+                                            {bcgData.filter(i => i.category === 'star').map(i => <span key={i.id} className="bcg-pill bcg-pill-star">{i.name}</span>)}
+                                            {bcgData.filter(i => i.category === 'star').length === 0 && <span className="bcg-empty">No items yet</span>}
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="bcg-quadrant bcg-cow">
-                                    <h4 className="bcg-title">Cash Cows <span className="bcg-desc">(High Volume, Low Revenue)</span></h4>
-                                    <div className="bcg-items">
-                                        {bcgData.filter(i => i.category === 'cow').map(i => <span key={i.id} className="bcg-pill">{i.name}</span>)}
-                                        {bcgData.filter(i => i.category === 'cow').length === 0 && <span className="bcg-empty">None yet</span>}
+
+                                    {/* TOP-RIGHT: Low Volume, High Revenue → Hidden Gems */}
+                                    <div className="bcg-quadrant bcg-gem">
+                                        <div className="bcg-q-header">
+                                            {/* <span className="bcg-q-icon">💎</span> */}
+                                            <div>
+                                                <div className="bcg-title">Hidden Gems</div>
+                                                <div className="bcg-desc">Low Volume · High Revenue</div>
+                                            </div>
+                                        </div>
+                                        <div className="bcg-items">
+                                            {bcgData.filter(i => i.category === 'gem').map(i => <span key={i.id} className="bcg-pill bcg-pill-gem">{i.name}</span>)}
+                                            {bcgData.filter(i => i.category === 'gem').length === 0 && <span className="bcg-empty">No items yet</span>}
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="bcg-quadrant bcg-dog">
-                                    <h4 className="bcg-title">Dead Weight <span className="bcg-desc">(Low Volume, Low Revenue)</span></h4>
-                                    <div className="bcg-items">
-                                        {bcgData.filter(i => i.category === 'dog').map(i => <span key={i.id} className="bcg-pill">{i.name}</span>)}
-                                        {bcgData.filter(i => i.category === 'dog').length === 0 && <span className="bcg-empty">None yet</span>}
+
+                                    {/* BOTTOM-LEFT: High Volume, Low Revenue → Cash Cows */}
+                                    <div className="bcg-quadrant bcg-cow">
+                                        <div className="bcg-q-header">
+                                            {/* <span className="bcg-q-icon">🐄</span> */}
+                                            <div>
+                                                <div className="bcg-title">Cash Items</div>
+                                                <div className="bcg-desc">High Volume · Low Revenue</div>
+                                            </div>
+                                        </div>
+                                        <div className="bcg-items">
+                                            {bcgData.filter(i => i.category === 'cow').map(i => <span key={i.id} className="bcg-pill bcg-pill-cow">{i.name}</span>)}
+                                            {bcgData.filter(i => i.category === 'cow').length === 0 && <span className="bcg-empty">No items yet</span>}
+                                        </div>
+                                    </div>
+
+                                    {/* BOTTOM-RIGHT: Low Volume, Low Revenue → Dead Weight */}
+                                    <div className="bcg-quadrant bcg-dog">
+                                        <div className="bcg-q-header">
+                                            {/* <span className="bcg-q-icon">💀</span> */}
+                                            <div>
+                                                <div className="bcg-title">Dead Weight</div>
+                                                <div className="bcg-desc">Low Volume · Low Revenue</div>
+                                            </div>
+                                        </div>
+                                        <div className="bcg-items">
+                                            {bcgData.filter(i => i.category === 'dog').map(i => <span key={i.id} className="bcg-pill bcg-pill-dog">{i.name}</span>)}
+                                            {bcgData.filter(i => i.category === 'dog').length === 0 && <span className="bcg-empty">No items yet</span>}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+
+                            {/* X-Axis: Volume labels */}
+                            <div className="bcg-x-axis-row">
+                                <div className="bcg-x-offset" />
+                                <div className="bcg-x-labels">
+                                    <span className="bcg-vol-high">High</span>
+                                    <span className="bcg-vol-low">Low</span>
+                                </div>
+                            </div>
+
+                            {/* X-Axis label */}
+                            <div className="bcg-x-label">Sales Volume ▶</div>
+
+                        </div>
+
+                        {/* Legend */}
+                        <div className="bcg-legend">
+                            <span className="bcg-legend-item"><span className="bcg-legend-dot bcg-dot-star"></span>Stars — Keep investing, they drive growth</span>
+                            <span className="bcg-legend-item"><span className="bcg-legend-dot bcg-dot-gem"></span>Hidden Gems — High value, low awareness. Promote these!</span>
+                            <span className="bcg-legend-item"><span className="bcg-legend-dot bcg-dot-cow"></span>Cash Items — Reliable sellers. Maintain consistency</span>
+                            <span className="bcg-legend-item"><span className="bcg-legend-dot bcg-dot-dog"></span>Dead Weight — Review for removal or rework</span>
                         </div>
                     </div>
 
                     {/* Recent Feedback */}
                     <div className="dashboard-card">
                         <div className="dashboard-card-header">
-                            <h3 className="dashboard-card-title">Recent Feedback</h3>
+                            <h3 className="dashboard-card-title">
+                                Recent Feedback
+                                <span className="info-icon">
+                                    <Info size={14} />
+                                    <span className="tooltip">Latest customer ratings and qualitative comments.</span>
+                                </span>
+                            </h3>
                             <span className="card-subtitle">Latest customer reviews</span>
                         </div>
                         <div className="feedback-list">
