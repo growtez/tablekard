@@ -6,10 +6,11 @@ import Sidebar from '../components/sidebar';
 import { useAuth } from '../context/AuthContext';
 import { useRestaurantTables } from '../hooks/useSupabaseQuery';
 import { paintQrTemplate } from '../utils/qrTemplatePainter';
+import type { RestaurantTable } from '../services/supabaseService';
 import './qrcode.css';
 
 // The base URL of the customer web app (e.g., http://192.168.1.16:3003)
-const CUSTOMER_APP_URL = (import.meta.env.VITE_CUSTOMER_APP_URL || 'https://tablekard.com').replace(/\/$/, '');
+const CUSTOMER_APP_URL = (import.meta.env.VITE_CUSTOMER_APP_URL || 'https://app.tablekard.com').replace(/\/$/, '');
 
 const QRCodePage: React.FC = () => {
     const { activeRestaurantId, activeRestaurantName } = useAuth();
@@ -28,6 +29,7 @@ const QRCodePage: React.FC = () => {
                 qrSvgElementId: `qr-svg-${tableId}`,
                 restaurantName: activeRestaurantName,
                 tableNumber,
+                qrUrl: buildQrUrl(tableId, tableNumber),
                 qrSize
             });
 
@@ -47,11 +49,12 @@ const QRCodePage: React.FC = () => {
                 qrSvgElementId: `qr-svg-${tableId}`,
                 restaurantName: activeRestaurantName,
                 tableNumber,
+                qrUrl: buildQrUrl(tableId, tableNumber),
                 qrSize: 300 // High resolution for PDF
             });
 
             const imgData = canvas.toDataURL('image/png', 1.0);
-            
+
             // Dimensions from qrTemplatePainter (W: 420, H: 540)
             const pdf = new jsPDF({
                 orientation: 'portrait',
@@ -68,7 +71,7 @@ const QRCodePage: React.FC = () => {
     };
 
     const downloadAll = () => {
-        tables.forEach((t, i) => {
+        tables.forEach((t: RestaurantTable, i: number) => {
             setTimeout(() => downloadQR(t.id, t.table_number), i * 300);
         });
     };
@@ -147,7 +150,7 @@ const QRCodePage: React.FC = () => {
                 {/* QR Grid */}
                 {!loading && !error && tables.length > 0 && (
                     <div className="qr-grid">
-                        {tables.map((table) => {
+                        {tables.map((table: RestaurantTable) => {
                             const url = buildQrUrl(table.id, table.table_number);
                             return (
                                 <div key={table.id} className={`qr-card ${!table.active ? 'qr-card-inactive' : ''}`}>
