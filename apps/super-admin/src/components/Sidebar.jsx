@@ -4,47 +4,43 @@ import {
     LayoutDashboard,
     Store,
     CreditCard,
-    Settings,
+    // Settings,
     Users,
     ChevronDown,
     ChevronRight,
-    Headphones,
+    // Headphones,
     LogOut,
-    Menu
+    Menu,
+    FileText,
+    Layers
 } from 'lucide-react';
 
 const navItems = [
     { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/restaurants', icon: Store, label: 'Restaurants' },
     { path: '/users', icon: Users, label: 'Users' },
-    {
-        icon: CreditCard,
-        label: 'Billing',
-        subItems: [
-            { path: '/subscriptions', label: 'Subscriptions Overview' },
-            { path: '/billing/transactions', label: 'Transactions & Refunds' },
-            { path: '/billing/plans', label: 'Pricing Plans' },
-        ]
-    },
-    {
-        icon: Headphones,
-        label: 'Support',
-        subItems: [
-            { path: '/support/complaints', label: 'Complaints & Disputes' },
-            { path: '/support/reviews', label: 'Reviews Moderation' },
-            { path: '/support/announcements', label: 'Announcements' },
-        ]
-    },
-    {
-        icon: Settings,
-        label: 'Settings',
-        subItems: [
-            { path: '/settings/general', label: 'General Settings' },
-            { path: '/settings/integrations', label: 'Integrations & API' },
-            { path: '/settings/security', label: 'Security & Backups' },
-            { path: '/settings/email', label: 'Email Templates' },
-        ]
-    }
+    { path: '/subscriptions', icon: CreditCard, label: 'Subscriptions' },
+    { path: '/billing/transactions', icon: FileText, label: 'Transactions' },
+    { path: '/billing/plans', icon: Layers, label: 'Pricing Plans' },
+    // {
+    //     icon: Headphones,
+    //     label: 'Support',
+    //     subItems: [
+    //         { path: '/support/complaints', label: 'Complaints & Disputes' },
+    //         { path: '/support/reviews', label: 'Reviews Moderation' },
+    //         { path: '/support/announcements', label: 'Announcements' },
+    //     ]
+    // },
+    // {
+    //     icon: Settings,
+    //     label: 'Settings',
+    //     subItems: [
+    //         { path: '/settings/general', label: 'General Settings' },
+    //         { path: '/settings/integrations', label: 'Integrations & API' },
+    //         { path: '/settings/security', label: 'Security & Backups' },
+    //         { path: '/settings/email', label: 'Email Templates' },
+    //     ]
+    // }
 ];
 
 const NavItemComponent = ({ item, collapsed }) => {

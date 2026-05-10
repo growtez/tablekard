@@ -7,7 +7,7 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
     const [error, setError] = useState(null)
     const [restaurants, setRestaurants] = useState([])
     const [formData, setFormData] = useState({ email: '', password: '', role: 'customer', restaurantId: '' })
-    const [resFormData, setResFormData] = useState({ name: '', contact_email: '', contact_address: '', contact_phone: '' })
+    const [resFormData, setResFormData] = useState({ name: '', contact_email: '', contact_address: '', contact_phone: '', admin_password: '' })
 
     const roleOptions = [
         { value: 'super_admin', label: 'Super Admin' },
@@ -32,13 +32,14 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                         name: editingData.name || '',
                         contact_email: editingData.contact_email || '',
                         contact_address: editingData.contact_address || '',
-                        contact_phone: editingData.contact_phone || ''
+                        contact_phone: editingData.contact_phone || '',
+                        admin_password: ''
                     })
                 }
             } else {
                 // Reset for creation
                 setFormData({ email: '', password: '', role: 'customer', restaurantId: '' })
-                setResFormData({ name: '', contact_email: '', contact_address: '', contact_phone: '' })
+                setResFormData({ name: '', contact_email: '', contact_address: '', contact_phone: '', admin_password: '' })
             }
         }
     }, [isOpen, editingData, activeForm])
@@ -124,7 +125,7 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                     .eq('id', editingData.id)
                 if (error) throw error
             } else {
-                const { error } = await supabase
+                const { data: newRes, error: resError } = await supabase
                     .from('restaurants')
                     .insert([
                         {
@@ -136,7 +137,37 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                             status: 'active'
                         }
                     ])
-                if (error) throw error
+                    .select()
+                    .single()
+                
+                if (resError) throw resError
+
+                // Create Admin Account automatically
+                if (resFormData.admin_password) {
+                    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+                        email: resFormData.contact_email.trim().toLowerCase(),
+                        password: resFormData.admin_password,
+                        email_confirm: true
+                    })
+                    
+                    if (authError) throw new Error(`Restaurant created, but admin account failed: ${authError.message}`)
+
+                    // Update Profile Role
+                    await supabase
+                        .from('profiles')
+                        .update({ role: 'restaurant_admin' })
+                        .eq('id', authData.user.id)
+
+                    // Link to Restaurant
+                    await supabase
+                        .from('restaurant_users')
+                        .insert({
+                            restaurant_id: newRes.id,
+                            profile_id: authData.user.id,
+                            role: 'admin',
+                            active: true
+                        })
+                }
             }
 
             onRefresh && onRefresh()
@@ -272,6 +303,27 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                                         onChange={(e) => setResFormData({ ...resFormData, contact_phone: e.target.value })}
                                     />
                                 </div>
+
+                                {!editingData && (
+                                    <>
+                                        <div style={{ marginTop: '1.5rem', marginBottom: '0.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>
+                                            <h4 style={{ fontSize: '0.9rem', fontWeight: 700, margin: 0 }}>Admin Login Credentials</h4>
+                                            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                                                The contact email <strong>{resFormData.contact_email || 'above'}</strong> will be used as the admin login.
+                                            </p>
+                                        </div>
+                                        <div className="form-group-modern">
+                                            <label>Admin Password</label>
+                                            <input
+                                                type="password"
+                                                placeholder="Set login password"
+                                                value={resFormData.admin_password}
+                                                onChange={(e) => setResFormData({ ...resFormData, admin_password: e.target.value })}
+                                                required={!editingData}
+                                            />
+                                        </div>
+                                    </>
+                                )}
                             </>
                         )}
 

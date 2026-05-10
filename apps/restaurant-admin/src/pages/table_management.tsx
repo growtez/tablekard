@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
+import { jsPDF } from 'jspdf';
 import {
     Download,
     RefreshCw,
@@ -24,7 +25,7 @@ import {
 } from '../services/supabaseService';
 import type { RestaurantTable } from '../services/supabaseService';
 import { useRestaurantTables, useInvalidateQueries } from '../hooks/useSupabaseQuery';
-import { paintQrTemplate } from '../utils/qrTemplatePainter';
+import { paintQrTemplate, CARD_MM_W, CARD_MM_H } from '../utils/qrTemplatePainter';
 
 import './table_management.css';
 
@@ -38,7 +39,6 @@ interface TableFormData {
 
 const TableManagementPage: React.FC = () => {
     const { activeRestaurantId } = useAuth();
-    const [qrSize, setQrSize] = useState(160);
     const [restaurantName, setRestaurantName] = useState<string>('Restaurant');
 
     // React Query: cached, auto-retries, refetches on tab focus
@@ -81,7 +81,7 @@ const TableManagementPage: React.FC = () => {
                 restaurantName,
                 tableNumber,
                 qrUrl: url,
-                qrSize: 200,
+                qrSize: 180,
             });
             const link = document.createElement('a');
             link.download = `table-${tableNumber}-qr.png`;
@@ -93,8 +93,30 @@ const TableManagementPage: React.FC = () => {
         }
     };
 
+    const downloadPDF = async (tableId: string, tableNumber: number) => {
+        try {
+            const canvas = await paintQrTemplate({
+                qrSvgElementId: `qr-svg-${tableId}`,
+                restaurantName,
+                tableNumber,
+                qrSize: 180,
+            });
+            const imgData = canvas.toDataURL('image/png', 1.0);
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: [CARD_MM_W, CARD_MM_H]
+            });
+            pdf.addImage(imgData, 'PNG', 0, 0, CARD_MM_W, CARD_MM_H);
+            pdf.save(`${restaurantName.replace(/\s+/g, '-')}-table-${tableNumber}.pdf`);
+        } catch (err) {
+            console.error('PDF generation failed:', err);
+            setError('Failed to generate PDF. Please try again.');
+        }
+    };
+
     const downloadAll = () => {
-        tables.forEach((t, i) => {
+        tables.forEach((t: RestaurantTable, i: number) => {
             setTimeout(() => downloadQR(t.id, t.table_number), i * 300);
         });
     };
@@ -102,7 +124,7 @@ const TableManagementPage: React.FC = () => {
     // Add Table
     const handleAddTable = () => {
         setFormData({
-            table_number: tables.length > 0 ? Math.max(...tables.map(t => t.table_number)) + 1 : 1,
+            table_number: tables.length > 0 ? Math.max(...tables.map((t: RestaurantTable) => t.table_number)) + 1 : 1,
             capacity: 4,
             active: true
         });
@@ -122,7 +144,7 @@ const TableManagementPage: React.FC = () => {
             setFormErrors('Capacity must be at least 1');
             return;
         }
-        if (tables.some(t => t.table_number === formData.table_number)) {
+        if (tables.some((t: RestaurantTable) => t.table_number === formData.table_number)) {
             setFormErrors(`Table ${formData.table_number} already exists`);
             return;
         }
@@ -165,7 +187,7 @@ const TableManagementPage: React.FC = () => {
             setFormErrors('Capacity must be at least 1');
             return;
         }
-        if (tables.some(t => t.id !== currentTable.id && t.table_number === formData.table_number)) {
+        if (tables.some((t: RestaurantTable) => t.id !== currentTable.id && t.table_number === formData.table_number)) {
             setFormErrors(`Table ${formData.table_number} already exists`);
             return;
         }
@@ -253,18 +275,6 @@ const TableManagementPage: React.FC = () => {
 
                 {/* Controls Row */}
                 <div className="tm-controls">
-                    <div className="tm-size-control">
-                        <label className="tm-size-label">QR Size: {qrSize}px</label>
-                        <input
-                            type="range"
-                            min={100}
-                            max={250}
-                            step={10}
-                            value={qrSize}
-                            onChange={(e) => setQrSize(parseInt(e.target.value))}
-                            className="tm-size-slider"
-                        />
-                    </div>
                     <div className="tm-stats">
                         <div className="tm-count-badge">
                             <Table2 size={16} />
@@ -272,7 +282,7 @@ const TableManagementPage: React.FC = () => {
                         </div>
                         <div className="tm-count-badge active">
                             <CheckCircle size={16} />
-                            {loading ? '...' : `${tables.filter(t => t.active).length} Active`}
+                            {loading ? '...' : `${tables.filter((t: RestaurantTable) => t.active).length} Active`}
                         </div>
                     </div>
                 </div>
@@ -309,7 +319,7 @@ const TableManagementPage: React.FC = () => {
                 {/* Tables Grid */}
                 {!loading && tables.length > 0 && (
                     <div className="tm-grid">
-                        {tables.map((table) => {
+                        {tables.map((table: RestaurantTable) => {
                             const url = buildQrUrl(table.id, table.table_number);
                             return (
                                 <div key={table.id} className={`tm-card ${!table.active ? 'tm-card-inactive' : ''}`}>
@@ -349,7 +359,7 @@ const TableManagementPage: React.FC = () => {
                                         <QRCodeSVG
                                             id={`qr-svg-${table.id}`}
                                             value={url}
-                                            size={qrSize}
+                                            size={180}
                                             bgColor="#ffffff"
                                             fgColor="#1A202C"
                                             level="H"
@@ -365,13 +375,24 @@ const TableManagementPage: React.FC = () => {
                                                 {table.capacity} seats
                                             </span>
                                         </div>
-                                        <button
-                                            className="tm-download-btn"
-                                            onClick={() => downloadQR(table.id, table.table_number)}
-                                        >
-                                            <Download size={14} />
-                                            Download QR
-                                        </button>
+                                        <div className="tm-action-buttons">
+                                            <button
+                                                className="tm-download-btn secondary"
+                                                onClick={() => downloadQR(table.id, table.table_number)}
+                                                title="Download as PNG"
+                                            >
+                                                <Download size={14} />
+                                                PNG
+                                            </button>
+                                            <button
+                                                className="tm-download-btn primary"
+                                                onClick={() => downloadPDF(table.id, table.table_number)}
+                                                title="Download as PDF"
+                                            >
+                                                <Download size={14} />
+                                                PDF
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             );

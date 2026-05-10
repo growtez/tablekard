@@ -4,7 +4,9 @@ import { supabase } from '../supabaseClient';
 import {
     ChevronLeft, User, Mail, Shield, Calendar,
     Clock, Info, AlertTriangle, Edit, Save, X as CloseIcon, Loader2,
-    Hash, Camera, Activity
+    Hash, Camera, Activity, ShieldCheck, MapPin, ExternalLink, ArrowUpRight,
+    Lock, History, Settings, Plus, CreditCard, CheckCircle2, Utensils,
+    ShoppingBag, Receipt
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
@@ -15,8 +17,10 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
     const location = useLocation();
     const [profile, setProfile] = useState(null);
     const [restaurants, setRestaurants] = useState([]);
+    const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [activeTab, setActiveTab] = useState('overview');
 
     const [isEditing, setIsEditing] = useState(location.state?.edit || false);
     const [formData, setFormData] = useState({});
@@ -49,7 +53,8 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
         setLoading(true);
         await Promise.all([
             fetchUserProfile(),
-            fetchRestaurants()
+            fetchRestaurants(),
+            fetchUserOrders()
         ]);
         setLoading(false);
     };
@@ -67,10 +72,32 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
         }
     };
 
+    const fetchUserOrders = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('orders')
+                .select(`
+                    id, 
+                    order_number, 
+                    total, 
+                    status, 
+                    payment_status, 
+                    created_at,
+                    restaurants(name, slug)
+                `)
+                .eq('customer_id', id)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            setOrders(data || []);
+        } catch (err) {
+            console.error('Failed to fetch user orders:', err);
+        }
+    };
+
     const fetchUserProfile = async () => {
         setError(null);
         try {
-            // Fetch profile
             const { data: profileData, error: profileError } = await supabase
                 .from('profiles')
                 .select('*')
@@ -79,7 +106,6 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
 
             if (profileError) throw profileError;
 
-            // Fetch restaurant association if applicable
             let restaurantId = '';
             if (['restaurant_admin', 'restaurant_staff'].includes(profileData.role)) {
                 const { data: resUserData } = await supabase
@@ -109,7 +135,6 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
         setSaving(true);
         setError(null);
         try {
-            // 1. Update Profile
             const { error: profileError } = await supabase
                 .from('profiles')
                 .update({
@@ -122,11 +147,8 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
 
             if (profileError) throw profileError;
 
-            // 2. Handle Restaurant Association
             if (['restaurant_admin', 'restaurant_staff'].includes(formData.role)) {
                 const restaurantRole = formData.role === 'restaurant_admin' ? 'admin' : 'staff';
-
-                // Check for existing
                 const { data: existing } = await supabase
                     .from('restaurant_users')
                     .select('id')
@@ -153,7 +175,6 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
                         });
                 }
             } else {
-                // If role changed to something else, remove association
                 await supabase
                     .from('restaurant_users')
                     .delete()
@@ -170,16 +191,10 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
     };
 
     const handleCancel = () => {
-        let restaurantId = '';
-        if (profile && ['restaurant_admin', 'restaurant_staff'].includes(profile.role)) {
-            // Need to re-derive restaurantId or store it in profile state
-            // But fetchUserProfile will reset it correctly
-        }
         setFormData({ ...profile, restaurant_id: profile.restaurant_id });
         setIsEditing(false);
     };
 
-    // Update refs every render
     useEffect(() => {
         saveRef.current = handleSave;
         cancelRef.current = handleCancel;
@@ -209,166 +224,270 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center p-20">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: '1.5rem' }}>
+                <div className="loader" />
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Fetching user profile...</p>
             </div>
         );
     }
 
     if (error || !profile) {
         return (
-            <div className="p-8">
-                <button onClick={() => navigate(-1)} className="btn-back">
-                    <ChevronLeft size={20} />
+            <div className="animate-fade-in" style={{ padding: '2rem', textAlign: 'center' }}>
+                <AlertCircle size={48} color="#ef4444" style={{ marginBottom: '1rem', opacity: 0.5 }} />
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>User Not Found</h2>
+                <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>{error || 'The requested user profile could not be located.'}</p>
+                <button onClick={() => navigate('/users')} className="btn-primary">
+                    <ChevronLeft size={18} /> Back to Users
                 </button>
-                <div className="error-container mt-4">
-                    <AlertTriangle size={48} className="text-warning mb-4" />
-                    <h2>Error loading profile</h2>
-                    <p>{error || 'Profile not found'}</p>
-                </div>
             </div>
         );
     }
 
-    const renderDetailSection = (title, icon, items, headerStyle = {}) => (
-        <Card className="detail-section overflow-hidden">
-            <CardHeader style={{
-                margin: '-1.5rem -1.5rem 0.5rem -1.5rem',
-                padding: '0.4rem 1.25rem',
-                borderBottom: 'none',
-                ...headerStyle
-            }}>
-                <div className="section-header">
-                    {icon}
-                    <CardTitle style={{
-                        color: headerStyle.color || 'inherit',
-                        fontSize: '0.95rem',
-                        borderBottom: 'none',
-                        paddingBottom: 0
-                    }}>{title}</CardTitle>
-                </div>
-            </CardHeader>
-            <div className="section-content">
-                {items.map((item, idx) => (
-                    <div key={idx} className="detail-row" style={{ alignItems: isEditing && item.type !== 'static' ? 'center' : 'flex-start' }}>
-                        <span className="detail-label" style={{ width: '35%' }}>{item.label}</span>
-                        <div className="detail-value" style={{ width: isEditing && item.type !== 'static' ? '65%' : 'auto' }}>
-                            {isEditing && item.field && item.type !== 'static' ? (
-                                item.type === 'select' ? (
-                                    <select
-                                        value={formData[item.field] || ''}
-                                        onChange={(e) => updateField(item.field, e.target.value)}
-                                        className="edit-input"
-                                    >
-                                        {item.options.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                                    </select>
-                                ) : (
-                                    <input
-                                        type={item.type || 'text'}
-                                        value={formData[item.field] || ''}
-                                        onChange={(e) => updateField(item.field, e.target.value)}
-                                        className="edit-input"
-                                        placeholder={`Enter ${item.label.toLowerCase()}`}
-                                    />
-                                )
-                            ) : (
-                                item.value || <span className="text-muted italic">Not set</span>
-                            )}
-                        </div>
+    const renderField = (label, field, type = 'text', options = []) => {
+        return (
+            <div className="space-y-2">
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</label>
+                {isEditing ? (
+                    type === 'select' ? (
+                        <select
+                            value={formData[field] || ''}
+                            onChange={(e) => updateField(field, e.target.value)}
+                            className="edit-input"
+                        >
+                            {options.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                        </select>
+                    ) : (
+                        <input
+                            type={type}
+                            value={formData[field] || ''}
+                            onChange={(e) => updateField(field, e.target.value)}
+                            className="edit-input"
+                            placeholder={`Enter ${label.toLowerCase()}`}
+                        />
+                    )
+                ) : (
+                    <div style={{ fontSize: '1rem', fontWeight: 600 }}>
+                        {field === 'role' ? profile.role?.replace('_', ' ').toUpperCase() : (profile[field] || '—')}
                     </div>
-                ))}
+                )}
             </div>
-        </Card>
-    );
+        );
+    };
+
+    const ORDER_STATUS_COLORS = {
+        completed: '#10b981',
+        delivered: '#10b981',
+        pending: '#f59e0b',
+        cancelled: '#ef4444',
+        processing: '#3b82f6'
+    };
 
     return (
-        <div className="user-detail-page animate-fade-in" style={{ paddingTop: '1rem' }}>
-            {error && !isEditing && <div className="p-4 mb-4 bg-error/10 text-error rounded-lg">{error}</div>}
-            {error && isEditing && <div className="fixed bottom-8 right-8 p-4 bg-error text-white rounded-lg shadow-lg z-50 animate-slide-up">{error}</div>}
+        <div className="animate-fade-in" style={{ maxWidth: '1000px', margin: '0 auto', paddingBottom: '3rem' }}>
 
-            <div className="detail-grid">
-                <div className="detail-column">
-                    {renderDetailSection(
-                        "Core Identity",
-                        <User size={20} />,
-                        [
-                            { label: "Full Name", field: "name", value: profile.name },
-                            { label: "Email Address", field: "email", type: "static", value: profile.email },
-                            {
-                                label: "Access Role",
-                                field: "role",
-                                type: "select",
-                                value: <Badge variant={profile.role === 'super_admin' ? 'success' : 'info'}>{profile.role}</Badge>,
-                                options: [
-                                    { value: 'super_admin', label: 'Super Admin' },
-                                    { value: 'restaurant_admin', label: 'Restaurant Admin' },
-                                    { value: 'restaurant_staff', label: 'Restaurant Staff' },
-                                    { value: 'customer', label: 'Customer' }
-                                ]
-                            },
-                            ...(['restaurant_admin', 'restaurant_staff'].includes(formData.role) ? [{
-                                label: <>Managed Restaurant <span className="text-error">*</span></>,
-                                field: "restaurant_id",
-                                type: "select",
-                                value: restaurants.find(r => r.id === formData.restaurant_id)?.name || 'Not Assigned',
-                                options: [
-                                    { value: '', label: 'Select a restaurant...' },
-                                    ...restaurants.map(r => ({ value: r.id, label: r.name }))
-                                ]
-                            }] : [])
-                        ],
-                        { background: 'linear-gradient(90deg, rgba(59, 130, 246, 0.15) 0%, transparent 100%)', borderLeft: '4px solid #3b82f6', color: '#3b82f6' }
-                    )}
+            {/* Tabs Navigation */}
+            <div style={{ display: 'flex', gap: '2rem', borderBottom: '1px solid var(--border-color)', marginBottom: '2rem' }}>
+                {[
+                    { id: 'overview', label: 'Overview', icon: User },
+                    { id: 'activity', label: 'Order History', icon: ShoppingBag },
+                    { id: 'security', label: 'Security & Access', icon: ShieldCheck }
+                ].map(tab => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '1rem 0',
+                            fontSize: '0.95rem',
+                            fontWeight: 600,
+                            color: activeTab === tab.id ? 'var(--accent-primary)' : 'var(--text-muted)',
+                            borderBottom: `2px solid ${activeTab === tab.id ? 'var(--accent-primary)' : 'transparent'}`,
+                            transition: 'all 0.2s',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        <tab.icon size={18} />
+                        {tab.label}
+                    </button>
+                ))}
+            </div>
 
-                    {renderDetailSection(
-                        "System Information",
-                        <Shield size={20} />,
-                        [
-                            { label: "Internal ID", type: "static", value: <code style={{ fontSize: '0.75rem', opacity: 0.7 }}>{profile.id}</code> },
-                            { label: "Initial Join", type: "static", value: new Date(profile.created_at).toLocaleString() },
-                            { label: "Last Heartbeat", type: "static", value: new Date(profile.updated_at).toLocaleString() }
-                        ],
-                        { background: 'linear-gradient(90deg, rgba(16, 185, 129, 0.15) 0%, transparent 100%)', borderLeft: '4px solid #10b981', color: '#10b981' }
-                    )}
-                </div>
-
-                <div className="detail-column">
-                    {renderDetailSection(
-                        "Profile Media",
-                        <Camera size={20} />,
-                        [
-                            {
-                                label: "Avatar URL",
-                                field: "avatar_url",
-                                value: profile.avatar_url ? (
-                                    <div className="truncate-url" title={profile.avatar_url}>
-                                        {profile.avatar_url}
+            <div className="tab-content">
+                {activeTab === 'overview' && (
+                    <div className="dashboard-chart-grid" style={{ gridTemplateColumns: 'repeat(12, 1fr)', gap: '1.5rem' }}>
+                        <div style={{ gridColumn: 'span 8', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                            <Card>
+                                <CardHeader>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                        <Info size={18} color="var(--accent-primary)" />
+                                        <CardTitle>Profile Information</CardTitle>
                                     </div>
-                                ) : 'Default Placeholder'
-                            },
-                            {
-                                label: "Preview",
-                                type: "static",
-                                value: (
-                                    <div className="user-avatar" style={{ width: '60px', height: '60px', fontSize: '1.5rem', borderRadius: '12px' }}>
-                                        {profile.avatar_url ? <img src={profile.avatar_url} alt="" /> : (profile.name?.[0] || profile.email?.[0] || '?').toUpperCase()}
-                                    </div>
-                                )
-                            }
-                        ],
-                        { background: 'linear-gradient(90deg, rgba(139, 92, 246, 0.15) 0%, transparent 100%)', borderLeft: '4px solid #8b5cf6', color: '#8b5cf6' }
-                    )}
+                                </CardHeader>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                                    {renderField("Full Name", "name")}
+                                    {renderField("Email Address", "email", "static")}
+                                    {renderField("Access Role", "role", "select", [
+                                        { value: 'super_admin', label: 'Super Admin' },
+                                        { value: 'restaurant_admin', label: 'Restaurant Admin' },
+                                        { value: 'restaurant_staff', label: 'Restaurant Staff' },
+                                        { value: 'customer', label: 'Customer' }
+                                    ])}
+                                    {isEditing && renderField("Avatar URL", "avatar_url")}
+                                    {['restaurant_admin', 'restaurant_staff'].includes(formData.role) &&
+                                        renderField("Managed Restaurant", "restaurant_id", "select", [
+                                            { value: '', label: 'Select a restaurant...' },
+                                            ...restaurants.map(r => ({ value: r.id, label: r.name }))
+                                        ])
+                                    }
+                                </div>
+                            </Card>
 
-                    {renderDetailSection(
-                        "Activity Log",
-                        <Activity size={20} />,
-                        [
-                            { label: "Total Visits", type: "static", value: "154 (Simulated)" },
-                            { label: "Last Action", type: "static", value: "Login - Today 05:42" }
-                        ],
-                        { background: 'linear-gradient(90deg, rgba(239, 68, 68, 0.15) 0%, transparent 100%)', borderLeft: '4px solid #ef4444', color: '#ef4444' }
-                    )}
-                </div>
+                            {['restaurant_admin', 'restaurant_staff'].includes(profile.role) && !isEditing && (
+                                <Card style={{ background: 'linear-gradient(90deg, var(--surface-color) 0%, rgba(16, 185, 129, 0.05) 100%)' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                                            <Store size={24} color="#10b981" />
+                                            <div>
+                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Affiliated Restaurant</div>
+                                                <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{restaurants.find(r => r.id === formData.restaurant_id)?.name || 'Not Linked'}</div>
+                                            </div>
+                                        </div>
+                                        {formData.restaurant_id && (
+                                            <button onClick={() => navigate(`/restaurants/${formData.restaurant_id}`)} className="btn-ghost" style={{ border: '1px solid var(--border-color)' }}>
+                                                View <ArrowUpRight size={16} />
+                                            </button>
+                                        )}
+                                    </div>
+                                </Card>
+                            )}
+                        </div>
+
+                        <div style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                            <Card>
+                                <CardHeader><CardTitle>User Stats</CardTitle></CardHeader>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                    <div style={{ background: 'var(--surface-hover)', padding: '1rem', borderRadius: '12px', textAlign: 'center' }}>
+                                        <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--accent-primary)' }}>{orders.length}</div>
+                                        <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Orders</div>
+                                    </div>
+                                    <div style={{ background: 'var(--surface-hover)', padding: '1rem', borderRadius: '12px', textAlign: 'center' }}>
+                                        <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#10b981' }}>{orders.filter(o => o.status === 'completed' || o.status === 'delivered').length}</div>
+                                        <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Done</div>
+                                    </div>
+                                </div>
+                                <div className="space-y-4" style={{ marginTop: '1.5rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                                        <span style={{ color: 'var(--text-muted)' }}>Spent Total</span>
+                                        <span style={{ fontWeight: 700 }}>₹{orders.filter(o => o.payment_status === 'paid' || o.payment_status === 'completed').reduce((sum, o) => sum + Number(o.total), 0).toLocaleString()}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                                        <span style={{ color: 'var(--text-muted)' }}>Avg Order</span>
+                                        <span style={{ fontWeight: 600 }}>₹{orders.length > 0 ? Math.round(orders.reduce((sum, o) => sum + Number(o.total), 0) / orders.length) : 0}</span>
+                                    </div>
+                                </div>
+                            </Card>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'activity' && (
+                    <Card>
+                        <CardHeader>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                    <ShoppingBag size={18} color="var(--accent-primary)" />
+                                    <CardTitle>Recent Food Orders</CardTitle>
+                                </div>
+                                <Badge variant="secondary">{orders.length} Total Orders</Badge>
+                            </div>
+                        </CardHeader>
+                        <div className="space-y-4">
+                            {orders.length > 0 ? orders.map((order, i) => (
+                                <div key={order.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: 'var(--surface-hover)', borderRadius: '12px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                        <div style={{ width: '44px', height: '44px', borderRadius: '10px', background: 'var(--surface-color)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <Utensils size={20} color="var(--accent-primary)" />
+                                        </div>
+                                        <div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <span style={{ fontSize: '0.95rem', fontWeight: 700 }}>#{order.order_number}</span>
+                                                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>at {order.restaurants?.name}</span>
+                                            </div>
+                                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                                {new Date(order.created_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style={{ textAlign: 'right' }}>
+                                        <div style={{ fontSize: '1rem', fontWeight: 800 }}>₹{Number(order.total).toLocaleString()}</div>
+                                        <Badge style={{
+                                            background: `${ORDER_STATUS_COLORS[order.status] || '#71717a'}15`,
+                                            color: ORDER_STATUS_COLORS[order.status] || '#71717a',
+                                            border: `1px solid ${ORDER_STATUS_COLORS[order.status] || '#71717a'}30`,
+                                            fontSize: '0.65rem'
+                                        }}>
+                                            {order.status?.toUpperCase()}
+                                        </Badge>
+                                    </div>
+                                </div>
+                            )) : (
+                                <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                                    <Receipt size={40} style={{ opacity: 0.2, marginBottom: '1rem' }} />
+                                    <p>No food orders found for this user.</p>
+                                </div>
+                            )}
+                        </div>
+                    </Card>
+                )}
+
+                {activeTab === 'security' && (
+                    <div className="dashboard-chart-grid" style={{ gridTemplateColumns: 'repeat(12, 1fr)', gap: '1.5rem' }}>
+                        <div style={{ gridColumn: 'span 7' }}>
+                            <Card>
+                                <CardHeader>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                        <ShieldCheck size={18} color="#10b981" />
+                                        <CardTitle>Access Control</CardTitle>
+                                    </div>
+                                </CardHeader>
+                                <div className="space-y-6">
+                                    <div style={{ padding: '1rem', background: 'var(--surface-hover)', borderRadius: '12px' }}>
+                                        <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>Two-Factor Authentication</div>
+                                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>Secure account access with an additional verification step.</p>
+                                        <Badge variant="warning" style={{ marginTop: '10px' }}>Not Configured</Badge>
+                                    </div>
+                                    <div style={{ padding: '1rem', background: 'var(--surface-hover)', borderRadius: '12px' }}>
+                                        <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>Account Status</div>
+                                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>Current standing of the user account on the platform.</p>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px', color: '#10b981', fontWeight: 600 }}>
+                                            <CheckCircle2 size={16} /> Fully Operational
+                                        </div>
+                                    </div>
+                                </div>
+                            </Card>
+                        </div>
+                        <div style={{ gridColumn: 'span 5' }}>
+                            <Card>
+                                <CardHeader><CardTitle>System Meta</CardTitle></CardHeader>
+                                <div className="space-y-4">
+                                    <div>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Internal UUID</div>
+                                        <code style={{ fontSize: '0.8rem', display: 'block', padding: '8px', background: 'var(--surface-hover)', borderRadius: '6px', marginTop: '4px' }}>{profile.id}</code>
+                                    </div>
+                                    <div>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Last Heartbeat</div>
+                                        <div style={{ fontSize: '0.9rem', marginTop: '4px' }}>{new Date(profile.updated_at).toLocaleString()}</div>
+                                    </div>
+                                </div>
+                            </Card>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

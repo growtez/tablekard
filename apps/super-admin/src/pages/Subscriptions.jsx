@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { Card, CardHeader, CardTitle } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
@@ -7,6 +8,7 @@ import { CreditCard, Search, Filter, SlidersHorizontal, Calendar, Store, Clock, 
 const STATUS_VARIANTS = { paid: 'success', pending: 'warning', failed: 'error' };
 
 export default function Subscriptions({ setSyncAction }) {
+    const navigate = useNavigate();
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -176,7 +178,7 @@ export default function Subscriptions({ setSyncAction }) {
                         ) : filtered.length === 0 ? (
                             <tr><td colSpan="8" style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>No subscription records found.</td></tr>
                         ) : filtered.map(row => (
-                            <tr key={row.id}>
+                            <tr key={row.id} onClick={() => navigate(`/subscriptions/${row.id}`)} style={{ cursor: 'pointer' }} className="clickable-row">
                                 <td>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                                         <div className="user-avatar" style={{ borderRadius: '8px', fontSize: '0.8rem', width: '32px', height: '32px' }}>
