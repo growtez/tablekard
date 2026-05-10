@@ -7,12 +7,14 @@ import './order_history.css';
 
 const OrderHistoryPage = () => {
     const navigate = useNavigate();
-    const { user, isAuthenticated } = useAuth();
+    const { user, isAuthenticated, loading: authLoading } = useAuth();
     const [activeFilter, setActiveFilter] = useState('all');
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (authLoading) return;
+        
         const fetchHistory = async () => {
             if (!isAuthenticated || !user) {
                 setLoading(false);
@@ -44,7 +46,7 @@ const OrderHistoryPage = () => {
         };
 
         fetchHistory();
-    }, [user, isAuthenticated]);
+    }, [authLoading, user, isAuthenticated]);
 
     const filters = [
         { id: 'all', label: 'All History' },

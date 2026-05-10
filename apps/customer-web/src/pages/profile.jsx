@@ -6,14 +6,17 @@ import {
 } from 'lucide-react';
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 import { useRestaurant } from '../context/RestaurantContext';
+import { SkeletonBottomNav } from '../components/PageSkeleton';
 import './profile.css';
 import Hamburger from '../components/hamburger';
 import { getUserStats } from '../services/supabaseService';
 
 
 const ProfilePage = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, loading: authLoading } = useAuth();
+  const { cartItems } = useCart();
   const { restaurant, tableId, tableNumber } = useRestaurant();
   const navigate = useNavigate();
   // Start as loading only if user isn't yet available, to avoid flash
@@ -33,21 +36,29 @@ const ProfilePage = () => {
 
   useEffect(() => {
     const loadProfileData = async () => {
-      if (!user) {
+      // If auth finished and no user, stop loading immediately
+      if (!authLoading && !user) {
         setIsProfileLoading(false);
         return;
       }
+      
+      // If auth is still loading and no user yet, just wait (keep skeleton)
+      if (!user) return;
 
+      // We have user data, set it immediately so the UI feels fast!
+      setUserProfile(prev => ({
+        ...prev,
+        name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Member',
+        email: user?.email || '',
+        phone: user?.phone || '+91 98XXX XXXXX',
+        avatar: user?.user_metadata?.avatar_url || prev.avatar,
+        tableNumber: tableNumber ? `Table No-${tableNumber}` : 'N/A',
+      }));
+
+      // Then fetch heavy stats
       try {
         const stats = await getUserStats(user.id);
-        setUserProfile(prev => ({
-          name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Member',
-          email: user?.email || '',
-          phone: user?.phone || '+91 98XXX XXXXX',
-          avatar: user?.user_metadata?.avatar_url || prev.avatar,
-          tableNumber: tableNumber ? `Table No-${tableNumber}` : 'N/A',
-          stats: stats
-        }));
+        setUserProfile(prev => ({ ...prev, stats }));
       } catch (err) {
         console.error('Failed to load profile stats:', err);
       } finally {
@@ -56,7 +67,7 @@ const ProfilePage = () => {
     };
 
     loadProfileData();
-  }, [user, tableNumber]);
+  }, [authLoading, user, tableNumber]);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({ ...userProfile });
@@ -199,6 +210,9 @@ const ProfilePage = () => {
             ))}
           </div>
         </div>
+
+        {/* Bottom Navigation - Using the exact same skeleton as Home */}
+        <SkeletonBottomNav />
       </div>
     );
   }
@@ -400,6 +414,7 @@ const ProfilePage = () => {
 
         <NavLink to="/orders" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
           <ShoppingCart size={22} />
+          {cartItems?.length > 0 && <span className="cart-badge">{cartItems.length > 9 ? '9+' : cartItems.length}</span>}
         </NavLink>
 
         <NavLink to="/profile" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>

@@ -37,7 +37,7 @@ const NAV_ITEMS = [
   { to: "/profile", Icon: User,          label: "Profile" },
 ];
 
-function SkeletonBottomNav() {
+export function SkeletonBottomNav() {
   return (
     <nav style={{
       position: "fixed", bottom: 0, left: 0, right: 0, height: 64,
@@ -47,6 +47,23 @@ function SkeletonBottomNav() {
       boxShadow: "0 -4px 20px rgba(139,58,30,0.06)",
       zIndex: 1000,
     }}>
+      <style>{`
+        .sk-nav-link {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 44px;
+          height: 44px;
+          border-radius: 12px;
+          text-decoration: none;
+          color: #9C8F8A;
+          transition: background 0.15s, color 0.15s;
+        }
+        .sk-nav-link.active {
+          background: rgba(139, 58, 30, 0.10);
+          color: #8B3A1E;
+        }
+      `}</style>
       {NAV_ITEMS.map(({ to, Icon, label }) => (
         <NavLink
           key={to}
