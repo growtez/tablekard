@@ -57,7 +57,10 @@ export const getMenuCategories = async (restaurantId) => {
 export const getMenuItems = async (restaurantId) => {
     const { data, error } = await supabase
         .from('menu_items')
-        .select('*')
+        .select(`
+            *,
+            menu_item_images (id, image_url, sort_order)
+        `)
         .eq('restaurant_id', restaurantId)
         .eq('is_available', true)
         .order('created_at', { ascending: true });
@@ -74,9 +77,9 @@ export const createOrder = async ({
     taxRate = 0.05,
     type = 'dine_in'
 }) => {
-    const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const taxes = Math.round(subtotal * taxRate);
-    const total = subtotal + taxes;
+    const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const taxes = Math.round(total * 0.18) + Math.round(total * 0.05); // Just for reference/record
+    const subtotal = total - taxes; // Subtotal is total minus taxes
     const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}`;
 
     const { data: order, error } = await supabase
@@ -125,13 +128,22 @@ export const getOrderHistory = async (userId) => {
         .from('orders')
         .select(`
             *,
-            order_items (*)
+            order_items (*),
+            restaurant_tables (table_number),
+            feedback (rating, comment)
         `)
         .eq('customer_id', userId)
         .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data ?? [];
+
+    // Flatten table_number and feedback onto the order object
+    return (data ?? []).map(order => ({
+        ...order,
+        table_number: order.restaurant_tables?.table_number ?? null,
+        rating: order.feedback?.[0]?.rating ?? null,
+        comment: order.feedback?.[0]?.comment ?? null
+    }));
 };
 
 export const getTodaysOrders = async (userId) => {

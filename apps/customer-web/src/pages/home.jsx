@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { getRecentOrderedItems, getRecommendedItems, getDiscountItemsForHome } from '../services/supabaseService';
 import PageSkeleton from '../components/PageSkeleton';
 import { showHomeLoader, hideHomeLoader } from '../utils/loader';
+import BottomNav from '../components/BottomNav';
 
 
 const HomePage = () => {
@@ -619,25 +620,7 @@ const HomePage = () => {
             )}
 
             {/* Bottom Navigation */}
-            {/* Bottom Navigation - Hidden when modal is open */}
-            {!showItemModal && (
-                <nav className="bottom-nav">
-                    <NavLink to="/" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
-                        <Home size={22} />
-                    </NavLink>
-                    <NavLink to="/menu" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
-                        <ShoppingBag size={22} />
-                    </NavLink>
-
-                    <NavLink to="/orders" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
-                        <ShoppingCart size={22} />
-                        {cartTotal > 0 && <span className="cart-badge">{cartTotal > 9 ? '9+' : cartTotal}</span>}
-                    </NavLink>
-                    <NavLink to="/profile" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
-                        <User size={22} />
-                    </NavLink>
-                </nav>
-            )}
+            {!showItemModal && <BottomNav />}
         </div>
     );
 };

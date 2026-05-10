@@ -1,6 +1,7 @@
 import React from 'react';
-import { Home, ShoppingBag, ShoppingCart, User } from 'lucide-react';
+import { Home, ShoppingCart, User } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
+import { CustomMenuIcon } from './BottomNav';
 
 const SHIMMER_CSS = `
   @keyframes _sk_shimmer {
@@ -30,11 +31,12 @@ const SHIMMER_CSS = `
   }
 `;
 
+
 const NAV_ITEMS = [
-  { to: "/",        Icon: Home,          label: "Home"    },
-  { to: "/menu",    Icon: ShoppingBag,   label: "Menu"    },
-  { to: "/orders",  Icon: ShoppingCart,  label: "Orders"  },
-  { to: "/profile", Icon: User,          label: "Profile" },
+  { to: "/",        Icon: Home,           label: "Home"    },
+  { to: "/menu",    Icon: CustomMenuIcon, label: "Menu"    },
+  { to: "/orders",  Icon: ShoppingCart,   label: "Orders"  },
+  { to: "/profile", Icon: User,           label: "Profile" },
 ];
 
 export function SkeletonBottomNav() {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { ArrowLeft, Clock, Star, Heart, X, Plus, Minus, Users, View } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import BottomNav from '../components/BottomNav';
 import { useRestaurant } from '../context/RestaurantContext';
 import { getDiscountItemsForHome } from '../services/supabaseService';
 import PageSkeleton from '../components/PageSkeleton';
@@ -298,6 +299,8 @@ const DiscountsPage = () => {
                     </div>
                 </div>
             )}
+            {/* Bottom Navigation */}
+            {!showItemModal && <BottomNav />}
         </div>
     );
 };

@@ -12,6 +12,7 @@ import { SkeletonBottomNav } from '../components/PageSkeleton';
 import './profile.css';
 import Hamburger from '../components/hamburger';
 import { getUserStats } from '../services/supabaseService';
+import BottomNav from '../components/BottomNav';
 
 
 const ProfilePage = () => {
@@ -403,24 +404,7 @@ const ProfilePage = () => {
       </div>
 
       {/* Bottom Navigation */}
-      <nav className="bottom-nav">
-        <NavLink to="/" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
-          <Home size={22} />
-        </NavLink>
-
-        <NavLink to="/menu" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
-          <ShoppingBag size={22} />
-        </NavLink>
-
-        <NavLink to="/orders" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
-          <ShoppingCart size={22} />
-          {cartItems?.length > 0 && <span className="cart-badge">{cartItems.length > 9 ? '9+' : cartItems.length}</span>}
-        </NavLink>
-
-        <NavLink to="/profile" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
-          <User size={22} />
-        </NavLink>
-      </nav>
+      <BottomNav />
     </div >
   );
 };

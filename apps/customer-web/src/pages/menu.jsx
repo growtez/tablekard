@@ -9,6 +9,7 @@ import { getFavorites, addFavorite, removeFavoriteFromDB } from '../services/sup
 import { Scanner } from '@yudiel/react-qr-scanner';
 import './menu.css';
 import Hamburger from '../components/hamburger';
+import BottomNav from '../components/BottomNav';
 
 const MenuPage = () => {
   const navigate = useNavigate();
@@ -26,6 +27,7 @@ const MenuPage = () => {
   const [menuItems, setMenuItems] = useState({});
   const [categories, setCategories] = useState([]);
   const [menuLoading, setMenuLoading] = useState(true);
+  const [vegOnly, setVegOnly] = useState(false);
 
   const closeItemModal = () => {
     setShowItemModal(false);
@@ -155,7 +157,8 @@ const MenuPage = () => {
     const searchLower = searchTerm.toLowerCase();
     const nameMatch = item.name?.toLowerCase().includes(searchLower);
     const descMatch = item.description?.toLowerCase().includes(searchLower);
-    return nameMatch || descMatch;
+    const vegMatch = vegOnly ? item.dietType === 'veg' : true;
+    return (nameMatch || descMatch) && vegMatch;
   });
 
   return (
@@ -282,7 +285,7 @@ const MenuPage = () => {
       </section>
 
       {/* Search Bar Redirect */}
-      <div className="menu-search-section" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+      <div className="menu-search-section" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <div className="menu-search-container" onClick={() => navigate('/search')} style={{ flex: 1, margin: 0 }}>
           <Search className="search-icon" size={20} />
           <input
@@ -291,6 +294,19 @@ const MenuPage = () => {
             readOnly
             className="search-input"
           />
+        </div>
+        
+        {/* Right-aligned Veg Toggle with text inside thumb */}
+        <div className="veg-filter-row right-aligned">
+          <button 
+            className={`modern-toggle text-inside ${vegOnly ? 'active' : ''}`}
+            onClick={() => setVegOnly(!vegOnly)}
+            aria-label="Toggle Vegetarian Only"
+          >
+            <div className="toggle-thumb">
+              <span className="thumb-text">Veg</span>
+            </div>
+          </button>
         </div>
       </div>
 
@@ -569,27 +585,8 @@ const MenuPage = () => {
 
     </>)}
 
-      {/* Bottom Navigation - Hidden when modal or scanner is open */}
-      {!showItemModal && !showScanner && (
-        <nav className="bottom-nav">
-          <NavLink to="/" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
-            <Home size={22} />
-          </NavLink>
-
-          <NavLink to="/menu" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
-            <ShoppingBag size={22} />
-          </NavLink>
-
-          <NavLink to="/orders" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
-            <ShoppingCart size={22} />
-            {cartTotal > 0 && <span className="cart-badge">{cartTotal > 9 ? '9+' : cartTotal}</span>}
-          </NavLink>
-
-          <NavLink to="/profile" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
-            <User size={22} />
-          </NavLink>
-        </nav>
-      )}
+      {/* Bottom Navigation */}
+      {!showItemModal && !showScanner && <BottomNav />}
     </div>
   );
 };

@@ -8,6 +8,7 @@ import { processOnlinePayment } from '../services/paymentService';
 import { createOrder, getTodaysOrders, cancelOrder, updateOrderType } from '../services/supabaseService';
 import './my_order.css';
 import Hamburger from '../components/hamburger';
+import BottomNav from '../components/BottomNav';
 import { jsPDF } from 'jspdf';
 import PageSkeleton from '../components/PageSkeleton';
 import { supabase } from '@restaurant-saas/supabase';
@@ -208,7 +209,7 @@ const MyOrderPage = () => {
           id: result.orderNumber,
           status: 'placed',
           items: cartItems.map(item => ({ name: item.name, quantity: item.quantity, price: item.price })),
-          total: getTotalPrice() + Math.round(getTotalPrice() * 0.05) + Math.round(getTotalPrice() * 0.18),
+          total: getTotalPrice(),
           orderDate: 'Just now',
           paymentStatus: 'Paid Online',
           statusLabel: 'Order Placed',
@@ -262,7 +263,7 @@ const MyOrderPage = () => {
         id: result.orderNumber,
         status: 'placed',
         items: cartItems.map(item => ({ name: item.name, quantity: item.quantity, price: item.price })),
-        total: getTotalPrice() + Math.round(getTotalPrice() * 0.05) + Math.round(getTotalPrice() * 0.18),
+        total: getTotalPrice(),
         orderDate: 'Just now',
         paymentStatus: 'Pay at Counter',
         statusLabel: 'Order Placed',
@@ -532,13 +533,13 @@ const MyOrderPage = () => {
               <div className="order-summary">
                 <div className="summary-row">
                   <span>Subtotal</span>
-                  <span>₹{getTotalPrice()}</span>
+                  <span>₹{getTotalPrice() - Math.round(getTotalPrice() * 0.05) - Math.round(getTotalPrice() * 0.18)}</span>
                 </div>
-                <div className="summary-row">
+                <div className="summary-row" style={{ color: '#888' }}>
                   <span>Service Charge (5%)</span>
                   <span>₹{Math.round(getTotalPrice() * 0.05)}</span>
                 </div>
-                <div className="summary-row">
+                <div className="summary-row" style={{ color: '#888' }}>
                   <span>Tax (18%)</span>
                   <span>₹{Math.round(getTotalPrice() * 0.18)}</span>
                 </div>
@@ -546,9 +547,12 @@ const MyOrderPage = () => {
                   <span>Discount</span>
                   <span>- ₹0</span>
                 </div>
-                <div className="summary-row total">
-                  <span>Total Amount</span>
-                  <span>₹{getTotalPrice() + Math.round(getTotalPrice() * 0.05) + Math.round(getTotalPrice() * 0.18)}</span>
+                <div className="summary-row total" style={{ alignItems: 'flex-start' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span>Total Amount</span>
+                    <span style={{ fontSize: '11px', fontWeight: '500', color: '#8B3A1E', marginTop: '2px' }}>(Inclusive of all taxes)</span>
+                  </div>
+                  <span>₹{getTotalPrice()}</span>
                 </div>
               </div>
 
@@ -717,24 +721,8 @@ const MyOrderPage = () => {
       )}
 
       {/* Bottom Navigation */}
-      <nav className="bottom-nav">
-        <NavLink to="/" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
-          <Home size={22} />
-        </NavLink>
+      <BottomNav />
 
-        <NavLink to="/menu" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
-          <ShoppingBag size={22} />
-        </NavLink>
-
-        <NavLink to="/orders" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
-          <ShoppingCart size={22} />
-          {cartItems.length > 0 && <span className="cart-badge">{cartItems.length > 9 ? '9+' : cartItems.length}</span>}
-        </NavLink>
-
-        <NavLink to="/profile" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
-          <User size={22} />
-        </NavLink>
-      </nav>
       {/* Pay at Counter Modal */}
       {showPayCounterPopup && (
         <div className="pay-counter-modal-overlay">

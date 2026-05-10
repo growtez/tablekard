@@ -23,7 +23,7 @@ body {
 /* ===== HERO SECTION ===== */
 .profile-hero {
   background: linear-gradient(to bottom, #FFF0EC 0%, #FFFFFF 100%);
-  padding: 40px 24px 40px;
+  padding: 16px 24px 40px;
   position: relative;
   overflow: hidden;
 }

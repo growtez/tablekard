@@ -217,6 +217,59 @@ body {
   color: #FFFFFF;
 }
 
+.veg-filter-row.right-aligned {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0;
+  margin-top: -4px;
+}
+
+.modern-toggle.text-inside {
+  width: 72px;
+  height: 32px;
+  background-color: #F0F0F0;
+  border-radius: 20px;
+  padding: 3px;
+  border: 1px solid #E0E0E0;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.modern-toggle.text-inside.active {
+  background-color: #2E7D32;
+  border-color: #256629;
+}
+
+.modern-toggle.text-inside .toggle-thumb {
+  width: 36px;
+  height: 24px;
+  background-color: #FFFFFF;
+  border-radius: 14px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modern-toggle.text-inside.active .toggle-thumb {
+  transform: translateX(29px);
+}
+
+.thumb-text {
+  font-size: 11px;
+  font-weight: 800;
+  color: #BDBDBD;
+  text-transform: uppercase;
+  transition: color 0.3s ease;
+}
+
+.modern-toggle.text-inside.active .thumb-text {
+  color: #2E7D32;
+}
+
 /* Menu Items Grid */
 /* Menu Items Redesign */
 .menu-items {

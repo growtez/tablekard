@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Heart, Star, Trash2, ShoppingCart, Plus, Minus, Users, Loader2, ArrowRight, X, Clock } from 'lucide-react';
 import { useNavigate, NavLink } from 'react-router-dom';
+import BottomNav from '../components/BottomNav';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { getFavorites, removeFavoriteFromDB } from '../services/supabaseService';
@@ -112,6 +113,7 @@ const LikesPage = () => {
                         </button>
                     </div>
                 </div>
+                <BottomNav />
             </div>
         );
     }
@@ -328,6 +330,8 @@ const LikesPage = () => {
                     </div>
                 </div>
             )}
+            {/* Bottom Navigation */}
+            {!showItemModal && <BottomNav />}
         </div>
     );
 };
