@@ -1,29 +1,30 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Store,
     Users,
     CreditCard,
-    Activity,
-    Utensils,
-    AlertCircle,
-    CheckCircle,
-    Server,
-    Database,
+    // Activity,
+    // Utensils,
+    // AlertCircle,
+    // CheckCircle,
+    // Server,
+    // Database,
     TrendingUp,
     ShoppingBag,
 } from 'lucide-react';
 import {
     BarChart,
     Bar,
-    PieChart,
-    Pie,
-    Cell,
+    // PieChart,
+    // Pie,
+    // Cell,
     XAxis,
     YAxis,
     CartesianGrid,
     Tooltip,
     ResponsiveContainer,
-    Legend
+    // Legend
 } from 'recharts';
 import { Link } from 'react-router-dom';
 import { Badge } from '../components/ui/Badge';
@@ -39,11 +40,11 @@ const PIE_COLORS = {
     failed: '#EF4444',
 };
 
-const systemHealth = [
-    { name: 'API Server', uptime: '99.9%', icon: Server },
-    { name: 'Database', uptime: '99.8%', icon: Database },
-    { name: 'Payment Gateway', uptime: '100%', icon: CreditCard },
-];
+// const systemHealth = [
+//     { name: 'API Server', uptime: '99.9%', icon: Server },
+//     { name: 'Database', uptime: '99.8%', icon: Database },
+//     { name: 'Payment Gateway', uptime: '100%', icon: CreditCard },
+// ];
 
 const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -73,6 +74,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 export default function Dashboard({ setSyncAction }) {
+    const navigate = useNavigate();
     const [stats, setStats] = useState({
         totalUsers: 0,
         totalRestaurants: 0,
@@ -81,37 +83,36 @@ export default function Dashboard({ setSyncAction }) {
     });
     const [revenueChartData, setRevenueChartData] = useState([]);
     const [subscriptionPieData, setSubscriptionPieData] = useState([]);
-    const [recentOrders, setRecentOrders] = useState([]);
+    const [recentSubscriptions, setRecentSubscriptions] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const fetchRealStats = async () => {
         setLoading(true);
         try {
             // 1. Core counts from schema tables
-            const [usersRes, restaurantsRes, ordersRes, revenueRes] = await Promise.all([
+            const [usersRes, restaurantsRes, subPaymentsRes] = await Promise.all([
                 supabase.from('profiles').select('*', { count: 'exact', head: true }),
                 supabase.from('restaurants').select('*', { count: 'exact', head: true }),
-                supabase.from('orders').select('*', { count: 'exact', head: true }),
-                supabase.from('revenue').select('total_revenue, total_orders, revenue_date').order('revenue_date', { ascending: true }),
+                supabase.from('subscription_payments').select('amount, created_at').eq('status', 'paid').order('created_at', { ascending: true }),
             ]);
 
-            const totalRevenue = (revenueRes.data || []).reduce((sum, r) => sum + Number(r.total_revenue || 0), 0);
+            const totalRevenue = (subPaymentsRes.data || []).reduce((sum, r) => sum + Number(r.amount || 0), 0);
 
             setStats({
                 totalUsers: usersRes.count || 0,
                 totalRestaurants: restaurantsRes.count || 0,
-                totalOrders: ordersRes.count || 0,
+                totalSubscriptions: (subPaymentsRes.data || []).length,
                 totalRevenue,
             });
 
-            // 2. Revenue chart — aggregate by month from revenue table
+            // 2. Revenue chart — aggregate by month from subscription_payments
             const monthlyMap = {};
-            for (const row of (revenueRes.data || [])) {
-                const d = new Date(row.revenue_date);
+            for (const row of (subPaymentsRes.data || [])) {
+                const d = new Date(row.created_at);
                 const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
                 if (!monthlyMap[key]) monthlyMap[key] = { revenue: 0, orders: 0, month: MONTH_NAMES[d.getMonth()] };
-                monthlyMap[key].revenue += Number(row.total_revenue || 0);
-                monthlyMap[key].orders += Number(row.total_orders || 0);
+                monthlyMap[key].revenue += Number(row.amount || 0);
+                monthlyMap[key].orders += 1; // Number of subscription payments
             }
             // Last 6 months
             const now = new Date();
@@ -123,37 +124,38 @@ export default function Dashboard({ setSyncAction }) {
             }
             setRevenueChartData(chartData);
 
-            // 3. Subscription pie — from subscription_payments table
-            const { data: subData } = await supabase
-                .from('subscription_payments')
-                .select('status');
-            if (subData && subData.length > 0) {
-                const counts = subData.reduce((acc, s) => { acc[s.status] = (acc[s.status] || 0) + 1; return acc; }, {});
-                setSubscriptionPieData(Object.entries(counts).map(([name, value]) => ({
-                    name: name.charAt(0).toUpperCase() + name.slice(1),
-                    value,
-                    color: PIE_COLORS[name] || '#6366f1'
-                })));
-            } else {
-                // Fallback: use restaurants subscription_status boolean
-                const { data: restData } = await supabase.from('restaurants').select('subscription_status, subscription_type');
-                if (restData) {
-                    const active = restData.filter(r => r.subscription_status).length;
-                    const trial = restData.filter(r => !r.subscription_status).length;
-                    setSubscriptionPieData([
-                        { name: 'Active (Paid)', value: active, color: '#10B981' },
-                        { name: 'Trial / Free', value: trial, color: '#3B82F6' },
-                    ].filter(d => d.value > 0));
-                }
-            }
+            // 3. Subscription Status Pie — Categorize from restaurants table
+            /* const { data: restSubData } = await supabase
+                .from('restaurants')
+                .select('subscription_status, subscription_end_at');
 
-            // 4. Recent orders — latest 5 from orders table joined with restaurants
-            const { data: ordersData } = await supabase
-                .from('orders')
-                .select('id, order_number, status, payment_status, total, created_at, restaurant_id, restaurants(name)')
+            if (restSubData) {
+                const now = new Date();
+                const counts = restSubData.reduce((acc, r) => {
+                    if (r.subscription_status) {
+                        acc.active++;
+                    } else if (r.subscription_end_at && new Date(r.subscription_end_at) < now) {
+                        acc.expired++;
+                    } else {
+                        acc.trial++;
+                    }
+                    return acc;
+                }, { active: 0, expired: 0, trial: 0 });
+
+                setSubscriptionPieData([
+                    { name: 'Active', value: counts.active, color: '#10B981' },
+                    { name: 'Expired', value: counts.expired, color: '#EF4444' },
+                    { name: 'Trial / Free', value: counts.trial, color: '#3B82F6' },
+                ].filter(d => d.value > 0));
+            } */
+
+            // 4. Recent subscriptions — latest 5 from subscription_payments join restaurants
+            const { data: subsData } = await supabase
+                .from('subscription_payments')
+                .select('id, amount, status, plan_duration, created_at, restaurants(name)')
                 .order('created_at', { ascending: false })
                 .limit(5);
-            setRecentOrders(ordersData || []);
+            setRecentSubscriptions(subsData || []);
 
         } catch (err) {
             console.error('Dashboard stats fetch failed:', err);
@@ -191,10 +193,11 @@ export default function Dashboard({ setSyncAction }) {
                     path="/users"
                 />
                 <StatCard
-                    label="Total Orders"
-                    value={loading ? '—' : stats.totalOrders.toLocaleString()}
-                    icon={ShoppingBag}
+                    label="Total Subscriptions"
+                    value={loading ? '—' : stats.totalSubscriptions.toLocaleString()}
+                    icon={CreditCard}
                     color="purple"
+                    path="/subscriptions"
                 />
                 <StatCard
                     label="Platform Revenue"
@@ -209,7 +212,7 @@ export default function Dashboard({ setSyncAction }) {
             <div className="dashboard-chart-grid">
                 <Card style={{ gridColumn: 'span 8', minWidth: 0 }}>
                     <CardHeader>
-                        <CardTitle>Revenue Analytics (Last 6 Months)</CardTitle>
+                        <CardTitle>Subscription Revenue (Last 6 Months)</CardTitle>
                     </CardHeader>
                     <div style={{ height: '300px', width: '100%' }}>
                         <ResponsiveContainer width="100%" height="100%">
@@ -218,121 +221,60 @@ export default function Dashboard({ setSyncAction }) {
                                 <XAxis dataKey="month" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
                                 <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => v === 0 ? '₹0' : `₹${(v / 1000).toFixed(0)}k`} />
                                 <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--surface-hover)' }} />
-                                <Bar dataKey="revenue" name="Revenue" fill="var(--accent-primary)" radius={[6, 6, 0, 0]} maxBarSize={45} />
+                                <Bar 
+                                    dataKey="revenue" 
+                                    name="Revenue" 
+                                    fill="var(--accent-primary)" 
+                                    radius={[6, 6, 0, 0]} 
+                                    maxBarSize={45} 
+                                    onClick={() => navigate('/subscriptions')}
+                                    style={{ cursor: 'pointer' }}
+                                />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
                 </Card>
 
-                <Card style={{ gridColumn: 'span 4', minWidth: 0 }}>
-                    <CardHeader>
-                        <CardTitle>Subscription Status</CardTitle>
-                    </CardHeader>
-                    <div style={{ height: '300px', width: '100%' }}>
-                        {subscriptionPieData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={subscriptionPieData}
-                                        cx="50%" cy="45%"
-                                        innerRadius={60} outerRadius={90}
-                                        paddingAngle={5} dataKey="value"
-                                    >
-                                        {subscriptionPieData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip content={<CustomTooltip />} />
-                                    <Legend verticalAlign="bottom" align="center" iconType="circle" />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        ) : (
-                            <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                                <CreditCard size={32} style={{ marginBottom: '0.75rem', opacity: 0.3 }} />
-                                No subscription data yet
-                            </div>
-                        )}
-                    </div>
-                </Card>
-            </div>
-
-            {/* ── Recent Activity + System Health ── */}
-            <div className="dashboard-bottom-grid">
-                <Card style={{ gridColumn: 'span 7' }}>
+                <Card style={{ gridColumn: 'span 4' }}>
                     <CardHeader>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <CardTitle>Recent Orders</CardTitle>
-                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Live from DB</span>
+                            <CardTitle>Recent Subscriptions</CardTitle>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Live</span>
                         </div>
                     </CardHeader>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '300px', overflowY: 'auto', paddingRight: '4px' }}>
                         {loading ? (
                             [...Array(4)].map((_, i) => (
                                 <div key={i} style={{ padding: '0.75rem', borderRadius: '10px', background: 'var(--surface-hover)', height: '56px', animation: 'pulse 1.5s infinite' }} />
                             ))
-                        ) : recentOrders.length === 0 ? (
+                        ) : recentSubscriptions.length === 0 ? (
                             <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                                <Utensils size={28} style={{ marginBottom: '0.5rem', opacity: 0.3 }} />
-                                <p>No orders yet</p>
+                                <CreditCard size={28} style={{ marginBottom: '0.5rem', opacity: 0.3 }} />
+                                <p>No subscriptions yet</p>
                             </div>
-                        ) : recentOrders.map(order => (
-                            <div key={order.id} style={{ display: 'flex', gap: '1rem', padding: '0.75rem', borderRadius: '10px', background: 'var(--surface-hover)', alignItems: 'center' }}>
-                                <div style={{ color: order.payment_status === 'paid' ? 'var(--accent-primary)' : order.payment_status === 'failed' ? '#ef4444' : '#3b82f6' }}>
-                                    <ShoppingBag size={18} />
-                                </div>
+                        ) : recentSubscriptions.map(sub => (
+                            <div 
+                                key={sub.id} 
+                                onClick={() => navigate(`/subscriptions/${sub.id}`)}
+                                className="clickable-stat"
+                                style={{ display: 'flex', gap: '0.75rem', padding: '0.6rem', borderRadius: '10px', background: 'var(--surface-hover)', alignItems: 'center', cursor: 'pointer' }}
+                            >
                                 <div style={{ flex: 1, minWidth: 0 }}>
-                                    <div style={{ fontSize: '0.875rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                        #{order.order_number} — {order.restaurants?.name || 'Unknown Restaurant'}
+                                    <div style={{ fontSize: '0.8rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                        {sub.restaurants?.name || 'Unknown'}
                                     </div>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
-                                        {new Date(order.created_at).toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                                        {sub.plan_duration} Days Plan
                                     </div>
                                 </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-                                    <span style={{ fontSize: '0.875rem', fontWeight: 700 }}>₹{Number(order.total).toLocaleString()}</span>
-                                    <Badge variant={order.payment_status === 'paid' ? 'success' : order.payment_status === 'failed' ? 'error' : 'warning'} style={{ fontSize: '0.65rem', padding: '1px 6px' }}>
-                                        {order.payment_status?.toUpperCase()}
+                                <div style={{ textAlign: 'right' }}>
+                                    <div style={{ fontSize: '0.8rem', fontWeight: 700 }}>₹{Number(sub.amount).toLocaleString()}</div>
+                                    <Badge variant={sub.status === 'paid' ? 'success' : 'warning'} style={{ fontSize: '0.6rem', padding: '0px 4px' }}>
+                                        {sub.status?.toUpperCase()}
                                     </Badge>
                                 </div>
                             </div>
                         ))}
-                    </div>
-                </Card>
-
-                <Card style={{ gridColumn: 'span 5' }}>
-                    <CardHeader>
-                        <CardTitle>System Health</CardTitle>
-                    </CardHeader>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        {systemHealth.map(service => (
-                            <div key={service.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                    <service.icon size={18} />
-                                    <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>{service.name}</span>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{service.uptime}</span>
-                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent-primary)', boxShadow: '0 0 8px var(--accent-primary)' }} />
-                                </div>
-                            </div>
-                        ))}
-
-                        <div style={{ marginTop: '0.5rem', padding: '1rem', borderRadius: '12px', background: 'var(--accent-primary-glow)', border: '1px solid hsla(155,100%,50%,0.15)' }}>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Quick Stats</div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginTop: '0.5rem' }}>
-                                {[
-                                    { label: 'Restaurants', value: stats.totalRestaurants },
-                                    { label: 'Users', value: stats.totalUsers },
-                                    { label: 'Orders', value: stats.totalOrders },
-                                    { label: 'Revenue', value: `₹${(stats.totalRevenue / 1000).toFixed(1)}k` }
-                                ].map(item => (
-                                    <div key={item.label}>
-                                        <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{item.label}</div>
-                                        <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--accent-primary)' }}>{loading ? '—' : item.value}</div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
                     </div>
                 </Card>
             </div>
