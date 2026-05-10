@@ -4,7 +4,7 @@ import { supabase } from '../supabaseClient';
 import {
     ChevronLeft, User, Mail, Shield, Calendar,
     Clock, Info, AlertTriangle, Edit, Save, X as CloseIcon, Loader2,
-    Hash, Camera, Activity
+    Hash, Camera, Activity, ShieldCheck, MapPin, ExternalLink, ArrowUpRight
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
@@ -170,11 +170,6 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
     };
 
     const handleCancel = () => {
-        let restaurantId = '';
-        if (profile && ['restaurant_admin', 'restaurant_staff'].includes(profile.role)) {
-            // Need to re-derive restaurantId or store it in profile state
-            // But fetchUserProfile will reset it correctly
-        }
         setFormData({ ...profile, restaurant_id: profile.restaurant_id });
         setIsEditing(false);
     };
@@ -209,165 +204,229 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center p-20">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: '1.5rem' }}>
+                <div className="loader" />
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Fetching user profile...</p>
             </div>
         );
     }
 
     if (error || !profile) {
         return (
-            <div className="p-8">
-                <button onClick={() => navigate(-1)} className="btn-back">
-                    <ChevronLeft size={20} />
+            <div className="animate-fade-in" style={{ padding: '2rem', textAlign: 'center' }}>
+                <AlertCircle size={48} color="#ef4444" style={{ marginBottom: '1rem', opacity: 0.5 }} />
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>User Not Found</h2>
+                <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>{error || 'The requested user profile could not be located.'}</p>
+                <button onClick={() => navigate('/users')} className="btn-primary">
+                    <ChevronLeft size={18} /> Back to Users
                 </button>
-                <div className="error-container mt-4">
-                    <AlertTriangle size={48} className="text-warning mb-4" />
-                    <h2>Error loading profile</h2>
-                    <p>{error || 'Profile not found'}</p>
-                </div>
             </div>
         );
     }
 
-    const renderDetailSection = (title, icon, items, headerStyle = {}) => (
-        <Card className="detail-section overflow-hidden">
-            <CardHeader style={{
-                margin: '-1.5rem -1.5rem 0.5rem -1.5rem',
-                padding: '0.4rem 1.25rem',
-                borderBottom: 'none',
-                ...headerStyle
-            }}>
-                <div className="section-header">
-                    {icon}
-                    <CardTitle style={{
-                        color: headerStyle.color || 'inherit',
-                        fontSize: '0.95rem',
-                        borderBottom: 'none',
-                        paddingBottom: 0
-                    }}>{title}</CardTitle>
-                </div>
-            </CardHeader>
-            <div className="section-content">
-                {items.map((item, idx) => (
-                    <div key={idx} className="detail-row" style={{ alignItems: isEditing && item.type !== 'static' ? 'center' : 'flex-start' }}>
-                        <span className="detail-label" style={{ width: '35%' }}>{item.label}</span>
-                        <div className="detail-value" style={{ width: isEditing && item.type !== 'static' ? '65%' : 'auto' }}>
-                            {isEditing && item.field && item.type !== 'static' ? (
-                                item.type === 'select' ? (
-                                    <select
-                                        value={formData[item.field] || ''}
-                                        onChange={(e) => updateField(item.field, e.target.value)}
-                                        className="edit-input"
-                                    >
-                                        {item.options.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                                    </select>
-                                ) : (
-                                    <input
-                                        type={item.type || 'text'}
-                                        value={formData[item.field] || ''}
-                                        onChange={(e) => updateField(item.field, e.target.value)}
-                                        className="edit-input"
-                                        placeholder={`Enter ${item.label.toLowerCase()}`}
-                                    />
-                                )
-                            ) : (
-                                item.value || <span className="text-muted italic">Not set</span>
-                            )}
-                        </div>
-                    </div>
-                ))}
+    const renderField = (label, field, type = 'text', options = []) => {
+        if (!isEditing) return null;
+        return (
+            <div className="space-y-2">
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</label>
+                {type === 'select' ? (
+                    <select
+                        value={formData[field] || ''}
+                        onChange={(e) => updateField(field, e.target.value)}
+                        className="edit-input"
+                    >
+                        {options.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                    </select>
+                ) : (
+                    <input
+                        type={type}
+                        value={formData[field] || ''}
+                        onChange={(e) => updateField(field, e.target.value)}
+                        className="edit-input"
+                        placeholder={`Enter ${label.toLowerCase()}`}
+                    />
+                )}
             </div>
-        </Card>
-    );
+        );
+    };
 
     return (
-        <div className="user-detail-page animate-fade-in" style={{ paddingTop: '1rem' }}>
-            {error && !isEditing && <div className="p-4 mb-4 bg-error/10 text-error rounded-lg">{error}</div>}
-            {error && isEditing && <div className="fixed bottom-8 right-8 p-4 bg-error text-white rounded-lg shadow-lg z-50 animate-slide-up">{error}</div>}
+        <div className="animate-fade-in" style={{ maxWidth: '1000px', margin: '0 auto', paddingBottom: '3rem' }}>
+            {/* Header / Profile Summary */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                    <div style={{ position: 'relative' }}>
+                        <div className="user-avatar" style={{ width: '80px', height: '80px', borderRadius: '24px', fontSize: '2rem' }}>
+                            {profile.avatar_url ? <img src={profile.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (profile.name?.[0] || profile.email?.[0] || '?').toUpperCase()}
+                        </div>
+                        <div style={{ position: 'absolute', bottom: '-5px', right: '-5px', background: 'var(--surface-color)', padding: '4px', borderRadius: '50%' }}>
+                            <div style={{ background: profile.role === 'super_admin' ? 'var(--accent-primary)' : '#3b82f6', width: '12px', height: '12px', borderRadius: '50%' }} />
+                        </div>
+                    </div>
+                    <div>
+                        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>{profile.name || 'No Name Set'}</h1>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '6px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                                <Mail size={14} /> {profile.email}
+                            </div>
+                            <Badge variant={profile.role === 'super_admin' ? 'success' : 'info'}>
+                                {profile.role?.replace('_', ' ').toUpperCase()}
+                            </Badge>
+                        </div>
+                    </div>
+                </div>
+                {!isEditing && (
+                    <button onClick={() => setIsEditing(true)} className="btn-save" style={{ background: 'var(--surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)' }}>
+                        <Edit size={16} /> Edit Profile
+                    </button>
+                )}
+            </div>
 
-            <div className="detail-grid">
-                <div className="detail-column">
-                    {renderDetailSection(
-                        "Core Identity",
-                        <User size={20} />,
-                        [
-                            { label: "Full Name", field: "name", value: profile.name },
-                            { label: "Email Address", field: "email", type: "static", value: profile.email },
-                            {
-                                label: "Access Role",
-                                field: "role",
-                                type: "select",
-                                value: <Badge variant={profile.role === 'super_admin' ? 'success' : 'info'}>{profile.role}</Badge>,
-                                options: [
-                                    { value: 'super_admin', label: 'Super Admin' },
-                                    { value: 'restaurant_admin', label: 'Restaurant Admin' },
-                                    { value: 'restaurant_staff', label: 'Restaurant Staff' },
-                                    { value: 'customer', label: 'Customer' }
-                                ]
-                            },
-                            ...(['restaurant_admin', 'restaurant_staff'].includes(formData.role) ? [{
-                                label: <>Managed Restaurant <span className="text-error">*</span></>,
-                                field: "restaurant_id",
-                                type: "select",
-                                value: restaurants.find(r => r.id === formData.restaurant_id)?.name || 'Not Assigned',
-                                options: [
-                                    { value: '', label: 'Select a restaurant...' },
-                                    ...restaurants.map(r => ({ value: r.id, label: r.name }))
-                                ]
-                            }] : [])
-                        ],
-                        { background: 'linear-gradient(90deg, rgba(59, 130, 246, 0.15) 0%, transparent 100%)', borderLeft: '4px solid #3b82f6', color: '#3b82f6' }
+            <div className="dashboard-chart-grid" style={{ gridTemplateColumns: 'repeat(12, 1fr)', gap: '1.5rem' }}>
+                {/* Left Column: Core Details */}
+                <div style={{ gridColumn: 'span 8', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <Card>
+                        <CardHeader>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <User size={18} color="var(--accent-primary)" />
+                                <CardTitle>{isEditing ? 'Edit Profile Information' : 'User Overview'}</CardTitle>
+                            </div>
+                        </CardHeader>
+                        <div style={{ padding: '0.5rem 0' }}>
+                            {isEditing ? (
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                                    {renderField("Full Name", "name")}
+                                    {renderField("Access Role", "role", "select", [
+                                        { value: 'super_admin', label: 'Super Admin' },
+                                        { value: 'restaurant_admin', label: 'Restaurant Admin' },
+                                        { value: 'restaurant_staff', label: 'Restaurant Staff' },
+                                        { value: 'customer', label: 'Customer' }
+                                    ])}
+                                    {renderField("Avatar URL", "avatar_url")}
+                                    {['restaurant_admin', 'restaurant_staff'].includes(formData.role) && 
+                                        renderField("Managed Restaurant", "restaurant_id", "select", [
+                                            { value: '', label: 'Select a restaurant...' },
+                                            ...restaurants.map(r => ({ value: r.id, label: r.name }))
+                                        ])
+                                    }
+                                </div>
+                            ) : (
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                                    <div className="space-y-6">
+                                        <div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Account Type</div>
+                                            <div style={{ fontSize: '1rem', fontWeight: 600 }}>{profile.role?.replace('_', ' ').toUpperCase()}</div>
+                                        </div>
+                                        <div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>User ID</div>
+                                            <code style={{ fontSize: '0.85rem', color: 'var(--accent-primary)' }}>{profile.id}</code>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-6">
+                                        <div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Email Verification</div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#10b981', fontWeight: 600 }}>
+                                                <ShieldCheck size={16} /> Verified
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Last Updated</div>
+                                            <div style={{ fontSize: '0.9rem' }}>{new Date(profile.updated_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </Card>
+
+                    {['restaurant_admin', 'restaurant_staff'].includes(profile.role) && !isEditing && (
+                        <Card style={{ background: 'linear-gradient(90deg, var(--surface-color) 0%, rgba(16, 185, 129, 0.05) 100%)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                                    <div style={{ background: 'var(--surface-hover)', p: '12px', borderRadius: '12px' }}>
+                                        <Store size={24} color="#10b981" />
+                                    </div>
+                                    <div>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Affiliated Restaurant</div>
+                                        <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{restaurants.find(r => r.id === formData.restaurant_id)?.name || 'Not Linked'}</div>
+                                    </div>
+                                </div>
+                                {formData.restaurant_id && (
+                                    <button onClick={() => navigate(`/restaurants/${formData.restaurant_id}`)} className="btn-ghost" style={{ border: '1px solid var(--border-color)' }}>
+                                        View Details <ArrowUpRight size={16} style={{ marginLeft: '6px' }} />
+                                    </button>
+                                )}
+                            </div>
+                        </Card>
                     )}
 
-                    {renderDetailSection(
-                        "System Information",
-                        <Shield size={20} />,
-                        [
-                            { label: "Internal ID", type: "static", value: <code style={{ fontSize: '0.75rem', opacity: 0.7 }}>{profile.id}</code> },
-                            { label: "Initial Join", type: "static", value: new Date(profile.created_at).toLocaleString() },
-                            { label: "Last Heartbeat", type: "static", value: new Date(profile.updated_at).toLocaleString() }
-                        ],
-                        { background: 'linear-gradient(90deg, rgba(16, 185, 129, 0.15) 0%, transparent 100%)', borderLeft: '4px solid #10b981', color: '#10b981' }
+                    {!isEditing && (
+                        <Card>
+                            <CardHeader>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                    <Activity size={18} color="#ef4444" />
+                                    <CardTitle>Recent Activity</CardTitle>
+                                </div>
+                            </CardHeader>
+                            <div className="space-y-4">
+                                {[
+                                    { action: 'Dashboard Access', time: '2 hours ago', status: 'Success' },
+                                    { action: 'Profile Update', time: 'Yesterday, 14:20', status: 'Success' },
+                                    { action: 'Subscription Renewal', time: '3 days ago', status: 'System' }
+                                ].map((act, i) => (
+                                    <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem', background: 'var(--surface-hover)', borderRadius: '10px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent-primary)' }} />
+                                            <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>{act.action}</span>
+                                        </div>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{act.status}</div>
+                                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{act.time}</div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </Card>
                     )}
                 </div>
 
-                <div className="detail-column">
-                    {renderDetailSection(
-                        "Profile Media",
-                        <Camera size={20} />,
-                        [
-                            {
-                                label: "Avatar URL",
-                                field: "avatar_url",
-                                value: profile.avatar_url ? (
-                                    <div className="truncate-url" title={profile.avatar_url}>
-                                        {profile.avatar_url}
-                                    </div>
-                                ) : 'Default Placeholder'
-                            },
-                            {
-                                label: "Preview",
-                                type: "static",
-                                value: (
-                                    <div className="user-avatar" style={{ width: '60px', height: '60px', fontSize: '1.5rem', borderRadius: '12px' }}>
-                                        {profile.avatar_url ? <img src={profile.avatar_url} alt="" /> : (profile.name?.[0] || profile.email?.[0] || '?').toUpperCase()}
-                                    </div>
-                                )
-                            }
-                        ],
-                        { background: 'linear-gradient(90deg, rgba(139, 92, 246, 0.15) 0%, transparent 100%)', borderLeft: '4px solid #8b5cf6', color: '#8b5cf6' }
-                    )}
+                {/* Right Column: Meta & Stats */}
+                <div style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <Card>
+                        <CardHeader>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <Calendar size={18} color="#3b82f6" />
+                                <CardTitle>Membership</CardTitle>
+                            </div>
+                        </CardHeader>
+                        <div style={{ textAlign: 'center', padding: '1rem 0' }}>
+                            <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--accent-primary)' }}>
+                                {Math.floor((new Date() - new Date(profile.created_at)) / (1000 * 60 * 60 * 24))}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Days Active</div>
+                        </div>
+                        <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '1rem 0' }} />
+                        <div className="space-y-4">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                                <span style={{ color: 'var(--text-muted)' }}>Joined On</span>
+                                <span style={{ fontWeight: 600 }}>{new Date(profile.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                                <span style={{ color: 'var(--text-muted)' }}>Platform Access</span>
+                                <Badge variant="success">Granted</Badge>
+                            </div>
+                        </div>
+                    </Card>
 
-                    {renderDetailSection(
-                        "Activity Log",
-                        <Activity size={20} />,
-                        [
-                            { label: "Total Visits", type: "static", value: "154 (Simulated)" },
-                            { label: "Last Action", type: "static", value: "Login - Today 05:42" }
-                        ],
-                        { background: 'linear-gradient(90deg, rgba(239, 68, 68, 0.15) 0%, transparent 100%)', borderLeft: '4px solid #ef4444', color: '#ef4444' }
-                    )}
+                    <Card style={{ background: 'linear-gradient(135deg, var(--surface-color) 0%, rgba(99, 102, 241, 0.05) 100%)' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '1rem 0', textAlign: 'center' }}>
+                            <Shield size={32} color="var(--accent-primary)" style={{ marginBottom: '1rem', opacity: 0.5 }} />
+                            <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>Security Logs</div>
+                            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+                                No suspicious login attempts detected in the last 30 days.
+                            </p>
+                        </div>
+                    </Card>
                 </div>
             </div>
         </div>

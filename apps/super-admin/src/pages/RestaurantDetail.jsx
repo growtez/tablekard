@@ -5,7 +5,8 @@ import {
     ChevronLeft, Store, Globe, Mail, Phone, Calendar,
     Shield, Activity, CreditCard, MapPin, Settings as SettingsIcon,
     Clock, Tag, Info, AlertTriangle, Edit, Save, X as CloseIcon, Loader2,
-    Utensils, Layers, List
+    Utensils, Layers, List, ArrowUpRight, CheckCircle2, XCircle, Timer,
+    Hash, Map, Palette, Image as ImageIcon
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
@@ -17,6 +18,16 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
     const [restaurant, setRestaurant] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [categories, setCategories] = useState([]);
+    const [menuItems, setMenuItems] = useState([]);
+
+    const [isEditing, setIsEditing] = useState(location.state?.edit || false);
+    const [formData, setFormData] = useState({});
+    const [saving, setSaving] = useState(false);
+
+    // Refs to handle stale closures in header actions
+    const saveRef = useRef();
+    const cancelRef = useRef();
 
     useEffect(() => {
         if (id) {
@@ -28,56 +39,6 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
         };
     }, [id]);
 
-    const [isEditing, setIsEditing] = useState(location.state?.edit || false);
-    const [formData, setFormData] = useState({});
-    const [saving, setSaving] = useState(false);
-
-    // Refs to handle stale closures in header actions
-    const saveRef = useRef();
-    const cancelRef = useRef();
-
-    const handleSave = async () => {
-        setSaving(true);
-        setError(null);
-        try {
-            const { error } = await supabase
-                .from('restaurants')
-                .update({
-                    name: formData.name,
-                    contact_email: formData.contact_email,
-                    contact_phone: formData.contact_phone,
-                    contact_address: formData.contact_address,
-                    primary_color: formData.primary_color,
-                    secondary_color: formData.secondary_color,
-                    logo_url: formData.logo_url,
-                    latitude: parseFloat(formData.latitude) || null,
-                    longitude: parseFloat(formData.longitude) || null,
-                    allowed_radius: parseInt(formData.allowed_radius) || 100,
-                    status: formData.status
-                })
-                .eq('id', id);
-
-            if (error) throw error;
-            setIsEditing(false);
-            fetchRestaurantDetails();
-        } catch (err) {
-            setError('Failed to save changes: ' + err.message);
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    const handleCancel = () => {
-        setFormData(restaurant);
-        setIsEditing(false);
-    };
-
-    // Update refs every render
-    useEffect(() => {
-        saveRef.current = handleSave;
-        cancelRef.current = handleCancel;
-    });
-
     useEffect(() => {
         if (setSyncAction && !isEditing) {
             setSyncAction({
@@ -87,37 +48,12 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
         }
     }, [loading, setSyncAction, isEditing]);
 
-    useEffect(() => {
-        if (restaurant && setHeaderData) {
-            setHeaderData({
-                id: restaurant.id,
-                name: restaurant.name,
-                logo_url: restaurant.logo_url,
-                status: restaurant.status,
-                onEdit: !isEditing ? () => setIsEditing(true) : null,
-                isEditing,
-                onSave: () => saveRef.current?.(),
-                onCancel: () => cancelRef.current?.(),
-                saving,
-                backPath: '/restaurants',
-                backTitle: 'Back to Restaurants'
-            });
-        }
-    }, [restaurant, setHeaderData, isEditing, saving]);
-
-    const [categories, setCategories] = useState([]);
-    const [menuItems, setMenuItems] = useState([]);
-
     const fetchMenuData = async () => {
         try {
             const [catRes, itemRes] = await Promise.all([
                 supabase.from('menu_categories').select('*').eq('restaurant_id', id).order('sort_order'),
                 supabase.from('menu_items').select('*').eq('restaurant_id', id)
             ]);
-
-            if (catRes.error) throw catRes.error;
-            if (itemRes.error) throw itemRes.error;
-
             setCategories(catRes.data || []);
             setMenuItems(itemRes.data || []);
         } catch (err) {
@@ -137,6 +73,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
 
             if (error) throw error;
             setRestaurant(data);
+            setFormData(data);
             await fetchMenuData();
         } catch (err) {
             setError('Failed to fetch restaurant details: ' + err.message);
@@ -145,11 +82,67 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
         }
     };
 
-    useEffect(() => {
-        if (restaurant) {
-            setFormData(restaurant);
+    const handleSave = async () => {
+        setSaving(true);
+        setError(null);
+        try {
+            const { error } = await supabase
+                .from('restaurants')
+                .update({
+                    name: formData.name,
+                    tagline: formData.tagline,
+                    contact_email: formData.contact_email,
+                    contact_phone: formData.contact_phone,
+                    contact_address: formData.contact_address,
+                    primary_color: formData.primary_color,
+                    secondary_color: formData.secondary_color,
+                    logo_url: formData.logo_url,
+                    latitude: parseFloat(formData.latitude) || null,
+                    longitude: parseFloat(formData.longitude) || null,
+                    allowed_radius: parseInt(formData.allowed_radius) || 100,
+                    status: formData.status,
+                    operating_hours_weekdays: formData.operating_hours_weekdays,
+                    operating_hours_weekends: formData.operating_hours_weekends
+                })
+                .eq('id', id);
+
+            if (error) throw error;
+            setIsEditing(false);
+            fetchRestaurantDetails();
+        } catch (err) {
+            setError('Failed to save changes: ' + err.message);
+        } finally {
+            setSaving(false);
         }
-    }, [restaurant]);
+    };
+
+    const handleCancel = () => {
+        setFormData(restaurant);
+        setIsEditing(false);
+    };
+
+    useEffect(() => {
+        saveRef.current = handleSave;
+        cancelRef.current = handleCancel;
+    });
+
+    useEffect(() => {
+        if (restaurant && setHeaderData) {
+            setHeaderData({
+                id: restaurant.id,
+                name: restaurant.name,
+                logo_url: restaurant.logo_url,
+                status: restaurant.status,
+                onEdit: !isEditing ? () => setIsEditing(true) : null,
+                isEditing,
+                onSave: () => saveRef.current?.(),
+                onCancel: () => cancelRef.current?.(),
+                saving,
+                backPath: '/restaurants',
+                backTitle: 'Back to Restaurants'
+            });
+        }
+    }, [restaurant, setHeaderData, isEditing, saving]);
 
     const updateField = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -157,283 +150,320 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center p-20">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: '1.5rem' }}>
+                <div className="loader" />
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Fetching restaurant profile...</p>
             </div>
         );
     }
 
     if (error || !restaurant) {
         return (
-            <div className="p-8">
-                <button onClick={() => navigate(-1)} className="btn-back">
-                    <ChevronLeft size={20} />
+            <div className="animate-fade-in" style={{ padding: '2rem', textAlign: 'center' }}>
+                <AlertCircle size={48} color="#ef4444" style={{ marginBottom: '1rem', opacity: 0.5 }} />
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>Restaurant Not Found</h2>
+                <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>{error || 'The requested restaurant could not be located.'}</p>
+                <button onClick={() => navigate('/restaurants')} className="btn-primary">
+                    <ChevronLeft size={18} /> Back to Restaurants
                 </button>
-                <div className="error-container mt-4">
-                    <AlertTriangle size={48} className="text-warning mb-4" />
-                    <h2>Error loading restaurant</h2>
-                    <p>{error || 'Restaurant not found'}</p>
-                </div>
             </div>
         );
     }
 
-    const renderDetailSection = (title, icon, items, headerStyle = {}) => (
-        <Card className="detail-section overflow-hidden">
-            <CardHeader style={{
-                margin: '-1.5rem -1.5rem 0.5rem -1.5rem',
-                padding: '0.4rem 1.25rem',
-                borderBottom: 'none',
-                ...headerStyle
-            }}>
-                <div className="section-header">
-                    {icon}
-                    <CardTitle style={{
-                        color: headerStyle.color || 'inherit',
-                        fontSize: '0.95rem',
-                        borderBottom: 'none',
-                        paddingBottom: 0
-                    }}>{title}</CardTitle>
-                </div>
-            </CardHeader>
-            <div className="section-content">
-                {items.map((item, idx) => (
-                    <div key={idx} className="detail-row" style={{ alignItems: isEditing && item.type !== 'static' ? 'center' : 'flex-start' }}>
-                        <span className="detail-label">{item.label}</span>
-                        <div className="detail-value" style={{ width: isEditing && item.type !== 'static' ? '60%' : 'auto' }}>
-                            {isEditing && item.field && item.type !== 'static' ? (
-                                item.type === 'select' ? (
-                                    <select
-                                        value={formData[item.field] || ''}
-                                        onChange={(e) => updateField(item.field, e.target.value)}
-                                        className="edit-input"
-                                    >
-                                        {item.options.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                                    </select>
-                                ) : (
-                                    <input
-                                        type={item.type || 'text'}
-                                        value={formData[item.field] || ''}
-                                        onChange={(e) => updateField(item.field, e.target.value)}
-                                        className="edit-input"
-                                        placeholder={`Enter ${item.label.toLowerCase()}`}
-                                    />
-                                )
-                            ) : (
-                                item.value || <span className="text-muted italic">Not set</span>
-                            )}
-                        </div>
-                    </div>
-                ))}
+    const renderField = (label, field, type = 'text', options = []) => {
+        if (!isEditing) return null;
+        return (
+            <div className="space-y-2">
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</label>
+                {type === 'select' ? (
+                    <select
+                        value={formData[field] || ''}
+                        onChange={(e) => updateField(field, e.target.value)}
+                        className="edit-input"
+                    >
+                        {options.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                    </select>
+                ) : (
+                    <input
+                        type={type}
+                        value={formData[field] || ''}
+                        onChange={(e) => updateField(field, e.target.value)}
+                        className="edit-input"
+                        placeholder={`Enter ${label.toLowerCase()}`}
+                    />
+                )}
             </div>
-        </Card>
-    );
+        );
+    };
+
+    const STATUS_COLORS = {
+        active: '#10b981',
+        approved: '#3b82f6',
+        pending: '#f59e0b',
+        suspended: '#ef4444',
+        rejected: '#71717a'
+    };
 
     return (
-        <div className="restaurant-detail-page animate-fade-in" style={{ paddingTop: '1rem' }}>
-            {error && !isEditing && <div className="p-4 mb-4 bg-error/10 text-error rounded-lg">{error}</div>}
-            {error && isEditing && <div className="fixed bottom-8 right-8 p-4 bg-error text-white rounded-lg shadow-lg z-50 animate-slide-up">{error}</div>}
-
-            <div className="detail-grid">
-                <div className="detail-column">
-                    {renderDetailSection(
-                        "General Information",
-                        <Store size={20} />,
-                        [
-                            { label: "Display Name", field: "name", value: restaurant.name },
-                            { label: "Unique Slug", type: "static", value: `/${restaurant.slug}` },
-                            { label: "Tagline", field: "tagline", value: restaurant.tagline },
-                            {
-                                label: "Status",
-                                field: "status",
-                                type: "select",
-                                value: restaurant.status,
-                                options: [
-                                    { value: 'pending', label: 'Pending' },
-                                    { value: 'approved', label: 'Approved' },
-                                    { value: 'active', label: 'Active' },
-                                    { value: 'suspended', label: 'Suspended' },
-                                    { value: 'rejected', label: 'Rejected' }
-                                ]
-                            },
-                            { label: "Opening Date", field: "opening_date", type: "date", value: restaurant.opening_date ? new Date(restaurant.opening_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : null },
-                            { label: "Weekday Hours", field: "operating_hours_weekdays", value: restaurant.operating_hours_weekdays },
-                            { label: "Weekend Hours", field: "operating_hours_weekends", value: restaurant.operating_hours_weekends },
-                            { label: "Created At", type: "static", value: new Date(restaurant.created_at).toLocaleString() },
-                            { label: "Last Updated", type: "static", value: new Date(restaurant.updated_at).toLocaleString() }
-                        ],
-                        { background: 'linear-gradient(90deg, rgba(59, 130, 246, 0.15) 0%, transparent 100%)', borderLeft: '4px solid #3b82f6', color: '#3b82f6' }
-                    )}
-
-                    {renderDetailSection(
-                        "Contact Details",
-                        <Mail size={20} />,
-                        [
-                            { label: "Email Address", field: "contact_email", value: restaurant.contact_email },
-                            { label: "Phone Number", field: "contact_phone", value: restaurant.contact_phone },
-                            { label: "Physical Address", field: "contact_address", value: restaurant.contact_address }
-                        ],
-                        { background: 'linear-gradient(90deg, rgba(16, 185, 129, 0.15) 0%, transparent 100%)', borderLeft: '4px solid #10b981', color: '#10b981' }
-                    )}
-
-                    {renderDetailSection(
-                        "Branding & Assets",
-                        <Tag size={20} />,
-                        [
-                            { label: "Logo URL", field: "logo_url", value: restaurant.logo_url },
-                            {
-                                label: "Primary Color",
-                                field: "primary_color",
-                                value: <div className="color-preview-row"><span className="color-circle" style={{ backgroundColor: restaurant.primary_color || 'var(--primary)' }}></span> {restaurant.primary_color}</div>
-                            },
-                            {
-                                label: "Secondary Color",
-                                field: "secondary_color",
-                                value: <div className="color-preview-row"><span className="color-circle" style={{ backgroundColor: restaurant.secondary_color || 'var(--secondary)' }}></span> {restaurant.secondary_color}</div>
-                            }
-                        ],
-                        { background: 'linear-gradient(90deg, rgba(139, 92, 246, 0.15) 0%, transparent 100%)', borderLeft: '4px solid #8b5cf6', color: '#8b5cf6' }
-                    )}
-                </div>
-
-                <div className="detail-column">
-                    {renderDetailSection(
-                        "Subscription & Billing",
-                        <CreditCard size={20} />,
-                        [
-                            { label: "Plan Status", type: "static", value: restaurant.subscription_status ? "Active (Paid)" : "Inactive (Trial/Free)" },
-                            { label: "Plan Type", type: "static", value: restaurant.subscription_type || "Lite Plan" },
-                            {
-                                label: "Expires On",
-                                type: "static",
-                                value: restaurant.subscription_end_at
-                                    ? (() => {
-                                        const daysLeft = Math.ceil((new Date(restaurant.subscription_end_at) - new Date()) / 86400000);
-                                        return (
-                                            <span style={{ color: daysLeft <= 0 ? '#ef4444' : daysLeft <= 7 ? '#f59e0b' : '#10b981', fontWeight: 700 }}>
-                                                {new Date(restaurant.subscription_end_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                                                {' — '}
-                                                {daysLeft <= 0 ? 'Expired' : `${daysLeft} day${daysLeft !== 1 ? 's' : ''} left`}
-                                            </span>
-                                        );
-                                    })()
-                                    : <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Not set</span>
-                            }
-                        ],
-                        { background: 'linear-gradient(90deg, rgba(245, 158, 11, 0.15) 0%, transparent 100%)', borderLeft: '4px solid #f59e0b', color: '#f59e0b' }
-                    )}
-
-                    {renderDetailSection(
-                        "Location & Radius",
-                        <MapPin size={20} />,
-                        [
-                            { label: "Latitude", field: "latitude", type: "number", value: restaurant.latitude },
-                            { label: "Longitude", field: "longitude", type: "number", value: restaurant.longitude },
-                            { label: "Allowed Radius (m)", field: "allowed_radius", type: "number", value: `${restaurant.allowed_radius} meters` }
-                        ],
-                        { background: 'linear-gradient(90deg, rgba(239, 68, 68, 0.15) 0%, transparent 100%)', borderLeft: '4px solid #ef4444', color: '#ef4444' }
-                    )}
-
-                    {renderDetailSection(
-                        "System Metadata",
-                        <Info size={20} />,
-                        [
-                            { label: "Raw Settings", type: "static", value: <pre className="json-preview">{JSON.stringify(restaurant.settings, null, 2)}</pre> }
-                        ],
-                        { background: 'linear-gradient(90deg, rgba(99, 102, 241, 0.15) 0%, transparent 100%)', borderLeft: '4px solid #6366f1', color: '#6366f1' }
-                    )}
-
-                    {renderDetailSection(
-                        "Menu & Catalog",
-                        <Utensils size={20} />,
-                        [
-                            { label: "Total Categories", type: "static", value: <Badge variant="info">{categories.length}</Badge> },
-                            { label: "Total Items", type: "static", value: <Badge variant="success">{menuItems.length}</Badge> },
-                            { label: "Active/Available", type: "static", value: menuItems.filter(i => i.is_available).length },
-                            { label: "Vegetarian Options", type: "static", value: menuItems.filter(i => i.is_veg).length }
-                        ],
-                        { background: 'linear-gradient(90deg, rgba(236, 72, 153, 0.15) 0%, transparent 100%)', borderLeft: '4px solid #ec4899', color: '#ec4899' }
+        <div className="animate-fade-in" style={{ maxWidth: '1100px', margin: '0 auto', paddingBottom: '4rem' }}>
+            {/* Cover & Profile Header */}
+            <div style={{ position: 'relative', marginBottom: '2.5rem' }}>
+                <div style={{ 
+                    height: '180px', 
+                    width: '100%', 
+                    background: `linear-gradient(135deg, ${restaurant.primary_color || 'var(--accent-primary)'} 0%, ${restaurant.secondary_color || 'var(--accent-secondary)'} 100%)`,
+                    borderRadius: '24px',
+                    opacity: 0.15,
+                    position: 'absolute',
+                    top: 0,
+                    zIndex: -1
+                }} />
+                
+                <div style={{ padding: '2rem 2.5rem 0', display: 'flex', alignItems: 'flex-end', gap: '2rem' }}>
+                    <div style={{ position: 'relative' }}>
+                        <div className="user-avatar" style={{ width: '120px', height: '120px', borderRadius: '32px', fontSize: '3rem', border: '6px solid var(--surface-color)', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
+                            {restaurant.logo_url ? <img src={restaurant.logo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (restaurant.name?.[0] || '?').toUpperCase()}
+                        </div>
+                    </div>
+                    <div style={{ flex: 1, paddingBottom: '1rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            <h1 style={{ fontSize: '2.25rem', fontWeight: 800, margin: 0 }}>{restaurant.name}</h1>
+                            <Badge style={{ background: STATUS_COLORS[restaurant.status], color: 'white', border: 'none', padding: '4px 12px' }}>
+                                {restaurant.status?.toUpperCase()}
+                            </Badge>
+                        </div>
+                        <p style={{ fontSize: '1.1rem', color: 'var(--text-muted)', marginTop: '4px' }}>{restaurant.tagline || 'No tagline set'}</p>
+                    </div>
+                    {!isEditing && (
+                        <div style={{ paddingBottom: '1rem' }}>
+                            <button onClick={() => setIsEditing(true)} className="btn-save" style={{ background: 'var(--surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)' }}>
+                                <Edit size={16} /> Edit Restaurant
+                            </button>
+                        </div>
                     )}
                 </div>
             </div>
 
-            {/* Added detailed lists for Menu Categories and Recently Added Items */}
-            <div style={{ marginTop: '2rem' }}>
-                <div className="detail-grid">
-                    <Card className="detail-section">
-                        <CardHeader style={{ padding: '0.4rem 1.25rem', borderBottom: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.02)' }}>
-                            <div className="section-header">
-                                <Layers size={18} style={{ color: 'var(--accent-primary)' }} />
-                                <CardTitle style={{ fontSize: '0.9rem' }}>Menu Categories</CardTitle>
+            <div className="dashboard-chart-grid" style={{ gridTemplateColumns: 'repeat(12, 1fr)', gap: '1.5rem' }}>
+                {/* Left: General & Menu */}
+                <div style={{ gridColumn: 'span 8', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <Card>
+                        <CardHeader>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <Store size={18} color="var(--accent-primary)" />
+                                <CardTitle>{isEditing ? 'Edit Restaurant Core' : 'General Information'}</CardTitle>
                             </div>
                         </CardHeader>
-                        <div style={{ padding: '1rem' }}>
-                            {categories.length > 0 ? (
-                                <div className="flex" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
-                                    {categories.map(cat => (
-                                        <Badge key={cat.id} variant={cat.active ? 'success' : 'secondary'} style={{ padding: '4px 10px', fontSize: '0.75rem' }}>
-                                            {cat.name}
-                                        </Badge>
-                                    ))}
+                        <div style={{ padding: '0.5rem 0' }}>
+                            {isEditing ? (
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                                    {renderField("Restaurant Name", "name")}
+                                    {renderField("Tagline", "tagline")}
+                                    {renderField("Operating Status", "status", "select", [
+                                        { value: 'pending', label: 'Pending' },
+                                        { value: 'approved', label: 'Approved' },
+                                        { value: 'active', label: 'Active' },
+                                        { value: 'suspended', label: 'Suspended' },
+                                        { value: 'rejected', label: 'Rejected' }
+                                    ])}
+                                    {renderField("Logo URL", "logo_url")}
+                                    {renderField("Weekdays Hours", "operating_hours_weekdays")}
+                                    {renderField("Weekends Hours", "operating_hours_weekends")}
                                 </div>
                             ) : (
-                                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontStyle: 'italic' }}>No categories defined yet.</p>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                                    <div className="space-y-6">
+                                        <div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Unique Slug</div>
+                                            <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--accent-primary)' }}>/{restaurant.slug}</div>
+                                        </div>
+                                        <div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Operating Hours</div>
+                                            <div style={{ fontSize: '0.9rem' }}>
+                                                <div>Week: {restaurant.operating_hours_weekdays || '—'}</div>
+                                                <div>End: {restaurant.operating_hours_weekends || '—'}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-6">
+                                        <div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Opening Date</div>
+                                            <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>
+                                                {restaurant.opening_date ? new Date(restaurant.opening_date).toLocaleDateString('en-IN', { dateStyle: 'long' }) : 'Not Announced'}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Created At</div>
+                                            <div style={{ fontSize: '0.9rem' }}>{new Date(restaurant.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                                        </div>
+                                    </div>
+                                </div>
                             )}
                         </div>
                     </Card>
 
-                    <Card className="detail-section">
-                        <CardHeader style={{ padding: '0.4rem 1.25rem', borderBottom: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.02)' }}>
-                            <div className="section-header">
-                                <List size={18} style={{ color: 'hsl(150, 100%, 50%)' }} />
-                                <CardTitle style={{ fontSize: '0.9rem' }}>Recently Updated Items</CardTitle>
+                    {!isEditing && (
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                            <Card>
+                                <CardHeader>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                        <Layers size={18} color="#8b5cf6" />
+                                        <CardTitle>Menu Categories</CardTitle>
+                                    </div>
+                                </CardHeader>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                    {categories.length > 0 ? categories.map(cat => (
+                                        <Badge key={cat.id} variant={cat.active ? 'info' : 'secondary'} style={{ padding: '4px 10px' }}>
+                                            {cat.name}
+                                        </Badge>
+                                    )) : <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No categories created.</p>}
+                                </div>
+                            </Card>
+                            <Card>
+                                <CardHeader>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                        <Utensils size={18} color="#ec4899" />
+                                        <CardTitle>Menu Stats</CardTitle>
+                                    </div>
+                                </CardHeader>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                    <div style={{ background: 'var(--surface-hover)', padding: '0.75rem', borderRadius: '10px', textAlign: 'center' }}>
+                                        <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{menuItems.length}</div>
+                                        <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Total Items</div>
+                                    </div>
+                                    <div style={{ background: 'var(--surface-hover)', padding: '0.75rem', borderRadius: '10px', textAlign: 'center' }}>
+                                        <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{menuItems.filter(i => i.is_veg).length}</div>
+                                        <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Veg Options</div>
+                                    </div>
+                                </div>
+                            </Card>
+                        </div>
+                    )}
+
+                    {!isEditing && (
+                        <Card>
+                            <CardHeader>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                    <List size={18} color="#10b981" />
+                                    <CardTitle>Recent Menu Updates</CardTitle>
+                                </div>
+                            </CardHeader>
+                            <div className="space-y-3">
+                                {menuItems.slice(0, 3).map(item => (
+                                    <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem', background: 'var(--surface-hover)', borderRadius: '12px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                            <div style={{ width: '44px', height: '44px', borderRadius: '8px', background: 'var(--surface-color)', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
+                                                {item.image_url ? <img src={item.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.3 }}><ImageIcon size={16} /></div>}
+                                            </div>
+                                            <div>
+                                                <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{item.name}</div>
+                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{categories.find(c => c.id === item.category_id)?.name}</div>
+                                            </div>
+                                        </div>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <div style={{ fontWeight: 700 }}>₹{item.price}</div>
+                                            <Badge variant={item.is_available ? 'success' : 'warning'} style={{ fontSize: '0.6rem' }}>{item.is_available ? 'Available' : 'Sold Out'}</Badge>
+                                        </div>
+                                    </div>
+                                ))}
+                                {menuItems.length === 0 && <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1rem' }}>No items added to the menu yet.</p>}
+                            </div>
+                        </Card>
+                    )}
+                </div>
+
+                {/* Right: Subscription, Contact, Location */}
+                <div style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <Card style={{ background: 'linear-gradient(135deg, var(--surface-color) 0%, rgba(245, 158, 11, 0.05) 100%)' }}>
+                        <CardHeader>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <CreditCard size={18} color="#f59e0b" />
+                                <CardTitle>Subscription</CardTitle>
                             </div>
                         </CardHeader>
-                        <div style={{ padding: 0, overflow: 'hidden' }}>
-                            {menuItems.length > 0 ? (
-                                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                    {menuItems
-                                        .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
-                                        .slice(0, 4)
-                                        .map((item, idx) => (
-                                            <div key={item.id} style={{
-                                                padding: '0.75rem',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'space-between',
-                                                borderBottom: idx < 3 ? '1px solid rgba(255,255,255,0.05)' : 'none'
-                                            }} className="hover:bg-white/5 transition-colors">
-                                                <div className="flex items-center" style={{ gap: '0.75rem' }}>
-                                                    <div style={{
-                                                        width: '40px',
-                                                        height: '40px',
-                                                        borderRadius: '8px',
-                                                        background: 'var(--surface-hover)',
-                                                        border: '1px solid var(--border-color)',
-                                                        overflow: 'hidden',
-                                                        flexShrink: 0
-                                                    }}>
-                                                        {item.image_url ? <img src={item.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', opacity: 0.5 }}>IMG</div>}
-                                                    </div>
-                                                    <div>
-                                                        <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>{item.name}</div>
-                                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                            {item.is_veg && <span style={{ color: 'hsl(150, 100%, 50%)', fontWeight: 'bold' }}>●</span>}
-                                                            {categories.find(c => c.id === item.category_id)?.name || 'Uncategorized'}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div style={{ textAlign: 'right' }}>
-                                                    <div style={{ fontSize: '0.875rem', fontWeight: 700 }}>₹{item.price}</div>
-                                                    {!item.is_available && <Badge variant="warning" style={{ fontSize: '0.6rem', padding: '1px 4px' }}>Unavailable</Badge>}
-                                                </div>
-                                            </div>
-                                        ))}
-                                </div>
-                            ) : (
-                                <p style={{ padding: '1rem', color: 'var(--text-muted)', fontSize: '0.875rem', fontStyle: 'italic' }}>No items found in the menu.</p>
-                            )}
+                        <div style={{ textAlign: 'center', padding: '1rem 0' }}>
+                            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Active Plan</div>
+                            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f59e0b' }}>{restaurant.subscription_type?.toUpperCase() || 'LITE PLAN'}</div>
+                            <Badge variant={restaurant.subscription_status ? 'success' : 'warning'} style={{ marginTop: '8px' }}>
+                                {restaurant.subscription_status ? 'Active & Paid' : 'Trial Period'}
+                            </Badge>
                         </div>
+                        <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '1rem 0' }} />
+                        <div className="space-y-3">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                                <span style={{ color: 'var(--text-muted)' }}>Expires On</span>
+                                <span style={{ fontWeight: 600 }}>{restaurant.subscription_end_at ? new Date(restaurant.subscription_end_at).toLocaleDateString('en-IN') : 'N/A'}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                                <span style={{ color: 'var(--text-muted)' }}>Auto Renewal</span>
+                                <span style={{ fontWeight: 600 }}>Enabled</span>
+                            </div>
+                        </div>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <Mail size={18} color="#3b82f6" />
+                                <CardTitle>Contact & Support</CardTitle>
+                            </div>
+                        </CardHeader>
+                        {isEditing ? (
+                            <div className="space-y-4">
+                                {renderField("Contact Email", "contact_email")}
+                                {renderField("Phone", "contact_phone")}
+                                {renderField("Address", "contact_address")}
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--surface-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Mail size={14} color="var(--text-muted)" />
+                                    </div>
+                                    <div style={{ fontSize: '0.9rem', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis' }}>{restaurant.contact_email}</div>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--surface-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Phone size={14} color="var(--text-muted)" />
+                                    </div>
+                                    <div style={{ fontSize: '0.9rem', fontWeight: 500 }}>{restaurant.contact_phone}</div>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--surface-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                        <MapPin size={14} color="var(--text-muted)" />
+                                    </div>
+                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>{restaurant.contact_address}</div>
+                                </div>
+                            </div>
+                        )}
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <Palette size={18} color="#8b5cf6" />
+                                <CardTitle>Brand Identity</CardTitle>
+                            </div>
+                        </CardHeader>
+                        {isEditing ? (
+                            <div className="space-y-4">
+                                {renderField("Primary Color", "primary_color")}
+                                {renderField("Secondary Color", "secondary_color")}
+                            </div>
+                        ) : (
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                <div style={{ padding: '1rem', borderRadius: '12px', background: 'var(--surface-hover)', textAlign: 'center' }}>
+                                    <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: restaurant.primary_color, margin: '0 auto 8px', border: '2px solid var(--border-color)' }} />
+                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Primary</div>
+                                    <div style={{ fontSize: '0.8rem', fontWeight: 700 }}>{restaurant.primary_color}</div>
+                                </div>
+                                <div style={{ padding: '1rem', borderRadius: '12px', background: 'var(--surface-hover)', textAlign: 'center' }}>
+                                    <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: restaurant.secondary_color, margin: '0 auto 8px', border: '2px solid var(--border-color)' }} />
+                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Secondary</div>
+                                    <div style={{ fontSize: '0.8rem', fontWeight: 700 }}>{restaurant.secondary_color}</div>
+                                </div>
+                            </div>
+                        )}
                     </Card>
                 </div>
             </div>
