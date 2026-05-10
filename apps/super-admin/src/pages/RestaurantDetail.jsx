@@ -20,6 +20,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
     const [error, setError] = useState(null);
     const [categories, setCategories] = useState([]);
     const [menuItems, setMenuItems] = useState([]);
+    const [payments, setPayments] = useState([]);
     const [activeTab, setActiveTab] = useState('general');
 
     const [isEditing, setIsEditing] = useState(location.state?.edit || false);
@@ -62,6 +63,21 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
         }
     };
 
+    const fetchPayments = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('subscription_payments')
+                .select('*')
+                .eq('restaurant_id', id)
+                .order('created_at', { ascending: false });
+            
+            if (error) throw error;
+            setPayments(data || []);
+        } catch (err) {
+            console.error('Failed to fetch payment history:', err);
+        }
+    };
+
     const fetchRestaurantDetails = async () => {
         setLoading(true);
         setError(null);
@@ -75,7 +91,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
             if (error) throw error;
             setRestaurant(data);
             setFormData(data);
-            await fetchMenuData();
+            await Promise.all([fetchMenuData(), fetchPayments()]);
         } catch (err) {
             setError('Failed to fetch restaurant details: ' + err.message);
         } finally {
@@ -391,11 +407,65 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                         </div>
                         <div style={{ gridColumn: 'span 6' }}>
                             <Card>
-                                <CardHeader><CardTitle>Payment History</CardTitle></CardHeader>
-                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem 1rem', color: 'var(--text-muted)', textAlign: 'center' }}>
-                                    <Activity size={32} style={{ marginBottom: '1rem', opacity: 0.2 }} />
-                                    <p style={{ fontSize: '0.9rem' }}>Detailed payment records are available in the Subscriptions module.</p>
-                                    <button onClick={() => navigate('/subscriptions')} className="btn-ghost" style={{ marginTop: '1rem', border: '1px solid var(--border-color)' }}>Go to Subscriptions</button>
+                                <CardHeader>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                        <CardTitle>Payment History</CardTitle>
+                                        <Badge variant="secondary">{payments.length} Transactions</Badge>
+                                    </div>
+                                </CardHeader>
+                                <div className="space-y-3">
+                                    {payments.length > 0 ? (
+                                        payments.map((payment) => (
+                                            <div 
+                                                key={payment.id}
+                                                onClick={() => navigate(`/subscriptions/${payment.id}`)}
+                                                style={{ 
+                                                    padding: '1rem', 
+                                                    borderRadius: '12px', 
+                                                    background: 'var(--surface-hover)', 
+                                                    display: 'flex', 
+                                                    alignItems: 'center', 
+                                                    justifyContent: 'space-between',
+                                                    cursor: 'pointer',
+                                                    border: '1px solid transparent',
+                                                    transition: 'all 0.2s'
+                                                }}
+                                                onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--accent-primary-glow)'}
+                                                onMouseLeave={(e) => e.currentTarget.style.borderColor = 'transparent'}
+                                            >
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                    <div style={{ 
+                                                        width: '40px', 
+                                                        height: '40px', 
+                                                        borderRadius: '10px', 
+                                                        background: payment.status === 'paid' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center'
+                                                    }}>
+                                                        <CreditCard size={18} color={payment.status === 'paid' ? '#10b981' : '#ef4444'} />
+                                                    </div>
+                                                    <div>
+                                                        <div style={{ fontSize: '0.9rem', fontWeight: 700 }}>₹{Number(payment.amount).toLocaleString()}</div>
+                                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{new Date(payment.created_at).toLocaleDateString()}</div>
+                                                    </div>
+                                                </div>
+                                                <div style={{ textAlign: 'right' }}>
+                                                    <Badge variant={payment.status === 'paid' ? 'success' : (payment.status === 'pending' ? 'warning' : 'error')} style={{ fontSize: '0.65rem' }}>
+                                                        {payment.status.toUpperCase()}
+                                                    </Badge>
+                                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                                                        {payment.plan_duration} Days
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem 1rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+                                            <Activity size={32} style={{ marginBottom: '1rem', opacity: 0.2 }} />
+                                            <p style={{ fontSize: '0.85rem' }}>No payment records found for this restaurant.</p>
+                                        </div>
+                                    )}
                                 </div>
                             </Card>
                         </div>
