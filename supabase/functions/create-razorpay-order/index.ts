@@ -155,8 +155,9 @@ serve(async (req: Request) => {
         }
 
         const taxPercentage = restaurant.settings?.tax_percentage || 0;
-        const taxes = Math.round((subtotal * taxPercentage) / 100 * 100) / 100;
-        const total = Math.round((subtotal + taxes) * 100) / 100;
+        const total = subtotal; // The initial subtotal is actually the total (inclusive)
+        const taxes = Math.round((total * taxPercentage) / 100 * 100) / 100;
+        const finalSubtotal = total - taxes;
 
         // ──────────────────────────────────────────────
         // 5. Create Razorpay Order via API
@@ -227,7 +228,7 @@ serve(async (req: Request) => {
                 razorpay_order_id: razorpayOrder.id,
                 amount: total,
                 amount_in_paise: amountInPaise,
-                subtotal,
+                subtotal: finalSubtotal,
                 taxes,
                 tax_percentage: taxPercentage,
                 restaurant_id,
@@ -251,7 +252,7 @@ serve(async (req: Request) => {
                 currency: "INR",
                 payment_id: payment.id, // Our internal payment ID
                 order_summary: {
-                    subtotal,
+                    subtotal: finalSubtotal,
                     taxes,
                     total,
                     items_count: validatedItems.length,

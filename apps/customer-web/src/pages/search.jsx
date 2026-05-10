@@ -24,18 +24,23 @@ const SearchPage = () => {
     useEffect(() => {
         if (!restaurantId) return;
         getMenuItems(restaurantId).then(items => {
-            const processedItems = items.map(m => ({
-                id: m.id,
-                name: m.name,
-                price: m.price,
-                time: m.preparation_time ? `${m.preparation_time}min` : '15min',
-                rating: 4.8,
-                serves: `Serves ${m.serves || 1}`,
-                image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
-                description: m.long_description || m.short_description || '',
-                dietType: m.is_veg ? 'veg' : 'non-veg',
-                modelUrl: m.model_url || null
-            }));
+            const processedItems = items.map(m => {
+                const images = (m.menu_item_images || []).sort((a, b) => a.sort_order - b.sort_order);
+                const primaryImage = images.length > 0 ? images[0].image_url : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop';
+                return {
+                    id: m.id,
+                    name: m.name,
+                    price: m.price,
+                    time: m.preparation_time ? `${m.preparation_time}min` : '15min',
+                    rating: 4.8,
+                    serves: `Serves ${m.serves || 1}`,
+                    image: primaryImage,
+                    images: images.map(img => img.image_url),
+                    description: m.long_description || m.short_description || '',
+                    dietType: m.is_veg ? 'veg' : 'non-veg',
+                    modelUrl: m.model_url || null
+                };
+            });
             setAllItems(processedItems);
         }).catch(err => console.error("Error fetching menu items:", err));
     }, [restaurantId]);
@@ -45,8 +50,7 @@ const SearchPage = () => {
             setResults([]);
         } else {
             const filtered = allItems.filter(item =>
-                item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                item.description.toLowerCase().includes(searchTerm.toLowerCase())
+                item.name.toLowerCase().startsWith(searchTerm.toLowerCase())
             );
             setResults(filtered);
         }
@@ -295,8 +299,8 @@ const SearchPage = () => {
                         <div className="search-illustration">
                             <img src="/assets/no-results-illustration.png" alt="No results" />
                         </div>
-                        <h3>Nothing found</h3>
-                        <p>We couldn't find anything for<br />"{searchTerm}"</p>
+                        <h3>No item available</h3>
+                        <p>We couldn't find any item starting with<br />"{searchTerm}"</p>
                     </div>
 
                 )}

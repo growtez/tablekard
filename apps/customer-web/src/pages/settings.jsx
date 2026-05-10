@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { Home, ShoppingBag, ShoppingCart, User, ArrowLeft, Bell, Globe, Shield, HelpCircle } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import './settings.css';
+import BottomNav from '../components/BottomNav';
 
 const SettingsPage = () => {
     const { theme } = useTheme();
@@ -60,12 +61,7 @@ const SettingsPage = () => {
             </div>
 
             {/* Bottom Navigation */}
-            <nav className="bottom-nav" style={{ backgroundColor: theme.card, borderTopColor: theme.border }}>
-                <NavLink to="/" className="nav-btn"><Home size={24} color={theme.textMuted} /></NavLink>
-                <NavLink to="/menu" className="nav-btn"><ShoppingBag size={24} color={theme.textMuted} /></NavLink>
-                <NavLink to="/orders" className="nav-btn"><ShoppingCart size={24} color={theme.textMuted} /></NavLink>
-                <NavLink to="/profile" className="nav-btn active"><User size={24} color={theme.text} /></NavLink>
-            </nav>
+            <BottomNav />
         </div>
     );
 };
