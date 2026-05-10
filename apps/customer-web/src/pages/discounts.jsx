@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { ArrowLeft, Clock, Star, Heart, X, Plus, Minus, Users, View } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useRestaurant } from '../context/RestaurantContext';
+import { getDiscountItemsForHome } from '../services/supabaseService';
+import PageSkeleton from '../components/PageSkeleton';
 import './discounts.css';
 
 const DiscountsPage = () => {
@@ -10,6 +13,10 @@ const DiscountsPage = () => {
     const [favorites, setFavorites] = useState([]);
     const [cart, setCart] = useState([]);
 
+    const { restaurant } = useRestaurant();
+    const [discountItems, setDiscountItems] = useState([]);
+    const [loadingItems, setLoadingItems] = useState(true);
+
     useLayoutEffect(() => {
         window.scrollTo(0, 0);
         document.body.scrollTo(0, 0);
@@ -17,12 +24,20 @@ const DiscountsPage = () => {
     }, []);
 
     useEffect(() => {
-        // Double check scroll on mount and after a small delay
         const timer = setTimeout(() => {
             window.scrollTo(0, 0);
         }, 100);
         return () => clearTimeout(timer);
     }, []);
+
+    useEffect(() => {
+        if (!restaurant?.id) return;
+        setLoadingItems(true);
+        getDiscountItemsForHome(restaurant.id, 20)
+            .then(discounts => setDiscountItems(discounts || []))
+            .catch(err => console.error('Discounts fetch failed:', err))
+            .finally(() => setLoadingItems(false));
+    }, [restaurant?.id]);
 
     useEffect(() => {
         if (showItemModal) {
@@ -34,48 +49,6 @@ const DiscountsPage = () => {
             document.body.style.overflow = 'unset';
         };
     }, [showItemModal]);
-
-    const featuredOffers = [
-        {
-            id: 'featured1',
-            name: 'Sushi Pack',
-            price: 12.99,
-            time: '15 min',
-            rating: 4.8,
-            discount: '20% OFF',
-            subtitle: 'Special sushi selection',
-            serves: 'Serves 1-2',
-            image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400&h=400&fit=crop',
-            description: 'A curated selection of premium seafood, including fresh Atlantic salmon nigiri, spicy tuna rolls, and delicate cucumber maki. Served with traditional pickled ginger, wasabi, and lower-sodium soy sauce. Perfect for spice lovers with a kick of wasabi',
-            dietType: 'non-veg'
-        },
-        {
-            id: 'featured2',
-            name: 'Salmon Platter',
-            price: 15.99,
-            time: '15 min',
-            rating: 4.8,
-            discount: '20% OFF',
-            subtitle: 'Premium grilled salmon',
-            serves: 'Serves 1',
-            image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=400&h=400&fit=crop',
-            description: 'Heart-healthy Atlantic salmon fillet, seasoned with a blend of Mediterranean herbs and lemon zest. Grilled over an open flame for a smoky finish and served atop a bed of sautéed garden vegetables.',
-            dietType: 'non-veg'
-        },
-        {
-            id: 'featured3',
-            name: 'California Rolls',
-            price: 10.99,
-            time: '12 min',
-            rating: 4.7,
-            discount: '20% OFF',
-            subtitle: 'Classic rolls',
-            serves: 'Serves 1',
-            image: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=400&fit=crop',
-            description: 'The classic fan-favorite! Authentic crab stick, creamy Haas avocado, and crisp cucumber wrapped in premium vinegared sushi rice and toasted nori. Topped with a sprinkle of toasted sesame seeds.',
-            dietType: 'non-veg'
-        },
-    ];
 
     const toggleFavorite = (itemId, e) => {
         if (e) e.stopPropagation();
@@ -139,9 +112,12 @@ const DiscountsPage = () => {
             </header>
 
             <div className="discounts-content">
-                <div className="menu-items">
-                    {featuredOffers.map(item => (
-                        <div key={item.id} className="menu-item" onClick={() => handleItemClick(item)}>
+                {loadingItems ? (
+                    <PageSkeleton />
+                ) : (
+                    <div className="menu-items">
+                        {discountItems.map(item => (
+                            <div key={item.id} className="menu-item" onClick={() => handleItemClick(item)}>
                             <div className="menu-image-container">
                                 <div className="image-scroll-wrapper">
                                     <div className="image-bg-wrapper">
@@ -222,6 +198,7 @@ const DiscountsPage = () => {
                         </div>
                     ))}
                 </div>
+                )}
             </div>
 
             {/* Dish Details Modal - Shared from Home */}
