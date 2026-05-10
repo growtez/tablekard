@@ -26,7 +26,7 @@ import { Badge } from '../components/ui/Badge';
 
 const STATUS_VARIANTS = { paid: 'success', pending: 'warning', failed: 'error' };
 
-export default function SubscriptionDetail() {
+export default function SubscriptionDetail({ setHeaderData }) {
     const { id } = useParams();
     const navigate = useNavigate();
     const [data, setData] = useState(null);
@@ -58,7 +58,20 @@ export default function SubscriptionDetail() {
 
     useEffect(() => {
         fetchDetail();
+        return () => setHeaderData && setHeaderData(null);
     }, [id]);
+
+    useEffect(() => {
+        if (data && setHeaderData) {
+            setHeaderData({
+                id: data.id,
+                name: "Transaction Detail",
+                status: data.status,
+                backPath: '/subscriptions',
+                backTitle: 'Back to Subscriptions'
+            });
+        }
+    }, [data, setHeaderData]);
 
     const formatDate = (d, time = false) => {
         if (!d) return '—';
@@ -98,51 +111,26 @@ export default function SubscriptionDetail() {
 
     return (
         <div className="animate-fade-in" style={{ maxWidth: '1000px', margin: '0 auto', paddingBottom: '3rem' }}>
-            {/* Header / Context Area */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2.5rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                    <button 
-                        onClick={() => navigate('/subscriptions')} 
-                        style={{ 
-                            background: 'var(--surface-hover)', 
-                            border: '1px solid var(--border-color)', 
-                            color: 'var(--text-main)',
-                            width: '44px', 
-                            height: '44px', 
-                            borderRadius: '12px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            transition: 'var(--transition)'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--accent-primary-glow)'}
-                        onMouseLeave={(e) => e.currentTarget.style.background = 'var(--surface-hover)'}
-                    >
-                        <ChevronLeft size={20} />
-                    </button>
-                    <div style={{ 
-                        width: '64px', 
-                        height: '64px', 
-                        borderRadius: '20px', 
-                        background: 'var(--accent-primary-glow)', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center' 
-                    }}>
-                        <Receipt size={32} color="var(--accent-primary)" />
-                    </div>
-                    <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>Transaction Details</h1>
-                            <Badge variant={STATUS_VARIANTS[data.status]} style={{ padding: '4px 12px' }}>
-                                {data.status?.toUpperCase()}
-                            </Badge>
-                        </div>
-                        <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                            System ID: <code style={{ color: 'var(--accent-primary)' }}>{data.id}</code>
-                        </p>
-                    </div>
+            {/* Context Area (Non-duplicated header) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '2.5rem' }}>
+                <div style={{ 
+                    width: '56px', 
+                    height: '56px', 
+                    borderRadius: '16px', 
+                    background: 'var(--accent-primary-glow)', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center' 
+                }}>
+                    <Receipt size={28} color="var(--accent-primary)" />
+                </div>
+                <div>
+                    <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>
+                        ₹{Number(data.amount).toLocaleString()} {data.currency}
+                    </h2>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                        Settled via Razorpay • {formatDate(data.created_at, true)}
+                    </p>
                 </div>
             </div>
 

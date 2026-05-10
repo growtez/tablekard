@@ -305,7 +305,7 @@ export default function App() {
               <Route path="/users/:id" element={<UserDetail setHeaderData={setHeaderData} setSyncAction={setSyncAction} />} />
               {/* Billing */}
               <Route path="/subscriptions" element={<Subscriptions setSyncAction={setSyncAction} />} />
-          <Route path="/subscriptions/:id" element={<SubscriptionDetail />} />
+          <Route path="/subscriptions/:id" element={<SubscriptionDetail setHeaderData={setHeaderData} />} />
               <Route path="/billing/transactions" element={<Transactions setSyncAction={setSyncAction} />} />
               <Route path="/billing/plans" element={<Plans />} />
               {/* Support */}
