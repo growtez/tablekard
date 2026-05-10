@@ -28,7 +28,6 @@ const QRCodePage: React.FC = () => {
                 qrSvgElementId: `qr-svg-${tableId}`,
                 restaurantName: activeRestaurantName,
                 tableNumber,
-                qrUrl: buildQrUrl(tableId, tableNumber),
                 qrSize
             });
 
@@ -48,7 +47,6 @@ const QRCodePage: React.FC = () => {
                 qrSvgElementId: `qr-svg-${tableId}`,
                 restaurantName: activeRestaurantName,
                 tableNumber,
-                qrUrl: buildQrUrl(tableId, tableNumber),
                 qrSize: 300 // High resolution for PDF
             });
 
