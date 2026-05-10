@@ -501,14 +501,14 @@ const normalizeHomeItem = (m, discountLabel = null) => ({
     modelUrl: m.model_url || null,
     // discount label shown on the carousel badge
     discount: discountLabel
-        || (m.discount_percentage > 0 ? `${m.discount_percentage}% OFF` : null),
+        || (m.discount_price ? `${Math.round(((m.price - m.discount_price) / m.price) * 100)}% OFF` : null),
     timer: null,
 });
 
 /**
  * Fetch items for the Discounts carousel on the home page.
  * Priority:
- *   1. Items where discount_percentage > 0 (if schema has that column)
+ *   1. Items where discount_price is present
  *   2. Top-selling items by total order count (fallback)
  *   3. First N available items (last resort)
  */
@@ -520,8 +520,7 @@ export const getDiscountItemsForHome = async (restaurantId, limit = 5) => {
             .select('*, menu_item_images(image_url, sort_order)')
             .eq('restaurant_id', restaurantId)
             .eq('is_available', true)
-            .gt('discount_percentage', 0)
-            .order('discount_percentage', { ascending: false })
+            .not('discount_price', 'is', null)
             .limit(limit);
 
         if (!discErr && discounted && discounted.length > 0) {
