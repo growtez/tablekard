@@ -5,7 +5,7 @@ import './home.css';
 import Hamburger from '../components/hamburger';
 import { useRestaurant } from '../context/RestaurantContext';
 import { useAuth } from '../context/AuthContext';
-import { getRecentOrderedItems } from '../services/supabaseService';
+import { getRecentOrderedItems, getRecommendedItems, getDiscountItemsForHome } from '../services/supabaseService';
 import PageSkeleton from '../components/PageSkeleton';
 import { showHomeLoader, hideHomeLoader } from '../utils/loader';
 
@@ -45,6 +45,9 @@ const HomePage = () => {
     const [modalQuantity, setModalQuantity] = useState(0);
     const [recentOrders, setRecentOrders] = useState([]);
     const [loadingRecent, setLoadingRecent] = useState(true);
+    const [menuItems, setMenuItems] = useState([]);
+    const [discountItems, setDiscountItems] = useState([]);
+    const [loadingItems, setLoadingItems] = useState(true);
 
     const handleScroll = () => {
         if (scrollRef.current) {
@@ -133,6 +136,22 @@ const HomePage = () => {
         }
     }, [user?.id]);
 
+    // Fetch dynamic menu items and discount carousel
+    useEffect(() => {
+        if (!restaurant?.id) return;
+        setLoadingItems(true);
+        Promise.all([
+            getRecommendedItems(user?.id, restaurant.id),
+            getDiscountItemsForHome(restaurant.id, 5),
+        ])
+            .then(([recommended, discounts]) => {
+                setMenuItems(recommended || []);
+                setDiscountItems(discounts || []);
+            })
+            .catch(err => console.error('Home item fetch failed:', err))
+            .finally(() => setLoadingItems(false));
+    }, [restaurant?.id, user?.id]);
+
     if (loadingRecent) {
         // If it's the first load, the showHomeLoader covers the screen, so returning null is fine.
         // On subsequent loads, we show the skeleton.
@@ -203,123 +222,30 @@ const HomePage = () => {
         { id: 'budget', label: 'Under ₹200' }
     ];
 
-    const featuredOffers = [
-        {
-            id: 'featured1',
-            name: 'Sushi Pack',
-            price: 12.99,
-            time: '15 min',
-            rating: 4.8,
-            discount: 'Buy 1, Get 1 Free',
-            timer: 'Ends in 02:45',
-            subtitle: 'Special sushi selection',
-            serves: 'Serves 1-2',
-            image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400&h=400&fit=crop',
-            description: 'A curated selection of premium seafood, including fresh Atlantic salmon nigiri, spicy tuna rolls, and delicate cucumber maki. Served with traditional pickled ginger, wasabi, and lower-sodium soy sauce. Perfect for spice lovers with a kick of wasabi',
-            dietType: 'non-veg'
-        },
-        {
-            id: 'featured2',
-            name: 'Salmon Platter',
-            price: 15.99,
-            time: '15 min',
-            rating: 4.8,
-            discount: '20% OFF',
-            timer: 'Ends in 05:12',
-            subtitle: 'Premium grilled salmon',
-            serves: 'Serves 1',
-            image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=400&h=400&fit=crop',
-            description: 'Heart-healthy Atlantic salmon fillet, seasoned with a blend of Mediterranean herbs and lemon zest. Grilled over an open flame for a smoky finish and served atop a bed of sautéed garden vegetables.',
-            dietType: 'non-veg'
-        },
-        {
-            id: 'featured3',
-            name: 'California Rolls',
-            price: 10.99,
-            time: '12 min',
-            rating: 4.7,
-            discount: '20% OFF',
-            timer: 'Ends in 12:30',
-            subtitle: 'Classic rolls',
-            serves: 'Serves 1',
-            image: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=400&fit=crop',
-            description: 'The classic fan-favorite! Authentic crab stick, creamy Haas avocado, and crisp cucumber wrapped in premium vinegared sushi rice and toasted nori. Topped with a sprinkle of toasted sesame seeds.',
-            dietType: 'non-veg'
-        },
-    ];
-
-    const popularItems = [
-        {
-            id: 'popular1',
-            name: 'Margherita',
-            price: 168,
-            time: '25min',
-            rating: 4.9,
-            serves: 'Serves 2',
-            desc: 'cheese layers 🧀',
-            image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300&h=300&fit=crop',
-            description: 'A timeless Italian masterpiece. Hand-stretched sourdough base topped with rich San Marzano tomato sauce, fresh buffalo mozzarella, and aromatic basil leaves. Simple yet profound flavor.',
-            dietType: 'veg'
-        },
-        {
-            id: 'popular2',
-            name: 'Tikka Masala',
-            price: 198,
-            time: '30min',
-            rating: 4.8,
-            serves: 'Serves 1',
-            desc: 'spicy layers 🌶️',
-            image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=300&h=300&fit=crop',
-            description: 'Experience a burst of authentic Indian spices. Succulent chicken pieces marinated in yogurt and spices, simmered in a creamy, mildly spicy tomato-based gravy. Medium spice level.',
-            dietType: 'non-veg'
-        },
-        {
-            id: 'popular3',
-            name: 'Lava Cake',
-            price: 568,
-            time: '15min',
-            rating: 4.9,
-            serves: 'Serves 1',
-            desc: 'chocolate 🍫',
-            image: 'https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=300&h=300&fit=crop',
-            description: 'The ultimate dessert indulgence. A warm dark chocolate cake with a soft, gooey molten chocolate center that flows out with every bite. Served with a light dusting of powdered sugar.',
-            dietType: 'veg'
-        },
-        {
-            id: 'popular4',
-            name: 'Caesar Salad',
-            price: 120,
-            time: '10min',
-            rating: 4.7,
-            serves: 'Serves 1',
-            desc: 'fresh greens 🥗',
-            image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=300&h=300&fit=crop',
-            description: 'Fresh, crisp heads of romaine lettuce tossed in our signature creamy Caesar dressing. Loaded with herb-infused croutons and generous shavings of aged Parmesan cheese.',
-            dietType: 'veg'
-        },
-    ];
+    // All dynamic — no hardcoded featuredOffers or popularItems
 
     // Function to get filtered items based on active filter
     const getFilteredItems = () => {
+        if (loadingItems) return [];
         switch (activeFilter) {
             case 'popular':
-                // Sort by rating (highest first)
-                return [...popularItems].sort((a, b) => b.rating - a.rating);
+                return menuItems; // already ranked by recommendation engine
             case 'all':
-                // Most selling - show all items (simulated)
-                return popularItems;
+                return [...menuItems].sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating));
             case 'rated':
-                // Sort by rating (highest first)
-                return [...popularItems].sort((a, b) => b.rating - a.rating);
+                return [...menuItems].sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating));
             case 'budget':
-                // Filter items under ₹200
-                return popularItems.filter(item => item.price < 200);
+                return menuItems.filter(item => item.price < 200);
             default:
-                return popularItems;
+                return menuItems;
         }
     };
 
     const filteredItems = getFilteredItems();
+
+    // Label for discounts section — reflect whether items are real discounts or top-sellers
+    const hasRealDiscounts = discountItems.some(d => d.discount && d.discount !== 'Top Seller' && d.discount !== 'Featured');
+    const discountSectionLabel = hasRealDiscounts ? 'Discounts for you' : 'Top sellers';
 
 
     const cartTotal = cart.reduce((total, item) => total + item.quantity, 0);
@@ -430,63 +356,67 @@ const HomePage = () => {
             </section>
 
             {/* Discounts Section */}
-            <section className="section">
-                <div className="section-header">
-                    <h2 className="section-title">
-                        Discounts for you
-                    </h2>
-                    <NavLink to="/discounts" className="view-all-link">
-                        View all
-                        <span className="arrow-square">→</span>
-                    </NavLink>
-                </div>
-                <div className="discounts-container">
-                    <div
-                        className="discounts-scroll"
-                        ref={scrollRef}
-                        onScroll={handleScroll}
-                    >
-                        {featuredOffers.map(offer => (
-                            <div key={offer.id} className="discount-card" onClick={() => handleItemClick(offer)}>
-                                <div className="discount-image-container">
-                                    <img src={offer.image} alt={offer.name} />
-                                    <div className="discount-badge">
-                                        <span className="discount-badge-text">{offer.discount}</span>
-                                    </div>
-                                    {offer.timer && (
-                                        <div className="discount-timer">
-                                            <Timer size={12} className="discount-timer-icon" />
-                                            <span className="discount-timer-text">{offer.timer}</span>
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="discount-info">
-                                    <h3 className="discount-name">{offer.name}</h3>
-                                    <div className="discount-meta-row">
-                                        <div className="discount-time">
-                                            <Clock size={12} color="#666666" />
-                                            <span>{offer.time}</span>
-                                        </div>
-                                        <div className="discount-rating">
-                                            <Star size={12} fill="#8B3A1E" color="#8B3A1E" />
-                                            <span>{offer.rating}</span>
-                                        </div>
-                                    </div>
-                                    <div className="discount-price">₹{offer.price}</div>
-                                </div>
-                            </div>
-                        ))}
+            {discountItems.length > 0 && (
+                <section className="section">
+                    <div className="section-header">
+                        <h2 className="section-title">
+                            {discountSectionLabel}
+                        </h2>
+                        <NavLink to="/discounts" className="view-all-link">
+                            View all
+                            <span className="arrow-square">→</span>
+                        </NavLink>
                     </div>
-                    <div className="pagination-dots">
-                        {featuredOffers.map((_, index) => (
-                            <span
-                                key={index}
-                                className={`dot ${activeOfferIndex === index ? 'active' : ''}`}
-                            ></span>
-                        ))}
+                    <div className="discounts-container">
+                        <div
+                            className="discounts-scroll"
+                            ref={scrollRef}
+                            onScroll={handleScroll}
+                        >
+                            {discountItems.map(offer => (
+                                <div key={offer.id} className="discount-card" onClick={() => handleItemClick(offer)}>
+                                    <div className="discount-image-container">
+                                        <img src={offer.image} alt={offer.name} />
+                                        {offer.discount && (
+                                            <div className="discount-badge">
+                                                <span className="discount-badge-text">{offer.discount}</span>
+                                            </div>
+                                        )}
+                                        {offer.timer && (
+                                            <div className="discount-timer">
+                                                <Timer size={12} className="discount-timer-icon" />
+                                                <span className="discount-timer-text">{offer.timer}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="discount-info">
+                                        <h3 className="discount-name">{offer.name}</h3>
+                                        <div className="discount-meta-row">
+                                            <div className="discount-time">
+                                                <Clock size={12} color="#666666" />
+                                                <span>{offer.time}</span>
+                                            </div>
+                                            <div className="discount-rating">
+                                                <Star size={12} fill="#8B3A1E" color="#8B3A1E" />
+                                                <span>{offer.rating}</span>
+                                            </div>
+                                        </div>
+                                        <div className="discount-price">₹{offer.price}</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="pagination-dots">
+                            {discountItems.map((_, index) => (
+                                <span
+                                    key={index}
+                                    className={`dot ${activeOfferIndex === index ? 'active' : ''}`}
+                                ></span>
+                            ))}
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
+            )}
 
             {/* Recent Orders */}
             <section className="section">

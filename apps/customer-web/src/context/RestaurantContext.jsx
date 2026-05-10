@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useLocation, matchPath } from 'react-router-dom';
+import { useLocation, matchPath, useNavigate } from 'react-router-dom';
 import { getRestaurantById, getTableById, getTableByNumber, getRecommendedItems } from '../services/supabaseService';
 import { supabase } from '@restaurant-saas/supabase';
 
@@ -11,6 +11,7 @@ const SESSION_KEY_TABLE      = 'tablekard_table_id';
 
 export function RestaurantProvider({ children }) {
     const location = useLocation();
+    const navigate = useNavigate();
 
     // Parse IDs from URL path or query-string
     const match          = matchPath('/order/:restaurantId/:tableId', location.pathname);
@@ -53,17 +54,27 @@ export function RestaurantProvider({ children }) {
         return () => subscription.unsubscribe();
     }, []);
 
-    // Persist new URL params to sessionStorage
+    // Persist new URL params to sessionStorage and clean URL
     useEffect(() => {
+        let shouldCleanUrl = false;
+        
         if (urlRestaurantId) {
             setRestaurantId(urlRestaurantId);
             sessionStorage.setItem(SESSION_KEY_RESTAURANT, urlRestaurantId);
+            shouldCleanUrl = true;
         }
         if (urlTableId) {
             setTableId(urlTableId);
             sessionStorage.setItem(SESSION_KEY_TABLE, urlTableId);
+            shouldCleanUrl = true;
         }
-    }, [urlRestaurantId, urlTableId]);
+
+        if (shouldCleanUrl) {
+            // If they came through the specific QR path, drop them on the clean Home page or Menu page.
+            // Using '/' provides the best new welcome experience.
+            navigate('/', { replace: true });
+        }
+    }, [urlRestaurantId, urlTableId, navigate]);
 
     // Fetch restaurant info whenever restaurantId changes
     useEffect(() => {

@@ -485,3 +485,96 @@ export const getRecommendedItems = async (userId, restaurantId) => {
         return [];
     }
 };
+
+// ── Helper shared by home page functions ─────────────────────────────────────
+const normalizeHomeItem = (m, discountLabel = null) => ({
+    id: m.id,
+    name: m.name,
+    price: m.price,
+    time: m.preparation_time ? `${m.preparation_time}min` : '15min',
+    rating: (4.5 + Math.random() * 0.4).toFixed(1),
+    serves: `Serves ${m.serves || 1}`,
+    image: m.menu_item_images?.[0]?.image_url
+        || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
+    description: m.long_description || m.short_description || '',
+    dietType: m.is_veg ? 'veg' : 'non-veg',
+    modelUrl: m.model_url || null,
+    // discount label shown on the carousel badge
+    discount: discountLabel
+        || (m.discount_percentage > 0 ? `${m.discount_percentage}% OFF` : null),
+    timer: null,
+});
+
+/**
+ * Fetch items for the Discounts carousel on the home page.
+ * Priority:
+ *   1. Items where discount_percentage > 0 (if schema has that column)
+ *   2. Top-selling items by total order count (fallback)
+ *   3. First N available items (last resort)
+ */
+export const getDiscountItemsForHome = async (restaurantId, limit = 5) => {
+    try {
+        // 1. Try items with an explicit discount
+        const { data: discounted, error: discErr } = await supabase
+            .from('menu_items')
+            .select('*, menu_item_images(image_url, sort_order)')
+            .eq('restaurant_id', restaurantId)
+            .eq('is_available', true)
+            .gt('discount_percentage', 0)
+            .order('discount_percentage', { ascending: false })
+            .limit(limit);
+
+        if (!discErr && discounted && discounted.length > 0) {
+            return discounted.map(m => normalizeHomeItem(m));
+        }
+    } catch (_) {
+        // Column may not exist — silently fall through
+    }
+
+    try {
+        // 2. Fall back to top-selling items for this restaurant
+        const { data: orderData } = await supabase
+            .from('order_items')
+            .select(`
+                menu_item_id,
+                orders!inner(restaurant_id)
+            `)
+            .eq('orders.restaurant_id', restaurantId)
+            .not('menu_item_id', 'is', null);
+
+        const counts = {};
+        (orderData || []).forEach(({ menu_item_id }) => {
+            counts[menu_item_id] = (counts[menu_item_id] || 0) + 1;
+        });
+
+        const topIds = Object.entries(counts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, limit)
+            .map(([id]) => id);
+
+        if (topIds.length > 0) {
+            const { data: topItems } = await supabase
+                .from('menu_items')
+                .select('*, menu_item_images(image_url, sort_order)')
+                .in('id', topIds)
+                .eq('restaurant_id', restaurantId)
+                .eq('is_available', true);
+
+            const sorted = topIds
+                .map(id => (topItems || []).find(m => m.id === id))
+                .filter(Boolean);
+
+            return sorted.map(m => normalizeHomeItem(m, 'Top Seller'));
+        }
+    } catch (_) { /* ignore */ }
+
+    // 3. Last resort: just return first N available items
+    const { data: anyItems } = await supabase
+        .from('menu_items')
+        .select('*, menu_item_images(image_url, sort_order)')
+        .eq('restaurant_id', restaurantId)
+        .eq('is_available', true)
+        .limit(limit);
+
+    return (anyItems || []).map(m => normalizeHomeItem(m, 'Featured'));
+};
