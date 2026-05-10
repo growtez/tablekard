@@ -146,10 +146,17 @@ const MenuPage = () => {
     setShowItemModal(true);
   };
 
-  const filteredItems = (menuItems[selectedCategory] || []).filter(item =>
-    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Safely determine the active category
+  const actualCategory = categories.includes(selectedCategory) 
+    ? selectedCategory 
+    : (categories.length > 0 ? categories[0] : 'Starters');
+
+  const filteredItems = (menuItems[actualCategory] || []).filter(item => {
+    const searchLower = searchTerm.toLowerCase();
+    const nameMatch = item.name?.toLowerCase().includes(searchLower);
+    const descMatch = item.description?.toLowerCase().includes(searchLower);
+    return nameMatch || descMatch;
+  });
 
   return (
     <div className={`menu-container${cartTotal > 0 ? ' has-cart' : ''}`}>
@@ -293,7 +300,7 @@ const MenuPage = () => {
           {categories.map(category => (
             <button
               key={category}
-              className={`category-btn ${selectedCategory === category ? 'active' : ''}`}
+              className={`category-btn ${actualCategory === category ? 'active' : ''}`}
               onClick={() => setSelectedCategory(category)}
             >
               {category}
