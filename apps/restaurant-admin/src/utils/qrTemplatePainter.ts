@@ -20,7 +20,7 @@ interface QrTemplateOptions {
     qrSvgElementId: string;   // id of the <svg> tag already in the DOM
     restaurantName: string;
     tableNumber: number;
-    qrUrl: string;
+    qrUrl?: string;            // encoded in the QR SVG itself; kept for API compat
     qrSize?: number;           // logical QR pixel size (default 200)
 }
 
@@ -30,7 +30,6 @@ export async function paintQrTemplate(opts: QrTemplateOptions): Promise<HTMLCanv
         qrSvgElementId,
         restaurantName,
         tableNumber,
-        qrUrl,
         qrSize = 200,
     } = opts;
 
@@ -50,8 +49,6 @@ export async function paintQrTemplate(opts: QrTemplateOptions): Promise<HTMLCanv
     // ── colours & fonts ──────────────────────────────────────────────────────
     const DARK   = '#61270eff';
     const ACCENT = '#2D6A4F';
-    const TEXT   = '#2D3748';
-    const MUTED  = '#718096';
     const WHITE  = '#FFFFFF';
     const BORDER = '#E2E8F0';
 
