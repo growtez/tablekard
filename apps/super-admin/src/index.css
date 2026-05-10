@@ -1,18 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --bg-color: hsl(240, 10%, 3%);
-  --surface-color: hsl(240, 10%, 7%);
-  --surface-hover: hsl(240, 10%, 12%);
-  --accent-primary: hsl(155, 100%, 50%);
-  --accent-primary-glow: hsla(155, 100%, 50%, 0.15);
-  --accent-secondary: hsl(260, 100%, 70%);
-  --accent-secondary-glow: hsla(260, 100%, 70%, 0.15);
-  --text-main: hsl(0, 0%, 98%);
-  --text-muted: hsl(240, 5%, 65%);
-  --border-color: hsla(240, 5%, 20%, 0.5);
-  --glass-bg: hsla(0, 0%, 100%, 0.03);
-  --glass-border: hsla(0, 0%, 100%, 0.08);
+  --bg-color: hsl(150, 25%, 5%);
+  --surface-color: hsl(150, 25%, 9%);
+  --surface-hover: hsl(150, 25%, 13%);
+  --accent-primary: hsl(140, 100%, 50%);
+  --accent-primary-glow: hsla(140, 100%, 50%, 0.3);
+  --accent-secondary: hsl(170, 100%, 45%);
+  --accent-secondary-glow: hsla(170, 100%, 45%, 0.15);
+  --text-main: hsl(150, 20%, 96%);
+  --text-muted: hsl(150, 15%, 70%);
+  --border-color: hsla(140, 40%, 35%, 0.4);
+  --glass-bg: hsla(140, 20%, 100%, 0.06);
+  --glass-border: hsla(140, 20%, 100%, 0.12);
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 20px;
@@ -39,8 +39,8 @@ body {
   min-height: 100vh;
   background-color: var(--bg-color);
   background-image:
-    radial-gradient(circle at 0% 0%, hsla(155, 100%, 50%, 0.03) 0%, transparent 50%),
-    radial-gradient(circle at 100% 100%, hsla(260, 100%, 70%, 0.03) 0%, transparent 50%);
+    radial-gradient(circle at 0% 0%, hsla(140, 100%, 50%, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 100% 100%, hsla(170, 100%, 45%, 0.1) 0%, transparent 50%);
   overflow-x: hidden;
 }
 
