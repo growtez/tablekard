@@ -5,7 +5,7 @@ import { Download, RefreshCw, QrCode, Table2, CheckCircle, AlertCircle } from 'l
 import Sidebar from '../components/sidebar';
 import { useAuth } from '../context/AuthContext';
 import { useRestaurantTables } from '../hooks/useSupabaseQuery';
-import { paintQrTemplate } from '../utils/qrTemplatePainter';
+import { paintQrTemplate, CARD_MM_W, CARD_MM_H } from '../utils/qrTemplatePainter';
 import type { RestaurantTable } from '../services/supabaseService';
 import './qrcode.css';
 
@@ -55,14 +55,13 @@ const QRCodePage: React.FC = () => {
 
             const imgData = canvas.toDataURL('image/png', 1.0);
 
-            // Dimensions from qrTemplatePainter (W: 420, H: 540)
             const pdf = new jsPDF({
                 orientation: 'portrait',
-                unit: 'px',
-                format: [420, 540]
+                unit: 'mm',
+                format: [CARD_MM_W, CARD_MM_H]
             });
 
-            pdf.addImage(imgData, 'PNG', 0, 0, 420, 540);
+            pdf.addImage(imgData, 'PNG', 0, 0, CARD_MM_W, CARD_MM_H);
             pdf.save(`${activeRestaurantName.replace(/\s+/g, '-')}-table-${tableNumber}.pdf`);
         } catch (err) {
             console.error('Failed to generate PDF:', err);

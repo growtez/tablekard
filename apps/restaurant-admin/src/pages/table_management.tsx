@@ -25,7 +25,7 @@ import {
 } from '../services/supabaseService';
 import type { RestaurantTable } from '../services/supabaseService';
 import { useRestaurantTables, useInvalidateQueries } from '../hooks/useSupabaseQuery';
-import { paintQrTemplate } from '../utils/qrTemplatePainter';
+import { paintQrTemplate, CARD_MM_W, CARD_MM_H } from '../utils/qrTemplatePainter';
 
 import './table_management.css';
 
@@ -102,16 +102,12 @@ const TableManagementPage: React.FC = () => {
                 qrSize: 180,
             });
             const imgData = canvas.toDataURL('image/png', 1.0);
-            const cardW = canvas.width / 3;
-            const cardH = canvas.height / 3;
-            const mmW = cardW * 0.264583;
-            const mmH = cardH * 0.264583;
             const pdf = new jsPDF({
-                orientation: cardH >= cardW ? 'portrait' : 'landscape',
+                orientation: 'portrait',
                 unit: 'mm',
-                format: [mmW, mmH]
+                format: [CARD_MM_W, CARD_MM_H]
             });
-            pdf.addImage(imgData, 'PNG', 0, 0, mmW, mmH);
+            pdf.addImage(imgData, 'PNG', 0, 0, CARD_MM_W, CARD_MM_H);
             pdf.save(`${restaurantName.replace(/\s+/g, '-')}-table-${tableNumber}.pdf`);
         } catch (err) {
             console.error('PDF generation failed:', err);
