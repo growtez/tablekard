@@ -255,7 +255,7 @@ export default function Dashboard({ setSyncAction }) {
                         ) : recentSubscriptions.map(sub => (
                             <div 
                                 key={sub.id} 
-                                onClick={() => navigate('/subscriptions')}
+                                onClick={() => navigate(`/subscriptions/${sub.id}`)}
                                 className="clickable-stat"
                                 style={{ display: 'flex', gap: '0.75rem', padding: '0.6rem', borderRadius: '10px', background: 'var(--surface-hover)', alignItems: 'center', cursor: 'pointer' }}
                             >

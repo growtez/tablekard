@@ -8,6 +8,7 @@ import Restaurants from './pages/Restaurants'
 import RestaurantDetail from './pages/RestaurantDetail'
 import UserDetail from './pages/UserDetail'
 import Subscriptions from './pages/Subscriptions'
+import SubscriptionDetail from './pages/SubscriptionDetail'
 import Transactions from './pages/billing/Transactions'
 import Plans from './pages/billing/Plans'
 // import Complaints from './pages/support/Complaints'
@@ -304,6 +305,7 @@ export default function App() {
               <Route path="/users/:id" element={<UserDetail setHeaderData={setHeaderData} setSyncAction={setSyncAction} />} />
               {/* Billing */}
               <Route path="/subscriptions" element={<Subscriptions setSyncAction={setSyncAction} />} />
+          <Route path="/subscriptions/:id" element={<SubscriptionDetail />} />
               <Route path="/billing/transactions" element={<Transactions setSyncAction={setSyncAction} />} />
               <Route path="/billing/plans" element={<Plans />} />
               {/* Support */}

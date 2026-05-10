@@ -10,22 +10,18 @@ import {
     ChevronRight,
     // Headphones,
     LogOut,
-    Menu
+    Menu,
+    FileText,
+    Layers
 } from 'lucide-react';
 
 const navItems = [
     { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/restaurants', icon: Store, label: 'Restaurants' },
     { path: '/users', icon: Users, label: 'Users' },
-    {
-        icon: CreditCard,
-        label: 'Billing',
-        subItems: [
-            { path: '/subscriptions', label: 'Subscriptions Overview' },
-            { path: '/billing/transactions', label: 'Transactions & Refunds' },
-            { path: '/billing/plans', label: 'Pricing Plans' },
-        ]
-    },
+    { path: '/subscriptions', icon: CreditCard, label: 'Subscriptions' },
+    { path: '/billing/transactions', icon: FileText, label: 'Transactions' },
+    { path: '/billing/plans', icon: Layers, label: 'Pricing Plans' },
     // {
     //     icon: Headphones,
     //     label: 'Support',
