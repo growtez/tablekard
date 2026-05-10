@@ -35,9 +35,9 @@ export async function paintQrTemplate(opts: QrTemplateOptions): Promise<HTMLCanv
     } = opts;
 
     // ── dimensions ──────────────────────────────────────────────────────────
-    const SCALE = 2;                        // retina / hi-dpi
+    const SCALE = 3;                        // higher resolution for better print
     const W = 420;
-    const H = 640;
+    const H = 540; // reduced height since instructions are removed
     const canvas = document.createElement('canvas');
     canvas.width  = W * SCALE;
     canvas.height = H * SCALE;
@@ -73,18 +73,18 @@ export async function paintQrTemplate(opts: QrTemplateOptions): Promise<HTMLCanv
 
     // ── restaurant name ───────────────────────────────────────────────────────
     ctx.fillStyle = DARK;
-    ctx.font = `700 24px "Segoe UI", Arial, sans-serif`;
+    ctx.font = `700 48px "Segoe UI", Arial, sans-serif`;
     ctx.textAlign = 'center';
-    const rName = clamp(restaurantName, 32);  // keep it on one line
+    const rName = clamp(restaurantName, 20);  // Larger font, fewer chars
     ctx.fillText(rName, W / 2, 130);
 
     // ── table badge ───────────────────────────────────────────────────────────
-    const badgeW = 140, badgeH = 34, badgeX = (W - badgeW) / 2, badgeY = 142;
-    roundRect(ctx, badgeX, badgeY, badgeW, badgeH, 17, ACCENT);
+    const badgeW = 220, badgeH = 50, badgeX = (W - badgeW) / 2, badgeY = 152;
+    roundRect(ctx, badgeX, badgeY, badgeW, badgeH, 25, ACCENT);
     ctx.fillStyle = WHITE;
-    ctx.font = `600 14px "Segoe UI", Arial, sans-serif`;
+    ctx.font = `700 28px "Segoe UI", Arial, sans-serif`;
     ctx.textAlign = 'center';
-    ctx.fillText(`TABLE  ${tableNumber}`, W / 2, badgeY + 22);
+    ctx.fillText(`TABLE  ${tableNumber}`, W / 2, badgeY + 36);
 
     // ── QR code ───────────────────────────────────────────────────────────────
     const qrPad = 12;
@@ -106,41 +106,30 @@ export async function paintQrTemplate(opts: QrTemplateOptions): Promise<HTMLCanv
 
     ctx.drawImage(qrImage, qrBoxX + qrPad, qrBoxY + qrPad, qrSize, qrSize);
 
-    // ── divider ───────────────────────────────────────────────────────────────
-    const divY = qrBoxY + qrBoxH + 24;
-    ctx.strokeStyle = BORDER;
-    ctx.lineWidth = 1;
-    ctx.setLineDash([4, 4]);
+    // ── Scan to Order Section ────────────────────────────────────────────────
+    const scanToOrderY = qrBoxY + qrBoxH + 60;
+    ctx.fillStyle = DARK;
+    ctx.font = `800 36px "Segoe UI", Arial, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('SCAN TO ORDER', W / 2, scanToOrderY);
+
+    // ── Arrow pointing up ─────────────────────────────────────────────────────
+    ctx.strokeStyle = DARK;
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    
+    const arrowX = W / 2;
+    const arrowY = scanToOrderY - 45;
+    const arrowLen = 20;
+
     ctx.beginPath();
-    ctx.moveTo(32, divY); ctx.lineTo(W - 32, divY);
+    ctx.moveTo(arrowX, arrowY);
+    ctx.lineTo(arrowX, arrowY + arrowLen);
+    ctx.moveTo(arrowX - 8, arrowY + 8);
+    ctx.lineTo(arrowX, arrowY);
+    ctx.lineTo(arrowX + 8, arrowY + 8);
     ctx.stroke();
-    ctx.setLineDash([]);
-
-    // ── instructions ──────────────────────────────────────────────────────────
-    ctx.fillStyle = TEXT;
-    ctx.font = `600 13px "Segoe UI", Arial, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.fillText('How to Order', W / 2, divY + 22);
-
-    const steps = [
-        '1.  Point your camera at the QR code above.',
-        '2.  The menu will open in your browser.',
-        '3.  Add items to cart and place your order.',
-        '4.  Sit back and enjoy!',
-    ];
-    ctx.font = `400 12px "Segoe UI", Arial, sans-serif`;
-    ctx.fillStyle = MUTED;
-    ctx.textAlign = 'left';
-    steps.forEach((step, i) => {
-        ctx.fillText(step, 40, divY + 46 + i * 22);
-    });
-
-    // ── URL caption ───────────────────────────────────────────────────────────
-    ctx.fillStyle = MUTED;
-    ctx.font = `400 10px "Courier New", monospace`;
-    ctx.textAlign = 'center';
-    const shortUrl = qrUrl.length > 52 ? qrUrl.slice(0, 50) + '…' : qrUrl;
-    ctx.fillText(shortUrl, W / 2, H - 30);
 
     // ── bottom border accent ──────────────────────────────────────────────────
     roundRectBottom(ctx, 0, H - 8, W, 8, 0, ACCENT);
