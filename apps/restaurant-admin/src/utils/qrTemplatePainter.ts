@@ -36,7 +36,8 @@ export async function paintQrTemplate(opts: QrTemplateOptions): Promise<HTMLCanv
     // ── dimensions ──────────────────────────────────────────────────────────
     const SCALE = 3;                        // higher resolution for better print
     const W = 420;
-    const H = 540; // reduced height since instructions are removed
+    // Height is dynamic so large qrSize values don't overflow the card
+    const H = 192 + (qrSize + 24) + 100;    // qrBoxY + qrBoxH + scan-to-order section
     const canvas = document.createElement('canvas');
     canvas.width  = W * SCALE;
     canvas.height = H * SCALE;

@@ -211,7 +211,7 @@
 /* QR Grid */
 .qr-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 24px;
 }
 
@@ -322,17 +322,19 @@
 .qr-download-btn {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 12px;
+    justify-content: center;
+    gap: 6px;
+    padding: 9px 8px;
     border: none;
     border-radius: 10px;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
     font-family: 'Poppins', sans-serif;
     flex: 1;
-    justify-content: center;
+    min-width: 0;
+    white-space: nowrap;
 }
 
 .qr-download-btn.primary {
