@@ -15,15 +15,15 @@ import {
 import {
     BarChart,
     Bar,
-    PieChart,
-    Pie,
-    Cell,
+    // PieChart,
+    // Pie,
+    // Cell,
     XAxis,
     YAxis,
     CartesianGrid,
     Tooltip,
     ResponsiveContainer,
-    Legend
+    // Legend
 } from 'recharts';
 import { Link } from 'react-router-dom';
 import { Badge } from '../components/ui/Badge';
@@ -122,29 +122,30 @@ export default function Dashboard({ setSyncAction }) {
             }
             setRevenueChartData(chartData);
 
-            // 3. Subscription pie — from subscription_payments table
-            const { data: subData } = await supabase
-                .from('subscription_payments')
-                .select('status');
-            if (subData && subData.length > 0) {
-                const counts = subData.reduce((acc, s) => { acc[s.status] = (acc[s.status] || 0) + 1; return acc; }, {});
-                setSubscriptionPieData(Object.entries(counts).map(([name, value]) => ({
-                    name: name.charAt(0).toUpperCase() + name.slice(1),
-                    value,
-                    color: PIE_COLORS[name] || '#6366f1'
-                })));
-            } else {
-                // Fallback: use restaurants subscription_status boolean
-                const { data: restData } = await supabase.from('restaurants').select('subscription_status, subscription_type');
-                if (restData) {
-                    const active = restData.filter(r => r.subscription_status).length;
-                    const trial = restData.filter(r => !r.subscription_status).length;
-                    setSubscriptionPieData([
-                        { name: 'Active (Paid)', value: active, color: '#10B981' },
-                        { name: 'Trial / Free', value: trial, color: '#3B82F6' },
-                    ].filter(d => d.value > 0));
-                }
-            }
+            // 3. Subscription Status Pie — Categorize from restaurants table
+            /* const { data: restSubData } = await supabase
+                .from('restaurants')
+                .select('subscription_status, subscription_end_at');
+
+            if (restSubData) {
+                const now = new Date();
+                const counts = restSubData.reduce((acc, r) => {
+                    if (r.subscription_status) {
+                        acc.active++;
+                    } else if (r.subscription_end_at && new Date(r.subscription_end_at) < now) {
+                        acc.expired++;
+                    } else {
+                        acc.trial++;
+                    }
+                    return acc;
+                }, { active: 0, expired: 0, trial: 0 });
+
+                setSubscriptionPieData([
+                    { name: 'Active', value: counts.active, color: '#10B981' },
+                    { name: 'Expired', value: counts.expired, color: '#EF4444' },
+                    { name: 'Trial / Free', value: counts.trial, color: '#3B82F6' },
+                ].filter(d => d.value > 0));
+            } */
 
             // 4. Recent subscriptions — latest 5 from subscription_payments join restaurants
             const { data: subsData } = await supabase
@@ -207,7 +208,7 @@ export default function Dashboard({ setSyncAction }) {
 
             {/* ── Charts Row ── */}
             <div className="dashboard-chart-grid">
-                <Card style={{ gridColumn: 'span 8', minWidth: 0 }}>
+                <Card style={{ gridColumn: 'span 12', minWidth: 0 }}>
                     <CardHeader>
                         <CardTitle>Subscription Revenue (Last 6 Months)</CardTitle>
                     </CardHeader>
@@ -224,7 +225,7 @@ export default function Dashboard({ setSyncAction }) {
                     </div>
                 </Card>
 
-                <Card style={{ gridColumn: 'span 4', minWidth: 0 }}>
+                {/* <Card style={{ gridColumn: 'span 4', minWidth: 0 }}>
                     <CardHeader>
                         <CardTitle>Subscription Status</CardTitle>
                     </CardHeader>
@@ -253,7 +254,7 @@ export default function Dashboard({ setSyncAction }) {
                             </div>
                         )}
                     </div>
-                </Card>
+                </Card> */}
             </div>
 
             {/* ── Recent Activity + System Health ── */}
