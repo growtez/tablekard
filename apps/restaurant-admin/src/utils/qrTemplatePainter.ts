@@ -86,7 +86,7 @@ export async function paintQrTemplate(opts: QrTemplateOptions): Promise<HTMLCanv
     ctx.fillText(clamp(restaurantName, 18), W / 2, 128);
 
     // ── table badge (y = 140 → 184, h = 44) ──────────────────────────────────
-    const badgeW = 200, badgeH = 44, badgeX = (W - badgeW) / 2, badgeY = 140;
+    const badgeW = 200, badgeH = 44, badgeX = (W - badgeW) / 2, badgeY = 158;
     roundRect(ctx, badgeX, badgeY, badgeW, badgeH, 22, ACCENT);
     ctx.fillStyle = WHITE;
     ctx.font = `700 24px "Segoe UI", Arial, sans-serif`;
@@ -120,7 +120,7 @@ export async function paintQrTemplate(opts: QrTemplateOptions): Promise<HTMLCanv
     ctx.lineCap     = 'round';
     ctx.lineJoin    = 'round';
     const arrowX = W / 2;
-    const arrowTip = textY - 42;
+    const arrowTip = textY - 54;
     ctx.beginPath();
     ctx.moveTo(arrowX, arrowTip);
     ctx.lineTo(arrowX, arrowTip + 18);
