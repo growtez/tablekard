@@ -831,6 +831,114 @@ export const getAnalyticsSummary = async (
     };
 };
 
+export interface RevenueBreakdown {
+    aov: number;
+    aovChange: number;
+    orderTypeSplit: { dineIn: number; takeaway: number };
+    paymentMethodSplit: { cash: number; online: number };
+    impactAnalysis: {
+        totalDiscount: number;
+        discountRate: number;
+        totalTax: number;
+        taxRate: number;
+    };
+}
+
+export const getAdvancedAnalytics = async (
+    restaurantId: string,
+    startDate: Date,
+    endDate: Date
+): Promise<RevenueBreakdown> => {
+    const startStr = startDate.toISOString();
+    const endStr = endDate.toISOString();
+
+    const { data: currentOrders, error } = await db
+        .from('orders')
+        .select('total, subtotal, discount, taxes, type, payment_method')
+        .eq('restaurant_id', restaurantId)
+        .eq('payment_status', 'paid')
+        .gte('created_at', startStr)
+        .lte('created_at', endStr);
+
+    if (error) throw error;
+
+    const diff = endDate.getTime() - startDate.getTime();
+    const prevStartDate = new Date(startDate.getTime() - diff - 86400000);
+    const prevEndDate = new Date(startDate.getTime() - 86400000);
+
+    const { data: prevOrders, error: prevError } = await db
+        .from('orders')
+        .select('total')
+        .eq('restaurant_id', restaurantId)
+        .eq('payment_status', 'paid')
+        .gte('created_at', prevStartDate.toISOString())
+        .lte('created_at', prevEndDate.toISOString());
+
+    if (prevError) throw prevError;
+
+    const currentTotalRevenue = (currentOrders || []).reduce((sum: number, order: any) => sum + Number(order.total), 0);
+    const currentTotalOrders = (currentOrders || []).length;
+    const currentAOV = currentTotalOrders > 0 ? currentTotalRevenue / currentTotalOrders : 0;
+
+    const prevTotalRevenue = (prevOrders || []).reduce((sum: number, order: any) => sum + Number(order.total), 0);
+    const prevTotalOrders = (prevOrders || []).length;
+    const prevAOV = prevTotalOrders > 0 ? prevTotalRevenue / prevTotalOrders : 0;
+
+    const aovChange = prevAOV === 0 ? (currentAOV > 0 ? 100 : 0) : ((currentAOV - prevAOV) / prevAOV) * 100;
+
+    let dineInOrders = 0;
+    let takeawayOrders = 0;
+    
+    let cashOrders = 0;
+    let onlineOrders = 0;
+
+    (currentOrders || []).forEach((order: any) => {
+        if (order.type === 'dine_in') {
+            dineInOrders++;
+        } else {
+            takeawayOrders++;
+        }
+
+        if (order.payment_method === 'cash') {
+            cashOrders++;
+        } else {
+            onlineOrders++;
+        }
+    });
+
+    const totalTypedOrders = dineInOrders + takeawayOrders;
+    const orderTypeSplit = {
+        dineIn: totalTypedOrders > 0 ? (dineInOrders / totalTypedOrders) * 100 : 0,
+        takeaway: totalTypedOrders > 0 ? (takeawayOrders / totalTypedOrders) * 100 : 0,
+    };
+
+    const totalPaidOrders = cashOrders + onlineOrders;
+    const paymentMethodSplit = {
+        cash: totalPaidOrders > 0 ? (cashOrders / totalPaidOrders) * 100 : 0,
+        online: totalPaidOrders > 0 ? (onlineOrders / totalPaidOrders) * 100 : 0,
+    };
+
+    const currentTotalSubtotal = (currentOrders || []).reduce((sum: number, order: any) => sum + Number(order.subtotal || 0), 0);
+    const currentTotalDiscount = (currentOrders || []).reduce((sum: number, order: any) => sum + Number(order.discount || 0), 0);
+    const currentTotalTax = (currentOrders || []).reduce((sum: number, order: any) => sum + Number(order.taxes || 0), 0);
+
+    const discountRate = currentTotalSubtotal > 0 ? (currentTotalDiscount / currentTotalSubtotal) * 100 : 0;
+    const taxRate = currentTotalRevenue > 0 ? (currentTotalTax / currentTotalRevenue) * 100 : 0;
+
+    return {
+        aov: currentAOV,
+        aovChange,
+        orderTypeSplit,
+        paymentMethodSplit,
+        impactAnalysis: {
+            totalDiscount: currentTotalDiscount,
+            discountRate,
+            totalTax: currentTotalTax,
+            taxRate
+        }
+    };
+};
+
 export const getActiveTablesCount = async (restaurantId: string): Promise<number> => {
     // Fetch count of tables where active is true for this restaurant
     const { count, error } = await db
@@ -1076,4 +1184,106 @@ export const getSubscriptionPayments = async (restaurantId: string): Promise<Sub
         endsAt: row.ends_at,
         createdAt: row.created_at
     }));
+};
+
+// ==========================================
+// BCG Matrix & Feedback
+// ==========================================
+
+export interface BCGItem {
+    id: string;
+    name: string;
+    sales: number;
+    revenue: number;
+    category: 'star' | 'cow' | 'gem' | 'dog';
+}
+
+export const getBCGMatrixData = async (restaurantId: string): Promise<BCGItem[]> => {
+    const { data, error } = await db
+        .from('menu_items')
+        .select('id, name, sales_count, price')
+        .eq('restaurant_id', restaurantId);
+
+    if (error) {
+        console.error("Error fetching BCG data:", error);
+        return [];
+    }
+
+    const items = (data || []).map((row: any) => {
+        const sales = row.sales_count || 0;
+        const price = Number(row.price) || 0;
+        return {
+            id: row.id,
+            name: row.name,
+            sales,
+            revenue: sales * price
+        };
+    });
+
+    if (items.length === 0) return [];
+
+    const totalSales = items.reduce((sum: number, item: any) => sum + item.sales, 0);
+    const totalRevenue = items.reduce((sum: number, item: any) => sum + item.revenue, 0);
+    
+    const avgSales = totalSales / items.length;
+    const avgRevenue = totalRevenue / items.length;
+
+    return items.map((item: any) => {
+        let category: 'star' | 'cow' | 'gem' | 'dog' = 'dog';
+        if (item.sales >= avgSales && item.revenue >= avgRevenue) category = 'star';
+        else if (item.sales >= avgSales && item.revenue < avgRevenue) category = 'cow';
+        else if (item.sales < avgSales && item.revenue >= avgRevenue) category = 'gem';
+        else category = 'dog';
+
+        return { ...item, category };
+    });
+};
+
+export interface FeedbackRecord {
+    id: string;
+    rating: number;
+    comment: string;
+    createdAt: string;
+    customerName: string;
+    orderItems: string;
+}
+
+export const getRecentFeedback = async (restaurantId: string): Promise<FeedbackRecord[]> => {
+    const { data, error } = await db
+        .from('feedback')
+        .select(`
+            id,
+            rating,
+            comment,
+            created_at,
+            orders!inner(
+                restaurant_id,
+                profiles(name),
+                order_items(name)
+            )
+        `)
+        .eq('orders.restaurant_id', restaurantId)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+    if (error) {
+        console.error("Error fetching feedback:", error);
+        return [];
+    }
+
+    return (data || []).map((row: any) => {
+        const order = Array.isArray(row.orders) ? row.orders[0] : row.orders;
+        const profile = order?.profiles ? (Array.isArray(order.profiles) ? order.profiles[0] : order.profiles) : null;
+        const items = order?.order_items || [];
+        const itemsStr = Array.isArray(items) ? items.map((i: any) => i.name).join(', ') : '';
+
+        return {
+            id: row.id,
+            rating: row.rating,
+            comment: row.comment || '',
+            createdAt: row.created_at,
+            customerName: profile?.name || 'Guest',
+            orderItems: itemsStr
+        };
+    });
 };
