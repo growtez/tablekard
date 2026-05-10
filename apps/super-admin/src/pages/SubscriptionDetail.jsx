@@ -101,6 +101,26 @@ export default function SubscriptionDetail() {
             {/* Header / Context Area */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                    <button 
+                        onClick={() => navigate('/subscriptions')} 
+                        style={{ 
+                            background: 'var(--surface-hover)', 
+                            border: '1px solid var(--border-color)', 
+                            color: 'var(--text-main)',
+                            width: '44px', 
+                            height: '44px', 
+                            borderRadius: '12px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            transition: 'var(--transition)'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--accent-primary-glow)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'var(--surface-hover)'}
+                    >
+                        <ChevronLeft size={20} />
+                    </button>
                     <div style={{ 
                         width: '64px', 
                         height: '64px', 

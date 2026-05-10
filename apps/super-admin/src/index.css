@@ -1,9 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --bg-color: hsl(150, 25%, 5%);
-  --surface-color: hsl(150, 25%, 9%);
-  --surface-hover: hsl(150, 25%, 13%);
+  --bg-color: hsl(150, 20%, 7%);
+  --surface-color: hsl(150, 20%, 11%);
+  --surface-hover: hsl(150, 20%, 15%);
   --accent-primary: hsl(140, 100%, 50%);
   --accent-primary-glow: hsla(140, 100%, 50%, 0.3);
   --accent-secondary: hsl(170, 100%, 45%);
@@ -39,8 +39,10 @@ body {
   min-height: 100vh;
   background-color: var(--bg-color);
   background-image:
-    radial-gradient(circle at 0% 0%, hsla(140, 100%, 50%, 0.15) 0%, transparent 50%),
-    radial-gradient(circle at 100% 100%, hsla(170, 100%, 45%, 0.1) 0%, transparent 50%);
+    radial-gradient(circle at 0% 0%, hsla(140, 100%, 50%, 0.12) 0%, transparent 40%),
+    radial-gradient(circle at 100% 0%, hsla(170, 100%, 45%, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 0% 100%, hsla(170, 100%, 45%, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 100% 100%, hsla(140, 100%, 50%, 0.12) 0%, transparent 40%);
   overflow-x: hidden;
 }
 
