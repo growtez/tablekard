@@ -93,7 +93,7 @@
 /* Statistics Cards (Key Metrics) */
 .metrics-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 24px;
     margin-bottom: 32px;
 }
@@ -367,47 +367,84 @@
     opacity: 1;
 }
 
-/* Category Sales */
-.category-list {
+/* Breakdown Card */
+.breakdown-card {
     display: flex;
     flex-direction: column;
-    gap: 20px;
 }
-
-.category-item {
+.breakdown-container {
+    display: flex;
+    flex: 1;
+    justify-content: space-around;
+    align-items: center;
+    padding: 16px 0;
+}
+.donut-section {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    align-items: center;
+    flex: 1;
 }
-
-.category-info {
-    display: flex;
-    justify-content: space-between;
-    font-size: 14px;
+.donut-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #4A5568;
+    margin: 0 0 20px 0;
     font-family: 'Poppins', sans-serif;
 }
-
-.category-name {
-    font-weight: 500;
-    color: #2D3748;
+.donut-content {
+    display: flex;
+    align-items: center;
+    gap: 24px;
 }
-
-.category-value {
-    color: #718096;
-    font-weight: 600;
+.donut-chart {
+    position: relative;
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
 }
-
-.category-progress-bg {
+.donut-hole {
+    width: 82px;
+    height: 82px;
+    background-color: #FFFFFF;
+    border-radius: 50%;
+    position: absolute;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+}
+.donut-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 2;
+}
+.donut-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-family: 'Poppins', sans-serif;
+    color: #4A5568;
+    white-space: nowrap;
+}
+.legend-color {
+    width: 10px;
     height: 10px;
-    background-color: #EDF2F7;
-    border-radius: 5px;
-    overflow: hidden;
+    border-radius: 50%;
 }
-
-.category-progress-fill {
-    height: 100%;
-    border-radius: 5px;
-    transition: width 1s ease-out;
+.breakdown-separator {
+    width: 1px;
+    height: 80%;
+    background-color: #E2E8F0;
+    margin: 0 16px;
 }
 
 /* Top Items Table */
@@ -648,4 +685,180 @@
     .metrics-grid {
         grid-template-columns: 1fr;
     }
+}
+
+/* BCG Matrix Enhancements */
+.bcg-wrapper {
+    position: relative;
+    padding: 10px 10px 30px 40px; /* space for axes */
+    margin-top: 10px;
+}
+
+.bcg-axis {
+    position: absolute;
+    font-size: 11px;
+    font-weight: 500;
+    color: #718096;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.bcg-y-axis {
+    top: 50%;
+    left: -10px;
+    transform: rotate(-90deg) translateY(-50%);
+    transform-origin: left center;
+}
+
+.bcg-x-axis {
+    bottom: 0px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.bcg-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    min-height: 400px;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #FFFFFF;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+}
+
+.bcg-quadrant {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.bcg-star { border-right: 1px dashed #CBD5E0; border-bottom: 1px dashed #CBD5E0; background-color: #F4FBFA; }
+.bcg-gem  { border-bottom: 1px dashed #CBD5E0; background-color: #FDF8F3; }
+.bcg-cow  { border-right: 1px dashed #CBD5E0; background-color: #F5F7FF; }
+.bcg-dog  { background-color: #FCF5F5; }
+
+.bcg-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+    color: #2D3748;
+    font-family: 'Poppins', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.bcg-desc {
+    font-size: 13px;
+    color: #718096;
+    font-weight: 500;
+}
+
+.bcg-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.bcg-pill {
+    padding: 6px 12px;
+    background-color: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #4A5568;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    transition: all 0.2s ease;
+}
+
+.bcg-pill:hover {
+    border-color: #CBD5E0;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+}
+
+.bcg-empty {
+    font-size: 12px;
+    color: #A0AEC0;
+    font-style: italic;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Recent Feedback */
+.feedback-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.feedback-list::-webkit-scrollbar {
+    width: 6px;
+}
+.feedback-list::-webkit-scrollbar-track {
+    background: #F7FAFC;
+    border-radius: 4px;
+}
+.feedback-list::-webkit-scrollbar-thumb {
+    background: #CBD5E0;
+    border-radius: 4px;
+}
+
+.feedback-item {
+    padding: 16px;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    background-color: #FFFFFF;
+}
+
+.feedback-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.feedback-rating {
+    font-size: 14px;
+    color: #ECC94B;
+}
+
+.feedback-name {
+    font-weight: 600;
+    color: #2D3748;
+    font-size: 14px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.feedback-date {
+    margin-left: auto;
+    font-size: 11px;
+    color: #A0AEC0;
+    font-family: 'Poppins', sans-serif;
+}
+
+.feedback-comment {
+    font-size: 13px;
+    color: #4A5568;
+    line-height: 1.5;
+    margin-bottom: 8px;
+    font-family: 'Poppins', sans-serif;
+    font-style: italic;
+}
+
+.feedback-items {
+    font-size: 11px;
+    color: #718096;
+    background-color: #F7FAFC;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-family: 'Poppins', sans-serif;
 }

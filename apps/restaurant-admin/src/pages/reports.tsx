@@ -10,12 +10,18 @@ import {
     getBestSellingDishes,
     getRevenueData,
     getPeakHourData,
+    getAdvancedAnalytics,
+    getBCGMatrixData,
+    getRecentFeedback
 } from '../services/supabaseService';
 import type {
     AnalyticsSummary,
     BestSellingDish,
     RevenueRecord,
-    PeakHourData
+    PeakHourData,
+    RevenueBreakdown,
+    BCGItem,
+    FeedbackRecord
 } from '../services/supabaseService';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -50,6 +56,9 @@ const Reports: React.FC = () => {
     const [peakData, setPeakData] = useState<PeakHourData>(
         Array.from({ length: 7 }, () => Array(24).fill(0))
     );
+    const [advanced, setAdvanced] = useState<RevenueBreakdown | null>(null);
+    const [bcgData, setBcgData] = useState<BCGItem[]>([]);
+    const [feedbackData, setFeedbackData] = useState<FeedbackRecord[]>([]);
     
     const [customStart, setCustomStart] = useState('');
     const [customEnd, setCustomEnd] = useState('');
@@ -82,7 +91,10 @@ const Reports: React.FC = () => {
                 itemsCount,
                 bestDishes,
                 revenueData,
-                heatmap
+                heatmap,
+                advancedData,
+                bcgMatrix,
+                recentFeedback
             ] = await Promise.all([
                 getAnalyticsSummary(activeRestaurantId, startDate, endDate),
                 getActiveTablesCount(activeRestaurantId),
@@ -90,6 +102,9 @@ const Reports: React.FC = () => {
                 getBestSellingDishes(activeRestaurantId),
                 getRevenueData(activeRestaurantId),
                 getPeakHourData(activeRestaurantId),
+                getAdvancedAnalytics(activeRestaurantId, startDate, endDate),
+                getBCGMatrixData(activeRestaurantId),
+                getRecentFeedback(activeRestaurantId)
             ]);
 
             setSummary(analyticsSummary);
@@ -98,6 +113,9 @@ const Reports: React.FC = () => {
             setTopItems(bestDishes.slice(0, 5));
             setRevenueHistory(revenueData.slice(0, 7).reverse());
             setPeakData(heatmap);
+            setAdvanced(advancedData);
+            setBcgData(bcgMatrix);
+            setFeedbackData(recentFeedback);
         } catch (error) {
             console.error("Error fetching report data:", error);
         } finally {
@@ -180,15 +198,30 @@ const Reports: React.FC = () => {
                     </div>
                     <div className="metric-card">
                         <div className="metric-card-top-bar metric-card-purple"></div>
-                        <h3 className="metric-title">Total Menu Items</h3>
-                        <div className="metric-value">{totalMenuItems}</div>
-                        <div className="metric-change" style={{ color: '#718096' }}>Currently Active</div>
+                        <h3 className="metric-title">Average Order Value</h3>
+                        <div className="metric-value">{formatCurrency(advanced?.aov || 0)}</div>
+                        <div className={`metric-change ${(advanced?.aovChange || 0) >= 0 ? 'change-positive' : 'change-negative'}`}>
+                            {(advanced?.aovChange || 0) >= 0 ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
+                            {Math.abs(advanced?.aovChange || 0).toFixed(1)}% vs last {timeframe}
+                        </div>
                     </div>
                     <div className="metric-card">
                         <div className="metric-card-top-bar metric-card-orange"></div>
                         <h3 className="metric-title">Active Tables</h3>
                         <div className="metric-value">{activeTables}</div>
                         <div className="metric-change" style={{ color: '#718096' }}>Currently Occupied</div>
+                    </div>
+                    <div className="metric-card">
+                        <div className="metric-card-top-bar" style={{ background: 'linear-gradient(to right, #E53E3E, #C53030)' }}></div>
+                        <h3 className="metric-title">Discount Impact</h3>
+                        <div className="metric-value">{formatCurrency(advanced?.impactAnalysis?.totalDiscount || 0)}</div>
+                        <div className="metric-change" style={{ color: '#718096' }}>{(advanced?.impactAnalysis?.discountRate || 0).toFixed(1)}% of subtotal</div>
+                    </div>
+                    <div className="metric-card">
+                        <div className="metric-card-top-bar" style={{ background: 'linear-gradient(to right, #3182CE, #2B6CB0)' }}></div>
+                        <h3 className="metric-title">Tax Collected</h3>
+                        <div className="metric-value">{formatCurrency(advanced?.impactAnalysis?.totalTax || 0)}</div>
+                        <div className="metric-change" style={{ color: '#718096' }}>{(advanced?.impactAnalysis?.taxRate || 0).toFixed(1)}% effective rate</div>
                     </div>
                 </div>
 
@@ -217,12 +250,50 @@ const Reports: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="dashboard-card">
+                    <div className="dashboard-card breakdown-card">
                         <div className="dashboard-card-header">
-                            <h3 className="dashboard-card-title">Top Categories</h3>
+                            <h3 className="dashboard-card-title">Order & Payment Breakdown</h3>
                         </div>
-                        <div className="category-list">
-                            <div style={{ color: '#A0AEC0', textAlign: 'center', padding: '32px 0', fontSize: '13px' }}>Data aggregation coming soon</div>
+                        <div className="breakdown-container">
+                            <div className="donut-section">
+                                <h4 className="donut-title">Order Type</h4>
+                                <div className="donut-content">
+                                    <div className="donut-chart" style={{
+                                        background: `conic-gradient(#4C51BF 0% ${advanced?.orderTypeSplit.dineIn || 0}%, #E2E8F0 ${advanced?.orderTypeSplit.dineIn || 0}% 100%)`
+                                    }}>
+                                        <div className="donut-hole"></div>
+                                        <div className="donut-label">
+                                            <span style={{ fontWeight: 600, fontSize: '18px', color: '#1A202C' }}>{Math.round(advanced?.orderTypeSplit.dineIn || 0)}%</span>
+                                            <span style={{ fontSize: '11px', color: '#718096' }}>Dine-in</span>
+                                        </div>
+                                    </div>
+                                    <div className="donut-legend">
+                                        <div className="legend-item"><div className="legend-color" style={{background: '#4C51BF'}}></div> Dine-in</div>
+                                        <div className="legend-item"><div className="legend-color" style={{background: '#E2E8F0'}}></div> Takeaway</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="breakdown-separator"></div>
+
+                            <div className="donut-section">
+                                <h4 className="donut-title">Payment Method</h4>
+                                <div className="donut-content">
+                                    <div className="donut-chart" style={{
+                                        background: `conic-gradient(#48BB78 0% ${advanced?.paymentMethodSplit.online || 0}%, #E2E8F0 ${advanced?.paymentMethodSplit.online || 0}% 100%)`
+                                    }}>
+                                        <div className="donut-hole"></div>
+                                        <div className="donut-label">
+                                            <span style={{ fontWeight: 600, fontSize: '18px', color: '#1A202C' }}>{Math.round(advanced?.paymentMethodSplit.online || 0)}%</span>
+                                            <span style={{ fontSize: '11px', color: '#718096' }}>Online</span>
+                                        </div>
+                                    </div>
+                                    <div className="donut-legend">
+                                        <div className="legend-item"><div className="legend-color" style={{background: '#48BB78'}}></div> Online</div>
+                                        <div className="legend-item"><div className="legend-color" style={{background: '#E2E8F0'}}></div> Cash</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -233,7 +304,7 @@ const Reports: React.FC = () => {
                     {/* Top Selling Items (shortened) */}
                     <div className="dashboard-card">
                         <div className="dashboard-card-header">
-                            <h3 className="dashboard-card-title">🏆 Top Selling Items</h3>
+                            <h3 className="dashboard-card-title">Top Selling Items</h3>
                             <span className="card-subtitle">All-time sales</span>
                         </div>
                         <table className="top-items-table">
@@ -269,7 +340,7 @@ const Reports: React.FC = () => {
                     {/* Peak Hour Heatmap */}
                     <div className="dashboard-card heatmap-card">
                         <div className="dashboard-card-header">
-                            <h3 className="dashboard-card-title">🔥 Peak Hour Heatmap</h3>
+                            <h3 className="dashboard-card-title">Peak Hour Heatmap</h3>
                             <span className="card-subtitle">Orders by day & hour</span>
                         </div>
 
@@ -311,6 +382,76 @@ const Reports: React.FC = () => {
                         </div>
                     </div>
 
+                </div>
+
+                {/* Full Width Sections: BCG & Feedback */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', marginTop: '32px' }}>
+                    {/* BCG Matrix */}
+                    <div className="dashboard-card">
+                        <div className="dashboard-card-header">
+                            <h3 className="dashboard-card-title">Menu Item Performance</h3>
+                            <span className="card-subtitle">BCG Matrix (Revenue vs. Volume)</span>
+                        </div>
+                        <div className="bcg-wrapper">
+                            <div className="bcg-axis bcg-y-axis">Revenue ➔</div>
+                            <div className="bcg-axis bcg-x-axis">Sales Volume ➔</div>
+                            <div className="bcg-grid">
+                                <div className="bcg-quadrant bcg-star">
+                                    <h4 className="bcg-title">Stars <span className="bcg-desc">(High Volume, High Revenue)</span></h4>
+                                    <div className="bcg-items">
+                                        {bcgData.filter(i => i.category === 'star').map(i => <span key={i.id} className="bcg-pill">{i.name}</span>)}
+                                        {bcgData.filter(i => i.category === 'star').length === 0 && <span className="bcg-empty">None yet</span>}
+                                    </div>
+                                </div>
+                                <div className="bcg-quadrant bcg-gem">
+                                    <h4 className="bcg-title">Hidden Gems <span className="bcg-desc">(Low Volume, High Revenue)</span></h4>
+                                    <div className="bcg-items">
+                                        {bcgData.filter(i => i.category === 'gem').map(i => <span key={i.id} className="bcg-pill">{i.name}</span>)}
+                                        {bcgData.filter(i => i.category === 'gem').length === 0 && <span className="bcg-empty">None yet</span>}
+                                    </div>
+                                </div>
+                                <div className="bcg-quadrant bcg-cow">
+                                    <h4 className="bcg-title">Cash Cows <span className="bcg-desc">(High Volume, Low Revenue)</span></h4>
+                                    <div className="bcg-items">
+                                        {bcgData.filter(i => i.category === 'cow').map(i => <span key={i.id} className="bcg-pill">{i.name}</span>)}
+                                        {bcgData.filter(i => i.category === 'cow').length === 0 && <span className="bcg-empty">None yet</span>}
+                                    </div>
+                                </div>
+                                <div className="bcg-quadrant bcg-dog">
+                                    <h4 className="bcg-title">Dead Weight <span className="bcg-desc">(Low Volume, Low Revenue)</span></h4>
+                                    <div className="bcg-items">
+                                        {bcgData.filter(i => i.category === 'dog').map(i => <span key={i.id} className="bcg-pill">{i.name}</span>)}
+                                        {bcgData.filter(i => i.category === 'dog').length === 0 && <span className="bcg-empty">None yet</span>}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Recent Feedback */}
+                    <div className="dashboard-card">
+                        <div className="dashboard-card-header">
+                            <h3 className="dashboard-card-title">Recent Feedback</h3>
+                            <span className="card-subtitle">Latest customer reviews</span>
+                        </div>
+                        <div className="feedback-list">
+                            {feedbackData.length === 0 ? (
+                                <div style={{ color: '#A0AEC0', textAlign: 'center', padding: '24px', fontSize: '14px', fontFamily: 'Poppins' }}>No feedback yet</div>
+                            ) : (
+                                feedbackData.map(fb => (
+                                    <div key={fb.id} className="feedback-item">
+                                        <div className="feedback-header">
+                                            <span className="feedback-rating">{'⭐'.repeat(fb.rating)}{'☆'.repeat(5 - fb.rating)}</span>
+                                            <span className="feedback-name">{fb.customerName}</span>
+                                            <span className="feedback-date">{new Date(fb.createdAt).toLocaleDateString()}</span>
+                                        </div>
+                                        {fb.comment && <div className="feedback-comment">"{fb.comment}"</div>}
+                                        {fb.orderItems && <div className="feedback-items">Ordered: {fb.orderItems}</div>}
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
                 </div>
 
             </div>
