@@ -344,6 +344,51 @@ export const getRecommendedItems = async (userId, restaurantId) => {
             });
         }
 
+        // --- NATIVE JAVASCRIPT ML ALGORITHM START ---
+
+        // 1. Build User-Item Matrix (Order Counts)
+        const userItemMatrix = {};
+        const itemOrderCounts = {};
+        const itemWeeklyOrderCounts = {};
+
+        // Step 2: Fetch all orders for this restaurant to build the ML Matrix
+        const { data: allOrders, error: ordersError } = await supabase
+            .from('orders')
+            .select(`
+                customer_id,
+                created_at,
+                order_items (menu_item_id)
+            `)
+            .eq('restaurant_id', restaurantId);
+
+        if (ordersError) throw ordersError;
+
+        if (allOrders) {
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+            allOrders.forEach(order => {
+                const uId = order.customer_id;
+                if (!uId) return;
+                
+                if (!userItemMatrix[uId]) userItemMatrix[uId] = {};
+                
+                const orderDate = new Date(order.created_at);
+                const isThisWeek = orderDate >= sevenDaysAgo;
+
+                order.order_items.forEach(item => {
+                    const iId = item.menu_item_id;
+                    userItemMatrix[uId][iId] = (userItemMatrix[uId][iId] || 0) + 1;
+                    itemOrderCounts[iId] = (itemOrderCounts[iId] || 0) + 1;
+                    if (isThisWeek) {
+                        itemWeeklyOrderCounts[iId] = (itemWeeklyOrderCounts[iId] || 0) + 1;
+                    }
+                });
+            });
+        }
+
+        const popularItemIds = Object.keys(itemOrderCounts).sort((a, b) => itemOrderCounts[b] - itemOrderCounts[a]);
+
         const processMenuItems = (items) => {
             return items.map(m => {
                 // Calculate average rating from DB or provide a high-quality fallback for new items
@@ -361,60 +406,26 @@ export const getRecommendedItems = async (userId, restaurantId) => {
                     image: m.menu_item_images?.[0]?.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
                     description: m.long_description || m.short_description || '',
                     dietType: m.is_veg ? 'veg' : 'non-veg',
-                    modelUrl: m.model_url || null
+                    modelUrl: m.model_url || null,
+                    salesCount: itemOrderCounts[m.id] || 0,
+                    weeklySalesCount: itemWeeklyOrderCounts[m.id] || 0
                 };
             });
         };
 
-        // Step 2: Fetch all orders for this restaurant to build the ML Matrix
-        const { data: allOrders, error: ordersError } = await supabase
-            .from('orders')
-            .select(`
-                customer_id,
-                order_items (menu_item_id)
-            `)
-            .eq('restaurant_id', restaurantId);
 
-        if (ordersError) throw ordersError;
-
-        // Fallback if absolutely no orders exist
-        if (!allOrders || allOrders.length === 0) {
-             return processMenuItems(menuItems.slice(0, 5));
-        }
-
-        // --- NATIVE JAVASCRIPT ML ALGORITHM START ---
-
-        // 1. Build User-Item Matrix (Order Counts)
-        const userItemMatrix = {};
-        const itemOrderCounts = {};
-
-        allOrders.forEach(order => {
-            const uId = order.customer_id;
-            if (!uId) return;
-            
-            if (!userItemMatrix[uId]) userItemMatrix[uId] = {};
-            
-            order.order_items.forEach(item => {
-                const iId = item.menu_item_id;
-                userItemMatrix[uId][iId] = (userItemMatrix[uId][iId] || 0) + 1;
-                itemOrderCounts[iId] = (itemOrderCounts[iId] || 0) + 1;
-            });
-        });
-
-        const popularItemIds = Object.keys(itemOrderCounts).sort((a, b) => itemOrderCounts[b] - itemOrderCounts[a]);
-        
-        const getItemsByIds = (ids, limit = 5) => {
+        const getItemsByIds = (ids) => {
             const result = [];
             for (const id of ids) {
                 const menuItem = menuItems.find(m => m.id === id);
                 if (menuItem) result.push(menuItem);
-                if (result.length >= limit) break;
             }
             return processMenuItems(result);
         };
 
         if (!userId || !userItemMatrix[userId]) {
-             return getItemsByIds(popularItemIds);
+             const allIds = [...popularItemIds, ...menuItems.map(m => m.id).filter(id => !popularItemIds.includes(id))];
+             return getItemsByIds(allIds);
         }
 
         const currentUserOrders = userItemMatrix[userId];
@@ -473,12 +484,13 @@ export const getRecommendedItems = async (userId, restaurantId) => {
 
         let recommendedIds = Object.keys(scores).sort((a, b) => scores[b] - scores[a]);
 
-        if (recommendedIds.length < 5) {
-             const filteredPopular = popularItemIds.filter(id => !currentUserOrders[id] && !recommendedIds.includes(id));
-             recommendedIds = [...recommendedIds, ...filteredPopular];
-        }
+        const filteredPopular = popularItemIds.filter(id => !recommendedIds.includes(id));
+        recommendedIds = [...recommendedIds, ...filteredPopular];
+        
+        const remainingIds = allItemIds.filter(id => !recommendedIds.includes(id));
+        recommendedIds = [...recommendedIds, ...remainingIds];
 
-        return getItemsByIds(recommendedIds, 5);
+        return getItemsByIds(recommendedIds);
 
     } catch (err) {
         console.error('Error fetching ML recommendations:', err);

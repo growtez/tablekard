@@ -90,7 +90,9 @@ const HomePage = () => {
     }, [showItemModal]);
 
     useEffect(() => {
-        const fetchRecent = async () => {
+        const fetchAllData = async () => {
+            if (!restaurant?.id) return; // Wait until restaurant is ready
+            
             const isFirstLoad = !sessionStorage.getItem('homeAnimationShown');
             
             // Force a minimum delay of 3 seconds only on first load so animation completes
@@ -103,28 +105,38 @@ const HomePage = () => {
                 sessionStorage.setItem('homeAnimationShown', 'true');
             }
             
-            if (user?.id) {
-                try {
-                    setLoadingRecent(true);
-                    const [data] = await Promise.all([
-                        getRecentOrderedItems(user.id, 3),
-                        minDelay
-                    ]);
-                    setRecentOrders(data);
-                } catch (err) {
-                    console.error('Error fetching recent items:', err);
-                } finally {
-                    setLoadingRecent(false);
-                    if (isFirstLoad) hideHomeLoader();
+            setLoadingRecent(true);
+            setLoadingItems(true);
+
+            try {
+                const fetchPromises = [
+                    getRecommendedItems(user?.id, restaurant.id),
+                    getDiscountItemsForHome(restaurant.id, 5),
+                    minDelay
+                ];
+                
+                if (user?.id) {
+                    fetchPromises.push(getRecentOrderedItems(user.id, 3));
                 }
-            } else {
-                setLoadingRecent(true);
-                await minDelay;
+
+                const results = await Promise.all(fetchPromises);
+                
+                setMenuItems(results[0] || []);
+                setDiscountItems(results[1] || []);
+                
+                if (user?.id) {
+                    setRecentOrders(results[3] || []);
+                }
+            } catch (err) {
+                console.error('Error fetching home data:', err);
+            } finally {
                 setLoadingRecent(false);
+                setLoadingItems(false);
                 if (isFirstLoad) hideHomeLoader();
             }
         };
-        fetchRecent();
+
+        fetchAllData();
 
         // Inject lottie-player script
         if (!document.getElementById('lottie-player-script')) {
@@ -134,22 +146,6 @@ const HomePage = () => {
             script.async = true;
             document.body.appendChild(script);
         }
-    }, [user?.id]);
-
-    // Fetch dynamic menu items and discount carousel
-    useEffect(() => {
-        if (!restaurant?.id) return;
-        setLoadingItems(true);
-        Promise.all([
-            getRecommendedItems(user?.id, restaurant.id),
-            getDiscountItemsForHome(restaurant.id, 5),
-        ])
-            .then(([recommended, discounts]) => {
-                setMenuItems(recommended || []);
-                setDiscountItems(discounts || []);
-            })
-            .catch(err => console.error('Home item fetch failed:', err))
-            .finally(() => setLoadingItems(false));
     }, [restaurant?.id, user?.id]);
 
     if (loadingRecent) {
@@ -229,15 +225,23 @@ const HomePage = () => {
         if (loadingItems) return [];
         switch (activeFilter) {
             case 'popular':
-                return menuItems; // already ranked by recommendation engine
+                return [...menuItems].sort((a, b) => (b.weeklySalesCount || 0) - (a.weeklySalesCount || 0)).slice(0, 4);
             case 'all':
-                return [...menuItems].sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating));
+                return [...menuItems].sort((a, b) => (b.salesCount || 0) - (a.salesCount || 0)).slice(0, 4);
             case 'rated':
-                return [...menuItems].sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating));
+                return [...menuItems].sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating)).slice(0, 4);
             case 'budget':
-                return menuItems.filter(item => item.price < 200);
+                return menuItems
+                    .filter(item => item.price < 200)
+                    .sort((a, b) => {
+                        if (a.price === b.price) {
+                            return a.name.localeCompare(b.name);
+                        }
+                        return a.price - b.price;
+                    })
+                    .slice(0, 4);
             default:
-                return menuItems;
+                return menuItems.slice(0, 4);
         }
     };
 

@@ -44,6 +44,7 @@ const LiveQueuePage = () => {
                     order_number, 
                     status, 
                     customer_id,
+                    updated_at,
                     order_items (
                         quantity,
                         menu_items (
@@ -79,28 +80,36 @@ const LiveQueuePage = () => {
                 };
             };
 
-            const readyOrders = data.filter(o => o.status === 'ready');
-            const preparingOrders = data.filter(o => o.status === 'preparing');
-            const upcomingOrders = data.filter(o => o.status === 'pending' || o.status === 'confirmed');
+            const now = new Date();
+            const activeData = data.filter(o => {
+                if (o.status === 'ready') {
+                    const updatedAt = new Date(o.updated_at);
+                    const diffMins = (now - updatedAt) / (1000 * 60);
+                    return diffMins <= 60;
+                }
+                return true;
+            });
+
+            const readyOrders = activeData.filter(o => o.status === 'ready');
+            const preparingOrders = activeData.filter(o => o.status === 'preparing');
+            const upcomingOrders = activeData.filter(o => o.status === 'pending' || o.status === 'confirmed');
 
             const nowServing = readyOrders.length > 0 ? formatToken(readyOrders[readyOrders.length - 1]) : null;
             const preparingTokens = preparingOrders.map(formatToken);
             const upcomingTokens = upcomingOrders.map(formatToken);
 
-            let yourToken = null;
+            let yourTokens = [];
             if (user?.id) {
-                // Find user's active order
-                const userOrder = data.find(o => o.customer_id === user.id);
-                if (userOrder) {
-                    yourToken = { ...formatToken(userOrder), status: userOrder.status };
-                }
+                // Find all active user orders
+                const userOrders = activeData.filter(o => o.customer_id === user.id);
+                yourTokens = userOrders.map(o => ({ ...formatToken(o), status: o.status }));
             }
 
             setQueueData({
                 nowServing,
                 preparing: preparingTokens,
                 upcoming: upcomingTokens,
-                yourToken
+                yourTokens
             });
             setIsLoading(false);
         } catch (err) {
@@ -173,31 +182,42 @@ const LiveQueuePage = () => {
         });
     };
 
-    const getYourPosition = () => {
-        const allQueue = [...queueData.preparing, ...queueData.upcoming];
-        const index = allQueue.findIndex(item => item.id === queueData.yourToken?.id);
+    const getYourPosition = (tokenId) => {
+        const index = queueData.upcoming.findIndex(item => item.id === tokenId);
         return index >= 0 ? index + 1 : null;
     };
 
     const getOrdersAhead = () => {
-        const position = getYourPosition();
-        if (position !== null) {
-            return position > 1 ? position - 1 : 0;
+        const preparingPenalty = queueData.preparing.length > 0 ? 1 : 0;
+
+        if (queueData.yourTokens && queueData.yourTokens.length > 0) {
+            // Treat the entire 'Preparing' section as exactly 1 block of work ahead of you.
+            // If the kitchen is busy, add 1. Then add how many people are in front of you in the waiting queue.
+            for (const token of queueData.yourTokens) {
+                if (token.status === 'pending' || token.status === 'confirmed') {
+                    const index = queueData.upcoming.findIndex(item => item.id === token.id);
+                    if (index !== -1) {
+                        return preparingPenalty + index;
+                    }
+                }
+            }
+            // If all their orders are already preparing or ready, ahead of you is 0
+            return 0;
         }
-        return queueData.preparing.length + queueData.upcoming.length;
+        return preparingPenalty + queueData.upcoming.length; // Default
     };
 
-    const getYourStatusDisplay = () => {
-        if (!queueData.yourToken) return { label: "", value: "", color: "", fontSize: "28px" };
+    const getYourStatusDisplay = (token) => {
+        if (!token) return { label: "", value: "", color: "", fontSize: "28px" };
         
-        if (queueData.yourToken.status === 'ready') {
+        if (token.status === 'ready') {
             return { label: "", value: "Ready!", color: "#8B3A1E", fontSize: "24px" };
         }
-        if (queueData.yourToken.status === 'preparing') {
+        if (token.status === 'preparing') {
             return { label: "", value: "Preparing", color: "#8B3A1E", fontSize: "22px" };
         }
         
-        const pos = getYourPosition();
+        const pos = getYourPosition(token.id);
         return { label: "Queue Pos", value: `#${pos}`, color: "#8B3A1E", fontSize: "28px" };
     };
 
@@ -208,8 +228,6 @@ const LiveQueuePage = () => {
             </div>
         );
     }
-
-    const statusInfo = getYourStatusDisplay();
 
     return (
         <div 
@@ -266,19 +284,22 @@ const LiveQueuePage = () => {
                 ></lottie-player>
             </div>
 
-            {/* Your Token Card */}
-            {queueData.yourToken && (
-                <div className="your-token-card">
-                    <div className="your-token-left">
-                        <span className="your-label">Your Order #</span>
-                        <span className="your-number">{queueData.yourToken.id}</span>
+            {/* Your Token Cards */}
+            {queueData.yourTokens && queueData.yourTokens.map((token) => {
+                const statusInfo = getYourStatusDisplay(token);
+                return (
+                    <div className="your-token-card" key={token.id}>
+                        <div className="your-token-left">
+                            <span className="your-label">Your Order #</span>
+                            <span className="your-number">{token.id}</span>
+                        </div>
+                        <div className="your-token-right">
+                            {statusInfo.label && <span className="position-label">{statusInfo.label}</span>}
+                            <span className="position-number" style={{ color: statusInfo.color, fontSize: statusInfo.fontSize }}>{statusInfo.value}</span>
+                        </div>
                     </div>
-                    <div className="your-token-right">
-                        {statusInfo.label && <span className="position-label">{statusInfo.label}</span>}
-                        <span className="position-number" style={{ color: statusInfo.color, fontSize: statusInfo.fontSize }}>{statusInfo.value}</span>
-                    </div>
-                </div>
-            )}
+                );
+            })}
 
             {/* Queue Timeline */}
             <div className="queue-timeline">
@@ -290,15 +311,18 @@ const LiveQueuePage = () => {
                         <span>Preparing Now</span>
                     </div>
                     <div className="timeline-tokens">
-                        {queueData.preparing.map((order) => (
-                            <div
-                                key={order.id}
-                                className={`timeline-token preparing ${order.id === queueData.yourToken?.id ? 'yours' : ''}`}
-                            >
-                                {order.id}
-                                {order.id === queueData.yourToken?.id && <span className="yours-badge">You</span>}
-                            </div>
-                        ))}
+                        {queueData.preparing.map((order) => {
+                            const isYours = queueData.yourTokens?.some(t => t.id === order.id);
+                            return (
+                                <div
+                                    key={order.id}
+                                    className={`timeline-token preparing ${isYours ? 'yours' : ''}`}
+                                >
+                                    {order.id}
+                                    {isYours && <span className="yours-badge">You</span>}
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
 
@@ -309,15 +333,18 @@ const LiveQueuePage = () => {
                         <span>Up Next</span>
                     </div>
                     <div className="timeline-tokens">
-                        {queueData.upcoming.map((order) => (
-                            <div
-                                key={order.id}
-                                className={`timeline-token upcoming ${order.id === queueData.yourToken?.id ? 'yours' : ''}`}
-                            >
-                                {order.id}
-                                {order.id === queueData.yourToken?.id && <span className="yours-badge">You</span>}
-                            </div>
-                        ))}
+                        {queueData.upcoming.map((order) => {
+                            const isYours = queueData.yourTokens?.some(t => t.id === order.id);
+                            return (
+                                <div
+                                    key={order.id}
+                                    className={`timeline-token upcoming ${isYours ? 'yours' : ''}`}
+                                >
+                                    {order.id}
+                                    {isYours && <span className="yours-badge">You</span>}
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             </div>
@@ -336,7 +363,7 @@ const LiveQueuePage = () => {
                 <div className="info-divider"></div>
                 <div className="info-item">
                     <span className="info-value">{getOrdersAhead()}</span>
-                    <span className="info-label">{queueData.yourToken ? "Ahead of You" : "Total Active"}</span>
+                    <span className="info-label">{(queueData.yourTokens && queueData.yourTokens.length > 0) ? "Ahead of You" : "Total Active"}</span>
                 </div>
             </div>
         </div>
