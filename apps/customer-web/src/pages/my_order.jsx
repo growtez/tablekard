@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Home, ShoppingBag, MessageCircle, User, Minus, Plus, Trash2, Clock, CheckCircle, Utensils, ShoppingCart, ListOrdered, ArrowRight, Star, Users, CreditCard, Wallet, Loader2, AlertCircle, Download } from 'lucide-react';
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from '../context/AuthContext';
@@ -9,10 +9,12 @@ import { createOrder, getTodaysOrders, cancelOrder, updateOrderType } from '../s
 import './my_order.css';
 import Hamburger from '../components/hamburger';
 import { jsPDF } from 'jspdf';
+import PageSkeleton from '../components/PageSkeleton';
+import { supabase } from '@restaurant-saas/supabase';
 
 const MyOrderPage = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, loading: authLoading } = useAuth();
   const { cartItems, updateQuantity, deleteFromCart, cartSubtotal, clearCart } = useCart();
   const { restaurantId, tableId } = useRestaurant();
   const [activeTab, setActiveTab] = useState('cart');
@@ -23,54 +25,120 @@ const MyOrderPage = () => {
 
 
   const [orders, setOrders] = useState([]);
-  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersLoading, setOrdersLoading] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   const [showPayCounterPopup, setShowPayCounterPopup] = useState(false);
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      if (!isAuthenticated || !user) return;
-      setOrdersLoading(true);
-      try {
-        const data = await getTodaysOrders(user.id);
-        const mapped = data
-          .map(order => ({
-            id: order.order_number || order.id.substring(0, 8),
-            status: order.status.toLowerCase(),
-            items: order.order_items.map(item => ({
-              name: item.name,
-              quantity: item.quantity,
-              price: item.price
-            })),
-            total: order.total,
-            discount: order.discount || 0,
-            orderDate: new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            fullDate: new Date(order.created_at).toLocaleDateString(),
-            paymentStatus: order.payment_status === 'PAID' ? 'Paid' : order.payment_status === 'PENDING' ? 'Pending' : order.payment_status,
-            paymentMethod: order.payment_method,
-            statusLabel: order.status.charAt(0).toUpperCase() + order.status.slice(1).toLowerCase(),
-            rawOrder: order
-          }))
-          .filter(o => o.status === 'pending' || o.status === 'confirmed' || o.status === 'cancelled');
+  // Pull to refresh state
+  const [isPulling, setIsPulling] = useState(false);
+  const [pullY, setPullY] = useState(0);
+  const touchStartY = useRef(0);
 
-        // Final mapping to UI labels for consistency
-        const finalMapped = mapped.map(o => ({
-          ...o,
-          status: (o.status === 'pending' || o.status === 'confirmed') ? 'placed' : o.status
+  const fetchOrders = async (isBackground = false) => {
+    if (!isAuthenticated || !user) return;
+    if (!isBackground) {
+      setOrdersLoading(true);
+    }
+    try {
+      const data = await getTodaysOrders(user.id);
+      const mapped = data
+        .map(order => ({
+          id: order.order_number || order.id.substring(0, 8),
+          status: order.status.toLowerCase(),
+          items: order.order_items.map(item => ({
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price
+          })),
+          total: order.total,
+          discount: order.discount || 0,
+          orderDate: new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          fullDate: new Date(order.created_at).toLocaleDateString(),
+          paymentStatus: order.payment_status === 'PAID' ? 'Paid' : order.payment_status === 'PENDING' ? 'Pending' : order.payment_status,
+          paymentMethod: order.payment_method,
+          statusLabel: order.status.charAt(0).toUpperCase() + order.status.slice(1).toLowerCase(),
+          rawOrder: order
         }));
 
-        setOrders(finalMapped);
-      } catch (err) {
-        console.error('Failed to fetch today\'s orders:', err);
-      } finally {
-        setOrdersLoading(false);
-      }
-    };
+      // Final mapping to UI labels for consistency
+      const finalMapped = mapped.map(o => ({
+        ...o,
+        status: (o.status === 'pending' || o.status === 'confirmed') ? 'placed' : o.status
+      }));
 
+      setOrders(finalMapped);
+    } catch (err) {
+      console.error("Failed to fetch today's orders:", err);
+    } finally {
+      setOrdersLoading(false);
+      setIsInitialLoad(false);
+    }
+  };
+
+  useEffect(() => {
+    if (authLoading) return;
     if (isAuthenticated && user) {
       fetchOrders();
+
+      // Set up realtime subscription for updates to orders
+      const subscription = supabase
+        .channel('public:orders')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'orders', filter: `customer_id=eq.${user.id}` },
+          (payload) => {
+            console.log('Order update received:', payload);
+            fetchOrders(true); // Silently re-fetch to get the latest data including order items
+          }
+        )
+        .subscribe();
+
+      // Fallback: poll every 15 seconds in case Supabase Realtime is disabled for the 'orders' table
+      const pollInterval = setInterval(() => {
+        fetchOrders(true); // Background fetch
+      }, 15000);
+
+      return () => {
+        supabase.removeChannel(subscription);
+        clearInterval(pollInterval);
+      };
+    } else {
+      setOrdersLoading(false);
+      setIsInitialLoad(false);
     }
-  }, [isAuthenticated, user]);
+  }, [authLoading, isAuthenticated, user]);
+
+  const handleTouchStart = (e) => {
+    if (window.scrollY === 0) {
+      touchStartY.current = e.touches[0].clientY;
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (touchStartY.current > 0 && window.scrollY <= 0) {
+      const y = e.touches[0].clientY;
+      const pullDist = y - touchStartY.current;
+      if (pullDist > 0) {
+        setPullY(Math.min(pullDist, 100)); // Cap at 100px
+        if (pullDist > 10 && e.cancelable) {
+           e.preventDefault(); // prevent native pull-to-refresh
+        }
+      }
+    }
+  };
+
+  const handleTouchEnd = async () => {
+    if (pullY > 50 && !isPulling) {
+      setIsPulling(true);
+      await fetchOrders(true); // Silent fetch, use spinner instead of skeleton
+      setIsPulling(false);
+    }
+    setPullY(0);
+    touchStartY.current = 0;
+  };
+
+
 
   // Alias for template compatibility
   const removeItem = deleteFromCart;
@@ -79,11 +147,15 @@ const MyOrderPage = () => {
   const getStatusIcon = (status) => {
     switch (status) {
       case 'placed':
-        return <CheckCircle size={16} color="#4CAF50" />;
+        return <Clock size={16} color="#FF9800" />;
       case 'preparing':
-        return <Utensils size={16} color="#FF9800" />;
+        return <Utensils size={16} color="#3B82F6" />;
       case 'ready':
-        return <Clock size={16} color="#d9b550" />;
+      case 'served':
+      case 'completed':
+        return <CheckCircle size={16} color="#22C55E" />;
+      case 'cancelled':
+        return <AlertCircle size={16} color="#EF4444" />;
       default:
         return <Clock size={16} color="#888888" />;
     }
@@ -92,11 +164,15 @@ const MyOrderPage = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'placed':
-        return '#4CAF50';
-      case 'preparing':
         return '#FF9800';
+      case 'preparing':
+        return '#3B82F6';
       case 'ready':
-        return '#d9b550';
+      case 'served':
+      case 'completed':
+        return '#22C55E';
+      case 'cancelled':
+        return '#EF4444';
       default:
         return '#888888';
     }
@@ -274,8 +350,39 @@ const MyOrderPage = () => {
     doc.save(`Invoice_${order.id}.pdf`);
   };
 
+  if (authLoading || isInitialLoad) {
+    return <PageSkeleton />;
+  }
+
   return (
-    <div className="myorder-container">
+    <div 
+      className="myorder-container"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Pull to refresh indicator */}
+      <div style={{
+        height: `${isPulling ? 60 : pullY}px`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'hidden',
+        transition: isPulling ? 'height 0.3s' : 'none',
+        backgroundColor: 'transparent'
+      }}>
+        {pullY > 0 && (
+          <Loader2 
+            size={24} 
+            color="#8B3A1E" 
+            style={{ 
+               transform: `rotate(${pullY * 2}deg)`,
+               ...(isPulling ? { animation: 'spin 1s linear infinite' } : {})
+            }} 
+          />
+        )}
+      </div>
+
       {/* Loading Overlay */}
       {paymentLoading && paymentStatus !== 'opening_checkout' && (
         <div style={{
