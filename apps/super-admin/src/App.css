@@ -399,8 +399,8 @@
   height: 72px;
   display: flex;
   align-items: center;
-  border-bottom: 1px solid var(--glass-border);
-  background: hsla(240, 10%, 3%, 0.8);
+  border-bottom: 1px solid var(--border-color);
+  background: hsla(150, 20%, 7%, 0.8);
   backdrop-filter: blur(12px);
 }
 
