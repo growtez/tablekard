@@ -257,7 +257,6 @@ const Dashboard: React.FC = () => {
   // Filter orders
   const activeOrders = orders.filter(order => order.status !== 'Completed' && order.status !== 'Cancelled' && (order.status !== 'Ready' || !order.isPaid));
   const completedOrders = orders.filter(order => order.status === 'Completed' || (order.status === 'Ready' && order.isPaid));
-  const pendingPayments = orders.filter(order => !order.isPaid && order.status !== 'Cancelled');
 
   // Revenue calc from raw orders (more robust and uses local timezone)
   const now = new Date();
