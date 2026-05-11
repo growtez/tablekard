@@ -494,6 +494,84 @@ export const deleteMenuCategory = async (categoryId: string): Promise<void> => {
 };
 
 // ==========================================
+// Offers
+// ==========================================
+
+export interface OfferRow {
+    id: string;
+    restaurant_id: string;
+    menu_item_id: string;
+    title: string;
+    discount_price: number;
+    valid_until: string | null;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export const getOffers = async (restaurantId: string): Promise<OfferRow[]> => {
+    const { data, error } = await db
+        .from('offers')
+        .select('*')
+        .eq('restaurant_id', restaurantId)
+        .order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data ?? []) as OfferRow[];
+};
+
+export const addOffer = async (
+    restaurantId: string,
+    offer: {
+        menu_item_id: string;
+        title: string;
+        discount_price: number;
+        valid_until?: string | null;
+        is_active?: boolean;
+    }
+): Promise<OfferRow> => {
+    const { data, error } = await db
+        .from('offers')
+        .insert({ restaurant_id: restaurantId, ...offer })
+        .select()
+        .single();
+    if (error) throw error;
+    return data as OfferRow;
+};
+
+export const updateOffer = async (
+    offerId: string,
+    offer: Partial<{
+        menu_item_id: string;
+        title: string;
+        discount_price: number;
+        valid_until: string | null;
+        is_active: boolean;
+    }>
+): Promise<void> => {
+    const { error } = await db
+        .from('offers')
+        .update(offer)
+        .eq('id', offerId);
+    if (error) throw error;
+};
+
+export const deleteOffer = async (offerId: string): Promise<void> => {
+    const { error } = await db
+        .from('offers')
+        .delete()
+        .eq('id', offerId);
+    if (error) throw error;
+};
+
+export const toggleOfferActive = async (offerId: string, isActive: boolean): Promise<void> => {
+    const { error } = await db
+        .from('offers')
+        .update({ is_active: isActive })
+        .eq('id', offerId);
+    if (error) throw error;
+};
+
+// ==========================================
 // Orders
 // ==========================================
 

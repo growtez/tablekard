@@ -3,7 +3,7 @@ import { ArrowLeft, Clock, Star, Heart, X, Plus, Minus, Users, View } from 'luci
 import { useNavigate } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
 import { useRestaurant } from '../context/RestaurantContext';
-import { getDiscountItemsForHome } from '../services/supabaseService';
+import { getOffersForCustomer } from '../services/supabaseService';
 import PageSkeleton from '../components/PageSkeleton';
 import './discounts.css';
 
@@ -34,9 +34,9 @@ const DiscountsPage = () => {
     useEffect(() => {
         if (!restaurant?.id) return;
         setLoadingItems(true);
-        getDiscountItemsForHome(restaurant.id, 20)
+        getOffersForCustomer(restaurant.id, 50)
             .then(discounts => setDiscountItems(discounts || []))
-            .catch(err => console.error('Discounts fetch failed:', err))
+            .catch(err => console.error('Offers fetch failed:', err))
             .finally(() => setLoadingItems(false));
     }, [restaurant?.id]);
 
@@ -132,7 +132,9 @@ const DiscountsPage = () => {
                                 <div className="details-header">
                                     <div className="title-desc">
                                         <h3>{item.name}</h3>
-                                        <p className="menu-description">{item.subtitle}</p>
+                                        {item.subtitle && (
+                                            <p className="menu-description" style={{ fontStyle: 'italic', color: '#888' }}>{item.subtitle}</p>
+                                        )}
                                     </div>
                                     <button
                                         className="favorite-btn-inline"
@@ -165,6 +167,9 @@ const DiscountsPage = () => {
 
                                 <div className="details-footer">
                                     <div className="price-vegan">
+                                        {item.originalPrice && item.originalPrice !== item.price && (
+                                            <span style={{ textDecoration: 'line-through', color: '#aaa', fontSize: '12px', marginRight: '4px' }}>₹{item.originalPrice}</span>
+                                        )}
                                         <span className="price-text">₹{item.price}</span>
                                     </div>
                                     {getItemQuantity(item.id) === 0 ? (

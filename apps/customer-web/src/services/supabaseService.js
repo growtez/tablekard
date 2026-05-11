@@ -601,3 +601,98 @@ export const getDiscountItemsForHome = async (restaurantId, limit = 5) => {
 
     return (anyItems || []).map(m => normalizeHomeItem(m, 'Featured'));
 };
+
+/**
+ * Fetch active offers from the `offers` table for the customer-facing UI.
+ *
+ * Returns items shaped identically to `getDiscountItemsForHome` so that
+ * home.jsx and discounts.jsx need no structural changes — just call this
+ * instead.
+ *
+ * Falls back to `getDiscountItemsForHome` if no active offers exist.
+ *
+ * @param {string} restaurantId
+ * @param {number} limit  - max items to return (default: all active offers)
+ */
+export const getOffersForCustomer = async (restaurantId, limit = 20) => {
+    try {
+        const now = new Date().toISOString();
+
+        const { data: offersData, error } = await supabase
+            .from('offers')
+            .select(`
+                id,
+                title,
+                discount_price,
+                valid_until,
+                is_active,
+                menu_item_id,
+                menu_items (
+                    id, name, price, is_veg, is_available,
+                    short_description, long_description,
+                    preparation_time, serves, model_url,
+                    menu_item_images (image_url, sort_order)
+                )
+            `)
+            .eq('restaurant_id', restaurantId)
+            .eq('is_active', true)
+            .or(`valid_until.is.null,valid_until.gte.${now}`)
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+        if (error) throw error;
+
+        // Filter out offers whose linked menu item is unavailable / deleted
+        const validOffers = (offersData || []).filter(
+            o => o.menu_items && o.menu_items.is_available
+        );
+
+        if (validOffers.length > 0) {
+            return validOffers.map(o => {
+                const m = o.menu_items;
+                const originalPrice = m.price;
+                const offerPrice = o.discount_price;
+                const savingPct = originalPrice > 0
+                    ? Math.round(((originalPrice - offerPrice) / originalPrice) * 100)
+                    : 0;
+
+                // Sort images by sort_order
+                const images = (m.menu_item_images || []).sort(
+                    (a, b) => a.sort_order - b.sort_order
+                );
+
+                return {
+                    // IDs — use offer id as the primary key so each card is unique
+                    id: o.id,
+                    menuItemId: m.id,
+
+                    // Display fields
+                    name: m.name,
+                    subtitle: o.title,           // offer title shown as subtitle
+                    price: offerPrice,           // the discounted price shown prominently
+                    originalPrice: originalPrice,
+                    discount: savingPct > 0 ? `${savingPct}% OFF` : 'Special Offer',
+                    timer: o.valid_until
+                        ? `Until ${new Date(o.valid_until).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}`
+                        : null,
+
+                    // Meta
+                    time: m.preparation_time ? `${m.preparation_time}min` : '15min',
+                    rating: (4.5 + Math.random() * 0.4).toFixed(1),
+                    serves: `Serves ${m.serves || 1}`,
+                    image: images[0]?.image_url
+                        || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
+                    description: m.long_description || m.short_description || '',
+                    dietType: m.is_veg ? 'veg' : 'non-veg',
+                    modelUrl: m.model_url || null,
+                };
+            });
+        }
+    } catch (err) {
+        console.error('getOffersForCustomer error:', err);
+    }
+
+    // Fallback: use the existing discount_price / top-sellers logic
+    return getDiscountItemsForHome(restaurantId, limit);
+};
+

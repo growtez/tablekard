@@ -5,7 +5,7 @@ import './home.css';
 import Hamburger from '../components/hamburger';
 import { useRestaurant } from '../context/RestaurantContext';
 import { useAuth } from '../context/AuthContext';
-import { getRecentOrderedItems, getRecommendedItems, getDiscountItemsForHome } from '../services/supabaseService';
+import { getRecentOrderedItems, getRecommendedItems, getOffersForCustomer } from '../services/supabaseService';
 import PageSkeleton from '../components/PageSkeleton';
 import { showHomeLoader, hideHomeLoader } from '../utils/loader';
 import BottomNav from '../components/BottomNav';
@@ -112,7 +112,7 @@ const HomePage = () => {
             try {
                 const fetchPromises = [
                     getRecommendedItems(user?.id, restaurant.id),
-                    getDiscountItemsForHome(restaurant.id, 5),
+                    getOffersForCustomer(restaurant.id, 5),
                     minDelay
                 ];
                 
@@ -248,9 +248,9 @@ const HomePage = () => {
 
     const filteredItems = getFilteredItems();
 
-    // Label for discounts section — reflect whether items are real discounts or top-sellers
+    // Label for discounts section — reflect whether items are real offers or top-sellers
     const hasRealDiscounts = discountItems.some(d => d.discount && d.discount !== 'Top Seller' && d.discount !== 'Featured');
-    const discountSectionLabel = hasRealDiscounts ? 'Discounts for you' : 'Top sellers';
+    const discountSectionLabel = hasRealDiscounts ? 'Offers for you' : 'Top sellers';
 
 
     const cartTotal = cart.reduce((total, item) => total + item.quantity, 0);
@@ -396,6 +396,9 @@ const HomePage = () => {
                                     </div>
                                     <div className="discount-info">
                                         <h3 className="discount-name">{offer.name}</h3>
+                                        {offer.subtitle && (
+                                            <p style={{ fontSize: '11px', color: '#888', margin: '2px 0 4px', fontStyle: 'italic' }}>{offer.subtitle}</p>
+                                        )}
                                         <div className="discount-meta-row">
                                             <div className="discount-time">
                                                 <Clock size={12} color="#666666" />
@@ -406,7 +409,12 @@ const HomePage = () => {
                                                 <span>{offer.rating}</span>
                                             </div>
                                         </div>
-                                        <div className="discount-price">₹{offer.price}</div>
+                                        <div className="discount-price">
+                                            {offer.originalPrice && offer.originalPrice !== offer.price && (
+                                                <span style={{ textDecoration: 'line-through', color: '#aaa', fontSize: '11px', marginRight: '4px' }}>₹{offer.originalPrice}</span>
+                                            )}
+                                            ₹{offer.price}
+                                        </div>
                                     </div>
                                 </div>
                             ))}

@@ -1,3 +1,4 @@
+/* ── Overlay & Container ───────────────────────────────────────────────────── */
 .offer-dialog-overlay {
   position: fixed;
   top: 0;
@@ -12,29 +13,29 @@
   animation: fadeIn 0.2s ease-in-out;
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 .offer-dialog-container {
   background-color: #FFFFFF;
   border-radius: 24px;
   padding: 32px;
   width: 100%;
-  max-width: 700px;
+  max-width: 680px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
   animation: slideUp 0.3s ease-out;
 }
 
 @keyframes slideUp {
-  from { 
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to { 
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0);    }
 }
 
+/* ── Header ────────────────────────────────────────────────────────────────── */
 .offer-dialog-header {
   display: flex;
   justify-content: space-between;
@@ -43,8 +44,8 @@
 }
 
 .offer-dialog-title {
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 22px;
+  font-weight: 700;
   color: #1A202C;
 }
 
@@ -60,12 +61,12 @@
   color: #718096;
   transition: all 0.2s;
 }
-
 .offer-dialog-close:hover {
   background-color: #F7FAFC;
   color: #1A202C;
 }
 
+/* ── Form Layout ───────────────────────────────────────────────────────────── */
 .offer-dialog-form {
   display: flex;
   flex-direction: column;
@@ -79,76 +80,209 @@
 }
 
 .offer-form-label {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 600;
   color: #4A5568;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
 }
 
-.offer-form-input,
-.offer-form-textarea {
+/* ── Select ────────────────────────────────────────────────────────────────── */
+.offer-select-wrapper {
+  position: relative;
+}
+
+.offer-form-select {
+  width: 100%;
   padding: 12px 16px;
   border: 2px solid #E2E8F0;
   border-radius: 12px;
   font-size: 14px;
   color: #1A202C;
   font-family: 'Poppins', sans-serif;
-  transition: all 0.2s;
+  background-color: #FAFAFA;
+  appearance: none;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
-
-.offer-form-input:focus,
-.offer-form-textarea:focus {
+.offer-form-select:focus {
   outline: none;
   border-color: #68D391;
-  box-shadow: 0 0 0 3px rgba(104, 211, 145, 0.1);
+  box-shadow: 0 0 0 3px rgba(104, 211, 145, 0.15);
+  background-color: #fff;
 }
 
-.offer-form-input::placeholder,
-.offer-form-textarea::placeholder {
+/* ── Text Inputs ───────────────────────────────────────────────────────────── */
+.offer-form-input {
+  padding: 12px 16px;
+  border: 2px solid #E2E8F0;
+  border-radius: 12px;
+  font-size: 14px;
+  color: #1A202C;
+  font-family: 'Poppins', sans-serif;
+  background-color: #FAFAFA;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.offer-form-input:focus {
+  outline: none;
+  border-color: #68D391;
+  box-shadow: 0 0 0 3px rgba(104, 211, 145, 0.15);
+  background-color: #fff;
+}
+.offer-form-input::placeholder {
   color: #A0AEC0;
 }
 
-.offer-form-textarea {
-  resize: vertical;
-  min-height: 80px;
-}
-
+/* ── Two-column row ────────────────────────────────────────────────────────── */
 .offer-form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
 }
 
-.offer-form-checkbox-label {
+/* ── Discount hint ─────────────────────────────────────────────────────────── */
+.offer-discount-hint {
+  font-size: 12px;
+  color: #37724e;
+  font-weight: 600;
+  padding: 4px 10px;
+  background: #f0faf4;
+  border-radius: 20px;
+  width: fit-content;
+}
+
+/* ── Item preview card ─────────────────────────────────────────────────────── */
+.offer-item-preview {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  background: linear-gradient(135deg, #f0faf5 0%, #e8f5ff 100%);
+  border: 1.5px solid #b2f0d5;
+  border-radius: 16px;
+  animation: fadeIn 0.25s ease;
+}
+
+.offer-item-preview-img {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 10px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.offer-item-preview-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  justify-content: center;
+}
+
+.offer-item-preview-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1A202C;
+  margin: 0;
+}
+
+.offer-item-preview-desc {
+  font-size: 12px;
+  color: #718096;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.offer-item-preview-meta {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.offer-item-preview-price {
+  font-size: 13px;
+  font-weight: 600;
+  color: #37724e;
   display: flex;
   align-items: center;
-  gap: 12px;
-  cursor: pointer;
+  gap: 2px;
+}
+
+.offer-item-preview-serves {
+  font-size: 12px;
+  color: #718096;
+}
+
+.offer-item-preview-veg {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+.offer-item-preview-veg.veg {
+  background: #c6f6d5;
+  color: #276749;
+}
+.offer-item-preview-veg.nonveg {
+  background: #fed7d7;
+  color: #9b2335;
+}
+
+/* ── Active Toggle button ──────────────────────────────────────────────────── */
+.offer-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 40px;
+  border: 2px solid transparent;
   font-size: 14px;
-  color: #1A202C;
-  font-weight: 500;
-}
-
-.offer-form-checkbox {
-  width: 20px;
-  height: 20px;
+  font-weight: 600;
   cursor: pointer;
-  accent-color: #37724e;
+  font-family: 'Poppins', sans-serif;
+  transition: all 0.25s;
+  width: fit-content;
 }
 
+.offer-toggle-btn.active {
+  background-color: #c6f6d5;
+  color: #276749;
+  border-color: #9ae6b4;
+}
+.offer-toggle-btn.active:hover {
+  background-color: #9ae6b4;
+}
+
+.offer-toggle-btn.inactive {
+  background-color: #E2E8F0;
+  color: #718096;
+  border-color: #CBD5E0;
+}
+.offer-toggle-btn.inactive:hover {
+  background-color: #CBD5E0;
+}
+
+/* ── Action Buttons ────────────────────────────────────────────────────────── */
 .offer-dialog-actions {
   display: flex;
   gap: 12px;
-  margin-top: 12px;
+  margin-top: 8px;
 }
 
 .offer-btn-cancel,
 .offer-btn-save {
   flex: 1;
-  padding: 12px 20px;
+  padding: 13px 20px;
   border: none;
   border-radius: 12px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
   font-family: 'Poppins', sans-serif;
@@ -158,8 +292,7 @@
   background-color: #F7FAFC;
   color: #4A5568;
 }
-
-.offer-btn-cancel:hover {
+.offer-btn-cancel:hover:not(:disabled) {
   background-color: #E2E8F0;
 }
 
@@ -167,19 +300,37 @@
   background-color: #37724e;
   color: white;
 }
-
-.offer-btn-save:hover {
-  background-color: #4f755c;
+.offer-btn-save:hover:not(:disabled) {
+  background-color: #2f6344;
   transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(55, 114, 78, 0.3);
 }
 
+.offer-btn-save:disabled,
+.offer-btn-cancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .offer-dialog-container {
-    padding: 24px;
-    max-width: 95%;
+    padding: 24px 20px;
+    max-width: 96%;
+    border-radius: 18px;
   }
 
   .offer-form-row {
     grid-template-columns: 1fr;
+  }
+
+  .offer-item-preview {
+    flex-direction: column;
+  }
+
+  .offer-item-preview-img {
+    width: 100%;
+    height: 140px;
   }
 }
