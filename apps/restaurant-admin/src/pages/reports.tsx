@@ -10,7 +10,6 @@ import {
     getRevenueData,
     getPeakHourData,
     getAdvancedAnalytics,
-    getBCGMatrixData,
     getRecentFeedback
 } from '../services/supabaseService';
 import type {
@@ -19,7 +18,6 @@ import type {
     RevenueRecord,
     PeakHourData,
     RevenueBreakdown,
-    BCGItem,
     FeedbackRecord
 } from '../services/supabaseService';
 
@@ -50,12 +48,12 @@ const Reports: React.FC = () => {
     });
     const [activeTables, setActiveTables] = useState(0);
     const [topItems, setTopItems] = useState<BestSellingDish[]>([]);
+    const [showAllItemsModal, setShowAllItemsModal] = useState(false);
     const [revenueHistory, setRevenueHistory] = useState<RevenueRecord[]>([]);
     const [peakData, setPeakData] = useState<PeakHourData>(
         Array.from({ length: 7 }, () => Array(24).fill(0))
     );
     const [advanced, setAdvanced] = useState<RevenueBreakdown | null>(null);
-    const [bcgData, setBcgData] = useState<BCGItem[]>([]);
     const [feedbackData, setFeedbackData] = useState<FeedbackRecord[]>([]);
     
     const [customStart, setCustomStart] = useState('');
@@ -90,7 +88,6 @@ const Reports: React.FC = () => {
                 revenueData,
                 heatmap,
                 advancedData,
-                bcgMatrix,
                 recentFeedback
             ] = await Promise.all([
                 getAnalyticsSummary(activeRestaurantId, startDate, endDate),
@@ -99,13 +96,12 @@ const Reports: React.FC = () => {
                 getRevenueData(activeRestaurantId),
                 getPeakHourData(activeRestaurantId),
                 getAdvancedAnalytics(activeRestaurantId, startDate, endDate),
-                getBCGMatrixData(activeRestaurantId),
                 getRecentFeedback(activeRestaurantId)
             ]);
 
             setSummary(analyticsSummary);
             setActiveTables(tablesCount);
-            setTopItems(bestDishes.slice(0, 5));
+            setTopItems(bestDishes);
             // Process revenue history to include zero-revenue days for the last 7 days
             const last7Days: RevenueRecord[] = [];
             for (let i = 6; i >= 0; i--) {
@@ -133,7 +129,6 @@ const Reports: React.FC = () => {
             setRevenueHistory(last7Days);
             setPeakData(heatmap);
             setAdvanced(advancedData);
-            setBcgData(bcgMatrix);
             setFeedbackData(recentFeedback);
         } catch (error) {
             console.error("Error fetching report data:", error);
@@ -390,10 +385,14 @@ const Reports: React.FC = () => {
                                 Top Selling Items
                                 <span className="info-icon">
                                     <Info size={14} />
-                                    <span className="tooltip">Your most popular items ranked by sales volume.</span>
                                 </span>
                             </h3>
-                            <span className="card-subtitle">All-time sales</span>
+                            <button 
+                                className="view-all-btn"
+                                onClick={() => setShowAllItemsModal(true)}
+                            >
+                                View All
+                            </button>
                         </div>
                         <div className="table-wrapper" style={{ overflowX: 'auto' }}>
                             <table className="top-items-table">
@@ -481,121 +480,7 @@ const Reports: React.FC = () => {
 
                 {/* Full Width Sections: BCG & Feedback */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', marginTop: '32px' }}>
-                    {/* BCG Matrix */}
-                    <div className="dashboard-card">
-                        <div className="dashboard-card-header">
-                            <h3 className="dashboard-card-title">
-                                Menu Item Performance
-                                <span className="info-icon">
-                                    <Info size={14} />
-                                    <span className="tooltip">Classification of menu items based on their revenue and volume performance.</span>
-                                </span>
-                            </h3>
-                            <span className="card-subtitle">BCG Matrix (Revenue vs. Volume)</span>
-                        </div>
-                        {/* BCG Matrix Container */}
-                        <div className="bcg-container">
 
-                            {/* Y-Axis Label */}
-                            <div className="bcg-y-label">
-                                <span>▲ Revenue</span>
-                            </div>
-
-                            {/* Main matrix area */}
-                            <div className="bcg-inner">
-
-                                {/* High / Low Revenue labels on left */}
-                                <div className="bcg-rev-labels">
-                                    <span className="bcg-rev-high">High</span>
-                                    <span className="bcg-rev-low">Low</span>
-                                </div>
-
-                                {/* The grid itself */}
-                                <div className="bcg-grid">
-                                    {/* TOP-LEFT: High Volume, High Revenue → Stars */}
-                                    <div className="bcg-quadrant bcg-star">
-                                        <div className="bcg-q-header">
-                                            {/* <span className="bcg-q-icon">⭐</span> */}
-                                            <div>
-                                                <div className="bcg-title">Stars</div>
-                                                <div className="bcg-desc">High Volume · High Revenue</div>
-                                            </div>
-                                        </div>
-                                        <div className="bcg-items">
-                                            {bcgData.filter(i => i.category === 'star').map(i => <span key={i.id} className="bcg-pill bcg-pill-star">{i.name}</span>)}
-                                            {bcgData.filter(i => i.category === 'star').length === 0 && <span className="bcg-empty">No items yet</span>}
-                                        </div>
-                                    </div>
-
-                                    {/* TOP-RIGHT: Low Volume, High Revenue → Hidden Gems */}
-                                    <div className="bcg-quadrant bcg-gem">
-                                        <div className="bcg-q-header">
-                                            {/* <span className="bcg-q-icon">💎</span> */}
-                                            <div>
-                                                <div className="bcg-title">Hidden Gems</div>
-                                                <div className="bcg-desc">Low Volume · High Revenue</div>
-                                            </div>
-                                        </div>
-                                        <div className="bcg-items">
-                                            {bcgData.filter(i => i.category === 'gem').map(i => <span key={i.id} className="bcg-pill bcg-pill-gem">{i.name}</span>)}
-                                            {bcgData.filter(i => i.category === 'gem').length === 0 && <span className="bcg-empty">No items yet</span>}
-                                        </div>
-                                    </div>
-
-                                    {/* BOTTOM-LEFT: High Volume, Low Revenue → Cash Cows */}
-                                    <div className="bcg-quadrant bcg-cow">
-                                        <div className="bcg-q-header">
-                                            {/* <span className="bcg-q-icon">🐄</span> */}
-                                            <div>
-                                                <div className="bcg-title">Cash Items</div>
-                                                <div className="bcg-desc">High Volume · Low Revenue</div>
-                                            </div>
-                                        </div>
-                                        <div className="bcg-items">
-                                            {bcgData.filter(i => i.category === 'cow').map(i => <span key={i.id} className="bcg-pill bcg-pill-cow">{i.name}</span>)}
-                                            {bcgData.filter(i => i.category === 'cow').length === 0 && <span className="bcg-empty">No items yet</span>}
-                                        </div>
-                                    </div>
-
-                                    {/* BOTTOM-RIGHT: Low Volume, Low Revenue → Dead Weight */}
-                                    <div className="bcg-quadrant bcg-dog">
-                                        <div className="bcg-q-header">
-                                            {/* <span className="bcg-q-icon">💀</span> */}
-                                            <div>
-                                                <div className="bcg-title">Dead Weight</div>
-                                                <div className="bcg-desc">Low Volume · Low Revenue</div>
-                                            </div>
-                                        </div>
-                                        <div className="bcg-items">
-                                            {bcgData.filter(i => i.category === 'dog').map(i => <span key={i.id} className="bcg-pill bcg-pill-dog">{i.name}</span>)}
-                                            {bcgData.filter(i => i.category === 'dog').length === 0 && <span className="bcg-empty">No items yet</span>}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* X-Axis: Volume labels */}
-                            <div className="bcg-x-axis-row">
-                                <div className="bcg-x-offset" />
-                                <div className="bcg-x-labels">
-                                    <span className="bcg-vol-high">High</span>
-                                    <span className="bcg-vol-low">Low</span>
-                                </div>
-                            </div>
-
-                            {/* X-Axis label */}
-                            <div className="bcg-x-label">Sales Volume ▶</div>
-
-                        </div>
-
-                        {/* Legend */}
-                        <div className="bcg-legend">
-                            <span className="bcg-legend-item"><span className="bcg-legend-dot bcg-dot-star"></span>Stars — Keep investing, they drive growth</span>
-                            <span className="bcg-legend-item"><span className="bcg-legend-dot bcg-dot-gem"></span>Hidden Gems — High value, low awareness. Promote these!</span>
-                            <span className="bcg-legend-item"><span className="bcg-legend-dot bcg-dot-cow"></span>Cash Items — Reliable sellers. Maintain consistency</span>
-                            <span className="bcg-legend-item"><span className="bcg-legend-dot bcg-dot-dog"></span>Dead Weight — Review for removal or rework</span>
-                        </div>
-                    </div>
 
                     {/* Recent Feedback */}
                     <div className="dashboard-card">
@@ -629,6 +514,62 @@ const Reports: React.FC = () => {
                     </div>
                 </div>
 
+                {/* All Items Modal */}
+                {showAllItemsModal && (
+                    <div className="reports-modal-overlay" onClick={() => setShowAllItemsModal(false)}>
+                        <div className="reports-modal-content" onClick={e => e.stopPropagation()}>
+                            <div className="reports-modal-header">
+                                <div>
+                                    <h2 className="reports-modal-title">All Selling Items</h2>
+                                    <p className="reports-modal-subtitle">Performance breakdown of all items in your menu</p>
+                                </div>
+                                <button className="reports-modal-close" onClick={() => setShowAllItemsModal(false)}>
+                                    <Info size={20} />
+                                </button>
+                            </div>
+                            
+                            <div className="reports-modal-body">
+                                <table className="top-items-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Rank</th>
+                                            <th>Item Name</th>
+                                            <th>Units Sold</th>
+                                            <th>Total Revenue</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {topItems.map((item, index) => (
+                                            <tr key={index}>
+                                                <td>
+                                                    <span className={`item-rank-tag rank-${index + 1}`}>#{index + 1}</span>
+                                                </td>
+                                                <td>
+                                                    <div className="item-name-cell">
+                                                        <span className="item-emoji-box">{item.image}</span>
+                                                        <span className="item-name-text">{item.name}</span>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span className="item-sold-count">{item.sold}</span>
+                                                </td>
+                                                <td>
+                                                    <span className="item-revenue-text">{formatCurrency(item.revenue)}</span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div className="reports-modal-footer">
+                                <button className="report-filter-btn active" onClick={() => setShowAllItemsModal(false)}>
+                                    Close View
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

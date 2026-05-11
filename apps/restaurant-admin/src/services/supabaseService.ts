@@ -1092,8 +1092,7 @@ export const getBestSellingDishes = async (restaurantId: string): Promise<BestSe
         .select('name, sales_count, price')
         .eq('restaurant_id', restaurantId)
         .gt('sales_count', 0)
-        .order('sales_count', { ascending: false })
-        .limit(5);
+        .order('sales_count', { ascending: false });
 
     if (error) {
         console.error("Error fetching best selling from menu_items:", error);

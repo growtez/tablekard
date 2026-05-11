@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-    Bell,
     BuildingIcon,
     CreditCardIcon,
     Crosshair,
     Edit3,
     ExternalLink,
     ImageIcon,
+    LogOut,
     MailIcon,
     MapPinIcon,
     PhoneIcon,
@@ -197,7 +197,7 @@ const validateAdminForm = (form: AdminFormState): string | null => {
 };
 
 const ProfilePage: React.FC = () => {
-    const { userProfile, activeRestaurantId, memberships, refreshSessionData } = useAuth();
+    const { userProfile, activeRestaurantId, memberships, refreshSessionData, signOut } = useAuth();
     const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
     const [restaurantForm, setRestaurantForm] = useState<RestaurantFormState | null>(null);
     const [adminForm, setAdminForm] = useState<AdminFormState>(createAdminFormState(userProfile));
@@ -207,6 +207,7 @@ const ProfilePage: React.FC = () => {
     const [isAdminEditing, setIsAdminEditing] = useState(false);
     const [isRestaurantSaving, setIsRestaurantSaving] = useState(false);
     const [isAdminSaving, setIsAdminSaving] = useState(false);
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
     // Cropping state
     const [cropImage, setCropImage] = useState<string | null>(null);
@@ -637,6 +638,19 @@ const ProfilePage: React.FC = () => {
             });
         } finally {
             setIsAdminSaving(false);
+        }
+    };
+
+    const handleLogout = async () => {
+        setShowLogoutConfirm(false);
+        try {
+            await signOut();
+        } catch (error: unknown) {
+            console.error('Logout error:', error);
+            setFeedback({
+                tone: 'error',
+                message: getErrorMessage(error, 'Failed to sign out. Please try again.')
+            });
         }
     };
 
@@ -1414,9 +1428,13 @@ const ProfilePage: React.FC = () => {
                         </p>
                     </div>
                     <div className="profile-header-right">
-                        <div className="profile-icon-button">
-                            <Bell size={20} color="#718096" />
-                        </div>
+                        <button 
+                            className="profile-icon-button profile-logout-button" 
+                            title="Sign Out"
+                            onClick={() => setShowLogoutConfirm(true)}
+                        >
+                            <LogOut size={20} color="#E53E3E" />
+                        </button>
                         {userProfile?.avatarUrl ? (
                             <img
                                 src={userProfile.avatarUrl}
@@ -1557,6 +1575,34 @@ const ProfilePage: React.FC = () => {
                     circular={cropType === 'avatar'}
                     aspect={cropType === 'logo' ? 1 : 1}
                 />
+            )}
+            {/* Logout Confirmation Modal */}
+            {showLogoutConfirm && (
+                <div className="profile-modal-overlay">
+                    <div className="profile-modal-content">
+                        <div className="profile-modal-header">
+                            <div className="profile-modal-icon logout-icon">
+                                <LogOut size={24} />
+                            </div>
+                            <h3>Sign Out</h3>
+                        </div>
+                        <p>Are you sure you want to sign out of your account?</p>
+                        <div className="profile-modal-actions">
+                            <button 
+                                className="profile-secondary-action" 
+                                onClick={() => setShowLogoutConfirm(false)}
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                className="profile-primary-action logout-confirm-btn" 
+                                onClick={handleLogout}
+                            >
+                                Sign Out
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
