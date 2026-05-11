@@ -4,7 +4,7 @@ import Sidebar from '../components/sidebar';
 import MenuDialog from '../components/menu_dialog';
 import CategoryDialog from '../components/category_dialog';
 import OfferDialog from '../components/offer_dialog';
-import type { OfferRecord } from '../components/offer_dialog';
+// import type { OfferRecord } from '../components/offer_dialog';
 import type { OfferFormData } from '../components/offer_dialog';
 import { useAuth } from '../context/AuthContext';
 import {
