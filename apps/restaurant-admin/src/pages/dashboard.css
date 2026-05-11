@@ -345,10 +345,10 @@ body {
   box-shadow: 0 4px 8px rgba(104, 211, 145, 0.3);
 }
 
-.served-action-btn {
+.ready-action-btn {
   padding: 6px 16px;
-  background-color: #90CDF4;
-  color: #2C5282;
+  background-color: #A0D9B4;
+  color: #22543D;
   border: none;
   border-radius: 10px;
   font-size: 12px;
@@ -358,10 +358,10 @@ body {
   font-family: 'Poppins', sans-serif;
 }
 
-.served-action-btn:hover {
-  background-color: #63B3ED;
+.ready-action-btn:hover {
+  background-color: #68D391;
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(144, 205, 244, 0.4);
+  box-shadow: 0 4px 8px rgba(104, 211, 145, 0.4);
 }
 
 .right-sidebar {

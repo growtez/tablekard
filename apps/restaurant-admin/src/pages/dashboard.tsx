@@ -13,19 +13,19 @@ import type { DashboardOrder } from '../services/supabaseService';
 interface OrderDetailsDialogProps {
   order: DashboardOrder | null;
   onClose: () => void;
-  onMarkServed: (orderId: string) => void;
+  onMarkReady: (orderId: string) => void;
 }
 
 interface AllOrdersDialogProps {
   orders: DashboardOrder[];
   onClose: () => void;
   onSelectOrder: (order: DashboardOrder) => void;
-  onMarkServed: (orderId: string) => void;
+  onMarkReady: (orderId: string) => void;
   onMarkPaid: (orderId: string) => void;
 }
 
 // Order Details Dialog
-const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({ order, onClose, onMarkServed }) => {
+const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({ order, onClose, onMarkReady }) => {
   if (!order) return null;
 
   return (
@@ -87,17 +87,17 @@ const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({ order, onClose,
             <div className="order-total-amount">₹{order.total}</div>
           </div>
 
-          {order.status !== 'Served' && order.status !== 'Completed' && (
+          {order.status !== 'Ready' && order.status !== 'Completed' && (
             <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
               <button
-                className="served-action-btn"
+                className="ready-action-btn"
                 onClick={() => {
-                  onMarkServed(order.id);
+                  onMarkReady(order.id);
                   onClose();
                 }}
                 style={{ padding: '12px 32px', fontSize: '14px' }}
               >
-                Mark as Served
+                Mark as Ready
               </button>
             </div>
           )}
@@ -108,7 +108,7 @@ const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({ order, onClose,
 };
 
 // All Orders Dialog
-const AllOrdersDialog: React.FC<AllOrdersDialogProps & { showAction?: boolean }> = ({ orders, onClose, onSelectOrder, onMarkServed, onMarkPaid, showAction = true }) => {
+const AllOrdersDialog: React.FC<AllOrdersDialogProps & { showAction?: boolean }> = ({ orders, onClose, onSelectOrder, onMarkReady, onMarkPaid, showAction = true }) => {
   return (
     <div className="dialog-overlay" onClick={onClose}>
       <div className="dialog-content chart-dialog" onClick={(e) => e.stopPropagation()}>
@@ -195,18 +195,18 @@ const AllOrdersDialog: React.FC<AllOrdersDialogProps & { showAction?: boolean }>
                 {showAction && (
                   <td>
                     <div style={{ display: 'flex', gap: '8px' }}>
-                      {order.status !== 'Served' && order.status !== 'Completed' && (
+                      {order.status !== 'Ready' && order.status !== 'Completed' && (
                         <button
-                          className="served-action-btn"
+                          className="ready-action-btn"
                           onClick={(e) => {
                             e.stopPropagation();
-                            onMarkServed(order.id);
+                            onMarkReady(order.id);
                           }}
                         >
-                          Mark Served
+                          Mark Ready
                         </button>
                       )}
-                      {order.status === 'Completed' || (order.status === 'Served' && order.isPaid) ? (
+                      {order.status === 'Completed' || (order.status === 'Ready' && order.isPaid) ? (
                         <span style={{ color: '#68D391', fontSize: '13px' }}>✓ Completed</span>
                       ) : null}
                     </div>
@@ -244,19 +244,19 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleMarkServed = async (orderId: string) => {
+  const handleMarkReady = async (orderId: string) => {
     try {
-      await updateOrderStatus(orderId, 'SERVED');
+      await updateOrderStatus(orderId, 'READY');
       if (activeRestaurantId) invalidateOrders(activeRestaurantId);
     } catch (err) {
       console.error(err);
-      alert('Failed to mark order as served');
+      alert('Failed to mark order as ready');
     }
   };
 
   // Filter orders
-  const activeOrders = orders.filter(order => order.status !== 'Completed' && order.status !== 'Cancelled' && (order.status !== 'Served' || !order.isPaid));
-  const completedOrders = orders.filter(order => order.status === 'Completed' || (order.status === 'Served' && order.isPaid));
+  const activeOrders = orders.filter(order => order.status !== 'Completed' && order.status !== 'Cancelled' && (order.status !== 'Ready' || !order.isPaid));
+  const completedOrders = orders.filter(order => order.status === 'Completed' || (order.status === 'Ready' && order.isPaid));
   const pendingPayments = orders.filter(order => !order.isPaid && order.status !== 'Cancelled');
 
   // Revenue calc from raw orders (more robust and uses local timezone)
@@ -279,7 +279,7 @@ const Dashboard: React.FC = () => {
   let revenueLastWeek = 0;
 
   orders.forEach(order => {
-    if (order.status !== 'Served' && order.status !== 'Completed' && !order.isPaid) return;
+    if (order.status !== 'Ready' && order.status !== 'Completed' && !order.isPaid) return;
 
     const orderDate = new Date(order.createdAt);
     
@@ -403,15 +403,15 @@ const Dashboard: React.FC = () => {
                         </td>
                         <td>
                           <div style={{ display: 'flex', gap: '8px' }}>
-                            {order.status !== 'Served' && (
+                            {order.status !== 'Ready' && (
                               <button
-                                className="served-action-btn"
+                                className="ready-action-btn"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleMarkServed(order.id);
+                                  handleMarkReady(order.id);
                                 }}
                               >
-                                Mark Served
+                                Mark Ready
                               </button>
                             )}
                           </div>
@@ -508,7 +508,7 @@ const Dashboard: React.FC = () => {
         <OrderDetailsDialog
           order={selectedOrder}
           onClose={() => setSelectedOrder(null)}
-          onMarkServed={handleMarkServed}
+          onMarkReady={handleMarkReady}
         />
       )}
 
@@ -517,7 +517,7 @@ const Dashboard: React.FC = () => {
           orders={activeOrders}
           onClose={() => setShowAllOrders(false)}
           onSelectOrder={setSelectedOrder}
-          onMarkServed={handleMarkServed}
+          onMarkReady={handleMarkReady}
           onMarkPaid={handlePaymentComplete}
           showAction={true}
         />
@@ -528,7 +528,7 @@ const Dashboard: React.FC = () => {
           orders={completedOrders}
           onClose={() => setShowAllCompleted(false)}
           onSelectOrder={setSelectedOrder}
-          onMarkServed={() => { }}
+          onMarkReady={() => { }}
           onMarkPaid={() => { }}
           showAction={false}
         />
