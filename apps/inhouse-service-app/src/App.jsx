@@ -54,69 +54,6 @@ function getTableNumber(order) {
   return '--';
 }
 
-/* ──────────────── OrderItemsDialog component ──────────── */
-
-const OrderItemsDialog = ({ items, orderNumber, tableNumber, type, status, onAction, onClose }) => (
-  <div className="dialog-overlay" onClick={onClose}>
-    <div className="dialog-content" onClick={(e) => e.stopPropagation()}>
-      <div className="dialog-header">
-        <div className="dialog-title-row">
-          <span className="dialog-title">Order Items</span>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            {type && <span className="dialog-type-badge">{String(type).replace('_', ' ').toUpperCase()}</span>}
-            <span className="dialog-order-badge">#{String(orderNumber || '').slice(-4).toUpperCase()}</span>
-          </div>
-        </div>
-        {tableNumber !== '--' && (
-          <span className="dialog-table-label">Table {tableNumber}</span>
-        )}
-        <button className="dialog-close" onClick={onClose}>
-          <X size={20} strokeWidth={2.5} />
-        </button>
-      </div>
-
-      <div className="dialog-items">
-        {items.length === 0 ? (
-          <div className="dialog-empty">No items in this order</div>
-        ) : (
-          items.map((item) => {
-            const details = buildDetailString(item);
-            return (
-              <div key={item.id} className="dialog-item">
-                <div className="dialog-item-main">
-                  <span className="dialog-item-name">{item.name}</span>
-                  <span className="dialog-item-qty">×{item.quantity}</span>
-                </div>
-                {details && <div className="dialog-item-detail">{details}</div>}
-                {item.special_instructions && (
-                  <div className="dialog-item-instructions">
-                    <AlertTriangle size={11} /> {item.special_instructions}
-                  </div>
-                )}
-                <div className="dialog-item-meta" style={{ justifyContent: 'flex-end' }}>
-                  <span className="dialog-item-time">{formatTime(item.created_at)}</span>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-
-      <div className="dialog-footer">
-        <span className="dialog-total-items">{items.length} item{items.length !== 1 ? 's' : ''}</span>
-        <button 
-          className={status === 'preparing' ? "btn btn-check" : "btn btn-up"} 
-          onClick={onAction} 
-          style={{ padding: '8px 16px', flex: 'none', display: 'flex', gap: '6px', alignItems: 'center' }}
-        >
-          {status === 'preparing' ? <Check size={20} strokeWidth={3} /> : <ArrowUp size={20} strokeWidth={3} />}
-          <span>{status === 'preparing' ? 'DONE' : 'PROCEED'}</span>
-        </button>
-      </div>
-    </div>
-  </div>
-);
-
 /* ──────────────────── OrderCard component ─────────────── */
 
 const OrderCard = ({
@@ -131,67 +68,93 @@ const OrderCard = ({
   onPromote,
   onCancel,
 }) => {
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   return (
-    <>
-      <div className="order-card">
-        {/* Top row: table number + order info */}
-        <div className="card-top">
-          <div className="table-section">
-            <span className="table-label">TABLE NO.</span>
-            <div className="table-number-oval">
-              <span className="table-number-value">{tableNumber}</span>
-            </div>
-          </div>
-          <div className="card-right">
-            <div className="order-badge">#{String(orderNumber || '').slice(-4).toUpperCase()}</div>
-            <div className="order-time">{formatTime(createdAt)}</div>
-            <button className="order-items-trigger" onClick={() => setDialogOpen(true)}>
-              <span>ORDER ITEMS</span>
-              <ChevronDown size={18} strokeWidth={2.5} />
-            </button>
+    <div className={`order-card${expanded ? ' order-card--expanded' : ''}`}>
+      {/* Top row: table number + order info */}
+      <div className="card-top">
+        <div className="table-section">
+          <span className="table-label">TABLE NO.</span>
+          <div className="table-number-oval">
+            <span className="table-number-value">{tableNumber}</span>
           </div>
         </div>
-
-        {/* Bottom row: action buttons */}
-        <div className="order-actions">
-          {status === 'preparing' ? (
-            <button className="btn btn-check" onClick={() => onMarkReady(id)} title="Mark as Ready">
-              <Check className="icon" size={20} color="#000" strokeWidth={3} />
-              <span style={{ marginLeft: '6px' }}>DONE</span>
-            </button>
-          ) : (
-            <>
-              <button className="btn btn-up" onClick={() => onPromote(id)} title="Move to Preparing">
-                <ArrowUp className="icon" size={20} color="#000" strokeWidth={3} />
-                <span style={{ marginLeft: '6px' }}>PROCEED</span>
-              </button>
-              <button className="btn btn-remove" onClick={() => onCancel(id)} title="Cancel Order">
-                <X className="icon" size={20} color="#000" strokeWidth={3} />
-                <span style={{ marginLeft: '6px' }}>DENY</span>
-              </button>
-            </>
-          )}
+        <div className="card-right">
+          <div className="order-badge">#{String(orderNumber || '').slice(-4).toUpperCase()}</div>
+          <div className="order-time">{formatTime(createdAt)}</div>
+          <button className="order-items-trigger" onClick={() => setExpanded((v) => !v)}>
+            <span>ORDER ITEMS</span>
+            <ChevronDown
+              size={18}
+              strokeWidth={2.5}
+              className={`expand-chevron${expanded ? ' expand-chevron--open' : ''}`}
+            />
+          </button>
         </div>
       </div>
 
-      {dialogOpen && (
-        <OrderItemsDialog
-          items={items}
-          orderNumber={orderNumber}
-          tableNumber={tableNumber}
-          type={type}
-          status={status}
-          onAction={() => {
-            if (status === 'preparing') onMarkReady(id);
-            else onPromote(id);
-            setDialogOpen(false);
-          }}
-          onClose={() => setDialogOpen(false)}
-        />
-      )}
-    </>
+      {/* Expandable items section */}
+      <div className={`card-expand-wrapper${expanded ? ' card-expand-wrapper--open' : ''}`}>
+        <div className="card-expand-inner">
+          {/* Type badge row */}
+          {type && (
+            <div className="expand-type-row">
+              <span className="expand-type-badge">{String(type).replace('_', ' ').toUpperCase()}</span>
+            </div>
+          )}
+
+          <div className="expand-items">
+            {items.length === 0 ? (
+              <div className="expand-empty">No items in this order</div>
+            ) : (
+              items.map((item) => {
+                const details = buildDetailString(item);
+                return (
+                  <div key={item.id} className="expand-item">
+                    <div className="expand-item-main">
+                      <span className="expand-item-name">{item.name}</span>
+                      <span className="expand-item-qty">×{item.quantity}</span>
+                    </div>
+                    {details && <div className="expand-item-detail">{details}</div>}
+                    {item.special_instructions && (
+                      <div className="expand-item-instructions">
+                        <AlertTriangle size={11} /> {item.special_instructions}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          <div className="expand-footer">
+            <span className="expand-total-items">{items.length} item{items.length !== 1 ? 's' : ''}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom row: action buttons */}
+      <div className="order-actions">
+        {status === 'preparing' ? (
+          <button className="btn btn-check" onClick={() => onMarkReady(id)} title="Mark as Ready">
+            <Check className="icon" size={20} color="#000" strokeWidth={3} />
+            <span style={{ marginLeft: '6px' }}>DONE</span>
+          </button>
+        ) : (
+          <>
+            <button className="btn btn-up" onClick={() => onPromote(id)} title="Move to Preparing">
+              <ArrowUp className="icon" size={20} color="#000" strokeWidth={3} />
+              <span style={{ marginLeft: '6px' }}>PROCEED</span>
+            </button>
+            <button className="btn btn-remove" onClick={() => onCancel(id)} title="Cancel Order">
+              <X className="icon" size={20} color="#000" strokeWidth={3} />
+              <span style={{ marginLeft: '6px' }}>DENY</span>
+            </button>
+          </>
+        )}
+      </div>
+    </div>
   );
 };
 

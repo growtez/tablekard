@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { TrendingUp, X, User, Clock } from 'lucide-react';
+import { TrendingUp, X, CheckCircle } from 'lucide-react';
 import './dashboard.css';
 import Sidebar from '../components/sidebar';
 
 import { useAuth } from '../context/AuthContext';
-import { useDashboardOrders, useInvalidateQueries, useRevenueData, useBestSellingDishes } from '../hooks/useSupabaseQuery';
+import { useDashboardOrders, useInvalidateQueries, useRevenueData } from '../hooks/useSupabaseQuery';
 import { updateOrderStatus, updatePaymentStatus } from '../services/supabaseService';
 import type { DashboardOrder } from '../services/supabaseService';
 
@@ -13,18 +13,19 @@ import type { DashboardOrder } from '../services/supabaseService';
 interface OrderDetailsDialogProps {
   order: DashboardOrder | null;
   onClose: () => void;
-  onMarkServed: (orderId: string) => void;
+  onMarkReady: (orderId: string) => void;
 }
 
 interface AllOrdersDialogProps {
   orders: DashboardOrder[];
   onClose: () => void;
   onSelectOrder: (order: DashboardOrder) => void;
-  onMarkServed: (orderId: string) => void;
+  onMarkReady: (orderId: string) => void;
+  onMarkPaid: (orderId: string) => void;
 }
 
 // Order Details Dialog
-const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({ order, onClose, onMarkServed }) => {
+const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({ order, onClose, onMarkReady }) => {
   if (!order) return null;
 
   return (
@@ -86,17 +87,17 @@ const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({ order, onClose,
             <div className="order-total-amount">₹{order.total}</div>
           </div>
 
-          {order.status !== 'Served' && order.status !== 'Completed' && (
+          {order.status !== 'Ready' && order.status !== 'Completed' && (
             <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
               <button
-                className="served-action-btn"
+                className="ready-action-btn"
                 onClick={() => {
-                  onMarkServed(order.id);
+                  onMarkReady(order.id);
                   onClose();
                 }}
                 style={{ padding: '12px 32px', fontSize: '14px' }}
               >
-                Mark as Served
+                Mark as Ready
               </button>
             </div>
           )}
@@ -107,7 +108,7 @@ const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({ order, onClose,
 };
 
 // All Orders Dialog
-const AllOrdersDialog: React.FC<AllOrdersDialogProps & { showAction?: boolean }> = ({ orders, onClose, onSelectOrder, onMarkServed, showAction = true }) => {
+const AllOrdersDialog: React.FC<AllOrdersDialogProps & { showAction?: boolean }> = ({ orders, onClose, onSelectOrder, onMarkReady, onMarkPaid, showAction = true }) => {
   return (
     <div className="dialog-overlay" onClick={onClose}>
       <div className="dialog-content chart-dialog" onClick={(e) => e.stopPropagation()}>
@@ -125,6 +126,7 @@ const AllOrdersDialog: React.FC<AllOrdersDialogProps & { showAction?: boolean }>
               <th>Table</th>
               <th>Ordered Time</th>
               <th>Status</th>
+              <th>Payment</th>
               <th>Customer</th>
               {showAction && <th>Action</th>}
             </tr>
@@ -158,6 +160,32 @@ const AllOrdersDialog: React.FC<AllOrdersDialogProps & { showAction?: boolean }>
                     {order.status}
                   </span>
                 </td>
+                <td style={{ cursor: 'pointer' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span 
+                      className={`status-pill ${order.isPaid ? 'payment-paid' : ''}`} 
+                      style={!order.isPaid ? { backgroundColor: '#FEF2F2', color: '#EF4444' } : {}}
+                      onClick={() => {
+                        onClose();
+                        onSelectOrder(order);
+                      }}
+                    >
+                      {order.isPaid ? 'Paid' : 'Pending'}
+                    </span>
+                    {!order.isPaid && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onMarkPaid(order.id);
+                        }}
+                        className="icon-action-btn"
+                        title="Mark Paid"
+                      >
+                        <CheckCircle size={16} />
+                      </button>
+                    )}
+                  </div>
+                </td>
                 <td onClick={() => {
                   onClose();
                   onSelectOrder(order);
@@ -166,19 +194,22 @@ const AllOrdersDialog: React.FC<AllOrdersDialogProps & { showAction?: boolean }>
                 </td>
                 {showAction && (
                   <td>
-                    {order.status !== 'Served' && order.status !== 'Completed' ? (
-                      <button
-                        className="served-action-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onMarkServed(order.id);
-                        }}
-                      >
-                        Mark Served
-                      </button>
-                    ) : (
-                      <span style={{ color: '#68D391', fontSize: '13px' }}>✓ Completed</span>
-                    )}
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      {order.status !== 'Ready' && order.status !== 'Completed' && (
+                        <button
+                          className="ready-action-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onMarkReady(order.id);
+                          }}
+                        >
+                          Mark Ready
+                        </button>
+                      )}
+                      {order.status === 'Completed' || (order.status === 'Ready' && order.isPaid) ? (
+                        <span style={{ color: '#68D391', fontSize: '13px' }}>✓ Completed</span>
+                      ) : null}
+                    </div>
                   </td>
                 )}
               </tr>
@@ -197,7 +228,6 @@ const Dashboard: React.FC = () => {
   // React Query cached orders
   const { data: orders = [], isLoading } = useDashboardOrders(activeRestaurantId);
   useRevenueData(activeRestaurantId);
-  const { data: bestSelling = [], isLoading: loadingBestSelling } = useBestSellingDishes(activeRestaurantId);
   const { invalidateOrders } = useInvalidateQueries();
 
   const [selectedOrder, setSelectedOrder] = useState<DashboardOrder | null>(null);
@@ -214,20 +244,19 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleMarkServed = async (orderId: string) => {
+  const handleMarkReady = async (orderId: string) => {
     try {
-      await updateOrderStatus(orderId, 'SERVED');
+      await updateOrderStatus(orderId, 'READY');
       if (activeRestaurantId) invalidateOrders(activeRestaurantId);
     } catch (err) {
       console.error(err);
-      alert('Failed to mark order as served');
+      alert('Failed to mark order as ready');
     }
   };
 
   // Filter orders
-  const activeOrders = orders.filter(order => order.status !== 'Served' && order.status !== 'Completed' && order.status !== 'Cancelled');
-  const completedOrders = orders.filter(order => order.status === 'Served' || order.status === 'Completed');
-  const pendingPayments = orders.filter(order => !order.isPaid && order.status !== 'Cancelled');
+  const activeOrders = orders.filter(order => order.status !== 'Completed' && order.status !== 'Cancelled' && (order.status !== 'Ready' || !order.isPaid));
+  const completedOrders = orders.filter(order => order.status === 'Completed' || (order.status === 'Ready' && order.isPaid));
 
   // Revenue calc from raw orders (more robust and uses local timezone)
   const now = new Date();
@@ -249,7 +278,7 @@ const Dashboard: React.FC = () => {
   let revenueLastWeek = 0;
 
   orders.forEach(order => {
-    if (order.status !== 'Served' && order.status !== 'Completed' && !order.isPaid) return;
+    if (order.status !== 'Ready' && order.status !== 'Completed' && !order.isPaid) return;
 
     const orderDate = new Date(order.createdAt);
     
@@ -271,7 +300,6 @@ const Dashboard: React.FC = () => {
 
 
 
-  const totalPending: number = pendingPayments.reduce((sum, payment) => sum + payment.total, 0);
 
   return (
     <div className="dashboard-container">
@@ -308,7 +336,7 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="content-grid">
+        <div className="content-grid" style={{ gridTemplateColumns: '1fr' }}>
           <div>
             <div className="table-card">
               <div className="table-header">
@@ -323,14 +351,16 @@ const Dashboard: React.FC = () => {
                       <th>Table</th>
                       <th>Ordered Time</th>
                       <th>Status</th>
+                      <th>Payment</th>
+                      <th>Customer</th>
                       <th>Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     {isLoading ? (
-                      <tr><td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>Loading active orders...</td></tr>
+                      <tr><td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>Loading active orders...</td></tr>
                     ) : activeOrders.length === 0 ? (
-                      <tr><td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>No active orders</td></tr>
+                      <tr><td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>No active orders</td></tr>
                     ) : activeOrders.slice(0, 5).map((order, idx) => (
                       <tr key={idx}>
                         <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
@@ -347,16 +377,46 @@ const Dashboard: React.FC = () => {
                             {order.status}
                           </span>
                         </td>
+                        <td style={{ cursor: 'pointer' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span 
+                              className={`status-pill ${order.isPaid ? 'payment-paid' : ''}`} 
+                              style={!order.isPaid ? { backgroundColor: '#FEF2F2', color: '#EF4444' } : {}}
+                              onClick={() => setSelectedOrder(order)}
+                            >
+                              {order.isPaid ? 'Paid' : 'Pending'}
+                            </span>
+                            {!order.isPaid && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handlePaymentComplete(order.id);
+                                }}
+                                className="icon-action-btn"
+                                title="Mark Paid"
+                              >
+                                <CheckCircle size={16} />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                        <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
+                          {order.customer}
+                        </td>
                         <td>
-                          <button
-                            className="served-action-btn"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleMarkServed(order.id);
-                            }}
-                          >
-                            Mark Served
-                          </button>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            {order.status !== 'Ready' && (
+                              <button
+                                className="ready-action-btn"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleMarkReady(order.id);
+                                }}
+                              >
+                                Mark Ready
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -378,15 +438,16 @@ const Dashboard: React.FC = () => {
                       <th>Table</th>
                       <th>Ordered Time</th>
                       <th>Status</th>
+                      <th>Payment</th>
                       <th>Customer</th>
                     </tr>
                   </thead>
                   <tbody>
                     {isLoading ? (
-                      <tr><td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>Loading completed orders...</td></tr>
+                      <tr><td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>Loading completed orders...</td></tr>
                     ) : completedOrders.length === 0 ? (
                       <tr>
-                        <td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>
+                        <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>
                           No completed orders yet
                         </td>
                       </tr>
@@ -407,6 +468,29 @@ const Dashboard: React.FC = () => {
                               {order.status}
                             </span>
                           </td>
+                          <td style={{ cursor: 'pointer' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span 
+                                className={`status-pill ${order.isPaid ? 'payment-paid' : ''}`} 
+                                style={!order.isPaid ? { backgroundColor: '#FEF2F2', color: '#EF4444' } : {}}
+                                onClick={() => setSelectedOrder(order)}
+                              >
+                                {order.isPaid ? 'Paid' : 'Pending'}
+                              </span>
+                              {!order.isPaid && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePaymentComplete(order.id);
+                                  }}
+                                  className="icon-action-btn"
+                                  title="Mark Paid"
+                                >
+                                  <CheckCircle size={16} />
+                                </button>
+                              )}
+                            </div>
+                          </td>
                           <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
                             {order.customer}
                           </td>
@@ -418,79 +502,15 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
           </div>
-
-          <div className="right-sidebar">
-            <div className="widget-card">
-              <h3 className="widget-title">🔥 Best-Selling Dishes</h3>
-              <div className="dish-list">
-                {loadingBestSelling ? (
-                  <div style={{ textAlign: 'center', padding: '16px', color: '#A0AEC0', fontSize: '13px' }}>Loading...</div>
-                ) : bestSelling.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '16px', color: '#A0AEC0', fontSize: '13px' }}>No data available</div>
-                ) : bestSelling.map((dish, idx) => (
-                  <div key={idx} className="dish-item">
-                    <div className="dish-image">{dish.image}</div>
-                    <div className="dish-info">
-                      <div className="dish-name">{dish.name}</div>
-                      <div className="dish-stats">
-                        <span className="dish-sold">{dish.sold} sold</span>
-                        <span className="dish-trend">{dish.trend}</span>
-                      </div>
-                    </div>
-                    <div className="dish-revenue">
-                      <div className="dish-revenue-amount">₹{dish.revenue.toLocaleString()}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="widget-card">
-              <h3 className="widget-title">⚠️ Pending Payments</h3>
-              <div className="pending-payments-list">
-                {isLoading ? (
-                  <div style={{ textAlign: 'center', padding: '16px', color: '#A0AEC0', fontSize: '13px' }}>Loading...</div>
-                ) : pendingPayments.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '16px', color: '#A0AEC0', fontSize: '13px' }}>No pending payments</div>
-                ) : pendingPayments.map((payment) => (
-                  <div key={payment.id} className="payment-item">
-                    <div className="payment-info">
-                      <div className="payment-table">{payment.table}</div>
-                      <div className="payment-customer">
-                        <User size={12} color="#718096" />
-                        <span className="payment-customer-name">{payment.customer}</span>
-                      </div>
-                      <div className="payment-time">
-                        <Clock size={11} color="#A0AEC0" />
-                        <span className="payment-time-text">{payment.time}</span>
-                      </div>
-                    </div>
-                    <div className="payment-action">
-                      <div className="payment-amount">₹{payment.total}</div>
-                      <button
-                        className="mark-paid-btn"
-                        onClick={() => handlePaymentComplete(payment.id)}
-                      >
-                        Mark Paid
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="payment-total">
-                <span className="payment-total-label">Total Pending</span>
-                <span className="payment-total-amount">₹{totalPending.toLocaleString()}</span>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
+
 
       {selectedOrder && (
         <OrderDetailsDialog
           order={selectedOrder}
           onClose={() => setSelectedOrder(null)}
-          onMarkServed={handleMarkServed}
+          onMarkReady={handleMarkReady}
         />
       )}
 
@@ -499,7 +519,8 @@ const Dashboard: React.FC = () => {
           orders={activeOrders}
           onClose={() => setShowAllOrders(false)}
           onSelectOrder={setSelectedOrder}
-          onMarkServed={handleMarkServed}
+          onMarkReady={handleMarkReady}
+          onMarkPaid={handlePaymentComplete}
           showAction={true}
         />
       )}
@@ -509,7 +530,8 @@ const Dashboard: React.FC = () => {
           orders={completedOrders}
           onClose={() => setShowAllCompleted(false)}
           onSelectOrder={setSelectedOrder}
-          onMarkServed={() => { }}
+          onMarkReady={() => { }}
+          onMarkPaid={() => { }}
           showAction={false}
         />
       )}

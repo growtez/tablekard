@@ -3,8 +3,8 @@
 :root {
   --bg-white: #ffffff;
   --border-color: #000000;
-  --preparing-bg: #ffa500;
-  --queue-bg: #ff0000;
+  --preparing-bg: #92400E;
+  --queue-bg: #8B3A1E;
   --btn-green-bg: #d5e8d4;
   --btn-green-border: #82b366;
   --btn-red-bg: #f8cecc;
@@ -95,10 +95,12 @@ body {
 
 .section-preparing {
   background-color: var(--preparing-bg);
+  color: #ffffff;
 }
 
 .section-queue {
   background-color: var(--queue-bg);
+  color: #ffffff;
 }
 
 /* ── Orders container ────────────────────────────────────── */
@@ -284,166 +286,111 @@ body {
   stroke-width: 2.5px;
 }
 
-/* ── Dialog overlay ──────────────────────────────────────── */
+/* ── Expand chevron rotation ─────────────────────────────── */
 
-.dialog-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.55);
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  z-index: 1000;
-  animation: fadeIn 0.2s ease;
+.expand-chevron {
+  transition: transform 0.3s ease;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+.expand-chevron--open {
+  transform: rotate(180deg);
 }
 
-@keyframes slideUp {
-  from { transform: translateY(100%); }
-  to   { transform: translateY(0); }
+/* ── Card expanded state ─────────────────────────────────── */
+
+.order-card--expanded {
+  border-color: #555;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
-.dialog-content {
-  background: #fff;
-  width: 100%;
-  max-width: 375px;
-  max-height: 80vh;
-  border-radius: 20px 20px 0 0;
-  display: flex;
-  flex-direction: column;
-  animation: slideUp 0.25s ease;
+/* ── Expandable wrapper (grid row animation) ─────────────── */
+
+.card-expand-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s ease;
+}
+
+.card-expand-wrapper--open {
+  grid-template-rows: 1fr;
+}
+
+.card-expand-inner {
   overflow: hidden;
-}
-
-/* ── Dialog header ───────────────────────────────────────── */
-
-.dialog-header {
-  padding: 18px 20px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  border-bottom: 1px solid #eee;
-  position: relative;
-}
-
-.dialog-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-right: 36px;
-}
-
-.dialog-title {
-  font-size: 18px;
-  font-weight: 800;
-  color: #1a1a1a;
-}
-
-.dialog-order-badge {
-  border: 1.5px solid #1a1a1a;
-  border-radius: 6px;
-  padding: 2px 10px;
-  font-size: 12px;
-  font-weight: 800;
-  color: #1a1a1a;
-}
-
-.dialog-type-badge {
-  background: #1a1a1a;
-  border-radius: 6px;
-  padding: 2px 10px;
-  font-size: 10px;
-  font-weight: 800;
-  color: #fff;
-}
-
-.dialog-table-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #888;
-}
-
-.dialog-close {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  background: #f3f3f3;
-  border: none;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  color: #555;
-  transition: background 0.15s;
-}
-
-.dialog-close:hover {
-  background: #e5e5e5;
-}
-
-/* ── Dialog items list ───────────────────────────────────── */
-
-.dialog-items {
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px 20px;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.dialog-empty {
+/* ── Type badge row ──────────────────────────────────────── */
+
+.expand-type-row {
+  padding-top: 4px;
+}
+
+.expand-type-badge {
+  background: #1a1a1a;
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.3px;
+}
+
+/* ── Expanded items list ─────────────────────────────────── */
+
+.expand-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.expand-empty {
   text-align: center;
-  padding: 24px 0;
+  padding: 14px 0;
   color: #aaa;
   font-size: 13px;
   font-style: italic;
 }
 
-.dialog-item {
-  padding: 12px 14px;
-  background: #fafafa;
-  border: 1px solid #f0f0f0;
-  border-radius: 12px;
+.expand-item {
+  padding: 10px 12px;
+  background: #f7f7f7;
+  border: 1px solid #eeeeee;
+  border-radius: 10px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
 }
 
-.dialog-item-main {
+.expand-item-main {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.dialog-item-name {
+.expand-item-name {
   font-weight: 700;
   color: #1a1a1a;
-  font-size: 14px;
+  font-size: 13px;
 }
 
-.dialog-item-qty {
+.expand-item-qty {
   font-weight: 800;
   color: #8B3A1E;
   background: rgba(139, 58, 30, 0.1);
   padding: 2px 8px;
   border-radius: 6px;
-  font-size: 13px;
+  font-size: 12px;
 }
 
-.dialog-item-detail {
-  font-size: 12px;
+.expand-item-detail {
+  font-size: 11px;
   color: #666;
 }
 
-.dialog-item-instructions {
+.expand-item-instructions {
   display: flex;
   align-items: center;
   gap: 5px;
@@ -452,44 +399,23 @@ body {
   font-style: italic;
   font-weight: 500;
   background: rgba(201, 112, 0, 0.06);
-  padding: 6px 8px;
+  padding: 5px 7px;
   border-radius: 6px;
 }
 
-.dialog-item-meta {
+/* ── Expand footer ───────────────────────────────────────── */
+
+.expand-footer {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  font-size: 12px;
-  color: #888;
-  font-weight: 600;
-}
-
-.dialog-item-time {
-  font-weight: 500;
-}
-
-/* ── Dialog footer ───────────────────────────────────────── */
-
-.dialog-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 20px;
+  padding: 4px 0 2px;
   border-top: 1px solid #eee;
-  background: #fafafa;
 }
 
-.dialog-total-items {
-  font-size: 13px;
+.expand-total-items {
+  font-size: 12px;
   font-weight: 600;
-  color: #666;
-}
-
-.dialog-total-price {
-  font-size: 16px;
-  font-weight: 800;
-  color: #1a1a1a;
+  color: #888;
 }
 
 /* ── Loading / Error / Empty states ──────────────────────── */

@@ -395,33 +395,35 @@ const Reports: React.FC = () => {
                             </h3>
                             <span className="card-subtitle">All-time sales</span>
                         </div>
-                        <table className="top-items-table">
-                            <thead>
-                                <tr>
-                                    <th>Item</th>
-                                    <th>Sold</th>
-                                    <th>Revenue</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {topItems.length === 0 ? (
-                                    <tr><td colSpan={3} style={{ textAlign: 'center', padding: '24px', color: '#A0AEC0' }}>No sales recorded</td></tr>
-                                ) : (
-                                    topItems.slice(0, 5).map((item, index) => (
-                                        <tr key={index}>
-                                            <td>
-                                                <div className="item-name-cell">
-                                                    <span className={`item-rank-tag rank-${index + 1}`}>#{index + 1}</span>
-                                                    <span className="item-name-text">{item.name}</span>
-                                                </div>
-                                            </td>
-                                            <td>{item.sold}</td>
-                                            <td>{formatCurrency(item.revenue)}</td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
+                        <div className="table-wrapper" style={{ overflowX: 'auto' }}>
+                            <table className="top-items-table">
+                                <thead>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Sold</th>
+                                        <th>Revenue</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {topItems.length === 0 ? (
+                                        <tr><td colSpan={3} style={{ textAlign: 'center', padding: '24px', color: '#A0AEC0' }}>No sales recorded</td></tr>
+                                    ) : (
+                                        topItems.slice(0, 5).map((item, index) => (
+                                            <tr key={index}>
+                                                <td>
+                                                    <div className="item-name-cell">
+                                                        <span className={`item-rank-tag rank-${index + 1}`}>#{index + 1}</span>
+                                                        <span className="item-name-text">{item.name}</span>
+                                                    </div>
+                                                </td>
+                                                <td>{item.sold}</td>
+                                                <td>{formatCurrency(item.revenue)}</td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     {/* Peak Hour Heatmap */}

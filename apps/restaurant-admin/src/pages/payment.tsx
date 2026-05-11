@@ -294,88 +294,90 @@ const Payment: React.FC = () => {
             <h2 className="table-title">Payments Table</h2>
           </div>
 
-          <table className="orders-table">
-            <thead>
-              <tr>
-                <th>Order ID</th>
-                <th>Customer Name</th>
-                <th>Date & Time</th>
-                <th>Payment Method</th>
-                <th>Payment Status</th>
-                <th>Amount</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
+          <div className="table-wrapper" style={{ overflowX: 'auto' }}>
+            <table className="orders-table">
+              <thead>
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>
-                    Loading transactions...
-                  </td>
+                  <th>Order ID</th>
+                  <th>Customer Name</th>
+                  <th>Date & Time</th>
+                  <th>Payment Method</th>
+                  <th>Payment Status</th>
+                  <th>Amount</th>
+                  <th>Actions</th>
                 </tr>
-              ) : filteredTransactions.length === 0 ? (
-                <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>
-                    No transactions found matching the selected filters
-                  </td>
-                </tr>
-              ) : (
-                filteredTransactions.map((transaction) => (
-                  <tr key={transaction.id}>
-                    <td>
-                      <div className="order-id-cell">{transaction.orderNumber}</div>
-                    </td>
-                    <td>
-                      <div className="customer-name-cell">{transaction.customerName}</div>
-                    </td>
-                    <td>
-                      <div className="datetime-cell">{transaction.dateTime}</div>
-                    </td>
-                    <td>
-                      <span className={`method-badge method-${transaction.paymentMethod.toLowerCase()}`}>
-                        {transaction.paymentMethod}
-                      </span>
-                    </td>
-                    <td>
-                      <select
-                        className={`payment-status-pill status-${transaction.statusColor}`}
-                        value={transaction.paymentStatus}
-                        onChange={(e) => handleStatusChange(transaction.id, e.target.value)}
-                        title="Change payment status"
-                        style={{ cursor: 'pointer', outline: 'none' }}
-                      >
-                        <option value="Paid">Paid</option>
-                        <option value="Pending">Pending</option>
-                        <option value="Failed">Failed</option>
-                        <option value="Refunded">Refunded</option>
-                      </select>
-                    </td>
-                    <td>
-                      <div className="amount-cell">₹{transaction.amount.toLocaleString()}</div>
-                    </td>
-                    <td>
-                      <div className="action-buttons">
-                        <button
-                          className="action-btn view-btn"
-                          onClick={() => handleView(transaction.id)}
-                          title="View Details"
-                        >
-                          <Eye size={14} />
-                        </button>
-                        <button
-                          className="action-btn delete-btn"
-                          onClick={() => handleDelete(transaction.id)}
-                          title="Hide Transaction"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>
+                      Loading transactions...
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : filteredTransactions.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>
+                      No transactions found matching the selected filters
+                    </td>
+                  </tr>
+                ) : (
+                  filteredTransactions.map((transaction) => (
+                    <tr key={transaction.id}>
+                      <td>
+                        <div className="order-id-cell">{transaction.orderNumber}</div>
+                      </td>
+                      <td>
+                        <div className="customer-name-cell">{transaction.customerName}</div>
+                      </td>
+                      <td>
+                        <div className="datetime-cell">{transaction.dateTime}</div>
+                      </td>
+                      <td>
+                        <span className={`method-badge method-${transaction.paymentMethod.toLowerCase()}`}>
+                          {transaction.paymentMethod}
+                        </span>
+                      </td>
+                      <td>
+                        <select
+                          className={`payment-status-pill status-${transaction.statusColor}`}
+                          value={transaction.paymentStatus}
+                          onChange={(e) => handleStatusChange(transaction.id, e.target.value)}
+                          title="Change payment status"
+                          style={{ cursor: 'pointer', outline: 'none' }}
+                        >
+                          <option value="Paid">Paid</option>
+                          <option value="Pending">Pending</option>
+                          <option value="Failed">Failed</option>
+                          <option value="Refunded">Refunded</option>
+                        </select>
+                      </td>
+                      <td>
+                        <div className="amount-cell">₹{transaction.amount.toLocaleString()}</div>
+                      </td>
+                      <td>
+                        <div className="action-buttons">
+                          <button
+                            className="action-btn view-btn"
+                            onClick={() => handleView(transaction.id)}
+                            title="View Details"
+                          >
+                            <Eye size={14} />
+                          </button>
+                          <button
+                            className="action-btn delete-btn"
+                            onClick={() => handleDelete(transaction.id)}
+                            title="Hide Transaction"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* Transaction Details Modal */}
