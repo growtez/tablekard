@@ -280,38 +280,40 @@ const SubscriptionPage: React.FC = () => {
                                 No subscription payments yet.
                             </div>
                         ) : (
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Plan</th>
-                                        <th>Amount</th>
-                                        <th>Period</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {payments.map((payment) => (
-                                        <tr key={payment.id}>
-                                            <td>{formatDate(payment.createdAt)}</td>
-                                            <td>{planLabel(payment.planDuration)}</td>
-                                            <td style={{ fontWeight: 600 }}>
-                                                ₹{payment.amount.toLocaleString('en-IN')}
-                                            </td>
-                                            <td>
-                                                {payment.startsAt && payment.endsAt
-                                                    ? `${formatDate(payment.startsAt)} — ${formatDate(payment.endsAt)}`
-                                                    : '—'}
-                                            </td>
-                                            <td>
-                                                <span className={`sub-status-${payment.status}`}>
-                                                    {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
-                                                </span>
-                                            </td>
+                            <div className="table-wrapper">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Plan</th>
+                                            <th>Amount</th>
+                                            <th>Period</th>
+                                            <th>Status</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {payments.map((payment) => (
+                                            <tr key={payment.id}>
+                                                <td>{formatDate(payment.createdAt)}</td>
+                                                <td>{planLabel(payment.planDuration)}</td>
+                                                <td style={{ fontWeight: 600 }}>
+                                                    ₹{payment.amount.toLocaleString('en-IN')}
+                                                </td>
+                                                <td>
+                                                    {payment.startsAt && payment.endsAt
+                                                        ? `${formatDate(payment.startsAt)} — ${formatDate(payment.endsAt)}`
+                                                        : '—'}
+                                                </td>
+                                                <td>
+                                                    <span className={`sub-status-${payment.status}`}>
+                                                        {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         )}
                     </div>
                 </div>
