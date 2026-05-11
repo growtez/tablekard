@@ -269,6 +269,19 @@ CREATE TABLE IF NOT EXISTS public.subscription_payments (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- offers
+CREATE TABLE IF NOT EXISTS public.offers (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    restaurant_id UUID NOT NULL REFERENCES public.restaurants(id) ON DELETE CASCADE,
+    menu_item_id UUID NOT NULL REFERENCES public.menu_items(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    discount_price NUMERIC NOT NULL CHECK (discount_price >= 0),
+    valid_until TIMESTAMPTZ,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Backfill schema changes for existing databases
 ALTER TABLE public.restaurants
     ADD COLUMN IF NOT EXISTS profile_urls TEXT[] DEFAULT ARRAY[]::TEXT[];
@@ -297,6 +310,9 @@ ON public.revenue(restaurant_id, revenue_date);
 CREATE INDEX IF NOT EXISTS idx_menu_items_sales_count
 ON public.menu_items(restaurant_id, sales_count DESC);
 
+CREATE INDEX IF NOT EXISTS idx_offers_restaurant_id ON public.offers(restaurant_id);
+CREATE INDEX IF NOT EXISTS idx_offers_menu_item_id ON public.offers(menu_item_id);
+
 -- ======================================================================================
 -- TRIGGERS FOR TIMESTAMPS
 -- ======================================================================================
@@ -310,6 +326,7 @@ CREATE TRIGGER update_menu_items_updated_at BEFORE UPDATE ON public.menu_items F
 CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON public.orders FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
 CREATE TRIGGER update_revenue_updated_at BEFORE UPDATE ON public.revenue FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
 CREATE TRIGGER update_platform_settings_updated_at BEFORE UPDATE ON public.platform_settings FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
+CREATE TRIGGER update_offers_updated_at BEFORE UPDATE ON public.offers FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
 
 -- ======================================================================================
 -- REVENUE AGGREGATION TRIGGER
@@ -535,6 +552,7 @@ ALTER TABLE public.favorites ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.feedback ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.platform_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.subscription_payments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.offers ENABLE ROW LEVEL SECURITY;
 
 -- ======================================================================================
 -- RLS POLICIES
@@ -628,6 +646,17 @@ CREATE POLICY "Super admins manage subscription payments" ON public.subscription
 -- NOTE: Restaurant members have read-only access. Status updates (e.g. auto-cancel)
 -- must be performed by the super-admin service role only (see super-admin/Subscriptions.jsx).
 
+-- 17. offers
+CREATE POLICY "Public can read active offers"
+    ON public.offers
+    FOR SELECT
+    USING (is_active = true);
+
+CREATE POLICY "Restaurant members manage their offers"
+    ON public.offers
+    FOR ALL
+    USING (public.is_restaurant_member(restaurant_id));
+
 
 -- ======================================================================================
 -- STORAGE POLICIES
@@ -653,21 +682,3 @@ USING (
   bucket_id = 'ar-files' AND
   auth.role() = 'authenticated'
 );
-
--- ======================================================================================
--- DATA BACKFILL (Run only once after migration)
--- ======================================================================================
-
--- Backfill sales_count for existing paid orders (OPTIONAL - run if you have existing data)
--- Uncomment the line below to backfill existing data:
--- UPDATE public.menu_items mi
--- SET sales_count = COALESCE(
---     (
---         SELECT SUM(oi.quantity)
---         FROM public.order_items oi
---         JOIN public.orders o ON o.id = oi.order_id
---         WHERE oi.menu_item_id = mi.id
---         AND o.payment_status = 'paid'
---     ),
---     0
--- );

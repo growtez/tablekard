@@ -4,6 +4,8 @@ import Sidebar from '../components/sidebar';
 import MenuDialog from '../components/menu_dialog';
 import CategoryDialog from '../components/category_dialog';
 import OfferDialog from '../components/offer_dialog';
+import type { OfferRecord } from '../components/offer_dialog';
+import type { OfferFormData } from '../components/offer_dialog';
 import { useAuth } from '../context/AuthContext';
 import {
   addMenuItem,
@@ -12,9 +14,14 @@ import {
   toggleMenuItemAvailability,
   addMenuCategory,
   updateMenuCategory,
-  deleteMenuCategory
+  deleteMenuCategory,
+  addOffer,
+  updateOffer,
+  deleteOffer,
+  toggleOfferActive,
 } from '../services/supabaseService';
-import { useMenuItems, useMenuCategories, useInvalidateQueries } from '../hooks/useSupabaseQuery';
+import type { OfferRow } from '../services/supabaseService';
+import { useMenuItems, useMenuCategories, useOffers, useInvalidateQueries } from '../hooks/useSupabaseQuery';
 import type { MenuItem, MenuCategory } from '@restaurant-saas/types';
 import './menu.css';
 
@@ -27,42 +34,9 @@ const Menu: React.FC = () => {
   // React Query: cached, auto-retries, refetches on tab focus
   const { data: menuItems = [], isLoading: loadingItems } = useMenuItems(activeRestaurantId);
   const { data: categories = [], isLoading: loadingCategories } = useMenuCategories(activeRestaurantId);
+  const { data: offers = [], isLoading: loadingOffers } = useOffers(activeRestaurantId);
   const loading = loadingItems || loadingCategories;
-  const { invalidateMenu } = useInvalidateQueries();
-
-  // Offers (mock data for now)
-  const [offers, setOffers] = useState([
-    {
-      id: 1,
-      title: 'Flat 20% Off',
-      description: 'On all Main Course items',
-      dishName: 'All Main Course',
-      originalPrice: 420,
-      discountedPrice: 336,
-      isActive: true,
-      validUntil: '2025-10-15'
-    },
-    {
-      id: 2,
-      title: 'Buy 1 Get 1 Free',
-      description: 'On Gulab Jamun',
-      dishName: 'Gulab Jamun',
-      originalPrice: 120,
-      discountedPrice: 120,
-      isActive: true,
-      validUntil: '2025-10-10'
-    },
-    {
-      id: 3,
-      title: 'Weekend Special',
-      description: '15% off on Biryani',
-      dishName: 'Biryani',
-      originalPrice: 380,
-      discountedPrice: 323,
-      isActive: false,
-      validUntil: '2025-10-08'
-    }
-  ]);
+  const { invalidateMenu, invalidateOffers } = useInvalidateQueries();
 
   const [menuDialogOpen, setMenuDialogOpen] = useState(false);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
@@ -70,7 +44,7 @@ const Menu: React.FC = () => {
 
   const [selectedMenuItem, setSelectedMenuItem] = useState<MenuItem | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<MenuCategory | null>(null);
-  const [selectedOffer, setSelectedOffer] = useState<any>(null);
+  const [selectedOffer, setSelectedOffer] = useState<OfferRow | null>(null);
   const [dialogMode, setDialogMode] = useState<'add' | 'edit'>('add');
 
   const filteredMenuItems = selectedCategoryId === 'all'
@@ -275,22 +249,51 @@ const Menu: React.FC = () => {
 
 
   // --- OFFER HANDLERS ---
-  const toggleOffer = (id: number) => {
-    setOffers(offs => offs.map(off => off.id === id ? { ...off, isActive: !off.isActive } : off));
-  };
-  const handleAddOffer = () => { setDialogMode('add'); setSelectedOffer(null); setOfferDialogOpen(true); };
-  const handleEditOffer = (offer: any) => { setDialogMode('edit'); setSelectedOffer(offer); setOfferDialogOpen(true); };
-  const handleSaveOffer = (offer: any) => {
-    if (dialogMode === 'add') {
-      const newOffer = { ...offer, id: Math.max(...offers.map(o => o.id), 0) + 1 };
-      setOffers([...offers, newOffer]);
-    } else {
-      setOffers(offs => offs.map(o => o.id === offer.id ? offer : o));
+  const toggleOffer = async (offer: OfferRow) => {
+    if (!activeRestaurantId) return;
+    try {
+      await toggleOfferActive(offer.id, !offer.is_active);
+      invalidateOffers(activeRestaurantId);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to toggle offer status');
     }
   };
-  const handleDeleteOffer = (id: number) => {
-    if (window.confirm('Delete this offer?')) {
-      setOffers(offers.filter(offer => offer.id !== id));
+
+  const handleAddOffer = () => { setDialogMode('add'); setSelectedOffer(null); setOfferDialogOpen(true); };
+  const handleEditOffer = (offer: OfferRow) => { setDialogMode('edit'); setSelectedOffer(offer); setOfferDialogOpen(true); };
+
+  const handleSaveOffer = async (formData: OfferFormData) => {
+    if (!activeRestaurantId) return;
+    const payload = {
+      menu_item_id: formData.menu_item_id,
+      title: formData.title,
+      discount_price: parseFloat(formData.discount_price),
+      valid_until: formData.valid_until ? new Date(formData.valid_until).toISOString() : null,
+      is_active: formData.is_active,
+    };
+    try {
+      if (dialogMode === 'add') {
+        await addOffer(activeRestaurantId, payload);
+      } else if (selectedOffer) {
+        await updateOffer(selectedOffer.id, payload);
+      }
+      invalidateOffers(activeRestaurantId);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to save offer');
+      throw err; // let dialog keep open
+    }
+  };
+
+  const handleDeleteOffer = async (id: string) => {
+    if (!window.confirm('Delete this offer?')) return;
+    try {
+      await deleteOffer(id);
+      if (activeRestaurantId) invalidateOffers(activeRestaurantId);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete offer');
     }
   };
 
@@ -491,31 +494,44 @@ const Menu: React.FC = () => {
               </button>
             </div>
 
+            {loadingOffers ? (
+              <div style={{ padding: '40px', textAlign: 'center', color: '#718096' }}>Loading offers...</div>
+            ) : offers.length === 0 ? (
+              <div style={{ padding: '40px', textAlign: 'center', color: '#718096' }}>No offers yet. Click "Add New Offer" to create one!</div>
+            ) : (
             <div className="offers-grid">
-              {offers.map((offer) => (
+              {offers.map((offer) => {
+                const linkedItem = menuItems.find(m => m.id === offer.menu_item_id);
+                const originalPrice = linkedItem?.price;
+                return (
                 <div key={offer.id} className="offer-card">
                   <div className="offer-header">
                     <h3 className="offer-title">{offer.title}</h3>
-                    <span className={`offer-status ${offer.isActive ? 'active' : 'inactive'}`}>
-                      {offer.isActive ? 'Active' : 'Inactive'}
+                    <span className={`offer-status ${offer.is_active ? 'active' : 'inactive'}`}>
+                      {offer.is_active ? 'Active' : 'Inactive'}
                     </span>
                   </div>
-                  <p className="offer-description">{offer.description}</p>
                   <div className="offer-details">
-                    <div className="offer-dish">{offer.dishName}</div>
+                    <div className="offer-dish">
+                      {linkedItem ? `${linkedItem.isVeg ? '🟩' : '🟥'} ${linkedItem.name}` : '—'}
+                    </div>
                     <div className="offer-pricing">
-                      <span className="original-price">₹{offer.originalPrice}</span>
-                      <span className="discounted-price">₹{offer.discountedPrice}</span>
+                      {originalPrice !== undefined && (
+                        <span className="original-price">₹{originalPrice}</span>
+                      )}
+                      <span className="discounted-price">₹{offer.discount_price}</span>
                     </div>
                   </div>
-                  <div className="offer-validity">Valid until: {offer.validUntil}</div>
+                  {offer.valid_until && (
+                    <div className="offer-validity">Valid until: {new Date(offer.valid_until).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
+                  )}
                   <div className="offer-actions">
                     <div className="offer-toggle">
                       <label className="toggle-switch">
                         <input
                           type="checkbox"
-                          checked={offer.isActive}
-                          onChange={() => toggleOffer(offer.id)}
+                          checked={offer.is_active}
+                          onChange={() => toggleOffer(offer)}
                         />
                         <span className="toggle-slider"></span>
                       </label>
@@ -530,8 +546,10 @@ const Menu: React.FC = () => {
                     </button>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
+            )}
           </div>
         )}
       </div>
@@ -559,8 +577,9 @@ const Menu: React.FC = () => {
         isOpen={offerDialogOpen}
         onClose={() => setOfferDialogOpen(false)}
         onSave={handleSaveOffer}
-        offer={selectedOffer}
+        offer={selectedOffer as any}
         mode={dialogMode}
+        menuItems={menuItems}
       />
     </div>
   );

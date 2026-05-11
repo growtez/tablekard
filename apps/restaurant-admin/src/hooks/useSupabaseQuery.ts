@@ -19,9 +19,10 @@ import {
   getRestaurantById,
   getRevenueData,
   getBestSellingDishes,
+  getOffers,
 } from '../services/supabaseService';
 import type { MenuItem, MenuCategory, Restaurant, Order } from '@restaurant-saas/types';
-import type { DashboardOrder, PaymentTransaction, RestaurantTable, RevenueRecord, BestSellingDish } from '../services/supabaseService';
+import type { DashboardOrder, PaymentTransaction, RestaurantTable, RevenueRecord, BestSellingDish, OfferRow } from '../services/supabaseService';
 
 // ─── Stale times ────────────────────────────────────────────────────
 const STALE_30S = 30 * 1000;   // data pages (orders, payments)
@@ -38,6 +39,7 @@ export const queryKeys = {
   tables: (restaurantId: string) => ['tables', restaurantId] as const,
   revenue: (restaurantId: string) => ['revenue', restaurantId] as const,
   bestSelling: (restaurantId: string) => ['bestSelling', restaurantId] as const,
+  offers: (restaurantId: string) => ['offers', restaurantId] as const,
 };
 
 // ─── Restaurant ─────────────────────────────────────────────────────
@@ -143,6 +145,17 @@ export function useRestaurantTables(restaurantId: string | null) {
   });
 }
 
+// ─── Offers ─────────────────────────────────────────────────────────
+export function useOffers(restaurantId: string | null) {
+  return useQuery<OfferRow[]>({
+    queryKey: queryKeys.offers(restaurantId ?? ''),
+    queryFn: () => getOffers(restaurantId!),
+    enabled: !!restaurantId,
+    staleTime: STALE_2M,
+    retry: 3,
+  });
+}
+
 // ─── Invalidation helper ────────────────────────────────────────────
 /**
  * Returns helper functions to invalidate specific query groups after mutations.
@@ -166,6 +179,9 @@ export function useInvalidateQueries() {
     },
     invalidateTables: (restaurantId: string) => {
       qc.invalidateQueries({ queryKey: queryKeys.tables(restaurantId) });
+    },
+    invalidateOffers: (restaurantId: string) => {
+      qc.invalidateQueries({ queryKey: queryKeys.offers(restaurantId) });
     },
     invalidateAll: (restaurantId: string) => {
       qc.invalidateQueries({ queryKey: ['menuItems', restaurantId] });
