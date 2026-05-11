@@ -10,6 +10,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 import { RestaurantProvider, useRestaurant } from "./context/RestaurantContext";
 import PageSkeleton from "./components/PageSkeleton";
+import FloatingQueueButton from "./components/FloatingQueueButton";
 import { showHomeLoader, hideHomeLoader } from "./utils/loader";
 
 import "./App.css";
@@ -142,6 +143,7 @@ function AppRoutes() {
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          <FloatingQueueButton />
         </RequireRestaurant>
       </Suspense>
     </RestaurantProvider>
