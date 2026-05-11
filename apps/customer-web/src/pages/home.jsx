@@ -559,29 +559,31 @@ const HomePage = () => {
 
                             <p className="dish-full-desc">{selectedItem.description}</p>
                             
-                            <button 
-                                className="view-ar-btn"
-                                onClick={() => navigate(`/ar/${selectedItem.id}`, { state: { modelUrl: selectedItem.modelUrl } })}
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '8px',
-                                    width: '100%',
-                                    padding: '12px',
-                                    marginTop: '16px',
-                                    backgroundColor: '#f5ede9',
-                                    color: '#8B3A1E',
-                                    border: 'none',
-                                    borderRadius: '12px',
-                                    fontSize: '15px',
-                                    fontWeight: '600',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                <View size={18} />
-                                View in AR
-                            </button>
+                            {selectedItem.modelUrl && (
+                                <button 
+                                    className="view-ar-btn"
+                                    onClick={() => navigate(`/ar/${selectedItem.id}`, { state: { modelUrl: selectedItem.modelUrl } })}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '8px',
+                                        width: '100%',
+                                        padding: '12px',
+                                        marginTop: '16px',
+                                        backgroundColor: '#f5ede9',
+                                        color: '#8B3A1E',
+                                        border: 'none',
+                                        borderRadius: '12px',
+                                        fontSize: '15px',
+                                        fontWeight: '600',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    <View size={18} />
+                                    View in AR
+                                </button>
+                            )}
                         </div>
 
                         {/* Sticky Bottom Action Bar */}

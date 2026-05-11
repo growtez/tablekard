@@ -1,0 +1,53 @@
+.floating-queue-btn {
+    position: fixed;
+    bottom: 90px; /* Above BottomNav */
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    background-color: var(--color-primary, #8B3A1E);
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    border: none;
+    cursor: pointer;
+    z-index: 999;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.floating-queue-btn:active {
+    transform: scale(0.95);
+}
+
+.floating-queue-btn:hover {
+    background-color: var(--color-primary-dark, #6F2D17);
+}
+
+.pulse-indicator {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 12px;
+    height: 12px;
+    background-color: var(--color-star, #F2B84B);
+    border-radius: 50%;
+    border: 2px solid var(--color-background, #FFFFFF);
+    animation: pulse-ring 2s infinite;
+}
+
+@keyframes pulse-ring {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(242, 184, 75, 0.7);
+    }
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 10px rgba(242, 184, 75, 0);
+    }
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(242, 184, 75, 0);
+    }
+}
