@@ -354,14 +354,15 @@ const Dashboard: React.FC = () => {
                       <th>Ordered Time</th>
                       <th>Status</th>
                       <th>Payment</th>
+                      <th>Customer</th>
                       <th>Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     {isLoading ? (
-                      <tr><td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>Loading active orders...</td></tr>
+                      <tr><td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>Loading active orders...</td></tr>
                     ) : activeOrders.length === 0 ? (
-                      <tr><td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>No active orders</td></tr>
+                      <tr><td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>No active orders</td></tr>
                     ) : activeOrders.slice(0, 5).map((order, idx) => (
                       <tr key={idx}>
                         <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
@@ -400,6 +401,9 @@ const Dashboard: React.FC = () => {
                               </button>
                             )}
                           </div>
+                        </td>
+                        <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
+                          {order.customer}
                         </td>
                         <td>
                           <div style={{ display: 'flex', gap: '8px' }}>
@@ -442,10 +446,10 @@ const Dashboard: React.FC = () => {
                   </thead>
                   <tbody>
                     {isLoading ? (
-                      <tr><td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>Loading completed orders...</td></tr>
+                      <tr><td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>Loading completed orders...</td></tr>
                     ) : completedOrders.length === 0 ? (
                       <tr>
-                        <td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>
+                        <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>
                           No completed orders yet
                         </td>
                       </tr>
