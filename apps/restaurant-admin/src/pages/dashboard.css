@@ -916,3 +916,24 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #A0AEC0;
 }
+
+.icon-action-btn {
+  background-color: #C6F6D5;
+  color: #22543D;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.icon-action-btn:hover {
+  background-color: #68D391;
+  color: #FFFFFF;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(104, 211, 145, 0.4);
+}
