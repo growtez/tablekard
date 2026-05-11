@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TrendingUp, X, User, Clock, CheckCircle } from 'lucide-react';
+import { TrendingUp, X, CheckCircle } from 'lucide-react';
 import './dashboard.css';
 import Sidebar from '../components/sidebar';
 
@@ -301,7 +301,6 @@ const Dashboard: React.FC = () => {
 
 
 
-  const totalPending: number = pendingPayments.reduce((sum, payment) => sum + payment.total, 0);
 
   return (
     <div className="dashboard-container">
