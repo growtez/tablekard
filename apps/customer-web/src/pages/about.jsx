@@ -128,9 +128,11 @@ const AboutPage = () => {
             <div className="about-journal-content">
                 {/* Hero / Brand Intro */}
                 <section className="about-journal-hero">
-                    <div className="brand-badge">SINCE {restaurant?.opening_date ? new Date(restaurant.opening_date).getFullYear() : '2020'}</div>
+                    {restaurant?.opening_date && (
+                        <div className="brand-badge">SINCE {new Date(restaurant.opening_date).getFullYear()}</div>
+                    )}
                     <h1 className="brand-main-title">{restaurant?.name?.toUpperCase() || 'TABLEKARD'}</h1>
-                    <p className="brand-philosophy">{restaurant?.tagline || 'The art of fine dining, redefined for the modern connoisseur.'}</p>
+                    <p className="brand-philosophy">{restaurant?.tagline || 'Where Every Meal Tells a Story.'}</p>
                     <div className="brand-accent-line"></div>
                 </section>
 
@@ -142,7 +144,7 @@ const AboutPage = () => {
                         </div>
                         <h2 className="legend-title">The Manifesto</h2>
                         <p className="legend-text">
-                            {restaurant?.manifesto || 'Tablekard was born from a singular vision: to create a sanctuary where flavors tell stories. Our journey began in 2020, driven by a passion for culinary excellence and a commitment to locally-sourced, seasonal ingredients. We believe that every meal is an opportunity to create a lasting memory.'}
+                            {restaurant?.manifesto || 'Tablekard was born in 2026 with a singular mission — to bring the future of dining to every table. We believe the restaurant experience should be seamless, personal, and delightful from the moment you sit down. Built on technology and powered by hospitality, Tablekard transforms the way restaurants connect with their guests — through smart menus, instant ordering, and real-time kitchen updates. Every meal becomes a moment worth remembering.'}
                         </p>
                     </div>
                 </section>

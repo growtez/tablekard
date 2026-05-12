@@ -19,12 +19,14 @@ import {
     Wifi,
     WifiOff,
     Star,
-    MapPin
+    MapPin,
+    Download
 } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
 import { useAuth } from '../context/AuthContext';
 import { getOrderHistory } from '../services/supabaseService';
+import { jsPDF } from 'jspdf';
 import './order_history.css';
 
 /* ─── Helpers ──────────────────────────────────────────────────────────────── */
@@ -101,6 +103,91 @@ const SkeletonCard = () => (
         </div>
     </div>
 );
+
+const downloadInvoice = (order) => {
+    const doc = new jsPDF();
+
+    // Header
+    doc.setFontSize(22);
+    doc.setTextColor(139, 58, 30);
+    doc.text('TABLEKARD', 105, 20, { align: 'center' });
+
+    doc.setFontSize(10);
+    doc.setTextColor(150, 150, 150);
+    doc.text('Powered by Tablekard · tablekard.com', 105, 27, { align: 'center' });
+
+    doc.setDrawColor(220, 220, 220);
+    doc.line(20, 32, 190, 32);
+
+    // Invoice Details
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Invoice: ${order.id}`, 20, 42);
+    doc.text(`Date: ${order.date}`, 20, 50);
+    if (order.tableNumber) {
+        doc.text(`Table: ${order.tableNumber}`, 20, 58);
+    }
+    const orderTypeLabel = { dine_in: 'Dine In', takeaway: 'Takeaway', delivery: 'Delivery' };
+    doc.text(`Type: ${orderTypeLabel[order.type] || order.type || 'Dine In'}`, 120, 42);
+    doc.text(`Payment: ${order.paymentMethod || 'Cash'}`, 120, 50);
+
+    doc.line(20, 64, 190, 64);
+
+    // Items Table Header
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(11);
+    doc.text('Item', 20, 73);
+    doc.text('Qty', 140, 73);
+    doc.text('Amount', 165, 73);
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(10);
+
+    let y = 82;
+    order.items.forEach(item => {
+        const itemName = item.name.length > 35 ? item.name.substring(0, 33) + '...' : item.name;
+        doc.text(itemName, 20, y);
+        doc.text(`x${item.quantity}`, 140, y);
+        doc.text(`Rs.${(item.price * item.quantity).toFixed(2)}`, 165, y);
+        y += 8;
+    });
+
+    doc.line(20, y + 2, 190, y + 2);
+    y += 12;
+
+    // Tax breakdown (inclusive model)
+    const tax18 = Math.round(order.total * 0.18);
+    const tax5 = Math.round(order.total * 0.05);
+    const subtotal = order.total - tax18 - tax5;
+
+    doc.setFontSize(10);
+    doc.text('Subtotal (excl. taxes):', 120, y);
+    doc.text(`Rs.${subtotal}`, 175, y, { align: 'right' });
+    y += 8;
+    doc.setTextColor(100, 100, 100);
+    doc.text('GST (18%):', 120, y);
+    doc.text(`Rs.${tax18}`, 175, y, { align: 'right' });
+    y += 8;
+    doc.text('Service Charge (5%):', 120, y);
+    doc.text(`Rs.${tax5}`, 175, y, { align: 'right' });
+    y += 10;
+
+    doc.setTextColor(139, 58, 30);
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(13);
+    doc.text('TOTAL PAID:', 120, y);
+    doc.text(`Rs.${order.total}`, 175, y, { align: 'right' });
+
+    // Footer
+    y += 20;
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'italic');
+    doc.setTextColor(150, 150, 150);
+    doc.text('Prices are inclusive of all applicable taxes.', 105, y, { align: 'center' });
+    y += 8;
+    doc.text('Thank you for dining with us! — Tablekard', 105, y, { align: 'center' });
+
+    doc.save(`Invoice_${order.id.replace('#', '')}.pdf`);
+};
 
 const OrderCard = ({ order, onReorder }) => {
     const [expanded, setExpanded] = useState(false);
@@ -197,13 +284,25 @@ const OrderCard = ({ order, onReorder }) => {
                             )}
                         </div>
                     </div>
-                    <button
-                        className="oh-reorder-btn"
-                        onClick={() => onReorder(order)}
-                    >
-                        <RotateCcw size={14} />
-                        Reorder
-                    </button>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end' }}>
+                        {order.paymentStatus === 'paid' && (
+                            <button
+                                className="oh-download-invoice-btn"
+                                onClick={() => downloadInvoice(order)}
+                                title="Download Invoice"
+                            >
+                                <Download size={13} />
+                                Invoice
+                            </button>
+                        )}
+                        <button
+                            className="oh-reorder-btn"
+                            onClick={() => onReorder(order)}
+                        >
+                            <RotateCcw size={14} />
+                            Reorder
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -246,7 +345,7 @@ const OrderHistoryPage = () => {
                 status: UI_STATUS(order.status),
                 realStatus: order.status,
                 paymentMethod: order.payment_method,
-                paymentStatus: order.payment_status,
+                paymentStatus: order.payment_status?.toLowerCase(),
                 type: order.type,
                 tableNumber: order.table_number ?? null,
                 rating: order.rating,

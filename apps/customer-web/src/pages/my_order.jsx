@@ -56,7 +56,7 @@ const MyOrderPage = () => {
           discount: order.discount || 0,
           orderDate: new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           fullDate: new Date(order.created_at).toLocaleDateString(),
-          paymentStatus: order.payment_status === 'PAID' ? 'Paid' : order.payment_status === 'PENDING' ? 'Pending' : order.payment_status,
+          paymentStatus: order.payment_status?.toLowerCase(),
           paymentMethod: order.payment_method,
           statusLabel: order.status.charAt(0).toUpperCase() + order.status.slice(1).toLowerCase(),
           rawOrder: order
@@ -693,7 +693,7 @@ const MyOrderPage = () => {
                             {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                           </span>
                         </div>
-                        {order.paymentStatus === 'Paid' && (
+                        {order.paymentStatus === 'paid' && (
                           <button
                             className="download-invoice-btn"
                             onClick={() => downloadInvoice(order)}

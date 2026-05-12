@@ -146,6 +146,33 @@ export const getOrderHistory = async (userId) => {
     }));
 };
 
+export const submitFeedback = async ({ orderId, userId, rating, comment }) => {
+    // We use a delete-then-insert pattern to simulate an upsert 
+    // because the feedback table might not have a unique constraint on order_id
+    try {
+        await supabase
+            .from('feedback')
+            .delete()
+            .eq('order_id', orderId);
+    } catch (e) {
+        console.error("Error clearing old feedback:", e);
+    }
+
+    const { data, error } = await supabase
+        .from('feedback')
+        .insert({
+            order_id: orderId,
+            user_id: userId,
+            rating: rating,
+            comment: comment
+        })
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+};
+
 export const getTodaysOrders = async (userId) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
