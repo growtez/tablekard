@@ -165,6 +165,33 @@ const EmptyState = ({ message }) => (
   <div className="empty-state">{message}</div>
 );
 
+/* ──────────── Deny confirmation dialog ────────────────── */
+
+const DenyConfirmDialog = ({ orderNumber, onConfirm, onClose }) => (
+  <div className="deny-overlay" onClick={onClose}>
+    <div className="deny-dialog" onClick={(e) => e.stopPropagation()}>
+      <div className="deny-dialog-icon">
+        <AlertTriangle size={28} color="#b85450" strokeWidth={2.5} />
+      </div>
+      <div className="deny-dialog-title">Deny Order?</div>
+      <div className="deny-dialog-desc">
+        Are you sure you want to reject order{' '}
+        <strong>#{String(orderNumber || '').slice(-4).toUpperCase()}</strong>?
+        This action cannot be undone.
+      </div>
+      <div className="deny-dialog-actions">
+        <button className="deny-dialog-btn deny-dialog-btn--cancel" onClick={onClose}>
+          GO BACK
+        </button>
+        <button className="deny-dialog-btn deny-dialog-btn--confirm" onClick={onConfirm}>
+          <X size={16} strokeWidth={3} />
+          DENY ORDER
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
 /* ──────────────────── App component ───────────────────── */
 
 function App() {
@@ -194,6 +221,7 @@ function App() {
 function OrdersView({ onSignOut }) {
   const { activeRestaurantId } = useAuth();
   const [restaurantName, setRestaurantName] = useState('TABLEKARD');
+  const [denyTarget, setDenyTarget] = useState(null); // { id, orderNumber }
 
   useEffect(() => {
     if (!activeRestaurantId) return;
@@ -221,6 +249,19 @@ function OrdersView({ onSignOut }) {
     handleMarkReady,
     handleCancel,
   } = useOrders();
+
+  /** Open the deny confirmation dialog */
+  const requestDeny = (orderId, orderNumber) => {
+    setDenyTarget({ id: orderId, orderNumber });
+  };
+
+  /** Confirmed deny – cancel the order and close dialog */
+  const confirmDeny = async () => {
+    if (denyTarget) {
+      await handleCancel(denyTarget.id);
+      setDenyTarget(null);
+    }
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
@@ -269,7 +310,7 @@ function OrdersView({ onSignOut }) {
                   status={order.status}
                   onMarkReady={handleMarkReady}
                   onPromote={handlePromote}
-                  onCancel={handleCancel}
+                  onCancel={(id) => requestDeny(id, order.order_number)}
                 />
               ))
             )}
@@ -293,12 +334,21 @@ function OrdersView({ onSignOut }) {
                   status={order.status}
                   onMarkReady={handleMarkReady}
                   onPromote={handlePromote}
-                  onCancel={handleCancel}
+                  onCancel={(id) => requestDeny(id, order.order_number)}
                 />
               ))
             )}
           </div>
         </>
+      )}
+
+      {/* Deny confirmation dialog */}
+      {denyTarget && (
+        <DenyConfirmDialog
+          orderNumber={denyTarget.orderNumber}
+          onConfirm={confirmDeny}
+          onClose={() => setDenyTarget(null)}
+        />
       )}
     </div>
   );
