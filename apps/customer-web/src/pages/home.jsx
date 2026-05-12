@@ -5,7 +5,8 @@ import './home.css';
 import Hamburger from '../components/hamburger';
 import { useRestaurant } from '../context/RestaurantContext';
 import { useAuth } from '../context/AuthContext';
-import { getRecentOrderedItems, getRecommendedItems, getOffersForCustomer } from '../services/supabaseService';
+import { useCart } from '../context/CartContext';
+import { getRecentOrderedItems, getRecommendedItems, getOffersForCustomer, getFavorites, addFavorite, removeFavoriteFromDB } from '../services/supabaseService';
 import PageSkeleton from '../components/PageSkeleton';
 import { showHomeLoader, hideHomeLoader } from '../utils/loader';
 import BottomNav from '../components/BottomNav';
@@ -36,10 +37,10 @@ const HomePage = () => {
         fontSize: getDynamicFontSize(restaurantName),
         letterSpacing: getDynamicLetterSpacing(restaurantName)
     };
+    const { cartItems, addToCart: cartAdd, removeFromCart: cartRemove, getItemQuantity } = useCart();
     const [searchTerm, setSearchTerm] = useState('');
     const [activeOfferIndex, setActiveOfferIndex] = useState(0);
     const [favorites, setFavorites] = useState([]);
-    const [cart, setCart] = useState([]);
     const [activeFilter, setActiveFilter] = useState('popular');
     const [selectedItem, setSelectedItem] = useState(null);
     const [showItemModal, setShowItemModal] = useState(false);
@@ -126,7 +127,12 @@ const HomePage = () => {
                 setDiscountItems(results[1] || []);
                 
                 if (user?.id) {
-                    setRecentOrders(results[3] || []);
+                    const [recent, favs] = await Promise.all([
+                        getRecentOrderedItems(user.id, 3),
+                        getFavorites(user.id)
+                    ]);
+                    setRecentOrders(recent || []);
+                    setFavorites(favs?.map(f => f.id) || []);
                 }
             } catch (err) {
                 console.error('Error fetching home data:', err);
@@ -160,46 +166,47 @@ const HomePage = () => {
             : null;
     }
 
-    const toggleFavorite = (itemId, e) => {
-        e.stopPropagation();
+    const toggleFavorite = async (itemId, e) => {
+        if (e) e.stopPropagation();
+        if (!user) {
+            navigate('/login');
+            return;
+        }
+
+        const isFavorite = favorites.includes(itemId);
+        
+        // Optimistic UI update
         setFavorites(prev =>
-            prev.includes(itemId)
+            isFavorite
                 ? prev.filter(id => id !== itemId)
                 : [...prev, itemId]
         );
+
+        try {
+            if (isFavorite) {
+                await removeFavoriteFromDB(user.id, itemId);
+            } else {
+                await addFavorite(user.id, itemId);
+            }
+        } catch (err) {
+            console.error('Error toggling favorite:', err);
+            // Rollback on error
+            setFavorites(prev =>
+                isFavorite
+                    ? [...prev, itemId]
+                    : prev.filter(id => id !== itemId)
+            );
+        }
     };
 
     const addToCart = (item, e) => {
         if (e) e.stopPropagation();
-        setCart(prev => {
-            const existingItem = prev.find(cartItem => cartItem.id === item.id);
-            if (existingItem) {
-                return prev.map(cartItem =>
-                    cartItem.id === item.id
-                        ? { ...cartItem, quantity: cartItem.quantity + 1 }
-                        : cartItem
-                );
-            }
-            return [...prev, { ...item, quantity: 1 }];
-        });
+        cartAdd(item);
     };
 
     const removeFromCart = (itemId, event) => {
         if (event) event.stopPropagation();
-        setCart(prev => {
-            const existingItem = prev.find(item => item.id === itemId);
-            if (existingItem && existingItem.quantity > 1) {
-                return prev.map(item =>
-                    item.id === itemId ? { ...item, quantity: item.quantity - 1 } : item
-                );
-            }
-            return prev.filter(item => item.id !== itemId);
-        });
-    };
-
-    const getItemQuantity = (itemId) => {
-        const item = cart.find(i => i.id === itemId);
-        return item ? item.quantity : 0;
+        cartRemove(itemId);
     };
 
     const handleItemClick = (item) => {
@@ -253,7 +260,8 @@ const HomePage = () => {
     const discountSectionLabel = hasRealDiscounts ? 'Offers for you' : 'Top sellers';
 
 
-    const cartTotal = cart.reduce((total, item) => total + item.quantity, 0);
+    const cartTotal = cartItems.reduce((total, item) => total + item.quantity, 0);
+    const cart = cartItems;
 
     return (
         <div className={`home-container ${cartTotal > 0 ? 'has-cart' : ''}`}>

@@ -326,11 +326,11 @@ const LiveQueuePage = () => {
                     </div>
                 </div>
 
-                {/* Up Next */}
+                {/* Order Queue */}
                 <div className="timeline-section">
                     <div className="timeline-header">
                         <Clock size={18} />
-                        <span>Up Next</span>
+                        <span>Order Queue</span>
                     </div>
                     <div className="timeline-tokens">
                         {queueData.upcoming.map((order) => {
