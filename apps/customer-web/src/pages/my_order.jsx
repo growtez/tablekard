@@ -663,7 +663,7 @@ const MyOrderPage = () => {
                           <span className="order-date">{order.orderDate}</span>
                         </div>
                         <div className={`payment-badge-top ${order.paymentStatus?.includes('Not') || order.paymentStatus === 'Pending' ? 'not-paid' : 'paid'}`}>
-                          <span className="payment-dollar">$</span>
+                          <span className="payment-dollar">₹</span>
                           {order.paymentStatus}
                         </div>
                       </div>
