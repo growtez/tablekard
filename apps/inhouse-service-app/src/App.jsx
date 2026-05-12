@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Check, ArrowUp, X, Loader2, RefreshCw, ChevronDown, AlertTriangle, LogOut } from 'lucide-react';
+import { supabase } from '@restaurant-saas/supabase';
 import { useOrders } from './hooks/useOrders';
 import { useAuth } from './context/AuthContext';
 import LoginScreen from './components/LoginScreen';
@@ -191,6 +192,25 @@ function App() {
 
 /** The main orders UI, shown only after successful auth */
 function OrdersView({ onSignOut }) {
+  const { activeRestaurantId } = useAuth();
+  const [restaurantName, setRestaurantName] = useState('TABLEKARD');
+
+  useEffect(() => {
+    if (!activeRestaurantId) return;
+    const fetchRestaurantName = async () => {
+      const { data, error } = await supabase
+        .from('restaurants')
+        .select('name')
+        .eq('id', activeRestaurantId)
+        .single();
+      
+      if (!error && data?.name) {
+        setRestaurantName(data.name);
+      }
+    };
+    fetchRestaurantName();
+  }, [activeRestaurantId]);
+
   const {
     preparingOrders,
     queueOrders,
@@ -206,7 +226,7 @@ function OrdersView({ onSignOut }) {
     <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
       <header className="header">
         <div className="header-row">
-          <div className="logo">TABLEKARD</div>
+          <div className="logo">{restaurantName}</div>
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn-refresh" onClick={refresh} title="Refresh orders">
               <RefreshCw size={18} />
