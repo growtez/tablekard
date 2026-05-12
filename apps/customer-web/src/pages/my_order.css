@@ -423,6 +423,14 @@ body {
   padding: 20px;
   border: 1.5px solid rgba(0, 0, 0, 0.22);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  position: relative;
+  transition: border-color 0.3s ease;
+}
+
+/* Cancelled card consolation border */
+.order-item--cancelled {
+  border-color: rgba(239, 68, 68, 0.35);
+  background: linear-gradient(135deg, #FFFFFF 0%, #FFF8F7 100%);
 }
 
 .order-header {
@@ -438,10 +446,18 @@ body {
   align-items: center;
 }
 
+/* ID + time grouped together */
+.order-id-group {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
 .order-id {
   color: #1A1A1A;
   font-weight: 800;
-  font-size: 16px;
+  font-size: 20px;
+  letter-spacing: 0.5px;
 }
 
 .order-date {
@@ -450,6 +466,49 @@ body {
   font-weight: 500;
 }
 
+/* Payment badge in top-right */
+.payment-badge-top {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.payment-badge-top.paid {
+  background: rgba(76, 175, 80, 0.12);
+  color: #2E7D32;
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.payment-badge-top.not-paid {
+  background: rgba(244, 67, 54, 0.08);
+  color: #C62828;
+  border: 1px solid rgba(244, 67, 54, 0.25);
+}
+
+.payment-dollar {
+  font-weight: 800;
+  font-size: 13px;
+}
+
+/* Status badge in bottom-right */
+.order-status-bottom {
+  padding: 6px 14px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #1A1A1A;
+  border: 1.5px solid transparent;
+  align-self: flex-end;
+}
+
+/* Legacy .order-status kept for backwards compat */
 .order-status {
   padding: 5px 10px;
   border-radius: 20px;
@@ -502,7 +561,7 @@ body {
 .order-footer {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end;
 }
 
 .payment-badge {

@@ -8,9 +8,9 @@ import {
   cancelOrder,
 } from '../lib/supabaseService';
 
-// Orders in the queue have status 'confirmed';
+// Orders in the queue have status 'pending' or 'confirmed';
 // orders being prepared have status 'preparing'.
-const WATCHED_STATUSES = ['confirmed', 'preparing'];
+const WATCHED_STATUSES = ['pending', 'confirmed', 'preparing'];
 
 export function useOrders() {
   const { activeRestaurantId } = useAuth();
@@ -33,7 +33,7 @@ export function useOrders() {
       const orders = await fetchOrdersByStatus(WATCHED_STATUSES, activeRestaurantId);
 
       setPreparingOrders(orders.filter((o) => o.status === 'preparing'));
-      setQueueOrders(orders.filter((o) => o.status === 'confirmed'));
+      setQueueOrders(orders.filter((o) => o.status === 'pending' || o.status === 'confirmed'));
     } catch (err) {
       setError(err.message ?? 'Failed to fetch orders');
     } finally {
