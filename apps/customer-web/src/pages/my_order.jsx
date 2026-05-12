@@ -650,26 +650,31 @@ const MyOrderPage = () => {
             <>
               <h2 className="section-heading">Today's Orders</h2>
               <div className="orders-list">
-                {orders.map(order => (
-                  <div key={order.id} className="order-item">
+                {orders.map(order => {
+                  const shortId = order.id?.slice(-4) || order.id;
+                  const isCancelled = order.status === 'cancelled';
+                  return (
+                  <div key={order.id} className={`order-item${isCancelled ? ' order-item--cancelled' : ''}`}>
+                    {/* Top row: #ID + time on left, payment badge on right */}
                     <div className="order-header">
                       <div className="order-id-row">
-                        <span className="order-id">Order #{order.id}</span>
-                        <div className="order-status" style={{ backgroundColor: getStatusColor(order.status) + '20' }}>
-                          {getStatusIcon(order.status)}
-                          <span className="status-text">
-                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                          </span>
+                        <div className="order-id-group">
+                          <span className="order-id">Order #{shortId}</span>
+                          <span className="order-date">{order.orderDate}</span>
+                        </div>
+                        <div className={`payment-badge-top ${order.paymentStatus?.includes('Not') || order.paymentStatus === 'Pending' ? 'not-paid' : 'paid'}`}>
+                          <span className="payment-dollar">$</span>
+                          {order.paymentStatus}
                         </div>
                       </div>
                       <div className="order-meta-row">
-                        <span className="order-date">{order.orderDate}</span>
                         <span className="order-type-badge">
                           {(order.rawOrder?.type || '').toLowerCase() === 'takeaway' ? 'Takeaway' : 'Dine In'}
                         </span>
                       </div>
                     </div>
 
+                    {/* Items list */}
                     <div className="order-items">
                       {order.items.map((item, index) => (
                         <div key={index} className="order-item-row">
@@ -679,10 +684,14 @@ const MyOrderPage = () => {
                       ))}
                     </div>
 
+                    {/* Footer: total on left, status badge on bottom-right */}
                     <div className="order-footer">
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <div className={`payment-badge ${order.paymentStatus?.includes('Not') || order.paymentStatus === 'Pending' ? 'not-paid' : 'paid'}`}>
-                          {order.paymentStatus}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-start' }}>
+                        <div className="order-status-bottom" style={{ backgroundColor: getStatusColor(order.status) + '20', borderColor: getStatusColor(order.status) + '50' }}>
+                          {getStatusIcon(order.status)}
+                          <span className="status-text">
+                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                          </span>
                         </div>
                         {order.paymentStatus === 'Paid' && (
                           <button
@@ -713,7 +722,8 @@ const MyOrderPage = () => {
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </>
           )}
