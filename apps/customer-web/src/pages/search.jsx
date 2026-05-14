@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Search, ArrowLeft, Heart, Star, Clock, X, Plus, Minus, View, Zap, ShoppingBag, ShoppingCart, ArrowRight, Users } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -45,16 +45,52 @@ const SearchPage = () => {
         }).catch(err => console.error("Error fetching menu items:", err));
     }, [restaurantId]);
 
+    // Debounced search with relevance ranking
+    const debounceRef = useRef(null);
+
+    const rankAndFilter = useCallback((query, items) => {
+        const q = query.toLowerCase().trim();
+        if (!q) return [];
+
+        const scored = [];
+        for (const item of items) {
+            const name = item.name.toLowerCase();
+            const desc = (item.description || '').toLowerCase();
+            let score = 0;
+
+            if (name === q) {
+                score = 100;                          // exact match
+            } else if (name.startsWith(q)) {
+                score = 80;                           // prefix match
+            } else if (name.split(/\s+/).some(w => w.startsWith(q))) {
+                score = 60;                           // word-boundary match
+            } else if (name.includes(q)) {
+                score = 40;                           // substring match
+            } else if (desc.includes(q)) {
+                score = 20;                           // description match
+            }
+
+            if (score > 0) scored.push({ item, score });
+        }
+
+        scored.sort((a, b) => b.score - a.score || a.item.name.localeCompare(b.item.name));
+        return scored.map(s => s.item);
+    }, []);
+
     useEffect(() => {
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+
         if (searchTerm.trim() === '') {
             setResults([]);
-        } else {
-            const filtered = allItems.filter(item =>
-                item.name.toLowerCase().startsWith(searchTerm.toLowerCase())
-            );
-            setResults(filtered);
+            return;
         }
-    }, [searchTerm, allItems]);
+
+        debounceRef.current = setTimeout(() => {
+            setResults(rankAndFilter(searchTerm, allItems));
+        }, 150);
+
+        return () => clearTimeout(debounceRef.current);
+    }, [searchTerm, allItems, rankAndFilter]);
 
     const handleItemClick = (item) => {
         setSelectedItem(item);
@@ -218,78 +254,62 @@ const SearchPage = () => {
                 ) : results.length > 0 ? (
 
                     /* ── Search Results ── */
-                    <div className="results-grid">
-                        <p className="results-count">
-                            {results.length} result{results.length > 1 ? 's' : ''} for &ldquo;{searchTerm}&rdquo;
+                    <div className="sr-container">
+                        <p className="sr-count">
+                            <span className="sr-count-num">{results.length}</span> result{results.length > 1 ? 's' : ''} for <span className="sr-count-q">"{searchTerm}"</span>
                         </p>
-                        {results.map((item, idx) => (
-                            <div
-                                key={item.id}
-                                className="search-result-card rec-card"
-                                style={{ animationDelay: `${idx * 0.06}s` }}
-                                onClick={() => handleItemClick(item)}
-                            >
-                                {/* Thumbnail */}
-                                <div className="rec-thumb">
-                                    <img src={item.image} alt={item.name} loading="lazy" />
-
-                                    {/* Veg/Non-Veg badge on image */}
-                                    <div className={`rec-veg-badge ${item.dietType || 'veg'}`}>
-                                        <div className="rec-veg-dot" />
-                                    </div>
-                                </div>
-
-                                {/* Info Column */}
-                                <div className="rec-info">
-                                    {/* Name + Rating */}
-                                    <div className="rec-name-row">
-                                        <h4 className="rec-name">{item.name}</h4>
-                                        <div className="rec-star-pill">
-                                            <Star size={10} fill="#8B3A1E" color="#8B3A1E" />
-                                            <span>{item.rating}</span>
+                        <div className="sr-list">
+                            {results.map((item, idx) => (
+                                <div
+                                    key={item.id}
+                                    className="sr-card"
+                                    style={{ animationDelay: `${idx * 0.04}s` }}
+                                    onClick={() => handleItemClick(item)}
+                                >
+                                    {/* Image */}
+                                    <div className="sr-img">
+                                        <img src={item.image} alt={item.name} loading="lazy" />
+                                        <div className={`sr-diet ${item.dietType || 'veg'}`}>
+                                            <span />
                                         </div>
                                     </div>
 
-                                    {/* Description */}
-                                    <p className="rec-desc">
-                                        {item.description || 'A chef-curated delight'}
-                                    </p>
-
-                                    {/* Price + Time + Add */}
-                                    <div className="rec-bottom-row">
-                                        <div className="rec-left-info">
-                                            <span className="rec-price">₹{item.price}</span>
-                                            {getItemQuantity(item.id) > 0 && (
-                                                <Link to="/orders" className="rec-view-cart-link" onClick={(e) => e.stopPropagation()}>
-                                                    View Cart
-                                                </Link>
+                                    {/* Info */}
+                                    <div className="sr-info">
+                                        <div className="sr-top">
+                                            <h4 className="sr-name">{item.name}</h4>
+                                            <div className="sr-rating">
+                                                <Star size={10} fill="#8B3A1E" color="#8B3A1E" />
+                                                <span>{item.rating}</span>
+                                            </div>
+                                        </div>
+                                        <p className="sr-desc">{item.description || 'A chef-curated delight'}</p>
+                                        <div className="sr-bottom">
+                                            <span className="sr-price">₹{item.price}</span>
+                                            {getItemQuantity(item.id) === 0 ? (
+                                                <button
+                                                    className="sr-add-btn"
+                                                    onClick={(e) => { e.stopPropagation(); addToCart(item); }}
+                                                >
+                                                    <Plus size={13} strokeWidth={3} />
+                                                    Add
+                                                </button>
+                                            ) : (
+                                                <div className="sr-qty" onClick={(e) => e.stopPropagation()}>
+                                                    <button onClick={() => removeFromCart(item.id)}>
+                                                        <Minus size={12} strokeWidth={3} />
+                                                    </button>
+                                                    <span>{getItemQuantity(item.id)}</span>
+                                                    <button onClick={() => addToCart(item)}>
+                                                        <Plus size={12} strokeWidth={3} />
+                                                    </button>
+                                                </div>
                                             )}
                                         </div>
-
-                                        {getItemQuantity(item.id) === 0 ? (
-                                            <button
-                                                className="rec-add-pill"
-                                                onClick={(e) => { e.stopPropagation(); addToCart(item); }}
-                                                aria-label={`Add ${item.name}`}
-                                            >
-                                                <Plus size={13} strokeWidth={3} />
-                                                Add
-                                            </button>
-                                        ) : (
-                                            <div className="rec-qty-stepper" onClick={(e) => e.stopPropagation()}>
-                                                <button className="rec-stepper-btn" onClick={() => removeFromCart(item.id)}>
-                                                    <Minus size={11} strokeWidth={3} />
-                                                </button>
-                                                <span className="rec-stepper-value">{getItemQuantity(item.id)}</span>
-                                                <button className="rec-stepper-btn" onClick={() => addToCart(item)}>
-                                                    <Plus size={11} strokeWidth={3} />
-                                                </button>
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
 
                 ) : (
@@ -300,7 +320,7 @@ const SearchPage = () => {
                             <img src="/assets/no-results-illustration.png" alt="No results" />
                         </div>
                         <h3>No item available</h3>
-                        <p>We couldn't find any item starting with<br />"{searchTerm}"</p>
+                        <p>We couldn't find any match for<br />"{searchTerm}"</p>
                     </div>
 
                 )}
