@@ -419,188 +419,199 @@ body {
 
 .order-item {
   background-color: #FFFFFF;
-  border-radius: 24px;
-  padding: 20px;
-  border: 1.5px solid rgba(0, 0, 0, 0.22);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  border-radius: 20px;
+  padding: 0;
+  border: 1.2px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
   position: relative;
   transition: border-color 0.3s ease;
+  overflow: hidden;
 }
 
-/* Cancelled card consolation border */
+/* Cancelled card styling */
 .order-item--cancelled {
-  border-color: rgba(239, 68, 68, 0.35);
-  background: linear-gradient(135deg, #FFFFFF 0%, #FFF8F7 100%);
+  border-color: rgba(239, 68, 68, 0.3);
+  background: linear-gradient(135deg, #FFFFFF 0%, #FFFAF9 100%);
 }
 
-.order-header {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-bottom: 16px;
-}
-
-.order-id-row {
+/* ── Tier 1: Identity Row ── */
+.oi-identity {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 16px 18px 12px;
 }
 
-/* ID + time grouped together */
-.order-id-group {
+.oi-identity-left {
   display: flex;
-  align-items: baseline;
+  align-items: center;
+  gap: 10px;
+}
+
+.oi-order-id {
+  font-size: 18px;
+  font-weight: 800;
+  color: #1A1A1A;
+  letter-spacing: 0.3px;
+  font-variant-numeric: tabular-nums;
+}
+
+.oi-type-chip {
+  font-size: 10px;
+  font-weight: 700;
+  color: #8B3A1E;
+  background: #FFF0EC;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.oi-payment-chip {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.oi-payment-chip.paid {
+  background: rgba(76, 175, 80, 0.1);
+  color: #2E7D32;
+  border: 1px solid rgba(76, 175, 80, 0.25);
+}
+
+.oi-payment-chip.unpaid {
+  background: rgba(244, 67, 54, 0.06);
+  color: #C62828;
+  border: 1px solid rgba(244, 67, 54, 0.2);
+}
+
+.oi-payment-symbol {
+  font-weight: 800;
+  font-size: 12px;
+}
+
+/* ── Tier 2: Items List ── */
+.oi-items {
+  margin: 0 18px;
+  padding: 12px 14px;
+  background: #FAFAFA;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
   gap: 8px;
 }
 
-.order-id {
-  color: #1A1A1A;
-  font-weight: 800;
-  font-size: 20px;
-  letter-spacing: 0.5px;
-}
-
-.order-date {
-  color: #888888;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-/* Payment badge in top-right */
-.payment-badge-top {
-  font-size: 11px;
-  font-weight: 700;
-  padding: 5px 12px;
-  border-radius: 20px;
-  display: inline-flex;
+.oi-item-row {
+  display: flex;
   align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.oi-item-qty {
+  flex-shrink: 0;
+  font-weight: 700;
+  font-size: 12px;
+  color: #8B3A1E;
+  min-width: 22px;
+  font-variant-numeric: tabular-nums;
+}
+
+.oi-item-name {
+  flex: 1;
+  color: #333;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.oi-item-price {
+  flex-shrink: 0;
+  color: #666;
+  font-weight: 600;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Tier 3: Footer ── */
+.oi-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 14px 18px 16px;
+}
+
+.oi-footer-left {
+  display: flex;
+  flex-direction: column;
   gap: 4px;
 }
 
-.payment-badge-top.paid {
-  background: rgba(76, 175, 80, 0.12);
-  color: #2E7D32;
-  border: 1px solid rgba(76, 175, 80, 0.3);
-}
-
-.payment-badge-top.not-paid {
-  background: rgba(244, 67, 54, 0.08);
-  color: #C62828;
-  border: 1px solid rgba(244, 67, 54, 0.25);
-}
-
-.payment-dollar {
-  font-weight: 800;
-  font-size: 13px;
-}
-
-/* Status badge in bottom-right */
-.order-status-bottom {
-  padding: 6px 14px;
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #1A1A1A;
-  border: 1.5px solid transparent;
-  align-self: flex-end;
-}
-
-/* Legacy .order-status kept for backwards compat */
-.order-status {
-  padding: 5px 10px;
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #1A1A1A;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.order-items {
-  background: #F9F9F9;
-  border-radius: 16px;
-  padding: 16px;
-  margin-bottom: 16px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.order-item-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-  color: #444444;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.order-item-row.fees {
-  padding-top: 10px;
-  margin-top: 10px;
-  border-top: 1px dashed rgba(0, 0, 0, 0.1);
-  color: #888888;
-  font-style: italic;
-  font-size: 13px;
-}
-
-.order-item-row.discount-row {
-  font-size: 13px;
-  font-weight: 700;
-  color: #1A1A1A;
-}
-
-.discount-value {
-  color: #1A1A1A;
-}
-
-.order-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-}
-
-.payment-badge {
-  font-size: 11px;
-  font-weight: 700;
-  padding: 6px 12px;
-  border-radius: 20px;
+.oi-status {
   display: inline-flex;
   align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid transparent;
 }
 
-.payment-badge.paid {
-  background: rgba(76, 175, 80, 0.15);
-  color: #2E7D32;
-  border: 1px solid rgba(76, 175, 80, 0.3);
+.oi-time {
+  font-size: 11px;
+  color: #999;
+  font-weight: 500;
+  padding-left: 2px;
 }
 
-.payment-badge.not-paid {
-  background: rgba(244, 67, 54, 0.1);
-  color: #C62828;
-  border: 1px solid rgba(244, 67, 54, 0.25);
-}
-
-.order-total-inline {
+.oi-footer-right {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  margin-right: 4px;
 }
 
-.order-total {
-  color: #1A1A1A;
-  font-size: 18px;
+.oi-total {
+  font-size: 20px;
   font-weight: 800;
+  color: #1A1A1A;
+  letter-spacing: -0.3px;
+  font-variant-numeric: tabular-nums;
 }
 
-.order-total-note {
+.oi-total-note {
   font-size: 10px;
-  color: #888888;
+  color: #999;
+  font-weight: 500;
+}
+
+/* ── Invoice button ── */
+.oi-invoice-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 10px;
+  background: none;
+  border: none;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  color: #8B3A1E;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.oi-invoice-btn:active {
+  background: #FFF5F0;
 }
 
 /* Empty State */
@@ -911,23 +922,8 @@ body {
   transform: scale(1.1);
 }
 
-.order-meta-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 4px;
-}
 
-.order-type-badge {
-  font-size: 10px;
-  font-weight: 700;
-  color: #8B3A1E;
-  background: #FFF0EC;
-  padding: 2px 8px;
-  border-radius: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
+
 
 /* Order Actions */
 .order-actions {

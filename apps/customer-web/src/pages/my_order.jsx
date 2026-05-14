@@ -653,74 +653,64 @@ const MyOrderPage = () => {
                 {orders.map(order => {
                   const shortId = order.id?.slice(-4) || order.id;
                   const isCancelled = order.status === 'cancelled';
+                  const orderTypeName = (order.rawOrder?.type || '').toLowerCase() === 'takeaway' ? 'Takeaway' : 'Dine In';
+                  const isPaid = order.paymentStatus === 'paid' || order.paymentStatus === 'Paid Online';
+                  const statusLabel = order.status.charAt(0).toUpperCase() + order.status.slice(1);
+
                   return (
                   <div key={order.id} className={`order-item${isCancelled ? ' order-item--cancelled' : ''}`}>
-                    {/* Top row: #ID + time on left, payment badge on right */}
-                    <div className="order-header">
-                      <div className="order-id-row">
-                        <div className="order-id-group">
-                          <span className="order-id">Order #{shortId}</span>
-                          <span className="order-date">{order.orderDate}</span>
-                        </div>
-                        <div className={`payment-badge-top ${order.paymentStatus?.includes('Not') || order.paymentStatus === 'Pending' ? 'not-paid' : 'paid'}`}>
-                          <span className="payment-dollar">₹</span>
-                          {order.paymentStatus}
-                        </div>
+                    {/* ── Tier 1: Identity Row ── */}
+                    <div className="oi-identity">
+                      <div className="oi-identity-left">
+                        <span className="oi-order-id">#{shortId}</span>
+                        <span className="oi-type-chip">{orderTypeName}</span>
                       </div>
-                      <div className="order-meta-row">
-                        <span className="order-type-badge">
-                          {(order.rawOrder?.type || '').toLowerCase() === 'takeaway' ? 'Takeaway' : 'Dine In'}
-                        </span>
+                      <div className={`oi-payment-chip ${isPaid ? 'paid' : 'unpaid'}`}>
+                        <span className="oi-payment-symbol">₹</span>
+                        {isPaid ? 'Paid' : 'Pending'}
                       </div>
                     </div>
 
-                    {/* Items list */}
-                    <div className="order-items">
+                    {/* ── Tier 2: Items ── */}
+                    <div className="oi-items">
                       {order.items.map((item, index) => (
-                        <div key={index} className="order-item-row">
-                          <span>{item.quantity}x {item.name}</span>
-                          <span>₹{(item.price * item.quantity)}</span>
+                        <div key={index} className="oi-item-row">
+                          <span className="oi-item-qty">{item.quantity}×</span>
+                          <span className="oi-item-name">{item.name}</span>
+                          <span className="oi-item-price">₹{item.price * item.quantity}</span>
                         </div>
                       ))}
                     </div>
 
-                    {/* Footer: total on left, status badge on bottom-right */}
-                    <div className="order-footer">
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-start' }}>
-                        <div className="order-status-bottom" style={{ backgroundColor: getStatusColor(order.status) + '20', borderColor: getStatusColor(order.status) + '50' }}>
+                    {/* ── Tier 3: Footer ── */}
+                    <div className="oi-footer">
+                      <div className="oi-footer-left">
+                        <div className="oi-status" style={{
+                          color: getStatusColor(order.status),
+                          backgroundColor: getStatusColor(order.status) + '15',
+                          borderColor: getStatusColor(order.status) + '30',
+                        }}>
                           {getStatusIcon(order.status)}
-                          <span className="status-text">
-                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                          </span>
+                          <span>{statusLabel}</span>
                         </div>
-                        {order.paymentStatus === 'paid' && (
-                          <button
-                            className="download-invoice-btn"
-                            onClick={() => downloadInvoice(order)}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              background: '#8B3A1E',
-                              color: 'white',
-                              border: 'none',
-                              padding: '6px 10px',
-                              borderRadius: '8px',
-                              fontSize: '11px',
-                              fontWeight: '600',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            <Download size={14} />
-                            Invoice
-                          </button>
-                        )}
+                        <span className="oi-time">{order.orderDate}</span>
                       </div>
-                      <div className="order-total-inline">
-                        <span className="order-total">₹{order.total}</span>
-                        <span className="order-total-note">(Incl. all taxes)</span>
+                      <div className="oi-footer-right">
+                        <span className="oi-total">₹{order.total}</span>
+                        <span className="oi-total-note">incl. taxes</span>
                       </div>
                     </div>
+
+                    {/* ── Invoice action (only when paid) ── */}
+                    {isPaid && (
+                      <button
+                        className="oi-invoice-btn"
+                        onClick={() => downloadInvoice(order)}
+                      >
+                        <Download size={13} />
+                        Download Invoice
+                      </button>
+                    )}
                   </div>
                   );
                 })}
