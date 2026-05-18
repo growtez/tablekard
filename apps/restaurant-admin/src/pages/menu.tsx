@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Bell, Plus, Edit3, Trash2, Layers } from 'lucide-react';
+import { Search, Bell, Plus, Edit3, Trash2, Layers, Loader2 } from 'lucide-react';
 import Sidebar from '../components/sidebar';
 import MenuDialog from '../components/menu_dialog';
 import CategoryDialog from '../components/category_dialog';
@@ -30,6 +30,13 @@ const Menu: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState('menu-items');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
+  const [isSaving, setIsSaving] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   // React Query: cached, auto-retries, refetches on tab focus
   const { data: menuItems = [], isLoading: loadingItems } = useMenuItems(activeRestaurantId);
@@ -58,12 +65,16 @@ const Menu: React.FC = () => {
 
   // --- ITEM HANDLERS ---
   const toggleStock = async (item: MenuItem) => {
+    setIsSaving(true);
     try {
       await toggleMenuItemAvailability(item.id, !item.available);
       if (activeRestaurantId) invalidateMenu(activeRestaurantId);
+      showToast('Availability updated', 'success');
     } catch (err) {
       console.error(err);
-      alert('Failed to update availability');
+      showToast('Failed to update availability', 'error');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -81,6 +92,7 @@ const Menu: React.FC = () => {
 
   const handleSaveMenuItem = async (itemData: any) => {
     if (!activeRestaurantId) return;
+    setIsSaving(true);
     try {
       // 1. Process images (Upload new ones)
       const processedImages = [];
@@ -165,14 +177,18 @@ const Menu: React.FC = () => {
         await updateMenuItem(itemData.id, updatePayload, processedImages);
       }
       invalidateMenu(activeRestaurantId);
+      showToast(dialogMode === 'add' ? 'Menu item added successfully' : 'Menu item updated successfully', 'success');
     } catch (err) {
       console.error('Failed to save menu item', err);
-      alert('Failed to save menu item');
+      showToast('Failed to save menu item', 'error');
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleDeleteMenuItem = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this menu item?')) return;
+    setIsSaving(true);
     try {
       const itemToDelete = menuItems.find(i => i.id === id);
       if (itemToDelete) {
@@ -192,9 +208,12 @@ const Menu: React.FC = () => {
 
       await deleteMenuItem(id);
       if (activeRestaurantId) invalidateMenu(activeRestaurantId);
+      showToast('Menu item deleted successfully', 'success');
     } catch (err) {
       console.error(err);
-      alert('Failed to delete menu item');
+      showToast('Failed to delete menu item', 'error');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -213,6 +232,7 @@ const Menu: React.FC = () => {
 
   const handleSaveCategory = async (catData: Partial<MenuCategory>) => {
     if (!activeRestaurantId) return;
+    setIsSaving(true);
     try {
       if (dialogMode === 'add') {
         await addMenuCategory(activeRestaurantId, {
@@ -230,20 +250,27 @@ const Menu: React.FC = () => {
         });
       }
       invalidateMenu(activeRestaurantId);
+      showToast(dialogMode === 'add' ? 'Category added successfully' : 'Category updated successfully', 'success');
     } catch (err) {
       console.error(err);
-      alert('Failed to save category');
+      showToast('Failed to save category', 'error');
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleDeleteCategory = async (id: string) => {
+    setIsSaving(true);
     try {
       await deleteMenuCategory(id);
       if (activeRestaurantId) invalidateMenu(activeRestaurantId);
       if (selectedCategoryId === id) setSelectedCategoryId('all');
+      showToast('Category deleted successfully', 'success');
     } catch (err) {
       console.error(err);
-      alert('Failed to delete category');
+      showToast('Failed to delete category', 'error');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -373,7 +400,12 @@ const Menu: React.FC = () => {
           <div className="tab-content">
             <div className="content-header">
               <h2 className="content-title">Menu Items & Categories</h2>
-              <div style={{ display: 'flex', gap: '12px' }}>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                {isSaving && (
+                  <div style={{ display: 'flex', alignItems: 'center', animation: 'spin 1s linear infinite' }}>
+                    <Loader2 size={18} color="#718096" />
+                  </div>
+                )}
                 <button className="add-button" onClick={handleAddCategory} style={{ backgroundColor: '#E2E8F0', color: '#1A202C' }}>
                   <Layers size={16} />
                   New Category
@@ -553,6 +585,35 @@ const Menu: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Toast Notification */}
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          top: '24px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: toast.type === 'success' ? '#48BB78' : '#F56565',
+          color: 'white',
+          padding: '12px 24px',
+          borderRadius: '8px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          zIndex: 10000,
+          fontSize: '14px',
+          fontWeight: 500,
+          pointerEvents: 'none',
+          transition: 'all 0.3s ease'
+        }}>
+          {toast.message}
+        </div>
+      )}
+
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
 
       {/* Dialogs */}
       <MenuDialog
