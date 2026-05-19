@@ -26,7 +26,7 @@ const DEFAULT_PLANS = [
         id: '1_month',
         name: '1 Month Package',
         price: 499,
-        duration: 30,
+        duration: 1,
         savings: 0,
         color: '#1e40af',
         description: 'Flexible short-term access to get started quickly.',
@@ -43,7 +43,7 @@ const DEFAULT_PLANS = [
         id: '3_months',
         name: '3 Months Package',
         price: 1399,
-        duration: 90,
+        duration: 3,
         savings: 7,
         color: '#10b981',
         description: 'Standard medium-term package for growing outlets.',
@@ -60,7 +60,7 @@ const DEFAULT_PLANS = [
         id: '6_months',
         name: '6 Months Package',
         price: 2699,
-        duration: 180,
+        duration: 6,
         savings: 10,
         color: '#059669',
         description: 'Best-value mid-term plan designed for optimal growth.',
@@ -78,7 +78,7 @@ const DEFAULT_PLANS = [
         id: '12_months',
         name: '12 Months Package',
         price: 4999,
-        duration: 365,
+        duration: 12,
         savings: 16,
         color: '#6d28d9',
         description: 'Ultimate long-term security with maximum savings.',
@@ -302,8 +302,7 @@ export default function Plans({ setSyncAction }) {
                     <div className="plans-grid">
                         {plans.map(plan => {
                             const IconComponent = ICON_MAP[plan.iconName] || Clock;
-                            const durationInMonths = plan.duration / 30;
-                            const perMonth = durationInMonths > 0 ? Math.round(plan.price / durationInMonths) : plan.price;
+                            const perMonth = Math.round(plan.price / plan.duration);
 
                             return (
                                 <div
@@ -344,7 +343,7 @@ export default function Plans({ setSyncAction }) {
                                         <div style={{ marginBottom: '1.5rem' }}>
                                             <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
                                                 <span style={{ fontSize: '2.25rem', fontWeight: 800, color: plan.color }}>₹{plan.price.toLocaleString('en-IN')}</span>
-                                                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>/ {plan.duration} days</span>
+                                                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>/ {plan.duration} {plan.duration === 1 ? 'Month' : 'Months'}</span>
                                             </div>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '0.35rem' }}>
                                                 <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>₹{perMonth}/month</span>
@@ -433,7 +432,7 @@ export default function Plans({ setSyncAction }) {
                                                 />
                                             </div>
                                             <div>
-                                                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>Duration (Days)</label>
+                                                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>Duration (Months)</label>
                                                 <input 
                                                     type="number"
                                                     value={plan.duration} 

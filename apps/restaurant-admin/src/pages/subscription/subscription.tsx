@@ -5,6 +5,7 @@ import { getRestaurantById, getSubscriptionPayments } from '../../services/supab
 import type { SubscriptionPaymentRecord } from '../../services/supabaseService';
 import { processSubscriptionPayment } from '../../services/subscriptionService';
 import type { Restaurant } from '@restaurant-saas/types';
+import { supabase } from '@restaurant-saas/supabase';
 import './subscription.css';
 
 // ──────────────────────────────────────────────
@@ -19,11 +20,11 @@ interface Plan {
     popular?: boolean;
 }
 
-const PLANS: Plan[] = [
-    { duration: 1, label: '1 Month', price: 499, perMonth: 499, savings: 0 },
-    { duration: 3, label: '3 Months', price: 1399, perMonth: 466, savings: 7 },
-    { duration: 6, label: '6 Months', price: 2699, perMonth: 450, savings: 10, popular: true },
-    { duration: 12, label: '12 Months', price: 4999, perMonth: 417, savings: 16 },
+const DEFAULT_PLANS: Plan[] = [
+    { duration: 1, label: '1 Month Package', price: 499, perMonth: 499, savings: 0 },
+    { duration: 3, label: '3 Months Package', price: 1399, perMonth: 466, savings: 7 },
+    { duration: 6, label: '6 Months Package', price: 2699, perMonth: 450, savings: 10, popular: true },
+    { duration: 12, label: '12 Months Package', price: 4999, perMonth: 417, savings: 16 },
 ];
 
 // ──────────────────────────────────────────────
@@ -87,6 +88,7 @@ const SubscriptionPage: React.FC = () => {
 
     const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
     const [payments, setPayments] = useState<SubscriptionPaymentRecord[]>([]);
+    const [dbPlans, setDbPlans] = useState<Plan[]>(DEFAULT_PLANS);
     const [selectedPlan, setSelectedPlan] = useState<number>(6); // default to popular plan
     const [isLoading, setIsLoading] = useState(true);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -109,6 +111,42 @@ const SubscriptionPage: React.FC = () => {
             ]);
             setRestaurant(rest);
             setPayments(pays);
+
+            // Fetch active billing plans from platform_settings
+            try {
+                const { data, error: err } = await supabase
+                    .from('platform_settings')
+                    .select('config')
+                    .eq('id', 'billing_plans')
+                    .maybeSingle();
+
+                if (err) throw err;
+
+                if (data?.config?.plans) {
+                    const mapped = data.config.plans.map((p: any) => ({
+                        duration: p.duration,
+                        label: p.name,
+                        price: p.price,
+                        perMonth: Math.round(p.price / p.duration),
+                        savings: p.savings || 0,
+                        popular: !!p.recommended
+                    }));
+                    setDbPlans(mapped);
+
+                    // Set default selected duration based on recommended flag
+                    const recommendedPlan = mapped.find((p: any) => p.popular);
+                    if (recommendedPlan) {
+                        setSelectedPlan(recommendedPlan.duration);
+                    } else if (mapped.length > 0) {
+                        setSelectedPlan(mapped[0].duration);
+                    }
+                } else {
+                    setDbPlans(DEFAULT_PLANS);
+                }
+            } catch (plansErr) {
+                console.error('Failed to load DB plans, utilizing fallbacks:', plansErr);
+                setDbPlans(DEFAULT_PLANS);
+            }
         } catch (err: any) {
             console.error('Failed to load subscription data:', err);
             setFeedback({ tone: 'error', message: err.message || 'Failed to load subscription data.' });
@@ -158,7 +196,7 @@ const SubscriptionPage: React.FC = () => {
     // ── Status info ──
     const statusInfo = getStatusInfo(restaurant);
     const days = restaurant?.subscriptionEndAt ? daysUntil(restaurant.subscriptionEndAt) : 0;
-    const activePlan = PLANS.find(p => p.duration === selectedPlan)!;
+    const activePlan = dbPlans.find(p => p.duration === selectedPlan) || dbPlans[0] || DEFAULT_PLANS[0];
 
     // ── Loading state ──
     if (isLoading) {
@@ -222,7 +260,7 @@ const SubscriptionPage: React.FC = () => {
                 <div className="subscription-plans-section">
                     <h2>{statusInfo.status === 'active' ? 'Extend Your Plan' : 'Choose a Plan'}</h2>
                     <div className="subscription-plans-grid">
-                        {PLANS.map((plan) => (
+                        {dbPlans.map((plan) => (
                             <div
                                 key={plan.duration}
                                 className={`subscription-plan-card${selectedPlan === plan.duration ? ' selected' : ''}${plan.popular ? ' popular' : ''}`}
