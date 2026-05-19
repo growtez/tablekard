@@ -222,15 +222,15 @@ body.sidebar-collapsed .subscription-main {
 }
 
 .subscription-plan-card:hover {
-    border-color: rgba(79, 117, 92, 0.5);
+    border-color: rgba(139, 58, 30, 0.5);
     transform: translateY(-2px);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
 .subscription-plan-card.selected {
-    border-color: #4f755c;
+    border-color: var(--tk-burgundy, #8B3A1E);
     background: linear-gradient(135deg, #f0faf3 0%, #ffffff 100%);
-    box-shadow: 0 0 0 1px rgba(79, 117, 92, 0.3), 0 8px 24px rgba(79, 117, 92, 0.12);
+    box-shadow: 0 0 0 1px rgba(139, 58, 30, 0.3), 0 8px 24px rgba(139, 58, 30, 0.12);
 }
 
 .subscription-plan-card.popular {
@@ -242,7 +242,7 @@ body.sidebar-collapsed .subscription-main {
     top: -10px;
     left: 50%;
     transform: translateX(-50%);
-    background: linear-gradient(135deg, #4f755c, #68d391);
+    background: linear-gradient(135deg, var(--tk-burgundy, #8B3A1E), #6B2A15);
     color: #fff;
     font-size: 0.7rem;
     font-weight: 700;
@@ -299,7 +299,7 @@ body.sidebar-collapsed .subscription-main {
     width: 22px;
     height: 22px;
     border-radius: 50%;
-    background: #4f755c;
+    background: var(--tk-burgundy, #8B3A1E);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -319,7 +319,7 @@ body.sidebar-collapsed .subscription-main {
     align-items: center;
     gap: 0.6rem;
     padding: 0.875rem 2.5rem;
-    background: linear-gradient(135deg, #4f755c 0%, #3d5c47 100%);
+    background: linear-gradient(135deg, var(--tk-burgundy, #8B3A1E) 0%, #6B2A15 100%);
     color: #fff;
     font-size: 1rem;
     font-weight: 600;
@@ -327,12 +327,12 @@ body.sidebar-collapsed .subscription-main {
     border-radius: 16px;
     cursor: pointer;
     transition: all 0.25s ease;
-    box-shadow: 0 4px 16px rgba(79, 117, 92, 0.3);
+    box-shadow: 0 4px 16px rgba(139, 58, 30, 0.3);
 }
 
 .subscription-pay-btn:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(79, 117, 92, 0.4);
+    box-shadow: 0 6px 20px rgba(139, 58, 30, 0.4);
 }
 
 .subscription-pay-btn:disabled {
@@ -439,7 +439,7 @@ body.sidebar-collapsed .subscription-main {
     width: 36px;
     height: 36px;
     border: 3px solid #E2E8F0;
-    border-top-color: #4f755c;
+    border-top-color: var(--tk-burgundy, #8B3A1E);
     border-radius: 50%;
     animation: sub-spin 0.7s linear infinite;
 }

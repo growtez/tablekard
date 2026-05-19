@@ -138,7 +138,7 @@
 }
 
 .card-top-bar-green {
-  background: linear-gradient(to right, #4f755c, #68D391);
+  background: linear-gradient(to right, var(--tk-burgundy, #8B3A1E), #6B2A15);
 }
 
 .card-top-bar-red {
@@ -257,7 +257,7 @@
   align-items: center;
   gap: 8px;
   padding: 12px 20px;
-  background-color: #37724e;
+  background-color: var(--tk-burgundy, #8B3A1E);
   color: white;
   border: none;
   border-radius: 12px;
@@ -269,7 +269,7 @@
 }
 
 .add-button:hover {
-  background-color: #4f755c;
+  background-color: var(--tk-burgundy, #8B3A1E);
   transform: translateY(-2px);
 }
 
@@ -300,9 +300,9 @@
 }
 
 .category-button.active {
-  background-color: #37724e;
+  background-color: var(--tk-burgundy, #8B3A1E);
   color: white;
-  border-color: #37724e;
+  border-color: var(--tk-burgundy, #8B3A1E);
 }
 
 /* Menu Grid */
@@ -359,7 +359,7 @@
 .menu-price {
   font-size: 20px;
   font-weight: 700;
-  color: #37724e;
+  color: var(--tk-burgundy, #8B3A1E);
 }
 
 .menu-actions {
@@ -413,7 +413,7 @@
 }
 
 input:checked+.toggle-slider {
-  background-color: #37724e;
+  background-color: var(--tk-burgundy, #8B3A1E);
 }
 
 input:checked+.toggle-slider:before {

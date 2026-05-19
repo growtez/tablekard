@@ -363,21 +363,21 @@ const Dashboard: React.FC = () => {
                       <tr><td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>No active orders</td></tr>
                     ) : activeOrders.slice(0, 5).map((order, idx) => (
                       <tr key={idx}>
-                        <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
+                        <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }} data-label="Order ID">
                           {order.orderNumber}
                         </td>
-                        <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
+                        <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }} data-label="Table">
                           {order.table}
                         </td>
-                        <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
+                        <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }} data-label="Ordered Time">
                           {order.time}
                         </td>
-                        <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
+                        <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }} data-label="Status">
                           <span className={`status-pill status-${order.statusColor}`}>
                             {order.status}
                           </span>
                         </td>
-                        <td style={{ cursor: 'pointer' }}>
+                        <td style={{ cursor: 'pointer' }} data-label="Payment">
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span 
                               className={`status-pill ${order.isPaid ? 'payment-paid' : ''}`} 
@@ -400,10 +400,10 @@ const Dashboard: React.FC = () => {
                             )}
                           </div>
                         </td>
-                        <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
+                        <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }} data-label="Customer">
                           {order.customer}
                         </td>
-                        <td>
+                        <td data-label="Action">
                           <div style={{ display: 'flex', gap: '8px' }}>
                             {order.status !== 'Ready' && (
                               <button
@@ -454,21 +454,21 @@ const Dashboard: React.FC = () => {
                     ) : (
                       completedOrders.slice(0, 5).map((order, idx) => (
                         <tr key={idx}>
-                          <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
+                          <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }} data-label="Order ID">
                             {order.orderNumber}
                           </td>
-                          <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
+                          <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }} data-label="Table">
                             {order.table}
                           </td>
-                          <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
+                          <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }} data-label="Ordered Time">
                             {order.time}
                           </td>
-                          <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
+                          <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }} data-label="Status">
                             <span className={`status-pill status-${order.statusColor}`}>
                               {order.status}
                             </span>
                           </td>
-                          <td style={{ cursor: 'pointer' }}>
+                          <td style={{ cursor: 'pointer' }} data-label="Payment">
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                               <span 
                                 className={`status-pill ${order.isPaid ? 'payment-paid' : ''}`} 
@@ -491,7 +491,7 @@ const Dashboard: React.FC = () => {
                               )}
                             </div>
                           </td>
-                          <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
+                          <td onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }} data-label="Customer">
                             {order.customer}
                           </td>
                         </tr>

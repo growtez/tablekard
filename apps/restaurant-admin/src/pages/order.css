@@ -149,7 +149,7 @@
 }
 
 .order-card-green {
-  background: linear-gradient(to right, #4f755c, #4f755c);
+  background: linear-gradient(to right, var(--tk-burgundy, #8B3A1E), var(--tk-burgundy, #8B3A1E));
 }
 
 .order-card-blue {
@@ -356,7 +356,7 @@
 .order-date-count-badge {
   display: inline-flex;
   align-items: center;
-  background: #4f755c;
+  background: var(--tk-burgundy, #8B3A1E);
   color: #FFFFFF;
   font-size: 12px;
   font-weight: 600;
@@ -560,6 +560,66 @@
     width: 100%;
   }
 
+}
+
+.status-blue {
+  background-color: #90CDF4;
+  color: #2C5282;
+}
+
+.status-teal {
+  background-color: #81E6D9;
+  color: #234E52;
+}
+
+.status-red {
+  background-color: #FEB2B2;
+  color: #742A2A;
+}
+
+/* Payment Badge */
+.order-payment-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  background-color: #EDF2F7;
+  color: #2D3748;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  font-family: 'Outfit', sans-serif;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .order-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+
+  .order-main-content,
+  .sidebar-collapsed .order-main-content {
+    margin-left: 0;
+    width: 100%;
+    border-radius: 0;
+    padding: 16px;
+    padding-top: 72px;
+    /* Space for mobile hamburger menu */
+  }
+
+  .order-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .order-search-bar {
+    width: 100%;
+  }
+
   .order-filter-section {
     flex-direction: column;
     align-items: stretch;
@@ -575,11 +635,87 @@
   }
 
   .order-table-wrapper {
-    overflow-x: scroll;
+    overflow-x: visible;
   }
 
   .order-history-table {
-    min-width: 800px;
+    min-width: 100%;
+  }
+
+  .order-history-table thead {
+    display: none;
+  }
+
+  .order-history-table, 
+  .order-history-table tbody, 
+  .order-history-table tr, 
+  .order-history-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .order-history-table tr {
+    margin-bottom: 16px;
+    background: #fff;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .order-history-table td {
+    padding: 4px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: none;
+    text-align: right;
+  }
+
+  /* Make the first cell (Order ID) act as the card header */
+  .order-history-table td:first-child {
+    justify-content: space-between;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--tk-burgundy, #8B3A1E);
+    border-bottom: 1px dashed #E2E8F0;
+    padding-bottom: 12px;
+    margin-bottom: 4px;
+  }
+  
+  .order-history-table td:first-child::before {
+    content: "Order ID";
+    color: #1A202C;
+    font-size: 14px;
+  }
+
+  /* Make the last cell (Actions) stand out */
+  .order-history-table td:last-child {
+    margin-top: 8px;
+    padding-top: 12px;
+    border-top: 1px dashed #E2E8F0;
+    justify-content: flex-end;
+  }
+  
+  .order-history-table td:last-child::before {
+    display: none;
+  }
+
+  .order-history-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #718096;
+    margin-right: 16px;
+    text-align: left;
+    font-size: 13px;
+  }
+
+  .order-items-cell {
+    max-width: none;
+    text-align: right;
   }
 }
 

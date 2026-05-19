@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Bell, Plus, Edit3, Trash2, Layers } from 'lucide-react';
+import { Search, Plus, Edit3, Trash2, Layers } from 'lucide-react';
 import Sidebar from '../components/sidebar';
 import MenuDialog from '../components/menu_dialog';
 import CategoryDialog from '../components/category_dialog';

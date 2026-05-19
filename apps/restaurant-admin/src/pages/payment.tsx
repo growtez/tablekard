@@ -322,21 +322,21 @@ const Payment: React.FC = () => {
                 ) : (
                   filteredTransactions.map((transaction) => (
                     <tr key={transaction.id}>
-                      <td>
+                      <td data-label="Order ID">
                         <div className="order-id-cell">{transaction.orderNumber}</div>
                       </td>
-                      <td>
+                      <td data-label="Customer Name">
                         <div className="customer-name-cell">{transaction.customerName}</div>
                       </td>
-                      <td>
+                      <td data-label="Date & Time">
                         <div className="datetime-cell">{transaction.dateTime}</div>
                       </td>
-                      <td>
+                      <td data-label="Payment Method">
                         <span className={`method-badge method-${transaction.paymentMethod.toLowerCase()}`}>
                           {transaction.paymentMethod}
                         </span>
                       </td>
-                      <td>
+                      <td data-label="Payment Status">
                         <select
                           className={`payment-status-pill status-${transaction.statusColor}`}
                           value={transaction.paymentStatus}
@@ -350,10 +350,10 @@ const Payment: React.FC = () => {
                           <option value="Refunded">Refunded</option>
                         </select>
                       </td>
-                      <td>
+                      <td data-label="Amount">
                         <div className="amount-cell">₹{transaction.amount.toLocaleString()}</div>
                       </td>
-                      <td>
+                      <td data-label="Actions">
                         <div className="action-buttons">
                           <button
                             className="action-btn view-btn"

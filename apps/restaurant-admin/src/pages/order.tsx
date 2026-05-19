@@ -335,14 +335,14 @@ const Order: React.FC = () => {
                 ) : (
                   filteredOrders.map((order) => (
                     <tr key={order.id}>
-                      <td className="order-id-cell">{order.orderNumber}</td>
-                      <td>{order.customerName}</td>
-                      <td>{order.table}</td>
-                      <td>
+                      <td className="order-id-cell" data-label="Order ID">{order.orderNumber}</td>
+                      <td data-label="Customer Name">{order.customerName}</td>
+                      <td data-label="Table">{order.table}</td>
+                      <td data-label="Date & Time">
                         <div style={{ fontSize: '14px', fontWeight: '500' }}>{new Date(order.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
                         <div style={{ fontSize: '12px', color: '#718096' }}>{order.time}</div>
                       </td>
-                      <td>
+                      <td data-label="Order Status">
                         <select
                           className={`order-status-select ${getStatusClass(order.statusColor)}`}
                           value={order.status.toLowerCase() === 'pending' ? 'pending' : order.status.toLowerCase()}
@@ -355,12 +355,12 @@ const Order: React.FC = () => {
                           <option value="cancelled">Cancelled</option>
                         </select>
                       </td>
-                      <td>
+                      <td data-label="Payment Method">
                         <span className="order-payment-badge">
                           {order.paymentMethod}
                         </span>
                       </td>
-                      <td>
+                      <td data-label="Payment Status">
                         <select
                           className={`payment-status-pill status-${order.paymentStatusColor}`}
                           value={order.paymentStatus}
@@ -373,9 +373,9 @@ const Order: React.FC = () => {
                           <option value="Refunded">Refunded</option>
                         </select>
                       </td>
-                      <td style={{ textTransform: 'capitalize' }}>{order.orderType?.replace('_', ' ')}</td>
-                      <td className="order-items-cell">{order.items}</td>
-                      <td>
+                      <td data-label="Order Type" style={{ textTransform: 'capitalize' }}>{order.orderType?.replace('_', ' ')}</td>
+                      <td className="order-items-cell" data-label="Items">{order.items}</td>
+                      <td data-label="Actions">
                         <button
                           className="view-order-btn"
                           onClick={() => setSelectedOrder(order)}

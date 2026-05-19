@@ -126,7 +126,7 @@
 }
 
 .metric-card-green {
-    background: linear-gradient(to right, #4f755c, #4f755c);
+    background: linear-gradient(to right, var(--tk-burgundy, #8B3A1E), var(--tk-burgundy, #8B3A1E));
 }
 
 .metric-card-purple {
@@ -257,7 +257,7 @@
     align-items: center;
     gap: 8px;
     padding: 12px 20px;
-    background-color: #4f755c;
+    background-color: var(--tk-burgundy, #8B3A1E);
     border: none;
     border-radius: 16px;
     font-size: 14px;
