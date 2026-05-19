@@ -8,7 +8,7 @@ import type { DashboardOrder } from '../services/supabaseService';
 import { useDashboardOrders, useInvalidateQueries, queryKeys, useRevenueData } from '../hooks/useSupabaseQuery';
 import OrderDetailModal from '../components/OrderDetailModal';
 import './order.css';
- 
+
 const Order: React.FC = () => {
   const { activeRestaurantId } = useAuth();
   const [selectedTable, setSelectedTable] = useState('All Tables');
@@ -180,7 +180,6 @@ const Order: React.FC = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <div className="order-user-avatar">👨‍💼</div>
           </div>
         </div>
 
@@ -377,8 +376,8 @@ const Order: React.FC = () => {
                       <td style={{ textTransform: 'capitalize' }}>{order.orderType?.replace('_', ' ')}</td>
                       <td className="order-items-cell">{order.items}</td>
                       <td>
-                        <button 
-                          className="view-order-btn" 
+                        <button
+                          className="view-order-btn"
                           onClick={() => setSelectedOrder(order)}
                           title="View Details"
                         >
@@ -394,9 +393,9 @@ const Order: React.FC = () => {
         </div>
       </div>
       {selectedOrder && (
-        <OrderDetailModal 
-          order={selectedOrder} 
-          onClose={() => setSelectedOrder(null)} 
+        <OrderDetailModal
+          order={selectedOrder}
+          onClose={() => setSelectedOrder(null)}
         />
       )}
     </div>

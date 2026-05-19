@@ -86,21 +86,21 @@ const Menu: React.FC = () => {
       const processedImages = [];
       if (itemData.images && itemData.images.length > 0) {
         for (const img of itemData.images) {
-           if (img.isDeleted) {
-               processedImages.push(img); // Pass it down to update logic to delete
-               if (img.url) {
-                 const { deleteMenuItemImageFromStorage } = await import('../services/storageService');
-                 await deleteMenuItemImageFromStorage(img.url).catch(console.error);
-               }
-           } else if (img.file) {
-               // Upload new file
-               const { uploadMenuItemImage } = await import('../services/storageService');
-               const url = await uploadMenuItemImage(activeRestaurantId, activeRestaurantName, img.file);
-               processedImages.push({ url, sortOrder: img.sortOrder });
-           } else {
-               // Existing image
-               processedImages.push({ id: img.id, url: img.url, sortOrder: img.sortOrder });
-           }
+          if (img.isDeleted) {
+            processedImages.push(img); // Pass it down to update logic to delete
+            if (img.url) {
+              const { deleteMenuItemImageFromStorage } = await import('../services/storageService');
+              await deleteMenuItemImageFromStorage(img.url).catch(console.error);
+            }
+          } else if (img.file) {
+            // Upload new file
+            const { uploadMenuItemImage } = await import('../services/storageService');
+            const url = await uploadMenuItemImage(activeRestaurantId, activeRestaurantName, img.file);
+            processedImages.push({ url, sortOrder: img.sortOrder });
+          } else {
+            // Existing image
+            processedImages.push({ id: img.id, url: img.url, sortOrder: img.sortOrder });
+          }
         }
       }
 
@@ -319,10 +319,6 @@ const Menu: React.FC = () => {
                 className="search-input"
               />
             </div>
-            <div className="icon-button">
-              <Bell size={20} color="#718096" />
-            </div>
-            <div className="user-avatar">👨‍💼</div>
           </div>
         </div>
 
@@ -423,9 +419,9 @@ const Menu: React.FC = () => {
                 {filteredMenuItems.map((item) => (
                   <div key={item.id} className="menu-card">
                     <div className="menu-image">
-                       {(item.images && item.images.length > 0) ? (
-                         <img src={item.images[0].url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                       ) : '🍽️'}
+                      {(item.images && item.images.length > 0) ? (
+                        <img src={item.images[0].url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : '🍽️'}
                     </div>
                     <div className="menu-info">
                       <h3 className="menu-name">
@@ -499,56 +495,56 @@ const Menu: React.FC = () => {
             ) : offers.length === 0 ? (
               <div style={{ padding: '40px', textAlign: 'center', color: '#718096' }}>No offers yet. Click "Add New Offer" to create one!</div>
             ) : (
-            <div className="offers-grid">
-              {offers.map((offer) => {
-                const linkedItem = menuItems.find(m => m.id === offer.menu_item_id);
-                const originalPrice = linkedItem?.price;
-                return (
-                <div key={offer.id} className="offer-card">
-                  <div className="offer-header">
-                    <h3 className="offer-title">{offer.title}</h3>
-                    <span className={`offer-status ${offer.is_active ? 'active' : 'inactive'}`}>
-                      {offer.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                  </div>
-                  <div className="offer-details">
-                    <div className="offer-dish">
-                      {linkedItem ? `${linkedItem.isVeg ? '🟩' : '🟥'} ${linkedItem.name}` : '—'}
-                    </div>
-                    <div className="offer-pricing">
-                      {originalPrice !== undefined && (
-                        <span className="original-price">₹{originalPrice}</span>
+              <div className="offers-grid">
+                {offers.map((offer) => {
+                  const linkedItem = menuItems.find(m => m.id === offer.menu_item_id);
+                  const originalPrice = linkedItem?.price;
+                  return (
+                    <div key={offer.id} className="offer-card">
+                      <div className="offer-header">
+                        <h3 className="offer-title">{offer.title}</h3>
+                        <span className={`offer-status ${offer.is_active ? 'active' : 'inactive'}`}>
+                          {offer.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
+                      <div className="offer-details">
+                        <div className="offer-dish">
+                          {linkedItem ? `${linkedItem.isVeg ? '🟩' : '🟥'} ${linkedItem.name}` : '—'}
+                        </div>
+                        <div className="offer-pricing">
+                          {originalPrice !== undefined && (
+                            <span className="original-price">₹{originalPrice}</span>
+                          )}
+                          <span className="discounted-price">₹{offer.discount_price}</span>
+                        </div>
+                      </div>
+                      {offer.valid_until && (
+                        <div className="offer-validity">Valid until: {new Date(offer.valid_until).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
                       )}
-                      <span className="discounted-price">₹{offer.discount_price}</span>
+                      <div className="offer-actions">
+                        <div className="offer-toggle">
+                          <label className="toggle-switch">
+                            <input
+                              type="checkbox"
+                              checked={offer.is_active}
+                              onChange={() => toggleOffer(offer)}
+                            />
+                            <span className="toggle-slider"></span>
+                          </label>
+                        </div>
+                        <button className="edit-button" onClick={() => handleEditOffer(offer)}>
+                          <Edit3 size={16} />
+                          Edit
+                        </button>
+                        <button className="delete-button" onClick={() => handleDeleteOffer(offer.id)}>
+                          <Trash2 size={16} />
+                          Delete
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  {offer.valid_until && (
-                    <div className="offer-validity">Valid until: {new Date(offer.valid_until).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
-                  )}
-                  <div className="offer-actions">
-                    <div className="offer-toggle">
-                      <label className="toggle-switch">
-                        <input
-                          type="checkbox"
-                          checked={offer.is_active}
-                          onChange={() => toggleOffer(offer)}
-                        />
-                        <span className="toggle-slider"></span>
-                      </label>
-                    </div>
-                    <button className="edit-button" onClick={() => handleEditOffer(offer)}>
-                      <Edit3 size={16} />
-                      Edit
-                    </button>
-                    <button className="delete-button" onClick={() => handleDeleteOffer(offer.id)}>
-                      <Trash2 size={16} />
-                      Delete
-                    </button>
-                  </div>
-                </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
             )}
           </div>
         )}
