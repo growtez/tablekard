@@ -38,16 +38,16 @@ export default function Complaints({ setSyncAction }) {
         return ms && (filterRating === 'all' || String(row.rating) === filterRating);
     });
 
-    const getRatingColor = r => r >= 4 ? '#10b981' : r >= 3 ? '#f59e0b' : '#ef4444';
+    const getRatingColor = r => r >= 4 ? '#065f46' : r >= 3 ? '#92400e' : '#991b1b';
 
     return (
         <div className="animate-fade-in space-y-6">
             <div className="subscriptions-summary-grid">
                 {[
-                    { label: 'Total Feedback', value: data.length, color: '#3b82f6' },
-                    { label: 'Avg Rating', value: avgRating ? `${avgRating} ★` : '—', color: '#f59e0b' },
-                    { label: 'Low Ratings (≤2)', value: data.filter(r => r.rating <= 2).length, color: '#ef4444' },
-                    { label: '5-Star Reviews', value: data.filter(r => r.rating === 5).length, color: '#10b981' },
+                    { label: 'Total Feedback', value: data.length, color: '#1e40af' },
+                    { label: 'Avg Rating', value: avgRating ? `${avgRating} ★` : '—', color: '#92400e' },
+                    { label: 'Low Ratings (≤2)', value: data.filter(r => r.rating <= 2).length, color: '#991b1b' },
+                    { label: '5-Star Reviews', value: data.filter(r => r.rating === 5).length, color: '#065f46' },
                 ].map(item => (
                     <div key={item.label} className="premium-card" style={{ padding: '1rem 1.25rem' }}>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>{item.label}</div>
@@ -60,10 +60,10 @@ export default function Complaints({ setSyncAction }) {
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
                     <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
                         <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={16} />
-                        <input type="text" placeholder="Search by comment, customer, or restaurant..." value={search} onChange={e => setSearch(e.target.value)} style={{ width: '100%', padding: '10px 10px 10px 38px', background: 'var(--surface-hover)', border: '1px solid var(--border-color)', borderRadius: '10px', color: 'white', fontSize: '0.875rem' }} />
+                        <input type="text" placeholder="Search by comment, customer, or restaurant..." value={search} onChange={e => setSearch(e.target.value)} style={{ width: '100%', padding: '10px 10px 10px 38px', background: 'var(--surface-hover)', border: '1px solid var(--border-color)', borderRadius: '10px', color: 'var(--text-main)', fontSize: '0.875rem' }} />
                     </div>
                     <div className="dropdown-wrapper">
-                        <button className="btn-ghost" style={{ padding: '10px 14px', borderRadius: '10px', background: filterRating !== 'all' ? 'rgba(59,130,246,0.1)' : 'rgba(255,255,255,0.05)', border: `1px solid ${filterRating !== 'all' ? 'var(--accent-primary)' : 'var(--border-color)'}`, gap: '6px', fontSize: '0.85rem', color: filterRating !== 'all' ? 'var(--accent-primary)' : 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+                        <button className="btn-ghost" style={{ padding: '10px 14px', borderRadius: '10px', background: filterRating !== 'all' ? 'rgba(59,130,246,0.1)' : 'var(--surface-hover)', border: `1px solid ${filterRating !== 'all' ? 'var(--accent-primary)' : 'var(--border-color)'}`, gap: '6px', fontSize: '0.85rem', color: filterRating !== 'all' ? 'var(--accent-primary)' : 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
                             <Star size={16} /> {filterRating === 'all' ? 'All Ratings' : `${filterRating}★`}
                         </button>
                         <div className="dropdown-content">

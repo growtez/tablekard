@@ -32,7 +32,7 @@
 }
 
 .toggle-btn:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-hover);
   color: var(--text-main);
   transform: none;
 }
@@ -120,7 +120,7 @@
 }
 
 .premium-table th {
-  background: hsla(240, 10%, 12%, 0.5);
+  background: var(--surface-hover);
   padding: 1rem 1.5rem;
   font-size: 0.8rem;
   font-weight: 600;
@@ -146,7 +146,7 @@
 }
 
 .premium-table tr:hover {
-  background: hsla(0, 0%, 100%, 0.02);
+  background: var(--surface-hover);
 }
 
 .clickable-row {
@@ -154,7 +154,7 @@
 }
 
 .clickable-row:hover {
-  background: hsla(0, 0%, 100%, 0.04) !important;
+  background: var(--surface-hover) !important;
 }
 
 /* Table Cells */
@@ -201,23 +201,23 @@
 }
 
 .role-super_admin {
-  background: hsla(150, 100%, 50%, 0.1);
-  color: hsl(150, 100%, 50%);
+  background: rgba(5, 150, 105, 0.1);
+  color: var(--text-main);
 }
 
 .role-restaurant_admin {
-  background: hsla(260, 100%, 70%, 0.1);
-  color: hsl(260, 100%, 70%);
+  background: rgba(124, 58, 237, 0.1);
+  color: var(--text-main);
 }
 
 .role-restaurant_staff {
-  background: hsla(200, 100%, 60%, 0.1);
-  color: hsl(200, 100%, 60%);
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--text-main);
 }
 
 .role-customer {
-  background: hsla(240, 5%, 40%, 0.1);
-  color: var(--text-muted);
+  background: rgba(113, 128, 150, 0.1);
+  color: var(--text-main);
 }
 
 /* Table Actions (Hover-to-Open Menu Pattern) */
@@ -287,7 +287,7 @@ tr:hover .actions-menu {
 
 .action-btn.edit:hover {
   background: var(--accent-primary);
-  color: black;
+  color: #FFFFFF;
 }
 
 .action-btn.delete {
@@ -304,7 +304,7 @@ tr:hover .actions-menu {
 .editing-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(8px);
   z-index: 1000;
   display: flex;

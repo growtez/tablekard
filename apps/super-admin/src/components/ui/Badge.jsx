@@ -2,15 +2,15 @@ export const Badge = ({ children, variant = 'default', style = {}, ...props }) =
     const getVariantStyles = () => {
         switch (variant) {
             case 'success':
-                return { backgroundColor: 'hsla(150, 100%, 50%, 0.1)', color: 'hsl(150, 100%, 50%)' };
+                return { backgroundColor: 'rgba(5, 150, 105, 0.1)', color: '#065f46' };
             case 'error':
-                return { backgroundColor: 'hsla(0, 100%, 65%, 0.1)', color: 'hsl(0, 100%, 65%)' };
+                return { backgroundColor: 'rgba(220, 38, 38, 0.1)', color: '#991b1b' };
             case 'warning':
-                return { backgroundColor: 'hsla(35, 100%, 60%, 0.1)', color: 'hsl(35, 100%, 60%)' };
+                return { backgroundColor: 'rgba(217, 119, 6, 0.1)', color: '#92400e' };
             case 'info':
-                return { backgroundColor: 'hsla(200, 100%, 60%, 0.1)', color: 'hsl(200, 100%, 60%)' };
+                return { backgroundColor: 'rgba(37, 99, 235, 0.1)', color: '#1e40af' };
             default:
-                return { backgroundColor: 'var(--surface-hover)', color: 'var(--text-muted)' };
+                return { backgroundColor: 'var(--surface-hover)', color: 'var(--text-main)' };
         }
     };
 

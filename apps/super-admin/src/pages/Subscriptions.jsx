@@ -103,10 +103,10 @@ export default function Subscriptions({ setSyncAction }) {
             {/* Summary Cards */}
             <div className="subscriptions-summary-grid">
                 {[
-                    { label: 'Total Records', value: summary.total, color: '#3b82f6' },
-                    { label: 'Paid', value: summary.paid, color: '#10b981' },
-                    { label: 'Pending', value: summary.pending, color: '#f59e0b' },
-                    { label: 'Failed', value: summary.failed, color: '#ef4444' },
+                    { label: 'Total Records', value: summary.total, color: '#1e40af' },
+                    { label: 'Paid', value: summary.paid, color: '#065f46' },
+                    { label: 'Pending', value: summary.pending, color: '#92400e' },
+                    { label: 'Failed', value: summary.failed, color: '#991b1b' },
                     { label: 'Total Collected', value: `₹${summary.totalRevenue.toLocaleString()}`, color: 'var(--accent-primary)' },
                 ].map(item => (
                     <div key={item.label} className="premium-card" style={{ padding: '1rem 1.25rem' }}>
@@ -126,11 +126,11 @@ export default function Subscriptions({ setSyncAction }) {
                             placeholder="Search restaurant or payment ID..."
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            style={{ width: '100%', padding: '10px 10px 10px 38px', background: 'var(--surface-hover)', border: '1px solid var(--border-color)', borderRadius: '10px', color: 'white', fontSize: '0.875rem' }}
+                            style={{ width: '100%', padding: '10px 10px 10px 38px', background: 'var(--surface-hover)', border: '1px solid var(--border-color)', borderRadius: '10px', color: 'var(--text-main)', fontSize: '0.875rem' }}
                         />
                     </div>
                     <div className="dropdown-wrapper">
-                        <button className="btn-ghost" style={{ padding: '10px 14px', borderRadius: '10px', background: filterStatus !== 'all' ? 'rgba(59,130,246,0.1)' : 'rgba(255,255,255,0.05)', border: `1px solid ${filterStatus !== 'all' ? 'var(--accent-primary)' : 'var(--border-color)'}`, gap: '6px', fontSize: '0.85rem', color: filterStatus !== 'all' ? 'var(--accent-primary)' : 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+                        <button className="btn-ghost" style={{ padding: '10px 14px', borderRadius: '10px', background: filterStatus !== 'all' ? 'rgba(59,130,246,0.1)' : 'var(--surface-hover)', border: `1px solid ${filterStatus !== 'all' ? 'var(--accent-primary)' : 'var(--border-color)'}`, gap: '6px', fontSize: '0.85rem', color: filterStatus !== 'all' ? 'var(--accent-primary)' : 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
                             <Filter size={16} /> {filterStatus === 'all' ? 'Status' : filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1)}
                         </button>
                         <div className="dropdown-content">
@@ -140,7 +140,7 @@ export default function Subscriptions({ setSyncAction }) {
                         </div>
                     </div>
                     <div className="dropdown-wrapper">
-                        <button className="btn-ghost" style={{ padding: '10px 14px', borderRadius: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', gap: '6px', fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+                        <button className="btn-ghost" style={{ padding: '10px 14px', borderRadius: '10px', background: 'var(--surface-hover)', border: '1px solid var(--border-color)', gap: '6px', fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
                             <SlidersHorizontal size={16} /> Sort
                         </button>
                         <div className="dropdown-content">
@@ -211,7 +211,7 @@ export default function Subscriptions({ setSyncAction }) {
                                 <td>
                                     <div style={{ fontSize: '0.78rem', lineHeight: 1.6 }}>
                                         <div style={{ color: 'var(--text-muted)' }}>From: {formatDate(row.starts_at)}</div>
-                                        <div style={{ color: row.ends_at && new Date(row.ends_at) < new Date() ? '#ef4444' : 'var(--text-main)' }}>
+                                        <div style={{ color: row.ends_at && new Date(row.ends_at) < new Date() ? '#991b1b' : 'var(--text-main)' }}>
                                             To: {formatDate(row.ends_at)}
                                         </div>
                                     </div>

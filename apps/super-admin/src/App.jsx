@@ -150,14 +150,14 @@ export default function App() {
             <div style={{ fontWeight: '700', fontSize: '1.1rem', marginBottom: '0.5rem' }}>Access Level Evaluation</div>
             <div className="flex justify-between w-full" style={{ fontSize: '0.85rem' }}>
               <span style={{ color: 'var(--text-muted)' }}>Detected Role:</span>
-              <code style={{ color: 'var(--accent-primary)', background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px' }}>{userRole || 'NotFound/Unknown'}</code>
+              <code style={{ color: 'var(--accent-primary)', background: 'var(--surface-hover)', padding: '2px 6px', borderRadius: '4px' }}>{userRole || 'NotFound/Unknown'}</code>
             </div>
             {authError && <div style={{ fontSize: '0.75rem', color: '#ff6b6b', marginTop: '4px', textAlign: 'left', background: 'rgba(255,0,0,0.05)', padding: '8px', borderRadius: '8px' }}><strong>Database Error:</strong> {authError}</div>}
             <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '8px', borderTop: '1px solid var(--border-color)', paddingTop: '8px' }}>User ID: <span style={{ opacity: 0.8 }}>{session?.user?.id}</span></div>
           </div>
           <div className="flex column gap-3" style={{ width: '100%' }}>
             <button onClick={() => checkIsAdmin(session)} className="primary" style={{ width: '100%' }}>Refresh Permissions</button>
-            <button onClick={handleLogout} style={{ width: '100%', background: 'rgba(255,255,255,0.05)' }}>Sign Out & Try Another Account</button>
+            <button onClick={handleLogout} style={{ width: '100%', background: 'var(--surface-hover)' }}>Sign Out & Try Another Account</button>
           </div>
         </div>
       </div>
@@ -274,7 +274,7 @@ export default function App() {
             <div className="nav-actions">
               {syncAction && (
                 <button onClick={() => { syncAction.onSync?.(); fetchGlobalStats(); }} className="btn-ghost"
-                  style={{ padding: '8px 16px', gap: '8px', fontSize: '0.85rem', opacity: 0.8, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)' }}>
+                  style={{ padding: '8px 16px', gap: '8px', fontSize: '0.85rem', display: 'flex', alignItems: 'center' }}>
                   <RefreshCw size={16} className={syncAction.loading ? 'animate-spin' : ''} />
                   <span className="sync-label">Sync</span>
                 </button>
@@ -323,9 +323,7 @@ export default function App() {
           </div>
         </main>
 
-        <footer className="app-footer">
-          <p>System Status: <span className="status-dot" /> Operational • v1.1.0</p>
-        </footer>
+
       </div>
 
       <QuickCreateDrawer

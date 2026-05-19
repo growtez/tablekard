@@ -498,7 +498,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                                         {renderField("Longitude", "longitude")}
                                     </div>
                                     <div style={{ padding: '1rem', background: 'rgba(239, 68, 68, 0.05)', borderRadius: '12px', border: '1px solid rgba(239, 68, 68, 0.1)' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#ef4444', fontWeight: 600, fontSize: '0.9rem' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#991b1b', fontWeight: 600, fontSize: '0.9rem' }}>
                                             <MapPin size={16} /> Allowed Radius
                                         </div>
                                         <div style={{ marginTop: '8px' }}>
