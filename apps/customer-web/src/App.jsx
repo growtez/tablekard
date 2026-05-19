@@ -1,14 +1,13 @@
 import React, { useState, useEffect, lazy, Suspense } from "react";
 import { Smartphone, Home, ShoppingBag, ShoppingCart, User } from "lucide-react";
 import {
-  BrowserRouter as Router,
   Routes, Route, Navigate,
   useLocation, NavLink
 } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
-import { RestaurantProvider, useRestaurant } from "./context/RestaurantContext";
+import { useRestaurant } from "./context/RestaurantContext";
 import PageSkeleton from "./components/PageSkeleton";
 import FloatingQueueButton from "./components/FloatingQueueButton";
 import { showHomeLoader, hideHomeLoader } from "./utils/loader";
@@ -106,11 +105,6 @@ function AppRoutes() {
   const location = useLocation();
 
   return (
-    <RestaurantProvider>
-      {/*
-        key={location.pathname} resets this Suspense boundary on every route change.
-        Result: the skeleton appears instantly when navigating, not after a delay.
-      */}
       <Suspense key={location.pathname} fallback={location.pathname === '/' ? <HomeLoading /> : <PageSkeleton />}>
         <RequireRestaurant>
           <Routes location={location}>
@@ -146,7 +140,6 @@ function AppRoutes() {
           <FloatingQueueButton />
         </RequireRestaurant>
       </Suspense>
-    </RestaurantProvider>
   );
 }
 
@@ -188,14 +181,12 @@ function App() {
     <AuthProvider>
       <CartProvider>
         <ThemeProvider>
-          <Router>
-            <ScrollToTop />
-            <MobileOnlyWrapper>
-              <div className="App">
-                <AppRoutes />
-              </div>
-            </MobileOnlyWrapper>
-          </Router>
+          <ScrollToTop />
+          <MobileOnlyWrapper>
+            <div className="App">
+              <AppRoutes />
+            </div>
+          </MobileOnlyWrapper>
         </ThemeProvider>
       </CartProvider>
     </AuthProvider>

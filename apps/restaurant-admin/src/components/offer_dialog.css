@@ -101,7 +101,7 @@
   border-radius: 12px;
   font-size: 14px;
   color: #1A202C;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
   background-color: #FAFAFA;
   appearance: none;
   cursor: pointer;
@@ -121,7 +121,7 @@
   border-radius: 12px;
   font-size: 14px;
   color: #1A202C;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
   background-color: #FAFAFA;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
@@ -246,7 +246,7 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
   transition: all 0.25s;
   width: fit-content;
 }
@@ -286,7 +286,7 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .offer-btn-cancel {

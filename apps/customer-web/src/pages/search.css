@@ -6,11 +6,14 @@
 /* ---------- Page Shell ---------- */
 .search-page-container {
     min-height: 100vh;
+    width: 100%;
+    max-width: 100vw;
     background: #F9F6F3;
     display: flex;
     flex-direction: column;
     font-family: 'Poppins', sans-serif;
     overflow-x: hidden;
+    box-sizing: border-box;
 }
 
 /* ============================================================
@@ -244,6 +247,7 @@
     display: flex;
     flex-direction: column;
     gap: 14px;
+    width: 100%;
 }
 
 /* Card shell */
@@ -261,6 +265,8 @@
     animation: cardEntry 0.4s ease both;
     transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1),
                 box-shadow 0.2s ease;
+    width: 100%;
+    max-width: calc(100vw - 40px);
 }
 
 .rec-card:active {
@@ -321,6 +327,7 @@
     flex-direction: column;
     padding: 12px 14px 10px;
     gap: 2px;
+    overflow: hidden;
 }
 
 /* Name + Star row */
@@ -503,6 +510,232 @@
 @keyframes cardEntry {
     from { opacity: 0; transform: translateY(16px); }
     to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   SEARCH RESULTS — COMPACT CARD LAYOUT
+   ============================================================ */
+.sr-container {
+    padding: 16px 20px 0;
+}
+
+.sr-count {
+    font-size: 13px;
+    color: #A09590;
+    font-weight: 500;
+    margin: 0 0 16px;
+    padding-left: 2px;
+}
+
+.sr-count-num {
+    font-weight: 700;
+    color: #1A1A1A;
+}
+
+.sr-count-q {
+    font-weight: 600;
+    color: #8B3A1E;
+    font-style: italic;
+}
+
+.sr-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Card */
+.sr-card {
+    display: flex;
+    align-items: stretch;
+    background: #FFFFFF;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,0.06);
+    box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+    cursor: pointer;
+    animation: cardEntry 0.35s ease both;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sr-card:active {
+    transform: scale(0.98);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+/* Image */
+.sr-img {
+    position: relative;
+    width: 88px;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.sr-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* Diet dot */
+.sr-diet {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    width: 16px;
+    height: 16px;
+    background: #FFF;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
+
+.sr-diet span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: block;
+}
+
+.sr-diet.veg span     { background: #2E7D32; }
+.sr-diet.non-veg span { background: #C62828; }
+
+/* Info column */
+.sr-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 10px 14px;
+    gap: 2px;
+}
+
+.sr-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.sr-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1A1A1A;
+    margin: 0;
+    line-height: 1.3;
+    flex: 1;
+    min-width: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.sr-rating {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    background: rgba(139,58,30,0.07);
+    padding: 2px 7px;
+    border-radius: 20px;
+    flex-shrink: 0;
+}
+
+.sr-rating span {
+    font-size: 11px;
+    font-weight: 700;
+    color: #8B3A1E;
+}
+
+.sr-desc {
+    font-size: 11px;
+    color: #B0A49F;
+    margin: 0;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.sr-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+    padding-top: 6px;
+}
+
+.sr-price {
+    font-size: 16px;
+    font-weight: 800;
+    color: #1A1A1A;
+    letter-spacing: -0.4px;
+}
+
+.sr-add-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #8B3A1E;
+    color: #FFF;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    box-shadow: 0 3px 10px rgba(139,58,30,0.25);
+    transition: transform 0.15s ease;
+    flex-shrink: 0;
+}
+
+.sr-add-btn:active {
+    transform: scale(0.9);
+    background: #6F2D17;
+}
+
+/* Quantity stepper */
+.sr-qty {
+    display: flex;
+    align-items: center;
+    background: #8B3A1E;
+    border-radius: 10px;
+    padding: 2px;
+    box-shadow: 0 3px 8px rgba(139,58,30,0.22);
+    flex-shrink: 0;
+}
+
+.sr-qty button {
+    background: transparent;
+    border: none;
+    color: #FFF;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.12s;
+}
+
+.sr-qty button:active {
+    background: rgba(255,255,255,0.2);
+}
+
+.sr-qty span {
+    color: #FFF;
+    font-size: 13px;
+    font-weight: 700;
+    min-width: 18px;
+    text-align: center;
 }
 
 /* ── Modern Frosted Glow Cart Indicator ── */

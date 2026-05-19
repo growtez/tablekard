@@ -3,9 +3,9 @@ import { Download, Calendar, ArrowUpRight, ArrowDownRight, Loader2, Info } from 
 import Sidebar from '../components/sidebar';
 import './reports.css';
 import { useAuth } from '../context/AuthContext';
-import { 
-    getAnalyticsSummary, 
-    getActiveTablesCount, 
+import {
+    getAnalyticsSummary,
+    getActiveTablesCount,
     getBestSellingDishes,
     getRevenueData,
     getPeakHourData,
@@ -30,7 +30,7 @@ const heatColor = (count: number, max: number): string => {
     if (max === 0 || count === 0) return '#F0F4F8';
     const intensity = count / max;
     if (intensity < 0.25) return '#C3DAFE';
-    if (intensity < 0.5)  return '#7F9CF5';
+    if (intensity < 0.5) return '#7F9CF5';
     if (intensity < 0.75) return '#4C51BF';
     return '#312E81';
 };
@@ -39,7 +39,7 @@ const Reports: React.FC = () => {
     const { activeRestaurantId } = useAuth();
     const [timeframe, setTimeframe] = useState('week');
     const [loading, setLoading] = useState(true);
-    
+
     const [summary, setSummary] = useState<AnalyticsSummary>({
         totalRevenue: 0,
         totalOrders: 0,
@@ -55,7 +55,7 @@ const Reports: React.FC = () => {
     );
     const [advanced, setAdvanced] = useState<RevenueBreakdown | null>(null);
     const [feedbackData, setFeedbackData] = useState<FeedbackRecord[]>([]);
-    
+
     const [customStart, setCustomStart] = useState('');
     const [customEnd, setCustomEnd] = useState('');
 
@@ -108,7 +108,7 @@ const Reports: React.FC = () => {
                 const d = new Date();
                 d.setDate(now.getDate() - i);
                 const dateStr = d.toISOString().split('T')[0];
-                
+
                 const existing = revenueData.find(record => record.revenueDate === dateStr);
                 if (existing) {
                     last7Days.push(existing);
@@ -177,14 +177,13 @@ const Reports: React.FC = () => {
                     <h1 className="reports-page-title">Reports & Analytics</h1>
                     <div className="reports-header-right">
                         {loading && <Loader2 className="animate-spin" size={20} style={{ color: '#4C51BF' }} />}
-                        <div className="reports-user-avatar">👨‍💼</div>
                     </div>
                 </div>
 
                 {/* Filters */}
                 <div className="reports-filters">
                     <button className={`report-filter-btn ${timeframe === 'today' ? 'active' : ''}`} onClick={() => setTimeframe('today')}>Today</button>
-                    <button className={`report-filter-btn ${timeframe === 'week'  ? 'active' : ''}`} onClick={() => setTimeframe('week')}>This Week</button>
+                    <button className={`report-filter-btn ${timeframe === 'week' ? 'active' : ''}`} onClick={() => setTimeframe('week')}>This Week</button>
                     <button className={`report-filter-btn ${timeframe === 'month' ? 'active' : ''}`} onClick={() => setTimeframe('month')}>This Month</button>
 
                     <div className="custom-range-container">
@@ -345,12 +344,12 @@ const Reports: React.FC = () => {
                                         </div>
                                     </div>
                                     <div className="donut-legend">
-                                        <div className="legend-item"><div className="legend-color" style={{background: '#4C51BF'}}></div> Dine-in</div>
-                                        <div className="legend-item"><div className="legend-color" style={{background: '#E2E8F0'}}></div> Takeaway</div>
+                                        <div className="legend-item"><div className="legend-color" style={{ background: '#4C51BF' }}></div> Dine-in</div>
+                                        <div className="legend-item"><div className="legend-color" style={{ background: '#E2E8F0' }}></div> Takeaway</div>
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div className="breakdown-separator"></div>
 
                             <div className="donut-section">
@@ -366,8 +365,8 @@ const Reports: React.FC = () => {
                                         </div>
                                     </div>
                                     <div className="donut-legend">
-                                        <div className="legend-item"><div className="legend-color" style={{background: '#48BB78'}}></div> Online</div>
-                                        <div className="legend-item"><div className="legend-color" style={{background: '#E2E8F0'}}></div> Cash</div>
+                                        <div className="legend-item"><div className="legend-color" style={{ background: '#48BB78' }}></div> Online</div>
+                                        <div className="legend-item"><div className="legend-color" style={{ background: '#E2E8F0' }}></div> Cash</div>
                                     </div>
                                 </div>
                             </div>
@@ -387,7 +386,7 @@ const Reports: React.FC = () => {
                                     <Info size={14} />
                                 </span>
                             </h3>
-                            <button 
+                            <button
                                 className="view-all-btn"
                                 onClick={() => setShowAllItemsModal(true)}
                             >
@@ -527,7 +526,7 @@ const Reports: React.FC = () => {
                                     <Info size={20} />
                                 </button>
                             </div>
-                            
+
                             <div className="reports-modal-body">
                                 <table className="top-items-table">
                                     <thead>
@@ -561,7 +560,7 @@ const Reports: React.FC = () => {
                                     </tbody>
                                 </table>
                             </div>
-                            
+
                             <div className="reports-modal-footer">
                                 <button className="report-filter-btn active" onClick={() => setShowAllItemsModal(false)}>
                                     Close View

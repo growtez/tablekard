@@ -1,10 +1,10 @@
 /* payment.css */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 .dashboard-container {
   display: flex;
   min-height: 100vh;
-  background-color: #343A40;
+  background-color: var(--tk-bg, #FFFFFF);
   /* Match sidebar background */
   position: relative;
 }
@@ -45,7 +45,7 @@
   font-weight: 600;
   color: #1A202C;
   margin: 0;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .header-right {
@@ -72,7 +72,7 @@
   color: #1A202C;
   background-color: transparent;
   width: 100%;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .search-input::placeholder {
@@ -111,7 +111,7 @@
 }
 
 .card-top-bar-green {
-  background: linear-gradient(to right, #4f755c, #4f755c);
+  background: linear-gradient(to right, var(--tk-burgundy, #8B3A1E), var(--tk-burgundy, #8B3A1E));
 }
 
 .card-top-bar-blue {
@@ -124,7 +124,7 @@
   margin-bottom: 12px;
   font-weight: 500;
   margin-top: 4px;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .revenue-amount {
@@ -132,14 +132,14 @@
   font-weight: 700;
   color: #1A202C;
   margin-bottom: 12px;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .revenue-change {
   display: flex;
   align-items: center;
   font-size: 13px;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .change-text {
@@ -197,7 +197,7 @@
   color: #1A202C;
   background-color: transparent;
   cursor: pointer;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
   min-width: 120px;
 }
 
@@ -212,14 +212,14 @@
   font-size: 14px;
   color: #1A202C;
   outline: none;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
   margin-left: 8px;
   background-color: #F7FAFC;
   transition: all 0.2s;
 }
 
 .custom-date-picker:focus {
-  border-color: #4f755c;
+  border-color: var(--tk-burgundy, #8B3A1E);
   box-shadow: 0 0 0 2px rgba(79, 117, 92, 0.1);
 }
 
@@ -228,22 +228,22 @@
   align-items: center;
   gap: 8px;
   padding: 10px 24px;
-  background-color: #68D391;
-  color: #22543D;
+  background-color: var(--tk-burgundy, #8B3A1E);
+  color: #FFFFFF;
   border: none;
   border-radius: 12px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-family: 'Poppins', sans-serif;
-  box-shadow: 0 4px 12px rgba(104, 211, 145, 0.3);
+  font-family: 'Outfit', sans-serif;
+  box-shadow: 0 4px 12px rgba(139, 58, 30, 0.3);
 }
 
 .export-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(104, 211, 145, 0.4);
-  background-color: #48BB78;
+  box-shadow: 0 6px 20px rgba(139, 58, 30, 0.4);
+  background-color: #6B2A15;
 }
 
 /* Table Card */
@@ -266,7 +266,7 @@
   font-weight: 600;
   color: #1A202C;
   margin: 0;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .view-all-btn {
@@ -279,7 +279,7 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .view-all-btn:hover {
@@ -291,7 +291,7 @@
   font-size: 14px;
   color: #718096;
   font-weight: 500;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 /* Orders Table */
@@ -299,7 +299,7 @@
   width: 100%;
   border-collapse: separate;
   border-spacing: 0 8px;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .orders-table thead tr {
@@ -401,7 +401,7 @@
   font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .status-paid {
@@ -426,7 +426,7 @@
 
 .amount-cell {
   font-weight: 700;
-  color: #4f755c;
+  color: var(--tk-burgundy, #8B3A1E);
   font-size: 15px;
 }
 
@@ -448,7 +448,7 @@
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .view-btn {
@@ -507,7 +507,7 @@
   width: 95%;
   max-height: 90vh;
   overflow-y: auto;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .modal-header {
@@ -574,7 +574,7 @@
   width: 40px;
   height: 40px;
   background-color: #FFFFFF;
-  color: #4f755c;
+  color: var(--tk-burgundy, #8B3A1E);
   border-radius: 10px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
 }
@@ -608,7 +608,7 @@
   font-weight: 600;
   color: #1A202C;
   margin-bottom: 16px;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .items-container {
@@ -673,7 +673,7 @@
 }
 
 .grand-total span:last-child {
-  color: #4f755c;
+  color: var(--tk-burgundy, #8B3A1E);
 }
 
 /* Responsive Design */
@@ -726,13 +726,83 @@
     width: 100%;
   }
 
-  .orders-table {
-    font-size: 12px;
+  .table-card {
+    overflow-x: visible;
   }
 
-  .orders-table th,
+  .orders-table {
+    min-width: 100%;
+  }
+
+  .orders-table thead {
+    display: none;
+  }
+
+  .orders-table, 
+  .orders-table tbody, 
+  .orders-table tr, 
   .orders-table td {
-    padding: 12px 8px;
+    display: block;
+    width: 100%;
+  }
+
+  .orders-table tr {
+    margin-bottom: 16px;
+    background: #fff;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .orders-table td {
+    padding: 4px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: none;
+    text-align: right;
+  }
+
+  /* Make the first cell (Order ID) act as the card header */
+  .orders-table td:first-child {
+    justify-content: space-between;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--tk-burgundy, #8B3A1E);
+    border-bottom: 1px dashed #E2E8F0;
+    padding-bottom: 12px;
+    margin-bottom: 4px;
+  }
+  
+  .orders-table td:first-child::before {
+    content: "Order ID"; /* Force text instead of attribute to be safe */
+    color: #1A202C;
+    font-size: 14px;
+  }
+
+  /* Make the last cell (Actions) stand out */
+  .orders-table td:last-child {
+    margin-top: 8px;
+    padding-top: 12px;
+    border-top: 1px dashed #E2E8F0;
+    justify-content: flex-end;
+  }
+  
+  .orders-table td:last-child::before {
+    display: none; /* Hide label for actions */
+  }
+
+  .orders-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #718096;
+    margin-right: 16px;
+    text-align: left;
+    font-size: 13px;
   }
 
   .method-badge,
@@ -797,16 +867,6 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
-  }
-}
-
-@media (max-width: 640px) {
-  .table-card {
-    overflow-x: auto;
-  }
-
-  .orders-table {
-    min-width: 700px;
   }
 }
 

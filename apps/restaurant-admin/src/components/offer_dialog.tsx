@@ -239,7 +239,8 @@ const OfferDialog: React.FC<OfferDialogProps> = ({
                 className="offer-form-input"
                 placeholder="0.00"
                 min="0"
-                step="0.01"
+                step="any"
+                onWheel={(e) => e.currentTarget.blur()}
                 required
               />
               {selectedItem && formData.discount_price !== '' && (
