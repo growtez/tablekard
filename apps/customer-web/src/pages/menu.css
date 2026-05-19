@@ -674,11 +674,23 @@ body {
   background: #FFFFFF;
   border-radius: 24px 24px 0 0;
   max-height: 85vh;
-  overflow-y: auto;
   transform: translateY(100%);
   transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
   position: relative;
-  padding-bottom: 120px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-bottom: 0;
+}
+
+.modal-scrollable-content {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.modal-scrollable-content::-webkit-scrollbar {
+  display: none;
 }
 
 .item-modal-overlay.show .modal-sheet {
@@ -861,10 +873,7 @@ body {
 
 /* Bottom Action Bar */
 .modal-bottom-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  position: relative;
   background: #FFFFFF;
   padding: 16px 24px 28px;
   display: flex;

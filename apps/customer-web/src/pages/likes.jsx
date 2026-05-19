@@ -254,46 +254,48 @@ const LikesPage = () => {
                             <X size={18} />
                         </button>
 
-                        {/* Centered Dish Image */}
-                        <div className="modal-dish-showcase">
-                            <div className="dish-image-frame">
-                                <img src={selectedItem.image} alt={selectedItem.name} />
-                            </div>
-                            <button
-                                className="modal-fav-floating active"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    removeFavorite(selectedItem.id);
-                                    closeItemModal();
-                                }}
-                            >
-                                <Heart
-                                    size={20}
-                                    fill="#8B3A1E"
-                                    color="#8B3A1E"
-                                />
-                            </button>
-                            <div className="dish-rating-pill">
-                                <Star size={12} fill="#8B3A1E" color="#8B3A1E" />
-                                <span>{selectedItem.rating}</span>
-                            </div>
-                        </div>
-
-                        {/* Dish Info */}
-                        <div className="modal-dish-info">
-                            <h2 className="dish-title">{selectedItem.name}</h2>
-
-                            <div className="dish-meta-chips">
-                                <span className="meta-chip"><Clock size={13} /> {selectedItem.raw?.preparation_time || '15'}min</span>
-                                <span className="meta-chip"><Users size={13} /> Serves {selectedItem.serves}</span>
-                                {selectedItem.raw?.is_veg ? (
-                                    <span className="meta-chip green">Veg</span>
-                                ) : (
-                                    <span className="meta-chip red">Non-Veg</span>
-                                )}
+                        <div className="modal-scrollable-content">
+                            {/* Centered Dish Image */}
+                            <div className="modal-dish-showcase">
+                                <div className="dish-image-frame">
+                                    <img src={selectedItem.image} alt={selectedItem.name} />
+                                </div>
+                                <button
+                                    className="modal-fav-floating active"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        removeFavorite(selectedItem.id);
+                                        closeItemModal();
+                                    }}
+                                >
+                                    <Heart
+                                        size={20}
+                                        fill="#8B3A1E"
+                                        color="#8B3A1E"
+                                    />
+                                </button>
+                                <div className="dish-rating-pill">
+                                    <Star size={12} fill="#8B3A1E" color="#8B3A1E" />
+                                    <span>{selectedItem.rating}</span>
+                                </div>
                             </div>
 
-                            <p className="dish-full-desc">{selectedItem.raw?.long_description || selectedItem.description}</p>
+                            {/* Dish Info */}
+                            <div className="modal-dish-info">
+                                <h2 className="dish-title">{selectedItem.name}</h2>
+
+                                <div className="dish-meta-chips">
+                                    <span className="meta-chip"><Clock size={13} /> {selectedItem.raw?.preparation_time || '15'}min</span>
+                                    <span className="meta-chip"><Users size={13} /> Serves {selectedItem.serves}</span>
+                                    {selectedItem.raw?.is_veg ? (
+                                        <span className="meta-chip green">Veg</span>
+                                    ) : (
+                                        <span className="meta-chip red">Non-Veg</span>
+                                    )}
+                                </div>
+
+                                <p className="dish-full-desc">{selectedItem.raw?.long_description || selectedItem.description}</p>
+                            </div>
                         </div>
 
                         {/* Sticky Bottom Action Bar */}
