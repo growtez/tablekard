@@ -498,3 +498,20 @@
     font-weight: 700;
     margin-bottom: 24px;
 }
+
+.feedback-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 100px 40px;
+    text-align: center;
+}
+
+.feedback-empty-state p {
+    font-size: 15px;
+    color: #888888;
+    font-weight: 500;
+    line-height: 1.6;
+    max-width: 260px;
+}

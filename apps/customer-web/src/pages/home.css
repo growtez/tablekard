@@ -211,15 +211,18 @@ body {
   padding: 0 20px 20px;
   margin: 0;
   text-align: left;
+  max-width: 100%;
 }
 
 .category-pills {
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  padding-bottom: 4px;
+  padding: 4px 0;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 .category-pills::-webkit-scrollbar {
@@ -318,18 +321,21 @@ body {
 .food-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
+  gap: 12px;
+  width: 100%;
 }
 
 /* Food Card - Black Border */
 .food-card {
   background: #FFFFFF;
   border-radius: 20px;
-  padding: 14px;
+  padding: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
   text-align: center;
   border: 1.5px solid #1A1A1A;
+  min-width: 0; /* Prevent overflow */
+  width: 100%;
 }
 
 .food-card:active {
@@ -438,6 +444,8 @@ body {
   scrollbar-width: none;
   scroll-snap-type: x mandatory;
   scroll-behavior: smooth;
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 .discounts-scroll::-webkit-scrollbar {
@@ -445,7 +453,8 @@ body {
 }
 
 .discount-card {
-  flex: 0 0 230px;
+  flex: 0 0 280px; /* More dynamic width */
+  max-width: 85vw; /* Ensure it doesn't exceed screen */
   background: #FFFFFF;
   border-radius: 28px;
   padding: 10px;

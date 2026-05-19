@@ -1,60 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Star, Send, MessageSquare, ThumbsUp, Edit3, Calendar, ShoppingBag, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Star, Send, ThumbsUp, Edit3, Calendar, ShoppingBag, ChevronRight, Loader2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { getOrderHistory, submitFeedback } from '../services/supabaseService';
+import { supabase } from '@restaurant-saas/supabase';
 import './feedback.css';
 
 const FeedbackPage = () => {
     const navigate = useNavigate();
     const { orderId: paramOrderId } = useParams();
+    const { user, isAuthenticated } = useAuth();
 
-    // Hardcoded orders for demonstration
-    const orders = [
-        {
-            id: '#ORD-9901',
-            date: '10 Jan / 02:30 PM',
-            items: ['Margherita Pizza', 'Caesar Salad'],
-            total: 3568,
-            status: 'completed',
-            isReviewed: false
-        },
-        {
-            id: '#ORD-9844',
-            date: '08 Jan / 12:15 PM',
-            items: ['Grilled Salmon', 'Orange Juice'],
-            total: 728,
-            status: 'completed',
-            isReviewed: true,
-            review: {
-                rating: 5,
-                text: "Excellent service and amazing food!",
-                categories: { food: 5, service: 5, ambiance: 4, speed: 5 }
-            }
-        },
-        {
-            id: '#ORD-9801',
-            date: '05 Jan / 07:45 PM',
-            items: ['Chef Special Omakase'],
-            total: 4500,
-        },
-        {
-            id: '#ORD-9700',
-            date: '04 Jan / 09:15 PM',
-            items: [
-                'Butter Chicken',
-                'Garlic Naan (2)',
-                'Dal Makhani',
-                'Jeera Rice',
-                'Paneer Tikka',
-                'Mango Lassi (3)',
-                'Gulab Jamun (4)',
-                'Raita'
-            ],
-            total: 2850,
-            status: 'completed',
-            isReviewed: false
-        }
-    ];
-
+    const [orders, setOrders] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [selectedOrderId, setSelectedOrderId] = useState(paramOrderId || null);
     const [isEditing, setIsEditing] = useState(false);
 
@@ -63,47 +21,117 @@ const FeedbackPage = () => {
     const [hoveredRating, setHoveredRating] = useState(0);
     const [feedback, setFeedback] = useState('');
     const [submitted, setSubmitted] = useState(false);
-    const [categoryRatings, setCategoryRatings] = useState({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const categories = [
-        { id: 'food', label: 'Food Quality', emoji: '🍽️' },
-        { id: 'service', label: 'Service', emoji: '👨‍🍳' },
-        { id: 'ambiance', label: 'Ambiance', emoji: '✨' },
-        { id: 'speed', label: 'Speed', emoji: '⚡' },
-    ];
+    // 1. Fetch Real Orders
+    const fetchOrders = async () => {
+        if (!user) return;
+        try {
+            setLoading(true);
+            const data = await getOrderHistory(user.id);
+            // Filter only orders that are ready, served, or completed for review
+            setOrders(data.filter(o => 
+                ['ready', 'READY', 'served', 'SERVED', 'completed', 'COMPLETED'].includes(o.status)
+            ));
+        } catch (err) {
+            console.error('Error fetching orders for feedback:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        if (paramOrderId) {
-            const order = orders.find(o => o.id === paramOrderId);
-            if (order && order.isReviewed) {
-                setRating(order.review.rating);
-                setFeedback(order.review.text);
-                setCategoryRatings(order.review.categories);
+        if (isAuthenticated && user) {
+            fetchOrders();
+
+            // 2. Real-time Subscription for Feedback table
+            const channel = supabase
+                .channel('realtime-feedback')
+                .on(
+                    'postgres_changes',
+                    { event: '*', schema: 'public', table: 'feedback', filter: `user_id=eq.${user.id}` },
+                    () => {
+                        fetchOrders(); // Re-fetch orders to get updated feedback
+                    }
+                )
+                .subscribe();
+
+            return () => {
+                supabase.removeChannel(channel);
+            };
+        }
+    }, [isAuthenticated, user]);
+
+    // Handle initial selection from URL params
+    useEffect(() => {
+        if (paramOrderId && orders.length > 0) {
+            const order = orders.find(o => o.id === paramOrderId || o.order_number === paramOrderId);
+            if (order) {
+                setSelectedOrderId(order.id);
+                if (order.rating) {
+                    setRating(order.rating);
+                    setFeedback(order.comment || '');
+                    setIsEditing(false);
+                } else {
+                    setIsEditing(true);
+                }
             }
         }
-    }, [paramOrderId]);
+    }, [paramOrderId, orders]);
 
     const handleOrderSelect = (order) => {
         setSelectedOrderId(order.id);
-        if (order.isReviewed) {
-            setRating(order.review.rating);
-            setFeedback(order.review.text);
-            setCategoryRatings(order.review.categories);
+        if (order.rating) {
+            setRating(order.rating);
+            setFeedback(order.comment || '');
             setIsEditing(false);
         } else {
             setRating(0);
             setFeedback('');
-            setCategoryRatings({});
             setIsEditing(true);
         }
     };
 
-    const handleSubmit = () => {
-        if (rating > 0) {
-            setSubmitted(true);
-            // In a real app, you'd send this to your backend
+    const handleSubmit = async () => {
+        if (rating > 0 && selectedOrderId && user) {
+            try {
+                setIsSubmitting(true);
+                await submitFeedback({
+                    orderId: selectedOrderId,
+                    userId: user.id,
+                    rating,
+                    comment: feedback
+                });
+                setSubmitted(true);
+            } catch (err) {
+                console.error('Error submitting feedback:', err);
+                alert('Failed to submit feedback. Please try again.');
+            } finally {
+                setIsSubmitting(false);
+            }
         }
     };
+
+    const formatDate = (dateStr) => {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-IN', { 
+            day: '2-digit', 
+            month: 'short', 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+    };
+
+    if (loading && orders.length === 0) {
+        return (
+            <div className="feedback-page-container">
+                <div className="feedback-page-loading">
+                    <Loader2 size={40} className="spin-animation" color="#8B3A1E" />
+                    <p>Loading your orders...</p>
+                </div>
+            </div>
+        );
+    }
 
     if (submitted) {
         return (
@@ -113,7 +141,7 @@ const FeedbackPage = () => {
                         <ThumbsUp size={48} />
                     </div>
                     <h2>Feedback Received!</h2>
-                    <p>Thank you for rating Order {selectedOrderId}. It helps us serve you better.</p>
+                    <p>Thank you for rating your order. It helps us serve you better.</p>
 
                     <div className="feedback-success-actions">
                         <button className="feedback-page-btn-primary" onClick={() => {
@@ -147,45 +175,46 @@ const FeedbackPage = () => {
                 </header>
 
                 <div className="feedback-page-content">
-                    <div className="feedback-page-info-box">
-                        <ShoppingBag size={20} />
-                        <p>Select a completed order to share your dining experience.</p>
-                    </div>
-
-                    <div className="feedback-order-list">
-                        {orders.map(order => (
-                            <div
-                                key={order.id}
-                                className={`feedback-order-card ${order.isReviewed ? 'reviewed' : ''}`}
-                                onClick={() => handleOrderSelect(order)}
-                            >
-                                <div className="feedback-order-main">
-                                    <div className="feedback-order-info">
-                                        <span className="feedback-order-id">{order.id}</span>
-                                        <span className="feedback-order-date">
-                                            <Calendar size={12} /> {order.date}
-                                        </span>
+                    {orders.length === 0 ? (
+                        <div className="feedback-empty-state">
+                            <p>Select a completed order to share your dining experience.</p>
+                        </div>
+                    ) : (
+                        <div className="feedback-order-list">
+                            {orders.map(order => (
+                                <div
+                                    key={order.id}
+                                    className={`feedback-order-card ${order.rating ? 'reviewed' : ''}`}
+                                    onClick={() => handleOrderSelect(order)}
+                                >
+                                    <div className="feedback-order-main">
+                                        <div className="feedback-order-info">
+                                            <span className="feedback-order-id">#{order.order_number}</span>
+                                            <span className="feedback-order-date">
+                                                <Calendar size={12} /> {formatDate(order.created_at)}
+                                            </span>
+                                        </div>
+                                        <div className="feedback-order-status">
+                                            {order.rating ? (
+                                                <span className="status-tag reviewed">Reviewed</span>
+                                            ) : (
+                                                <span className="status-tag pending">Rate Now</span>
+                                            )}
+                                            <ChevronRight size={18} />
+                                        </div>
                                     </div>
-                                    <div className="feedback-order-status">
-                                        {order.isReviewed ? (
-                                            <span className="status-tag reviewed">Reviewed</span>
-                                        ) : (
-                                            <span className="status-tag pending">Rate Now</span>
-                                        )}
-                                        <ChevronRight size={18} />
+                                    <div className="feedback-order-items-wrapper">
+                                        <p className="feedback-order-items">
+                                            {order.order_items?.slice(0, 3).map(i => i.name).join(', ')}
+                                            {order.order_items?.length > 3 && (
+                                                <span className="items-more-tag"> +{order.order_items.length - 3} more</span>
+                                            )}
+                                        </p>
                                     </div>
                                 </div>
-                                <div className="feedback-order-items-wrapper">
-                                    <p className="feedback-order-items">
-                                        {order.items.slice(0, 3).join(', ')}
-                                        {order.items.length > 3 && (
-                                            <span className="items-more-tag"> +{order.items.length - 3} more</span>
-                                        )}
-                                    </p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
         );
@@ -193,7 +222,7 @@ const FeedbackPage = () => {
 
     // View: Detail View (Form or Summary)
     const currentOrder = orders.find(o => o.id === selectedOrderId);
-    const showSummary = currentOrder?.isReviewed && !isEditing;
+    const showSummary = currentOrder?.rating && !isEditing;
 
     return (
         <div className="feedback-page-container">
@@ -207,7 +236,7 @@ const FeedbackPage = () => {
 
             <div className="feedback-page-content">
                 <div className="feedback-active-order-label">
-                    <span>Order {selectedOrderId}</span>
+                    <span>Order #{currentOrder?.order_number}</span>
                 </div>
 
                 {showSummary ? (
@@ -223,12 +252,10 @@ const FeedbackPage = () => {
                                     />
                                 ))}
                             </div>
-                            <span className="feedback-page-review-date">{currentOrder.date}</span>
+                            <span className="feedback-page-review-date">{formatDate(currentOrder.created_at)}</span>
                         </div>
 
-                        <p className="feedback-page-review-text">"{feedback}"</p>
-
-
+                        <p className="feedback-page-review-text">{feedback ? `"${feedback}"` : "No comments shared."}</p>
 
                         <button
                             className="feedback-page-edit-btn"
@@ -260,8 +287,6 @@ const FeedbackPage = () => {
                             </div>
                         </section>
 
-
-
                         <section className="feedback-page-section">
                             <h2 className="feedback-page-section-title">Your Comments</h2>
                             <textarea
@@ -277,12 +302,16 @@ const FeedbackPage = () => {
                             <button
                                 className={`feedback-page-submit-btn ${rating > 0 ? 'active' : ''}`}
                                 onClick={handleSubmit}
-                                disabled={rating === 0}
+                                disabled={rating === 0 || isSubmitting}
                             >
-                                <Send size={18} />
-                                {currentOrder?.isReviewed ? 'Update Review' : 'Submit Review'}
+                                {isSubmitting ? (
+                                    <Loader2 size={18} className="spin-animation" />
+                                ) : (
+                                    <Send size={18} />
+                                )}
+                                {currentOrder?.rating ? 'Update Review' : 'Submit Review'}
                             </button>
-                            {isEditing && currentOrder?.isReviewed && (
+                            {isEditing && currentOrder?.rating && (
                                 <button
                                     className="feedback-page-cancel-btn"
                                     onClick={() => setIsEditing(false)}

@@ -25,17 +25,21 @@ const FloatingQueueButton = () => {
 
             const { data, error } = await supabase
                 .from('orders')
-                .select('id')
+                .select('id, status')
                 .eq('restaurant_id', restaurantId)
                 .eq('customer_id', user.id)
                 .gte('created_at', today.toISOString())
                 .neq('status', 'cancelled')
                 .neq('status', 'completed')
                 .neq('status', 'served')
-                .limit(1);
+                .neq('status', 'SERVED');
 
             if (!error && data && data.length > 0) {
-                setHasActiveOrder(true);
+                // Only show if there are truly active (not-yet-ready) orders
+                const hasNonReadyOrders = data.some(o =>
+                    o.status !== 'ready' && o.status !== 'READY'
+                );
+                setHasActiveOrder(hasNonReadyOrders);
             } else {
                 setHasActiveOrder(false);
             }

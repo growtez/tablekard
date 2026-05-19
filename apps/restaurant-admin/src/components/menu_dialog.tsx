@@ -328,7 +328,8 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
                 className="menu-form-input"
                 placeholder="0.00"
                 min="0"
-                step="0.01"
+                step="any"
+                onWheel={(e) => e.currentTarget.blur()}
                 required
               />
             </div>
@@ -342,7 +343,8 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
                 className="menu-form-input"
                 placeholder="Leave blank if none"
                 min="0"
-                step="0.01"
+                step="any"
+                onWheel={(e) => e.currentTarget.blur()}
               />
             </div>
           </div>
@@ -399,6 +401,7 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
               className="menu-form-input"
               placeholder="e.g. 2"
               min="1"
+              onWheel={(e) => e.currentTarget.blur()}
             />
           </div>
 
@@ -570,6 +573,8 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
                 className="menu-form-input menu-variant-price-input"
                 placeholder="Price (₹)"
                 min="0"
+                step="any"
+                onWheel={(e) => e.currentTarget.blur()}
               />
               <button type="button" className="menu-tag-add-btn" onClick={addVariant}>
                 <Plus size={16} />
@@ -615,6 +620,8 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
                 className="menu-form-input menu-variant-price-input"
                 placeholder="Price (₹)"
                 min="0"
+                step="any"
+                onWheel={(e) => e.currentTarget.blur()}
                 onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomAddon(); } }}
               />
               <button type="button" className="menu-tag-add-btn" onClick={addCustomAddon}>
