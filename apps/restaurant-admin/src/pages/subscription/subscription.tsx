@@ -122,8 +122,9 @@ const SubscriptionPage: React.FC = () => {
 
                 if (err) throw err;
 
-                if (data?.config?.plans) {
-                    const mapped = data.config.plans.map((p: any) => ({
+                const config = data?.config as any;
+                if (config?.plans) {
+                    const mapped = config.plans.map((p: any) => ({
                         duration: p.duration,
                         label: p.name,
                         price: p.price,
