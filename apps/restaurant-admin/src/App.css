@@ -1,4 +1,4 @@
-/* App.css */
+/* ── App Layout – TableKard Outlined ─────────────────────── */
 * {
   margin: 0;
   padding: 0;
@@ -16,12 +16,11 @@
 .app-container {
   display: flex;
   min-height: 100vh;
-  background-color: #f7f8fa;
+  background-color: var(--tk-bg, #FFFFFF);
 }
 
 .main-content {
   margin-left: 240px;
-  /* Same width as sidebar */
   flex: 1;
   padding: 20px;
   overflow-y: auto;
@@ -33,20 +32,17 @@
   margin-left: 80px;
 }
 
-/* Remove these if you want a full-width layout */
 .main-content-wrapper {
   max-width: 1280px;
   margin: 0 auto;
 }
 
-/* Responsive Design */
+/* ── Responsive ──────────────────────────────────────────── */
 @media (max-width: 768px) {
-
   .main-content,
   .sidebar-collapsed .main-content {
     margin-left: 0;
     padding: 16px;
     padding-top: 72px;
-    /* Space for mobile hamburger menu */
   }
 }

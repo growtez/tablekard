@@ -105,7 +105,7 @@
     background-color: #FFFFFF;
     font-size: 14px;
     color: #1A202C;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Outfit', sans-serif;
     transition: all 0.2s;
     width: 100%;
     box-sizing: border-box;
@@ -155,7 +155,7 @@
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Outfit', sans-serif;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -176,7 +176,7 @@
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Outfit', sans-serif;
     display: flex;
     align-items: center;
     justify-content: center;

@@ -1,10 +1,10 @@
 /* Order.css */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 .order-container {
   display: flex;
   min-height: 100vh;
-  background-color: #343A40;
+  background-color: var(--tk-bg, #FFFFFF);
   /* Match sidebar background */
   position: relative;
 }
@@ -46,7 +46,7 @@
   font-weight: 600;
   color: #1A202C;
   margin: 0;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .order-header-right {
@@ -75,7 +75,7 @@
   color: #1A202C;
   background-color: transparent;
   width: 100%;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .order-search-input::placeholder {
@@ -103,7 +103,7 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background-color: #A0D9B4;
+  background-color: var(--tk-burgundy, #8B3A1E);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -162,7 +162,7 @@
   margin-bottom: 12px;
   font-weight: 500;
   margin-top: 4px;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .order-stat-number {
@@ -170,14 +170,14 @@
   font-weight: 700;
   color: #1A202C;
   margin-bottom: 12px;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .order-stat-change {
   display: flex;
   align-items: center;
   font-size: 13px;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .order-change-positive {
@@ -276,7 +276,7 @@
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), inset 0 1px 2px rgba(0, 0, 0, 0.02);
   transition: all 0.2s;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
@@ -330,7 +330,7 @@
   font-weight: 600;
   color: #1A202C;
   margin: 0;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .order-date-tag-group {
@@ -349,7 +349,7 @@
   font-weight: 500;
   padding: 6px 14px;
   border-radius: 12px;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
   border: 1px solid #C6E0D5;
 }
 
@@ -362,7 +362,7 @@
   font-weight: 600;
   padding: 5px 12px;
   border-radius: 12px;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
   letter-spacing: 0.2px;
   box-shadow: 0 2px 6px rgba(79, 117, 92, 0.3);
 }
@@ -375,7 +375,7 @@
   width: 100%;
   border-collapse: separate;
   border-spacing: 0 8px;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .order-history-table thead tr {
@@ -429,7 +429,7 @@
   font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
   border: none;
   cursor: pointer;
   appearance: none;
@@ -498,7 +498,7 @@
 }
 
 .status-green {
-  background-color: #A0D9B4;
+  background-color: #C6F6D5;
   color: #22543D;
 }
 
@@ -528,7 +528,7 @@
   font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 /* Responsive Design */

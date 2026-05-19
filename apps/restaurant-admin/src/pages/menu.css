@@ -1,9 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 .menu-container {
   display: flex;
   min-height: 100vh;
-  background-color: #343A40;
+  background-color: var(--tk-bg, #FFFFFF);
   position: relative;
 }
 
@@ -64,7 +64,7 @@
   color: #1A202C;
   background-color: transparent;
   width: 100%;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .search-input::placeholder {
@@ -92,7 +92,7 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background-color: #A0D9B4;
+  background-color: var(--tk-burgundy, #8B3A1E);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -208,7 +208,7 @@
   color: #718096;
   cursor: pointer;
   transition: all 0.2s;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .tab-button.active {
@@ -265,7 +265,7 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .add-button:hover {
@@ -291,7 +291,7 @@
   color: #4A5568;
   cursor: pointer;
   transition: all 0.2s;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .category-button:hover {
@@ -446,7 +446,7 @@ input:checked+.toggle-slider:before {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .edit-button:hover {
@@ -496,8 +496,8 @@ input:checked+.toggle-slider:before {
 }
 
 .offer-status.active {
-  background-color: #A0D9B4;
-  color: #22543D;
+  background-color: var(--tk-burgundy, #8B3A1E);
+  color: #FFFFFF;
 }
 
 .offer-status.inactive {
@@ -570,7 +570,7 @@ input:checked+.toggle-slider:before {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .delete-button:hover {

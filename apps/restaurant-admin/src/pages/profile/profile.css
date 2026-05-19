@@ -1,10 +1,10 @@
 /* Profile.css */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 .profile-container {
   display: flex;
   min-height: 100vh;
-  background-color: #343A40;
+  background-color: var(--tk-bg, #FFFFFF);
   /* Match sidebar background */
   position: relative;
 }
@@ -45,14 +45,14 @@
   font-weight: 600;
   color: #1A202C;
   margin: 0;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .profile-page-subtitle {
   color: #718096;
   margin: 8px 0 0 0;
   font-size: 15px;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .profile-header-right {
@@ -138,7 +138,7 @@
   font-weight: 600;
   margin: 0;
   color: #1A202C;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .profile-card-subtitle {
@@ -146,7 +146,7 @@
   color: #718096;
   font-size: 13px;
   line-height: 1.5;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .profile-card-actions {
@@ -161,7 +161,7 @@
 .profile-icon-action {
   border: none;
   border-radius: 12px;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -255,14 +255,14 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .profile-info-value {
   font-size: 16px;
   color: #1A202C;
   font-weight: 500;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .profile-value-inline {
@@ -289,7 +289,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
   font-size: 14px;
   font-weight: 500;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
@@ -349,14 +349,14 @@
   color: #4A5568;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .profile-field-help {
   color: #718096;
   font-size: 12px;
   line-height: 1.5;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .profile-input {
@@ -367,7 +367,7 @@
   color: #1A202C;
   padding: 12px 14px;
   font-size: 14px;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
   box-sizing: border-box;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -428,7 +428,7 @@
   margin: 0;
   font-size: 16px;
   color: #1A202C;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .profile-section-header p {
@@ -436,7 +436,7 @@
   color: #718096;
   font-size: 13px;
   line-height: 1.5;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .profile-url-list,
@@ -462,7 +462,7 @@
   font-weight: 500;
   text-decoration: none;
   word-break: break-all;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .profile-link:hover {
@@ -476,7 +476,7 @@
   color: #718096;
   background-color: #F8FAFC;
   font-size: 14px;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .profile-swatch-list {
@@ -495,7 +495,7 @@
   color: #2D3748;
   font-size: 13px;
   font-weight: 500;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .profile-color-swatch {
@@ -535,12 +535,12 @@
   font-weight: 600;
   text-transform: capitalize;
   width: fit-content;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .status-badge.active {
-  background-color: #A0D9B4;
-  color: #22543D;
+  background-color: var(--tk-burgundy, #8B3A1E);
+  color: #FFFFFF;
 }
 
 .status-badge.suspended {
@@ -587,7 +587,7 @@
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.12em;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .order-user-avatar-img {
@@ -610,7 +610,7 @@
   color: #4f755c;
   font-size: 13px;
   font-weight: 600;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
   cursor: pointer;
   transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
@@ -699,7 +699,7 @@
   gap: 8px;
   padding: 24px 16px;
   color: #718096;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
   text-align: center;
 }
 
@@ -743,7 +743,7 @@
   font-size: 13px;
   font-weight: 500;
   color: #4f755c;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 /* Loading State */
@@ -754,7 +754,7 @@
   justify-content: center;
   height: calc(100vh - 160px);
   color: #718096;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .profile-loading-spinner {
@@ -784,7 +784,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
@@ -843,7 +843,7 @@
   font-weight: 600;
   color: #1A202C;
   margin: 0;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .profile-modal-content p {
@@ -851,7 +851,7 @@
   font-size: 15px;
   line-height: 1.6;
   margin: 0 0 24px 0;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 .profile-modal-actions {
