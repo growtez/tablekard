@@ -339,72 +339,74 @@ const SearchPage = () => {
                             <X size={18} />
                         </button>
 
-                        {/* Centered Dish Image */}
-                        <div className="modal-dish-showcase">
-                            <div className="dish-image-frame-scrollable">
-                                {selectedItem.images && selectedItem.images.length > 0 ? (
-                                    selectedItem.images.map((imgUrl, idx) => (
-                                        <div key={idx} className="dish-image-frame">
-                                            <img src={imgUrl} alt={`${selectedItem.name} - ${idx}`} loading="lazy" />
+                        <div className="modal-scrollable-content">
+                            {/* Centered Dish Image */}
+                            <div className="modal-dish-showcase">
+                                <div className="dish-image-frame-scrollable">
+                                    {selectedItem.images && selectedItem.images.length > 0 ? (
+                                        selectedItem.images.map((imgUrl, idx) => (
+                                            <div key={idx} className="dish-image-frame">
+                                                <img src={imgUrl} alt={`${selectedItem.name} - ${idx}`} loading="lazy" />
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="dish-image-frame">
+                                            <img src={selectedItem.image} alt={selectedItem.name} loading="lazy" />
                                         </div>
-                                    ))
-                                ) : (
-                                    <div className="dish-image-frame">
-                                        <img src={selectedItem.image} alt={selectedItem.name} loading="lazy" />
-                                    </div>
-                                )}
-                            </div>
-                            <div className="dish-rating-pill">
-                                <Star size={12} fill="#8B3A1E" color="#8B3A1E" />
-                                <span>{selectedItem.rating}</span>
-                            </div>
-                        </div>
-
-                        {/* Dish Info */}
-                        <div className="modal-dish-info">
-                            <h2 className="dish-title">{selectedItem.name}</h2>
-
-                            <div className="dish-meta-chips">
-                                <span className="meta-chip"><Clock size={13} />{selectedItem.time}</span>
-                                <span className="meta-chip"><Users size={13} /> {selectedItem.serves}</span>
-                                {selectedItem.dietType === 'vegan' && (
-                                    <span className="meta-chip vegan">Vegan</span>
-                                )}
-                                {selectedItem.dietType === 'veg' && (
-                                    <span className="meta-chip green">Veg</span>
-                                )}
-                                {selectedItem.dietType === 'non-veg' && (
-                                    <span className="meta-chip red">Non-Veg</span>
-                                )}
+                                    )}
+                                </div>
+                                <div className="dish-rating-pill">
+                                    <Star size={12} fill="#8B3A1E" color="#8B3A1E" />
+                                    <span>{selectedItem.rating}</span>
+                                </div>
                             </div>
 
-                            <p className="dish-full-desc">{selectedItem.description}</p>
-                            
-                            {selectedItem.modelUrl && (
-                                <button 
-                                    className="view-ar-btn"
-                                    onClick={() => navigate(`/ar/${selectedItem.id}`, { state: { modelUrl: selectedItem.modelUrl } })}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: '8px',
-                                        width: '100%',
-                                        padding: '12px',
-                                        marginTop: '16px',
-                                        backgroundColor: '#f5ede9',
-                                        color: '#8B3A1E',
-                                        border: 'none',
-                                        borderRadius: '12px',
-                                        fontSize: '15px',
-                                        fontWeight: '600',
-                                        cursor: 'pointer'
-                                    }}
-                                >
-                                    <View size={18} />
-                                    View in AR
-                                </button>
-                            )}
+                            {/* Dish Info */}
+                            <div className="modal-dish-info">
+                                <h2 className="dish-title">{selectedItem.name}</h2>
+
+                                <div className="dish-meta-chips">
+                                    <span className="meta-chip"><Clock size={13} />{selectedItem.time}</span>
+                                    <span className="meta-chip"><Users size={13} /> {selectedItem.serves}</span>
+                                    {selectedItem.dietType === 'vegan' && (
+                                        <span className="meta-chip vegan">Vegan</span>
+                                    )}
+                                    {selectedItem.dietType === 'veg' && (
+                                        <span className="meta-chip green">Veg</span>
+                                    )}
+                                    {selectedItem.dietType === 'non-veg' && (
+                                        <span className="meta-chip red">Non-Veg</span>
+                                    )}
+                                </div>
+
+                                <p className="dish-full-desc">{selectedItem.description}</p>
+                                
+                                {selectedItem.modelUrl && (
+                                    <button 
+                                        className="view-ar-btn"
+                                        onClick={() => navigate(`/ar/${selectedItem.id}`, { state: { modelUrl: selectedItem.modelUrl } })}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '8px',
+                                            width: '100%',
+                                            padding: '12px',
+                                            marginTop: '16px',
+                                            backgroundColor: '#f5ede9',
+                                            color: '#8B3A1E',
+                                            border: 'none',
+                                            borderRadius: '12px',
+                                            fontSize: '15px',
+                                            fontWeight: '600',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        <View size={18} />
+                                        View in AR
+                                    </button>
+                                )}
+                            </div>
                         </div>
 
                         {/* Sticky Bottom Action Bar */}
