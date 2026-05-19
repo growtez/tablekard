@@ -53,9 +53,8 @@ const CustomTooltip = ({ active, payload, label }) => {
                 padding: '0.75rem 1rem',
                 borderRadius: '10px',
                 border: '1px solid var(--border-color)',
-                backgroundColor: 'rgba(10, 10, 15, 0.95)',
-                backdropFilter: 'blur(8px)',
-                boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+                backgroundColor: 'var(--surface-color)',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
             }}>
                 <p style={{ margin: '0 0 0.5rem 0', fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-main)' }}>{label}</p>
                 {payload.map((entry, index) => (

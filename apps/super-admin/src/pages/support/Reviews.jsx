@@ -43,15 +43,15 @@ export default function Reviews({ setSyncAction }) {
     }));
 
     const avgRating = data.length > 0 ? (data.reduce((s, r) => s + r.rating, 0) / data.length).toFixed(1) : null;
-    const getStarColor = r => r >= 4 ? '#10b981' : r === 3 ? '#f59e0b' : '#ef4444';
+    const getStarColor = r => r >= 4 ? '#065f46' : r === 3 ? '#92400e' : '#991b1b';
 
     return (
         <div className="animate-fade-in space-y-6">
             <div style={{ display: 'grid', gridTemplateColumns: 'minmax(160px, 1fr) 2fr', gap: '1.5rem' }}>
                 <div className="premium-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: '0.5rem', padding: '1.5rem' }}>
-                    <div style={{ fontSize: '3rem', fontWeight: 800, color: '#f59e0b', lineHeight: 1 }}>{loading ? '—' : (avgRating || '—')}</div>
+                    <div style={{ fontSize: '3rem', fontWeight: 800, color: '#92400e', lineHeight: 1 }}>{loading ? '—' : (avgRating || '—')}</div>
                     <div style={{ display: 'flex', gap: '2px' }}>
-                        {[1,2,3,4,5].map(i => <Star key={i} size={14} fill={avgRating && i <= Math.round(avgRating) ? '#f59e0b' : 'transparent'} color="#f59e0b" />)}
+                        {[1,2,3,4,5].map(i => <Star key={i} size={14} fill={avgRating && i <= Math.round(avgRating) ? '#92400e' : 'transparent'} color="#92400e" />)}
                     </div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{data.length} review{data.length !== 1 ? 's' : ''}</div>
                 </div>
@@ -74,10 +74,10 @@ export default function Reviews({ setSyncAction }) {
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
                     <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
                         <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={16} />
-                        <input type="text" placeholder="Search by comment, customer, or restaurant..." value={search} onChange={e => setSearch(e.target.value)} style={{ width: '100%', padding: '10px 10px 10px 38px', background: 'var(--surface-hover)', border: '1px solid var(--border-color)', borderRadius: '10px', color: 'white', fontSize: '0.875rem' }} />
+                        <input type="text" placeholder="Search by comment, customer, or restaurant..." value={search} onChange={e => setSearch(e.target.value)} style={{ width: '100%', padding: '10px 10px 10px 38px', background: 'var(--surface-hover)', border: '1px solid var(--border-color)', borderRadius: '10px', color: 'var(--text-main)', fontSize: '0.875rem' }} />
                     </div>
                     <div className="dropdown-wrapper">
-                        <button className="btn-ghost" style={{ padding: '10px 14px', borderRadius: '10px', background: filterRating !== 'all' ? 'rgba(59,130,246,0.1)' : 'rgba(255,255,255,0.05)', border: `1px solid ${filterRating !== 'all' ? 'var(--accent-primary)' : 'var(--border-color)'}`, gap: '6px', fontSize: '0.85rem', color: filterRating !== 'all' ? 'var(--accent-primary)' : 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+                        <button className="btn-ghost" style={{ padding: '10px 14px', borderRadius: '10px', background: filterRating !== 'all' ? 'rgba(59,130,246,0.1)' : 'var(--surface-hover)', border: `1px solid ${filterRating !== 'all' ? 'var(--accent-primary)' : 'var(--border-color)'}`, gap: '6px', fontSize: '0.85rem', color: filterRating !== 'all' ? 'var(--accent-primary)' : 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
                             <Star size={16} /> {filterRating === 'all' ? 'All Stars' : `${filterRating}★`}
                         </button>
                         <div className="dropdown-content">

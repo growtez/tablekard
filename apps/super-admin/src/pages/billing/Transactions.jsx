@@ -24,7 +24,7 @@ const normalisePayment = (row) => ({
     currency: row.currency || 'INR',
     status: row.status,
     gateway: 'Razorpay',
-    gateway_color: '#3b82f6',
+    gateway_color: '#1e40af',
     razorpay_payment_id: row.razorpay_payment_id || null,
     failure_reason: row.failure_reason || null,
     date: row.paid_at || row.created_at,
@@ -41,7 +41,7 @@ const normaliseOrder = (row) => ({
     currency: 'INR',
     status: row.payment_status,
     gateway: 'Pay at Counter',
-    gateway_color: '#f59e0b',
+    gateway_color: '#92400e',
     razorpay_payment_id: null,
     failure_reason: null,
     date: row.updated_at || row.created_at,
@@ -137,10 +137,10 @@ export default function Transactions({ setSyncAction }) {
             {/* Summary */}
             <div className="subscriptions-summary-grid">
                 {[
-                    { label: 'Total Transactions', value: summary.total, color: '#3b82f6' },
-                    { label: 'Successful', value: summary.paid, color: '#10b981' },
+                    { label: 'Total Transactions', value: summary.total, color: '#1e40af' },
+                    { label: 'Successful', value: summary.paid, color: '#065f46' },
                     { label: 'Revenue Collected', value: `₹${summary.totalAmount.toLocaleString()}`, color: 'var(--accent-primary)' },
-                    { label: 'Refunded', value: summary.refunded, color: '#f59e0b' },
+                    { label: 'Refunded', value: summary.refunded, color: '#92400e' },
                 ].map(item => (
                     <div key={item.label} className="premium-card" style={{ padding: '1rem 1.25rem' }}>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>{item.label}</div>
@@ -155,11 +155,11 @@ export default function Transactions({ setSyncAction }) {
                     <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
                         <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={16} />
                         <input type="text" placeholder="Search restaurant, order #, or payment ID..." value={search} onChange={e => setSearch(e.target.value)}
-                            style={{ width: '100%', padding: '10px 10px 10px 38px', background: 'var(--surface-hover)', border: '1px solid var(--border-color)', borderRadius: '10px', color: 'white', fontSize: '0.875rem' }} />
+                            style={{ width: '100%', padding: '10px 10px 10px 38px', background: 'var(--surface-hover)', border: '1px solid var(--border-color)', borderRadius: '10px', color: 'var(--text-main)', fontSize: '0.875rem' }} />
                     </div>
 
                     <div className="dropdown-wrapper">
-                        <button className="btn-ghost" style={{ padding: '10px 14px', borderRadius: '10px', background: filterStatus !== 'all' ? 'rgba(59,130,246,0.1)' : 'rgba(255,255,255,0.05)', border: `1px solid ${filterStatus !== 'all' ? 'var(--accent-primary)' : 'var(--border-color)'}`, gap: '6px', fontSize: '0.85rem', color: filterStatus !== 'all' ? 'var(--accent-primary)' : 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+                        <button className="btn-ghost" style={{ padding: '10px 14px', borderRadius: '10px', background: filterStatus !== 'all' ? 'rgba(59,130,246,0.1)' : 'var(--surface-hover)', border: `1px solid ${filterStatus !== 'all' ? 'var(--accent-primary)' : 'var(--border-color)'}`, gap: '6px', fontSize: '0.85rem', color: filterStatus !== 'all' ? 'var(--accent-primary)' : 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
                             <Filter size={16} /> {filterStatus === 'all' ? 'Status' : filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1)}
                         </button>
                         <div className="dropdown-content">
@@ -170,7 +170,7 @@ export default function Transactions({ setSyncAction }) {
                     </div>
 
                     <div className="dropdown-wrapper">
-                        <button className="btn-ghost" style={{ padding: '10px 14px', borderRadius: '10px', background: filterGateway !== 'all' ? 'rgba(245,158,11,0.1)' : 'rgba(255,255,255,0.05)', border: `1px solid ${filterGateway !== 'all' ? '#f59e0b' : 'var(--border-color)'}`, gap: '6px', fontSize: '0.85rem', color: filterGateway !== 'all' ? '#f59e0b' : 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+                        <button className="btn-ghost" style={{ padding: '10px 14px', borderRadius: '10px', background: filterGateway !== 'all' ? 'rgba(245,158,11,0.1)' : 'var(--surface-hover)', border: `1px solid ${filterGateway !== 'all' ? '#92400e' : 'var(--border-color)'}`, gap: '6px', fontSize: '0.85rem', color: filterGateway !== 'all' ? '#92400e' : 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
                             <Store size={16} /> {filterGateway === 'all' ? 'Gateway' : filterGateway === 'razorpay' ? 'Razorpay' : 'Pay at Counter'}
                         </button>
                         <div className="dropdown-content">
@@ -181,7 +181,7 @@ export default function Transactions({ setSyncAction }) {
                     </div>
 
                     <div className="dropdown-wrapper">
-                        <button className="btn-ghost" style={{ padding: '10px 14px', borderRadius: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', gap: '6px', fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+                        <button className="btn-ghost" style={{ padding: '10px 14px', borderRadius: '10px', background: 'var(--surface-hover)', border: '1px solid var(--border-color)', gap: '6px', fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
                             <SlidersHorizontal size={16} /> Sort
                         </button>
                         <div className="dropdown-content">
@@ -237,7 +237,7 @@ export default function Transactions({ setSyncAction }) {
                                 <td>
                                     <Badge variant={STATUS_VARIANTS[row.status] || 'default'}>{row.status?.toUpperCase()}</Badge>
                                     {row.failure_reason && (
-                                        <div style={{ fontSize: '0.65rem', color: '#ef4444', marginTop: '3px', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={row.failure_reason}>{row.failure_reason}</div>
+                                        <div style={{ fontSize: '0.65rem', color: '#991b1b', marginTop: '3px', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={row.failure_reason}>{row.failure_reason}</div>
                                     )}
                                 </td>
                                 <td>

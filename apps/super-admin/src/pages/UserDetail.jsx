@@ -276,11 +276,11 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
     };
 
     const ORDER_STATUS_COLORS = {
-        completed: '#10b981',
-        delivered: '#10b981',
-        pending: '#f59e0b',
-        cancelled: '#ef4444',
-        processing: '#3b82f6'
+        completed: '#065f46',
+        delivered: '#065f46',
+        pending: '#92400e',
+        cancelled: '#991b1b',
+        processing: '#1e40af'
     };
 
     return (
@@ -376,7 +376,7 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
                                         <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Orders</div>
                                     </div>
                                     <div style={{ background: 'var(--surface-hover)', padding: '1rem', borderRadius: '12px', textAlign: 'center' }}>
-                                        <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#10b981' }}>{orders.filter(o => o.status === 'completed' || o.status === 'delivered').length}</div>
+                                        <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#065f46' }}>{orders.filter(o => o.status === 'completed' || o.status === 'delivered').length}</div>
                                         <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Done</div>
                                     </div>
                                 </div>
@@ -464,7 +464,7 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
                                     <div style={{ padding: '1rem', background: 'var(--surface-hover)', borderRadius: '12px' }}>
                                         <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>Account Status</div>
                                         <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>Current standing of the user account on the platform.</p>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px', color: '#10b981', fontWeight: 600 }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px', color: '#065f46', fontWeight: 600 }}>
                                             <CheckCircle2 size={16} /> Fully Operational
                                         </div>
                                     </div>

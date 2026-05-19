@@ -244,7 +244,7 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
             </div>
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <div className="dropdown-wrapper">
-                <button className={`btn-ghost ${filterRole !== 'all' ? 'active-filter' : ''}`} style={{ padding: '10px 16px', borderRadius: '12px', background: filterRole !== 'all' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255,255,255,0.05)', border: `1px solid ${filterRole !== 'all' ? 'var(--accent-primary)' : 'var(--border-color)'}`, gap: '8px', fontSize: '0.9rem', color: filterRole !== 'all' ? 'var(--accent-primary)' : 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+                <button className={`btn-ghost ${filterRole !== 'all' ? 'active-filter' : ''}`} style={{ padding: '10px 16px', borderRadius: '12px', background: filterRole !== 'all' ? 'rgba(59, 130, 246, 0.1)' : 'var(--surface-hover)', border: `1px solid ${filterRole !== 'all' ? 'var(--accent-primary)' : 'var(--border-color)'}`, gap: '8px', fontSize: '0.9rem', color: filterRole !== 'all' ? 'var(--accent-primary)' : 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
                   <Filter size={18} />
                   {filterRole === 'all' ? 'Filter' : `Role: ${roleOptions.find(r => r.value === filterRole)?.label}`}
                 </button>
@@ -258,7 +258,7 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
               </div>
 
               <div className="dropdown-wrapper">
-                <button className="btn-ghost" style={{ padding: '10px 16px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', gap: '8px', fontSize: '0.9rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+                <button className="btn-ghost" style={{ padding: '10px 16px', borderRadius: '12px', background: 'var(--surface-hover)', border: '1px solid var(--border-color)', gap: '8px', fontSize: '0.9rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
                   <SlidersHorizontal size={18} />
                   {sortBy === 'newest' ? 'Sort By' : `Sorted: ${sortBy.charAt(0).toUpperCase() + sortBy.slice(1)}`}
                 </button>

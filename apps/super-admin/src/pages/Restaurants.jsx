@@ -112,14 +112,14 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                                 background: 'var(--surface-hover)',
                                 border: '1px solid var(--border-color)',
                                 borderRadius: '12px',
-                                color: 'white',
+                                color: 'var(--text-main)',
                                 fontSize: '0.9rem'
                             }}
                         />
                     </div>
                     <div style={{ display: 'flex', gap: '0.75rem' }}>
                         <div className="dropdown-wrapper">
-                            <button className={`btn-ghost ${filterStatus !== 'all' ? 'active-filter' : ''}`} style={{ padding: '10px 16px', borderRadius: '12px', background: filterStatus !== 'all' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255,255,255,0.05)', border: `1px solid ${filterStatus !== 'all' ? 'var(--accent-primary)' : 'var(--border-color)'}`, gap: '8px', fontSize: '0.9rem', color: filterStatus !== 'all' ? 'var(--accent-primary)' : 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+                            <button className={`btn-ghost ${filterStatus !== 'all' ? 'active-filter' : ''}`} style={{ padding: '10px 16px', borderRadius: '12px', background: filterStatus !== 'all' ? 'rgba(59, 130, 246, 0.1)' : 'var(--surface-hover)', border: `1px solid ${filterStatus !== 'all' ? 'var(--accent-primary)' : 'var(--border-color)'}`, gap: '8px', fontSize: '0.9rem', color: filterStatus !== 'all' ? 'var(--accent-primary)' : 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
                                 <Filter size={18} />
                                 {filterStatus === 'all' ? 'Filter' : `Status: ${filterStatus}`}
                             </button>
@@ -133,7 +133,7 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                         </div>
 
                         <div className="dropdown-wrapper">
-                            <button className="btn-ghost" style={{ padding: '10px 16px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', gap: '8px', fontSize: '0.9rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+                            <button className="btn-ghost" style={{ padding: '10px 16px', borderRadius: '12px', background: 'var(--surface-hover)', border: '1px solid var(--border-color)', gap: '8px', fontSize: '0.9rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
                                 <SlidersHorizontal size={18} />
                                 {sortBy === 'newest' ? 'Sort By' : `Sorted: ${sortBy}`}
                             </button>

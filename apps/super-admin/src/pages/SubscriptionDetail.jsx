@@ -271,13 +271,13 @@ export default function SubscriptionDetail({ setHeaderData }) {
                                     <div style={{ background: 'var(--surface-hover)', padding: '1.5rem', borderRadius: '16px', textAlign: 'center' }}>
                                         <Timer size={28} color={data.ends_at && new Date(data.ends_at) < new Date() ? '#ef4444' : 'var(--accent-secondary)'} style={{ marginBottom: '1rem', opacity: 0.8 }} />
                                         <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Expiration Date</div>
-                                        <div style={{ fontSize: '1.25rem', fontWeight: 700, color: data.ends_at && new Date(data.ends_at) < new Date() ? '#ef4444' : 'inherit' }}>
+                                        <div style={{ fontSize: '1.25rem', fontWeight: 700, color: data.ends_at && new Date(data.ends_at) < new Date() ? '#991b1b' : 'inherit' }}>
                                             {formatDate(data.ends_at)}
                                         </div>
                                     </div>
                                 </div>
                                 <div style={{ marginTop: '2rem', padding: '1.5rem', borderRadius: '12px', background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.1)' }}>
-                                    <div style={{ fontWeight: 600, fontSize: '0.95rem', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <div style={{ fontWeight: 600, fontSize: '0.95rem', color: '#92400e', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                         <Info size={16} /> Plan Information
                                     </div>
                                     <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '8px', lineHeight: 1.6 }}>

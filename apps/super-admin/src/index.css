@@ -1,29 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --bg-color: hsl(150, 20%, 7%);
-  --surface-color: hsl(150, 20%, 11%);
-  --surface-hover: hsl(150, 20%, 15%);
-  --accent-primary: hsl(140, 100%, 50%);
-  --accent-primary-glow: hsla(140, 100%, 50%, 0.3);
-  --accent-secondary: hsl(170, 100%, 45%);
-  --accent-secondary-glow: hsla(170, 100%, 45%, 0.15);
-  --text-main: hsl(150, 20%, 96%);
-  --text-muted: hsl(150, 15%, 70%);
-  --border-color: hsla(140, 40%, 35%, 0.4);
-  --glass-bg: hsla(140, 20%, 100%, 0.06);
-  --glass-border: hsla(140, 20%, 100%, 0.12);
+  --bg-color: #f7f8fa;
+  --surface-color: #FFFFFF;
+  --surface-hover: #F7FAFC;
+  --accent-primary: #059669;
+  --accent-primary-glow: rgba(5, 150, 105, 0.15);
+  --accent-secondary: #10B981;
+  --accent-secondary-glow: rgba(16, 185, 129, 0.15);
+  --sidebar-accent: #A0D9B4;
+  --text-main: #1A202C;
+  --text-muted: #718096;
+  --border-color: #E2E8F0;
+  
+  --sidebar-bg: #343A40;
+  --sidebar-text: #FFFFFF;
+  --sidebar-text-muted: #A0AEC0;
+  --sidebar-hover: rgba(255, 255, 255, 0.05);
+  --sidebar-border: transparent;
+  
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(226, 232, 240, 0.8);
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 20px;
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.06);
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color-scheme: dark;
+  color-scheme: light;
   color: var(--text-main);
   background-color: var(--bg-color);
   -webkit-font-smoothing: antialiased;
@@ -38,11 +47,7 @@
 body {
   min-height: 100vh;
   background-color: var(--bg-color);
-  background-image:
-    radial-gradient(circle at 0% 0%, hsla(140, 100%, 50%, 0.12) 0%, transparent 40%),
-    radial-gradient(circle at 100% 0%, hsla(170, 100%, 45%, 0.08) 0%, transparent 40%),
-    radial-gradient(circle at 0% 100%, hsla(170, 100%, 45%, 0.08) 0%, transparent 40%),
-    radial-gradient(circle at 100% 100%, hsla(140, 100%, 50%, 0.12) 0%, transparent 40%);
+  color: var(--text-main);
   overflow-x: hidden;
 }
 
@@ -50,7 +55,7 @@ h1,
 h2,
 h3,
 h4 {
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Poppins', sans-serif;
   font-weight: 600;
   letter-spacing: -0.02em;
 }
@@ -70,7 +75,7 @@ h4 {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-color);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -109,7 +114,7 @@ h4 {
 
 /* Common Buttons */
 button {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Poppins', sans-serif;
   font-weight: 600;
   font-size: 0.95rem;
   padding: 0.75rem 1.5rem;
@@ -136,15 +141,15 @@ button:active {
 }
 
 button.primary {
-  background: linear-gradient(135deg, var(--accent-primary) 0%, hsl(160, 100%, 40%) 100%);
-  color: black;
+  background: var(--accent-primary);
+  color: #FFFFFF;
   border: none;
   box-shadow: 0 4px 15px var(--accent-primary-glow);
 }
 
 button.primary:hover {
-  box-shadow: 0 6px 25px var(--accent-primary-glow);
-  filter: brightness(1.1);
+  background: #047857;
+  box-shadow: 0 6px 20px var(--accent-primary-glow);
 }
 
 button.danger {
