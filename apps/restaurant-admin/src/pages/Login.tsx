@@ -79,8 +79,8 @@ const LoginPage: React.FC = () => {
         <div className="login-page">
             <div className="login-container">
                 <div className="login-header">
-                    <div className="logo">🍕</div>
-                    <h1>Restaurant Admin</h1>
+                    <div className="logo">TABLEKARD</div>
+                    <h1>Admin Console</h1>
                     <p>Sign in to manage your restaurant</p>
                 </div>
 
@@ -147,8 +147,8 @@ const LoginPage: React.FC = () => {
                 </form>
 
                 <div className="login-footer">
-                    <p>For restaurant administrators only</p>
-                    <p className="security-note">🔒 Secured by Supabase</p>
+                    <p>Powered by TableKard · Restaurant Management Platform</p>
+                    <p className="security-note">🔒 Enterprise-grade security</p>
                 </div>
             </div>
 

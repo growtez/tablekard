@@ -24,9 +24,9 @@ const DashboardIcon = ({ active }: { active: boolean }) => (
 const OrderIcon = ({ active }: { active: boolean }) => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M18 3H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2V5a2 2 0 00-2-2z" fill={active ? 'currentColor' : 'none'} />
-    <line x1="7" y1="8" x2="17" y2="8" stroke={active ? 'var(--icon-stripe, #A0D9B4)' : 'currentColor'} />
-    <line x1="7" y1="12" x2="17" y2="12" stroke={active ? 'var(--icon-stripe, #A0D9B4)' : 'currentColor'} />
-    <line x1="7" y1="16" x2="13" y2="16" stroke={active ? 'var(--icon-stripe, #A0D9B4)' : 'currentColor'} />
+    <line x1="7" y1="8" x2="17" y2="8" stroke={active ? 'var(--icon-stripe, #FFF0EC)' : 'currentColor'} />
+    <line x1="7" y1="12" x2="17" y2="12" stroke={active ? 'var(--icon-stripe, #FFF0EC)' : 'currentColor'} />
+    <line x1="7" y1="16" x2="13" y2="16" stroke={active ? 'var(--icon-stripe, #FFF0EC)' : 'currentColor'} />
   </svg>
 );
 
@@ -40,7 +40,7 @@ const MenuIcon = ({ active }: { active: boolean }) => (
 const PaymentIcon = ({ active }: { active: boolean }) => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
-    <line x1="1" y1="10" x2="23" y2="10" stroke={active ? 'var(--icon-stripe, #A0D9B4)' : 'currentColor'} />
+    <line x1="1" y1="10" x2="23" y2="10" stroke={active ? 'var(--icon-stripe, #FFF0EC)' : 'currentColor'} />
   </svg>
 );
 
@@ -71,9 +71,9 @@ const ProfileIcon = ({ active }: { active: boolean }) => (
 
 const SubscriptionIcon = ({ active }: { active: boolean }) => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 2v20M2 12h20" fill={active ? 'currentColor' : 'none'} stroke={active ? 'var(--icon-stripe, #A0D9B4)' : 'currentColor'} strokeWidth="1" />
+    <path d="M12 2v20M2 12h20" fill={active ? 'currentColor' : 'none'} stroke={active ? 'var(--icon-stripe, #FFF0EC)' : 'currentColor'} strokeWidth="1" />
     <path d="M20.88 18.09A5 5 0 0018 9h-1.26A8 8 0 103 16.29" fill={active ? 'currentColor' : 'none'} />
-    <path d="M16 14l-4 4-4-4M12 18V9" stroke={active ? 'var(--icon-stripe, #A0D9B4)' : 'currentColor'} />
+    <path d="M16 14l-4 4-4-4M12 18V9" stroke={active ? 'var(--icon-stripe, #FFF0EC)' : 'currentColor'} />
   </svg>
 );
 

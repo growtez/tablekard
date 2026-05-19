@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import {  Download, Calendar, CreditCard, CheckCircle, Eye, Trash2, X, Search, User, Hash, Clock, Utensils } from 'lucide-react';
+import { Download, Calendar, CreditCard, CheckCircle, Eye, Trash2, X, Search, User, Hash, Clock, Utensils } from 'lucide-react';
 import './payment.css';
 import Sidebar from '../components/sidebar';
 import { useAuth } from '../context/AuthContext';
@@ -27,7 +27,7 @@ const Payment: React.FC = () => {
   const { data: revenueData = [], isLoading: loadingRevenue } = useRevenueData(activeRestaurantId);
   const { invalidatePayments } = useInvalidateQueries();
   const queryClient = useQueryClient();
-  
+
   const [revenuePeriod, setRevenuePeriod] = useState<string>('today');
   const [revenueCustomDate, setRevenueCustomDate] = useState<string>('');
 
@@ -40,11 +40,11 @@ const Payment: React.FC = () => {
   // Filter transactions based on selected filters
   const filteredTransactions = transactions.filter(transaction => {
     const matchesSearch = transaction.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          transaction.customerName.toLowerCase().includes(searchQuery.toLowerCase());
-    const methodMatch = selectedPaymentMethod === 'all' || 
-                        (selectedPaymentMethod === 'Online' 
-                          ? transaction.paymentMethod.toLowerCase() !== 'cash' 
-                          : transaction.paymentMethod.toLowerCase() === selectedPaymentMethod.toLowerCase());
+      transaction.customerName.toLowerCase().includes(searchQuery.toLowerCase());
+    const methodMatch = selectedPaymentMethod === 'all' ||
+      (selectedPaymentMethod === 'Online'
+        ? transaction.paymentMethod.toLowerCase() !== 'cash'
+        : transaction.paymentMethod.toLowerCase() === selectedPaymentMethod.toLowerCase());
     const statusMatch = selectedPaymentStatus === 'all' || transaction.paymentStatus === selectedPaymentStatus;
 
     // Date range filtering
@@ -83,7 +83,7 @@ const Payment: React.FC = () => {
       // parse YYYY-MM-DD
       const [year, month, day] = r.revenueDate.split('-');
       const rDate = new Date(Number(year), Number(month) - 1, Number(day));
-      
+
       let match = false;
       if (revenuePeriod === 'today') {
         match = rDate.getTime() === startOfToday.getTime();
@@ -186,7 +186,6 @@ const Payment: React.FC = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <div className="order-user-avatar">👨‍💼</div>
           </div>
         </div>
 
@@ -206,8 +205,8 @@ const Payment: React.FC = () => {
               <option value="custom">Custom Range</option>
             </select>
             {revenuePeriod === 'custom' && (
-              <input 
-                type="date" 
+              <input
+                type="date"
                 className="custom-date-picker"
                 value={revenueCustomDate}
                 onChange={(e) => setRevenueCustomDate(e.target.value)}
@@ -245,8 +244,8 @@ const Payment: React.FC = () => {
                 <option value="custom">Custom Range</option>
               </select>
               {selectedDateRange === 'custom' && (
-                <input 
-                  type="date" 
+                <input
+                  type="date"
                   className="custom-date-picker"
                   value={customDate}
                   onChange={(e) => setCustomDate(e.target.value)}
@@ -323,21 +322,21 @@ const Payment: React.FC = () => {
                 ) : (
                   filteredTransactions.map((transaction) => (
                     <tr key={transaction.id}>
-                      <td>
+                      <td data-label="Order ID">
                         <div className="order-id-cell">{transaction.orderNumber}</div>
                       </td>
-                      <td>
+                      <td data-label="Customer Name">
                         <div className="customer-name-cell">{transaction.customerName}</div>
                       </td>
-                      <td>
+                      <td data-label="Date & Time">
                         <div className="datetime-cell">{transaction.dateTime}</div>
                       </td>
-                      <td>
+                      <td data-label="Payment Method">
                         <span className={`method-badge method-${transaction.paymentMethod.toLowerCase()}`}>
                           {transaction.paymentMethod}
                         </span>
                       </td>
-                      <td>
+                      <td data-label="Payment Status">
                         <select
                           className={`payment-status-pill status-${transaction.statusColor}`}
                           value={transaction.paymentStatus}
@@ -351,10 +350,10 @@ const Payment: React.FC = () => {
                           <option value="Refunded">Refunded</option>
                         </select>
                       </td>
-                      <td>
+                      <td data-label="Amount">
                         <div className="amount-cell">₹{transaction.amount.toLocaleString()}</div>
                       </td>
-                      <td>
+                      <td data-label="Actions">
                         <div className="action-buttons">
                           <button
                             className="action-btn view-btn"

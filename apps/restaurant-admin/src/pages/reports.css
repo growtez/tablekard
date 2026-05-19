@@ -1,10 +1,10 @@
 /* Reports.css */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 .reports-container {
     display: flex;
     min-height: 100vh;
-    background-color: #343A40;
+    background-color: var(--tk-bg, #FFFFFF);
     /* Match sidebar background */
     position: relative;
 }
@@ -46,7 +46,7 @@
     font-weight: 600;
     color: #1A202C;
     margin: 0;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Outfit', sans-serif;
 }
 
 .reports-header-right {
@@ -76,7 +76,7 @@
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    background-color: #A0D9B4;
+    background-color: var(--tk-burgundy, #8B3A1E);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -126,7 +126,7 @@
 }
 
 .metric-card-green {
-    background: linear-gradient(to right, #4f755c, #4f755c);
+    background: linear-gradient(to right, var(--tk-burgundy, #8B3A1E), var(--tk-burgundy, #8B3A1E));
 }
 
 .metric-card-purple {
@@ -143,7 +143,7 @@
     margin-bottom: 12px;
     font-weight: 500;
     margin-top: 4px;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Outfit', sans-serif;
 }
 
 .metric-value {
@@ -151,7 +151,7 @@
     font-weight: 700;
     color: #1A202C;
     margin-bottom: 12px;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Outfit', sans-serif;
 }
 
 .metric-change {
@@ -159,7 +159,7 @@
     align-items: center;
     gap: 6px;
     font-size: 13px;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Outfit', sans-serif;
 }
 
 .change-positive {
@@ -196,7 +196,7 @@
     cursor: pointer;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), inset 0 1px 2px rgba(0, 0, 0, 0.02);
     transition: all 0.2s;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Outfit', sans-serif;
 }
 
 .report-filter-btn:hover {
@@ -231,7 +231,7 @@
     border-radius: 8px;
     padding: 6px 8px;
     font-size: 13px;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Outfit', sans-serif;
     color: #4A5568;
     outline: none;
     transition: border-color 0.2s;
@@ -257,7 +257,7 @@
     align-items: center;
     gap: 8px;
     padding: 12px 20px;
-    background-color: #4f755c;
+    background-color: var(--tk-burgundy, #8B3A1E);
     border: none;
     border-radius: 16px;
     font-size: 14px;
@@ -266,7 +266,7 @@
     cursor: pointer;
     box-shadow: 0 4px 12px rgba(79, 117, 92, 0.2);
     transition: all 0.2s;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Outfit', sans-serif;
     margin-left: auto;
 }
 
@@ -300,7 +300,7 @@
     font-weight: 600;
     color: #1A202C;
     margin: 0;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Outfit', sans-serif;
 }
 
 /* Chart */
@@ -344,7 +344,7 @@
     font-size: 12px;
     color: #718096;
     white-space: nowrap;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Outfit', sans-serif;
 }
 
 .chart-tooltip {
@@ -360,7 +360,7 @@
     transition: opacity 0.2s;
     pointer-events: none;
     white-space: nowrap;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Outfit', sans-serif;
     z-index: 10;
 }
 
@@ -391,7 +391,7 @@
     font-weight: 600;
     color: #4A5568;
     margin: 0 0 20px 0;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Outfit', sans-serif;
 }
 .donut-content {
     display: flex;
@@ -432,7 +432,7 @@
     align-items: center;
     gap: 8px;
     font-size: 13px;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Outfit', sans-serif;
     color: #4A5568;
     white-space: nowrap;
 }
@@ -453,7 +453,7 @@
     width: 100%;
     border-collapse: separate;
     border-spacing: 0 8px;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Outfit', sans-serif;
 }
 
 .top-items-table th {
@@ -495,7 +495,7 @@
     border-radius: 6px;
     background-color: #EDF2F7;
     color: #718096;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Outfit', sans-serif;
 }
 
 .item-name-text {
@@ -586,7 +586,7 @@
     text-align: center;
     font-size: 10px;
     color: #A0AEC0;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Outfit', sans-serif;
 }
 
 .heatmap-row {
@@ -601,7 +601,7 @@
     font-size: 11px;
     font-weight: 600;
     color: #718096;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Outfit', sans-serif;
 }
 
 .heatmap-cell {
@@ -630,7 +630,7 @@
 .heatmap-legend-label {
     font-size: 11px;
     color: #A0AEC0;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Outfit', sans-serif;
 }
 
 .heatmap-legend-cell {
@@ -791,14 +791,14 @@
     font-weight: 600;
     color: #2D3748;
     font-size: 14px;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Outfit', sans-serif;
 }
 
 .feedback-date {
     margin-left: auto;
     font-size: 11px;
     color: #A0AEC0;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Outfit', sans-serif;
 }
 
 .feedback-comment {
@@ -806,7 +806,7 @@
     color: #4A5568;
     line-height: 1.5;
     margin-bottom: 8px;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Outfit', sans-serif;
     font-style: italic;
 }
 
@@ -816,7 +816,7 @@
     background-color: #F7FAFC;
     padding: 6px 10px;
     border-radius: 6px;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Outfit', sans-serif;
 }
 
 /* Reports Loading (Sync with Subscription) */
@@ -845,7 +845,7 @@
     font-size: 1.1rem;
     font-weight: 500;
     color: #4A5568;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Outfit', sans-serif;
 }
 
 @keyframes reports-spin {
@@ -868,7 +868,7 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Outfit', sans-serif;
 }
 
 .view-all-btn:hover {
@@ -920,14 +920,14 @@
     font-weight: 700;
     color: #1A202C;
     margin: 0;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Outfit', sans-serif;
 }
 
 .reports-modal-subtitle {
     font-size: 14px;
     color: #718096;
     margin: 4px 0 0;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Outfit', sans-serif;
 }
 
 .reports-modal-close {
