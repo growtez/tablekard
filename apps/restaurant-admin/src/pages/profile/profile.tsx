@@ -139,7 +139,7 @@ const createRestaurantFormState = (restaurant: Restaurant): RestaurantFormState 
     secondaryColor: restaurant.branding?.secondaryColor ?? '',
     latitude: restaurant.location?.latitude != null ? String(restaurant.location.latitude) : '',
     longitude: restaurant.location?.longitude != null ? String(restaurant.location.longitude) : '',
-    allowedRadius: restaurant.location?.allowedRadius != null ? String(restaurant.location.allowedRadius) : '',
+    allowedRadius: restaurant.location?.allowedRadius != null ? String(restaurant.location.allowedRadius) : '150',
     openingDate: restaurant.openingDate ?? '',
     tagline: restaurant.tagline ?? '',
     manifesto: restaurant.manifesto ?? '',

@@ -146,10 +146,7 @@ const LoginPage: React.FC = () => {
                     </button>
                 </form>
 
-                <div className="login-footer">
-                    <p>Powered by TableKard · Restaurant Management Platform</p>
-                    <p className="security-note">🔒 Enterprise-grade security</p>
-                </div>
+                
             </div>
 
             {/* Password Reset Modal */}

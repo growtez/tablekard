@@ -1,5 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from "react";
-import { Smartphone, Home, ShoppingBag, ShoppingCart, User } from "lucide-react";
+import { Smartphone, Home, ShoppingBag, ShoppingCart, User, MapPinOff, AlertCircle } from "lucide-react";
 import {
   Routes, Route, Navigate,
   useLocation, NavLink
@@ -85,13 +85,56 @@ function RequireAuth({ children }) {
 
 // ─── Restaurant guard ─────────────────────────────────────────────────────────
 function RequireRestaurant({ children }) {
-  const { restaurantId, restaurantLoading } = useRestaurant();
+  const { restaurantId, restaurantLoading, geofenceStatus, distance, allowedRadius, checkGeofence } = useRestaurant();
   const location = useLocation();
   
   if (restaurantLoading) return location.pathname === '/' ? <HomeLoading /> : <PageSkeleton />;
   
   if (!restaurantId) {
     return <ScanQRPage />;
+  }
+
+  if (geofenceStatus === 'checking') {
+    return <PageSkeleton />;
+  }
+
+  if (geofenceStatus === 'outside') {
+    return (
+      <div className="geofence-blocked-screen">
+        <div className="geofence-blocked-card">
+          <div className="blocked-icon-wrapper">
+            <MapPinOff size={48} color="#8B3A1E" />
+          </div>
+          <h2>You are outside the restaurant</h2>
+          <p>
+            To view the menu or place an order, you must be physically present at the restaurant. 
+            
+          </p>
+          <button className="geofence-retry-btn-large" onClick={checkGeofence}>
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (geofenceStatus === 'error') {
+    return (
+      <div className="geofence-blocked-screen">
+        <div className="geofence-blocked-card">
+          <div className="blocked-icon-wrapper">
+            <AlertCircle size={48} color="#8B3A1E" />
+          </div>
+          <h2>Location Access Required</h2>
+          <p>
+            This app requires location access to verify you are present at the restaurant before placing orders.
+          </p>
+          <button className="geofence-retry-btn-large" onClick={checkGeofence}>
+            Enable Location & Retry
+          </button>
+        </div>
+      </div>
+    );
   }
   
   return children;
