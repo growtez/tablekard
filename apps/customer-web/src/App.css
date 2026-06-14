@@ -36,3 +36,90 @@
     transform: rotate(360deg);
   }
 }
+
+/* ===== GEOFENCE BLOCKED SCREEN ===== */
+.geofence-blocked-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #FAFAFA;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 10000;
+  font-family: 'Inter', sans-serif;
+}
+
+.geofence-blocked-card {
+  background: #FFFFFF;
+  border-radius: 28px;
+  padding: 40px 24px;
+  width: 100%;
+  max-width: 360px;
+  text-align: center;
+  border: 1.2px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.blocked-icon-wrapper {
+  background: #FFF0EC;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  border: 1px solid #FFD8CC;
+}
+
+.geofence-blocked-card h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: #1A1A1A;
+  margin-bottom: 12px;
+}
+
+.geofence-blocked-card p {
+  font-size: 14px;
+  color: #666666;
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+.distance-badge {
+  background: #FFF0EC;
+  color: #8B3A1E;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 20px;
+  margin-bottom: 24px;
+  border: 1px solid rgba(139, 58, 30, 0.2);
+}
+
+.geofence-retry-btn-large {
+  width: 100%;
+  background: linear-gradient(135deg, #8B3A1E 0%, #6F2D17 100%);
+  color: #FFFFFF;
+  border: none;
+  padding: 16px;
+  border-radius: 16px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(139, 58, 30, 0.25);
+  transition: all 0.2s ease;
+}
+
+.geofence-retry-btn-large:active {
+  transform: scale(0.97);
+  box-shadow: 0 4px 10px rgba(139, 58, 30, 0.2);
+}

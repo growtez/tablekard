@@ -9,6 +9,22 @@ const RestaurantContext = createContext(null);
 const SESSION_KEY_RESTAURANT = 'tablekard_restaurant_id';
 const SESSION_KEY_TABLE      = 'tablekard_table_id';
 
+// Helper function for distance calculation using Haversine formula
+function getDistanceInMeters(lat1, lon1, lat2, lon2) {
+    const R = 6371e3; // metres
+    const phi1 = lat1 * Math.PI/180;
+    const phi2 = lat2 * Math.PI/180;
+    const deltaPhi = (lat2-lat1) * Math.PI/180;
+    const deltaLambda = (lon2-lon1) * Math.PI/180;
+
+    const a = Math.sin(deltaPhi/2) * Math.sin(deltaPhi/2) +
+              Math.cos(phi1) * Math.cos(phi2) *
+              Math.sin(deltaLambda/2) * Math.sin(deltaLambda/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    return R * c;
+}
+
 export function RestaurantProvider({ children }) {
     const location = useLocation();
     const navigate = useNavigate();
@@ -39,6 +55,73 @@ export function RestaurantProvider({ children }) {
     const [recommendations, setRecommendations] = useState([]);
     const [recommendationsLoading, setRecommendationsLoading] = useState(false);
     const [currentUserId, setCurrentUserId] = useState(null);
+
+    // Geofencing states
+    const [geofenceStatus, setGeofenceStatus] = useState('not_checked'); // 'not_checked' | 'checking' | 'inside' | 'outside' | 'error' | 'disabled'
+    const [distance, setDistance] = useState(null);
+    const [userCoords, setUserCoords] = useState(null);
+
+    const lat = restaurant?.latitude !== undefined && restaurant?.latitude !== null ? restaurant.latitude : restaurant?.location?.latitude;
+    const lon = restaurant?.longitude !== undefined && restaurant?.longitude !== null ? restaurant.longitude : restaurant?.location?.longitude;
+    const rad = restaurant?.allowed_radius !== undefined && restaurant?.allowed_radius !== null ? restaurant.allowed_radius : restaurant?.location?.allowedRadius;
+
+    const allowedRadius = rad ? Number(rad) : 150;
+
+    const checkGeofence = () => {
+        console.log('[Geofence] Checking location. Restaurant coords:', lat, lon, 'allowed radius:', allowedRadius);
+        if (lat === null || lat === undefined || lon === null || lon === undefined) {
+            console.log('[Geofence] Geofencing disabled: restaurant lat/lon not configured');
+            setGeofenceStatus('disabled');
+            return;
+        }
+
+        if (!navigator.geolocation) {
+            setGeofenceStatus('error');
+            console.warn('[RestaurantContext] Geolocation not supported by browser');
+            return;
+        }
+
+        setGeofenceStatus('checking');
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const uLat = position.coords.latitude;
+                const uLon = position.coords.longitude;
+                setUserCoords({ latitude: uLat, longitude: uLon });
+
+                const rLat = Number(lat);
+                const rLon = Number(lon);
+                const dist = getDistanceInMeters(uLat, uLon, rLat, rLon);
+                setDistance(dist);
+
+                console.log('[Geofence] User coords:', uLat, uLon, 'Distance to restaurant:', dist, 'm');
+
+                if (dist <= allowedRadius) {
+                    setGeofenceStatus('inside');
+                } else {
+                    setGeofenceStatus('outside');
+                }
+            },
+            (error) => {
+                console.error('[RestaurantContext] Geolocation error:', error);
+                setGeofenceStatus('error');
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+    };
+
+    // Run automatically when restaurant data is loaded
+    useEffect(() => {
+        if (restaurant) {
+            const currentLat = restaurant?.latitude !== undefined && restaurant?.latitude !== null ? restaurant.latitude : restaurant?.location?.latitude;
+            const currentLon = restaurant?.longitude !== undefined && restaurant?.longitude !== null ? restaurant.longitude : restaurant?.location?.longitude;
+            console.log('[Geofence] Restaurant loaded:', restaurant, 'lat:', currentLat, 'lon:', currentLon);
+            if (currentLat !== null && currentLat !== undefined && currentLon !== null && currentLon !== undefined) {
+                checkGeofence();
+            } else {
+                setGeofenceStatus('disabled');
+            }
+        }
+    }, [restaurant]);
 
     // Track Auth state for recommendations
     useEffect(() => {
@@ -148,7 +231,12 @@ export function RestaurantProvider({ children }) {
             tableLoading,
             tableNumber: table?.table_number || null,
             recommendations,
-            recommendationsLoading
+            recommendationsLoading,
+            geofenceStatus,
+            distance,
+            userCoords,
+            allowedRadius,
+            checkGeofence
         }}>
             {children}
         </RestaurantContext.Provider>

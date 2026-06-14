@@ -17,7 +17,7 @@ const MyOrderPage = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user, loading: authLoading } = useAuth();
   const { cartItems, updateQuantity, deleteFromCart, cartSubtotal, clearCart } = useCart();
-  const { restaurantId, tableId } = useRestaurant();
+  const { restaurantId, tableId, geofenceStatus, distance, allowedRadius, checkGeofence } = useRestaurant();
   const [activeTab, setActiveTab] = useState('cart');
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState('');
@@ -188,6 +188,15 @@ const MyOrderPage = () => {
       return;
     }
 
+    if (geofenceStatus === 'outside') {
+      setError(`Cannot place order. You are outside the allowed radius of ${allowedRadius}m (current distance: ${Math.round(distance)}m).`);
+      return;
+    }
+    if (geofenceStatus === 'checking') {
+      setError('Verifying your location. Please wait...');
+      return;
+    }
+
     setPaymentLoading(true);
     setError('');
 
@@ -236,6 +245,15 @@ const MyOrderPage = () => {
     if (!isAuthenticated) {
       const currentPath = encodeURIComponent(window.location.pathname);
       navigate(`/login?redirect=${currentPath}`);
+      return;
+    }
+
+    if (geofenceStatus === 'outside') {
+      setError(`Cannot place order. You are outside the allowed radius of ${allowedRadius}m (current distance: ${Math.round(distance)}m).`);
+      return;
+    }
+    if (geofenceStatus === 'checking') {
+      setError('Verifying your location. Please wait...');
       return;
     }
 
@@ -448,6 +466,39 @@ const MyOrderPage = () => {
       {/* Cart Content */}
       {activeTab === 'cart' && (
         <div className="cart-content">
+          {geofenceStatus !== 'disabled' && geofenceStatus !== 'inside' && (
+            <div className={`geofence-banner geofence-banner--${geofenceStatus}`}>
+              <div className="geofence-banner-content">
+                <AlertCircle size={20} className="geofence-icon" />
+                <div className="geofence-text">
+                  {geofenceStatus === 'checking' && (
+                    <>
+                      <strong>Checking Location</strong>
+                      <p>Verifying you are at the restaurant...</p>
+                    </>
+                  )}
+                  {geofenceStatus === 'outside' && (
+                    <>
+                      <strong>Outside Allowed Area</strong>
+                      <p>You are {Math.round(distance)}m away. Ordering is restricted to {allowedRadius}m.</p>
+                    </>
+                  )}
+                  {geofenceStatus === 'error' && (
+                    <>
+                      <strong>Location Verification Failed</strong>
+                      <p>Please enable location access to place your order.</p>
+                    </>
+                  )}
+                </div>
+              </div>
+              {(geofenceStatus === 'outside' || geofenceStatus === 'error') && (
+                <button className="geofence-retry-btn" onClick={checkGeofence}>
+                  Retry
+                </button>
+              )}
+            </div>
+          )}
+
           {cartItems.length === 0 ? (
             <div className="empty-state">
               <ShoppingBag size={64} color="#888888" />

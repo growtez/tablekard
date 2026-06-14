@@ -966,4 +966,108 @@ body {
   background: rgba(139, 58, 30, 0.2);
   transform: scale(0.96);
 }
+
+/* ===== GEOFENCING BANNER ===== */
+.geofence-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  border-radius: 18px;
+  margin-bottom: 20px;
+  border: 1.5px solid transparent;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.geofence-banner-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+}
+
+.geofence-icon {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.geofence-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.geofence-text strong {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.geofence-text p {
+  font-size: 12px;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.geofence-retry-btn {
+  background: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  color: #1A1A1A;
+  padding: 6px 14px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+  margin-left: 12px;
+}
+
+.geofence-retry-btn:active {
+  transform: scale(0.95);
+  background: #F5F5F5;
+}
+
+/* Modifiers */
+.geofence-banner--checking {
+  background: #FFFBF0;
+  border-color: #FFE0B2;
+}
+.geofence-banner--checking .geofence-icon {
+  color: #F57C00;
+}
+.geofence-banner--checking .geofence-text strong {
+  color: #E65100;
+}
+.geofence-banner--checking .geofence-text p {
+  color: #B55D00;
+}
+
+.geofence-banner--outside {
+  background: #FFF5F5;
+  border-color: #FFCDD2;
+}
+.geofence-banner--outside .geofence-icon {
+  color: #D32F2F;
+}
+.geofence-banner--outside .geofence-text strong {
+  color: #C62828;
+}
+.geofence-banner--outside .geofence-text p {
+  color: #B71C1C;
+}
+
+.geofence-banner--error {
+  background: #ECEFF1;
+  border-color: #CFD8DC;
+}
+.geofence-banner--error .geofence-icon {
+  color: #455A64;
+}
+.geofence-banner--error .geofence-text strong {
+  color: #37474F;
+}
+.geofence-banner--error .geofence-text p {
+  color: #263238;
+}
 
