@@ -44,13 +44,7 @@ const LiveQueuePage = () => {
                     order_number, 
                     status, 
                     customer_id,
-                    updated_at,
-                    order_items (
-                        quantity,
-                        menu_items (
-                            preparation_time
-                        )
-                    )
+                    updated_at
                 `)
                 .eq('restaurant_id', restaurant.id)
                 .gte('created_at', today.toISOString())
@@ -62,21 +56,8 @@ const LiveQueuePage = () => {
             if (error) throw error;
 
             const formatToken = (order) => {
-                let prepTime = 0;
-                if (order.order_items && order.order_items.length > 0) {
-                    // A kitchen cooks items simultaneously. The base time is the longest prep time of any item.
-                    const maxItemTime = Math.max(...order.order_items.map(item => item.menu_items?.preparation_time || 5));
-                    
-                    // Add a small buffer for additional quantity (e.g., +2 mins per extra item)
-                    const totalItems = order.order_items.reduce((sum, item) => sum + (item.quantity || 1), 0);
-                    prepTime = maxItemTime + ((totalItems - 1) * 2);
-                } else {
-                    prepTime = 5; // Default fallback
-                }
-                
                 return {
-                    id: order.order_number ? order.order_number.split('-')[1].slice(-4) : order.id.slice(0, 4).toUpperCase(),
-                    prepTime: prepTime
+                    id: order.order_number ? order.order_number.split('-')[1].slice(-4) : order.id.slice(0, 4).toUpperCase()
                 };
             };
 

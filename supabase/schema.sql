@@ -599,6 +599,7 @@ CREATE POLICY "Restaurant members manage their menu item images" ON public.menu_
 
 -- 8. orders
 CREATE POLICY "Customers can read own orders" ON public.orders FOR SELECT USING (customer_id = auth.uid());
+CREATE POLICY "Public can read orders for live queue" ON public.orders FOR SELECT USING (true);
 CREATE POLICY "Customers can create orders" ON public.orders FOR INSERT WITH CHECK (customer_id = auth.uid() OR customer_id IS NULL);
 CREATE POLICY "Restaurant members can manage restaurant orders" ON public.orders FOR ALL USING (public.is_restaurant_member(restaurant_id));
 
