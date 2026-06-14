@@ -16,7 +16,7 @@
 Tablekard is a comprehensive, multi-tenant Software-as-a-Service (SaaS) platform that enables seamless, contactless QR-based ordering and restaurant management without reliance on traditional, expensive Point-of-Sale (POS) hardware. It is built on a serverless-oriented cloud architecture, where a single centralized backend securely serves multiple independent restaurant tenants, forming a highly scalable and cost-effective digital ecosystem.
 Unlike conventional on-premise restaurant systems that require complex local installations, Tablekard employs a frictionless web-based approach. Customers scan table-specific QR codes to access dynamic menus and place orders directly from their smartphones, eliminating the need to download dedicated applications or wait for waitstaff.
 To prevent operational bottlenecks and order mismanagement, the system integrates real-time database subscriptions and role-based access control. These mechanisms ensure that orders placed by customers are instantly reflected on the kitchen and admin dashboards, maximizing operational efficiency during peak dining hours.
-The application is developed using React 18 and Vite for high-performance frontend interfaces. A hybrid cloud architecture utilizes Supabase (PostgreSQL) for robust data storage and real-time synchronization, while Razorpay is integrated for secure, instant payment processing.
+The application is developed using React 19 and Vite for high-performance frontend interfaces. A hybrid cloud architecture utilizes Supabase (PostgreSQL) for robust data storage and real-time synchronization, while Razorpay is integrated for secure, instant payment processing.
 The core contributions of this project include:
 - **Infrastructure-Less Customer Experience** – enabling customers to order and pay seamlessly via web browsers using simple QR code scans.
 - **Multi-Tenant SaaS Architecture** – eliminating heavy upfront costs for restaurants by providing a scalable, subscription-based cloud platform.
@@ -84,7 +84,7 @@ This research presents models for forecasting restaurant revenue based on histor
 
 Tablekard utilizes a modern, serverless-oriented cloud architecture designed for multi-tenancy. 
 
-- **Frontend:** Built with React 18 and Vite. It consists of three separate Single Page Applications (SPAs): the Customer Web App, Restaurant Admin Panel, and Super Admin Panel.
+- **Frontend:** Built with React 19 and Vite. It consists of three separate Single Page Applications (SPAs): the Customer Web App, Restaurant Admin Panel, and Super Admin Panel.
 - **Backend & Database:** Powered by **Supabase**. It utilizes PostgreSQL for robust relational data storage. Row Level Security (RLS) is heavily implemented to ensure strict multi-tenant data isolation (ensuring Restaurant A cannot access Restaurant B's data).
 - **Real-time Synchronization:** Supabase's Realtime capabilities are used to push live order updates instantly from the Customer Web App to the Restaurant Admin dashboard.
 
@@ -109,25 +109,62 @@ While the core SaaS workflow handles daily operations, the platform is augmented
 
 ### 5.1 Software Requirements
 
+The Tablekard platform relies on a modern, robust, and highly integrated software ecosystem spanning frontend interfaces, serverless backend engines, secure payment processing APIs, interactive augmented reality interfaces, and predictive analytics tools.
+
 | Category | Tool / Library | Version | Purpose |
 | :--- | :--- | :--- | :--- |
-| **Frontend Framework** | React | 19 | SPA development (Customer, Admin, Super Admin) |
-| **Build Tool** | Vite | ≥7 | Frontend scaffolding and bundling |
-| **Language** | TypeScript | — | Compile-time type safety |
-| **QR Code** | qrcode.react | ≥4 | Table QR code generation |
-| **Database** | Supabase (PostgreSQL) | — | Relational database with row-level security |
-| **Authentication** | Supabase Auth | — | Google OAuth, Magic Link, email/password |
-| **Realtime** | Supabase Realtime | — | WebSocket-based live order notifications |
-| **Storage** | Supabase Storage | — | Media asset hosting |
+| **Frontend Core** | React | 19 | Core SPA framework for Customer Web, Restaurant Admin, and Super Admin panels |
+| **Build Tool** | Vite | ≥ 5.x | High-performance dev server, bundling, and hot module replacement (HMR) |
+| **Development Language** | TypeScript | ≥ 5.3 | Compile-time static type safety across client applications and shared packages |
+| **SPA Routing** | React Router DOM | v7 | Declarative frontend routing, query parameter handling, and page transition flow |
+| **State & Data Caching** | TanStack React Query | v5 | Managing server state, optimistic UI updates, and real-time dashboard polling |
+| **Database Engine** | PostgreSQL (Supabase) | — | Relational data persistence with custom multi-tenant schemas and indexes |
+| **Database Security** | PostgreSQL RLS | — | Row-Level Security policies to enforce strict data isolation between restaurant tenants |
+| **Backend Runtime** | Deno (Supabase Functions)| — | Serverless TypeScript environment for webhook handlers and payment verifications |
+| **Realtime Gateway** | Supabase Realtime | — | WebSockets-based listener for instant order status pushes to kitchen/admin |
+| **Cloud Storage** | Supabase Storage | — | Hosting user-uploaded food item images, 3D AR assets, and store logos |
+| **Payment Gateway** | Razorpay SDK & API | — | Secure checkout integration (UPI, cards, netbanking) and Deno HMAC verification |
+| **QR Code Generation** | `qrcode.react` | ≥ 4.2 | Dynamic QR generation for table-specific ordering routes inside Admin panel |
+| **In-App QR Scanning** | `@yudiel/react-qr-scanner`| ≥ 2.5 | Camera-based customer sign-in/table scanning from web browser |
+| **Interactive 3D / AR** | `@google/model-viewer` | ≥ 3.x / 4.x | High-fidelity WebGL 3D rendering and immersive AR scene projections |
+| **Data Visualization** | Recharts | v3.8 | Interactive analytics, charts, and metrics breakdown for the reports dashboard |
+| **Document Generation** | jsPDF | v4 | Dynamic generation of PDF invoices for receipts and admin analytical reports |
+| **Image Manipulation** | `react-easy-crop` | v5 | Client-side image cropping and resizing for uploading menu graphics |
+| **ML Engine (Proposed)** | Python / Facebook Prophet | ≥ 3.10 | Time-series forecasting for revenue and collaborative recommendation pipeline |
 
 ### 5.2 Hardware Requirements
 
-| Component | Minimum | Recommended |
+The hardware specifications ensure efficient local development, smooth multi-tenant database operations, responsive administrative interfaces, and fluid real-time interactions for users.
+
+| Component | Minimum Specifications | Recommended Specifications |
 | :--- | :--- | :--- |
-| **Dev Machine** | Intel i5 8th Gen / Ryzen 5, 8 GB RAM, 20 GB SSD, Windows 10 / macOS 12 / Ubuntu 20.04 | 16 GB RAM for ML pipelines; NVIDIA CUDA GPU |
-| **Customer Device** | Any smartphone/tablet with Chrome 79+, Safari 14+, or equivalent; mobile data/Wi-Fi | ARCore (Android) or ARKit (iOS) compatibility for AR 3D menu features |
-| **Admin Devices** | Desktop/laptop, Chrome 90+ / Edge / Firefox / Safari, 1280×720 display, stable broadband | 1920×1080 resolution for analytics dashboard |
-| **ML Microservice** *(proposed)* | 2 vCPU, 2 GB RAM, 5 GB persistent storage | 4 vCPU, 4 GB RAM (e.g., Railway Starter / Render Standard / EC2 t3.small) |
+| **Development Machine** | Intel Core i5 (8th Gen) / AMD Ryzen 5<br>8 GB RAM<br>20 GB available SSD space<br>Windows 10 / macOS Monterey / Ubuntu 20.04 | Intel Core i7 / Apple Silicon (M1/M2/M3)<br>16 GB RAM<br>50 GB SSD space<br>NVIDIA CUDA-compatible GPU (for local ML prototyping) |
+| **Customer Device** | Smartphone/tablet (Android or iOS)<br>Rear-facing camera (5 MP)<br>Chrome 79+ / Safari 14+ / Edge 79+<br>3G/4G Mobile Data or stable Wi-Fi (5 Mbps) | Modern smartphone (released 2020 or later)<br>High-res autofocus camera (12 MP)<br>Chrome/Safari latest version<br>5G or high-speed Wi-Fi (15+ Mbps)<br>ARCore/ARKit hardware compatibility |
+| **Restaurant Admin Devices**| Desktop PC, laptop, or tablet (iPad/Galaxy Tab)<br>1280×720 screen resolution<br>Chrome 90+ / Edge / Safari<br>Stable broadband connection (10 Mbps) | Desktop PC or dedicated POS station<br>1920×1080 Full HD display (optimal dashboard view)<br>Chrome latest version (configured for auto-print)<br>High-speed fiber broadband (50+ Mbps with backup link) |
+| **ML Server (Proposed)** | 2 vCPUs<br>2 GB RAM<br>5 GB persistent SSD storage (e.g., Render Starter / Railway Starter) | 4 vCPUs<br>4 GB RAM / Dedicated GPU instance<br>15 GB SSD storage (e.g., AWS EC2 t3.medium or Railway Pro) |
+
+### 5.3 Augmented Reality (AR) System Requirements
+
+Immersive dish visualization is a key differentiator of Tablekard, allowing customers to preview a realistic 3D model of their food on their dining table in real-world scale before ordering. To achieve this, the platform utilizes web-standard AR technologies that require specific software and hardware configurations.
+
+#### 5.3.1 Client-Side AR Software Requirements
+- **WebXR Device API:** The primary web standard used to access device sensors, cameras, and tracking features directly from the web browser.
+- **Google `<model-viewer>` Component:** Leverages standard web-components to automatically detect device capabilities and launch the best available AR mode:
+  - **WebXR:** Inline browser-based AR rendering (supported in modern mobile Chrome/Edge).
+  - **Scene Viewer:** Android native AR wrapper (launches Google Play Services for AR).
+  - **Quick Look:** iOS native AR viewer (launches native iOS Quick Look app for USDZ rendering).
+- **Supported 3D Formats:**
+  - **glTF Binary (`.glb`):** Required for inline WebGL 3D rendering and Android Scene Viewer AR.
+  - **Universal Scene Description (`.usdz`):** Required for iOS Safari Quick Look AR integration.
+  - *Optimization Spec:* 3D models must be compressed (using Draco compression) and kept under 10 MB (ideally 2–5 MB) with a low polygon count (≤ 50,000 triangles) to ensure rapid loading over cellular networks.
+
+#### 5.3.2 Client-Side AR Hardware Requirements
+- **Tracking & Motion Sensors:** The device must possess a 6-Degrees-of-Freedom (6-DoF) sensor suite including an Accelerometer, Gyroscope, and Magnetometer to perform Simultaneous Localization and Mapping (SLAM).
+- **Camera System:** High-resolution rear-facing camera (minimum 8 MP with autofocus) to capture and analyze the physical table surface for plane detection.
+- **Operating System & Native SDK Support:**
+  - **Android Devices:** Android 7.0 (Nougat) or newer with Google Play Services for AR (ARCore) installed.
+  - **iOS Devices:** iOS 11.0 or newer on ARKit-compatible devices (iPhone 6s/SE or newer, iPad Pro 1st Gen or newer).
+- **GPU and Memory:** System must support WebGL 2.0. At least 4 GB of system RAM is recommended to prevent tab crashes when rendering detailed 3D textures in memory.
 
 ---
 
