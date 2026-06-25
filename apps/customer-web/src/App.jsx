@@ -17,6 +17,7 @@ import "./App.css";
 // ─── Scroll-to-top on every route change ─────────────────────────────────────
 // React Router does not reset scroll position on navigation.
 // This component listens to pathname changes and snaps the page to the top.
+
 function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => {
@@ -29,6 +30,7 @@ function ScrollToTop() {
 }
 
 // ─── Lazy pages ───────────────────────────────────────────────────────────────
+
 const HomePage        = lazy(() => import("./pages/home"));
 const MenuPage        = lazy(() => import("./pages/menu"));
 const MyOrdersPage    = lazy(() => import("./pages/my_order"));

@@ -68,8 +68,10 @@ const OrderCard = ({
   onMarkReady,
   onPromote,
   onCancel,
+  onUpdateItemStatus,
 }) => {
   const [expanded, setExpanded] = useState(false);
+  const allItemsReady = items.length > 0 && items.every((item) => item.status === 'ready');
 
   return (
     <div className={`order-card${expanded ? ' order-card--expanded' : ''}`}>
@@ -111,11 +113,52 @@ const OrderCard = ({
             ) : (
               items.map((item) => {
                 const details = buildDetailString(item);
+                const itemStatus = item.status || 'placed';
                 return (
-                  <div key={item.id} className="expand-item">
-                    <div className="expand-item-main">
-                      <span className="expand-item-name">{item.name}</span>
-                      <span className="expand-item-qty">×{item.quantity}</span>
+                  <div key={item.id} className="expand-item" style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.05)', paddingBottom: '10px', marginBottom: '10px' }}>
+                    <div className="expand-item-main" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <span className="expand-item-name">{item.name}</span>
+                        <span className="expand-item-qty">×{item.quantity}</span>
+                      </div>
+                      
+                      {/* Interactive status buttons for items with theme colors */}
+                      <div className="item-status-actions" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        {itemStatus === 'placed' && (
+                          <>
+                            <button 
+                              onClick={() => onUpdateItemStatus(item.id, 'preparing')} 
+                              style={{ padding: '4px 10px', fontSize: '11px', borderRadius: '6px', border: 'none', background: '#8B3A1E', color: '#fff', cursor: 'pointer', fontWeight: 'bold' }}
+                            >
+                              PREPARE
+                            </button>
+                            <button 
+                              onClick={() => onUpdateItemStatus(item.id, 'ready')} 
+                              style={{ padding: '4px 10px', fontSize: '11px', borderRadius: '6px', border: 'none', background: '#82b366', color: '#fff', cursor: 'pointer', fontWeight: 'bold' }}
+                            >
+                              READY
+                            </button>
+                          </>
+                        )}
+                        {itemStatus === 'preparing' && (
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <span style={{ fontSize: '11px', color: '#92400E', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                              Preparing
+                            </span>
+                            <button 
+                              onClick={() => onUpdateItemStatus(item.id, 'ready')} 
+                              style={{ padding: '4px 10px', fontSize: '11px', borderRadius: '6px', border: 'none', background: '#82b366', color: '#fff', cursor: 'pointer', fontWeight: 'bold' }}
+                            >
+                              READY
+                            </button>
+                          </div>
+                        )}
+                        {itemStatus === 'ready' && (
+                          <span style={{ fontSize: '11px', color: '#82b366', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                            <Check size={12} strokeWidth={3} /> READY
+                          </span>
+                        )}
+                      </div>
                     </div>
                     {details && <div className="expand-item-detail">{details}</div>}
                     {item.special_instructions && (
@@ -138,8 +181,20 @@ const OrderCard = ({
       {/* Bottom row: action buttons */}
       <div className="order-actions">
         {status === 'preparing' ? (
-          <button className="btn btn-check" onClick={() => onMarkReady(id)} title="Mark as Ready">
-            <Check className="icon" size={20} color="#000" strokeWidth={3} />
+          <button 
+            className="btn btn-check" 
+            onClick={() => allItemsReady && onMarkReady(id)} 
+            disabled={!allItemsReady}
+            title={allItemsReady ? "Mark as Ready" : "Prepare all items first"}
+            style={{ 
+              opacity: allItemsReady ? 1 : 0.4, 
+              cursor: allItemsReady ? 'pointer' : 'not-allowed',
+              backgroundColor: allItemsReady ? 'var(--btn-green-bg)' : '#e0e0e0',
+              borderColor: allItemsReady ? 'var(--btn-green-border)' : '#cccccc',
+              color: allItemsReady ? '#1a1a1a' : '#888888'
+            }}
+          >
+            <Check className="icon" size={20} color={allItemsReady ? "#000" : "#888"} strokeWidth={3} />
             <span style={{ marginLeft: '6px' }}>DONE</span>
           </button>
         ) : (
@@ -248,6 +303,7 @@ function OrdersView({ onSignOut }) {
     handlePromote,
     handleMarkReady,
     handleCancel,
+    handleUpdateItemStatus,
   } = useOrders();
 
   /** Open the deny confirmation dialog */
@@ -311,6 +367,7 @@ function OrdersView({ onSignOut }) {
                   onMarkReady={handleMarkReady}
                   onPromote={handlePromote}
                   onCancel={(id) => requestDeny(id, order.order_number)}
+                  onUpdateItemStatus={handleUpdateItemStatus}
                 />
               ))
             )}
@@ -335,6 +392,7 @@ function OrdersView({ onSignOut }) {
                   onMarkReady={handleMarkReady}
                   onPromote={handlePromote}
                   onCancel={(id) => requestDeny(id, order.order_number)}
+                  onUpdateItemStatus={handleUpdateItemStatus}
                 />
               ))
             )}

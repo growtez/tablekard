@@ -97,21 +97,42 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ order, onClose }) =
                   </tr>
                 </thead>
                 <tbody>
-                  {order.orderItems.map((item, idx) => (
-                    <tr key={idx}>
-                      <td>
-                        <div className="item-name-cell">
-                          <span className="item-name">{item.name}</span>
-                          {item.special_instructions && (
-                            <span className="item-instruction">Note: {item.special_instructions}</span>
-                          )}
-                        </div>
-                      </td>
-                      <td>x{item.quantity}</td>
-                      <td>₹{item.price}</td>
-                      <td className="text-right">₹{item.price * item.quantity}</td>
-                    </tr>
-                  ))}
+                  {order.orderItems.map((item, idx) => {
+                    const itemStatus = (item as any).status || 'placed';
+                    let badgeColor = '#FF9800'; // placed
+                    if (itemStatus === 'preparing') badgeColor = '#3B82F6';
+                    if (itemStatus === 'ready') badgeColor = '#22C55E';
+
+                    return (
+                      <tr key={idx}>
+                        <td>
+                          <div className="item-name-cell">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span className="item-name">{item.name}</span>
+                              <span style={{ 
+                                fontSize: '10px', 
+                                padding: '2px 8px', 
+                                borderRadius: '12px', 
+                                fontWeight: 'bold',
+                                color: badgeColor,
+                                backgroundColor: badgeColor + '12',
+                                border: `1px solid ${badgeColor}30`,
+                                textTransform: 'capitalize'
+                              }}>
+                                {itemStatus}
+                              </span>
+                            </div>
+                            {item.special_instructions && (
+                              <span className="item-instruction">Note: {item.special_instructions}</span>
+                            )}
+                          </div>
+                        </td>
+                        <td>x{item.quantity}</td>
+                        <td>₹{item.price}</td>
+                        <td className="text-right">₹{item.price * item.quantity}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
