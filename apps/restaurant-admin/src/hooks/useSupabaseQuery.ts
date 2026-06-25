@@ -8,7 +8,9 @@
  *   - staleTime avoids unnecessary re-fetches while keeping data fresh
  *   - Shared loading/error/data states
  */
+import { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@restaurant-saas/supabase';
 import {
   getMenuItems,
   getMenuCategories,
@@ -76,15 +78,43 @@ export function useMenuCategories(restaurantId: string | null) {
 
 // ─── Orders ─────────────────────────────────────────────────────────
 export function useDashboardOrders(restaurantId: string | null) {
-  return useQuery<DashboardOrder[]>({
-    queryKey: queryKeys.dashboardOrders(restaurantId ?? ''),
+  const queryClient = useQueryClient();
+  const queryKey = queryKeys.dashboardOrders(restaurantId ?? '');
+
+  const queryResult = useQuery<DashboardOrder[]>({
+    queryKey,
     queryFn: () => getDashboardOrders(restaurantId!),
     enabled: !!restaurantId,
     staleTime: STALE_30S,
     refetchOnWindowFocus: false,
-    refetchInterval: 5_000,  // auto-poll every 30s for a real-time feel
     retry: 3,
   });
+
+  useEffect(() => {
+    if (!restaurantId) return;
+
+    const channel = supabase
+      .channel(`realtime-dashboard-orders-${restaurantId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders',
+          filter: `restaurant_id=eq.${restaurantId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [restaurantId, queryClient, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return queryResult;
 }
 
 export function useOrders(restaurantId: string | null, limit?: number) {

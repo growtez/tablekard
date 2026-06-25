@@ -48,10 +48,10 @@ const MenuPage = () => {
       }
 
       try {
-        // 2. Parallel Fetch
+        // 2. Parallel Fetch — fetch ALL items (available + unavailable) for real-time tracking
         const [catsRes, itemsRes] = await Promise.all([
           supabase.from('menu_categories').select('id, name').eq('restaurant_id', restaurantId).eq('active', true).order('sort_order'),
-          supabase.from('menu_items').select('*, menu_item_images(id, image_url, sort_order)').eq('restaurant_id', restaurantId).eq('is_available', true)
+          supabase.from('menu_items').select('*, menu_item_images(id, image_url, sort_order)').eq('restaurant_id', restaurantId)
         ]);
 
         if (catsRes.data && itemsRes.data) {
@@ -81,6 +81,7 @@ const MenuPage = () => {
                   variants: item.variants || [],
                   addons: item.addons || [],
                   modelUrl: item.model_url || null,
+                  isAvailable: item.is_available,
                 };
               });
           });
@@ -115,6 +116,53 @@ const MenuPage = () => {
       }
     };
     loadFavorites();
+
+    // 4. Real-time subscription for menu_items availability changes
+    const subscription = supabase
+      .channel(`public:menu_items:${restaurantId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'menu_items',
+          filter: `restaurant_id=eq.${restaurantId}`,
+        },
+        (payload) => {
+          const { eventType, new: newRow, old: oldRow } = payload;
+
+          setMenuItems(prev => {
+            const updated = { ...prev };
+
+            Object.keys(updated).forEach(catName => {
+              updated[catName] = updated[catName].map(item => {
+                // UPDATE: item exists in state and matches the changed row
+                if (eventType === 'UPDATE' && newRow && item.id === newRow.id) {
+                  return { ...item, isAvailable: newRow.is_available };
+                }
+                // DELETE or item became invisible via RLS (unavailable → treated as DELETE)
+                // In this case old row id matches — mark as unavailable
+                if (eventType === 'DELETE' && oldRow && item.id === oldRow.id) {
+                  return { ...item, isAvailable: false };
+                }
+                return item;
+              });
+            });
+
+            // INSERT: a newly available item — trigger a full refresh to get images too
+            if (eventType === 'INSERT') {
+              loadMenu();
+            }
+
+            return updated;
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
   }, [restaurantId, isAuthenticated, user]);
 
   const toggleFavorite = async (itemId) => {
@@ -345,94 +393,111 @@ const MenuPage = () => {
         </div>
       ) : (
         <div className="menu-items" style={cartTotal > 0 ? { paddingBottom: '100px' } : {}}>
-          {filteredItems.map(item => (
-            <div key={item.id} className="menu-item" onClick={() => handleItemClick(item)}>
-              <div className="menu-image-container">
-                <div className="image-scroll-wrapper">
-                  {item.images && item.images.length > 0 ? (
-                    item.images.map((imgUrl, idx) => (
-                      <div key={idx} className="image-bg-wrapper">
-                        <img src={imgUrl} alt={`${item.name} - ${idx}`} loading="lazy" />
+          {filteredItems.map(item => {
+            const isOutOfStock = item.isAvailable === false;
+            return (
+              <div
+                key={item.id}
+                className={`menu-item${isOutOfStock ? ' out-of-stock' : ''}`}
+                onClick={isOutOfStock ? undefined : () => handleItemClick(item)}
+                style={isOutOfStock ? { cursor: 'default' } : {}}
+              >
+                <div className="menu-image-container">
+                  <div className="image-scroll-wrapper">
+                    {item.images && item.images.length > 0 ? (
+                      item.images.map((imgUrl, idx) => (
+                        <div key={idx} className="image-bg-wrapper">
+                          <img src={imgUrl} alt={`${item.name} - ${idx}`} loading="lazy" />
+                        </div>
+                      ))
+                    ) : (
+                      <div className="image-bg-wrapper">
+                        <img src={item.image} alt={item.name} loading="lazy" />
                       </div>
-                    ))
-                  ) : (
-                    <div className="image-bg-wrapper">
-                      <img src={item.image} alt={item.name} loading="lazy" />
+                    )}
+                  </div>
+                  {isOutOfStock && (
+                    <div className="out-of-stock-overlay">
+                      <span className="out-of-stock-label">Out of Stock</span>
                     </div>
                   )}
                 </div>
-              </div>
 
-              <div className="menu-details">
-                <div className="details-header">
-                  <div className="title-desc">
-                    <h3>{item.name}</h3>
-                    <p className="menu-description">{item.shortDesc}</p>
-                  </div>
-                  <button
-                    className="favorite-btn-inline"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleFavorite(item.id);
-                    }}
-                  >
-                    <Heart
-                      size={20}
-                      fill={favorites.includes(item.id) ? '#8B3A1E' : 'transparent'}
-                      color={favorites.includes(item.id) ? '#8B3A1E' : '#B8ADA9'}
-                    />
-                  </button>
-                </div>
-
-                <div className="details-meta">
-                  <div className="meta-item">
-                    <Star size={14} fill="#8B3A1E" color="#8B3A1E" />
-                    <span>{item.rating}</span>
-                  </div>
-                  <div className="meta-item">
-                    <Clock size={14} color="#1A1A1A" />
-                    <span>{item.time}</span>
-                  </div>
-                  <div className="serves-pill">
-                    <Users size={12} /> {item.serves}
-                  </div>
-                </div>
-
-                <div className="details-footer">
-                  <div className="price-vegan">
-                    <span className="price-text">₹{item.price}</span>
-                  </div>
-                  {getItemQuantity(item.id) === 0 ? (
-                    <button
-                      className="add-btn-large"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        addToCart(item);
-                      }}
-                    >
-                      <Plus size={20} color="#FFFFFF" />
-                    </button>
-                  ) : (
-                    <div className="menu-qty-stepper" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        className="menu-stepper-btn"
-                        onClick={(e) => { e.stopPropagation(); removeFromCart(item.id); }}
-                      >
-                        <Minus size={16} />
-                      </button>
-                      <span className="menu-stepper-value">{getItemQuantity(item.id)}</span>
-                      <button
-                        className="menu-stepper-btn"
-                        onClick={(e) => { e.stopPropagation(); addToCart(item); }}
-                      >
-                        <Plus size={16} />
-                      </button>
+                <div className="menu-details">
+                  <div className="details-header">
+                    <div className="title-desc">
+                      <h3>{item.name}</h3>
+                      <p className="menu-description">{item.shortDesc}</p>
                     </div>
-                  )}
+                    {!isOutOfStock && (
+                      <button
+                        className="favorite-btn-inline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFavorite(item.id);
+                        }}
+                      >
+                        <Heart
+                          size={20}
+                          fill={favorites.includes(item.id) ? '#8B3A1E' : 'transparent'}
+                          color={favorites.includes(item.id) ? '#8B3A1E' : '#B8ADA9'}
+                        />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="details-meta">
+                    <div className="meta-item">
+                      <Star size={14} fill={isOutOfStock ? '#AAAAAA' : '#8B3A1E'} color={isOutOfStock ? '#AAAAAA' : '#8B3A1E'} />
+                      <span>{item.rating}</span>
+                    </div>
+                    <div className="meta-item">
+                      <Clock size={14} color={isOutOfStock ? '#AAAAAA' : '#1A1A1A'} />
+                      <span>{item.time}</span>
+                    </div>
+                    <div className="serves-pill">
+                      <Users size={12} /> {item.serves}
+                    </div>
+                  </div>
+
+                  <div className="details-footer">
+                    <div className="price-vegan">
+                      <span className="price-text">₹{item.price}</span>
+                    </div>
+                    {isOutOfStock ? (
+                      <span className="unavailable-tag">Unavailable</span>
+                    ) : getItemQuantity(item.id) === 0 ? (
+                      <button
+                        className="add-btn-large"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          addToCart(item);
+                        }}
+                      >
+                        <Plus size={20} color="#FFFFFF" />
+                      </button>
+                    ) : (
+                      <div className="menu-qty-stepper" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          className="menu-stepper-btn"
+                          onClick={(e) => { e.stopPropagation(); removeFromCart(item.id); }}
+                        >
+                          <Minus size={16} />
+                        </button>
+                        <span className="menu-stepper-value">{getItemQuantity(item.id)}</span>
+                        <button
+                          className="menu-stepper-btn"
+                          onClick={(e) => { e.stopPropagation(); addToCart(item); }}
+                        >
+                          <Plus size={16} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

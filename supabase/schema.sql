@@ -683,3 +683,37 @@ USING (
   bucket_id = 'ar-files' AND
   auth.role() = 'authenticated'
 );
+
+-- ======================================================================================
+-- REALTIME CONFIGURATION
+-- ======================================================================================
+
+-- 1. Create the realtime publication if it doesn't already exist
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_publication WHERE pubname = 'supabase_realtime') THEN
+        CREATE PUBLICATION supabase_realtime;
+    END IF;
+END $$;
+
+-- 2. Add the orders and other tables to the publication
+ALTER PUBLICATION supabase_realtime ADD TABLE public.orders;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.revenue;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.menu_items;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.menu_categories;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.menu_item_images;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.offers;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.feedback;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.order_items;
+
+-- 3. (Optional but recommended) Set replica identity to FULL
+-- This ensures UPDATE and DELETE events include the complete old row,
+-- allowing Supabase to properly filter realtime events through RLS policies.
+ALTER TABLE public.orders REPLICA IDENTITY FULL;
+ALTER TABLE public.revenue REPLICA IDENTITY FULL;
+ALTER TABLE public.menu_items REPLICA IDENTITY FULL;
+ALTER TABLE public.menu_categories REPLICA IDENTITY FULL;
+ALTER TABLE public.menu_item_images REPLICA IDENTITY FULL;
+ALTER TABLE public.offers REPLICA IDENTITY FULL;
+ALTER TABLE public.feedback REPLICA IDENTITY FULL;
+ALTER TABLE public.order_items REPLICA IDENTITY FULL;
