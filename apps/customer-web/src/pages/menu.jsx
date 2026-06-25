@@ -152,6 +152,9 @@ const MenuPage = () => {
             // INSERT: a newly available item — trigger a full refresh to get images too
             if (eventType === 'INSERT') {
               loadMenu();
+            } else {
+              // Sync updated state to sessionStorage cache
+              sessionStorage.setItem('menuData', JSON.stringify(updated));
             }
 
             return updated;

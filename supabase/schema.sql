@@ -590,7 +590,7 @@ CREATE POLICY "Public can read active categories" ON public.menu_categories FOR 
 CREATE POLICY "Restaurant members manage their categories" ON public.menu_categories FOR ALL USING (public.is_restaurant_member(restaurant_id));
 
 -- 6. menu_items
-CREATE POLICY "Public can read active menu items" ON public.menu_items FOR SELECT USING (is_available = true);
+CREATE POLICY "Public can read menu items" ON public.menu_items FOR SELECT USING (true);
 CREATE POLICY "Restaurant members manage their items" ON public.menu_items FOR ALL USING (public.is_restaurant_member(restaurant_id));
 
 -- 7. menu_item_images
