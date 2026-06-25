@@ -655,7 +655,7 @@ export const getDashboardOrders = async (restaurantId: string): Promise<Dashboar
             created_at,
             restaurant_tables(table_number),
             profiles(name),
-            order_items(name, quantity, price, special_instructions)
+            order_items(name, quantity, price, special_instructions, status)
         `)
         .eq('restaurant_id', restaurantId)
         .order('created_at', { ascending: false });
@@ -697,7 +697,8 @@ export const getDashboardOrders = async (restaurantId: string): Promise<Dashboar
                 name: item.name,
                 quantity: item.quantity,
                 price: Number(item.price) || 0,
-                special_instructions: item.special_instructions || undefined
+                special_instructions: item.special_instructions || undefined,
+                status: item.status || 'placed'
             })),
             customer: profile?.name || 'Guest',
             subtotal: Number(row.subtotal) || 0,

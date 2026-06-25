@@ -177,6 +177,7 @@ CREATE TABLE IF NOT EXISTS public.order_items (
     variant JSONB,
     addons JSONB,
     special_instructions TEXT,
+    status TEXT NOT NULL DEFAULT 'placed' CHECK (status IN ('placed', 'preparing', 'ready')),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -717,3 +718,82 @@ ALTER TABLE public.menu_item_images REPLICA IDENTITY FULL;
 ALTER TABLE public.offers REPLICA IDENTITY FULL;
 ALTER TABLE public.feedback REPLICA IDENTITY FULL;
 ALTER TABLE public.order_items REPLICA IDENTITY FULL;
+
+-- ======================================================================================
+-- AUTOMATIC ORDER ROLLUP TRIGGER
+-- ======================================================================================
+
+CREATE OR REPLACE FUNCTION update_parent_order_status()
+RETURNS TRIGGER AS $$
+DECLARE
+    total_items INT;
+    ready_items INT;
+BEGIN
+    -- Count total items in the order
+    SELECT COUNT(*) INTO total_items 
+    FROM public.order_items 
+    WHERE order_id = NEW.order_id;
+
+    -- Count items that are ready
+    SELECT COUNT(*) INTO ready_items 
+    FROM public.order_items 
+    WHERE order_id = NEW.order_id AND status = 'ready';
+
+    -- If all items are ready, update the main order status to 'ready'
+    IF total_items = ready_items THEN
+        UPDATE public.orders 
+        SET status = 'ready'::order_status 
+        WHERE id = NEW.order_id;
+    -- If at least one item is preparing, update main order status to 'preparing'
+    ELSEIF EXISTS (
+        SELECT 1 FROM public.order_items 
+        WHERE order_id = NEW.order_id AND status = 'preparing'
+    ) THEN
+        UPDATE public.orders 
+        SET status = 'preparing'::order_status 
+        WHERE id = NEW.order_id;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trigger_update_parent_order ON public.order_items;
+CREATE TRIGGER trigger_update_parent_order
+    AFTER UPDATE OF status ON public.order_items
+    FOR EACH ROW
+    EXECUTE PROCEDURE update_parent_order_status();
+
+-- ======================================================================================
+-- CASCADE ORDER STATUS TO ITEMS TRIGGER
+-- ======================================================================================
+
+CREATE OR REPLACE FUNCTION propagate_order_status_to_items()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Prevent recursive trigger loops by checking trigger depth
+    IF pg_trigger_depth() <= 1 THEN
+        -- If parent order status changes, update all its items to match the status
+        IF NEW.status = 'preparing' THEN
+            UPDATE public.order_items
+            SET status = 'preparing'
+            WHERE order_id = NEW.id AND status = 'placed';
+        ELSIF NEW.status = 'ready' THEN
+            UPDATE public.order_items
+            SET status = 'ready'
+            WHERE order_id = NEW.id AND status != 'ready';
+        ELSIF NEW.status = 'pending' OR NEW.status = 'confirmed' THEN
+            UPDATE public.order_items
+            SET status = 'placed'
+            WHERE order_id = NEW.id AND status != 'placed';
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trigger_propagate_order_status ON public.orders;
+CREATE TRIGGER trigger_propagate_order_status
+    AFTER UPDATE OF status ON public.orders
+    FOR EACH ROW
+    EXECUTE PROCEDURE propagate_order_status_to_items();

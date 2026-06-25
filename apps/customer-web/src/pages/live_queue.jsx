@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Bell, ChefHat, Clock, Utensils, Loader2 } from 'lucide-react';
+import { ArrowLeft, Bell, ChefHat, Clock, Utensils, Loader2, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useRestaurant } from '../context/RestaurantContext';
 import { useAuth } from '../context/AuthContext';
@@ -10,11 +10,19 @@ const LiveQueuePage = () => {
     const navigate = useNavigate();
     const { restaurant } = useRestaurant();
     const { user } = useAuth();
+    const [expandedOrders, setExpandedOrders] = useState({});
     const [currentTime, setCurrentTime] = useState(new Date());
     const [isLoading, setIsLoading] = useState(true);
     const [isPulling, setIsPulling] = useState(false);
     const [pullY, setPullY] = useState(0);
     const touchStartY = useRef(0);
+
+    const toggleOrderItems = (orderId) => {
+        setExpandedOrders(prev => ({
+            ...prev,
+            [orderId]: !prev[orderId]
+        }));
+    };
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -44,7 +52,8 @@ const LiveQueuePage = () => {
                     order_number, 
                     status, 
                     customer_id,
-                    updated_at
+                    updated_at,
+                    order_items (status, name)
                 `)
                 .eq('restaurant_id', restaurant.id)
                 .gte('created_at', today.toISOString())
@@ -56,8 +65,12 @@ const LiveQueuePage = () => {
             if (error) throw error;
 
             const formatToken = (order) => {
+                const items = order.order_items || [];
+                const readyCount = items.filter(i => i.status === 'ready').length;
+                const totalCount = items.length;
                 return {
-                    id: order.order_number ? order.order_number.split('-')[1].slice(-4) : order.id.slice(0, 4).toUpperCase()
+                    id: order.order_number ? order.order_number.split('-')[1].slice(-4) : order.id.slice(0, 4).toUpperCase(),
+                    progress: totalCount > 0 ? `${readyCount}/${totalCount}` : ''
                 };
             };
 
@@ -83,7 +96,18 @@ const LiveQueuePage = () => {
             if (user?.id) {
                 // Find all active user orders
                 const userOrders = activeData.filter(o => o.customer_id === user.id);
-                yourTokens = userOrders.map(o => ({ ...formatToken(o), status: o.status }));
+                yourTokens = userOrders.map(o => {
+                    const tokenData = formatToken(o);
+                    const items = o.order_items || [];
+                    const readyCount = items.filter(i => i.status === 'ready').length;
+                    const totalCount = items.length;
+                    return {
+                        ...tokenData,
+                        status: o.status,
+                        progress: totalCount > 0 ? `${readyCount}/${totalCount} items ready` : '',
+                        items: items.map(i => ({ name: i.name, status: i.status || 'placed' }))
+                    };
+                });
             }
 
             setQueueData({
@@ -268,16 +292,68 @@ const LiveQueuePage = () => {
             {/* Your Token Cards */}
             {queueData.yourTokens && queueData.yourTokens.map((token) => {
                 const statusInfo = getYourStatusDisplay(token);
+                const showArrow = token.status !== 'ready';
+                const isExpanded = showArrow && !!expandedOrders[token.id];
                 return (
-                    <div className="your-token-card" key={token.id}>
-                        <div className="your-token-left">
-                            <span className="your-label">Your Order #</span>
-                            <span className="your-number">{token.id}</span>
+                    <div className="your-token-card" key={token.id} style={{ display: 'flex', flexDirection: 'column' }}>
+                        <div 
+                            style={{ display: 'flex', width: '100%', cursor: showArrow ? 'pointer' : 'default', borderBottom: isExpanded ? '1px solid rgba(139, 58, 30, 0.1)' : 'none' }}
+                            onClick={() => showArrow && toggleOrderItems(token.id)}
+                        >
+                            <div className="your-token-left">
+                                <span className="your-label">Your Order #</span>
+                                <span className="your-number" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    {token.id}
+                                    {showArrow && (
+                                        <ChevronDown 
+                                            size={20} 
+                                            color="#8B3A1E" 
+                                            style={{ 
+                                                transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                                                transition: 'transform 0.2s ease'
+                                            }} 
+                                        />
+                                    )}
+                                </span>
+                            </div>
+                            <div className="your-token-right">
+                                {statusInfo.label && <span className="position-label">{statusInfo.label}</span>}
+                                <span className="position-number" style={{ color: statusInfo.color, fontSize: statusInfo.fontSize }}>{statusInfo.value}</span>
+                            </div>
                         </div>
-                        <div className="your-token-right">
-                            {statusInfo.label && <span className="position-label">{statusInfo.label}</span>}
-                            <span className="position-number" style={{ color: statusInfo.color, fontSize: statusInfo.fontSize }}>{statusInfo.value}</span>
-                        </div>
+                        {/* List of items with statuses */}
+                        {isExpanded && token.items && token.items.length > 0 && (
+                            <div style={{ padding: '16px 20px', background: '#FAFAFA', width: '100%' }}>
+                                <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#666', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                    Items Status
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    {token.items.map((item, idx) => {
+                                        let badgeColor = '#FF9800'; // placed
+                                        if (item.status === 'preparing') badgeColor = '#3B82F6';
+                                        if (item.status === 'ready') badgeColor = '#22C55E';
+                                        
+                                        return (
+                                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
+                                                <span style={{ fontWeight: '500', color: '#1A1A1A' }}>{item.name}</span>
+                                                <span style={{ 
+                                                    fontSize: '10px', 
+                                                    padding: '2px 8px', 
+                                                    borderRadius: '12px', 
+                                                    fontWeight: 'bold',
+                                                    color: badgeColor,
+                                                    backgroundColor: badgeColor + '12',
+                                                    border: `1px solid ${badgeColor}30`,
+                                                    textTransform: 'capitalize'
+                                                }}>
+                                                    {item.status}
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 );
             })}
@@ -298,9 +374,24 @@ const LiveQueuePage = () => {
                                 <div
                                     key={order.id}
                                     className={`timeline-token preparing ${isYours ? 'yours' : ''}`}
+                                    style={{ 
+                                        display: 'flex', 
+                                        flexDirection: 'column', 
+                                        alignItems: 'center', 
+                                        justifyContent: 'center', 
+                                        gap: '2px',
+                                        padding: '10px 14px',
+                                        minWidth: '70px',
+                                        height: 'auto'
+                                    }}
                                 >
-                                    {order.id}
-                                    {isYours && <span className="yours-badge">You</span>}
+                                    <span style={{ fontSize: '18px', fontWeight: '800' }}>{order.id}</span>
+                                    {order.progress && (
+                                        <span style={{ fontSize: '10px', opacity: 0.8, fontWeight: 'bold' }}>
+                                            {order.progress}
+                                        </span>
+                                    )}
+                                    {isYours && <span className="yours-badge" style={{ position: 'absolute', top: '-6px', right: '-6px' }}>You</span>}
                                 </div>
                             );
                         })}

@@ -6,6 +6,7 @@ import {
   markAsReady,
   promoteToProcessing,
   cancelOrder,
+  updateOrderItemStatus,
 } from '../lib/supabaseService';
 
 // Orders in the queue have status 'pending' or 'confirmed';
@@ -118,6 +119,19 @@ export function useOrders() {
     [loadOrders]
   );
 
+  /** Update an item's status */
+  const handleUpdateItemStatus = useCallback(
+    async (itemId, newStatus) => {
+      try {
+        await updateOrderItemStatus(itemId, newStatus);
+        await loadOrders();
+      } catch (err) {
+        console.error('Update item status failed:', err);
+      }
+    },
+    [loadOrders]
+  );
+
   return {
     preparingOrders,
     queueOrders,
@@ -127,5 +141,6 @@ export function useOrders() {
     handlePromote,
     handleMarkReady,
     handleCancel,
+    handleUpdateItemStatus,
   };
 }

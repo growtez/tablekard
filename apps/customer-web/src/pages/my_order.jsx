@@ -50,7 +50,8 @@ const MyOrderPage = () => {
           items: order.order_items.map(item => ({
             name: item.name,
             quantity: item.quantity,
-            price: item.price
+            price: item.price,
+            status: item.status || 'placed'
           })),
           total: order.total,
           discount: order.discount || 0,
@@ -82,15 +83,23 @@ const MyOrderPage = () => {
     if (isAuthenticated && user) {
       fetchOrders();
 
-      // Set up realtime subscription for updates to orders
+      // Set up realtime subscription for updates to orders and order items
       const subscription = supabase
-        .channel('public:orders')
+        .channel('public:orders-and-items')
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'orders', filter: `customer_id=eq.${user.id}` },
           (payload) => {
             console.log('Order update received:', payload);
-            fetchOrders(true); // Silently re-fetch to get the latest data including order items
+            fetchOrders(true); // Silently re-fetch to get the latest data
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'order_items' },
+          (payload) => {
+            console.log('Order item update received:', payload);
+            fetchOrders(true); // Silently re-fetch to get the latest data
           }
         )
         .subscribe();
@@ -724,13 +733,34 @@ const MyOrderPage = () => {
 
                     {/* ── Tier 2: Items ── */}
                     <div className="oi-items">
-                      {order.items.map((item, index) => (
-                        <div key={index} className="oi-item-row">
-                          <span className="oi-item-qty">{item.quantity}×</span>
-                          <span className="oi-item-name">{item.name}</span>
-                          <span className="oi-item-price">₹{item.price * item.quantity}</span>
-                        </div>
-                      ))}
+                      {order.items.map((item, index) => {
+                        const itemStatus = item.status || 'placed';
+                        let badgeColor = '#FF9800'; // placed
+                        if (itemStatus === 'preparing') badgeColor = '#3B82F6';
+                        if (itemStatus === 'ready') badgeColor = '#22C55E';
+
+                        return (
+                          <div key={index} className="oi-item-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span className="oi-item-qty">{item.quantity}×</span>
+                              <span className="oi-item-name">{item.name}</span>
+                              <span style={{ 
+                                fontSize: '10px', 
+                                padding: '2px 8px', 
+                                borderRadius: '12px', 
+                                fontWeight: 'bold',
+                                color: badgeColor,
+                                backgroundColor: badgeColor + '12',
+                                border: `1px solid ${badgeColor}30`,
+                                textTransform: 'capitalize'
+                              }}>
+                                {itemStatus}
+                              </span>
+                            </div>
+                            <span className="oi-item-price">₹{item.price * item.quantity}</span>
+                          </div>
+                        );
+                      })}
                     </div>
 
                     {/* ── Tier 3: Footer ── */}
