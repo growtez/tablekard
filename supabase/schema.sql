@@ -6,6 +6,10 @@
 -- 1. Enable Required Extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- Set default database and session timezone to Indian Standard Time (IST)
+ALTER DATABASE postgres SET timezone TO 'Asia/Kolkata';
+SET timezone TO 'Asia/Kolkata';
+
 -- 2. Define Custom Enums
 DO $$ BEGIN
     CREATE TYPE user_role AS ENUM ('super_admin', 'restaurant_admin', 'restaurant_staff', 'customer');
@@ -652,7 +656,7 @@ CREATE POLICY "Super admins manage subscription payments" ON public.subscription
 CREATE POLICY "Public can read active offers"
     ON public.offers
     FOR SELECT
-    USING (is_active = true);
+    USING (true);
 
 CREATE POLICY "Restaurant members manage their offers"
     ON public.offers

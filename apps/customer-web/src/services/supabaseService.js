@@ -698,7 +698,7 @@ export const getOffersForCustomer = async (restaurantId, limit = 20) => {
                     subtitle: o.title,           // offer title shown as subtitle
                     price: offerPrice,           // the discounted price shown prominently
                     originalPrice: originalPrice,
-                    discount: savingPct > 0 ? `${savingPct}% OFF` : 'Special Offer',
+                    discount: o.title,           // badge text taken directly from offers.title
                     timer: o.valid_until
                         ? `Until ${new Date(o.valid_until).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}`
                         : null,
@@ -719,7 +719,7 @@ export const getOffersForCustomer = async (restaurantId, limit = 20) => {
         console.error('getOffersForCustomer error:', err);
     }
 
-    // Fallback: use the existing discount_price / top-sellers logic
-    return getDiscountItemsForHome(restaurantId, limit);
+    // No active offers — return empty so UI can hide the section
+    return [];
 };
 
