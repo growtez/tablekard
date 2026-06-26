@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Search, TrendingUp, Calendar, Eye, Clock, ChefHat, CheckCircle, XCircle, Package } from 'lucide-react';
 import Sidebar from '../components/sidebar';
 import { useAuth } from '../context/AuthContext';
@@ -42,6 +42,12 @@ const Order: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<DashboardOrder | null>(null);
+  const [visibleCount, setVisibleCount] = useState(20);
+
+  // Reset visible count when filters change
+  useEffect(() => {
+    setVisibleCount(20);
+  }, [searchQuery, selectedTable, selectedPayment, selectedStatus, selectedDate]);
 
   const { data: orders = [], isLoading: loading } = useDashboardOrders(activeRestaurantId);
   const { data: revenueData = [], isLoading: loadingRevenue } = useRevenueData(activeRestaurantId);
@@ -193,6 +199,20 @@ const Order: React.FC = () => {
     return orders.filter(o => new Date(o.createdAt).toISOString().slice(0, 10) === selectedDate).length;
   }, [orders, selectedDate]);
 
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!loadMoreRef.current) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && visibleCount < filteredOrders.length) {
+        setVisibleCount(prev => prev + 20);
+      }
+    }, { rootMargin: '200px' });
+    
+    observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [visibleCount, filteredOrders.length]);
+
   return (
     <div className="order-container">
       <Sidebar />
@@ -330,8 +350,9 @@ const Order: React.FC = () => {
               <p>Try adjusting your filters or search query</p>
             </div>
           ) : (
-            <div className="order-cards-grid">
-              {filteredOrders.map((order) => {
+            <>
+              <div className="order-cards-grid">
+              {filteredOrders.slice(0, visibleCount).map((order) => {
                 const st = order.status.toLowerCase();
                 const statusConf = STATUS_CONFIG[st] || STATUS_CONFIG.pending;
                 const availableStatuses = getAvailableStatuses(st);
@@ -408,6 +429,12 @@ const Order: React.FC = () => {
                 );
               })}
             </div>
+            {visibleCount < filteredOrders.length && (
+              <div ref={loadMoreRef} style={{ textAlign: 'center', padding: '24px', color: '#94A3B8', fontSize: '13px', fontFamily: "'Outfit', sans-serif" }}>
+                Loading more orders...
+              </div>
+            )}
+            </>
           )}
         </div>
       </div>

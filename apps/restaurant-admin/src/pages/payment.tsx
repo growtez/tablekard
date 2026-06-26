@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Download, Calendar, CreditCard, CheckCircle, Eye, Trash2, X, Search, User, Hash, Clock, Utensils } from 'lucide-react';
 import './payment.css';
 import Sidebar from '../components/sidebar';
@@ -21,6 +21,13 @@ const Payment: React.FC = () => {
 
   // Hidden (locally removed) transaction IDs – for the "hide" button
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
+
+  const [visibleCount, setVisibleCount] = useState(20);
+  const loadMoreRef = useRef<HTMLTableRowElement>(null);
+
+  useEffect(() => {
+    setVisibleCount(20);
+  }, [selectedDateRange, selectedPaymentMethod, selectedPaymentStatus, customDate, searchQuery]);
 
   // React Query: cached, auto-retries, refetches on tab focus
   const { data: allTransactions = [], isLoading: loading } = usePaymentTransactions(activeRestaurantId);
@@ -68,6 +75,17 @@ const Payment: React.FC = () => {
 
     return matchesSearch && methodMatch && statusMatch && dateMatch;
   });
+
+  useEffect(() => {
+    if (!loadMoreRef.current) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && visibleCount < filteredTransactions.length) {
+        setVisibleCount(prev => prev + 20);
+      }
+    }, { rootMargin: '200px' });
+    observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [visibleCount, filteredTransactions.length]);
 
   const filteredRevenue = useMemo(() => {
     let totalRevenue = 0;
@@ -320,7 +338,7 @@ const Payment: React.FC = () => {
                     </td>
                   </tr>
                 ) : (
-                  filteredTransactions.map((transaction) => (
+                  filteredTransactions.slice(0, visibleCount).map((transaction) => (
                     <tr key={transaction.id}>
                       <td data-label="Order ID">
                         <div className="order-id-cell">{transaction.orderNumber}</div>
@@ -373,6 +391,13 @@ const Payment: React.FC = () => {
                       </td>
                     </tr>
                   ))
+                )}
+                {visibleCount < filteredTransactions.length && (
+                  <tr ref={loadMoreRef}>
+                    <td colSpan={7} style={{ textAlign: 'center', padding: '24px', color: '#718096', fontSize: '13px', fontFamily: "'Outfit', sans-serif" }}>
+                      Loading more transactions...
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>

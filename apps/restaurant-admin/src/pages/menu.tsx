@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Search, Plus, Edit3, Trash2, Layers, Loader2 } from 'lucide-react';
 import Sidebar from '../components/sidebar';
 import MenuDialog from '../components/menu_dialog';
@@ -57,6 +57,38 @@ const Menu: React.FC = () => {
   const filteredMenuItems = selectedCategoryId === 'all'
     ? menuItems
     : menuItems.filter(item => item.categoryId === selectedCategoryId);
+
+  const [visibleItemCount, setVisibleItemCount] = useState(20);
+  const [visibleOfferCount, setVisibleOfferCount] = useState(20);
+  const loadMoreItemsRef = useRef<HTMLDivElement>(null);
+  const loadMoreOffersRef = useRef<HTMLDivElement>(null);
+
+  // Reset item count on category change
+  useEffect(() => {
+    setVisibleItemCount(20);
+  }, [selectedCategoryId]);
+
+  useEffect(() => {
+    if (!loadMoreItemsRef.current) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && visibleItemCount < filteredMenuItems.length) {
+        setVisibleItemCount(prev => prev + 20);
+      }
+    }, { rootMargin: '200px' });
+    observer.observe(loadMoreItemsRef.current);
+    return () => observer.disconnect();
+  }, [visibleItemCount, filteredMenuItems.length]);
+
+  useEffect(() => {
+    if (!loadMoreOffersRef.current) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && visibleOfferCount < offers.length) {
+        setVisibleOfferCount(prev => prev + 20);
+      }
+    }, { rootMargin: '200px' });
+    observer.observe(loadMoreOffersRef.current);
+    return () => observer.disconnect();
+  }, [visibleOfferCount, offers.length]);
 
   const getCategoryName = (catId: string) => {
     const cat = categories.find(c => c.id === catId);
@@ -448,7 +480,7 @@ const Menu: React.FC = () => {
               <div style={{ padding: '40px', textAlign: 'center', color: '#718096' }}>No menu items found. Add one to get started!</div>
             ) : (
               <div className="menu-grid">
-                {filteredMenuItems.map((item) => (
+                {filteredMenuItems.slice(0, visibleItemCount).map((item) => (
                   <div key={item.id} className="menu-card">
                     <div className="menu-image">
                       {(item.images && item.images.length > 0) ? (
@@ -509,6 +541,11 @@ const Menu: React.FC = () => {
                 ))}
               </div>
             )}
+            {visibleItemCount < filteredMenuItems.length && (
+              <div ref={loadMoreItemsRef} style={{ textAlign: 'center', padding: '24px', color: '#718096', fontSize: '13px', fontFamily: "'Outfit', sans-serif" }}>
+                Loading more items...
+              </div>
+            )}
           </div>
         )}
 
@@ -528,7 +565,7 @@ const Menu: React.FC = () => {
               <div style={{ padding: '40px', textAlign: 'center', color: '#718096' }}>No offers yet. Click "Add New Offer" to create one!</div>
             ) : (
               <div className="offers-grid">
-                {offers.map((offer) => {
+                {offers.slice(0, visibleOfferCount).map((offer) => {
                   const linkedItem = menuItems.find(m => m.id === offer.menu_item_id);
                   const originalPrice = linkedItem?.price;
                   return (
@@ -576,6 +613,11 @@ const Menu: React.FC = () => {
                     </div>
                   );
                 })}
+              </div>
+            )}
+            {visibleOfferCount < offers.length && (
+              <div ref={loadMoreOffersRef} style={{ textAlign: 'center', padding: '24px', color: '#718096', fontSize: '13px', fontFamily: "'Outfit', sans-serif" }}>
+                Loading more offers...
               </div>
             )}
           </div>
