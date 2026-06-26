@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { TrendingUp, X, CheckCircle } from 'lucide-react';
 import './dashboard.css';
 import Sidebar from '../components/sidebar';
@@ -107,8 +107,21 @@ const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({ order, onClose,
   );
 };
 
-// All Orders Dialog
 const AllOrdersDialog: React.FC<AllOrdersDialogProps & { showAction?: boolean }> = ({ orders, onClose, onSelectOrder, onMarkReady, onMarkPaid, showAction = true }) => {
+  const [visibleCount, setVisibleCount] = useState(20);
+  const loadMoreRef = useRef<HTMLTableRowElement>(null);
+
+  useEffect(() => {
+    if (!loadMoreRef.current) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && visibleCount < orders.length) {
+        setVisibleCount(prev => prev + 20);
+      }
+    }, { rootMargin: '200px' });
+    observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [visibleCount, orders.length]);
+
   return (
     <div className="dialog-overlay" onClick={onClose}>
       <div className="dialog-content chart-dialog" onClick={(e) => e.stopPropagation()}>
@@ -132,7 +145,7 @@ const AllOrdersDialog: React.FC<AllOrdersDialogProps & { showAction?: boolean }>
             </tr>
           </thead>
           <tbody>
-            {orders.map((order, idx) => (
+            {orders.slice(0, visibleCount).map((order, idx) => (
               <tr key={idx}>
                 <td onClick={() => {
                   onClose();
@@ -214,6 +227,13 @@ const AllOrdersDialog: React.FC<AllOrdersDialogProps & { showAction?: boolean }>
                 )}
               </tr>
             ))}
+            {visibleCount < orders.length && (
+              <tr ref={loadMoreRef}>
+                <td colSpan={7} style={{ textAlign: 'center', padding: '24px', color: '#718096', fontSize: '13px', fontFamily: "'Outfit', sans-serif" }}>
+                  Loading more orders...
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
