@@ -138,7 +138,22 @@ const MenuPage = () => {
               updated[catName] = updated[catName].map(item => {
                 // UPDATE: item exists in state and matches the changed row
                 if (eventType === 'UPDATE' && newRow && item.id === newRow.id) {
-                  return { ...item, isAvailable: newRow.is_available };
+                  return {
+                    ...item,
+                    name: newRow.name,
+                    shortDesc: newRow.short_description || newRow.description?.substring(0, 80) || '',
+                    description: newRow.long_description || newRow.description || '',
+                    price: newRow.discount_price || newRow.price,
+                    originalPrice: newRow.discount_price ? newRow.price : null,
+                    time: newRow.preparation_time ? `${newRow.preparation_time}min` : '15min',
+                    serves: newRow.serves ? `Serves ${newRow.serves}` : 'Serves 1',
+                    dietType: newRow.is_veg ? 'veg' : 'non-veg',
+                    tags: newRow.tags || [],
+                    variants: newRow.variants || [],
+                    addons: newRow.addons || [],
+                    modelUrl: newRow.model_url || null,
+                    isAvailable: newRow.is_available,
+                  };
                 }
                 // DELETE or item became invisible via RLS (unavailable → treated as DELETE)
                 // In this case old row id matches — mark as unavailable
