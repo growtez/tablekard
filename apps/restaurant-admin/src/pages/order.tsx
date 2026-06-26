@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, TrendingUp, Calendar, Eye, Package, Clock, ChefHat, CheckCircle, XCircle, ShoppingBag } from 'lucide-react';
+import { Search, TrendingUp, Calendar, Eye, Clock, ChefHat, CheckCircle, XCircle, Package } from 'lucide-react';
 import Sidebar from '../components/sidebar';
 import { useAuth } from '../context/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
@@ -97,18 +97,7 @@ const Order: React.FC = () => {
     return { today, week, todayChange, weekChange };
   }, [revenueData]);
 
-  // ── Status quick counts ───────────────────────────────────────────
-  const statusCounts = useMemo(() => {
-    const counts = { placed: 0, preparing: 0, ready: 0, cancelled: 0 };
-    orders.forEach(o => {
-      const s = o.status.toLowerCase();
-      if (s === 'pending' || s === 'confirmed') counts.placed++;
-      else if (s === 'preparing') counts.preparing++;
-      else if (s === 'ready') counts.ready++;
-      else if (s === 'cancelled') counts.cancelled++;
-    });
-    return counts;
-  }, [orders]);
+
 
   const handleStatusChange = async (orderId: string, nextStatus: string) => {
     if (!activeRestaurantId) return;
