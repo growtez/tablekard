@@ -1,39 +1,55 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import Dashboard from "./pages/dashboard";
-import Order from "./pages/order";
-import Menu from "./pages/menu";
-import Payment from "./pages/payment";
-import LoginPage from "./pages/Login";
-import Reports from "./pages/reports";
-import QRCodePage from "./pages/qrcode";
-import TableManagement from "./pages/table_management";
-import ProfilePage from "./pages/profile/profile";
-import SubscriptionPage from "./pages/subscription/subscription";
 
+// Lazy load page components
+const Dashboard = lazy(() => import("./pages/dashboard"));
+const Order = lazy(() => import("./pages/order"));
+const Menu = lazy(() => import("./pages/menu"));
+const Payment = lazy(() => import("./pages/payment"));
+const LoginPage = lazy(() => import("./pages/Login"));
+const Reports = lazy(() => import("./pages/reports"));
+const QRCodePage = lazy(() => import("./pages/qrcode"));
+const TableManagement = lazy(() => import("./pages/table_management"));
+const ProfilePage = lazy(() => import("./pages/profile/profile"));
+const SubscriptionPage = lazy(() => import("./pages/subscription/subscription"));
 
-
+// Loading fallback for Suspense
+const PageLoader = () => (
+  <div style={{
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100vh',
+    background: '#F4F6F9',
+    color: '#1E293B',
+    fontFamily: "'Outfit', sans-serif",
+    fontSize: '16px',
+    fontWeight: 500
+  }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+      <div style={{ 
+        width: '40px', 
+        height: '40px', 
+        border: '3px solid #E2E8F0', 
+        borderTopColor: '#8B3A1E', 
+        borderRadius: '50%', 
+        animation: 'spin 1s linear infinite' 
+      }}></div>
+      <span>Loading...</span>
+    </div>
+    <style>{`
+      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    `}</style>
+  </div>
+);
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
 
-
-
   if (loading) {
-    return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        background: '#FFFFFF',
-        color: '#1A1A1A'
-      }}>
-        Loading...
-      </div>
-    );
+    return <PageLoader />;
   }
 
   if (!isAuthenticated) {
@@ -44,48 +60,47 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AppRoutes() {
-
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="/dashboard" element={
-        <ProtectedRoute><Dashboard /></ProtectedRoute>
-      } />
-      <Route path="/orders" element={
-        <ProtectedRoute><Order /></ProtectedRoute>
-      } />
-      <Route path="/menu" element={
-        <ProtectedRoute><Menu /></ProtectedRoute>
-      } />
-      <Route path="/payments" element={
-        <ProtectedRoute><Payment /></ProtectedRoute>
-      } />
-      <Route path="/reports" element={
-        <ProtectedRoute><Reports /></ProtectedRoute>
-      } />
-      <Route path="/qrcode" element={
-        <ProtectedRoute><QRCodePage /></ProtectedRoute>
-      } />
-      <Route path="/table-management" element={
-        <ProtectedRoute><TableManagement /></ProtectedRoute>
-      } />
-      <Route path="/profile" element={
-        <ProtectedRoute><ProfilePage /></ProtectedRoute>
-      } />
-      <Route path="/subscription" element={
-        <ProtectedRoute><SubscriptionPage /></ProtectedRoute>
-      } />
-    </Routes>
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/dashboard" element={
+          <ProtectedRoute><Dashboard /></ProtectedRoute>
+        } />
+        <Route path="/orders" element={
+          <ProtectedRoute><Order /></ProtectedRoute>
+        } />
+        <Route path="/menu" element={
+          <ProtectedRoute><Menu /></ProtectedRoute>
+        } />
+        <Route path="/payments" element={
+          <ProtectedRoute><Payment /></ProtectedRoute>
+        } />
+        <Route path="/reports" element={
+          <ProtectedRoute><Reports /></ProtectedRoute>
+        } />
+        <Route path="/qrcode" element={
+          <ProtectedRoute><QRCodePage /></ProtectedRoute>
+        } />
+        <Route path="/table-management" element={
+          <ProtectedRoute><TableManagement /></ProtectedRoute>
+        } />
+        <Route path="/profile" element={
+          <ProtectedRoute><ProfilePage /></ProtectedRoute>
+        } />
+        <Route path="/subscription" element={
+          <ProtectedRoute><SubscriptionPage /></ProtectedRoute>
+        } />
+      </Routes>
+    </Suspense>
   );
 }
 
 export default function App() {
-
   return (
     <AuthProvider>
       <AppRoutes />
     </AuthProvider>
   );
 }
-
