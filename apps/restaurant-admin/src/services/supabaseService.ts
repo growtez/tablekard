@@ -655,7 +655,7 @@ export const getDashboardOrders = async (restaurantId: string): Promise<Dashboar
             created_at,
             restaurant_tables(table_number),
             profiles(name),
-            order_items(name, quantity, price, special_instructions, status)
+            order_items(id, name, quantity, price, special_instructions, status)
         `)
         .eq('restaurant_id', restaurantId)
         .order('created_at', { ascending: false });
@@ -694,6 +694,7 @@ export const getDashboardOrders = async (restaurantId: string): Promise<Dashboar
                 price: Number(item.price) || 0
             })),
             orderItems: itemsList.map((item: any) => ({
+                id: item.id,
                 name: item.name,
                 quantity: item.quantity,
                 price: Number(item.price) || 0,
@@ -716,6 +717,14 @@ export const updateOrderStatus = async (orderId: string, status: OrderStatus): P
         .from('orders')
         .update({ status: status.toLowerCase(), updated_at: new Date().toISOString() })
         .eq('id', orderId);
+    if (error) throw error;
+};
+
+export const updateOrderItemStatus = async (itemId: string, status: string): Promise<void> => {
+    const { error } = await db
+        .from('order_items')
+        .update({ status: status.toLowerCase() })
+        .eq('id', itemId);
     if (error) throw error;
 };
 

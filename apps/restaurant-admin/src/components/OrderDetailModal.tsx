@@ -6,9 +6,10 @@ import './OrderDetailModal.css';
 interface OrderDetailModalProps {
   order: DashboardOrder;
   onClose: () => void;
+  onUpdateItemStatus?: (itemId: string, nextStatus: string) => void;
 }
 
-const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ order, onClose }) => {
+const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ order, onClose, onUpdateItemStatus }) => {
   return (
     <div className="order-modal-overlay" onClick={onClose}>
       <div className="order-modal-content" onClick={(e) => e.stopPropagation()}>
@@ -109,18 +110,27 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ order, onClose }) =
                           <div className="item-name-cell">
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                               <span className="item-name">{item.name}</span>
-                              <span style={{ 
-                                fontSize: '10px', 
-                                padding: '2px 8px', 
-                                borderRadius: '12px', 
-                                fontWeight: 'bold',
-                                color: badgeColor,
-                                backgroundColor: badgeColor + '12',
-                                border: `1px solid ${badgeColor}30`,
-                                textTransform: 'capitalize'
-                              }}>
-                                {itemStatus}
-                              </span>
+                              <select
+                                value={itemStatus}
+                                onChange={(e) => onUpdateItemStatus?.((item as any).id, e.target.value)}
+                                style={{ 
+                                  fontSize: '11px', 
+                                  padding: '2px 8px', 
+                                  borderRadius: '8px', 
+                                  fontWeight: 'bold',
+                                  color: badgeColor,
+                                  backgroundColor: badgeColor + '12',
+                                  border: `1px solid ${badgeColor}30`,
+                                  cursor: onUpdateItemStatus ? 'pointer' : 'default',
+                                  textTransform: 'capitalize',
+                                  outline: 'none'
+                                }}
+                                disabled={!onUpdateItemStatus}
+                              >
+                                <option value="placed">Placed</option>
+                                <option value="preparing">Preparing</option>
+                                <option value="ready">Ready</option>
+                              </select>
                             </div>
                             {item.special_instructions && (
                               <span className="item-instruction">Note: {item.special_instructions}</span>

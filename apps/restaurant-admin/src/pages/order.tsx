@@ -1,13 +1,38 @@
 import React, { useState, useMemo } from 'react';
-import { Search, TrendingUp, Filter, Calendar, Eye } from 'lucide-react';
+import { Search, TrendingUp, Calendar, Eye, Package, Clock, ChefHat, CheckCircle, XCircle, ShoppingBag } from 'lucide-react';
 import Sidebar from '../components/sidebar';
 import { useAuth } from '../context/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
-import { updateOrderStatus, updatePaymentStatus } from '../services/supabaseService';
+import { updateOrderStatus, updatePaymentStatus, updateOrderItemStatus } from '../services/supabaseService';
 import type { DashboardOrder } from '../services/supabaseService';
 import { useDashboardOrders, useInvalidateQueries, queryKeys, useRevenueData } from '../hooks/useSupabaseQuery';
 import OrderDetailModal from '../components/OrderDetailModal';
 import './order.css';
+
+// ── Status transition rules ──────────────────────────────────────────
+// Once an order is "ready", it can ONLY go to "cancelled".
+// Once "cancelled", no further changes allowed.
+const getAvailableStatuses = (currentStatus: string) => {
+  const st = currentStatus.toLowerCase();
+  if (st === 'ready') return [{ value: 'ready', label: 'Ready' }, { value: 'cancelled', label: 'Cancelled' }];
+  if (st === 'cancelled') return [{ value: 'cancelled', label: 'Cancelled' }];
+  // For pending/preparing — full forward flow
+  return [
+    { value: 'pending', label: 'Placed' },
+    { value: 'preparing', label: 'Preparing' },
+    { value: 'ready', label: 'Ready' },
+    { value: 'cancelled', label: 'Cancelled' },
+  ];
+};
+
+const STATUS_CONFIG: Record<string, { icon: React.ReactNode; bg: string; color: string; label: string }> = {
+  pending:   { icon: <Clock size={12} />,      bg: '#FEF3C7', color: '#92400E', label: 'Placed' },
+  preparing: { icon: <ChefHat size={12} />,    bg: '#DBEAFE', color: '#1E40AF', label: 'Preparing' },
+  ready:     { icon: <CheckCircle size={12} />, bg: '#D1FAE5', color: '#065F46', label: 'Ready' },
+  cancelled: { icon: <XCircle size={12} />,    bg: '#FEE2E2', color: '#991B1B', label: 'Cancelled' },
+  served:    { icon: <CheckCircle size={12} />, bg: '#CCFBF1', color: '#115E59', label: 'Served' },
+  completed: { icon: <CheckCircle size={12} />, bg: '#CCFBF1', color: '#115E59', label: 'Completed' },
+};
 
 const Order: React.FC = () => {
   const { activeRestaurantId } = useAuth();
@@ -18,13 +43,27 @@ const Order: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<DashboardOrder | null>(null);
 
-  // React Query: cached, auto-retries, refetches every 5s (defined in hook)
   const { data: orders = [], isLoading: loading } = useDashboardOrders(activeRestaurantId);
   const { data: revenueData = [], isLoading: loadingRevenue } = useRevenueData(activeRestaurantId);
   const { invalidateOrders } = useInvalidateQueries();
   const queryClient = useQueryClient();
 
-  // ── Stats calculation ─────────────────────────────────────────────
+  const activeDetailOrder = useMemo(() => {
+    if (!selectedOrder) return null;
+    return orders.find(o => o.id === selectedOrder.id) || selectedOrder;
+  }, [orders, selectedOrder]);
+
+  const handleItemStatusChange = async (itemId: string, nextStatus: string) => {
+    if (!activeRestaurantId) return;
+    try {
+      await updateOrderItemStatus(itemId, nextStatus);
+      invalidateOrders(activeRestaurantId);
+    } catch (err) {
+      console.error('Failed to update item status', err);
+    }
+  };
+
+  // ── Stats ─────────────────────────────────────────────────────────
   const stats = useMemo(() => {
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -35,7 +74,6 @@ const Order: React.FC = () => {
     let today = 0, yesterday = 0, week = 0, lastWeek = 0;
 
     revenueData.forEach(r => {
-      // parse YYYY-MM-DD
       const [year, month, day] = r.revenueDate.split('-');
       const rDate = new Date(Number(year), Number(month) - 1, Number(day));
       const rTime = rDate.getTime();
@@ -59,18 +97,29 @@ const Order: React.FC = () => {
     return { today, week, todayChange, weekChange };
   }, [revenueData]);
 
+  // ── Status quick counts ───────────────────────────────────────────
+  const statusCounts = useMemo(() => {
+    const counts = { placed: 0, preparing: 0, ready: 0, cancelled: 0 };
+    orders.forEach(o => {
+      const s = o.status.toLowerCase();
+      if (s === 'pending' || s === 'confirmed') counts.placed++;
+      else if (s === 'preparing') counts.preparing++;
+      else if (s === 'ready') counts.ready++;
+      else if (s === 'cancelled') counts.cancelled++;
+    });
+    return counts;
+  }, [orders]);
+
   const handleStatusChange = async (orderId: string, nextStatus: string) => {
     if (!activeRestaurantId) return;
 
     const queryKey = queryKeys.dashboardOrders(activeRestaurantId);
     const previousOrders = queryClient.getQueryData<any[]>(queryKey);
 
-    // 1. Optimistically update the cache
     queryClient.setQueryData(queryKey, (old: any[] | undefined) => {
       if (!old) return [];
       return old.map(order => {
         if (order.id === orderId) {
-          // Map status color locally for immediate feedback
           let statusColor = 'yellow';
           const st = nextStatus.toLowerCase();
           if (st === 'preparing') statusColor = 'blue';
@@ -89,11 +138,9 @@ const Order: React.FC = () => {
 
     try {
       await updateOrderStatus(orderId, nextStatus.toLowerCase() as any);
-      // Optional: refetch in background to ensure sync
       invalidateOrders(activeRestaurantId);
     } catch (err) {
       console.error('Failed to update status', err);
-      // 2. Rollback if failed
       if (previousOrders) {
         queryClient.setQueryData(queryKey, previousOrders);
       }
@@ -106,7 +153,6 @@ const Order: React.FC = () => {
     const queryKey = queryKeys.dashboardOrders(activeRestaurantId);
     const previousOrders = queryClient.getQueryData<any[]>(queryKey);
 
-    // 1. Optimistically update the cache
     queryClient.setQueryData(queryKey, (old: any[] | undefined) => {
       if (!old) return [];
       return old.map(order => {
@@ -153,13 +199,10 @@ const Order: React.FC = () => {
     });
   }, [orders, searchQuery, selectedTable, selectedPayment, selectedStatus, selectedDate]);
 
-  // Total orders on the selected date (ignoring other filters – true daily total)
   const dateOrderCount = useMemo(() => {
     if (!selectedDate) return 0;
     return orders.filter(o => new Date(o.createdAt).toISOString().slice(0, 10) === selectedDate).length;
   }, [orders, selectedDate]);
-
-  const getStatusClass = (color: string) => `status-${color}`;
 
   return (
     <div className="order-container">
@@ -168,10 +211,13 @@ const Order: React.FC = () => {
       <div className="order-main-content">
         {/* Header */}
         <div className="order-header">
-          <h1 className="order-page-title">Order Management</h1>
+          <div>
+            <h1 className="order-page-title">Orders</h1>
+            <p className="order-page-subtitle">Manage and track all your restaurant orders</p>
+          </div>
           <div className="order-header-right">
             <div className="order-search-bar">
-              <Search size={18} color="#718096" />
+              <Search size={16} color="#94A3B8" />
               <input
                 type="text"
                 placeholder="Search orders..."
@@ -226,57 +272,37 @@ const Order: React.FC = () => {
           </div>
         </div>
 
-        {/* Filter Section */}
-        <div className="order-filter-section">
-          <div className="order-filter-buttons">
-            {/* Date filter */}
+        {/* Filter Bar */}
+        <div className="order-filter-bar">
+          <div className="order-filter-group">
             <div className="order-date-filter-wrapper">
-              <Calendar size={15} className="order-date-icon" />
+              <Calendar size={14} className="order-date-icon" />
               <input
                 type="date"
-                className="order-filter-btn order-date-input"
+                className="order-filter-select order-date-input"
                 value={selectedDate}
                 onChange={e => setSelectedDate(e.target.value)}
                 title="Filter by date"
               />
               {selectedDate && (
-                <button
-                  className="order-date-clear"
-                  onClick={() => setSelectedDate('')}
-                  title="Clear date filter"
-                >×</button>
+                <button className="order-date-clear" onClick={() => setSelectedDate('')} title="Clear">×</button>
               )}
             </div>
 
-            {/* Table filter */}
-            <select
-              className="order-filter-btn"
-              value={selectedTable}
-              onChange={e => setSelectedTable(e.target.value)}
-            >
+            <select className="order-filter-select" value={selectedTable} onChange={e => setSelectedTable(e.target.value)}>
               <option value="All Tables">All Tables</option>
               {Array.from(new Set(orders.map(o => o.table))).map(table => (
                 table !== 'N/A' && <option key={table} value={table}>{table}</option>
               ))}
             </select>
 
-            {/* Payment filter — Cash & Online only */}
-            <select
-              className="order-filter-btn"
-              value={selectedPayment}
-              onChange={e => setSelectedPayment(e.target.value)}
-            >
+            <select className="order-filter-select" value={selectedPayment} onChange={e => setSelectedPayment(e.target.value)}>
               <option value="Payment Method">All Payment</option>
               <option value="cash">Cash</option>
               <option value="online">Online</option>
             </select>
 
-            {/* Status filter — Placed (Pending), Preparing, Ready, Cancelled only */}
-            <select
-              className="order-filter-btn"
-              value={selectedStatus}
-              onChange={e => setSelectedStatus(e.target.value)}
-            >
+            <select className="order-filter-select" value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)}>
               <option value="Status">All Status</option>
               <option value="pending">Placed</option>
               <option value="preparing">Preparing</option>
@@ -285,117 +311,123 @@ const Order: React.FC = () => {
             </select>
           </div>
 
-          <button className="order-filter-icon-btn">
-            <Filter size={18} color="#718096" />
-          </button>
+          {selectedDate && (
+            <div className="order-date-tag-group">
+              <span className="order-date-tag">
+                📅 {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+              </span>
+              <span className="order-date-count-badge">{dateOrderCount}</span>
+            </div>
+          )}
         </div>
 
-        {/* Order History Table */}
-        <div className="order-table-card">
-          <div className="order-table-header">
-            <h2 className="order-table-title">Order History</h2>
-            {selectedDate && (
-              <div className="order-date-tag-group">
-                <span className="order-date-tag">
-                  📅 {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
-                </span>
-                <span className="order-date-count-badge">{dateOrderCount} order{dateOrderCount !== 1 ? 's' : ''}</span>
-              </div>
-            )}
+        {/* Orders List */}
+        <div className="order-list-section">
+          <div className="order-list-header">
+            <h2 className="order-list-title">All Orders</h2>
+            <span className="order-list-count">{filteredOrders.length} order{filteredOrders.length !== 1 ? 's' : ''}</span>
           </div>
-          <div className="order-table-wrapper">
-            <table className="order-history-table">
-              <thead>
-                <tr>
-                  <th>Order ID</th>
-                  <th>Customer Name</th>
-                  <th>Table</th>
-                  <th>Date & Time</th>
-                  <th> Order Status</th>
-                  <th>Payment Method</th>
-                  <th>Payment Status</th>
-                  <th>Order Type</th>
-                  <th>Items</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan={10} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>
-                      Loading orders...
-                    </td>
-                  </tr>
-                ) : filteredOrders.length === 0 ? (
-                  <tr>
-                    <td colSpan={10} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>
-                      No orders found
-                    </td>
-                  </tr>
-                ) : (
-                  filteredOrders.map((order) => (
-                    <tr key={order.id}>
-                      <td className="order-id-cell" data-label="Order ID">{order.orderNumber}</td>
-                      <td data-label="Customer Name">{order.customerName}</td>
-                      <td data-label="Table">{order.table}</td>
-                      <td data-label="Date & Time">
-                        <div style={{ fontSize: '14px', fontWeight: '500' }}>{new Date(order.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
-                        <div style={{ fontSize: '12px', color: '#718096' }}>{order.time}</div>
-                      </td>
-                      <td data-label="Order Status">
+
+          {loading ? (
+            <div className="order-loading">
+              <div className="order-skeleton" />
+              <div className="order-skeleton" />
+              <div className="order-skeleton" />
+            </div>
+          ) : filteredOrders.length === 0 ? (
+            <div className="order-empty">
+              <Package size={48} color="#CBD5E1" />
+              <h3>No orders found</h3>
+              <p>Try adjusting your filters or search query</p>
+            </div>
+          ) : (
+            <div className="order-cards-grid">
+              {filteredOrders.map((order) => {
+                const st = order.status.toLowerCase();
+                const statusConf = STATUS_CONFIG[st] || STATUS_CONFIG.pending;
+                const availableStatuses = getAvailableStatuses(st);
+                const isLocked = st === 'cancelled';
+
+                return (
+                  <div
+                    className={`order-card ord-status-${st}`}
+                    key={order.id}
+                    onClick={() => setSelectedOrder(order)}
+                  >
+                    {/* Card top row: ID + Status */}
+                    <div className="ocard-top">
+                      <div className="ocard-id-group">
+                        <span className="ocard-id">{order.orderNumber}</span>
+                        <span className="ocard-time">{order.time}</span>
+                      </div>
+                      <div onClick={(e) => e.stopPropagation()}>
                         <select
-                          className={`order-status-select ${getStatusClass(order.statusColor)}`}
-                          value={order.status.toLowerCase() === 'pending' ? 'pending' : order.status.toLowerCase()}
+                          className="ocard-status-select"
+                          style={{ backgroundColor: statusConf.bg, color: statusConf.color }}
+                          value={st === 'pending' ? 'pending' : st}
                           onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                          title="Change order status"
+                          disabled={isLocked}
                         >
-                          <option value="pending">Placed</option>
-                          <option value="preparing">Preparing</option>
-                          <option value="ready">Ready</option>
-                          <option value="cancelled">Cancelled</option>
+                          {availableStatuses.map(s => (
+                            <option key={s.value} value={s.value}>{s.label}</option>
+                          ))}
                         </select>
-                      </td>
-                      <td data-label="Payment Method">
-                        <span className="order-payment-badge">
-                          {order.paymentMethod}
-                        </span>
-                      </td>
-                      <td data-label="Payment Status">
+                      </div>
+                    </div>
+
+                    {/* Card body: customer + details */}
+                    <div className="ocard-body">
+                      <div className="ocard-customer">{order.customerName}</div>
+                      <div className="ocard-meta-row">
+                        <span className="ocard-meta-chip">{order.table}</span>
+                        <span className="ocard-meta-chip type">{order.orderType?.replace('_', ' ')}</span>
+                      </div>
+                    </div>
+
+                    {/* Items preview */}
+                    <div className="ocard-items" title={order.items}>
+                      {order.items}
+                    </div>
+
+                    {/* Card footer: payment + total + action */}
+                    <div className="ocard-footer">
+                      <div className="ocard-payment" onClick={(e) => e.stopPropagation()}>
+                        <span className="ocard-pay-method">{order.paymentMethod}</span>
                         <select
-                          className={`payment-status-pill status-${order.paymentStatusColor}`}
+                          className={`ocard-pay-status ps-${order.paymentStatusColor}`}
                           value={order.paymentStatus}
                           onChange={(e) => handlePaymentStatusChange(order.id, e.target.value)}
-                          title="Change payment status"
                         >
                           <option value="Paid">Paid</option>
                           <option value="Pending">Pending</option>
                           <option value="Failed">Failed</option>
                           <option value="Refunded">Refunded</option>
                         </select>
-                      </td>
-                      <td data-label="Order Type" style={{ textTransform: 'capitalize' }}>{order.orderType?.replace('_', ' ')}</td>
-                      <td className="order-items-cell" data-label="Items">{order.items}</td>
-                      <td data-label="Actions">
+                      </div>
+                      <div className="ocard-total-action">
+                        <span className="ocard-total">₹{order.total.toLocaleString('en-IN')}</span>
                         <button
-                          className="view-order-btn"
-                          onClick={() => setSelectedOrder(order)}
+                          className="ocard-view-btn"
+                          onClick={(e) => { e.stopPropagation(); setSelectedOrder(order); }}
                           title="View Details"
                         >
-                          <Eye size={18} />
+                          <Eye size={15} />
                         </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
-      {selectedOrder && (
+
+      {activeDetailOrder && (
         <OrderDetailModal
-          order={selectedOrder}
+          order={activeDetailOrder}
           onClose={() => setSelectedOrder(null)}
+          onUpdateItemStatus={handleItemStatusChange}
         />
       )}
     </div>
