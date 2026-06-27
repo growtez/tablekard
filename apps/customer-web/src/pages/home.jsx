@@ -552,9 +552,19 @@ const HomePage = () => {
                         <div className="modal-scrollable-content">
                             {/* Centered Dish Image */}
                             <div className="modal-dish-showcase">
-                                <div className="dish-image-frame">
-                                    <img src={selectedItem.image} alt={selectedItem.name} />
-                                </div>
+                                {selectedItem.images && selectedItem.images.length > 1 ? (
+                                    <div className="dish-images-scroll-container">
+                                        {selectedItem.images.map((imgUrl, idx) => (
+                                            <div key={idx} className="dish-image-frame">
+                                                <img src={imgUrl} alt={`${selectedItem.name} ${idx + 1}`} />
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="dish-image-frame">
+                                        <img src={selectedItem.image} alt={selectedItem.name} />
+                                    </div>
+                                )}
                                 <button
                                     className="modal-fav-floating"
                                     onClick={(e) => toggleFavorite(selectedItem.id, e)}

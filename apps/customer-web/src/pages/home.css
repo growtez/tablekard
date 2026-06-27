@@ -491,7 +491,7 @@ body {
   position: absolute;
   top: 0;
   right: 0;
-  background: linear-gradient(135deg, #D90429 0%, #ef233c 60%, #ff6b6b 100%);
+  background: #8B3A1E;
   padding: 10px 18px 10px 16px;
   border-radius: 0 22px 0 20px;
   display: flex;
@@ -1069,13 +1069,30 @@ body {
   position: relative;
 }
 
+.dish-images-scroll-container {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  width: 100vw; /* full viewport width to allow edge-to-edge scroll */
+  padding: 10px 24px;
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.dish-images-scroll-container::-webkit-scrollbar {
+  display: none;
+}
+
 .dish-image-frame {
   width: 280px;
-  height: 200px;
+  height: 280px;
   border-radius: 24px;
   overflow: hidden;
   box-shadow: 0 16px 50px rgba(139, 58, 30, 0.18);
   border: 5px solid #FFFFFF;
+  flex-shrink: 0;
+  scroll-snap-align: center;
 }
 
 .dish-image-frame img {

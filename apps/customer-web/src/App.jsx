@@ -46,6 +46,7 @@ const LiveQueuePage   = lazy(() => import("./pages/live_queue"));
 const FeedbackPage    = lazy(() => import("./pages/feedback"));
 const OrderHistoryPage= lazy(() => import("./pages/order_history"));
 const AboutPage       = lazy(() => import("./pages/about"));
+const AboutTablekardPage = lazy(() => import("./pages/about_tablekard"));
 const TestWebhookPage = lazy(() => import("./pages/test_webhook"));
 const ARViewerPage    = lazy(() => import("./pages/ar_viewer"));
 
@@ -166,6 +167,7 @@ function AppRoutes() {
           <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/login"      element={<LoginPage />} />
           <Route path="/about"      element={<AboutPage />} />
+          <Route path="/about-tablekard" element={<AboutTablekardPage />} />
           <Route path="/ar/:slug"   element={<ARViewerPage />} />
 
             {/* Protected */}

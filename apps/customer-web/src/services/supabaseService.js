@@ -223,6 +223,7 @@ export const getRecentOrderedItems = async (userId, limit = 3) => {
                 rating: 4.8, // Default rating
                 serves: `Serves ${m.serves || 1}`,
                 image: m.menu_item_images?.[0]?.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
+                images: m.menu_item_images?.map(img => img.image_url) || [],
                 description: m.long_description || m.short_description || '',
                 dietType: m.is_veg ? 'veg' : 'non-veg'
             };
@@ -443,6 +444,7 @@ export const getRecommendedItems = async (userId, restaurantId) => {
                     rating: avgRating, // Dynamically fetched from Database feedback!
                     serves: `Serves ${m.serves || 1}`,
                     image: m.menu_item_images?.[0]?.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
+                    images: m.menu_item_images?.map(img => img.image_url) || [],
                     description: m.long_description || m.short_description || '',
                     dietType: m.is_veg ? 'veg' : 'non-veg',
                     modelUrl: m.model_url || null,
@@ -547,6 +549,7 @@ const normalizeHomeItem = (m, discountLabel = null) => ({
     serves: `Serves ${m.serves || 1}`,
     image: m.menu_item_images?.[0]?.image_url
         || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
+    images: m.menu_item_images?.map(img => img.image_url) || [],
     description: m.long_description || m.short_description || '',
     dietType: m.is_veg ? 'veg' : 'non-veg',
     modelUrl: m.model_url || null,
@@ -709,6 +712,7 @@ export const getOffersForCustomer = async (restaurantId, limit = 20) => {
                     serves: `Serves ${m.serves || 1}`,
                     image: images[0]?.image_url
                         || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
+                    images: images.map(img => img.image_url) || [],
                     description: m.long_description || m.short_description || '',
                     dietType: m.is_veg ? 'veg' : 'non-veg',
                     modelUrl: m.model_url || null,
