@@ -81,32 +81,43 @@ export function RestaurantProvider({ children }) {
             return;
         }
 
-        setGeofenceStatus('checking');
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const uLat = position.coords.latitude;
-                const uLon = position.coords.longitude;
-                setUserCoords({ latitude: uLat, longitude: uLon });
+        const attemptGeofence = (attempt = 1) => {
+            setGeofenceStatus('checking');
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const uLat = position.coords.latitude;
+                    const uLon = position.coords.longitude;
+                    setUserCoords({ latitude: uLat, longitude: uLon });
 
-                const rLat = Number(lat);
-                const rLon = Number(lon);
-                const dist = getDistanceInMeters(uLat, uLon, rLat, rLon);
-                setDistance(dist);
+                    const rLat = Number(lat);
+                    const rLon = Number(lon);
+                    const dist = getDistanceInMeters(uLat, uLon, rLat, rLon);
+                    setDistance(dist);
+                    const accuracy = position.coords.accuracy || 0;
 
-                console.log('[Geofence] User coords:', uLat, uLon, 'Distance to restaurant:', dist, 'm');
+                    console.log(`[Geofence] Attempt ${attempt} User coords:`, uLat, uLon, 'Distance:', dist, 'm', 'Accuracy:', accuracy, 'm');
 
-                if (dist <= allowedRadius) {
-                    setGeofenceStatus('inside');
-                } else {
-                    setGeofenceStatus('outside');
-                }
-            },
-            (error) => {
-                console.error('[RestaurantContext] Geolocation error:', error);
-                setGeofenceStatus('error');
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
+                    if (dist <= allowedRadius) {
+                        setGeofenceStatus('inside');
+                    } else {
+                        // If they are 'outside' but accuracy is poor, retry automatically up to 3 times
+                        // because the phone's GPS is still finding satellites.
+                        if (accuracy > allowedRadius && attempt < 3) {
+                            console.log(`[Geofence] Poor accuracy. Retrying automatically in 2s...`);
+                            setTimeout(() => attemptGeofence(attempt + 1), 2000);
+                        } else {
+                            setGeofenceStatus('outside');
+                        }
+                    }
+                },
+                (error) => {
+                    console.error('[RestaurantContext] Geolocation error:', error);
+                    setGeofenceStatus('error');
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        };
+        attemptGeofence(1);
     };
 
     // Run automatically when restaurant data is loaded
@@ -153,7 +164,7 @@ export function RestaurantProvider({ children }) {
         }
 
         if (shouldCleanUrl) {
-            // If they came through the specific QR path, drop them on the clean Home page or Menu page.
+            // If they came through the specific QR path, drop them on the clean Home page.
             // Using '/' provides the best new welcome experience.
             navigate('/', { replace: true });
         }

@@ -191,6 +191,10 @@ const MyOrderPage = () => {
   // ─── PAY ONLINE: Razorpay flow ───
   const handlePayOnline = async () => {
     if (cartItems.length === 0) return;
+    if (cartItems.some(item => item.outOfStock)) {
+      setError('Please remove out of stock items from your cart before proceeding.');
+      return;
+    }
     if (!isAuthenticated) {
       const currentPath = encodeURIComponent(window.location.pathname);
       navigate(`/login?redirect=${currentPath}`);
@@ -251,6 +255,10 @@ const MyOrderPage = () => {
   // ─── PAY AT COUNTER: Direct order ───
   const handlePayAtCounter = async () => {
     if (cartItems.length === 0) return;
+    if (cartItems.some(item => item.outOfStock)) {
+      setError('Please remove out of stock items from your cart before proceeding.');
+      return;
+    }
     if (!isAuthenticated) {
       const currentPath = encodeURIComponent(window.location.pathname);
       navigate(`/login?redirect=${currentPath}`);
@@ -518,9 +526,14 @@ const MyOrderPage = () => {
             <>
               <div className="cart-items">
                 {cartItems.map(item => (
-                  <div key={item.id} className="cart-item">
+                  <div key={item.id} className="cart-item" style={{ opacity: item.outOfStock ? 0.6 : 1, filter: item.outOfStock ? 'grayscale(100%)' : 'none' }}>
                     <div className="cart-image">
                       <img src={item.image} alt={item.name} />
+                      {item.outOfStock && (
+                        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(0,0,0,0.7)', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+                          OUT OF STOCK
+                        </div>
+                      )}
                     </div>
                     <div className="cart-info">
                       <div className="cart-header">
@@ -544,19 +557,25 @@ const MyOrderPage = () => {
                       </div>
                       <div className="cart-bottom">
                         <div className="quantity-controls">
-                          <button
-                            className="quantity-btn"
-                            onClick={() => updateQuantity(item.id, -1)}
-                          >
-                            <Minus size={14} />
-                          </button>
-                          <span className="quantity">{item.quantity}</span>
-                          <button
-                            className="quantity-btn"
-                            onClick={() => updateQuantity(item.id, 1)}
-                          >
-                            <Plus size={14} />
-                          </button>
+                          {item.outOfStock ? (
+                            <span style={{ fontSize: '12px', color: '#EF4444', fontWeight: 'bold' }}>Out of stock</span>
+                          ) : (
+                            <>
+                              <button
+                                className="quantity-btn"
+                                onClick={() => updateQuantity(item.id, -1)}
+                              >
+                                <Minus size={14} />
+                              </button>
+                              <span className="quantity">{item.quantity}</span>
+                              <button
+                                className="quantity-btn"
+                                onClick={() => updateQuantity(item.id, 1)}
+                              >
+                                <Plus size={14} />
+                              </button>
+                            </>
+                          )}
                         </div>
                         <div className="item-price">
                           ₹{(item.price * item.quantity)}
@@ -633,11 +652,11 @@ const MyOrderPage = () => {
                 <button
                   className="place-order-btn"
                   onClick={handlePayAtCounter}
-                  disabled={paymentLoading}
+                  disabled={paymentLoading || cartItems.some(i => i.outOfStock)}
                   style={{
                     flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
                     padding: '10px 12px', fontSize: '13px', whiteSpace: 'nowrap',
-                    opacity: paymentLoading ? 0.6 : 1
+                    opacity: (paymentLoading || cartItems.some(i => i.outOfStock)) ? 0.6 : 1
                   }}
                 >
                   <Wallet size={16} />
@@ -646,12 +665,12 @@ const MyOrderPage = () => {
                 <button
                   className="place-order-btn"
                   onClick={handlePayOnline}
-                  disabled={paymentLoading}
+                  disabled={paymentLoading || cartItems.some(i => i.outOfStock)}
                   style={{
                     flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
                     background: 'transparent', border: '2px solid #8B3A1E', color: '#8B3A1E',
                     padding: '10px 12px', fontSize: '13px', whiteSpace: 'nowrap',
-                    opacity: paymentLoading ? 0.6 : 1
+                    opacity: (paymentLoading || cartItems.some(i => i.outOfStock)) ? 0.6 : 1
                   }}
                 >
                   <CreditCard size={16} />
@@ -782,16 +801,14 @@ const MyOrderPage = () => {
                       </div>
                     </div>
 
-                    {/* ── Invoice action (only when paid) ── */}
-                    {isPaid && (
-                      <button
-                        className="oi-invoice-btn"
-                        onClick={() => downloadInvoice(order)}
-                      >
-                        <Download size={13} />
-                        Download Invoice
-                      </button>
-                    )}
+                    {/* ── Invoice action ── */}
+                    <button
+                      className="oi-invoice-btn"
+                      onClick={() => downloadInvoice(order)}
+                    >
+                      <Download size={13} />
+                      Download Invoice
+                    </button>
                   </div>
                   );
                 })}

@@ -20,12 +20,14 @@ import {
     WifiOff,
     Star,
     MapPin,
-    Download
+    Download,
+    Utensils
 } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
 import { useAuth } from '../context/AuthContext';
-import { getOrderHistory } from '../services/supabaseService';
+import { useCart } from '../context/CartContext';
+import { getOrderHistory, getMenuItems } from '../services/supabaseService';
 import { jsPDF } from 'jspdf';
 import './order_history.css';
 
@@ -58,10 +60,16 @@ const PAYMENT_ICON = {
     netbanking: <CreditCard size={10} />,
 };
 
+const ORDER_TYPE_ICON = {
+    dine_in: <Utensils size={10} />,
+    takeaway: <ShoppingBag size={10} />,
+    delivery: <ShoppingBag size={10} />, // Fallback for delivery
+};
+
 const ORDER_TYPE_LABEL = {
-    dine_in:  '🍽️ Dine In',
-    takeaway: '🛍️ Takeaway',
-    delivery: '🛵 Delivery',
+    dine_in: 'Dine In',
+    takeaway: 'Takeaway',
+    delivery: 'Delivery',
 };
 
 const formatDate = (iso) => {
@@ -217,7 +225,8 @@ const OrderCard = ({ order, onReorder }) => {
                             </span>
                         )}
                         {order.type && (
-                            <span className="oh-order-type-badge">
+                            <span className="oh-order-type-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                {ORDER_TYPE_ICON[order.type]}
                                 {ORDER_TYPE_LABEL[order.type] || order.type}
                             </span>
                         )}
@@ -284,17 +293,15 @@ const OrderCard = ({ order, onReorder }) => {
                             )}
                         </div>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end' }}>
-                        {order.paymentStatus === 'paid' && (
-                            <button
-                                className="oh-download-invoice-btn"
-                                onClick={() => downloadInvoice(order)}
-                                title="Download Invoice"
-                            >
-                                <Download size={13} />
-                                Invoice
-                            </button>
-                        )}
+                    <div className="oh-action-buttons">
+                        <button
+                            className="oh-download-invoice-btn"
+                            onClick={() => downloadInvoice(order)}
+                            title="Download Invoice"
+                        >
+                            <Download size={13} />
+                            Invoice
+                        </button>
                         <button
                             className="oh-reorder-btn"
                             onClick={() => onReorder(order)}
@@ -331,9 +338,11 @@ const OrderHistoryPage = () => {
             const mapped = history.map(order => ({
                 id: `#${order.order_number || order.id.substring(0, 8).toUpperCase()}`,
                 rawId: order.id,
+                restaurantId: order.restaurant_id,
                 date: formatDate(order.created_at),
                 rawDate: order.created_at,
                 items: (order.order_items || []).map(item => ({
+                    id: item.menu_item_id,
                     name: item.name,
                     quantity: item.quantity || 1,
                     price: item.price,
@@ -397,8 +406,54 @@ const OrderHistoryPage = () => {
         return acc;
     }, {});
 
-    const handleReorder = (order) => {
-        navigate('/menu');
+    const { setCartItems } = useCart();
+
+    const handleReorder = async (order) => {
+        try {
+            setLoading(true);
+            // Fetch current menu items to check availability
+            const currentMenu = await getMenuItems(order.restaurantId);
+            const currentMenuMap = {};
+            currentMenu.forEach(m => {
+                currentMenuMap[m.id] = m;
+            });
+
+            // Map old order items to new cart items
+            const newCart = order.items.map(item => {
+                const currentItem = currentMenuMap[item.id];
+                const isAvailable = currentItem && currentItem.is_available;
+                
+                return {
+                    id: item.id,
+                    name: currentItem ? currentItem.name : item.name,
+                    price: currentItem ? (currentItem.discount_price || currentItem.price) : item.price,
+                    image: currentItem?.menu_item_images?.[0]?.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
+                    rating: currentItem?.rating || '4.5',
+                    serves: currentItem?.serves || '1',
+                    quantity: item.quantity,
+                    outOfStock: !isAvailable
+                };
+            });
+
+            setCartItems(prev => {
+                const combined = [...prev];
+                newCart.forEach(newItem => {
+                    const existing = combined.find(i => i.id === newItem.id);
+                    if (existing) {
+                        existing.quantity += newItem.quantity;
+                    } else {
+                        combined.push(newItem);
+                    }
+                });
+                return combined;
+            });
+            navigate('/orders');
+        } catch (err) {
+            console.error("Reorder failed:", err);
+            setError("Failed to process reorder.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     /* ── Login gate ──────────────────────────────────────────────── */
