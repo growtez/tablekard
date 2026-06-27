@@ -535,15 +535,23 @@
     margin-top: 3px;
 }
 
+.oh-action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 140px;
+}
+
 .oh-reorder-btn {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
-    padding: 12px 18px;
+    padding: 10px 16px;
     background: #1A1A1A;
     color: #FFFFFF;
-    border: none;
-    border-radius: 14px;
+    border: 1px solid #1A1A1A;
+    border-radius: 12px;
     font-size: 12px;
     font-weight: 700;
     cursor: pointer;
@@ -551,33 +559,37 @@
     white-space: nowrap;
     flex-shrink: 0;
     font-family: 'Outfit', sans-serif;
+    width: 100%;
 }
 
 .oh-reorder-btn:active {
-    transform: scale(0.95);
+    transform: scale(0.97);
     background: #333333;
+    border-color: #333333;
 }
 
 .oh-download-invoice-btn {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
-    padding: 8px 14px;
+    padding: 10px 16px;
     background: transparent;
     color: #8B3A1E;
     border: 1.5px solid #8B3A1E;
-    border-radius: 10px;
-    font-size: 11px;
+    border-radius: 12px;
+    font-size: 12px;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s ease;
     white-space: nowrap;
     flex-shrink: 0;
     font-family: 'Outfit', sans-serif;
+    width: 100%;
 }
 
 .oh-download-invoice-btn:active {
-    transform: scale(0.95);
+    transform: scale(0.97);
     background: #8B3A1E;
     color: #FFFFFF;
 }

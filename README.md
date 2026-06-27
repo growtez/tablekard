@@ -1,88 +1,101 @@
-# Restaurant SaaS Platform (QR Only)
+# Tablekard - Restaurant SaaS Platform (QR Only)
 
-A multi-tenant Restaurant SaaS platform focused on **QR-based, on-premise ordering**. This repo keeps the platform lean: **Super Admin**, **Restaurant Admin**, and **Customer Web (QR)**.
-
----
-
-## Overview
-
-**Multi-tenant structure:**
-
-- **Super Admin** → Manages all restaurants, subscriptions, and platform settings.
-- **Restaurant Admin** → Manages menu, orders, tables, and staff for a restaurant.
-- **Customer Web (QR)** → Logged-in customers scan a table QR and place dine-in orders.
+A comprehensive multi-tenant Restaurant SaaS platform focused on **QR-based, on-premise ordering**. This repository is structured as a monorepo containing multiple frontend applications that interface with a shared Supabase backend.
 
 ---
 
-## Apps
+## 🏗️ Architecture & Apps
 
-| App | Type | Purpose |
-|-----|------|---------|
-| **Super Admin** | React + Vite | Platform management |
-| **Restaurant Admin** | React + Vite | Restaurant operations |
-| **Customer Web (QR)** | React + Vite | QR ordering experience |
+The platform is designed with a strict multi-tenant architecture, separating concerns between platform administration, restaurant management, and the end-customer experience.
+
+| App | Tech Stack | Purpose |
+|-----|------------|---------|
+| **Super Admin** (`apps/super-admin`) | React + Vite | Platform-level management, SaaS subscription billing, and overarching restaurant onboarding. |
+| **Restaurant Admin** (`apps/restaurant-admin`) | React + Vite | Restaurant operations dashboard. Manages the menu, orders, tables, staff roles, and analytics/revenue. |
+| **Customer Web (QR)** (`apps/customer-web`) | React + Vite | The core dine-in experience. Customers scan a table QR code, authenticate, and place orders directly from their mobile devices. |
+| **Inhouse Service App** (`apps/inhouse-service-app`) | React + Vite | Internal service application for staff/kitchen operations. |
+
+*(Note: Delivery and native mobile apps have been deprecated in favor of a focused, QR-only ordering flow.)*
 
 ---
 
-## Tech Stack
+## 🛠️ Tech Stack
 
 | Layer | Technology |
 |------|------------|
-| Web Apps | React 18/19 + Vite |
-| Backend | Supabase (Postgres + Auth + RLS) |
-| Auth | Google OAuth + Magic Link (customers), Email/Password (admins) |
+| **Web Apps** | React 18/19 + Vite |
+| **Package Manager**| NPM Workspaces |
+| **Backend & DB** | Supabase (PostgreSQL) |
+| **Authentication**| Supabase Auth (Google OAuth, Magic Links for customers; Email/Password for admins) |
+| **Storage** | Supabase Storage (for avatars, restaurant logos, and menu item images) |
 
 ---
 
-## Quick Start
+## 🗄️ Database Features (Supabase)
+
+The core logic of the platform resides securely in the Supabase PostgreSQL database (`supabase/schema.sql`). It utilizes advanced PostgreSQL features:
+
+- **Row Level Security (RLS)**: Enforces strict data isolation between tenants. Users only see data belonging to their assigned restaurant. Super Admins have platform-wide access.
+- **Realtime Subscriptions**: Live updates for the order queue, revenue changes, and menu updates are powered by Supabase Realtime publications.
+- **Trigger-based Aggregations**: 
+  - Revenue automatically rolls up into daily summaries.
+  - Menu item sales counts are automatically tracked and incremented.
+  - Order status cascades intelligently between parent orders and individual order items (e.g., if all items are 'ready', the order becomes 'ready').
+- **Multi-tiered Roles**: Custom Enums governing roles (`super_admin`, `restaurant_admin`, `restaurant_staff`, `customer`).
+
+---
+
+## 🚀 Quick Start
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 18+ (Node 20+ recommended)
 - npm 10+
-- Supabase project
+- A configured Supabase project
 
-### Environment
+### Environment Setup
 
-Copy `.env.example` → `.env` and fill:
-
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
-
-### Run Apps
+Create a `.env` file at the root or within specific apps by copying from `.env.example`:
 
 ```bash
-cd apps/super-admin
-npm install
-npm run dev
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-```bash
-cd apps/restaurant-admin
-npm install
-npm run dev
-```
+### Installation & Running Locally
+
+The project utilizes npm workspaces, allowing you to install dependencies once from the root.
 
 ```bash
-cd apps/customer-web
+# Install all dependencies across all workspaces
 npm install
-npm run dev
+```
+
+**Run individual apps:**
+
+```bash
+# Super Admin
+npm run dev:super-admin
+
+# Restaurant Admin
+npm run dev:restaurant-admin
+
+# Customer Web
+npm run dev:customer-web
+
+# Inhouse Service App
+npm run dev:inhouse-service-app
+```
+
+### Building for Production
+
+```bash
+npm run build:all
 ```
 
 ---
 
-## Supabase Schema
+## 📅 Roadmap & Notes
 
-SQL for the Supabase schema and RLS policies is in:
-
-```
-supabase/schema.sql
-```
-
----
-
-## Notes
-
-- Delivery and mobile apps have been removed in favor of QR-only ordering.
-- Payments (Razorpay) are planned but not wired yet.
-
+- **Payments Integration**: Integration with Razorpay for SaaS subscriptions and customer checkouts is planned and supported in the schema, but wiring is currently in progress.
+- **AR Models**: Support for 3D model URLs (`model_url`) in menu items is included in the schema to support Augmented Reality menu viewing.

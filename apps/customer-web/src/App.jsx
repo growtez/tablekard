@@ -97,7 +97,7 @@ function RequireRestaurant({ children }) {
   }
 
   if (geofenceStatus === 'checking') {
-    return <PageSkeleton />;
+    return location.pathname === '/' ? <HomeLoading /> : <PageSkeleton />;
   }
 
   if (geofenceStatus === 'outside') {
