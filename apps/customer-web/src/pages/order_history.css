@@ -93,7 +93,7 @@
 
 .oh-topnav-title {
     font-family: 'Playfair Display', serif;
-    font-size: 20px;
+    font-size: 24px;
     font-weight: 800;
     color: #FFFFFF;
     letter-spacing: 0.3px;
@@ -121,7 +121,7 @@
 }
 
 .oh-stats-eyebrow {
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 2.5px;
@@ -131,7 +131,7 @@
 
 .oh-stats-amount {
     font-family: 'Inter', sans-serif;
-    font-size: 42px;
+    font-size: 48px;
     font-weight: 800;
     color: #FFFFFF;
     letter-spacing: -2px;
@@ -139,7 +139,7 @@
 }
 
 .oh-stats-amount .currency {
-    font-size: 24px;
+    font-size: 28px;
     font-weight: 600;
     letter-spacing: -1px;
     vertical-align: top;
@@ -148,7 +148,7 @@
 }
 
 .oh-stats-subtitle {
-    font-size: 12px;
+    font-size: 14px;
     color: rgba(255, 255, 255, 0.55);
     margin-top: 4px;
     font-weight: 500;
@@ -188,14 +188,14 @@
 
 .oh-stat-val {
     font-family: 'Inter', sans-serif;
-    font-size: 20px;
+    font-size: 24px;
     font-weight: 800;
     color: #FFFFFF;
     line-height: 1;
 }
 
 .oh-stat-label {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 600;
     color: rgba(255, 255, 255, 0.5);
     text-transform: uppercase;
@@ -229,7 +229,7 @@
     border-radius: 50px;
     background: #FFFFFF;
     border: 1.5px solid #EBEBEB;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 600;
     color: #888888;
     cursor: pointer;
@@ -242,7 +242,7 @@
 .oh-tab-count {
     background: #F0F0F0;
     color: #999;
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 700;
     padding: 2px 7px;
     border-radius: 20px;
@@ -356,7 +356,7 @@
 
 .oh-order-num {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 600;
     color: #1A1A1A;
     white-space: nowrap;
@@ -366,7 +366,7 @@
     display: flex;
     align-items: center;
     gap: 5px;
-    font-size: 11px;
+    font-size: 13px;
     color: #AAAAAA;
     font-weight: 500;
 }
@@ -382,7 +382,7 @@
     gap: 5px;
     padding: 6px 12px;
     border-radius: 50px;
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.8px;
@@ -446,7 +446,7 @@
 }
 
 .oh-items-label {
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1.5px;
@@ -467,7 +467,7 @@
     background: #F7F7F7;
     padding: 5px 12px;
     border-radius: 10px;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
     color: #444444;
 }
@@ -475,7 +475,7 @@
 .oh-item-qty {
     background: #EBEBEB;
     color: #666;
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 700;
     padding: 1px 5px;
     border-radius: 5px;
@@ -487,7 +487,7 @@
     background: #F0F0F0;
     padding: 5px 12px;
     border-radius: 10px;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 600;
     color: #888888;
 }
@@ -509,7 +509,7 @@
 }
 
 .oh-price-label {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1.5px;
@@ -518,7 +518,7 @@
 
 .oh-price-amount {
     font-family: 'Inter', sans-serif;
-    font-size: 22px;
+    font-size: 26px;
     font-weight: 800;
     color: #1A1A1A;
     letter-spacing: -0.5px;
@@ -529,7 +529,7 @@
     display: flex;
     align-items: center;
     gap: 5px;
-    font-size: 10px;
+    font-size: 12px;
     color: #BBBBBB;
     font-weight: 500;
     margin-top: 3px;
@@ -708,7 +708,7 @@
     gap: 4px;
     padding: 3px 8px;
     border-radius: 6px;
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.8px;
@@ -729,7 +729,7 @@
 
 /* ── TIMELINE CONNECTOR (visual grouping) ────────────────── */
 .oh-date-group-label {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 700;
     color: #999999;
     padding: 16px 0 8px;
@@ -777,7 +777,7 @@
     gap: 4px;
     padding: 3px 8px;
     border-radius: 8px;
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 700;
     background: #FFF9E5;
     color: #B45309;
@@ -792,7 +792,7 @@
     gap: 5px;
     background: none;
     border: none;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 600;
     color: #8B3A1E;
     cursor: pointer;

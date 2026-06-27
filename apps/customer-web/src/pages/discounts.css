@@ -102,15 +102,23 @@
 
 .discount-badge-overlay {
     position: absolute;
-    top: 5px;
-    left: 5px;
-    background: #8B3A1E;
+    top: 8px;
+    left: 8px;
+    background: linear-gradient(135deg, #D90429 0%, #ef233c 60%, #ff6b6b 100%);
     color: white;
-    padding: 2px 6px;
-    border-radius: 6px;
-    font-size: 9px;
-    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
     z-index: 2;
+    box-shadow: 0 3px 10px rgba(217, 4, 41, 0.45);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    max-width: calc(100% - 16px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .menu-details {
@@ -348,13 +356,30 @@
   position: relative;
 }
 
+.dish-images-scroll-container {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  width: 100vw;
+  padding: 10px 24px;
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.dish-images-scroll-container::-webkit-scrollbar {
+  display: none;
+}
+
 .dish-image-frame {
   width: 280px;
-  height: 200px;
+  height: 280px;
   border-radius: 24px;
   overflow: hidden;
   box-shadow: 0 16px 50px rgba(139, 58, 30, 0.18);
   border: 5px solid #FFFFFF;
+  flex-shrink: 0;
+  scroll-snap-align: center;
 }
 
 .dish-image-frame img {

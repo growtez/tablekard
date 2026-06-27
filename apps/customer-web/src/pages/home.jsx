@@ -10,8 +10,7 @@ import { getRecentOrderedItems, getRecommendedItems, getOffersForCustomer, getFa
 import PageSkeleton from '../components/PageSkeleton';
 import { showHomeLoader, hideHomeLoader } from '../utils/loader';
 import BottomNav from '../components/BottomNav';
-
-
+import { supabase } from '@restaurant-saas/supabase';
 const HomePage = () => {
 
     const navigate = useNavigate();
@@ -153,6 +152,25 @@ const HomePage = () => {
             script.async = true;
             document.body.appendChild(script);
         }
+
+        // Real-time subscription for offers
+        const offersSubscription = supabase
+            .channel('home-offers')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'offers', filter: `restaurant_id=eq.${restaurant?.id}` },
+                async () => {
+                    if (restaurant?.id) {
+                        const updatedOffers = await getOffersForCustomer(restaurant.id, 5);
+                        setDiscountItems(updatedOffers || []);
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(offersSubscription);
+        };
     }, [restaurant?.id, user?.id]);
 
     if (loadingRecent) {
@@ -404,9 +422,6 @@ const HomePage = () => {
                                     </div>
                                     <div className="discount-info">
                                         <h3 className="discount-name">{offer.name}</h3>
-                                        {offer.subtitle && (
-                                            <p style={{ fontSize: '11px', color: '#888', margin: '2px 0 4px', fontStyle: 'italic' }}>{offer.subtitle}</p>
-                                        )}
                                         <div className="discount-meta-row">
                                             <div className="discount-time">
                                                 <Clock size={12} color="#666666" />
@@ -537,9 +552,19 @@ const HomePage = () => {
                         <div className="modal-scrollable-content">
                             {/* Centered Dish Image */}
                             <div className="modal-dish-showcase">
-                                <div className="dish-image-frame">
-                                    <img src={selectedItem.image} alt={selectedItem.name} />
-                                </div>
+                                {selectedItem.images && selectedItem.images.length > 1 ? (
+                                    <div className="dish-images-scroll-container">
+                                        {selectedItem.images.map((imgUrl, idx) => (
+                                            <div key={idx} className="dish-image-frame">
+                                                <img src={imgUrl} alt={`${selectedItem.name} ${idx + 1}`} />
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="dish-image-frame">
+                                        <img src={selectedItem.image} alt={selectedItem.name} />
+                                    </div>
+                                )}
                                 <button
                                     className="modal-fav-floating"
                                     onClick={(e) => toggleFavorite(selectedItem.id, e)}

@@ -223,6 +223,7 @@ export const getRecentOrderedItems = async (userId, limit = 3) => {
                 rating: 4.8, // Default rating
                 serves: `Serves ${m.serves || 1}`,
                 image: m.menu_item_images?.[0]?.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
+                images: m.menu_item_images?.map(img => img.image_url) || [],
                 description: m.long_description || m.short_description || '',
                 dietType: m.is_veg ? 'veg' : 'non-veg'
             };
@@ -443,6 +444,7 @@ export const getRecommendedItems = async (userId, restaurantId) => {
                     rating: avgRating, // Dynamically fetched from Database feedback!
                     serves: `Serves ${m.serves || 1}`,
                     image: m.menu_item_images?.[0]?.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
+                    images: m.menu_item_images?.map(img => img.image_url) || [],
                     description: m.long_description || m.short_description || '',
                     dietType: m.is_veg ? 'veg' : 'non-veg',
                     modelUrl: m.model_url || null,
@@ -547,6 +549,7 @@ const normalizeHomeItem = (m, discountLabel = null) => ({
     serves: `Serves ${m.serves || 1}`,
     image: m.menu_item_images?.[0]?.image_url
         || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
+    images: m.menu_item_images?.map(img => img.image_url) || [],
     description: m.long_description || m.short_description || '',
     dietType: m.is_veg ? 'veg' : 'non-veg',
     modelUrl: m.model_url || null,
@@ -698,7 +701,7 @@ export const getOffersForCustomer = async (restaurantId, limit = 20) => {
                     subtitle: o.title,           // offer title shown as subtitle
                     price: offerPrice,           // the discounted price shown prominently
                     originalPrice: originalPrice,
-                    discount: savingPct > 0 ? `${savingPct}% OFF` : 'Special Offer',
+                    discount: o.title,           // badge text taken directly from offers.title
                     timer: o.valid_until
                         ? `Until ${new Date(o.valid_until).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}`
                         : null,
@@ -709,6 +712,7 @@ export const getOffersForCustomer = async (restaurantId, limit = 20) => {
                     serves: `Serves ${m.serves || 1}`,
                     image: images[0]?.image_url
                         || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
+                    images: images.map(img => img.image_url) || [],
                     description: m.long_description || m.short_description || '',
                     dietType: m.is_veg ? 'veg' : 'non-veg',
                     modelUrl: m.model_url || null,
@@ -719,7 +723,7 @@ export const getOffersForCustomer = async (restaurantId, limit = 20) => {
         console.error('getOffersForCustomer error:', err);
     }
 
-    // Fallback: use the existing discount_price / top-sellers logic
-    return getDiscountItemsForHome(restaurantId, limit);
+    // No active offers — return empty so UI can hide the section
+    return [];
 };
 

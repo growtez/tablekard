@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Plus, Minus, Tag, ChevronDown, Upload, Trash2, Maximize2, Edit2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Plus, Minus, Tag, ChevronDown, Upload, Trash2, Maximize2, Edit2, ChevronLeft, ChevronRight, Crop } from 'lucide-react';
 import type { MenuCategory } from '@restaurant-saas/types';
 import './menu_dialog.css';
+import ImageCropper from './ImageCropper';
 
 interface Variant {
   name: string;   // e.g. "Small", "Medium", "Large"
@@ -60,6 +61,15 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [currentGalleryIndex, setCurrentGalleryIndex] = useState(0);
 
+  const [cropQueue, setCropQueue] = useState<{ url: string, file?: File, index?: number }[]>([]);
+  const [currentCrop, setCurrentCrop] = useState<{ url: string, file?: File, index?: number } | null>(null);
+
+  useEffect(() => {
+    if (cropQueue.length > 0 && !currentCrop) {
+      setCurrentCrop(cropQueue[0]);
+    }
+  }, [cropQueue, currentCrop]);
+
   useEffect(() => {
     if (mode === 'edit' && item) {
       setFormData({
@@ -114,22 +124,48 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    setFormData(prev => {
-      // Find the max sort order among non-deleted images
-      const maxOrder = prev.images.reduce((max, img) => (!img.isDeleted && img.sortOrder > max ? img.sortOrder : max), 0);
-      
-      const newImages = files.map((file, index) => {
-        return {
-          file,
-          url: URL.createObjectURL(file), // Provide immediate preview
-          sortOrder: maxOrder + index + 1
-        };
-      });
-      return { ...prev, images: [...prev.images, ...newImages] };
-    });
+    const newCropQueue = files.map(file => ({
+      url: URL.createObjectURL(file),
+      file
+    }));
     
-    // reset input
+    setCropQueue(prev => [...prev, ...newCropQueue]);
+    
     if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleCropComplete = (croppedBlob: Blob) => {
+    const croppedFile = new File([croppedBlob], currentCrop?.file?.name || 'cropped-image.jpg', { type: 'image/jpeg' });
+    const croppedUrl = URL.createObjectURL(croppedBlob);
+
+    setFormData(prev => {
+      const updatedImages = [...prev.images];
+      if (currentCrop?.index !== undefined) {
+        // Update existing image
+        updatedImages[currentCrop.index] = {
+          ...updatedImages[currentCrop.index],
+          file: croppedFile,
+          url: croppedUrl
+        };
+      } else {
+        // Add new image
+        const maxOrder = prev.images.reduce((max, img) => (!img.isDeleted && img.sortOrder > max ? img.sortOrder : max), 0);
+        updatedImages.push({
+          file: croppedFile,
+          url: croppedUrl,
+          sortOrder: maxOrder + 1
+        });
+      }
+      return { ...prev, images: updatedImages };
+    });
+
+    setCropQueue(prev => prev.slice(1));
+    setCurrentCrop(null);
+  };
+
+  const handleCropCancel = () => {
+    setCropQueue(prev => prev.slice(1));
+    setCurrentCrop(null);
   };
 
   const handleRemoveImage = (urlToRemove: string) => {
@@ -242,9 +278,10 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
   if (!isOpen) return null;
 
   return (
-    <div className="menu-dialog-overlay" onClick={onClose}>
-      <div className="menu-dialog-container" onClick={(e) => e.stopPropagation()}>
-        <div className="menu-dialog-header">
+    <>
+      <div className="menu-dialog-overlay" onClick={onClose}>
+        <div className="menu-dialog-container" onClick={(e) => e.stopPropagation()}>
+          <div className="menu-dialog-header">
           <h2 className="menu-dialog-title">
             {mode === 'add' ? 'Add New Menu Item' : 'Edit Menu Item'}
           </h2>
@@ -352,8 +389,10 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
           <div className="menu-form-group">
             <label className="menu-form-label">Item Images</label>
             <div className="menu-image-previews-container">
-              {formData.images.filter(img => !img.isDeleted).map((img, idx) => (
-                <div key={img.id || img.url || idx} className="menu-image-preview-card" onClick={() => openGallery(idx)}>
+              {formData.images.filter(img => !img.isDeleted).map((img, idx) => {
+                const originalIndex = formData.images.findIndex(i => i.url === img.url);
+                return (
+                <div key={img.id || img.url || originalIndex} className="menu-image-preview-card" onClick={() => openGallery(idx)}>
                   <img src={img.url} alt={`Preview ${idx}`} className="menu-image-preview-img" />
                   <button 
                     type="button" 
@@ -362,12 +401,21 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
                   >
                     <X size={12} />
                   </button>
+                  <button 
+                    type="button" 
+                    onClick={(e) => { e.stopPropagation(); setCurrentCrop({ url: img.url, index: originalIndex }); }}
+                    title="Crop Image"
+                    style={{ position: 'absolute', top: 6, left: 6, background: '#fff', border: 'none', borderRadius: '4px', padding: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', zIndex: 10 }}
+                  >
+                    <Crop size={14} color="#333" />
+                  </button>
                   {idx === 0 && <div className="menu-image-primary-badge">Primary</div>}
                   <div className="menu-image-card-overlay">
                     <Maximize2 size={16} />
                   </div>
                 </div>
-              ))}
+                );
+              })}
               
               <div 
                 className="menu-image-add-trigger" 
@@ -653,6 +701,18 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
           </div>
         </form>
       </div>
+      </div>
+
+      {currentCrop && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100000 }}>
+          <ImageCropper
+            image={currentCrop.url}
+            onCropComplete={handleCropComplete}
+            onCancel={handleCropCancel}
+            aspect={1}
+          />
+        </div>
+      )}
 
       {/* Gallery Editor Overlay */}
       {isGalleryOpen && (
@@ -681,6 +741,19 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
                     <div className="gallery-image-wrapper">
                       <img src={currentImg.url} alt="Gallery view" className="gallery-image" />
                       <div className="gallery-image-actions">
+                        <button 
+                          type="button"
+                          className="gallery-action-btn edit"
+                          onClick={() => {
+                            const originalIndex = formData.images.findIndex(i => i.url === currentImg.url);
+                            setCurrentCrop({ url: currentImg.url, index: originalIndex });
+                            setIsGalleryOpen(false);
+                          }}
+                          style={{ background: '#fff', color: '#333' }}
+                        >
+                          <Crop size={18} />
+                          Crop Image
+                        </button>
                         <button 
                           type="button"
                           className="gallery-action-btn delete"
@@ -726,7 +799,7 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 

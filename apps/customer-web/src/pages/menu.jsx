@@ -16,7 +16,7 @@ const MenuPage = () => {
   const { restaurantId } = useRestaurant();
   const { user, isAuthenticated } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Starters');
+  const [selectedCategory, setSelectedCategory] = useState('All');
   const [favorites, setFavorites] = useState([]);
   const { cartItems: cart, addToCart, removeFromCart, getItemQuantity, cartTotal, cartSubtotal } = useCart();
   const cartIconRef = useRef(null);
@@ -92,7 +92,7 @@ const MenuPage = () => {
           sessionStorage.setItem('menuData', JSON.stringify(grouped));
           sessionStorage.setItem('menuCategories', JSON.stringify(catNames));
 
-          if (!catNames.includes(selectedCategory) && catNames.length > 0) {
+          if (selectedCategory !== 'All' && !catNames.includes(selectedCategory) && catNames.length > 0) {
             setSelectedCategory(catNames[0]);
           }
         }
@@ -138,7 +138,22 @@ const MenuPage = () => {
               updated[catName] = updated[catName].map(item => {
                 // UPDATE: item exists in state and matches the changed row
                 if (eventType === 'UPDATE' && newRow && item.id === newRow.id) {
-                  return { ...item, isAvailable: newRow.is_available };
+                  return {
+                    ...item,
+                    name: newRow.name,
+                    shortDesc: newRow.short_description || newRow.description?.substring(0, 80) || '',
+                    description: newRow.long_description || newRow.description || '',
+                    price: newRow.discount_price || newRow.price,
+                    originalPrice: newRow.discount_price ? newRow.price : null,
+                    time: newRow.preparation_time ? `${newRow.preparation_time}min` : '15min',
+                    serves: newRow.serves ? `Serves ${newRow.serves}` : 'Serves 1',
+                    dietType: newRow.is_veg ? 'veg' : 'non-veg',
+                    tags: newRow.tags || [],
+                    variants: newRow.variants || [],
+                    addons: newRow.addons || [],
+                    modelUrl: newRow.model_url || null,
+                    isAvailable: newRow.is_available,
+                  };
                 }
                 // DELETE or item became invisible via RLS (unavailable → treated as DELETE)
                 // In this case old row id matches — mark as unavailable
@@ -200,11 +215,17 @@ const MenuPage = () => {
   };
 
   // Safely determine the active category
-  const actualCategory = categories.includes(selectedCategory) 
-    ? selectedCategory 
-    : (categories.length > 0 ? categories[0] : 'Starters');
+  const actualCategory = selectedCategory === 'All'
+    ? 'All'
+    : categories.includes(selectedCategory) 
+      ? selectedCategory 
+      : (categories.length > 0 ? categories[0] : 'Starters');
 
-  const filteredItems = (menuItems[actualCategory] || []).filter(item => {
+  const itemsToFilter = actualCategory === 'All'
+    ? Object.values(menuItems).flat()
+    : (menuItems[actualCategory] || []);
+
+  const filteredItems = itemsToFilter.filter(item => {
     const searchLower = searchTerm.toLowerCase();
     const nameMatch = item.name?.toLowerCase().includes(searchLower);
     const descMatch = item.description?.toLowerCase().includes(searchLower);
@@ -364,6 +385,12 @@ const MenuPage = () => {
       {/* Categories */}
       <div className="categories-section">
         <div className="categories-list">
+          <button
+            className={`category-btn ${actualCategory === 'All' ? 'active' : ''}`}
+            onClick={() => setSelectedCategory('All')}
+          >
+            All
+          </button>
           {categories.map(category => (
             <button
               key={category}
@@ -543,19 +570,19 @@ const MenuPage = () => {
             <div className="modal-scrollable-content">
               {/* Centered Dish Image */}
               <div className="modal-dish-showcase">
-                <div className="dish-image-frame-scrollable">
-                  {selectedItem.images && selectedItem.images.length > 0 ? (
-                    selectedItem.images.map((imgUrl, idx) => (
+                {selectedItem.images && selectedItem.images.length > 1 ? (
+                  <div className="dish-images-scroll-container">
+                    {selectedItem.images.map((imgUrl, idx) => (
                       <div key={idx} className="dish-image-frame">
-                        <img src={imgUrl} alt={`${selectedItem.name} - ${idx}`} loading="lazy" />
+                        <img src={imgUrl} alt={`${selectedItem.name} ${idx + 1}`} loading="lazy" />
                       </div>
-                    ))
-                  ) : (
-                    <div className="dish-image-frame">
-                      <img src={selectedItem.image} alt={selectedItem.name} loading="lazy" />
-                    </div>
-                  )}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="dish-image-frame">
+                    <img src={selectedItem.image} alt={selectedItem.name} loading="lazy" />
+                  </div>
+                )}
                 <button
                   className="modal-fav-floating"
                   onClick={() => toggleFavorite(selectedItem.id)}

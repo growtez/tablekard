@@ -5,6 +5,7 @@ import BottomNav from '../components/BottomNav';
 import { useRestaurant } from '../context/RestaurantContext';
 import { getOffersForCustomer } from '../services/supabaseService';
 import PageSkeleton from '../components/PageSkeleton';
+import { supabase } from '@restaurant-saas/supabase';
 import './discounts.css';
 
 const DiscountsPage = () => {
@@ -34,10 +35,31 @@ const DiscountsPage = () => {
     useEffect(() => {
         if (!restaurant?.id) return;
         setLoadingItems(true);
-        getOffersForCustomer(restaurant.id, 50)
-            .then(discounts => setDiscountItems(discounts || []))
-            .catch(err => console.error('Offers fetch failed:', err))
-            .finally(() => setLoadingItems(false));
+        
+        const fetchDiscounts = () => {
+            getOffersForCustomer(restaurant.id, 50)
+                .then(discounts => setDiscountItems(discounts || []))
+                .catch(err => console.error('Offers fetch failed:', err))
+                .finally(() => setLoadingItems(false));
+        };
+        
+        fetchDiscounts();
+
+        const channel = supabase.channel('discounts-page-changes')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'offers', filter: `restaurant_id=eq.${restaurant.id}` },
+                () => {
+                    getOffersForCustomer(restaurant.id, 50)
+                        .then(discounts => setDiscountItems(discounts || []))
+                        .catch(err => console.error('Offers fetch failed on real-time update:', err));
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, [restaurant?.id]);
 
     useEffect(() => {
@@ -218,9 +240,19 @@ const DiscountsPage = () => {
 
                         <div className="modal-scrollable-content">
                             <div className="modal-dish-showcase">
-                                <div className="dish-image-frame">
-                                    <img src={selectedItem.image} alt={selectedItem.name} />
-                                </div>
+                                {selectedItem.images && selectedItem.images.length > 1 ? (
+                                    <div className="dish-images-scroll-container">
+                                        {selectedItem.images.map((imgUrl, idx) => (
+                                            <div key={idx} className="dish-image-frame">
+                                                <img src={imgUrl} alt={`${selectedItem.name} ${idx + 1}`} />
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="dish-image-frame">
+                                        <img src={selectedItem.image} alt={selectedItem.name} />
+                                    </div>
+                                )}
                                 <button
                                     className="modal-fav-floating"
                                     onClick={(e) => toggleFavorite(selectedItem.id, e)}
@@ -309,8 +341,8 @@ const DiscountsPage = () => {
                     </div>
                 </div>
             )}
-            {/* Bottom Navigation */}
-            {!showItemModal && <BottomNav />}
+            {/* Bottom Navigation
+            {!showItemModal && <BottomNav />} */}
         </div>
     );
 };

@@ -396,6 +396,12 @@ const ProfilePage = () => {
           </div>
         </div>
 
+        {/* About Tablekard Button */}
+        <button className="about-tablekard-btn" onClick={() => navigate('/about-tablekard')}>
+          <Info size={18} color="#8B3A1E" />
+          <span>About Tablekard</span>
+        </button>
+
         {/* Logout Button */}
         <button className="signout-btn" onClick={handleLogout}>
           <LogOut size={18} />
