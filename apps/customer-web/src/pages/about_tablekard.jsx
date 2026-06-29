@@ -29,7 +29,7 @@ const AboutTablekardPage = () => {
         }}>
           <ArrowLeft size={22} color="#1A1A1A" />
         </button>
-        <h1 style={{ fontSize: '15px', fontWeight: 600, margin: 0, color: '#1A1A1A', letterSpacing: '1px', textTransform: 'uppercase' }}>About</h1>
+        <h1 style={{ fontSize: '15px', fontWeight: 600, margin: 0, color: '#1A1A1A', letterSpacing: '1px', textTransform: 'uppercase' }}>About us</h1>
       </header>
 
       <div style={{ padding: '40px 24px', maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '32px' }}>

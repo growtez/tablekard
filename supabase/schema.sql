@@ -290,6 +290,8 @@ CREATE TABLE IF NOT EXISTS public.offers (
 -- Backfill schema changes for existing databases
 ALTER TABLE public.restaurants
     ADD COLUMN IF NOT EXISTS profile_urls TEXT[] DEFAULT ARRAY[]::TEXT[];
+ALTER TABLE public.restaurants
+    ADD COLUMN IF NOT EXISTS pay_online BOOLEAN DEFAULT true;
 
 ALTER TABLE public.restaurants
     ADD COLUMN IF NOT EXISTS subscription_end_at TIMESTAMPTZ;

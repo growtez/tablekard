@@ -45,6 +45,7 @@ interface RestaurantFormState {
   instagramUrl: string;
   facebookUrl: string;
   websiteUrl: string;
+  payOnline: boolean;
 }
 
 interface AdminFormState {
@@ -161,6 +162,7 @@ const createRestaurantFormState = (
   instagramUrl: restaurant.instagramUrl ?? "",
   facebookUrl: restaurant.facebookUrl ?? "",
   websiteUrl: restaurant.websiteUrl ?? "",
+  payOnline: (restaurant as any).pay_online ?? true,
 });
 
 const createAdminFormState = (
@@ -724,6 +726,7 @@ const ProfilePage: React.FC = () => {
           instagramUrl: emptyToNull(restaurantForm.instagramUrl),
           facebookUrl: emptyToNull(restaurantForm.facebookUrl),
           websiteUrl: emptyToNull(restaurantForm.websiteUrl),
+          pay_online: restaurantForm.payOnline,
         },
       );
 
@@ -973,6 +976,16 @@ const ProfilePage: React.FC = () => {
                   />
                 </label>
 
+                <label className="profile-field profile-field-span-2" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', border: '1px solid #CBD5E0', borderRadius: '14px', marginTop: '8px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <span className="profile-field-label">Enable Online Payments</span>
+                    <span className="profile-field-help" style={{ margin: 0 }}>Allow customers to pay online from their phones</span>
+                  </div>
+                  <div className={`profile-toggle-switch ${restaurantForm.payOnline ? 'active' : ''}`} onClick={() => handleRestaurantFieldChange("payOnline", !restaurantForm.payOnline as any)}>
+                     <div className="profile-toggle-thumb" />
+                  </div>
+                </label>
+
                 <div className="profile-info-item">
                   <span className="profile-info-label">Status</span>
                   <span
@@ -1035,6 +1048,13 @@ const ProfilePage: React.FC = () => {
                   <span className="profile-info-label">Tagline</span>
                   <span className="profile-info-value">
                     {restaurant?.tagline || "Not set"}
+                  </span>
+                </div>
+
+                <div className="profile-info-item">
+                  <span className="profile-info-label">Online Payments</span>
+                  <span className="profile-info-value">
+                    {(restaurant as any)?.pay_online === false ? "Disabled" : "Enabled"}
                   </span>
                 </div>
 
