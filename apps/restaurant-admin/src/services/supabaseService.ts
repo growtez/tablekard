@@ -88,6 +88,8 @@ export interface RestaurantProfileUpdateInput {
     instagramUrl?: string | null;
     facebookUrl?: string | null;
     websiteUrl?: string | null;
+    slug?: string | null;
+    pay_online?: boolean | null;
 }
 
 export interface AdministratorProfileUpdateInput {
@@ -138,8 +140,9 @@ const mapRestaurantRow = (row: RestaurantRow): Restaurant => ({
     operatingHoursWeekends: row.operating_hours_weekends,
     instagramUrl: row.instagram_url,
     facebookUrl: row.facebook_url,
-    websiteUrl: row.website_url
-});
+    websiteUrl: row.website_url,
+    pay_online: (row as any).pay_online
+} as unknown as Restaurant);
 
 const mapProfileRow = (row: ProfileRow): Profile => ({
     id: row.id,
@@ -190,7 +193,9 @@ export const updateRestaurantProfile = async (
             operating_hours_weekends: input.operatingHoursWeekends ?? null,
             instagram_url: input.instagramUrl ?? null,
             facebook_url: input.facebookUrl ?? null,
-            website_url: input.websiteUrl ?? null
+            website_url: input.websiteUrl ?? null,
+            slug: input.slug ?? null,
+            pay_online: input.pay_online ?? null
         })
         .eq('id', restaurantId)
         .select('*')

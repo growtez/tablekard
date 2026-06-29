@@ -17,7 +17,7 @@ const MyOrderPage = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user, loading: authLoading } = useAuth();
   const { cartItems, updateQuantity, deleteFromCart, cartSubtotal, clearCart } = useCart();
-  const { restaurantId, tableId, geofenceStatus, distance, allowedRadius, checkGeofence } = useRestaurant();
+  const { restaurantId, tableId, geofenceStatus, distance, allowedRadius, checkGeofence, restaurant } = useRestaurant();
   const [activeTab, setActiveTab] = useState('cart');
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState('');
@@ -662,20 +662,22 @@ const MyOrderPage = () => {
                   <Wallet size={16} />
                   Pay at Counter
                 </button>
-                <button
-                  className="place-order-btn"
-                  onClick={handlePayOnline}
-                  disabled={paymentLoading || cartItems.some(i => i.outOfStock)}
-                  style={{
-                    flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                    background: 'transparent', border: '2px solid #8B3A1E', color: '#8B3A1E',
-                    padding: '10px 12px', fontSize: '13px', whiteSpace: 'nowrap',
-                    opacity: (paymentLoading || cartItems.some(i => i.outOfStock)) ? 0.6 : 1
-                  }}
-                >
-                  <CreditCard size={16} />
-                  Pay Online
-                </button>
+                {restaurant?.pay_online !== false && (
+                  <button
+                    className="place-order-btn"
+                    onClick={handlePayOnline}
+                    disabled={paymentLoading || cartItems.some(i => i.outOfStock)}
+                    style={{
+                      flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                      background: 'transparent', border: '2px solid #8B3A1E', color: '#8B3A1E',
+                      padding: '10px 12px', fontSize: '13px', whiteSpace: 'nowrap',
+                      opacity: (paymentLoading || cartItems.some(i => i.outOfStock)) ? 0.6 : 1
+                    }}
+                  >
+                    <CreditCard size={16} />
+                    Pay Online
+                  </button>
+                )}
               </div>
 
               <style>{`

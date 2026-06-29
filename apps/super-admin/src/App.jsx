@@ -213,19 +213,11 @@ export default function App() {
                     <ChevronLeft size={20} />
                   </Link>
                   <div className="h-6 w-[1px] bg-white/10 mx-1" />
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center" style={{ gap: '1rem' }}>
                     <div className="res-avatar-small">
                       {headerData.logo_url ? <img src={headerData.logo_url} alt="" /> : <span>{headerData.name?.[0] || '?'}</span>}
                     </div>
-                    <div className="flex column" style={{ gap: '0px' }}>
-                      <div className="flex items-center gap-2">
-                        <h2 style={{ fontSize: '0.95rem', fontWeight: 700, margin: 0 }}>{headerData.name}</h2>
-                        <Badge variant={headerData.status === 'active' ? 'success' : 'warning'} style={{ fontSize: '0.65rem', padding: '1px 6px' }}>
-                          {headerData.status?.toUpperCase()}
-                        </Badge>
-                      </div>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>ID: {headerData.id}</span>
-                    </div>
+                    <h2 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0 }}>{headerData.name}</h2>
                   </div>
                   <div className="flex items-center gap-2" style={{ marginLeft: '1rem' }}>
                     {headerData.isEditing ? (
