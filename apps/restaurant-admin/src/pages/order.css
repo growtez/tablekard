@@ -522,32 +522,32 @@
 .ocard-payment {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .ocard-pay-method {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   color: #64748B;
   background: #F8FAFC;
-  padding: 3px 8px;
-  border-radius: 5px;
+  padding: 6px 10px;
+  border-radius: 6px;
   text-transform: capitalize;
   font-family: 'Outfit', sans-serif;
 }
 
 .ocard-pay-status {
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 700;
   font-family: 'Outfit', sans-serif;
-  padding: 3px 20px 3px 8px;
-  border-radius: 6px;
+  padding: 6px 26px 6px 12px;
+  border-radius: 8px;
   border: none;
   cursor: pointer;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 6px center;
+  background-position: right 10px center;
 }
 
 .ocard-pay-status:focus {
