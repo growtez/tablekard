@@ -261,11 +261,11 @@ const OrderCard = ({
         <div className="order-actions">
           <button className="btn btn-up" onClick={() => onPromote(id)} title="Move to Preparing">
             <ArrowUp className="icon" size={20} color="#000" strokeWidth={3} />
-            <span style={{ marginLeft: '6px' }}>PROCEED</span>
+            <span style={{ marginLeft: '6px' }}>PREPARE</span>
           </button>
           <button className="btn btn-remove" onClick={() => onCancel(id)} title="Cancel Order">
             <X className="icon" size={20} color="#000" strokeWidth={3} />
-            <span style={{ marginLeft: '6px' }}>DENY</span>
+            <span style={{ marginLeft: '6px' }}>REJECT</span>
           </button>
         </div>
       )}
