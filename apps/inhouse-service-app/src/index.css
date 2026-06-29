@@ -267,6 +267,98 @@ body {
   background-color: #c7dfc6;
 }
 
+/* ── Item-level controls (queue cards) ──────────────────── */
+
+.item-status-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.item-action-btn {
+  padding: 4px 10px;
+  font-size: 11px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+  font-family: 'Roboto', sans-serif;
+  letter-spacing: 0.2px;
+  transition: opacity 0.15s;
+}
+
+.item-action-btn:active {
+  opacity: 0.75;
+}
+
+.item-action-btn--prepare {
+  background: #8B3A1E;
+  color: #fff;
+}
+
+.item-action-btn--ready {
+  background: #82b366;
+  color: #fff;
+}
+
+.item-done-label {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #82b366;
+}
+
+/* ── Preparing-card ✓ toggle ──────────────────────────── */
+
+.item-ready-toggle {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid #ddd;
+  background: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #ccc;
+  flex-shrink: 0;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.item-ready-toggle:hover {
+  border-color: #82b366;
+  color: #82b366;
+  background: rgba(130, 179, 102, 0.1);
+}
+
+.item-ready-toggle--done {
+  background: #82b366;
+  border-color: #82b366;
+  color: #fff;
+  cursor: default;
+}
+
+/* ── Preparing-card always-visible items panel ──────────── */
+
+.preparing-items-panel {
+  /* no overflow:hidden wrapper — items are always fully shown */
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.preparing-progress {
+  font-size: 11px;
+  font-weight: 700;
+  color: #82b366;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-top: 2px;
+}
+
 .btn-up {
   background-color: var(--btn-green-bg);
   border: 1.5px solid var(--btn-green-border);
@@ -347,6 +439,44 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+/* ── Queue card read-only item list ──────────────────────── */
+
+.queue-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 0;
+}
+
+.queue-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.queue-item-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.queue-item-info {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.queue-item-preparing {
+  font-size: 10px;
+  font-weight: 700;
+  color: #8B3A1E;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .expand-empty {

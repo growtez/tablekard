@@ -57,6 +57,17 @@ function getTableNumber(order) {
 
 /* ──────────────────── OrderCard component ─────────────── */
 
+/**
+ * QUEUE card  (status = 'pending' | 'confirmed')
+ * – Collapsed by default; tap "ORDER ITEMS" to expand
+ * – Per-item: PREPARE (placed→preparing) + READY (→ready) buttons
+ * – Card actions: PROCEED  |  DENY
+ *
+ * PREPARING card  (status = 'preparing')
+ * – Items always visible — no expand step needed
+ * – Per-item: single circular ✓ toggle (tap to mark ready)
+ * – When ALL items are ready the order is auto-promoted; no DONE button
+ */
 const OrderCard = ({
   id,
   orderNumber,
@@ -70,11 +81,126 @@ const OrderCard = ({
   onCancel,
   onUpdateItemStatus,
 }) => {
+  const isPreparingCard = status === 'preparing';
   const [expanded, setExpanded] = useState(false);
-  const allItemsReady = items.length > 0 && items.every((item) => item.status === 'ready');
 
+  const readyCount = items.filter((i) => i.status === 'ready').length;
+  const allItemsReady = items.length > 0 && readyCount === items.length;
+
+  // Auto-promote the order the moment every item is ticked ready
+  useEffect(() => {
+    if (isPreparingCard && allItemsReady) {
+      onMarkReady(id);
+    }
+  }, [isPreparingCard, allItemsReady, id, onMarkReady]);
+
+  /* ── Queue items — PREPARE per item, no READY ────────── */
+  const renderQueueItems = () =>
+    items.length === 0 ? (
+      <div className="expand-empty">No items in this order</div>
+    ) : (
+      items.map((item) => {
+        const details = buildDetailString(item);
+        const itemStatus = item.status || 'placed';
+        return (
+          <div key={item.id} className="queue-item">
+            <div className="queue-item-main">
+              <div className="queue-item-info">
+                <span className="expand-item-name">{item.name}</span>
+                <span className="expand-item-qty">×{item.quantity}</span>
+              </div>
+              {itemStatus === 'placed' && (
+                <button
+                  className="item-action-btn item-action-btn--prepare"
+                  onClick={() => onUpdateItemStatus(item.id, 'preparing')}
+                >
+                  PREPARE
+                </button>
+              )}
+              {itemStatus === 'preparing' && (
+                <span className="queue-item-preparing">● IN PROGRESS</span>
+              )}
+              {itemStatus === 'ready' && (
+                <span className="item-done-label">
+                  <Check size={12} strokeWidth={3} /> READY
+                </span>
+              )}
+            </div>
+            {details && <div className="expand-item-detail">{details}</div>}
+            {item.special_instructions && (
+              <div className="expand-item-instructions">
+                <AlertTriangle size={11} /> {item.special_instructions}
+              </div>
+            )}
+          </div>
+        );
+      })
+    );
+
+  /* ── Preparing items — 3 states: PREPARE / ✓ toggle / done ── */
+  const renderPreparingItems = () =>
+    items.length === 0 ? (
+      <div className="expand-empty">No items in this order</div>
+    ) : (
+      items.map((item) => {
+        const details = buildDetailString(item);
+        const itemStatus = item.status || 'placed';
+        const isReady = itemStatus === 'ready';
+        return (
+          <div key={item.id} className="expand-item">
+            <div className="expand-item-main">
+              <div>
+                <span className="expand-item-name">{item.name}</span>
+                <span className="expand-item-qty">×{item.quantity}</span>
+              </div>
+
+              {itemStatus === 'placed' && (
+                /* Still not started — show PREPARE to kick it off */
+                <button
+                  className="item-action-btn item-action-btn--prepare"
+                  onClick={() => onUpdateItemStatus(item.id, 'preparing')}
+                >
+                  PREPARE
+                </button>
+              )}
+
+              {itemStatus === 'preparing' && (
+                /* In progress — tap ✓ to mark done */
+                <button
+                  className="item-ready-toggle"
+                  onClick={() => onUpdateItemStatus(item.id, 'ready')}
+                  title="Mark as ready"
+                >
+                  <Check size={14} strokeWidth={3.5} />
+                </button>
+              )}
+
+              {isReady && (
+                /* Done */
+                <button
+                  className="item-ready-toggle item-ready-toggle--done"
+                  disabled
+                  title="Item ready"
+                >
+                  <Check size={14} strokeWidth={3.5} />
+                </button>
+              )}
+            </div>
+            {details && <div className="expand-item-detail">{details}</div>}
+            {item.special_instructions && (
+              <div className="expand-item-instructions">
+                <AlertTriangle size={11} /> {item.special_instructions}
+              </div>
+            )}
+          </div>
+        );
+      })
+    );
+
+  /* ── render ───────────────────────────────────────── */
   return (
-    <div className={`order-card${expanded ? ' order-card--expanded' : ''}`}>
+    <div className={`order-card${(expanded || isPreparingCard) ? ' order-card--expanded' : ''}`}>
+
       {/* Top row: table number + order info */}
       <div className="card-top">
         <div className="table-section">
@@ -86,130 +212,63 @@ const OrderCard = ({
         <div className="card-right">
           <div className="order-badge">#{String(orderNumber || '').slice(-4).toUpperCase()}</div>
           <div className="order-time">{formatTime(createdAt)}</div>
-          <button className="order-items-trigger" onClick={() => setExpanded((v) => !v)}>
-            <span>ORDER ITEMS</span>
-            <ChevronDown
-              size={18}
-              strokeWidth={2.5}
-              className={`expand-chevron${expanded ? ' expand-chevron--open' : ''}`}
-            />
-          </button>
+
+          {isPreparingCard ? (
+            /* Progress counter replaces expand trigger */
+            <div className="preparing-progress">
+              {readyCount}/{items.length} ready
+            </div>
+          ) : (
+            <button className="order-items-trigger" onClick={() => setExpanded((v) => !v)}>
+              <span>{items.length} ITEM{items.length !== 1 ? 'S' : ''}</span>
+              <ChevronDown
+                size={18}
+                strokeWidth={2.5}
+                className={`expand-chevron${expanded ? ' expand-chevron--open' : ''}`}
+              />
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Expandable items section */}
-      <div className={`card-expand-wrapper${expanded ? ' card-expand-wrapper--open' : ''}`}>
-        <div className="card-expand-inner">
-          {/* Type badge row */}
+      {/* Items panel */}
+      {isPreparingCard ? (
+        /* Always visible for preparing cards */
+        <div className="card-expand-inner preparing-items-panel">
           {type && (
             <div className="expand-type-row">
               <span className="expand-type-badge">{String(type).replace('_', ' ').toUpperCase()}</span>
             </div>
           )}
-
-          <div className="expand-items">
-            {items.length === 0 ? (
-              <div className="expand-empty">No items in this order</div>
-            ) : (
-              items.map((item) => {
-                const details = buildDetailString(item);
-                const itemStatus = item.status || 'placed';
-                return (
-                  <div key={item.id} className="expand-item" style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.05)', paddingBottom: '10px', marginBottom: '10px' }}>
-                    <div className="expand-item-main" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <span className="expand-item-name">{item.name}</span>
-                        <span className="expand-item-qty">×{item.quantity}</span>
-                      </div>
-                      
-                      {/* Interactive status buttons for items with theme colors */}
-                      <div className="item-status-actions" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        {itemStatus === 'placed' && (
-                          <>
-                            <button 
-                              onClick={() => onUpdateItemStatus(item.id, 'preparing')} 
-                              style={{ padding: '4px 10px', fontSize: '11px', borderRadius: '6px', border: 'none', background: '#8B3A1E', color: '#fff', cursor: 'pointer', fontWeight: 'bold' }}
-                            >
-                              PREPARE
-                            </button>
-                            <button 
-                              onClick={() => onUpdateItemStatus(item.id, 'ready')} 
-                              style={{ padding: '4px 10px', fontSize: '11px', borderRadius: '6px', border: 'none', background: '#82b366', color: '#fff', cursor: 'pointer', fontWeight: 'bold' }}
-                            >
-                              READY
-                            </button>
-                          </>
-                        )}
-                        {itemStatus === 'preparing' && (
-                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                            <span style={{ fontSize: '11px', color: '#92400E', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
-                              Preparing
-                            </span>
-                            <button 
-                              onClick={() => onUpdateItemStatus(item.id, 'ready')} 
-                              style={{ padding: '4px 10px', fontSize: '11px', borderRadius: '6px', border: 'none', background: '#82b366', color: '#fff', cursor: 'pointer', fontWeight: 'bold' }}
-                            >
-                              READY
-                            </button>
-                          </div>
-                        )}
-                        {itemStatus === 'ready' && (
-                          <span style={{ fontSize: '11px', color: '#82b366', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '3px' }}>
-                            <Check size={12} strokeWidth={3} /> READY
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    {details && <div className="expand-item-detail">{details}</div>}
-                    {item.special_instructions && (
-                      <div className="expand-item-instructions">
-                        <AlertTriangle size={11} /> {item.special_instructions}
-                      </div>
-                    )}
-                  </div>
-                );
-              })
+          <div className="expand-items">{renderPreparingItems()}</div>
+        </div>
+      ) : (
+        /* Collapsible for queue cards — items are read-only */
+        <div className={`card-expand-wrapper${expanded ? ' card-expand-wrapper--open' : ''}`}>
+          <div className="card-expand-inner">
+            {type && (
+              <div className="expand-type-row">
+                <span className="expand-type-badge">{String(type).replace('_', ' ').toUpperCase()}</span>
+              </div>
             )}
-          </div>
-
-          <div className="expand-footer">
-            <span className="expand-total-items">{items.length} item{items.length !== 1 ? 's' : ''}</span>
+            <div className="queue-items">{renderQueueItems()}</div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Bottom row: action buttons */}
-      <div className="order-actions">
-        {status === 'preparing' ? (
-          <button 
-            className="btn btn-check" 
-            onClick={() => allItemsReady && onMarkReady(id)} 
-            disabled={!allItemsReady}
-            title={allItemsReady ? "Mark as Ready" : "Prepare all items first"}
-            style={{ 
-              opacity: allItemsReady ? 1 : 0.4, 
-              cursor: allItemsReady ? 'pointer' : 'not-allowed',
-              backgroundColor: allItemsReady ? 'var(--btn-green-bg)' : '#e0e0e0',
-              borderColor: allItemsReady ? 'var(--btn-green-border)' : '#cccccc',
-              color: allItemsReady ? '#1a1a1a' : '#888888'
-            }}
-          >
-            <Check className="icon" size={20} color={allItemsReady ? "#000" : "#888"} strokeWidth={3} />
-            <span style={{ marginLeft: '6px' }}>DONE</span>
+      {/* Card-level actions — only queue cards have buttons */}
+      {!isPreparingCard && (
+        <div className="order-actions">
+          <button className="btn btn-up" onClick={() => onPromote(id)} title="Move to Preparing">
+            <ArrowUp className="icon" size={20} color="#000" strokeWidth={3} />
+            <span style={{ marginLeft: '6px' }}>PROCEED</span>
           </button>
-        ) : (
-          <>
-            <button className="btn btn-up" onClick={() => onPromote(id)} title="Move to Preparing">
-              <ArrowUp className="icon" size={20} color="#000" strokeWidth={3} />
-              <span style={{ marginLeft: '6px' }}>PROCEED</span>
-            </button>
-            <button className="btn btn-remove" onClick={() => onCancel(id)} title="Cancel Order">
-              <X className="icon" size={20} color="#000" strokeWidth={3} />
-              <span style={{ marginLeft: '6px' }}>DENY</span>
-            </button>
-          </>
-        )}
-      </div>
+          <button className="btn btn-remove" onClick={() => onCancel(id)} title="Cancel Order">
+            <X className="icon" size={20} color="#000" strokeWidth={3} />
+            <span style={{ marginLeft: '6px' }}>DENY</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 };
@@ -286,7 +345,7 @@ function OrdersView({ onSignOut }) {
         .select('name')
         .eq('id', activeRestaurantId)
         .single();
-      
+
       if (!error && data?.name) {
         setRestaurantName(data.name);
       }
