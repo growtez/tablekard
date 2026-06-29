@@ -6,12 +6,13 @@ import {
     Shield, Activity, CreditCard, MapPin, Settings as SettingsIcon,
     Clock, Tag, Info, AlertTriangle, Edit, Save, X as CloseIcon, Loader2,
     Utensils, Layers, List, ArrowUpRight, CheckCircle2, XCircle, Timer,
-    Hash, Map, Palette, Image as ImageIcon, Box, Plus
+    Hash, Map, Palette, Image as ImageIcon, Box, Plus, BookOpen, User
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import QuickAddCategoryDrawer from '../components/QuickAddCategoryDrawer';
 import QuickAddMenuItemDrawer from '../components/QuickAddMenuItemDrawer';
+import RestaurantProfileView from '../components/RestaurantProfileView';
 
 const TIME_OPTIONS = [
     { value: 'Closed', label: 'Closed' }
@@ -133,7 +134,14 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                     allowed_radius: parseInt(formData.allowed_radius) || 100,
                     status: formData.status,
                     operating_hours_weekdays: formData.operating_hours_weekdays || '09:00 AM - 10:00 PM',
-                    operating_hours_weekends: formData.operating_hours_weekends || '09:00 AM - 10:00 PM'
+                    operating_hours_weekends: formData.operating_hours_weekends || '09:00 AM - 10:00 PM',
+                    slug: formData.slug,
+                    cover_image_url: formData.cover_image_url,
+                    website_url: formData.website_url,
+                    instagram_url: formData.instagram_url,
+                    facebook_url: formData.facebook_url,
+                    manifesto: formData.manifesto,
+                    opening_date: formData.opening_date || null
                 })
                 .eq('id', id);
 
@@ -288,9 +296,11 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
             <div style={{ display: 'flex', gap: '2.5rem', borderBottom: '1px solid var(--border-color)', marginBottom: '2rem', overflowX: 'auto' }}>
                 {[
                     { id: 'general', label: 'General Info', icon: Info },
+                    { id: 'branding', label: 'Location & Branding', icon: Palette },
+                    { id: 'story', label: 'Story & Socials', icon: BookOpen },
+                    { id: 'admin', label: 'Admin Profile', icon: User },
                     { id: 'menu', label: 'Menu & Catalog', icon: Utensils },
-                    { id: 'billing', label: 'Billing & Sub', icon: CreditCard },
-                    { id: 'branding', label: 'Branding & Geo', icon: Palette }
+                    { id: 'billing', label: 'Billing & Sub', icon: CreditCard }
                 ].map(tab => (
                     <button
                         key={tab.id}
@@ -318,64 +328,18 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
             </div>
 
             <div className="tab-content">
-                {activeTab === 'general' && (
-                    <div className="dashboard-chart-grid" style={{ gridTemplateColumns: 'repeat(12, 1fr)', gap: '1.5rem' }}>
-                        <div style={{ gridColumn: 'span 7', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                            <Card>
-                                {renderCardHeader("Core Identity", "core")}
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                    {renderField("Restaurant Name", "name", "core")}
-                                    {renderField("Tagline", "tagline", "core")}
-                                    {renderField("Slug (URL)", "slug", "core", "static")}
-                                    {renderField("Status", "status", "core", "select", [
-                                        { value: 'pending', label: 'Pending' },
-                                        { value: 'approved', label: 'Approved' },
-                                        { value: 'active', label: 'Active' },
-                                        { value: 'suspended', label: 'Suspended' }
-                                    ])}
-                                </div>
-                            </Card>
-                            <Card>
-                                {renderCardHeader("Contact Information", "contact")}
-                                <div className="space-y-3">
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                        <Mail size={16} color="var(--text-muted)" />
-                                        {renderField(null, "contact_email", "contact")}
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                        <Phone size={16} color="var(--text-muted)" />
-                                        {renderField(null, "contact_phone", "contact")}
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                        <MapPin size={16} color="var(--text-muted)" />
-                                        {renderField(null, "contact_address", "contact")}
-                                    </div>
-                                </div>
-                            </Card>
-                        </div>
-                        <div style={{ gridColumn: 'span 5', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            <Card>
-                                {renderCardHeader("Operating Hours", "hours")}
-                                <div className="space-y-3">
-                                    {renderField("Weekdays", "operating_hours_weekdays", "hours", "time-range")}
-                                    {renderField("Weekends", "operating_hours_weekends", "hours", "time-range")}
-                                </div>
-                            </Card>
-                            <Card>
-                                <CardHeader><CardTitle>System Meta</CardTitle></CardHeader>
-                                <div className="space-y-3">
-                                    <div>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Opening Date</div>
-                                        <div style={{ fontSize: '0.95rem', fontWeight: 600 }}>{restaurant.opening_date || '—'}</div>
-                                    </div>
-                                    <div>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Last Update</div>
-                                        <div style={{ fontSize: '0.9rem' }}>{new Date(restaurant.updated_at).toLocaleString()}</div>
-                                    </div>
-                                </div>
-                            </Card>
-                        </div>
-                    </div>
+                {['general', 'branding', 'story', 'admin'].includes(activeTab) && (
+                    <RestaurantProfileView 
+                        restaurant={restaurant}
+                        formData={formData}
+                        updateField={updateField}
+                        saving={saving}
+                        handleSave={handleSave}
+                        handleCancel={handleCancel}
+                        editingCard={editingCard}
+                        setEditingCard={setEditingCard}
+                        activeTab={activeTab}
+                    />
                 )}
 
                 {activeTab === 'menu' && (
