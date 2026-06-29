@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
-import { X, UserPlus, FilePlus } from 'lucide-react'
+import { X, UserPlus, FilePlus, Eye, EyeOff } from 'lucide-react'
 
 export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActiveForm, editingData, onRefresh }) {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
     const [restaurants, setRestaurants] = useState([])
     const [formData, setFormData] = useState({ email: '', password: '', role: 'customer', restaurantId: '' })
-    const [resFormData, setResFormData] = useState({ name: '', contact_email: '', contact_address: '', contact_phone: '', admin_password: '' })
+    const [resFormData, setResFormData] = useState({ name: '', slug: '', contact_email: '', contact_address: '', contact_phone: '', admin_password: '' })
+    const [wasEditing, setWasEditing] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
 
     const roleOptions = [
         { value: 'super_admin', label: 'Super Admin' },
@@ -20,6 +22,7 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
         if (isOpen) {
             fetchRestaurants()
             if (editingData) {
+                setWasEditing(true)
                 if (activeForm === 'user') {
                     setFormData({
                         email: editingData.email || '',
@@ -30,6 +33,7 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                 } else {
                     setResFormData({
                         name: editingData.name || '',
+                        slug: editingData.slug || '',
                         contact_email: editingData.contact_email || '',
                         contact_address: editingData.contact_address || '',
                         contact_phone: editingData.contact_phone || '',
@@ -37,9 +41,11 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                     })
                 }
             } else {
-                // Reset for creation
-                setFormData({ email: '', password: '', role: 'customer', restaurantId: '' })
-                setResFormData({ name: '', contact_email: '', contact_address: '', contact_phone: '', admin_password: '' })
+                if (wasEditing) {
+                    setFormData({ email: '', password: '', role: 'customer', restaurantId: '' })
+                    setResFormData({ name: '', slug: '', contact_email: '', contact_address: '', contact_phone: '', admin_password: '' })
+                    setWasEditing(false)
+                }
             }
         }
     }, [isOpen, editingData, activeForm])
@@ -97,6 +103,9 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
             }
 
             onRefresh && onRefresh()
+            if (!editingData) {
+                setFormData({ email: '', password: '', role: 'customer', restaurantId: '' })
+            }
             onClose()
         } catch (err) {
             setError(`Failed to ${editingData ? 'update' : 'create'} user: ` + err.message)
@@ -110,7 +119,7 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
         setError(null)
         setLoading(true)
 
-        const slug = resFormData.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+        const slug = resFormData.slug.trim().toLowerCase().replace(/[^a-z0-9-]/g, '')
 
         try {
             if (editingData) {
@@ -118,6 +127,7 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                     .from('restaurants')
                     .update({
                         name: resFormData.name.trim(),
+                        slug: slug,
                         contact_email: resFormData.contact_email.trim(),
                         contact_address: resFormData.contact_address.trim(),
                         contact_phone: resFormData.contact_phone.trim(),
@@ -171,6 +181,9 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
             }
 
             onRefresh && onRefresh()
+            if (!editingData) {
+                setResFormData({ name: '', slug: '', contact_email: '', contact_address: '', contact_phone: '', admin_password: '' })
+            }
             onClose()
         } catch (err) {
             setError(`Failed to ${editingData ? 'update' : 'create'} restaurant: ` + err.message)
@@ -193,7 +206,7 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                     </button>
                 </div>
 
-                <div className="drawer-content">
+                <div className="drawer-content" style={{ display: 'flex', flexDirection: 'column' }}>
                     <div className="form-toggle-group" style={{ marginBottom: '2rem' }}>
                         <button
                             className={`toggle-btn ${activeForm === 'user' ? 'active' : ''}`}
@@ -211,14 +224,14 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                         </button>
                     </div>
 
-                    <form onSubmit={activeForm === 'user' ? handleCreateUser : handleCreateRestaurant} className="admin-form">
+                    <form onSubmit={activeForm === 'user' ? handleCreateUser : handleCreateRestaurant} className="admin-form" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                         {activeForm === 'user' ? (
                             <>
                                 <div className="form-group-modern">
                                     <label>Email Address</label>
                                     <input
                                         type="email"
-                                        placeholder="user@example.com"
+                                        placeholder="rahul@example.in"
                                         value={formData.email}
                                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                         required
@@ -269,17 +282,43 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                                     <label>Restaurant Name</label>
                                     <input
                                         type="text"
-                                        placeholder="The Gourmet Kitchen"
+                                        placeholder="The Bombay Spice"
                                         value={resFormData.name}
                                         onChange={(e) => setResFormData({ ...resFormData, name: e.target.value })}
                                         required
                                     />
                                 </div>
                                 <div className="form-group-modern">
+                                    <label>Restaurant Slug (URL)</label>
+                                    <div style={{ display: 'flex', alignItems: 'stretch' }}>
+                                        <input
+                                            type="text"
+                                            placeholder="the-bombay-spice"
+                                            value={resFormData.slug}
+                                            onChange={(e) => setResFormData({ ...resFormData, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
+                                            required
+                                            style={{ flex: 1, borderTopRightRadius: 0, borderBottomRightRadius: 0 }}
+                                        />
+                                        <span style={{ 
+                                            padding: '0 12px', 
+                                            background: 'var(--surface-hover)', 
+                                            border: '1px solid var(--border-color)', 
+                                            borderLeft: 'none', 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            borderTopRightRadius: '8px', 
+                                            borderBottomRightRadius: '8px',
+                                            color: 'var(--text-muted)',
+                                            fontSize: '0.9rem',
+                                            whiteSpace: 'nowrap'
+                                        }}>.tablekard.com</span>
+                                    </div>
+                                </div>
+                                <div className="form-group-modern">
                                     <label>Contact Email</label>
                                     <input
                                         type="email"
-                                        placeholder="manager@restaurant.com"
+                                        placeholder="manager@bombayspice.in"
                                         value={resFormData.contact_email}
                                         onChange={(e) => setResFormData({ ...resFormData, contact_email: e.target.value })}
                                         required
@@ -289,7 +328,7 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                                     <label>Address</label>
                                     <input
                                         type="text"
-                                        placeholder="123 Street, City"
+                                        placeholder="MG Road, Bangalore"
                                         value={resFormData.contact_address}
                                         onChange={(e) => setResFormData({ ...resFormData, contact_address: e.target.value })}
                                     />
@@ -298,7 +337,7 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                                     <label>Phone Number</label>
                                     <input
                                         type="text"
-                                        placeholder="+1 234 567 890"
+                                        placeholder="+91 98765 43210"
                                         value={resFormData.contact_phone}
                                         onChange={(e) => setResFormData({ ...resFormData, contact_phone: e.target.value })}
                                     />
@@ -314,13 +353,34 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                                         </div>
                                         <div className="form-group-modern">
                                             <label>Admin Password</label>
-                                            <input
-                                                type="password"
-                                                placeholder="Set login password"
-                                                value={resFormData.admin_password}
-                                                onChange={(e) => setResFormData({ ...resFormData, admin_password: e.target.value })}
-                                                required={!editingData}
-                                            />
+                                            <div style={{ position: 'relative' }}>
+                                                <input
+                                                    type={showPassword ? "text" : "password"}
+                                                    placeholder="Set login password"
+                                                    value={resFormData.admin_password}
+                                                    onChange={(e) => setResFormData({ ...resFormData, admin_password: e.target.value })}
+                                                    required={!editingData}
+                                                    style={{ paddingRight: '40px', width: '100%' }}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowPassword(!showPassword)}
+                                                    style={{
+                                                        position: 'absolute',
+                                                        right: '10px',
+                                                        top: '50%',
+                                                        transform: 'translateY(-50%)',
+                                                        background: 'transparent',
+                                                        border: 'none',
+                                                        color: 'var(--text-muted)',
+                                                        cursor: 'pointer',
+                                                        padding: '4px',
+                                                        display: 'flex'
+                                                    }}
+                                                >
+                                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                                </button>
+                                            </div>
                                         </div>
                                     </>
                                 )}
@@ -333,7 +393,7 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                             </div>
                         )}
 
-                        <button type="submit" className="primary" style={{ marginTop: '1rem', width: '100%', height: '48px' }} disabled={loading}>
+                        <button type="submit" className="primary" style={{ marginTop: 'auto', width: '100%', height: '48px', minHeight: '48px' }} disabled={loading}>
                             {loading ? (
                                 <div className="loader" style={{ width: '20px', height: '20px', borderWidth: '3px' }}></div>
                             ) : (

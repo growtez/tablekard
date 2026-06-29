@@ -6,10 +6,26 @@ import {
     Shield, Activity, CreditCard, MapPin, Settings as SettingsIcon,
     Clock, Tag, Info, AlertTriangle, Edit, Save, X as CloseIcon, Loader2,
     Utensils, Layers, List, ArrowUpRight, CheckCircle2, XCircle, Timer,
-    Hash, Map, Palette, Image as ImageIcon, Box
+    Hash, Map, Palette, Image as ImageIcon, Box, Plus, BookOpen, User
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
+import QuickAddCategoryDrawer from '../components/QuickAddCategoryDrawer';
+import QuickAddMenuItemDrawer from '../components/QuickAddMenuItemDrawer';
+import RestaurantProfileView from '../components/RestaurantProfileView';
+
+const TIME_OPTIONS = [
+    { value: 'Closed', label: 'Closed' }
+];
+for (let h = 0; h < 24; h++) {
+    for (let m = 0; m < 60; m += 30) {
+        let ampm = h >= 12 ? 'PM' : 'AM';
+        let hour12 = h % 12 || 12;
+        let mins = m === 0 ? '00' : '30';
+        let timeStr = `${hour12.toString().padStart(2, '0')}:${mins} ${ampm}`;
+        TIME_OPTIONS.push({ value: timeStr, label: timeStr });
+    }
+}
 
 export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
     const { id } = useParams();
@@ -23,13 +39,12 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
     const [payments, setPayments] = useState([]);
     const [activeTab, setActiveTab] = useState('general');
 
-    const [isEditing, setIsEditing] = useState(location.state?.edit || false);
+    const [editingCard, setEditingCard] = useState(null);
     const [formData, setFormData] = useState({});
     const [saving, setSaving] = useState(false);
 
-    // Refs to handle stale closures in header actions
-    const saveRef = useRef();
-    const cancelRef = useRef();
+    const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
+    const [isAddItemOpen, setIsAddItemOpen] = useState(false);
 
     useEffect(() => {
         if (id) {
@@ -42,13 +57,13 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
     }, [id]);
 
     useEffect(() => {
-        if (setSyncAction && !isEditing) {
+        if (setSyncAction && !editingCard) {
             setSyncAction({
                 onSync: fetchRestaurantDetails,
                 loading: loading
             });
         }
-    }, [loading, setSyncAction, isEditing]);
+    }, [loading, setSyncAction, editingCard]);
 
     const fetchMenuData = async () => {
         try {
@@ -118,13 +133,20 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                     longitude: parseFloat(formData.longitude) || null,
                     allowed_radius: parseInt(formData.allowed_radius) || 100,
                     status: formData.status,
-                    operating_hours_weekdays: formData.operating_hours_weekdays,
-                    operating_hours_weekends: formData.operating_hours_weekends
+                    operating_hours_weekdays: formData.operating_hours_weekdays || '09:00 AM - 10:00 PM',
+                    operating_hours_weekends: formData.operating_hours_weekends || '09:00 AM - 10:00 PM',
+                    slug: formData.slug,
+                    cover_image_url: formData.cover_image_url,
+                    website_url: formData.website_url,
+                    instagram_url: formData.instagram_url,
+                    facebook_url: formData.facebook_url,
+                    manifesto: formData.manifesto,
+                    opening_date: formData.opening_date || null
                 })
                 .eq('id', id);
 
             if (error) throw error;
-            setIsEditing(false);
+            setEditingCard(null);
             fetchRestaurantDetails();
         } catch (err) {
             setError('Failed to save changes: ' + err.message);
@@ -135,13 +157,8 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
 
     const handleCancel = () => {
         setFormData(restaurant);
-        setIsEditing(false);
+        setEditingCard(null);
     };
-
-    useEffect(() => {
-        saveRef.current = handleSave;
-        cancelRef.current = handleCancel;
-    });
 
     useEffect(() => {
         if (restaurant && setHeaderData) {
@@ -150,16 +167,11 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                 name: restaurant.name,
                 logo_url: restaurant.logo_url,
                 status: restaurant.status,
-                onEdit: !isEditing ? () => setIsEditing(true) : null,
-                isEditing,
-                onSave: () => saveRef.current?.(),
-                onCancel: () => cancelRef.current?.(),
-                saving,
                 backPath: '/restaurants',
                 backTitle: 'Back to Restaurants'
             });
         }
-    }, [restaurant, setHeaderData, isEditing, saving]);
+    }, [restaurant, setHeaderData]);
 
     const updateField = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -187,11 +199,32 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
         );
     }
 
-    const renderField = (label, field, type = 'text', options = []) => {
+    const renderCardHeader = (title, cardId) => (
+        <CardHeader>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                <CardTitle style={{ margin: 0 }}>{title}</CardTitle>
+                {editingCard === cardId ? (
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        <button onClick={handleCancel} className="btn-secondary" style={{ padding: '4px 12px', fontSize: '0.8rem' }} disabled={saving}><CloseIcon size={14} /> Cancel</button>
+                        <button onClick={handleSave} className="btn-primary" style={{ padding: '4px 12px', fontSize: '0.8rem' }} disabled={saving}>
+                            {saving ? <Loader2 size={14} className="spin" /> : <><Save size={14} /> Save</>}
+                        </button>
+                    </div>
+                ) : (
+                    <button onClick={() => { setFormData(restaurant); setEditingCard(cardId); }} style={{ background: 'transparent', border: 'none', color: 'var(--accent-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: 600, padding: '4px 8px', borderRadius: '6px' }} className="hover-bg-accent">
+                        <Edit size={14} /> Edit
+                    </button>
+                )}
+            </div>
+        </CardHeader>
+    );
+
+    const renderField = (label, field, cardId, type = 'text', options = []) => {
+        const isEditingCard = editingCard === cardId;
         return (
-            <div className="space-y-2">
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</label>
-                {isEditing ? (
+            <div className="space-y-1" style={{ flex: 1, width: '100%' }}>
+                {label && <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>{label}</label>}
+                {isEditingCard && type !== 'static' ? (
                     type === 'select' ? (
                         <select
                             value={formData[field] || ''}
@@ -200,13 +233,42 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                         >
                             {options.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                         </select>
+                    ) : type === 'time-range' ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            <select
+                                value={formData[field] === 'Closed' ? 'Closed' : (formData[field]?.split(' - ')[0] || '09:00 AM')}
+                                onChange={(e) => {
+                                    const currentEnd = formData[field]?.split(' - ')[1] || '10:00 PM';
+                                    const newVal = e.target.value === 'Closed' ? 'Closed' : `${e.target.value} - ${currentEnd}`;
+                                    updateField(field, newVal);
+                                }}
+                                className="edit-input"
+                                style={{ flex: 1 }}
+                            >
+                                {TIME_OPTIONS.map(opt => <option key={`start-${opt.value}`} value={opt.value}>{opt.label}</option>)}
+                            </select>
+                            <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>to</span>
+                            <select
+                                value={formData[field]?.split(' - ')[1] || '10:00 PM'}
+                                onChange={(e) => {
+                                    const currentStart = formData[field] === 'Closed' ? '09:00 AM' : (formData[field]?.split(' - ')[0] || '09:00 AM');
+                                    const newVal = formData[field] === 'Closed' ? 'Closed' : `${currentStart} - ${e.target.value}`;
+                                    updateField(field, newVal);
+                                }}
+                                className="edit-input"
+                                style={{ flex: 1 }}
+                                disabled={formData[field] === 'Closed'}
+                            >
+                                {TIME_OPTIONS.map(opt => <option key={`end-${opt.value}`} value={opt.value}>{opt.label}</option>)}
+                            </select>
+                        </div>
                     ) : (
                         <input
                             type={type}
                             value={formData[field] || ''}
                             onChange={(e) => updateField(field, e.target.value)}
                             className="edit-input"
-                            placeholder={`Enter ${label.toLowerCase()}`}
+                            placeholder={label ? `Enter ${label.toLowerCase()}` : ''}
                         />
                     )
                 ) : (
@@ -234,9 +296,11 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
             <div style={{ display: 'flex', gap: '2.5rem', borderBottom: '1px solid var(--border-color)', marginBottom: '2rem', overflowX: 'auto' }}>
                 {[
                     { id: 'general', label: 'General Info', icon: Info },
+                    { id: 'branding', label: 'Location & Branding', icon: Palette },
+                    { id: 'story', label: 'Story & Socials', icon: BookOpen },
+                    { id: 'admin', label: 'Admin Profile', icon: User },
                     { id: 'menu', label: 'Menu & Catalog', icon: Utensils },
-                    { id: 'billing', label: 'Billing & Sub', icon: CreditCard },
-                    { id: 'branding', label: 'Branding & Geo', icon: Palette }
+                    { id: 'billing', label: 'Billing & Sub', icon: CreditCard }
                 ].map(tab => (
                     <button
                         key={tab.id}
@@ -264,69 +328,23 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
             </div>
 
             <div className="tab-content">
-                {activeTab === 'general' && (
-                    <div className="dashboard-chart-grid" style={{ gridTemplateColumns: 'repeat(12, 1fr)', gap: '1.5rem' }}>
-                        <div style={{ gridColumn: 'span 7', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                            <Card>
-                                <CardHeader><CardTitle>Core Identity</CardTitle></CardHeader>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-                                    {renderField("Restaurant Name", "name")}
-                                    {renderField("Tagline", "tagline")}
-                                    {renderField("Slug (URL)", "slug", "static")}
-                                    {renderField("Status", "status", "select", [
-                                        { value: 'pending', label: 'Pending' },
-                                        { value: 'approved', label: 'Approved' },
-                                        { value: 'active', label: 'Active' },
-                                        { value: 'suspended', label: 'Suspended' }
-                                    ])}
-                                </div>
-                            </Card>
-                            <Card>
-                                <CardHeader><CardTitle>Contact Information</CardTitle></CardHeader>
-                                <div className="space-y-4">
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                        <Mail size={16} color="var(--text-muted)" />
-                                        {renderField("Contact Email", "contact_email")}
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                        <Phone size={16} color="var(--text-muted)" />
-                                        {renderField("Phone Number", "contact_phone")}
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-                                        <MapPin size={16} color="var(--text-muted)" style={{ marginTop: '4px' }} />
-                                        {renderField("Address", "contact_address")}
-                                    </div>
-                                </div>
-                            </Card>
-                        </div>
-                        <div style={{ gridColumn: 'span 5', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                            <Card>
-                                <CardHeader><CardTitle>Operating Hours</CardTitle></CardHeader>
-                                <div className="space-y-4">
-                                    {renderField("Weekdays", "operating_hours_weekdays")}
-                                    {renderField("Weekends", "operating_hours_weekends")}
-                                </div>
-                            </Card>
-                            <Card>
-                                <CardHeader><CardTitle>System Meta</CardTitle></CardHeader>
-                                <div className="space-y-4">
-                                    <div>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Opening Date</div>
-                                        <div style={{ fontSize: '0.95rem', fontWeight: 600 }}>{restaurant.opening_date || '—'}</div>
-                                    </div>
-                                    <div>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Last Update</div>
-                                        <div style={{ fontSize: '0.9rem' }}>{new Date(restaurant.updated_at).toLocaleString()}</div>
-                                    </div>
-                                </div>
-                            </Card>
-                        </div>
-                    </div>
+                {['general', 'branding', 'story', 'admin'].includes(activeTab) && (
+                    <RestaurantProfileView 
+                        restaurant={restaurant}
+                        formData={formData}
+                        updateField={updateField}
+                        saving={saving}
+                        handleSave={handleSave}
+                        handleCancel={handleCancel}
+                        editingCard={editingCard}
+                        setEditingCard={setEditingCard}
+                        activeTab={activeTab}
+                    />
                 )}
 
                 {activeTab === 'menu' && (
-                    <div className="dashboard-chart-grid" style={{ gridTemplateColumns: 'repeat(12, 1fr)', gap: '1.5rem' }}>
-                        <div style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <div className="dashboard-chart-grid" style={{ gridTemplateColumns: 'repeat(12, 1fr)', gap: '1rem' }}>
+                        <div style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                             <Card>
                                 <CardHeader><CardTitle>Menu Overview</CardTitle></CardHeader>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -341,7 +359,12 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                                 </div>
                             </Card>
                             <Card>
-                                <CardHeader><CardTitle>Categories</CardTitle></CardHeader>
+                                <CardHeader style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                                    <CardTitle style={{ margin: 0 }}>Categories</CardTitle>
+                                    <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsAddCategoryOpen(true); }} style={{ background: 'transparent', border: 'none', color: 'var(--accent-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: 600, padding: '4px 8px', borderRadius: '6px' }} className="hover-bg-accent">
+                                        <Plus size={14} /> Add
+                                    </button>
+                                </CardHeader>
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                                     {categories.map(cat => (
                                         <Badge key={cat.id} variant={cat.active ? 'success' : 'secondary'}>{cat.name}</Badge>
@@ -352,9 +375,14 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                         <div style={{ gridColumn: 'span 8' }}>
                             <Card>
                                 <CardHeader>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                        <CardTitle>Recent Menu Items</CardTitle>
-                                        <Badge variant="info">{menuItems.length} Total</Badge>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                        <CardTitle style={{ margin: 0 }}>Recent Menu Items</CardTitle>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <Badge variant="info">{menuItems.length} Total</Badge>
+                                            <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsAddItemOpen(true); }} className="btn-primary" style={{ padding: '4px 12px', fontSize: '0.8rem', gap: '6px' }}>
+                                                <Plus size={14} /> Add Item
+                                            </button>
+                                        </div>
                                     </div>
                                 </CardHeader>
                                 <div className="space-y-3">
@@ -382,7 +410,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                 )}
 
                 {activeTab === 'billing' && (
-                    <div className="dashboard-chart-grid" style={{ gridTemplateColumns: 'repeat(12, 1fr)', gap: '1.5rem' }}>
+                    <div className="dashboard-chart-grid" style={{ gridTemplateColumns: 'repeat(12, 1fr)', gap: '1rem' }}>
                         <div style={{ gridColumn: 'span 6' }}>
                             <Card style={{ background: 'linear-gradient(135deg, var(--surface-color) 0%, rgba(245, 158, 11, 0.05) 100%)' }}>
                                 <CardHeader><CardTitle>Subscription Status</CardTitle></CardHeader>
@@ -393,7 +421,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                                         {restaurant.subscription_status ? 'ACTIVE & PAID' : 'TRIAL PERIOD'}
                                     </Badge>
                                 </div>
-                                <div className="space-y-4" style={{ marginTop: '1.5rem' }}>
+                                <div className="space-y-3" style={{ marginTop: '1rem' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
                                         <span style={{ color: 'var(--text-muted)' }}>Valid Until</span>
                                         <span style={{ fontWeight: 600 }}>{restaurant.subscription_end_at ? new Date(restaurant.subscription_end_at).toLocaleDateString('en-IN', { dateStyle: 'long' }) : 'N/A'}</span>
@@ -473,36 +501,36 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                 )}
 
                 {activeTab === 'branding' && (
-                    <div className="dashboard-chart-grid" style={{ gridTemplateColumns: 'repeat(12, 1fr)', gap: '1.5rem' }}>
-                        <div style={{ gridColumn: 'span 6', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <div className="dashboard-chart-grid" style={{ gridTemplateColumns: 'repeat(12, 1fr)', gap: '1rem' }}>
+                        <div style={{ gridColumn: 'span 6', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                             <Card>
-                                <CardHeader><CardTitle>Color Palette</CardTitle></CardHeader>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                                {renderCardHeader("Color Palette", "branding")}
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                                     <div style={{ padding: '1.25rem', borderRadius: '16px', background: 'var(--surface-hover)', textAlign: 'center' }}>
                                         <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: restaurant.primary_color, margin: '0 auto 10px', border: '3px solid var(--border-color)' }} />
                                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Primary</div>
-                                        {isEditing ? renderField("", "primary_color") : <div style={{ fontWeight: 700 }}>{restaurant.primary_color}</div>}
+                                        {editingCard === 'branding' ? renderField(null, "primary_color", "branding") : <div style={{ fontWeight: 700 }}>{restaurant.primary_color}</div>}
                                     </div>
                                     <div style={{ padding: '1.25rem', borderRadius: '16px', background: 'var(--surface-hover)', textAlign: 'center' }}>
                                         <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: restaurant.secondary_color, margin: '0 auto 10px', border: '3px solid var(--border-color)' }} />
                                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Secondary</div>
-                                        {isEditing ? renderField("", "secondary_color") : <div style={{ fontWeight: 700 }}>{restaurant.secondary_color}</div>}
+                                        {editingCard === 'branding' ? renderField(null, "secondary_color", "branding") : <div style={{ fontWeight: 700 }}>{restaurant.secondary_color}</div>}
                                     </div>
                                 </div>
                             </Card>
                             <Card>
-                                <CardHeader><CardTitle>Geofencing</CardTitle></CardHeader>
-                                <div className="space-y-6">
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-                                        {renderField("Latitude", "latitude")}
-                                        {renderField("Longitude", "longitude")}
+                                {renderCardHeader("Geofencing", "geo")}
+                                <div className="space-y-4">
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                        {renderField("Latitude", "latitude", "geo")}
+                                        {renderField("Longitude", "longitude", "geo")}
                                     </div>
                                     <div style={{ padding: '1rem', background: 'rgba(239, 68, 68, 0.05)', borderRadius: '12px', border: '1px solid rgba(239, 68, 68, 0.1)' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#991b1b', fontWeight: 600, fontSize: '0.9rem' }}>
                                             <MapPin size={16} /> Allowed Radius
                                         </div>
                                         <div style={{ marginTop: '8px' }}>
-                                            {isEditing ? renderField("", "allowed_radius", "number") : <div style={{ fontSize: '1.25rem', fontWeight: 800 }}>{restaurant.allowed_radius} <span style={{ fontSize: '0.8rem', fontWeight: 500 }}>meters</span></div>}
+                                            {editingCard === 'geo' ? renderField(null, "allowed_radius", "geo", "number") : <div style={{ fontSize: '1.25rem', fontWeight: 800 }}>{restaurant.allowed_radius} <span style={{ fontSize: '0.8rem', fontWeight: 500 }}>meters</span></div>}
                                         </div>
                                     </div>
                                 </div>
@@ -510,14 +538,14 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                         </div>
                         <div style={{ gridColumn: 'span 6' }}>
                             <Card>
-                                <CardHeader><CardTitle>Visual Assets</CardTitle></CardHeader>
-                                <div className="space-y-6">
+                                {renderCardHeader("Visual Assets", "logo")}
+                                <div className="space-y-4">
                                     <div>
                                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px' }}>Restaurant Logo</div>
                                         <div style={{ width: '100%', height: '160px', borderRadius: '16px', background: 'var(--surface-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                                             {restaurant.logo_url ? <img src={restaurant.logo_url} alt="" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} /> : <ImageIcon size={48} style={{ opacity: 0.1 }} />}
                                         </div>
-                                        {isEditing && <div style={{ marginTop: '1rem' }}>{renderField("Logo URL", "logo_url")}</div>}
+                                        {editingCard === 'logo' && <div style={{ marginTop: '1rem' }}>{renderField("Logo URL", "logo_url", "logo")}</div>}
                                     </div>
                                 </div>
                             </Card>
@@ -525,6 +553,21 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                     </div>
                 )}
             </div>
+
+            <QuickAddCategoryDrawer
+                isOpen={isAddCategoryOpen}
+                onClose={() => setIsAddCategoryOpen(false)}
+                restaurantId={id}
+                onSuccess={fetchMenuData}
+            />
+            <QuickAddMenuItemDrawer
+                isOpen={isAddItemOpen}
+                onClose={() => setIsAddItemOpen(false)}
+                restaurantId={id}
+                categories={categories}
+                onSuccess={fetchMenuData}
+                onAddCategory={() => setIsAddCategoryOpen(true)}
+            />
         </div>
     );
 }

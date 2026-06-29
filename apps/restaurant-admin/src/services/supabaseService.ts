@@ -88,6 +88,7 @@ export interface RestaurantProfileUpdateInput {
     instagramUrl?: string | null;
     facebookUrl?: string | null;
     websiteUrl?: string | null;
+    slug?: string | null;
 }
 
 export interface AdministratorProfileUpdateInput {
@@ -190,7 +191,8 @@ export const updateRestaurantProfile = async (
             operating_hours_weekends: input.operatingHoursWeekends ?? null,
             instagram_url: input.instagramUrl ?? null,
             facebook_url: input.facebookUrl ?? null,
-            website_url: input.websiteUrl ?? null
+            website_url: input.websiteUrl ?? null,
+            slug: input.slug ?? null
         })
         .eq('id', restaurantId)
         .select('*')
