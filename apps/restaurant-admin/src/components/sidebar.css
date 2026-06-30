@@ -308,3 +308,47 @@
     display: none;
   }
 }
+
+/* ── Theme Toggle Button ──────────────────────────────────── */
+.theme-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 16px;
+  border-radius: var(--tk-radius-md, 12px);
+  background-color: var(--tk-bg-hover, #FFF0EA);
+  color: var(--tk-text-secondary, #7A6F6B);
+  cursor: pointer;
+  margin-top: 8px;
+  font-size: 13.5px;
+  font-weight: 500;
+  font-family: 'Outfit', sans-serif;
+  transition: all 0.25s ease;
+  border: 1.5px solid var(--tk-border, #E8E1DD);
+  text-align: left;
+}
+
+.sidebar.collapsed .theme-toggle-btn {
+  justify-content: center;
+  padding: 12px;
+  gap: 0;
+}
+
+.theme-toggle-btn:hover {
+  background-color: var(--tk-burgundy-bg, #FFF0EC);
+  color: var(--tk-burgundy, #8B3A1E);
+  border-color: rgba(139, 58, 30, 0.2);
+  transform: translateY(-1px);
+}
+
+.theme-toggle-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.theme-toggle-label {
+  font-weight: inherit;
+}

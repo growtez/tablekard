@@ -997,3 +997,64 @@
     from { transform: translateY(30px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
 }
+
+/* ── Dark Mode Overrides for Reports Page ───────────────────────── */
+[data-theme="dark"] .reports-main-content { background-color: var(--tk-bg-surface); }
+
+[data-theme="dark"] .reports-page-title,
+[data-theme="dark"] .metric-value,
+[data-theme="dark"] .dashboard-card-title,
+[data-theme="dark"] .donut-title,
+[data-theme="dark"] .item-name-text,
+[data-theme="dark"] .reports-modal-title,
+[data-theme="dark"] .feedback-name,
+[data-theme="dark"] .item-sold-count,
+[data-theme="dark"] .item-revenue-text,
+[data-theme="dark"] .legend-item { color: var(--tk-text); }
+
+[data-theme="dark"] .metric-title,
+[data-theme="dark"] .date-separator,
+[data-theme="dark"] .card-subtitle,
+[data-theme="dark"] .top-items-table th,
+[data-theme="dark"] .feedback-date,
+[data-theme="dark"] .feedback-comment,
+[data-theme="dark"] .reports-loading-text,
+[data-theme="dark"] .reports-modal-subtitle,
+[data-theme="dark"] .heatmap-day-label { color: var(--tk-text-secondary); }
+
+[data-theme="dark"] .heatmap-hour-label { color: var(--tk-text-muted); }
+
+[data-theme="dark"] .reports-icon-button,
+[data-theme="dark"] .report-filter-btn,
+[data-theme="dark"] .custom-date-inputs { background-color: var(--tk-bg-elevated); color: var(--tk-text); border-color: var(--tk-border); }
+
+[data-theme="dark"] .report-filter-btn:hover { background-color: var(--tk-bg-hover); }
+
+[data-theme="dark"] .metric-card,
+[data-theme="dark"] .dashboard-card,
+[data-theme="dark"] .reports-modal-content,
+[data-theme="dark"] .feedback-item { background-color: var(--tk-bg-card); border-color: var(--tk-border); }
+
+[data-theme="dark"] .date-input { background-color: var(--tk-bg-hover); color: var(--tk-text); border-color: var(--tk-border); }
+
+[data-theme="dark"] .top-items-table td { background-color: var(--tk-bg-elevated); border-color: var(--tk-border); color: var(--tk-text); }
+[data-theme="dark"] .top-items-table tbody tr:hover td { background-color: var(--tk-bg-hover); }
+
+[data-theme="dark"] .donut-hole { background-color: var(--tk-bg-card); }
+[data-theme="dark"] .chart-container { border-color: var(--tk-border); }
+
+[data-theme="dark"] .reports-modal-close { background-color: var(--tk-bg-hover); color: var(--tk-text-secondary); }
+[data-theme="dark"] .reports-modal-close:hover { background-color: var(--tk-bg-elevated); color: var(--tk-text); }
+[data-theme="dark"] .reports-modal-header,
+[data-theme="dark"] .reports-modal-footer { border-color: var(--tk-border); }
+[data-theme="dark"] .reports-modal-footer { background-color: var(--tk-bg-surface); }
+
+[data-theme="dark"] .feedback-items { background-color: var(--tk-bg-hover); color: var(--tk-text-secondary); }
+
+[data-theme="dark"] .rank-1 { background-color: rgba(236, 201, 75, 0.15); color: #ECC94B; }
+[data-theme="dark"] .rank-2 { background-color: rgba(160, 174, 192, 0.15); color: #A0AEC0; }
+[data-theme="dark"] .rank-3 { background-color: rgba(237, 137, 54, 0.15); color: #ED8936; }
+[data-theme="dark"] .item-rank-tag:not(.rank-1):not(.rank-2):not(.rank-3) { background-color: var(--tk-bg-hover); color: var(--tk-text-secondary); }
+
+[data-theme="dark"] .view-all-btn { background-color: var(--tk-bg-elevated); color: var(--tk-text-secondary); border-color: var(--tk-border); }
+[data-theme="dark"] .view-all-btn:hover { background-color: var(--tk-bg-hover); color: var(--tk-text); }

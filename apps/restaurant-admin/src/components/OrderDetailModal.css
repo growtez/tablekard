@@ -344,3 +344,36 @@
     border-radius: 0;
   }
 }
+
+/* ── Dark Mode Overrides ───────────────────────── */
+[data-theme="dark"] .order-modal-content { background-color: var(--tk-bg-card); color: var(--tk-text); }
+[data-theme="dark"] .order-modal-header { background-color: var(--tk-bg-surface); border-color: var(--tk-border); }
+[data-theme="dark"] .order-modal-title,
+[data-theme="dark"] .order-section-title h4,
+[data-theme="dark"] .order-info-value,
+[data-theme="dark"] .item-name,
+[data-theme="dark"] .summary-row.grand-total,
+[data-theme="dark"] .order-items-table td { color: var(--tk-text); }
+
+[data-theme="dark"] .order-info-label,
+[data-theme="dark"] .order-items-table th,
+[data-theme="dark"] .summary-row { color: var(--tk-text-secondary); }
+
+[data-theme="dark"] .order-info-card { background-color: var(--tk-bg-elevated); border-color: var(--tk-border); }
+[data-theme="dark"] .order-info-card:hover { border-color: var(--tk-text-muted); }
+[data-theme="dark"] .order-info-icon { background-color: var(--tk-bg-surface); }
+
+[data-theme="dark"] .order-items-list { background-color: var(--tk-bg-card); border-color: var(--tk-border); }
+[data-theme="dark"] .order-items-table th,
+[data-theme="dark"] .order-items-table td,
+[data-theme="dark"] .summary-row.grand-total { border-color: var(--tk-border); }
+[data-theme="dark"] .order-items-table th { background-color: var(--tk-bg-elevated); }
+
+[data-theme="dark"] .order-summary-box,
+[data-theme="dark"] .order-modal-footer { background-color: var(--tk-bg-surface); border-color: var(--tk-border); }
+
+[data-theme="dark"] .order-modal-print-btn { background-color: var(--tk-bg-elevated); color: var(--tk-text); border-color: var(--tk-border); }
+[data-theme="dark"] .order-modal-print-btn:hover { background-color: var(--tk-bg-hover); }
+
+[data-theme="dark"] .order-modal-close-btn { color: var(--tk-text-secondary); }
+[data-theme="dark"] .order-modal-close-btn:hover { background-color: var(--tk-bg-hover); color: var(--tk-text); }

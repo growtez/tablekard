@@ -8,7 +8,7 @@
 
 body {
   font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background-color: #f7f8fa;
+  background-color: var(--tk-bg-surface);
 }
 
 .dashboard-container {
@@ -27,7 +27,7 @@ body {
   overflow-y: auto;
   min-height: 100vh;
   width: calc(100% - 240px);
-  background-color: var(--tk-bg-surface, #f7f8fa);
+  background-color: var(--tk-bg-surface, var(--tk-bg-surface));
   border-radius: 0;
   box-shadow: none;
   transition: all 0.3s ease;
@@ -48,7 +48,7 @@ body {
 .page-title {
   font-size: 32px;
   font-weight: 600;
-  color: #1A202C;
+  color: var(--tk-text);
 }
 
 .header-right {
@@ -61,7 +61,7 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  background-color: #FFFFFF;
+  background-color: var(--tk-bg-card);
   padding: 10px 20px;
   border-radius: 20px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
@@ -72,21 +72,21 @@ body {
   border: none;
   outline: none;
   font-size: 14px;
-  color: #1A202C;
+  color: var(--tk-text);
   background-color: transparent;
   width: 100%;
   font-family: 'Outfit', sans-serif;
 }
 
 .search-input::placeholder {
-  color: #A0AEC0;
+  color: var(--tk-text-muted);
 }
 
 .icon-button {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background-color: #FFFFFF;
+  background-color: var(--tk-bg-card);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -128,10 +128,10 @@ body {
 }
 
 .revenue-card {
-  background-color: #FFFFFF;
+  background-color: var(--tk-bg-card);
   padding: 24px;
   border-radius: 20px;
-  border: 1.5px solid #1A1A1A;
+  border: var(--tk-border-card);
   box-shadow: none;
   position: relative;
   overflow: hidden;
@@ -162,7 +162,7 @@ body {
 
 .card-title {
   font-size: 14px;
-  color: #718096;
+  color: var(--tk-text-secondary);
   margin-bottom: 12px;
   font-weight: 500;
   margin-top: 4px;
@@ -171,7 +171,7 @@ body {
 .revenue-amount {
   font-size: 36px;
   font-weight: 700;
-  color: #1A202C;
+  color: var(--tk-text);
   margin-bottom: 12px;
 }
 
@@ -201,7 +201,7 @@ body {
 
 .click-hint {
   font-size: 12px;
-  color: #A0AEC0;
+  color: var(--tk-text-muted);
   margin-top: 8px;
 }
 
@@ -212,10 +212,10 @@ body {
 }
 
 .table-card {
-  background-color: #FFFFFF;
+  background-color: var(--tk-bg-card);
   padding: 24px;
   border-radius: 20px;
-  border: 1.5px solid #1A1A1A;
+  border: var(--tk-border-card);
   box-shadow: none;
 }
 
@@ -229,7 +229,7 @@ body {
 .table-title {
   font-size: 20px;
   font-weight: 600;
-  color: #1A202C;
+  color: var(--tk-text);
 }
 
 .view-all-btn {
@@ -263,7 +263,7 @@ body {
 }
 
 .orders-table thead tr {
-  border-bottom: 2px solid #E2E8F0;
+  border-bottom: 2px solid var(--tk-border);
 }
 
 .orders-table th {
@@ -271,8 +271,8 @@ body {
   padding: 12px 16px;
   font-size: 13px;
   font-weight: 600;
-  color: #718096;
-  border-bottom: 2px solid #E2E8F0;
+  color: var(--tk-text-secondary);
+  border-bottom: 2px solid var(--tk-border);
   white-space: nowrap;
 }
 
@@ -281,13 +281,13 @@ body {
 }
 
 .orders-table tbody tr:hover {
-  background-color: #F7FAFC;
+  background-color: var(--tk-bg-hover);
 }
 
 .orders-table td {
   padding: 16px;
   font-size: 14px;
-  color: #1A202C;
+  color: var(--tk-text);
 }
 
 .status-pill {
@@ -324,6 +324,11 @@ body {
 .payment-paid {
   background-color: #C6F6D5;
   color: #22543D;
+}
+
+.payment-pending {
+  background-color: #FEF2F2;
+  color: #EF4444;
 }
 
 .payment-action-btn {
@@ -371,17 +376,17 @@ body {
 }
 
 .widget-card {
-  background-color: #FFFFFF;
+  background-color: var(--tk-bg-card);
   padding: 24px;
   border-radius: 20px;
-  border: 1.5px solid #1A1A1A;
+  border: var(--tk-border-card);
   box-shadow: none;
 }
 
 .widget-title {
   font-size: 18px;
   font-weight: 600;
-  color: #1A202C;
+  color: var(--tk-text);
   margin-bottom: 20px;
   display: flex;
   align-items: center;
@@ -399,7 +404,7 @@ body {
   align-items: center;
   gap: 12px;
   padding: 12px;
-  background-color: #F7FAFC;
+  background-color: var(--tk-bg-hover);
   border-radius: 16px;
   transition: transform 0.2s;
   cursor: pointer;
@@ -428,7 +433,7 @@ body {
 .dish-name {
   font-size: 14px;
   font-weight: 600;
-  color: #1A202C;
+  color: var(--tk-text);
   margin-bottom: 4px;
 }
 
@@ -440,7 +445,7 @@ body {
 
 .dish-sold {
   font-size: 12px;
-  color: #718096;
+  color: var(--tk-text-secondary);
 }
 
 .dish-trend {
@@ -490,7 +495,7 @@ body {
 .payment-table {
   font-size: 14px;
   font-weight: 600;
-  color: #1A202C;
+  color: var(--tk-text);
   margin-bottom: 4px;
 }
 
@@ -503,7 +508,7 @@ body {
 
 .payment-customer-name {
   font-size: 12px;
-  color: #718096;
+  color: var(--tk-text-secondary);
 }
 
 .payment-time {
@@ -514,7 +519,7 @@ body {
 
 .payment-time-text {
   font-size: 11px;
-  color: #A0AEC0;
+  color: var(--tk-text-muted);
 }
 
 .payment-amount {
@@ -562,7 +567,7 @@ body {
 .payment-total-label {
   font-size: 14px;
   font-weight: 600;
-  color: #1A202C;
+  color: var(--tk-text);
 }
 
 .payment-total-amount {
@@ -596,14 +601,14 @@ body {
 }
 
 .dialog-content {
-  background-color: white;
+  background-color: var(--tk-bg-card);
   border-radius: 24px;
   padding: 32px;
   max-width: 500px;
   width: 90%;
   max-height: 80vh;
   overflow: auto;
-  border: 1.5px solid #E8E1DD;
+  border: 1.5px solid var(--tk-border);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
   animation: slideUp 0.3s ease;
 }
@@ -630,7 +635,7 @@ body {
 .dialog-title {
   font-size: 24px;
   font-weight: 600;
-  color: #1A202C;
+  color: var(--tk-text);
 }
 
 .dialog-close {
@@ -646,7 +651,7 @@ body {
 }
 
 .dialog-close:hover {
-  background-color: #F7FAFC;
+  background-color: var(--tk-bg-hover);
 }
 
 .order-details {
@@ -659,7 +664,7 @@ body {
   display: flex;
   justify-content: space-between;
   padding-bottom: 16px;
-  border-bottom: 2px solid #E2E8F0;
+  border-bottom: 2px solid var(--tk-border);
 }
 
 .order-id-section {
@@ -669,14 +674,14 @@ body {
 
 .order-label {
   font-size: 14px;
-  color: #718096;
+  color: var(--tk-text-secondary);
   margin-bottom: 4px;
 }
 
 .order-value {
   font-size: 18px;
   font-weight: 600;
-  color: #1A202C;
+  color: var(--tk-text);
 }
 
 .order-status-section {
@@ -704,38 +709,38 @@ body {
   display: flex;
   justify-content: space-between;
   padding: 12px;
-  background-color: #F7FAFC;
+  background-color: var(--tk-bg-hover);
   border-radius: 12px;
 }
 
 .order-item-name {
   font-size: 14px;
   font-weight: 600;
-  color: #1A202C;
+  color: var(--tk-text);
 }
 
 .order-item-qty {
   font-size: 12px;
-  color: #718096;
+  color: var(--tk-text-secondary);
 }
 
 .order-item-price {
   font-size: 14px;
   font-weight: 600;
-  color: #1A202C;
+  color: var(--tk-text);
 }
 
 .order-total {
   display: flex;
   justify-content: space-between;
   padding-top: 16px;
-  border-top: 2px solid #E2E8F0;
+  border-top: 2px solid var(--tk-border);
 }
 
 .order-total-label {
   font-size: 18px;
   font-weight: 600;
-  color: #1A202C;
+  color: var(--tk-text);
 }
 
 .order-total-amount {
@@ -772,12 +777,12 @@ body {
 }
 
 .legend-line-secondary {
-  background-color: #A0AEC0;
+  background-color: var(--tk-text-muted);
 }
 
 .legend-text {
   font-size: 14px;
-  color: #718096;
+  color: var(--tk-text-secondary);
 }
 
 .line-chart-container {
@@ -797,7 +802,7 @@ body {
 
 .y-axis-label {
   font-size: 12px;
-  color: #718096;
+  color: var(--tk-text-secondary);
   text-align: right;
 }
 
@@ -822,7 +827,7 @@ body {
 
 .x-label {
   font-size: 12px;
-  color: #718096;
+  color: var(--tk-text-secondary);
   font-weight: 500;
   text-align: center;
 }
@@ -907,7 +912,7 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #F7FAFC;
+  background: var(--tk-bg-hover);
 }
 
 ::-webkit-scrollbar-thumb {
@@ -938,4 +943,119 @@ body {
   color: #FFFFFF;
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(104, 211, 145, 0.4);
+}
+
+/* ── Dark Mode Dashboard Overrides ───────────────────────── */
+[data-theme="dark"] .status-preparing {
+  background-color: rgba(254, 234, 154, 0.15);
+  color: #ECC94B;
+}
+
+[data-theme="dark"] .status-served {
+  background-color: rgba(144, 205, 244, 0.15);
+  color: #76C0EC;
+}
+
+[data-theme="dark"] .payment-paid {
+  background-color: rgba(198, 246, 213, 0.15);
+  color: #68D391;
+}
+
+[data-theme="dark"] .payment-pending {
+  background-color: rgba(254, 242, 242, 0.08);
+  color: #FC8181;
+}
+
+[data-theme="dark"] .payment-item {
+  background-color: rgba(239, 68, 68, 0.1);
+  border-left-color: #EF4444;
+}
+
+[data-theme="dark"] .payment-total {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+[data-theme="dark"] .icon-action-btn {
+  background-color: rgba(198, 246, 213, 0.15);
+  color: #68D391;
+}
+
+[data-theme="dark"] .icon-action-btn:hover {
+  background-color: #2F6539;
+  color: #C6F6D5;
+}
+
+[data-theme="dark"] .ready-action-btn {
+  background-color: rgba(198, 246, 213, 0.12);
+  color: #68D391;
+}
+
+[data-theme="dark"] .ready-action-btn:hover {
+  background-color: rgba(104, 211, 145, 0.25);
+  color: #9AE6B4;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: #3A3A3A;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: #505050;
+}
+
+[data-theme="dark"] .revenue-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* Ensure cards actually turn dark by overriding other global light styles */
+[data-theme="dark"] .revenue-card,
+[data-theme="dark"] .table-card,
+[data-theme="dark"] .widget-card,
+[data-theme="dark"] .dialog-content,
+[data-theme="dark"] .chart-dialog,
+[data-theme="dark"] .search-bar,
+[data-theme="dark"] .orders-table tr,
+[data-theme="dark"] .icon-button {
+  background-color: var(--tk-bg-card);
+  border-color: var(--tk-border);
+}
+
+[data-theme="dark"] .page-title,
+[data-theme="dark"] .table-title,
+[data-theme="dark"] .widget-title,
+[data-theme="dark"] .revenue-amount,
+[data-theme="dark"] .dialog-title,
+[data-theme="dark"] .dish-name,
+[data-theme="dark"] .dish-revenue-amount,
+[data-theme="dark"] .order-total-amount,
+[data-theme="dark"] .orders-table td {
+  color: var(--tk-text);
+}
+
+[data-theme="dark"] .card-title,
+[data-theme="dark"] .orders-table th,
+[data-theme="dark"] .click-hint,
+[data-theme="dark"] .dish-sold,
+[data-theme="dark"] .order-label,
+[data-theme="dark"] .payment-table,
+[data-theme="dark"] .payment-total-label {
+  color: var(--tk-text-secondary);
+}
+
+[data-theme="dark"] .dish-item {
+  background-color: var(--tk-bg-hover);
+}
+
+[data-theme="dark"] .dish-item:hover,
+[data-theme="dark"] .orders-table tbody tr:hover {
+  background-color: var(--tk-bg-elevated);
+}
+
+[data-theme="dark"] .search-input { color: var(--tk-text); }
+[data-theme="dark"] .search-input::placeholder { color: var(--tk-text-muted); }
+
+[data-theme="dark"] .orders-table th,
+[data-theme="dark"] .orders-table td,
+[data-theme="dark"] .orders-table thead tr {
+  border-color: var(--tk-border);
 }

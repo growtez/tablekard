@@ -176,8 +176,7 @@ const AllOrdersDialog: React.FC<AllOrdersDialogProps & { showAction?: boolean }>
                 <td style={{ cursor: 'pointer' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span 
-                      className={`status-pill ${order.isPaid ? 'payment-paid' : ''}`} 
-                      style={!order.isPaid ? { backgroundColor: '#FEF2F2', color: '#EF4444' } : {}}
+                      className={`status-pill ${order.isPaid ? 'payment-paid' : 'payment-pending'}`} 
                       onClick={() => {
                         onClose();
                         onSelectOrder(order);
@@ -400,8 +399,7 @@ const Dashboard: React.FC = () => {
                         <td style={{ cursor: 'pointer' }} data-label="Payment">
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span 
-                              className={`status-pill ${order.isPaid ? 'payment-paid' : ''}`} 
-                              style={!order.isPaid ? { backgroundColor: '#FEF2F2', color: '#EF4444' } : {}}
+                              className={`status-pill ${order.isPaid ? 'payment-paid' : 'payment-pending'}`} 
                               onClick={() => setSelectedOrder(order)}
                             >
                               {order.isPaid ? 'Paid' : 'Pending'}
@@ -491,8 +489,7 @@ const Dashboard: React.FC = () => {
                           <td style={{ cursor: 'pointer' }} data-label="Payment">
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                               <span 
-                                className={`status-pill ${order.isPaid ? 'payment-paid' : ''}`} 
-                                style={!order.isPaid ? { backgroundColor: '#FEF2F2', color: '#EF4444' } : {}}
+                                className={`status-pill ${order.isPaid ? 'payment-paid' : 'payment-pending'}`} 
                                 onClick={() => setSelectedOrder(order)}
                               >
                                 {order.isPaid ? 'Paid' : 'Pending'}

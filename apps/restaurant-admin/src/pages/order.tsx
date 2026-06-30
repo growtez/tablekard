@@ -372,8 +372,7 @@ const Order: React.FC = () => {
                       </div>
                       <div onClick={(e) => e.stopPropagation()}>
                         <select
-                          className="ocard-status-select"
-                          style={{ backgroundColor: statusConf.bg, color: statusConf.color }}
+                          className={`ocard-status-select st-${st}`}
                           value={st === 'pending' ? 'pending' : st}
                           onChange={(e) => handleStatusChange(order.id, e.target.value)}
                           disabled={isLocked}

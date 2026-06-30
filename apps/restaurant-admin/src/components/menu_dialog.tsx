@@ -405,9 +405,10 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
                     type="button" 
                     onClick={(e) => { e.stopPropagation(); setCurrentCrop({ url: img.url, index: originalIndex }); }}
                     title="Crop Image"
-                    style={{ position: 'absolute', top: 6, left: 6, background: '#fff', border: 'none', borderRadius: '4px', padding: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', zIndex: 10 }}
+                    className="menu-image-crop-inline-btn"
+                    style={{ position: 'absolute', top: 6, left: 6, borderRadius: '4px', padding: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', zIndex: 10 }}
                   >
-                    <Crop size={14} color="#333" />
+                    <Crop size={14} className="menu-image-crop-icon" />
                   </button>
                   {idx === 0 && <div className="menu-image-primary-badge">Primary</div>}
                   <div className="menu-image-card-overlay">
@@ -749,7 +750,6 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
                             setCurrentCrop({ url: currentImg.url, index: originalIndex });
                             setIsGalleryOpen(false);
                           }}
-                          style={{ background: '#fff', color: '#333' }}
                         >
                           <Crop size={18} />
                           Crop Image

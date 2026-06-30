@@ -434,7 +434,7 @@ const Menu: React.FC = () => {
                     <Loader2 size={18} color="#718096" />
                   </div>
                 )}
-                <button className="add-button" onClick={handleAddCategory} style={{ backgroundColor: '#E2E8F0', color: '#1A202C' }}>
+                <button className="add-category-btn" onClick={handleAddCategory}>
                   <Layers size={16} />
                   New Category
                 </button>
@@ -463,8 +463,8 @@ const Menu: React.FC = () => {
                   </button>
                   {selectedCategoryId === category.id && (
                     <button
+                      className="edit-category-btn"
                       onClick={(e) => { e.stopPropagation(); handleEditCategory(category); }}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#718096', padding: '4px' }}
                       title="Edit Category"
                     >
                       <Edit3 size={14} />
@@ -475,9 +475,9 @@ const Menu: React.FC = () => {
             </div>
 
             {loading ? (
-              <div style={{ padding: '40px', textAlign: 'center', color: '#718096' }}>Loading menu...</div>
+              <div className="menu-empty-state">Loading menu...</div>
             ) : filteredMenuItems.length === 0 ? (
-              <div style={{ padding: '40px', textAlign: 'center', color: '#718096' }}>No menu items found. Add one to get started!</div>
+              <div className="menu-empty-state">No menu items found. Add one to get started!</div>
             ) : (
               <div className="menu-grid">
                 {filteredMenuItems.slice(0, visibleItemCount).map((item) => (
@@ -497,7 +497,7 @@ const Menu: React.FC = () => {
                       <p className="menu-category">{getCategoryName(item.categoryId)}</p>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div className="menu-price">₹{item.price}</div>
-                        <div style={{ fontSize: '12px', color: '#718096' }}>👥 Serves {item.serves}</div>
+                        <div className="menu-serves">👥 Serves {item.serves}</div>
                       </div>
                     </div>
                     <div className="menu-actions" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '12px' }}>
@@ -519,19 +519,7 @@ const Menu: React.FC = () => {
                           <Edit3 size={16} />
                           Edit
                         </button>
-                        <button className="delete-button" style={{
-                          flex: 1,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '6px',
-                          padding: '8px 12px',
-                          border: '1px solid #FC8181',
-                          borderRadius: '8px',
-                          backgroundColor: 'transparent',
-                          color: '#E53E3E',
-                          cursor: 'pointer'
-                        }} onClick={() => handleDeleteMenuItem(item.id)}>
+                        <button className="item-delete-btn" onClick={() => handleDeleteMenuItem(item.id)}>
                           <Trash2 size={16} />
                           Delete
                         </button>
@@ -560,9 +548,9 @@ const Menu: React.FC = () => {
             </div>
 
             {loadingOffers ? (
-              <div style={{ padding: '40px', textAlign: 'center', color: '#718096' }}>Loading offers...</div>
+              <div className="menu-empty-state">Loading offers...</div>
             ) : offers.length === 0 ? (
-              <div style={{ padding: '40px', textAlign: 'center', color: '#718096' }}>No offers yet. Click "Add New Offer" to create one!</div>
+              <div className="menu-empty-state">No offers yet. Click "Add New Offer" to create one!</div>
             ) : (
               <div className="offers-grid">
                 {offers.slice(0, visibleOfferCount).map((offer) => {
