@@ -4,7 +4,7 @@ import { supabase } from '../supabaseClient';
 import {
     ChevronLeft, Store, Globe, Mail, Phone, Calendar,
     Shield, Activity, CreditCard, MapPin, Settings as SettingsIcon,
-    Clock, Tag, Info, AlertTriangle, Edit, Save, X as CloseIcon, Loader2,
+    Clock, Tag, Info, AlertTriangle, AlertCircle, Edit, Save, X as CloseIcon, Loader2,
     Utensils, Layers, List, ArrowUpRight, CheckCircle2, XCircle, Timer,
     Hash, Map, Palette, Image as ImageIcon, Box, Plus, BookOpen, User
 } from 'lucide-react';

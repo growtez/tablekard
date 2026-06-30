@@ -12,7 +12,8 @@ import {
     LogOut,
     Menu,
     FileText,
-    Layers
+    Layers,
+    Inbox
 } from 'lucide-react';
 
 const navItems = [
@@ -22,6 +23,7 @@ const navItems = [
     { path: '/subscriptions', icon: CreditCard, label: 'Subscriptions' },
     { path: '/billing/transactions', icon: FileText, label: 'Transactions' },
     { path: '/billing/plans', icon: Layers, label: 'Pricing Plans' },
+    { path: '/leads', icon: Inbox, label: 'Landing Leads' },
     // {
     //     icon: Headphones,
     //     label: 'Support',
