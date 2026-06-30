@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Search, TrendingUp, Calendar, Eye, Clock, ChefHat, CheckCircle, XCircle, Package } from 'lucide-react';
+import { Search, TrendingUp, Calendar, Eye, Package } from 'lucide-react';
 import Sidebar from '../components/sidebar';
 import { useAuth } from '../context/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
@@ -25,14 +25,6 @@ const getAvailableStatuses = (currentStatus: string) => {
   ];
 };
 
-const STATUS_CONFIG: Record<string, { icon: React.ReactNode; bg: string; color: string; label: string }> = {
-  pending:   { icon: <Clock size={12} />,      bg: '#FEF3C7', color: '#92400E', label: 'Placed' },
-  preparing: { icon: <ChefHat size={12} />,    bg: '#DBEAFE', color: '#1E40AF', label: 'Preparing' },
-  ready:     { icon: <CheckCircle size={12} />, bg: '#D1FAE5', color: '#065F46', label: 'Ready' },
-  cancelled: { icon: <XCircle size={12} />,    bg: '#FEE2E2', color: '#991B1B', label: 'Cancelled' },
-  served:    { icon: <CheckCircle size={12} />, bg: '#CCFBF1', color: '#115E59', label: 'Served' },
-  completed: { icon: <CheckCircle size={12} />, bg: '#CCFBF1', color: '#115E59', label: 'Completed' },
-};
 
 const Order: React.FC = () => {
   const { activeRestaurantId } = useAuth();
@@ -354,7 +346,6 @@ const Order: React.FC = () => {
               <div className="order-cards-grid">
               {filteredOrders.slice(0, visibleCount).map((order) => {
                 const st = order.status.toLowerCase();
-                const statusConf = STATUS_CONFIG[st] || STATUS_CONFIG.pending;
                 const availableStatuses = getAvailableStatuses(st);
                 const isLocked = st === 'cancelled';
 
