@@ -494,3 +494,39 @@ body.sidebar-collapsed .subscription-main {
         grid-template-columns: 1fr;
     }
 }
+
+/* ── Dark Mode Overrides for Subscription Page ───────────────────────── */
+[data-theme="dark"] .subscription-main { background-color: var(--tk-bg-surface); }
+
+[data-theme="dark"] .subscription-header h1,
+[data-theme="dark"] .subscription-status-info h3,
+[data-theme="dark"] .subscription-days-remaining,
+[data-theme="dark"] .subscription-plans-section h2,
+[data-theme="dark"] .subscription-plan-price,
+[data-theme="dark"] .subscription-history-section h2,
+[data-theme="dark"] .subscription-history-card tbody td { color: var(--tk-text); }
+
+[data-theme="dark"] .subscription-header p,
+[data-theme="dark"] .subscription-status-info p,
+[data-theme="dark"] .subscription-days-label,
+[data-theme="dark"] .subscription-plan-duration,
+[data-theme="dark"] .subscription-plan-price span,
+[data-theme="dark"] .subscription-plan-per-month,
+[data-theme="dark"] .subscription-history-card thead th,
+[data-theme="dark"] .subscription-empty-history,
+[data-theme="dark"] .subscription-loading { color: var(--tk-text-secondary); }
+
+[data-theme="dark"] .subscription-status-card,
+[data-theme="dark"] .subscription-plan-card,
+[data-theme="dark"] .subscription-history-card { background-color: var(--tk-bg-card); border-color: var(--tk-border); }
+
+[data-theme="dark"] .subscription-plan-card.selected { background: var(--tk-bg-hover); border-color: var(--tk-burgundy); }
+[data-theme="dark"] .subscription-plan-card:hover { border-color: var(--tk-border); }
+
+[data-theme="dark"] .subscription-history-card thead th { background: var(--tk-bg-elevated); border-color: var(--tk-border); }
+[data-theme="dark"] .subscription-history-card tbody td { border-color: var(--tk-border); }
+[data-theme="dark"] .subscription-history-card tbody tr:hover { background: var(--tk-bg-hover); }
+
+[data-theme="dark"] .subscription-status-icon.inactive,
+[data-theme="dark"] .subscription-status-badge.inactive { background: var(--tk-bg-elevated); color: var(--tk-text-secondary); }
+

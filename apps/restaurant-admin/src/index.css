@@ -12,8 +12,8 @@
 
   /* Backgrounds – Warm Light */
   --tk-bg: #FFFFFF;
-  --tk-bg-card: #FFF7F3;
-  --tk-bg-elevated: #FFEDE5;
+  --tk-bg-card: #faf6f6;
+  --tk-bg-elevated: #FFEDE5; 
   --tk-bg-hover: #FFF0EA;
   --tk-bg-sidebar: #FFFFFF;
   --tk-bg-surface: #f7f8fa;
@@ -63,6 +63,53 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Dark Mode ──────────────────────────────────────────── */
+[data-theme="dark"] {
+  /* Primary – Burgundy stays vivid */
+  --tk-burgundy: #C75B3A;
+  --tk-burgundy-dark: #A84628;
+  --tk-burgundy-light: #5C2413;
+  --tk-burgundy-bg: #2D1810;
+  --tk-burgundy-glow: rgba(199, 91, 58, 0.35);
+
+  /* Backgrounds – Deep dark */
+  --tk-bg: #121212;
+  --tk-bg-card: #1E1E1E;
+  --tk-bg-elevated: #252525;
+  --tk-bg-hover: #2A2A2A;
+  --tk-bg-sidebar: #161616;
+  --tk-bg-surface: #0F0F0F;
+
+  /* Text */
+  --tk-text: #F0EDE8;
+  --tk-text-body: #D4CFC9;
+  --tk-text-secondary: #9A918B;
+  --tk-text-muted: #5A534E;
+  --tk-text-on-primary: #FFFFFF;
+
+  /* Accent */
+  --tk-accent: #F2B84B;
+
+  /* Status */
+  --tk-success: #4CAF50;
+  --tk-warning: #F2B84B;
+  --tk-error: #E14B4B;
+  --tk-info: #6B9A9A;
+
+  /* Borders */
+  --tk-border: #2E2E2E;
+  --tk-border-strong: #F0EDE8;
+  --tk-border-card: 1.5px solid #2E2E2E;
+
+  /* Shadows */
+  --tk-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --tk-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --tk-shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.5);
+
+  color: var(--tk-text);
+  background-color: var(--tk-bg-surface);
 }
 
 a {

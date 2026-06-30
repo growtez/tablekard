@@ -883,3 +883,79 @@
     font-size: 28px;
   }
 }
+
+/* ── Dark Mode Overrides for Payment Page ───────────────────────── */
+[data-theme="dark"] .main-content { background-color: var(--tk-bg-surface); }
+
+[data-theme="dark"] .page-title,
+[data-theme="dark"] .revenue-amount,
+[data-theme="dark"] .table-title,
+[data-theme="dark"] .order-id-cell,
+[data-theme="dark"] .customer-name-cell,
+[data-theme="dark"] .datetime-cell,
+[data-theme="dark"] .amount-cell,
+[data-theme="dark"] .modal-title,
+[data-theme="dark"] .info-value,
+[data-theme="dark"] .section-title,
+[data-theme="dark"] .grand-total,
+[data-theme="dark"] .filter-select,
+[data-theme="dark"] .search-input { color: var(--tk-text); }
+
+[data-theme="dark"] .card-title,
+[data-theme="dark"] .payment-summary,
+[data-theme="dark"] .orders-table th,
+[data-theme="dark"] .table-no-cell,
+[data-theme="dark"] .info-label,
+[data-theme="dark"] .summary-row,
+[data-theme="dark"] .items-table th,
+[data-theme="dark"] .modal-close-btn { color: var(--tk-text-secondary); }
+
+[data-theme="dark"] .search-input::placeholder { color: var(--tk-text-muted); }
+
+[data-theme="dark"] .search-bar,
+[data-theme="dark"] .revenue-card,
+[data-theme="dark"] .table-card,
+[data-theme="dark"] .filter-group,
+[data-theme="dark"] .items-container,
+[data-theme="dark"] .modal-content { background-color: var(--tk-bg-card); border-color: var(--tk-border); }
+
+[data-theme="dark"] .custom-date-picker { background-color: var(--tk-bg-elevated); color: var(--tk-text); border-color: var(--tk-border); }
+[data-theme="dark"] .custom-date-picker:focus { border-color: var(--tk-burgundy); }
+
+[data-theme="dark"] .orders-table tbody tr:hover { background-color: var(--tk-bg-hover); }
+
+[data-theme="dark"] .view-all-btn { background-color: var(--tk-bg-elevated); color: var(--tk-text-secondary); }
+[data-theme="dark"] .view-all-btn:hover { background-color: var(--tk-bg-hover); color: var(--tk-text); }
+
+[data-theme="dark"] .info-card,
+[data-theme="dark"] .payment-summary-box { background-color: var(--tk-bg-elevated); border-color: var(--tk-border); }
+[data-theme="dark"] .info-card:hover { background-color: var(--tk-bg-hover); }
+
+[data-theme="dark"] .info-icon { background-color: var(--tk-bg-surface); }
+
+[data-theme="dark"] .orders-table thead tr,
+[data-theme="dark"] .orders-table th,
+[data-theme="dark"] .items-table th,
+[data-theme="dark"] .items-table td,
+[data-theme="dark"] .modal-header { border-color: var(--tk-border); }
+
+[data-theme="dark"] .items-table th { background-color: var(--tk-bg-elevated); }
+[data-theme="dark"] .items-table td { color: var(--tk-text); }
+
+[data-theme="dark"] .grand-total { border-color: var(--tk-border); }
+
+[data-theme="dark"] .action-btn.view-btn { background-color: rgba(144, 205, 244, 0.15); color: #90CDF4; }
+[data-theme="dark"] .action-btn.view-btn:hover { background-color: rgba(144, 205, 244, 0.25); }
+[data-theme="dark"] .action-btn.delete-btn { background-color: rgba(252, 129, 129, 0.15); color: #FC8181; }
+[data-theme="dark"] .action-btn.delete-btn:hover { background-color: rgba(252, 129, 129, 0.25); }
+[data-theme="dark"] .action-btn.paid-btn { background-color: rgba(104, 211, 145, 0.15); color: #68D391; }
+[data-theme="dark"] .action-btn.paid-btn:hover { background-color: rgba(104, 211, 145, 0.25); }
+
+@media (max-width: 768px) {
+  [data-theme="dark"] .orders-table tr { background-color: var(--tk-bg-card); border-color: var(--tk-border); }
+  [data-theme="dark"] .orders-table td { color: var(--tk-text); }
+  [data-theme="dark"] .orders-table td::before { color: var(--tk-text-secondary); }
+  [data-theme="dark"] .orders-table td:first-child::before { color: var(--tk-text); }
+  [data-theme="dark"] .orders-table td:first-child { border-color: var(--tk-border); }
+  [data-theme="dark"] .orders-table td:last-child { border-color: var(--tk-border); }
+}

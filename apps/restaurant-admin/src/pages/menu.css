@@ -637,7 +637,111 @@ input:checked+.toggle-slider:before {
     justify-content: center;
   }
 
-  .category-filter {
+    .category-filter {
     justify-content: center;
   }
 }
+
+/* Extracted Inline Styles */
+.add-category-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background-color: #E2E8F0;
+  color: #1A202C;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Outfit', sans-serif;
+}
+.add-category-btn:hover { background-color: #CBD5E0; }
+
+.edit-category-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #718096;
+  padding: 4px;
+}
+.edit-category-btn:hover { color: #4A5568; }
+
+.menu-empty-state {
+  padding: 40px;
+  text-align: center;
+  color: #718096;
+}
+
+.menu-serves {
+  font-size: 12px;
+  color: #718096;
+}
+
+.item-delete-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid #FC8181;
+  border-radius: 8px;
+  background-color: transparent;
+  color: #E53E3E;
+  cursor: pointer;
+}
+.item-delete-btn:hover { background-color: #FED7D7; }
+
+/* ── Dark Mode Overrides for Menu Page ───────────────────────── */
+[data-theme="dark"] .main-content { background-color: var(--tk-bg-surface); }
+
+[data-theme="dark"] .page-title,
+[data-theme="dark"] .stats-number,
+[data-theme="dark"] .top-selling-name,
+[data-theme="dark"] .content-title,
+[data-theme="dark"] .menu-name,
+[data-theme="dark"] .offer-title,
+[data-theme="dark"] .offer-dish,
+[data-theme="dark"] .tab-button.active { color: var(--tk-text); }
+
+[data-theme="dark"] .search-input { color: var(--tk-text); }
+[data-theme="dark"] .search-input::placeholder { color: var(--tk-text-muted); }
+
+[data-theme="dark"] .card-title,
+[data-theme="dark"] .stats-subtitle,
+[data-theme="dark"] .tab-button,
+[data-theme="dark"] .menu-category,
+[data-theme="dark"] .offer-description,
+[data-theme="dark"] .offer-validity,
+[data-theme="dark"] .menu-empty-state,
+[data-theme="dark"] .menu-serves,
+[data-theme="dark"] .edit-category-btn,
+[data-theme="dark"] .category-button { color: var(--tk-text-secondary); }
+
+[data-theme="dark"] .search-bar,
+[data-theme="dark"] .icon-button,
+[data-theme="dark"] .stats-card,
+[data-theme="dark"] .menu-card,
+[data-theme="dark"] .offer-card,
+[data-theme="dark"] .tab-button.active,
+[data-theme="dark"] .category-button { background-color: var(--tk-bg-card); border-color: var(--tk-border); }
+
+[data-theme="dark"] .tab-navigation { background-color: var(--tk-bg-elevated); }
+
+[data-theme="dark"] .add-category-btn { background-color: var(--tk-bg-hover); color: var(--tk-text); }
+[data-theme="dark"] .add-category-btn:hover { background-color: var(--tk-border); }
+
+[data-theme="dark"] .category-button { border-color: var(--tk-border); }
+[data-theme="dark"] .category-button:hover { background-color: var(--tk-bg-hover); border-color: var(--tk-border); color: var(--tk-text); }
+[data-theme="dark"] .category-button.active { background-color: var(--tk-burgundy); color: #fff; border-color: var(--tk-burgundy); }
+
+[data-theme="dark"] .edit-button { background-color: var(--tk-bg-hover); color: var(--tk-text-secondary); }
+[data-theme="dark"] .edit-button:hover { background-color: var(--tk-border); color: var(--tk-text); }
+
+[data-theme="dark"] .toggle-slider { background-color: var(--tk-bg-elevated); border: 1px solid var(--tk-border); }
+[data-theme="dark"] input:checked+.toggle-slider { background-color: var(--tk-burgundy); border-color: var(--tk-burgundy); }
+
+[data-theme="dark"] .original-price { color: var(--tk-text-muted); }
