@@ -19,8 +19,10 @@ import ImageCropper from "../../components/ImageCropper";
 import { useAuth } from "../../context/AuthContext";
 import {
   getRestaurantById,
+  getRestaurantPaymentSettings,
   updateAdministratorProfile,
   updateRestaurantProfile,
+  updateRestaurantPaymentSettings,
 } from "../../services/supabaseService";
 import { uploadProfileImage } from "../../services/storageService";
 import "./profile.css";
@@ -248,14 +250,29 @@ const ProfilePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
   const [isRestaurantEditing, setIsRestaurantEditing] = useState(false);
-  const [editingSection, setEditingSection] = useState<'core' | 'contact' | 'branding' | 'story' | null>(null);
+  const [editingSection, setEditingSection] = useState<'core' | 'contact' | 'branding' | 'story' | 'payments' | null>(null);
   const [isAdminEditing, setIsAdminEditing] = useState(false);
   const [isRestaurantSaving, setIsRestaurantSaving] = useState(false);
   const [isAdminSaving, setIsAdminSaving] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    "general" | "branding" | "story" | "admin"
+    "general" | "branding" | "story" | "payments" | "admin"
   >("general");
+
+  // Payment settings state
+  const [paymentSettings, setPaymentSettings] = useState({
+    razorpayKeyId: "",
+    hasRazorpayKeySecret: false,
+    hasRazorpayWebhookSecret: false,
+    onlinePaymentsEnabled: false,
+  });
+  const [paymentForm, setPaymentForm] = useState({
+    razorpayKeyId: "",
+    razorpayKeySecret: "",
+    razorpayWebhookSecret: "",
+    onlinePaymentsEnabled: false,
+  });
+  const [isPaymentSaving, setIsPaymentSaving] = useState(false);
 
   // Cropping state
   const [cropImage, setCropImage] = useState<string | null>(null);
@@ -281,9 +298,25 @@ const ProfilePage: React.FC = () => {
       try {
         setIsLoading(true);
         setFeedback(null);
-        const data = await getRestaurantById(activeRestaurantId);
+        const [data, pmtSettings] = await Promise.all([
+          getRestaurantById(activeRestaurantId),
+          getRestaurantPaymentSettings(activeRestaurantId),
+        ]);
         setRestaurant(data);
         setRestaurantForm(data ? createRestaurantFormState(data) : null);
+        const ps = {
+          razorpayKeyId: pmtSettings.razorpayKeyId ?? "",
+          hasRazorpayKeySecret: pmtSettings.hasRazorpayKeySecret,
+          hasRazorpayWebhookSecret: pmtSettings.hasRazorpayWebhookSecret,
+          onlinePaymentsEnabled: pmtSettings.onlinePaymentsEnabled,
+        };
+        setPaymentSettings(ps);
+        setPaymentForm({
+          razorpayKeyId: ps.razorpayKeyId,
+          razorpayKeySecret: "",
+          razorpayWebhookSecret: "",
+          onlinePaymentsEnabled: ps.onlinePaymentsEnabled,
+        });
       } catch (error: unknown) {
         console.error("Error fetching restaurant context:", error);
         setFeedback({
@@ -1859,6 +1892,154 @@ const ProfilePage: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* Payments Tab */}
+        <div style={{ display: activeTab === "payments" ? "block" : "none" }}>
+          <div className="profile-section">
+            <div className="profile-section-header">
+              <div>
+                <h3>Restaurant Razorpay</h3>
+                <p>Customer food payments settle directly into this restaurant's own Razorpay account.</p>
+              </div>
+              {editingSection === "payments" ? (
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <button
+                    type="button"
+                    className="profile-btn profile-btn-secondary"
+                    onClick={() => {
+                      setEditingSection(null);
+                      setPaymentForm({
+                        razorpayKeyId: paymentSettings.razorpayKeyId,
+                        razorpayKeySecret: "",
+                        razorpayWebhookSecret: "",
+                        onlinePaymentsEnabled: paymentSettings.onlinePaymentsEnabled,
+                      });
+                    }}
+                  >
+                    <X size={14} /> Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="profile-btn profile-btn-primary"
+                    disabled={isPaymentSaving}
+                    onClick={async () => {
+                      if (!activeRestaurantId) return;
+                      setIsPaymentSaving(true);
+                      try {
+                        const updated = await updateRestaurantPaymentSettings(activeRestaurantId, {
+                          razorpayKeyId: paymentForm.razorpayKeyId.trim() || null,
+                          razorpayKeySecret: paymentForm.razorpayKeySecret.trim() || null,
+                          razorpayWebhookSecret: paymentForm.razorpayWebhookSecret.trim() || null,
+                          onlinePaymentsEnabled: paymentForm.onlinePaymentsEnabled,
+                        });
+                        const ps = {
+                          razorpayKeyId: updated.razorpayKeyId ?? "",
+                          hasRazorpayKeySecret: updated.hasRazorpayKeySecret,
+                          hasRazorpayWebhookSecret: updated.hasRazorpayWebhookSecret,
+                          onlinePaymentsEnabled: updated.onlinePaymentsEnabled,
+                        };
+                        setPaymentSettings(ps);
+                        setPaymentForm({ ...paymentForm, razorpayKeySecret: "", razorpayWebhookSecret: "" });
+                        setEditingSection(null);
+                        setFeedback({ tone: "success", message: "Payment settings saved." });
+                      } catch (err) {
+                        setFeedback({ tone: "error", message: getErrorMessage(err, "Failed to save payment settings.") });
+                      } finally {
+                        setIsPaymentSaving(false);
+                      }
+                    }}
+                  >
+                    <Save size={14} /> {isPaymentSaving ? "Saving…" : "Save"}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="profile-btn profile-btn-secondary"
+                  onClick={() => setEditingSection("payments")}
+                >
+                  <Edit3 size={14} /> Edit
+                </button>
+              )}
+            </div>
+
+            {editingSection === "payments" ? (
+              <div className="profile-form-grid">
+                <label className="profile-field profile-field-span-2" style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", border: "1px solid #CBD5E0", borderRadius: "8px" }}>
+                  <span className="profile-field-label" style={{ marginBottom: 0 }}>Enable Online Food Payments</span>
+                  <button
+                    type="button"
+                    className={`profile-toggle-switch ${paymentForm.onlinePaymentsEnabled ? "active" : ""}`}
+                    onClick={() => setPaymentForm(f => ({ ...f, onlinePaymentsEnabled: !f.onlinePaymentsEnabled }))}
+                  />
+                </label>
+
+                <label className="profile-field">
+                  <span className="profile-field-label">Razorpay Key ID</span>
+                  <input
+                    className="profile-input"
+                    type="text"
+                    value={paymentForm.razorpayKeyId}
+                    onChange={e => setPaymentForm(f => ({ ...f, razorpayKeyId: e.target.value }))}
+                    placeholder="rzp_live_xxxxxxxxxxxx"
+                  />
+                </label>
+
+                <label className="profile-field">
+                  <span className="profile-field-label">Razorpay Key Secret {paymentSettings.hasRazorpayKeySecret && <span style={{ color: "green", fontSize: "0.75rem" }}>✓ Configured</span>}</span>
+                  <input
+                    className="profile-input"
+                    type="password"
+                    value={paymentForm.razorpayKeySecret}
+                    onChange={e => setPaymentForm(f => ({ ...f, razorpayKeySecret: e.target.value }))}
+                    placeholder={paymentSettings.hasRazorpayKeySecret ? "Leave blank to keep existing" : "Enter key secret"}
+                    autoComplete="new-password"
+                  />
+                </label>
+
+                <label className="profile-field profile-field-span-2">
+                  <span className="profile-field-label">Webhook Secret {paymentSettings.hasRazorpayWebhookSecret && <span style={{ color: "green", fontSize: "0.75rem" }}>✓ Configured</span>}</span>
+                  <input
+                    className="profile-input"
+                    type="password"
+                    value={paymentForm.razorpayWebhookSecret}
+                    onChange={e => setPaymentForm(f => ({ ...f, razorpayWebhookSecret: e.target.value }))}
+                    placeholder={paymentSettings.hasRazorpayWebhookSecret ? "Leave blank to keep existing" : "Enter webhook secret"}
+                    autoComplete="new-password"
+                  />
+                  <span className="profile-field-help">Set this in your Razorpay Dashboard → Webhooks → Secret.</span>
+                </label>
+              </div>
+            ) : (
+              <div className="profile-form-grid">
+                <div className="profile-info-item">
+                  <span className="profile-info-label">Online Food Payments</span>
+                  <span className="profile-info-value">
+                    {paymentSettings.onlinePaymentsEnabled ? "✅ Enabled" : "❌ Disabled"}
+                  </span>
+                </div>
+                <div className="profile-info-item">
+                  <span className="profile-info-label">Razorpay Key ID</span>
+                  <span className="profile-info-value profile-info-mono">
+                    {paymentSettings.razorpayKeyId || "Not set"}
+                  </span>
+                </div>
+                <div className="profile-info-item">
+                  <span className="profile-info-label">Key Secret</span>
+                  <span className="profile-info-value">
+                    {paymentSettings.hasRazorpayKeySecret ? "🔒 Configured" : "Not set"}
+                  </span>
+                </div>
+                <div className="profile-info-item">
+                  <span className="profile-info-label">Webhook Secret</span>
+                  <span className="profile-info-value">
+                    {paymentSettings.hasRazorpayWebhookSecret ? "🔒 Configured" : "Not set"}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     );
   }
@@ -2131,6 +2312,7 @@ const ProfilePage: React.FC = () => {
               { id: "general", label: "General Info" },
               { id: "branding", label: "Location & Branding" },
               { id: "story", label: "Story & Socials" },
+              { id: "payments", label: "Payments" },
               { id: "admin", label: "Admin Profile" },
             ].map((tab) => (
               <button

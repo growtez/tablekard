@@ -5,12 +5,13 @@ import { Save, RefreshCw, AlertCircle, Eye, EyeOff, Key, Webhook } from 'lucide-
 
 // platform_settings: id TEXT PRIMARY KEY, config JSONB, updated_at TIMESTAMPTZ
 // Key: 'integrations'
-// Stores Razorpay keys (used by Edge Functions for subscription_payments and payments tables)
+// Stores platform Razorpay keys for TableKard subscription billing.
+// Restaurant food-order payments use each restaurant's own Razorpay settings.
 
 const FIELD_META = [
-    { key: 'razorpay_key_id', label: 'Razorpay Key ID', type: 'text', secret: false, description: 'Public key for Razorpay SDK (method: cash|card|upi|netbanking|wallet|online).' },
-    { key: 'razorpay_key_secret', label: 'Razorpay Key Secret', type: 'password', secret: true, description: 'Secret for signature verification (stored masked).' },
-    { key: 'razorpay_webhook_secret', label: 'Razorpay Webhook Secret', type: 'password', secret: true, description: 'Used to verify webhook_verified flag on payments.' },
+    { key: 'razorpay_key_id', label: 'Platform Razorpay Key ID', type: 'text', secret: false, description: 'Public key for TableKard SaaS subscription checkout.' },
+    { key: 'razorpay_key_secret', label: 'Platform Razorpay Key Secret', type: 'password', secret: true, description: 'Secret for TableKard subscription payment verification.' },
+    { key: 'razorpay_webhook_secret', label: 'Platform Razorpay Webhook Secret', type: 'password', secret: true, description: 'Reserved for platform billing webhooks.' },
     { key: 'supabase_url', label: 'Supabase URL', type: 'text', secret: false, description: 'Project URL — used by Edge Functions.' },
     { key: 'supabase_service_key', label: 'Supabase Service Role Key', type: 'password', secret: true, description: 'Service key for admin operations in Edge Functions.' },
 ];

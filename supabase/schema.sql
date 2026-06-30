@@ -324,15 +324,35 @@ CREATE INDEX IF NOT EXISTS idx_offers_menu_item_id ON public.offers(menu_item_id
 -- TRIGGERS FOR TIMESTAMPS
 -- ======================================================================================
 
+DROP TRIGGER IF EXISTS update_profiles_updated_at ON public.profiles;
+DROP TRIGGER IF EXISTS update_profiles_updated_at ON public.profiles;
 CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
+DROP TRIGGER IF EXISTS update_restaurants_updated_at ON public.restaurants;
+DROP TRIGGER IF EXISTS update_restaurants_updated_at ON public.restaurants;
 CREATE TRIGGER update_restaurants_updated_at BEFORE UPDATE ON public.restaurants FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
+DROP TRIGGER IF EXISTS update_restaurant_users_updated_at ON public.restaurant_users;
+DROP TRIGGER IF EXISTS update_restaurant_users_updated_at ON public.restaurant_users;
 CREATE TRIGGER update_restaurant_users_updated_at BEFORE UPDATE ON public.restaurant_users FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
+DROP TRIGGER IF EXISTS update_restaurant_tables_updated_at ON public.restaurant_tables;
+DROP TRIGGER IF EXISTS update_restaurant_tables_updated_at ON public.restaurant_tables;
 CREATE TRIGGER update_restaurant_tables_updated_at BEFORE UPDATE ON public.restaurant_tables FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
+DROP TRIGGER IF EXISTS update_menu_categories_updated_at ON public.menu_categories;
+DROP TRIGGER IF EXISTS update_menu_categories_updated_at ON public.menu_categories;
 CREATE TRIGGER update_menu_categories_updated_at BEFORE UPDATE ON public.menu_categories FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
+DROP TRIGGER IF EXISTS update_menu_items_updated_at ON public.menu_items;
+DROP TRIGGER IF EXISTS update_menu_items_updated_at ON public.menu_items;
 CREATE TRIGGER update_menu_items_updated_at BEFORE UPDATE ON public.menu_items FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
+DROP TRIGGER IF EXISTS update_orders_updated_at ON public.orders;
+DROP TRIGGER IF EXISTS update_orders_updated_at ON public.orders;
 CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON public.orders FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
+DROP TRIGGER IF EXISTS update_revenue_updated_at ON public.revenue;
+DROP TRIGGER IF EXISTS update_revenue_updated_at ON public.revenue;
 CREATE TRIGGER update_revenue_updated_at BEFORE UPDATE ON public.revenue FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
+DROP TRIGGER IF EXISTS update_platform_settings_updated_at ON public.platform_settings;
+DROP TRIGGER IF EXISTS update_platform_settings_updated_at ON public.platform_settings;
 CREATE TRIGGER update_platform_settings_updated_at BEFORE UPDATE ON public.platform_settings FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
+DROP TRIGGER IF EXISTS update_offers_updated_at ON public.offers;
+DROP TRIGGER IF EXISTS update_offers_updated_at ON public.offers;
 CREATE TRIGGER update_offers_updated_at BEFORE UPDATE ON public.offers FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
 
 -- ======================================================================================
@@ -407,6 +427,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trigger_maintain_revenue ON public.orders;
+DROP TRIGGER IF EXISTS trigger_maintain_revenue ON public.orders;
 DROP TRIGGER IF EXISTS trigger_maintain_revenue ON public.orders;
 CREATE TRIGGER trigger_maintain_revenue
     AFTER INSERT OR UPDATE OR DELETE ON public.orders
@@ -485,6 +507,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS trigger_update_sales_count ON public.orders;
+DROP TRIGGER IF EXISTS trigger_update_sales_count ON public.orders;
+DROP TRIGGER IF EXISTS trigger_update_sales_count ON public.orders;
 CREATE TRIGGER trigger_update_sales_count
     AFTER INSERT OR UPDATE OR DELETE ON public.orders
     FOR EACH ROW EXECUTE PROCEDURE update_menu_item_sales_count();
@@ -512,6 +536,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
@@ -566,10 +592,20 @@ ALTER TABLE public.offers ENABLE ROW LEVEL SECURITY;
 -- ======================================================================================
 
 -- 1. profiles
+DROP POLICY IF EXISTS "Users can read own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can read own profile" ON public.profiles;
 CREATE POLICY "Users can read own profile" ON public.profiles FOR SELECT USING (auth.uid() = id);
+DROP POLICY IF EXISTS "Super admins can manage all profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Super admins can manage all profiles" ON public.profiles;
 CREATE POLICY "Super admins can manage all profiles" ON public.profiles FOR ALL USING (public.is_super_admin(auth.uid()));
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
 CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
+DROP POLICY IF EXISTS "Allow profile creation" ON public.profiles;
+DROP POLICY IF EXISTS "Allow profile creation" ON public.profiles;
 CREATE POLICY "Allow profile creation" ON public.profiles FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Restaurant members can read customer profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Restaurant members can read customer profiles" ON public.profiles;
 CREATE POLICY "Restaurant members can read customer profiles" ON public.profiles FOR SELECT USING (
   EXISTS (
     SELECT 1 FROM public.orders o
@@ -578,88 +614,162 @@ CREATE POLICY "Restaurant members can read customer profiles" ON public.profiles
 );
 
 -- 2. restaurants
+DROP POLICY IF EXISTS "Anyone can read approved/active restaurants" ON public.restaurants;
+DROP POLICY IF EXISTS "Anyone can read approved/active restaurants" ON public.restaurants;
 CREATE POLICY "Anyone can read approved/active restaurants" ON public.restaurants FOR SELECT USING (status IN ('approved', 'active'));
+DROP POLICY IF EXISTS "Restaurant admins can read full restaurant row" ON public.restaurants;
+DROP POLICY IF EXISTS "Restaurant admins can read full restaurant row" ON public.restaurants;
 CREATE POLICY "Restaurant admins can read full restaurant row" ON public.restaurants FOR SELECT USING (public.is_restaurant_member(id));
+DROP POLICY IF EXISTS "Super admins can manage all restaurants" ON public.restaurants;
+DROP POLICY IF EXISTS "Super admins can manage all restaurants" ON public.restaurants;
 CREATE POLICY "Super admins can manage all restaurants" ON public.restaurants FOR ALL USING (public.is_super_admin());
+DROP POLICY IF EXISTS "Restaurant admins can update their restaurant" ON public.restaurants;
+DROP POLICY IF EXISTS "Restaurant admins can update their restaurant" ON public.restaurants;
 CREATE POLICY "Restaurant admins can update their restaurant" ON public.restaurants FOR UPDATE USING (public.is_restaurant_member(id));
 
 -- 3. restaurant_users
+DROP POLICY IF EXISTS "Super admins manage all restaurant users" ON public.restaurant_users;
+DROP POLICY IF EXISTS "Super admins manage all restaurant users" ON public.restaurant_users;
 CREATE POLICY "Super admins manage all restaurant users" ON public.restaurant_users FOR ALL USING (public.is_super_admin());
+DROP POLICY IF EXISTS "Restaurant admins manage their staff" ON public.restaurant_users;
+DROP POLICY IF EXISTS "Restaurant admins manage their staff" ON public.restaurant_users;
 CREATE POLICY "Restaurant admins manage their staff" ON public.restaurant_users FOR ALL USING (public.is_restaurant_member(restaurant_id));
+DROP POLICY IF EXISTS "Users can view their own assignment" ON public.restaurant_users;
+DROP POLICY IF EXISTS "Users can view their own assignment" ON public.restaurant_users;
 CREATE POLICY "Users can view their own assignment" ON public.restaurant_users FOR SELECT USING (profile_id = auth.uid());
 
 -- 4. restaurant_tables
+DROP POLICY IF EXISTS "Public can read tables" ON public.restaurant_tables;
+DROP POLICY IF EXISTS "Public can read tables" ON public.restaurant_tables;
 CREATE POLICY "Public can read tables" ON public.restaurant_tables FOR SELECT USING (active = true);
+DROP POLICY IF EXISTS "Restaurant members manage their tables" ON public.restaurant_tables;
+DROP POLICY IF EXISTS "Restaurant members manage their tables" ON public.restaurant_tables;
 CREATE POLICY "Restaurant members manage their tables" ON public.restaurant_tables FOR ALL USING (public.is_restaurant_member(restaurant_id));
 
 -- 5. menu_categories
+DROP POLICY IF EXISTS "Public can read active categories" ON public.menu_categories;
+DROP POLICY IF EXISTS "Public can read active categories" ON public.menu_categories;
 CREATE POLICY "Public can read active categories" ON public.menu_categories FOR SELECT USING (active = true);
+DROP POLICY IF EXISTS "Restaurant members manage their categories" ON public.menu_categories;
+DROP POLICY IF EXISTS "Restaurant members manage their categories" ON public.menu_categories;
 CREATE POLICY "Restaurant members manage their categories" ON public.menu_categories FOR ALL USING (public.is_restaurant_member(restaurant_id));
 
 -- 6. menu_items
+DROP POLICY IF EXISTS "Public can read menu items" ON public.menu_items;
+DROP POLICY IF EXISTS "Public can read menu items" ON public.menu_items;
 CREATE POLICY "Public can read menu items" ON public.menu_items FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Restaurant members manage their items" ON public.menu_items;
+DROP POLICY IF EXISTS "Restaurant members manage their items" ON public.menu_items;
 CREATE POLICY "Restaurant members manage their items" ON public.menu_items FOR ALL USING (public.is_restaurant_member(restaurant_id));
 
 -- 7. menu_item_images
+DROP POLICY IF EXISTS "Public can read menu item images" ON public.menu_item_images;
+DROP POLICY IF EXISTS "Public can read menu item images" ON public.menu_item_images;
 CREATE POLICY "Public can read menu item images" ON public.menu_item_images FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Restaurant members manage their menu item images" ON public.menu_item_images;
+DROP POLICY IF EXISTS "Restaurant members manage their menu item images" ON public.menu_item_images;
 CREATE POLICY "Restaurant members manage their menu item images" ON public.menu_item_images FOR ALL USING (public.is_restaurant_member(restaurant_id));
 
 -- 8. orders
+DROP POLICY IF EXISTS "Customers can read own orders" ON public.orders;
+DROP POLICY IF EXISTS "Customers can read own orders" ON public.orders;
 CREATE POLICY "Customers can read own orders" ON public.orders FOR SELECT USING (customer_id = auth.uid());
+DROP POLICY IF EXISTS "Public can read orders for live queue" ON public.orders;
+DROP POLICY IF EXISTS "Public can read orders for live queue" ON public.orders;
 CREATE POLICY "Public can read orders for live queue" ON public.orders FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Customers can create orders" ON public.orders;
+DROP POLICY IF EXISTS "Customers can create orders" ON public.orders;
 CREATE POLICY "Customers can create orders" ON public.orders FOR INSERT WITH CHECK (customer_id = auth.uid() OR customer_id IS NULL);
+DROP POLICY IF EXISTS "Restaurant members can manage restaurant orders" ON public.orders;
+DROP POLICY IF EXISTS "Restaurant members can manage restaurant orders" ON public.orders;
 CREATE POLICY "Restaurant members can manage restaurant orders" ON public.orders FOR ALL USING (public.is_restaurant_member(restaurant_id));
 
 -- 9. order_items
+DROP POLICY IF EXISTS "Customers can read own order items" ON public.order_items;
+DROP POLICY IF EXISTS "Customers can read own order items" ON public.order_items;
 CREATE POLICY "Customers can read own order items" ON public.order_items FOR SELECT USING (
   EXISTS (SELECT 1 FROM public.orders o WHERE o.id = order_id AND o.customer_id = auth.uid())
 );
+DROP POLICY IF EXISTS "Customers can insert their order items" ON public.order_items;
+DROP POLICY IF EXISTS "Customers can insert their order items" ON public.order_items;
 CREATE POLICY "Customers can insert their order items" ON public.order_items FOR INSERT WITH CHECK (
   EXISTS (SELECT 1 FROM public.orders o WHERE o.id = order_id AND (o.customer_id = auth.uid() OR o.customer_id IS NULL))
 );
+DROP POLICY IF EXISTS "Restaurant members can manage order items" ON public.order_items;
+DROP POLICY IF EXISTS "Restaurant members can manage order items" ON public.order_items;
 CREATE POLICY "Restaurant members can manage order items" ON public.order_items FOR ALL USING (
   EXISTS (SELECT 1 FROM public.orders o WHERE o.id = order_items.order_id AND public.is_restaurant_member(o.restaurant_id))
 );
 
 -- 10. payments
+DROP POLICY IF EXISTS "Customers can read their payments" ON public.payments;
+DROP POLICY IF EXISTS "Customers can read their payments" ON public.payments;
 CREATE POLICY "Customers can read their payments" ON public.payments FOR SELECT USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "Customers can create payments" ON public.payments;
+DROP POLICY IF EXISTS "Customers can create payments" ON public.payments;
 CREATE POLICY "Customers can create payments" ON public.payments FOR INSERT WITH CHECK (user_id = auth.uid() OR user_id IS NULL);
+DROP POLICY IF EXISTS "Restaurant members can read their payments" ON public.payments;
+DROP POLICY IF EXISTS "Restaurant members can read their payments" ON public.payments;
 CREATE POLICY "Restaurant members can read their payments" ON public.payments FOR SELECT USING (public.is_restaurant_member(restaurant_id));
 
 -- 11. payment_logs
+DROP POLICY IF EXISTS "Restaurant members can read payment logs" ON public.payment_logs;
+DROP POLICY IF EXISTS "Restaurant members can read payment logs" ON public.payment_logs;
 CREATE POLICY "Restaurant members can read payment logs" ON public.payment_logs FOR SELECT USING (
   EXISTS (SELECT 1 FROM public.payments p WHERE p.id = payment_id AND public.is_restaurant_member(p.restaurant_id))
 );
 
 -- 12. revenue
+DROP POLICY IF EXISTS "Restaurant members can manage revenue" ON public.revenue;
+DROP POLICY IF EXISTS "Restaurant members can manage revenue" ON public.revenue;
 CREATE POLICY "Restaurant members can manage revenue" ON public.revenue FOR ALL USING (public.is_restaurant_member(restaurant_id));
+DROP POLICY IF EXISTS "Super admins can manage all revenue" ON public.revenue;
+DROP POLICY IF EXISTS "Super admins can manage all revenue" ON public.revenue;
 CREATE POLICY "Super admins can manage all revenue" ON public.revenue FOR ALL USING (public.is_super_admin());
 
 -- 13. favorites
+DROP POLICY IF EXISTS "Users can manage own favorites" ON public.favorites;
+DROP POLICY IF EXISTS "Users can manage own favorites" ON public.favorites;
 CREATE POLICY "Users can manage own favorites" ON public.favorites FOR ALL USING (user_id = auth.uid());
 
 -- 14. feedback
+DROP POLICY IF EXISTS "Users can read/write own feedback" ON public.feedback;
+DROP POLICY IF EXISTS "Users can read/write own feedback" ON public.feedback;
 CREATE POLICY "Users can read/write own feedback" ON public.feedback FOR ALL USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "Restaurant members can read feedback" ON public.feedback;
+DROP POLICY IF EXISTS "Restaurant members can read feedback" ON public.feedback;
 CREATE POLICY "Restaurant members can read feedback" ON public.feedback FOR SELECT USING (
   EXISTS (SELECT 1 FROM public.orders o WHERE o.id = feedback.order_id AND public.is_restaurant_member(o.restaurant_id))
 );
 
 -- 15. platform_settings
+DROP POLICY IF EXISTS "Public can read platform settings" ON public.platform_settings;
+DROP POLICY IF EXISTS "Public can read platform settings" ON public.platform_settings;
 CREATE POLICY "Public can read platform settings" ON public.platform_settings FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Super admins manage platform settings" ON public.platform_settings;
+DROP POLICY IF EXISTS "Super admins manage platform settings" ON public.platform_settings;
 CREATE POLICY "Super admins manage platform settings" ON public.platform_settings FOR ALL USING (public.is_super_admin());
 
 -- 16. subscription_payments
+DROP POLICY IF EXISTS "Restaurant members can read subscription payments" ON public.subscription_payments;
+DROP POLICY IF EXISTS "Restaurant members can read subscription payments" ON public.subscription_payments;
 CREATE POLICY "Restaurant members can read subscription payments" ON public.subscription_payments FOR SELECT USING (public.is_restaurant_member(restaurant_id));
+DROP POLICY IF EXISTS "Super admins manage subscription payments" ON public.subscription_payments;
+DROP POLICY IF EXISTS "Super admins manage subscription payments" ON public.subscription_payments;
 CREATE POLICY "Super admins manage subscription payments" ON public.subscription_payments FOR ALL USING (public.is_super_admin());
 -- NOTE: Restaurant members have read-only access. Status updates (e.g. auto-cancel)
 -- must be performed by the super-admin service role only (see super-admin/Subscriptions.jsx).
 
 -- 17. offers
+DROP POLICY IF EXISTS "Public can read active offers" ON public.offers;
+DROP POLICY IF EXISTS "Public can read active offers" ON public.offers;
 CREATE POLICY "Public can read active offers"
     ON public.offers
     FOR SELECT
     USING (true);
 
+DROP POLICY IF EXISTS "Restaurant members manage their offers" ON public.offers;
+DROP POLICY IF EXISTS "Restaurant members manage their offers" ON public.offers;
 CREATE POLICY "Restaurant members manage their offers"
     ON public.offers
     FOR ALL
@@ -673,10 +783,14 @@ CREATE POLICY "Restaurant members manage their offers"
 -- 17. storage.objects (ar-files bucket)
 -- Note: These policies target the storage.objects table which is in a different schema
 
+DROP POLICY IF EXISTS "Public Access" ON storage.objects;
+DROP POLICY IF EXISTS "Public Access" ON storage.objects;
 CREATE POLICY "Public Access"
 ON storage.objects FOR SELECT
 USING ( bucket_id = 'ar-files' );
 
+DROP POLICY IF EXISTS "Authenticated Insert" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated Insert" ON storage.objects;
 CREATE POLICY "Authenticated Insert"
 ON storage.objects FOR INSERT
 WITH CHECK (
@@ -684,6 +798,8 @@ WITH CHECK (
   auth.role() = 'authenticated'
 );
 
+DROP POLICY IF EXISTS "Authenticated Management" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated Management" ON storage.objects;
 CREATE POLICY "Authenticated Management"
 ON storage.objects FOR ALL
 USING (
@@ -696,27 +812,6 @@ USING (
 -- ======================================================================================
 
 -- 1. Create the realtime publication if it doesn't already exist
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_publication WHERE pubname = 'supabase_realtime') THEN
-        CREATE PUBLICATION supabase_realtime;
-    END IF;
-END $$;
-
--- 2. Add the orders and other tables to the publication
-ALTER PUBLICATION supabase_realtime ADD TABLE public.orders;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.revenue;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.menu_items;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.menu_categories;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.menu_item_images;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.offers;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.feedback;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.order_items;
-
--- 3. (Optional but recommended) Set replica identity to FULL
--- This ensures UPDATE and DELETE events include the complete old row,
--- allowing Supabase to properly filter realtime events through RLS policies.
-ALTER TABLE public.orders REPLICA IDENTITY FULL;
 ALTER TABLE public.revenue REPLICA IDENTITY FULL;
 ALTER TABLE public.menu_items REPLICA IDENTITY FULL;
 ALTER TABLE public.menu_categories REPLICA IDENTITY FULL;
@@ -765,6 +860,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS trigger_update_parent_order ON public.order_items;
+DROP TRIGGER IF EXISTS trigger_update_parent_order ON public.order_items;
+DROP TRIGGER IF EXISTS trigger_update_parent_order ON public.order_items;
 CREATE TRIGGER trigger_update_parent_order
     AFTER UPDATE OF status ON public.order_items
     FOR EACH ROW
@@ -799,33 +896,168 @@ END;
 $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS trigger_propagate_order_status ON public.orders;
+DROP TRIGGER IF EXISTS trigger_propagate_order_status ON public.orders;
+DROP TRIGGER IF EXISTS trigger_propagate_order_status ON public.orders;
 CREATE TRIGGER trigger_propagate_order_status
     AFTER UPDATE OF status ON public.orders
     FOR EACH ROW
     EXECUTE PROCEDURE propagate_order_status_to_items();
-
-    -- ======================================================================================
--- LANDING PAGE LEADS
+-- ======================================================================================
+-- VAULT CONFIGURATION & RESTAURANT PAYMENT SETTINGS
 -- ======================================================================================
 
-CREATE TABLE IF NOT EXISTS public.landing_leads (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    restaurant_name TEXT NOT NULL,
-    owner_name TEXT NOT NULL,
-    country TEXT NOT NULL,
-    state TEXT,
-    district TEXT,
-    phone_number TEXT NOT NULL,
-    email TEXT,
-    status TEXT DEFAULT 'new' CHECK (status IN ('new', 'contacted', 'converted', 'rejected')),
+-- Enable Vault Extension
+CREATE EXTENSION IF NOT EXISTS "supabase_vault" WITH SCHEMA "vault";
+
+-- Drop old table if exists to recreate it cleanly (or alter it if preferred)
+-- Actually, we'll just create the table safely.
+CREATE TABLE IF NOT EXISTS public.restaurant_payment_settings (
+    restaurant_id UUID PRIMARY KEY REFERENCES public.restaurants(id) ON DELETE CASCADE,
+    provider TEXT NOT NULL DEFAULT 'razorpay',
+    razorpay_key_id TEXT,
+    has_razorpay_key_secret BOOLEAN NOT NULL DEFAULT false,
+    has_razorpay_webhook_secret BOOLEAN NOT NULL DEFAULT false,
+    online_payments_enabled BOOLEAN NOT NULL DEFAULT false,
+    razorpay_key_secret_id UUID,
+    razorpay_webhook_secret_id UUID,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Enable RLS
-ALTER TABLE public.landing_leads ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.restaurant_payment_settings ENABLE ROW LEVEL SECURITY;
 
--- Allow anyone to insert (since the landing page is public and unauthenticated)
-CREATE POLICY "Public can insert leads" ON public.landing_leads FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Restaurant members manage payment settings" ON public.restaurant_payment_settings;
+DROP POLICY IF EXISTS "Restaurant members manage payment settings" ON public.restaurant_payment_settings;
+CREATE POLICY "Restaurant members manage payment settings" 
+    ON public.restaurant_payment_settings 
+    FOR ALL 
+    USING (public.is_restaurant_member(restaurant_id)) 
+    WITH CHECK (public.is_restaurant_member(restaurant_id));
 
--- Only super_admin can view/manage leads
-CREATE POLICY "Super admins can manage leads" ON public.landing_leads FOR ALL USING (public.is_super_admin());
+DROP POLICY IF EXISTS "Super admins manage restaurant payment settings" ON public.restaurant_payment_settings;
+DROP POLICY IF EXISTS "Super admins manage restaurant payment settings" ON public.restaurant_payment_settings;
+CREATE POLICY "Super admins manage restaurant payment settings" 
+    ON public.restaurant_payment_settings 
+    FOR ALL 
+    USING (public.is_super_admin()) 
+    WITH CHECK (public.is_super_admin());
+
+DROP TRIGGER IF EXISTS update_restaurant_payment_settings_updated_at ON public.restaurant_payment_settings;
+DROP TRIGGER IF EXISTS update_restaurant_payment_settings_updated_at ON public.restaurant_payment_settings;
+CREATE TRIGGER update_restaurant_payment_settings_updated_at 
+    BEFORE UPDATE ON public.restaurant_payment_settings 
+    FOR EACH ROW 
+    EXECUTE PROCEDURE set_updated_at();
+
+-- RPC Functions
+
+CREATE OR REPLACE FUNCTION upsert_restaurant_payment_settings(
+    p_restaurant_id UUID,
+    p_razorpay_key_id TEXT,
+    p_razorpay_key_secret TEXT,
+    p_razorpay_webhook_secret TEXT,
+    p_online_payments_enabled BOOLEAN
+)
+RETURNS public.restaurant_payment_settings
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_result public.restaurant_payment_settings;
+    v_key_secret_id UUID;
+    v_webhook_secret_id UUID;
+BEGIN
+    IF NOT (public.is_restaurant_member(p_restaurant_id) OR public.is_super_admin()) THEN
+        RAISE EXCEPTION 'Access denied';
+    END IF;
+
+    SELECT razorpay_key_secret_id, razorpay_webhook_secret_id 
+    INTO v_key_secret_id, v_webhook_secret_id
+    FROM public.restaurant_payment_settings
+    WHERE restaurant_id = p_restaurant_id;
+
+    IF p_razorpay_key_secret IS NOT NULL THEN
+        IF v_key_secret_id IS NOT NULL THEN
+            UPDATE vault.secrets SET secret = p_razorpay_key_secret WHERE id = v_key_secret_id;
+        ELSE
+            SELECT id INTO v_key_secret_id FROM vault.create_secret(p_razorpay_key_secret, 'razorpay_key_secret for ' || p_restaurant_id);
+        END IF;
+    END IF;
+
+    IF p_razorpay_webhook_secret IS NOT NULL THEN
+        IF v_webhook_secret_id IS NOT NULL THEN
+            UPDATE vault.secrets SET secret = p_razorpay_webhook_secret WHERE id = v_webhook_secret_id;
+        ELSE
+            SELECT id INTO v_webhook_secret_id FROM vault.create_secret(p_razorpay_webhook_secret, 'razorpay_webhook_secret for ' || p_restaurant_id);
+        END IF;
+    END IF;
+
+    INSERT INTO public.restaurant_payment_settings (
+        restaurant_id, 
+        provider, 
+        razorpay_key_id, 
+        online_payments_enabled, 
+        razorpay_key_secret_id, 
+        razorpay_webhook_secret_id,
+        has_razorpay_key_secret,
+        has_razorpay_webhook_secret
+    )
+    VALUES (
+        p_restaurant_id, 
+        'razorpay', 
+        p_razorpay_key_id, 
+        p_online_payments_enabled, 
+        v_key_secret_id, 
+        v_webhook_secret_id,
+        v_key_secret_id IS NOT NULL,
+        v_webhook_secret_id IS NOT NULL
+    )
+    ON CONFLICT (restaurant_id) DO UPDATE SET
+        razorpay_key_id = EXCLUDED.razorpay_key_id,
+        online_payments_enabled = EXCLUDED.online_payments_enabled,
+        razorpay_key_secret_id = COALESCE(EXCLUDED.razorpay_key_secret_id, public.restaurant_payment_settings.razorpay_key_secret_id),
+        razorpay_webhook_secret_id = COALESCE(EXCLUDED.razorpay_webhook_secret_id, public.restaurant_payment_settings.razorpay_webhook_secret_id),
+        has_razorpay_key_secret = COALESCE(EXCLUDED.razorpay_key_secret_id, public.restaurant_payment_settings.razorpay_key_secret_id) IS NOT NULL,
+        has_razorpay_webhook_secret = COALESCE(EXCLUDED.razorpay_webhook_secret_id, public.restaurant_payment_settings.razorpay_webhook_secret_id) IS NOT NULL,
+        updated_at = NOW()
+    RETURNING * INTO v_result;
+
+    RETURN v_result;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION get_restaurant_payment_settings(p_restaurant_id UUID)
+RETURNS SETOF public.restaurant_payment_settings
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+    IF NOT (public.is_restaurant_member(p_restaurant_id) OR public.is_super_admin()) THEN
+        RAISE EXCEPTION 'Access denied';
+    END IF;
+
+    RETURN QUERY SELECT * FROM public.restaurant_payment_settings WHERE restaurant_id = p_restaurant_id;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION get_restaurant_razorpay_secret(
+    p_restaurant_id UUID
+)
+RETURNS TABLE (
+    razorpay_key_secret TEXT,
+    razorpay_webhook_secret TEXT
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        k.secret AS razorpay_key_secret,
+        w.secret AS razorpay_webhook_secret
+    FROM public.restaurant_payment_settings rps
+    LEFT JOIN vault.decrypted_secrets k ON k.id = rps.razorpay_key_secret_id
+    LEFT JOIN vault.decrypted_secrets w ON w.id = rps.razorpay_webhook_secret_id
+    WHERE rps.restaurant_id = p_restaurant_id;
+END;
+$$;

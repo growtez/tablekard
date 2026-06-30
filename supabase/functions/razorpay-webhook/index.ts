@@ -30,18 +30,16 @@ serve(async (req: Request) => {
         // ──────────────────────────────────────────────
         // 0. Read environment variables
         // ──────────────────────────────────────────────
-        const RAZORPAY_WEBHOOK_SECRET = Deno.env.get("RAZORPAY_WEBHOOK_SECRET");
         const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
         const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-        if (!RAZORPAY_WEBHOOK_SECRET) {
-            throw new Error("Webhook secret not configured");
-        }
 
         // ──────────────────────────────────────────────
         // 1. Read the raw request body (needed for signature verification)
         // ──────────────────────────────────────────────
         const rawBody = await req.text();
+        const supabaseAdmin = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+        const webhookData = JSON.parse(rawBody);
+        const event = webhookData.event;
 
         // ──────────────────────────────────────────────
         // 2. Verify the webhook signature
@@ -54,7 +52,61 @@ serve(async (req: Request) => {
             return new Response("Missing signature", { status: 400, headers: corsHeaders });
         }
 
-        const expectedSignature = createHmac("sha256", RAZORPAY_WEBHOOK_SECRET)
+        let lookupQuery;
+        if (event === "payment.captured" || event === "payment.failed") {
+            const razorpayOrderId = webhookData.payload?.payment?.entity?.order_id;
+            if (!razorpayOrderId) {
+                return new Response("Missing Razorpay order id", { status: 400, headers: corsHeaders });
+            }
+            lookupQuery = supabaseAdmin
+                .from("payments")
+                .select("id, restaurant_id")
+                .eq("razorpay_order_id", razorpayOrderId)
+                .maybeSingle();
+        } else if (event === "refund.created" || event === "refund.processed") {
+            const razorpayPaymentId = webhookData.payload?.refund?.entity?.payment_id;
+            if (!razorpayPaymentId) {
+                return new Response("Missing Razorpay payment id", { status: 400, headers: corsHeaders });
+            }
+            lookupQuery = supabaseAdmin
+                .from("payments")
+                .select("id, restaurant_id")
+                .eq("razorpay_payment_id", razorpayPaymentId)
+                .maybeSingle();
+        }
+
+        if (!lookupQuery) {
+            console.log(`Unhandled webhook event before verification: ${event}`);
+            return new Response(JSON.stringify({ received: true }), {
+                status: 200,
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+        }
+
+        const { data: webhookPayment, error: webhookPaymentError } = await lookupQuery;
+        if (webhookPaymentError || !webhookPayment) {
+            console.error("Payment not found for webhook verification", webhookPaymentError);
+            return new Response("Payment record not found", { status: 200, headers: corsHeaders });
+        }
+
+        const { data: paymentSettings, error: settingsError } = await supabaseAdmin
+            .from("restaurant_payment_settings")
+            .select("razorpay_webhook_secret_id")
+            .eq("restaurant_id", webhookPayment.restaurant_id)
+            .maybeSingle();
+
+        const { data: webhookSecret, error: webhookSecretError } = await supabaseAdmin
+            .rpc("get_restaurant_razorpay_secret", {
+                p_restaurant_id: webhookPayment.restaurant_id,
+                p_secret_type: "webhook_secret",
+            });
+
+        if (settingsError || webhookSecretError || !paymentSettings?.razorpay_webhook_secret_id || !webhookSecret) {
+            console.error("Webhook secret not configured for restaurant", webhookPayment.restaurant_id);
+            return new Response("Webhook secret not configured", { status: 400, headers: corsHeaders });
+        }
+
+        const expectedSignature = createHmac("sha256", webhookSecret)
             .update(rawBody)
             .digest("hex");
 
@@ -66,10 +118,6 @@ serve(async (req: Request) => {
         // ──────────────────────────────────────────────
         // ✅ Signature verified — this is a genuine Razorpay webhook
         // ──────────────────────────────────────────────
-
-        const supabaseAdmin = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
-        const webhookData = JSON.parse(rawBody);
-        const event = webhookData.event;
 
         console.log(`Webhook received: ${event}`);
 

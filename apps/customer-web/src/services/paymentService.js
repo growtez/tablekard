@@ -9,8 +9,6 @@
 
 import { supabase } from '@restaurant-saas/supabase';
 
-const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID?.trim();
-
 /**
  * Step 1: Create a Razorpay Order via our Edge Function
  * 
@@ -93,8 +91,13 @@ export const openRazorpayCheckout = ({
             return;
         }
 
+        if (!razorpayKeyId) {
+            reject(new Error('Restaurant Razorpay account is not configured.'));
+            return;
+        }
+
         const options = {
-            key: razorpayKeyId || RAZORPAY_KEY_ID,
+            key: razorpayKeyId,
             amount: amount,         // Already in paise from Edge Function
             currency: currency,
             name: restaurantName,
