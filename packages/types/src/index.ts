@@ -725,6 +725,37 @@ export interface Database {
         };
         Relationships: [];
       };
+      restaurant_payment_settings: {
+        Row: {
+          restaurant_id: string;
+          provider: 'razorpay';
+          razorpay_key_id: string | null;
+          razorpay_key_secret_id: string | null;
+          razorpay_webhook_secret_id: string | null;
+          online_payments_enabled: boolean;
+          created_at: IsoDateString;
+          updated_at: IsoDateString;
+        };
+        Insert: {
+          restaurant_id: string;
+          provider?: 'razorpay';
+          razorpay_key_id?: string | null;
+          razorpay_key_secret_id?: string | null;
+          razorpay_webhook_secret_id?: string | null;
+          online_payments_enabled?: boolean;
+          created_at?: IsoDateString;
+          updated_at?: IsoDateString;
+        };
+        Update: {
+          provider?: 'razorpay';
+          razorpay_key_id?: string | null;
+          razorpay_key_secret_id?: string | null;
+          razorpay_webhook_secret_id?: string | null;
+          online_payments_enabled?: boolean;
+          updated_at?: IsoDateString;
+        };
+        Relationships: [];
+      };
       order_items: {
         Row: {
           id: string;

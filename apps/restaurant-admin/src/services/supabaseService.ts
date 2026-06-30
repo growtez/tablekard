@@ -36,6 +36,16 @@ interface RestaurantRow {
     created_at: string; updated_at: string;
 }
 
+interface RestaurantPaymentSettingsRpcRow {
+    restaurant_id: string;
+    provider: 'razorpay';
+    razorpay_key_id: string | null;
+    has_razorpay_key_secret: boolean;
+    has_razorpay_webhook_secret: boolean;
+    online_payments_enabled: boolean;
+    updated_at: string;
+}
+
 interface ProfileRow {
     id: string; email: string; name: string | null; role: Profile['role'];
     avatar_url: string | null; created_at: string; updated_at: string;
@@ -105,6 +115,22 @@ export interface AdministratorProfileUpdateResult {
     pendingEmail?: string;
 }
 
+export interface RestaurantPaymentSettings {
+    restaurantId: string;
+    provider: 'razorpay';
+    razorpayKeyId: string;
+    hasRazorpayKeySecret: boolean;
+    hasRazorpayWebhookSecret: boolean;
+    onlinePaymentsEnabled: boolean;
+}
+
+export interface RestaurantPaymentSettingsInput {
+    razorpayKeyId?: string | null;
+    razorpayKeySecret?: string | null;
+    razorpayWebhookSecret?: string | null;
+    onlinePaymentsEnabled: boolean;
+}
+
 const mapRestaurantRow = (row: RestaurantRow): Restaurant => ({
     id: row.id,
     name: row.name,
@@ -152,6 +178,15 @@ const mapProfileRow = (row: ProfileRow): Profile => ({
     avatarUrl: row.avatar_url,
     createdAt: row.created_at,
     updatedAt: row.updated_at
+});
+
+const mapRestaurantPaymentSettingsRpcRow = (row: RestaurantPaymentSettingsRpcRow): RestaurantPaymentSettings => ({
+    restaurantId: row.restaurant_id,
+    provider: row.provider,
+    razorpayKeyId: row.razorpay_key_id ?? '',
+    hasRazorpayKeySecret: row.has_razorpay_key_secret,
+    hasRazorpayWebhookSecret: row.has_razorpay_webhook_secret,
+    onlinePaymentsEnabled: row.online_payments_enabled
 });
 
 // ==========================================
@@ -203,6 +238,48 @@ export const updateRestaurantProfile = async (
 
     if (error) throw error;
     return mapRestaurantRow(data as RestaurantRow);
+};
+
+export const getRestaurantPaymentSettings = async (
+    restaurantId: string
+): Promise<RestaurantPaymentSettings> => {
+    const { data, error } = await db
+        .rpc('get_restaurant_payment_settings', {
+            p_restaurant_id: restaurantId
+        });
+
+    if (error) throw error;
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) {
+        return {
+            restaurantId,
+            provider: 'razorpay',
+            razorpayKeyId: '',
+            hasRazorpayKeySecret: false,
+            hasRazorpayWebhookSecret: false,
+            onlinePaymentsEnabled: false
+        };
+    }
+
+    return mapRestaurantPaymentSettingsRpcRow(row as RestaurantPaymentSettingsRpcRow);
+};
+
+export const updateRestaurantPaymentSettings = async (
+    restaurantId: string,
+    input: RestaurantPaymentSettingsInput
+): Promise<RestaurantPaymentSettings> => {
+    const { data, error } = await db
+        .rpc('upsert_restaurant_payment_settings', {
+            p_restaurant_id: restaurantId,
+            p_razorpay_key_id: input.razorpayKeyId?.trim() || null,
+            p_razorpay_key_secret: input.razorpayKeySecret?.trim() || null,
+            p_razorpay_webhook_secret: input.razorpayWebhookSecret?.trim() || null,
+            p_online_payments_enabled: input.onlinePaymentsEnabled
+        });
+
+    if (error) throw error;
+    const row = Array.isArray(data) ? data[0] : data;
+    return mapRestaurantPaymentSettingsRpcRow(row as RestaurantPaymentSettingsRpcRow);
 };
 
 export const updateAdministratorProfile = async (

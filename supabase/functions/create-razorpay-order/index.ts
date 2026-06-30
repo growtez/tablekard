@@ -31,14 +31,8 @@ serve(async (req: Request) => {
         // ──────────────────────────────────────────────
         // 0. Read environment variables
         // ──────────────────────────────────────────────
-        const RAZORPAY_KEY_ID = Deno.env.get("RAZORPAY_KEY_ID");
-        const RAZORPAY_KEY_SECRET = Deno.env.get("RAZORPAY_KEY_SECRET");
         const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
         const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-        if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
-            throw new Error("Razorpay credentials not configured");
-        }
 
         // ──────────────────────────────────────────────
         // 1. Parse request body
@@ -146,12 +140,47 @@ serve(async (req: Request) => {
         // ──────────────────────────────────────────────
         const { data: restaurant, error: restError } = await supabaseAdmin
             .from("restaurants")
-            .select("id, name, settings, slug")
+            .select("id, name, settings, slug, pay_online")
             .eq("id", restaurant_id)
             .single();
 
         if (restError || !restaurant) {
             throw new Error(`Restaurant not found: ${restError?.message}`);
+        }
+
+        if (restaurant.pay_online === false) {
+            return new Response(
+                JSON.stringify({ error: "Online payments are disabled for this restaurant" }),
+                { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+        }
+
+        const { data: paymentSettings, error: paymentSettingsError } = await supabaseAdmin
+            .from("restaurant_payment_settings")
+            .select("razorpay_key_id, razorpay_key_secret_id, online_payments_enabled")
+            .eq("restaurant_id", restaurant_id)
+            .maybeSingle();
+
+        if (paymentSettingsError) {
+            throw new Error(`Failed to load restaurant payment settings: ${paymentSettingsError.message}`);
+        }
+
+        const razorpayKeyId = paymentSettings?.razorpay_key_id?.trim();
+        const { data: razorpayKeySecret, error: keySecretError } = await supabaseAdmin
+            .rpc("get_restaurant_razorpay_secret", {
+                p_restaurant_id: restaurant_id,
+                p_secret_type: "key_secret",
+            });
+
+        if (keySecretError) {
+            throw new Error(`Failed to load restaurant Razorpay secret: ${keySecretError.message}`);
+        }
+
+        if (!paymentSettings?.online_payments_enabled || !razorpayKeyId || !paymentSettings.razorpay_key_secret_id || !razorpayKeySecret) {
+            return new Response(
+                JSON.stringify({ error: "Restaurant Razorpay account is not configured" }),
+                { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
         }
 
         const taxPercentage = restaurant.settings?.tax_percentage || 0;
@@ -169,7 +198,7 @@ serve(async (req: Request) => {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                Authorization: `Basic ${btoa(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`)}`,
+                Authorization: `Basic ${btoa(`${razorpayKeyId}:${razorpayKeySecret}`)}`,
             },
             body: JSON.stringify({
                 amount: amountInPaise,
@@ -247,7 +276,7 @@ serve(async (req: Request) => {
             JSON.stringify({
                 success: true,
                 razorpay_order_id: razorpayOrder.id,
-                razorpay_key_id: RAZORPAY_KEY_ID,
+                razorpay_key_id: razorpayKeyId,
                 amount: amountInPaise,
                 currency: "INR",
                 payment_id: payment.id, // Our internal payment ID

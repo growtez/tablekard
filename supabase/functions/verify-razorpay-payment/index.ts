@@ -42,13 +42,8 @@ serve(async (req: Request) => {
         // ──────────────────────────────────────────────
         // 0. Read environment variables
         // ──────────────────────────────────────────────
-        const RAZORPAY_KEY_SECRET = Deno.env.get("RAZORPAY_KEY_SECRET");
         const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
         const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-        if (!RAZORPAY_KEY_SECRET) {
-            throw new Error("Razorpay key secret not configured");
-        }
 
         // ──────────────────────────────────────────────
         // 1. Parse request body
@@ -97,12 +92,6 @@ serve(async (req: Request) => {
         // 3. VERIFY the Razorpay signature
         //    signature = HMAC-SHA256(razorpay_order_id + "|" + razorpay_payment_id, key_secret)
         // ──────────────────────────────────────────────
-        const expectedSignature = createHmac("sha256", RAZORPAY_KEY_SECRET)
-            .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-            .digest("hex");
-
-        const isValid = expectedSignature === razorpay_signature;
-
         // ──────────────────────────────────────────────
         // 4. Fetch the stored payment record
         // ──────────────────────────────────────────────
@@ -127,6 +116,31 @@ serve(async (req: Request) => {
                 { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }
+
+        const { data: paymentSettings, error: settingsError } = await supabaseAdmin
+            .from("restaurant_payment_settings")
+            .select("razorpay_key_secret_id, online_payments_enabled")
+            .eq("restaurant_id", paymentRecord.restaurant_id)
+            .maybeSingle();
+
+        const { data: razorpayKeySecret, error: keySecretError } = await supabaseAdmin
+            .rpc("get_restaurant_razorpay_secret", {
+                p_restaurant_id: paymentRecord.restaurant_id,
+                p_secret_type: "key_secret",
+            });
+
+        if (settingsError || keySecretError || !paymentSettings?.online_payments_enabled || !paymentSettings.razorpay_key_secret_id || !razorpayKeySecret) {
+            return new Response(
+                JSON.stringify({ error: "Restaurant Razorpay account is not configured" }),
+                { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+        }
+
+        const expectedSignature = createHmac("sha256", razorpayKeySecret)
+            .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+            .digest("hex");
+
+        const isValid = expectedSignature === razorpay_signature;
 
         if (!isValid) {
             // ──────────────────────────────────────────────
