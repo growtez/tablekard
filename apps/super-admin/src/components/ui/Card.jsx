@@ -19,3 +19,9 @@ export const CardTitle = ({ children, className = '', ...props }) => (
         {children}
     </h3>
 );
+
+export const CardContent = ({ children, className = '', style = {}, ...props }) => (
+    <div className={`card-content ${className}`} style={style} {...props}>
+        {children}
+    </div>
+);
