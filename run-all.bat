@@ -10,6 +10,3 @@ start "Customer Web" cmd /c npm run dev:customer-web
 
 echo Starting Inhouse Service App...
 start "Inhouse Service App" cmd /c npm run dev:inhouse-service-app
-
-echo All applications are starting in separate windows!
-pause

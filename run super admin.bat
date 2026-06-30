@@ -1,0 +1,3 @@
+@echo off
+echo Starting Super Admin...
+start "Super Admin" cmd /c npm run dev:super-admin
