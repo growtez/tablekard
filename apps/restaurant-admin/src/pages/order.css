@@ -668,3 +668,69 @@
     font-size: 20px;
   }
 }
+
+/* Status Classes */
+.st-pending { background-color: #FEF3C7; color: #92400E; }
+.st-preparing { background-color: #DBEAFE; color: #1E40AF; }
+.st-ready { background-color: #D1FAE5; color: #065F46; }
+.st-cancelled { background-color: #FEE2E2; color: #991B1B; }
+.st-served { background-color: #CCFBF1; color: #115E59; }
+.st-completed { background-color: #CCFBF1; color: #115E59; }
+
+/* ── Dark Mode Overrides for Order Page ───────────────────────── */
+[data-theme="dark"] .order-main-content { background-color: var(--tk-bg-surface); }
+
+[data-theme="dark"] .order-page-title,
+[data-theme="dark"] .order-list-title,
+[data-theme="dark"] .ocard-id,
+[data-theme="dark"] .ocard-customer,
+[data-theme="dark"] .ocard-total,
+[data-theme="dark"] .order-stat-number,
+[data-theme="dark"] .order-empty h3 { color: var(--tk-text); }
+
+[data-theme="dark"] .order-page-subtitle,
+[data-theme="dark"] .order-stat-title,
+[data-theme="dark"] .order-date-tag,
+[data-theme="dark"] .ocard-time,
+[data-theme="dark"] .ocard-items,
+[data-theme="dark"] .order-empty p { color: var(--tk-text-secondary); }
+
+[data-theme="dark"] .order-search-bar,
+[data-theme="dark"] .order-stat-card,
+[data-theme="dark"] .order-filter-select,
+[data-theme="dark"] .order-list-section,
+[data-theme="dark"] .order-card,
+[data-theme="dark"] .ocard-status-select option,
+[data-theme="dark"] .ocard-pay-status option { background-color: var(--tk-bg-card); color: var(--tk-text); border-color: var(--tk-border); }
+
+[data-theme="dark"] .order-search-input { color: var(--tk-text); }
+[data-theme="dark"] .order-search-input::placeholder { color: var(--tk-text-muted); }
+[data-theme="dark"] .order-empty svg { color: var(--tk-text-muted); }
+
+[data-theme="dark"] .order-list-count,
+[data-theme="dark"] .ocard-meta-chip,
+[data-theme="dark"] .ocard-pay-method,
+[data-theme="dark"] .ocard-view-btn { background-color: var(--tk-bg-hover); color: var(--tk-text-secondary); }
+[data-theme="dark"] .ocard-view-btn:hover { background-color: var(--tk-burgundy); color: #fff; }
+
+[data-theme="dark"] .ocard-meta-chip.type { background-color: rgba(67, 56, 202, 0.2); color: #818CF8; }
+
+[data-theme="dark"] .order-card { border-color: var(--tk-border); }
+[data-theme="dark"] .ocard-items,
+[data-theme="dark"] .ocard-footer,
+[data-theme="dark"] .order-list-section,
+[data-theme="dark"] .order-search-bar { border-color: var(--tk-border); }
+[data-theme="dark"] .ocard-items { border-top-style: solid; }
+
+/* Status Classes Dark Mode */
+[data-theme="dark"] .st-pending { background-color: rgba(254, 243, 199, 0.15); color: #FCD34D; }
+[data-theme="dark"] .st-preparing { background-color: rgba(219, 234, 254, 0.15); color: #93C5FD; }
+[data-theme="dark"] .st-ready { background-color: rgba(209, 250, 229, 0.15); color: #6EE7B7; }
+[data-theme="dark"] .st-cancelled { background-color: rgba(254, 226, 226, 0.15); color: #FCA5A5; }
+[data-theme="dark"] .st-served,
+[data-theme="dark"] .st-completed { background-color: rgba(204, 251, 241, 0.15); color: #5EEAD4; }
+
+[data-theme="dark"] .ps-paid { background-color: rgba(209, 250, 229, 0.15); color: #6EE7B7; }
+[data-theme="dark"] .ps-pending { background-color: rgba(254, 243, 199, 0.15); color: #FCD34D; }
+[data-theme="dark"] .ps-failed { background-color: rgba(254, 226, 226, 0.15); color: #FCA5A5; }
+[data-theme="dark"] .ps-refunded { background-color: rgba(237, 233, 254, 0.15); color: #C4B5FD; }

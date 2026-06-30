@@ -1,4 +1,4 @@
-﻿/* Profile.css */
+/* Profile.css */
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 .profile-container {
@@ -984,3 +984,60 @@
 .profile-toggle-switch.active .profile-toggle-thumb {
   transform: translateX(20px);
 }
+
+/* ── Dark Mode Overrides for Profile Page ───────────────────────── */
+[data-theme="dark"] .profile-main-content { background-color: var(--tk-bg-surface); }
+
+[data-theme="dark"] .profile-page-title,
+[data-theme="dark"] .profile-card-title,
+[data-theme="dark"] .profile-info-value,
+[data-theme="dark"] .profile-section-header h3,
+[data-theme="dark"] .profile-input,
+[data-theme="dark"] .profile-color-picker,
+[data-theme="dark"] .profile-modal-header h3,
+[data-theme="dark"] .profile-modal-title { color: var(--tk-text); }
+
+[data-theme="dark"] .profile-page-subtitle,
+[data-theme="dark"] .profile-card-subtitle,
+[data-theme="dark"] .profile-info-label,
+[data-theme="dark"] .profile-info-mono,
+[data-theme="dark"] .profile-muted,
+[data-theme="dark"] .profile-field-label,
+[data-theme="dark"] .profile-field-help,
+[data-theme="dark"] .profile-section-header p,
+[data-theme="dark"] .profile-empty-state,
+[data-theme="dark"] .profile-dropzone-empty,
+[data-theme="dark"] .profile-dropzone-hint,
+[data-theme="dark"] .profile-modal-content p,
+[data-theme="dark"] .profile-loading { color: var(--tk-text-secondary); }
+
+[data-theme="dark"] .profile-card,
+[data-theme="dark"] .profile-section,
+[data-theme="dark"] .profile-summary-card,
+[data-theme="dark"] .profile-modal-content { background-color: var(--tk-bg-card); border-color: var(--tk-border); }
+
+[data-theme="dark"] .profile-icon-button,
+[data-theme="dark"] .profile-secondary-action,
+[data-theme="dark"] .profile-add-link,
+[data-theme="dark"] .profile-swatch-chip,
+[data-theme="dark"] .profile-dropzone,
+[data-theme="dark"] .profile-input,
+[data-theme="dark"] .profile-color-picker,
+[data-theme="dark"] .profile-modal-cancel { background-color: var(--tk-bg-elevated); border-color: var(--tk-border); color: var(--tk-text); }
+
+[data-theme="dark"] .profile-dropzone { border-color: var(--tk-border); }
+
+[data-theme="dark"] .profile-empty-state { background-color: var(--tk-bg-elevated); border-color: var(--tk-border); }
+
+[data-theme="dark"] .profile-card-header,
+[data-theme="dark"] .profile-modal-header,
+[data-theme="dark"] .profile-modal-footer { border-color: var(--tk-border); }
+
+[data-theme="dark"] .profile-icon-button:hover,
+[data-theme="dark"] .profile-secondary-action:hover,
+[data-theme="dark"] .profile-add-link:hover { background-color: var(--tk-bg-hover); }
+
+[data-theme="dark"] .profile-locate-btn { background-color: rgba(72, 187, 120, 0.15); color: #68D391; border-color: #68D391; }
+[data-theme="dark"] .profile-locate-btn:hover:not(:disabled) { background-color: rgba(72, 187, 120, 0.25); }
+
+[data-theme="dark"] .profile-toggle-switch { background-color: var(--tk-border); }

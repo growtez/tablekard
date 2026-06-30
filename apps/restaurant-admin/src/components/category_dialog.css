@@ -354,3 +354,27 @@
 .category-toggle-switch input:checked+.category-toggle-slider:before {
     transform: translateX(20px);
 }
+
+/* ── Dark Mode Overrides ───────────────────────── */
+[data-theme="dark"] .category-dialog-container { background-color: var(--tk-bg-card); color: var(--tk-text); }
+[data-theme="dark"] .category-dialog-title,
+[data-theme="dark"] .category-toggle-label,
+[data-theme="dark"] .category-form-checkbox-label { color: var(--tk-text); }
+
+[data-theme="dark"] .category-form-label,
+[data-theme="dark"] .category-form-hint,
+[data-theme="dark"] .category-toggle-desc { color: var(--tk-text-secondary); }
+
+[data-theme="dark"] .category-form-input { background-color: var(--tk-bg-elevated); color: var(--tk-text); border-color: var(--tk-border); }
+[data-theme="dark"] .category-form-input::placeholder { color: var(--tk-text-muted); }
+
+[data-theme="dark"] .category-image-upload-area { border-color: var(--tk-border); }
+[data-theme="dark"] .category-image-upload-area:hover { background-color: var(--tk-bg-hover); }
+
+[data-theme="dark"] .category-toggle-row { background-color: var(--tk-bg-elevated); border-color: var(--tk-border); }
+
+[data-theme="dark"] .category-btn-cancel { background-color: var(--tk-bg-elevated); color: var(--tk-text-secondary); }
+[data-theme="dark"] .category-btn-cancel:hover { background-color: var(--tk-bg-hover); color: var(--tk-text); }
+
+[data-theme="dark"] .category-dialog-close { color: var(--tk-text-secondary); }
+[data-theme="dark"] .category-dialog-close:hover { background-color: var(--tk-bg-hover); color: var(--tk-text); }

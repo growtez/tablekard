@@ -335,3 +335,29 @@
     height: 140px;
   }
 }
+
+/* ── Dark Mode Overrides ───────────────────────── */
+[data-theme="dark"] .offer-dialog-container { background-color: var(--tk-bg-card); color: var(--tk-text); }
+[data-theme="dark"] .offer-dialog-title,
+[data-theme="dark"] .offer-item-preview-name,
+[data-theme="dark"] .offer-form-input,
+[data-theme="dark"] .offer-form-select { color: var(--tk-text); }
+
+[data-theme="dark"] .offer-form-label,
+[data-theme="dark"] .offer-item-preview-desc,
+[data-theme="dark"] .offer-item-preview-serves { color: var(--tk-text-secondary); }
+
+[data-theme="dark"] .offer-form-input,
+[data-theme="dark"] .offer-form-select { background-color: var(--tk-bg-elevated); border-color: var(--tk-border); }
+[data-theme="dark"] .offer-form-input::placeholder { color: var(--tk-text-muted); }
+
+[data-theme="dark"] .offer-item-preview { background: var(--tk-bg-elevated); border-color: var(--tk-border); }
+
+[data-theme="dark"] .offer-toggle-btn.inactive { background-color: var(--tk-bg-elevated); color: var(--tk-text-secondary); border-color: var(--tk-border); }
+[data-theme="dark"] .offer-toggle-btn.inactive:hover { background-color: var(--tk-bg-hover); }
+
+[data-theme="dark"] .offer-btn-cancel { background-color: var(--tk-bg-elevated); color: var(--tk-text-secondary); }
+[data-theme="dark"] .offer-btn-cancel:hover:not(:disabled) { background-color: var(--tk-bg-hover); color: var(--tk-text); }
+
+[data-theme="dark"] .offer-dialog-close { color: var(--tk-text-secondary); }
+[data-theme="dark"] .offer-dialog-close:hover { background-color: var(--tk-bg-hover); color: var(--tk-text); }
