@@ -8,9 +8,6 @@ import {
     Users,
     ChevronDown,
     ChevronRight,
-    // Headphones,
-    LogOut,
-    Menu,
     FileText,
     Layers,
     Inbox
@@ -45,6 +42,12 @@ const navItems = [
     // }
 ];
 
+// Fixed icon box size in px. Kept as a constant so the icon wrapper and the
+// lucide `size` prop always agree — this is what actually keeps icons from
+// drifting when the sidebar animates.
+const ICON_BOX = 20; // matches w-5/h-5
+const ICON_SIZE = 18; // rendered glyph size, slightly smaller than its box
+
 const NavItemComponent = ({ item, collapsed }) => {
     const location = useLocation();
 
@@ -56,25 +59,34 @@ const NavItemComponent = ({ item, collapsed }) => {
         return (
             <div className="nav-item-group">
                 <button
-                    className={`w-full flex items-center justify-between px-3 py-2.5 text-[14px] font-medium rounded-lg mb-1 transition-colors ${isSubItemActive ? 'bg-sidebar-hover text-sidebar-text' : 'text-sidebar-text-muted bg-transparent hover:bg-sidebar-hover hover:text-sidebar-text'}`}
+                    className={`w-full flex items-center justify-between px-2.5 py-2 text-[13px] font-medium rounded-lg mb-1 border transition-colors ${isSubItemActive ? 'bg-sidebar-hover text-sidebar-text border-transparent' : 'text-sidebar-text-muted bg-transparent border-transparent hover:bg-sidebar-hover hover:text-sidebar-text'}`}
                     onClick={() => setIsOpen(!isOpen)}
                 >
-                    <div className="flex items-center gap-3">
-                        <item.icon className="w-5 h-5 shrink-0" />
-                        {!collapsed && <span>{item.label}</span>}
+                    <div className="flex items-center w-full h-5">
+                        <div
+                            className="flex items-center justify-center shrink-0 grow-0"
+                            style={{ width: ICON_BOX, height: ICON_BOX }}
+                        >
+                            <item.icon size={ICON_SIZE} className="shrink-0" />
+                        </div>
+                        <div
+                            className={`ml-2.5 h-full flex items-center overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-200 ease-in-out ${collapsed ? 'max-w-0 opacity-0' : 'max-w-[140px] opacity-100'}`}
+                        >
+                            <span className="truncate">{item.label}</span>
+                        </div>
                     </div>
                     {!collapsed && (
-                        isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />
+                        isOpen ? <ChevronDown size={15} /> : <ChevronRight size={15} />
                     )}
                 </button>
                 {isOpen && !collapsed && (
-                    <div className="flex flex-col pl-7 mt-0.5 ml-5 border-l border-sidebar-border">
+                    <div className="flex flex-col pl-5 mt-0.5 ml-3 border-l border-sidebar-border">
                         {item.subItems.map((sub, idx) => (
                             <NavLink
                                 key={idx}
                                 to={sub.path}
                                 className={({ isActive }) =>
-                                    `px-3 py-2 text-[13px] rounded transition-colors mb-0.5 block ${isActive ? 'text-sidebar-accent font-semibold bg-[#A0D9B4]/15' : 'text-sidebar-text-muted hover:text-sidebar-text hover:bg-sidebar-hover'}`
+                                    `px-2.5 py-2 text-[12px] rounded transition-colors mb-0.5 block ${isActive ? 'text-sidebar-accent font-semibold bg-[#A0D9B4]/15' : 'text-sidebar-text-muted hover:text-sidebar-text hover:bg-sidebar-hover'}`
                                 }
                             >
                                 {sub.label}
@@ -90,68 +102,52 @@ const NavItemComponent = ({ item, collapsed }) => {
         <NavLink
             to={item.path}
             className={({ isActive }) =>
-                `w-full flex items-center gap-3 px-3 py-2.5 text-[14px] font-medium rounded-lg mb-1 transition-colors ${isActive ? 'bg-sidebar-accent text-[#1A202C] border border-sidebar-accent font-semibold' : 'text-sidebar-text-muted bg-transparent hover:bg-sidebar-hover hover:text-sidebar-text'}`
+                `w-full flex items-center px-2.5 py-2 text-[13px] font-medium rounded-lg mb-1 border transition-colors ${isActive ? 'bg-sidebar-accent text-[#1A202C] border-sidebar-accent font-semibold' : 'text-sidebar-text-muted bg-transparent border-transparent hover:bg-sidebar-hover hover:text-sidebar-text'}`
             }
             title={collapsed ? item.label : undefined}
         >
-            <item.icon className="w-5 h-5 shrink-0" />
-            {!collapsed && <span>{item.label}</span>}
+            <span
+                className="flex items-center justify-center shrink-0 grow-0"
+                style={{ width: ICON_BOX, height: ICON_BOX }}
+            >
+                <item.icon size={ICON_SIZE} className="shrink-0" />
+            </span>
+            <div
+                className={`ml-2.5 h-full flex items-center overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-200 ease-in-out ${collapsed ? 'max-w-0 opacity-0' : 'max-w-[140px] opacity-100'}`}
+            >
+                <span className="truncate">{item.label}</span>
+            </div>
         </NavLink>
     );
 };
 
-export default function Sidebar({ collapsed: isLocked = true, setCollapsed: setIsLocked, session, onLogout, mobileOpen = false, setMobileOpen }) {
+export default function Sidebar({ collapsed, session, onLogout, mobileOpen = false, setMobileOpen }) {
     const [isHovered, setIsHovered] = useState(false);
-    const effectiveCollapsed = isLocked && !isHovered && !mobileOpen;
+    const effectiveCollapsed = collapsed && !isHovered && !mobileOpen;
 
     return (
         <aside
-            className={`fixed top-0 left-0 h-screen flex flex-col bg-sidebar-bg border-r border-sidebar-border z-50 transition-all duration-300 ${effectiveCollapsed ? 'w-[80px]' : 'w-[260px]'} ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
+            className={`fixed top-0 left-0 h-screen flex flex-col bg-sidebar-bg border-r border-sidebar-border z-50 transition-[width] duration-150 ${effectiveCollapsed ? 'w-[52px]' : 'w-[180px]'} ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
-            <div className={`border-b border-sidebar-border ${effectiveCollapsed ? 'py-6 px-0' : 'p-6 pb-5'}`}>
-                <div className={`flex items-center w-full ${effectiveCollapsed ? 'justify-center gap-0' : 'justify-start gap-3'}`}>
-                    <button
-                        className={`p-2 rounded-lg flex items-center justify-center transition-colors ${!isLocked ? 'bg-accent-primary/10 text-accent-primary border border-accent-primary/10' : 'bg-surface-hover hover:bg-border text-text-muted'}`}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setIsLocked(!isLocked);
-                        }}
-                        title={isLocked ? "Lock Sidebar Open" : "Unlock Sidebar (Hover Mode)"}
-                    >
-                        <Menu size={20} />
-                    </button>
-                    <div className="flex items-center">
-                        {!effectiveCollapsed && <span className="text-xl font-extrabold bg-gradient-to-br from-white to-sidebar-text-muted text-transparent bg-clip-text tracking-tight font-poppins">TableKard</span>}
-                    </div>
-                </div>
+            <div className="border-b border-sidebar-border py-4 pl-4 pr-4 flex items-center overflow-hidden">
+                <span className="text-lg font-extrabold bg-gradient-to-br from-white to-sidebar-text-muted text-transparent bg-clip-text tracking-tight font-poppins leading-none shrink-0 grow-0">
+                    T
+                </span>
+                <span
+                    className={`text-lg font-extrabold bg-gradient-to-br from-white to-sidebar-text-muted text-transparent bg-clip-text tracking-tight font-poppins leading-none overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-200 ease-in-out ${effectiveCollapsed ? 'max-w-0 opacity-0' : 'max-w-[140px] opacity-100'}`}
+                >
+                    ableKard
+                </span>
             </div>
 
-            <nav className="flex-1 overflow-y-auto px-2 mt-4">
+            <nav className="flex-1 overflow-y-auto px-1.5 mt-3">
                 {navItems.map((item, idx) => (
                     <NavItemComponent key={idx} item={item} collapsed={effectiveCollapsed} />
                 ))}
             </nav>
 
-            <div className={`mt-auto border-t border-sidebar-border flex flex-col gap-4 ${effectiveCollapsed ? 'py-5 items-center' : 'p-5'}`}>
-                <div className={`flex items-center gap-3 p-2 w-full overflow-hidden ${effectiveCollapsed ? 'justify-center p-0' : ''}`}>
-                    <div className="w-9 h-9 rounded-lg bg-accent-primary/15 text-accent-primary flex items-center justify-center font-bold text-sm border border-accent-primary/15 shrink-0">
-                        {session?.user?.email?.[0]?.toUpperCase() || 'A'}
-                    </div>
-                    {!effectiveCollapsed && (
-                        <div className="flex flex-col min-w-0 flex-1">
-                            <span className="text-[13px] text-sidebar-text font-semibold truncate block w-full">{session?.user?.email}</span>
-                            <span className="text-[11px] text-sidebar-text-muted">Super Admin</span>
-                        </div>
-                    )}
-                </div>
-
-                <button className="flex items-center gap-3 px-3 py-2.5 w-full bg-transparent border-none rounded-lg text-sidebar-text-muted text-sm font-medium transition-colors hover:bg-red-500/10 hover:text-red-400 cursor-pointer" onClick={onLogout} title="Logout">
-                    <LogOut size={20} className={effectiveCollapsed ? 'mx-auto' : ''} />
-                    {!effectiveCollapsed && <span>Logout</span>}
-                </button>
-            </div>
         </aside>
     );
 }
