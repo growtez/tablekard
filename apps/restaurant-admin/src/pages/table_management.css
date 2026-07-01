@@ -34,7 +34,7 @@
 }
 
 .tm-page-title {
-    font-size: 32px;
+    font-size: 24px;
     font-weight: 700;
     color: #1A202C;
     margin: 0 0 4px 0;
@@ -689,7 +689,13 @@
         width: 100%;
         border-radius: 0;
         padding: 16px;
-        padding-top: 72px;
+        padding-top: 16px;
+    }
+
+    .tm-page-title {
+        font-size: 24px;
+        margin-left: 64px;
+        margin-top: 4px;
     }
 
     .tm-header {

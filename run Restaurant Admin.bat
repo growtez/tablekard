@@ -1,0 +1,3 @@
+@echo off
+echo Starting Restaurant Admin...
+start "Restaurant Admin" cmd /c npm run dev:restaurant-admin

@@ -1,0 +1,3 @@
+@echo off
+echo Starting Customer Web...
+start "Customer Web" cmd /c npm run dev:customer-web

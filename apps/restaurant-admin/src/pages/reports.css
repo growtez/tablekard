@@ -42,7 +42,7 @@
 }
 
 .reports-page-title {
-    font-size: 32px;
+    font-size: 24px;
     font-weight: 600;
     color: #1A202C;
     margin: 0;
@@ -122,11 +122,11 @@
 }
 
 .metric-card-blue {
-    background: linear-gradient(to right, #455689, #4C51BF);
+    background: linear-gradient(to right, #5C7A7A, #8AABAB);
 }
 
 .metric-card-green {
-    background: linear-gradient(to right, var(--tk-burgundy, #8B3A1E), var(--tk-burgundy, #8B3A1E));
+    background: linear-gradient(to right, #8B3A1E, #D4816B);
 }
 
 .metric-card-purple {
@@ -296,7 +296,7 @@
 }
 
 .dashboard-card-title {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 600;
     color: #1A202C;
     margin: 0;
@@ -658,7 +658,13 @@
         width: 100%;
         border-radius: 0;
         padding: 16px;
-        padding-top: 72px;
+        padding-top: 16px;
+    }
+
+    .reports-page-title {
+        font-size: 24px;
+        margin-left: 64px;
+        margin-top: 4px;
     }
 
     .reports-header {

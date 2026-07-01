@@ -1,0 +1,3 @@
+@echo off
+echo Starting Inhouse Service App...
+start "Inhouse Service App" cmd /c npm run dev:inhouse-service-app

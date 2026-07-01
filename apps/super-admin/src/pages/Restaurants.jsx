@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import { Store, Globe, Mail, Phone, Calendar, Search, RefreshCw, MoreVertical, ExternalLink, Edit2, Trash2, Filter, SlidersHorizontal, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
-import { Card, CardHeader, CardTitle } from '../components/ui/Card';
-import { StatCard } from '../components/ui/StatCard';
-import { Badge } from '../components/ui/Badge';
+import { Mail, Phone, Calendar, Search, ExternalLink, Filter, SlidersHorizontal, ArrowUpDown, ArrowUp, ArrowDown, Download, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { TableRowsSkeleton } from '../components/ui/Skeleton';
 
 export default function Restaurants({ openDrawer, setSyncAction }) {
     const navigate = useNavigate();
@@ -14,6 +12,8 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
     const [filterStatus, setFilterStatus] = useState('all');
     const [sortBy, setSortBy] = useState('newest');
     const [error, setError] = useState(null);
+    const [page, setPage] = useState(1);
+    const [perPage, setPerPage] = useState(8);
 
     useEffect(() => {
         fetchRestaurants();
@@ -47,22 +47,6 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
         }
     };
 
-    const deleteRestaurant = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this restaurant? This cannot be undone.')) return;
-
-        try {
-            const { error } = await supabase
-                .from('restaurants')
-                .delete()
-                .eq('id', id);
-
-            if (error) throw error;
-            setRestaurants(prev => prev.filter(r => r.id !== id));
-        } catch (err) {
-            alert('Failed to delete restaurant: ' + err.message);
-        }
-    };
-
     const filteredRestaurants = restaurants
         .filter(res => {
             const matchesSearch = res.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -80,6 +64,24 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
             if (sortBy === 'status') return (a.status || '').localeCompare(b.status || '');
         });
 
+    const totalPages = Math.max(1, Math.ceil(filteredRestaurants.length / perPage));
+    const safePage = Math.min(page, totalPages);
+    const pagedRestaurants = filteredRestaurants.slice((safePage - 1) * perPage, safePage * perPage);
+
+    const getPaginationPages = () => {
+        const pages = [];
+        if (totalPages <= 5) {
+            for (let i = 1; i <= totalPages; i++) pages.push(i);
+        } else {
+            pages.push(1);
+            if (safePage > 3) pages.push('...');
+            for (let i = Math.max(2, safePage - 1); i <= Math.min(totalPages - 1, safePage + 1); i++) pages.push(i);
+            if (safePage < totalPages - 2) pages.push('...');
+            pages.push(totalPages);
+        }
+        return pages;
+    };
+
     const toggleSort = (newSort) => {
         if (sortBy === newSort) {
             setSortBy(newSort === 'newest' ? 'oldest' : newSort === 'name' ? 'newest' : 'newest');
@@ -94,178 +96,199 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
         return <ArrowUpDown size={14} style={{ opacity: 0.3 }} />;
     };
 
-    return (
-        <div className="space-y-8">
-            {/* List Control */}
-            <Card>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                    <div style={{ position: 'relative', flex: 1 }}>
-                        <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={18} />
-                        <input
-                            type="text"
-                            placeholder="Search by name, slug, or contact email..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            style={{
-                                width: '100%',
-                                padding: '12px 12px 12px 42px',
-                                background: 'var(--surface-hover)',
-                                border: '1px solid var(--border-color)',
-                                borderRadius: '12px',
-                                color: 'var(--text-main)',
-                                fontSize: '0.9rem'
-                            }}
-                        />
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.75rem' }}>
-                        <div className="dropdown-wrapper">
-                            <button className={`btn-ghost ${filterStatus !== 'all' ? 'active-filter' : ''}`} style={{ padding: '10px 16px', borderRadius: '12px', background: filterStatus !== 'all' ? 'rgba(59, 130, 246, 0.1)' : 'var(--surface-hover)', border: `1px solid ${filterStatus !== 'all' ? 'var(--accent-primary)' : 'var(--border-color)'}`, gap: '8px', fontSize: '0.9rem', color: filterStatus !== 'all' ? 'var(--accent-primary)' : 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
-                                <Filter size={18} />
-                                {filterStatus === 'all' ? 'Filter' : `Status: ${filterStatus}`}
-                            </button>
-                            <div className="dropdown-content">
-                                {['all', 'active', 'pending', 'suspended', 'approved'].map(status => (
-                                    <button key={status} onClick={() => setFilterStatus(status)} className={filterStatus === status ? 'active' : ''}>
-                                        {status.charAt(0).toUpperCase() + status.slice(1)}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
+    const handleExport = () => {
+        const csvContent = "data:text/csv;charset=utf-8," 
+            + "Name,Slug,Status,Plan,Email,Phone,Created At\n"
+            + filteredRestaurants.map(r => `${r.name},${r.slug},${r.status},${r.subscription_type || (r.subscription_status ? 'PRO PLAN' : 'TRIAL PLAN')},${r.contact_email || ''},${r.contact_phone || ''},${new Date(r.created_at).toLocaleDateString()}`).join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `restaurants_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
-                        <div className="dropdown-wrapper">
-                            <button className="btn-ghost" style={{ padding: '10px 16px', borderRadius: '12px', background: 'var(--surface-hover)', border: '1px solid var(--border-color)', gap: '8px', fontSize: '0.9rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
-                                <SlidersHorizontal size={18} />
-                                {sortBy === 'newest' ? 'Sort By' : `Sorted: ${sortBy}`}
+    return (
+        <div className="space-y-3">
+            {/* List Control */}
+            <div className="flex items-center gap-3 w-full bg-white p-2 rounded-xl shadow-sm border border-border">
+                {/* Search Box */}
+                <div className="relative w-full max-w-[260px] shrink-0">
+                    <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
+                    <input
+                        type="text"
+                        placeholder="Search Restaurants..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full py-2 pl-4 pr-10 bg-surface-hover border border-border rounded-full text-text-main text-[13px] focus:outline-none focus:ring-1 focus:ring-accent-primary transition-all"
+                    />
+                </div>
+
+                {/* Inline Active Filters (Scrollable horizontally if needed) */}
+                <div className="flex-1 flex items-center gap-1.5 overflow-x-auto no-scrollbar min-w-0 px-2 border-x border-border/50">
+                    {(searchQuery || filterStatus !== 'all' || sortBy !== 'newest') ? (
+                        <>
+                            <span className="text-[11px] text-text-muted font-medium uppercase tracking-wider shrink-0 mr-1">Active:</span>
+                            {searchQuery && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 text-[11px] font-medium border border-blue-500/20 shrink-0">
+                                    "{searchQuery}"
+                                    <button onClick={() => setSearchQuery('')} className="hover:text-blue-800 focus:outline-none flex items-center justify-center bg-transparent border-none cursor-pointer p-0 ml-1"><X size={10} /></button>
+                                </span>
+                            )}
+                            {filterStatus !== 'all' && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 text-[11px] font-medium border border-blue-500/20 shrink-0">
+                                    {filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1)}
+                                    <button onClick={() => setFilterStatus('all')} className="hover:text-blue-800 focus:outline-none flex items-center justify-center bg-transparent border-none cursor-pointer p-0 ml-1"><X size={10} /></button>
+                                </span>
+                            )}
+                            {sortBy !== 'newest' && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 text-[11px] font-medium border border-blue-500/20 shrink-0">
+                                    {sortBy === 'oldest' ? 'Oldest' : sortBy === 'name' ? 'A-Z' : sortBy === 'status' ? 'Status' : sortBy}
+                                    <button onClick={() => setSortBy('newest')} className="hover:text-blue-800 focus:outline-none flex items-center justify-center bg-transparent border-none cursor-pointer p-0 ml-1"><X size={10} /></button>
+                                </span>
+                            )}
+                            <button 
+                                onClick={() => { setSearchQuery(''); setFilterStatus('all'); setSortBy('newest'); setPage(1); }}
+                                className="text-[11px] text-text-muted hover:text-red-500 transition-colors ml-1 bg-transparent border-none cursor-pointer font-medium shrink-0"
+                            >
+                                Clear
                             </button>
-                            <div className="dropdown-content">
-                                <button onClick={() => setSortBy('newest')} className={sortBy === 'newest' ? 'active' : ''}>Newest First</button>
-                                <button onClick={() => setSortBy('oldest')} className={sortBy === 'oldest' ? 'active' : ''}>Oldest First</button>
-                                <button onClick={() => setSortBy('name')} className={sortBy === 'name' ? 'active' : ''}>Brand Name (A-Z)</button>
-                                <button onClick={() => setSortBy('status')} className={sortBy === 'status' ? 'active' : ''}>Current Status</button>
-                            </div>
+                        </>
+                    ) : (
+                        <span className="text-[11px] text-text-muted italic opacity-50">No active filters</span>
+                    )}
+                </div>
+
+                {/* Pagination Controls */}
+                <div className="flex items-center gap-1 shrink-0 border-x border-border/50 px-3">
+                    <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
+                        <ChevronLeft size={14} />
+                    </button>
+                    {getPaginationPages().map((p, i) => p === '...' ? (
+                        <span key={`ellipsis-${i}`} className="text-[11px] text-text-muted px-1">…</span>
+                    ) : (
+                        <button key={p} onClick={() => setPage(p)} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
+                    ))}
+                    <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
+                        <ChevronRight size={14} />
+                    </button>
+                </div>
+
+                {/* Per-page & Actions */}
+                <div className="flex gap-2 shrink-0">
+                    <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1); }} className="py-1.5 px-2 rounded-lg border border-border bg-surface text-text-main text-[12px] focus:outline-none focus:ring-1 focus:ring-accent-primary cursor-pointer">
+                        {[8, 20, 50, 100].map(n => <option key={n} value={n}>{n} / page</option>)}
+                    </select>
+                    <div className="relative group">
+                        <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface text-text-main hover:bg-surface-hover transition-colors text-[12px] font-medium">
+                            <Filter size={14} className="text-accent-primary" /> Filter
+                        </button>
+                        <div className="absolute right-0 top-full mt-2 w-48 bg-surface border border-border rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 flex flex-col overflow-hidden py-1">
+                            {['all', 'active', 'pending', 'suspended', 'approved'].map(status => (
+                                <button key={status} onClick={() => setFilterStatus(status)} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${filterStatus === status ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>
+                                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                                </button>
+                            ))}
                         </div>
                     </div>
+
+                    <div className="relative group">
+                        <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface text-text-main hover:bg-surface-hover transition-colors text-[12px] font-medium">
+                            <SlidersHorizontal size={14} className="text-accent-primary" /> Sort
+                        </button>
+                        <div className="absolute right-0 top-full mt-2 w-48 bg-surface border border-border rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 flex flex-col overflow-hidden py-1">
+                            <button onClick={() => setSortBy('newest')} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${sortBy === 'newest' ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>Newest First</button>
+                            <button onClick={() => setSortBy('oldest')} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${sortBy === 'oldest' ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>Oldest First</button>
+                            <button onClick={() => setSortBy('name')} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${sortBy === 'name' ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>Brand Name (A-Z)</button>
+                            <button onClick={() => setSortBy('status')} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${sortBy === 'status' ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>Current Status</button>
+                        </div>
+                    </div>
+                    
+                    <button 
+                        onClick={handleExport}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent-primary text-white hover:bg-accent-hover transition-colors text-[12px] font-medium shadow-sm ml-2 cursor-pointer border-none"
+                    >
+                        <Download size={14} /> Export
+                    </button>
                 </div>
-            </Card>
+            </div>
 
             {/* Restaurants Table */}
-            <div className="table-container">
-                <table className="premium-table">
+            <div className="w-full overflow-x-auto bg-white rounded-xl shadow-sm border border-border">
+                <table className="w-full text-left border-collapse whitespace-nowrap">
                     <thead>
-                        <tr>
-                            <th className="sortable-header" onClick={() => toggleSort('name')}>
+                        <tr className="border-b border-border">
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[25%]" onClick={() => toggleSort('name')}>
                                 <div className="flex items-center gap-2">
                                     Name {getSortIcon('name')}
                                 </div>
                             </th>
-                            <th className="sortable-header" onClick={() => toggleSort('status')}>
-                                <div className="flex items-center gap-2">
-                                    Status & Plan {getSortIcon('status')}
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[25%]">Slug</th>
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[1%]" onClick={() => toggleSort('status')}>
+                                <div className="flex items-center gap-2 whitespace-nowrap">
+                                    Status {getSortIcon('status')}
                                 </div>
                             </th>
-                            <th>Contacts</th>
-                            <th className="sortable-header" onClick={() => toggleSort('newest')}>
-                                <div className="flex items-center gap-2">
-                                    Onboarded {getSortIcon('newest')}
-                                </div>
-                            </th>
-                            <th>Actions</th>
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[1%]">Plan</th>
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[25%]">Email</th>
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[1%]">Phone</th>
                         </tr>
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr>
-                                <td colSpan="5" style={{ textAlign: 'center', padding: '4rem' }}>
-                                    <div className="loader" style={{ margin: '0 auto' }}></div>
-                                    <p style={{ marginTop: '1rem', color: 'var(--text-muted)' }}>Scanning restaurant records...</p>
-                                </td>
-                            </tr>
+                            <TableRowsSkeleton rows={perPage} columns={6} />
                         ) : filteredRestaurants.length === 0 ? (
                             <tr>
-                                <td colSpan="5" style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>
+                                <td colSpan="6" className="text-center py-10 text-text-muted text-[13px]">
                                     No restaurants found matching your criteria.
                                 </td>
                             </tr>
                         ) : (
-                            filteredRestaurants.map((res) => (
+                            pagedRestaurants.map((res) => (
                                 <tr
                                     key={res.id}
-                                    className="clickable-row"
+                                    className="group hover:bg-surface-hover border-b border-border/40 last:border-b-0 cursor-pointer transition-colors"
                                     onClick={(e) => {
-                                        // Don't navigate if clicking action buttons or the menu
-                                        if (e.target.closest('.actions-cell') || e.target.closest('.action-trigger') || e.target.closest('.actions-menu')) {
+                                        if (e.target.closest('a')) {
                                             return;
                                         }
                                         navigate(`/restaurants/${res.id}`);
                                     }}
                                 >
-                                    <td>
-                                        <div className="user-cell">
-                                            <div className="user-avatar" style={{ borderRadius: '10px', background: 'var(--surface-hover)', border: '1px solid var(--border-color)' }}>
+                                    <td className="py-2.5 px-4 align-middle">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center font-bold text-blue-600 text-[12px] shrink-0">
                                                 {res.name[0].toUpperCase()}
                                             </div>
-                                            <div className="user-info-text">
-                                                <span className="user-name" style={{ fontSize: '1rem' }}>{res.name}</span>
-                                                <span className="user-email" style={{ fontSize: '0.75rem', opacity: 0.6 }}>/{res.slug}</span>
-                                            </div>
+                                            <span className="font-semibold text-text-main text-[13px] group-hover:text-accent-primary transition-colors max-w-[220px] truncate block" title={res.name}>{res.name}</span>
                                         </div>
                                     </td>
-                                    <td>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                                            <Badge variant={res.status === 'active' ? 'success' : res.status === 'pending' ? 'warning' : 'error'}>
-                                                {(res.status || 'pending').toUpperCase()}
-                                            </Badge>
-                                            <span style={{ fontSize: '0.7rem', color: res.subscription_status ? 'var(--accent-primary)' : 'var(--text-muted)', opacity: 0.8, fontWeight: 600 }}>
-                                                {(res.subscription_type || (res.subscription_status ? 'PRO PLAN' : 'TRIAL PLAN')).toUpperCase()}
-                                            </span>
+                                    <td className="py-2.5 px-4 align-middle">
+                                        <a href={`https://${res.slug}.tablekard.com`} target="_blank" rel="noreferrer" className="text-[12px] text-blue-500 hover:text-blue-600 font-medium max-w-[220px] inline-block truncate hover:underline" title={`${res.slug}.tablekard.com`} onClick={(e) => e.stopPropagation()}>
+                                            {res.slug}.tablekard.com
+                                        </a>
+                                    </td>
+                                    <td className="py-2.5 px-4 align-middle">
+                                        <span className={`text-[12px] font-bold ${res.status === 'active' ? 'text-green-500' : res.status === 'pending' ? 'text-amber-500' : 'text-red-500'}`}>
+                                            {(res.status || 'pending').toUpperCase()}
+                                        </span>
+                                    </td>
+                                    <td className="py-2.5 px-4 align-middle">
+                                        <span className={`text-[12px] font-bold ${res.subscription_status ? 'text-blue-500' : 'text-text-muted opacity-80'}`}>
+                                            {(res.subscription_type || (res.subscription_status ? 'PRO PLAN' : 'TRIAL PLAN')).toUpperCase()}
+                                        </span>
+                                    </td>
+                                    <td className="py-2.5 px-4 align-middle">
+                                        <div className="flex items-center gap-2 text-[12px] text-text-main">
+                                            <Mail size={12} className="text-blue-500 shrink-0" />
+                                            <span className="max-w-[200px] inline-block truncate" title={res.contact_email || '—'}>{res.contact_email || '—'}</span>
                                         </div>
                                     </td>
-                                    <td>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' }}>
-                                                <Mail size={12} className="text-muted" />
-                                                <span>{res.contact_email || 'N/A'}</span>
-                                            </div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' }}>
-                                                <Phone size={12} className="text-muted" />
-                                                <span>{res.contact_phone || 'N/A'}</span>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                                            <Calendar size={14} />
-                                            {new Date(res.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                        </div>
-                                    </td>
-                                    <td className="actions-cell">
-                                        <button className="action-trigger">
-                                            <MoreVertical size={18} />
-                                        </button>
-                                        <div className="actions-menu">
-                                            <a
-                                                href={`https://${res.slug}.tablekard.com`}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="action-btn edit"
-                                                title="Visit Website"
-                                            >
-                                                <ExternalLink size={14} />
-                                            </a>
-                                            <button
-                                                className="action-btn edit"
-                                                title="View Details & Edit"
-                                                onClick={() => navigate(`/restaurants/${res.id}`, { state: { edit: true } })}
-                                            >
-                                                <Edit2 size={14} />
-                                            </button>
-                                            <button
-                                                className="action-btn delete"
-                                                title="De-list Restaurant"
-                                                onClick={() => deleteRestaurant(res.id)}
-                                            >
-                                                <Trash2 size={14} />
-                                            </button>
+                                    <td className="py-2.5 px-4 align-middle">
+                                        <div className="flex items-center gap-2 text-[12px] text-text-main">
+                                            <Phone size={12} className="text-blue-500 shrink-0" />
+                                            <span className="max-w-[110px] inline-block truncate" title={res.contact_phone || '—'}>{res.contact_phone || '—'}</span>
                                         </div>
                                     </td>
                                 </tr>

@@ -8,16 +8,16 @@
 }
 
 .main-content {
-  margin-left: 240px;
+  /* margin-left: 240px; */
   flex: 1;
-  padding: 24px;
+  /* padding: 24px; */
   padding-left: 32px;
   overflow-y: auto;
   min-height: 100vh;
   width: calc(100% - 240px);
-  background-color: #f7f8fa;
-  border-radius: 32px 0 0 32px;
-  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12);
+  background-color: var(--tk-bg-surface, var(--tk-bg-surface));
+  border-radius: 0;
+  box-shadow: none;
   transition: all 0.3s ease;
 }
 
@@ -35,7 +35,7 @@
 }
 
 .page-title {
-  font-size: 32px;
+  font-size: 24px;
   font-weight: 600;
   color: #1A202C;
 }
@@ -138,15 +138,15 @@
 }
 
 .card-top-bar-green {
-  background: linear-gradient(to right, var(--tk-burgundy, #8B3A1E), #6B2A15);
+  background: linear-gradient(to right, #8B3A1E, #D4816B);
 }
 
 .card-top-bar-red {
-  background: linear-gradient(to right, #E53E3E, #FEB2B2);
+  background: linear-gradient(to right, #E53E3E, #FC8181);
 }
 
 .card-top-bar-blue {
-  background: linear-gradient(to right, #455689, #4C51BF);
+  background: linear-gradient(to right, #5C7A7A, #8AABAB);
 }
 
 .card-title {
@@ -247,7 +247,7 @@
 }
 
 .content-title {
-  font-size: 24px;
+  font-size: 18px;
   font-weight: 600;
   color: #1A202C;
 }
@@ -593,6 +593,18 @@ input:checked+.toggle-slider:before {
   }
 }
 
+@media (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .menu-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .offers-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 768px) {
 
   .main-content,
@@ -600,12 +612,13 @@ input:checked+.toggle-slider:before {
     margin-left: 0;
     width: 100%;
     padding: 16px;
-    padding-top: 72px;
-    /* Space for mobile hamburger menu */
+    padding-top: 16px;
   }
 
-  .stats-grid {
-    grid-template-columns: 1fr;
+  .page-title {
+    font-size: 24px;
+    margin-left: 64px;
+    margin-top: 4px;
   }
 
   .header {
@@ -624,21 +637,25 @@ input:checked+.toggle-slider:before {
     gap: 16px;
   }
 
-  .menu-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .offers-grid {
-    grid-template-columns: 1fr;
-  }
-
   .tab-navigation {
     width: 100%;
     justify-content: center;
   }
 
-    .category-filter {
+  .category-filter {
     justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .menu-grid {
+    grid-template-columns: 1fr;
+  }
+  .offers-grid {
+    grid-template-columns: 1fr;
   }
 }
 

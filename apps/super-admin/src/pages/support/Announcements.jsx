@@ -3,6 +3,7 @@ import { supabase } from '../../supabaseClient';
 import { Card, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Megaphone, Plus, Trash2, Clock, AlertCircle } from 'lucide-react';
+import { CardListSkeleton } from '../../components/ui/Skeleton';
 
 // Stored in platform_settings: id TEXT PRIMARY KEY, config JSONB, updated_at TIMESTAMPTZ
 // Key: 'announcements', config: { items: [{id, title, body, level, created_at}] }
@@ -124,7 +125,7 @@ export default function Announcements({ setSyncAction }) {
             )}
 
             {loading ? (
-                <div style={{ textAlign: 'center', padding: '4rem' }}><div className="loader" style={{ margin: '0 auto' }} /></div>
+                <CardListSkeleton count={4} />
             ) : announcements.length === 0 ? (
                 <div className="premium-card" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
                     <Megaphone size={32} style={{ marginBottom: '0.75rem', opacity: 0.3 }} />

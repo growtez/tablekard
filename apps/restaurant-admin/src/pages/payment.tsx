@@ -233,7 +233,7 @@ const Payment: React.FC = () => {
           </div>
         </div>
 
-        <div className="revenue-grid">
+        <div className="payment-revenue-grid">
           <div className="revenue-card">
             <div className="card-top-bar card-top-bar-green"></div>
             <h3 className="card-title">Total Revenue</h3>

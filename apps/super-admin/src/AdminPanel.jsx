@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from './supabaseClient'
-import { Filter, SlidersHorizontal, Search, RefreshCw, MoreVertical, Edit2, Trash2, Store, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
+import { Filter, SlidersHorizontal, Search, RefreshCw, MoreVertical, Edit2, Trash2, Store, ArrowUpDown, ArrowUp, ArrowDown, X, Download, Mail, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Card } from './components/ui/Card'
-import './AdminPanel.css'
+import { TableRowsSkeleton } from './components/ui/Skeleton'
 
 export default function AdminPanel({ activeForm, setActiveForm, setSyncAction }) {
   const navigate = useNavigate()
@@ -14,6 +14,8 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
   const [searchQuery, setSearchQuery] = useState('')
   const [filterRole, setFilterRole] = useState('all')
   const [sortBy, setSortBy] = useState('newest')
+  const [page, setPage] = useState(1)
+  const [perPage, setPerPage] = useState(8)
 
   useEffect(() => {
     if (setSyncAction) {
@@ -204,6 +206,24 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
       return 0;
     });
 
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / perPage));
+  const safePage = Math.min(page, totalPages);
+  const pagedUsers = filteredUsers.slice((safePage - 1) * perPage, safePage * perPage);
+
+  const getPaginationPages = () => {
+    const pages = [];
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (safePage > 3) pages.push('...');
+      for (let i = Math.max(2, safePage - 1); i <= Math.min(totalPages - 1, safePage + 1); i++) pages.push(i);
+      if (safePage < totalPages - 2) pages.push('...');
+      pages.push(totalPages);
+    }
+    return pages;
+  };
+
   const toggleSort = (newSort) => {
     if (sortBy === newSort) {
       setSortBy(newSort === 'newest' ? 'oldest' : 'newest');
@@ -218,179 +238,208 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
     return <ArrowUpDown size={14} style={{ opacity: 0.3 }} />;
   };
 
-  return (
-    <div className="admin-panel full-width">
-      {/* Main Content: Users Table */}
-      <section className="users-section">
-        <Card style={{ marginBottom: '2rem' }}>
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            <div style={{ position: 'relative', flex: 1 }}>
-              <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={18} />
-              <input
-                type="text"
-                placeholder="Search users by name or email..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '12px 12px 12px 42px',
-                  background: 'var(--surface-hover)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '12px',
-                  color: 'white',
-                  fontSize: '0.9rem'
-                }}
-              />
-            </div>
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
-              <div className="dropdown-wrapper">
-                <button className={`btn-ghost ${filterRole !== 'all' ? 'active-filter' : ''}`} style={{ padding: '10px 16px', borderRadius: '12px', background: filterRole !== 'all' ? 'rgba(59, 130, 246, 0.1)' : 'var(--surface-hover)', border: `1px solid ${filterRole !== 'all' ? 'var(--accent-primary)' : 'var(--border-color)'}`, gap: '8px', fontSize: '0.9rem', color: filterRole !== 'all' ? 'var(--accent-primary)' : 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
-                  <Filter size={18} />
-                  {filterRole === 'all' ? 'Filter' : `Role: ${roleOptions.find(r => r.value === filterRole)?.label}`}
-                </button>
-                <div className="dropdown-content">
-                  {roleOptions.map(option => (
-                    <button key={option.value} onClick={() => setFilterRole(option.value)} className={filterRole === option.value ? 'active' : ''}>
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+  const handleExport = () => {
+    const csvContent = "data:text/csv;charset=utf-8,"
+        + "Name,Email,Role,Restaurant,Joined\n"
+        + filteredUsers.map(u => `${u.name || 'Anonymous User'},${u.email},${roleOptions.find(r => r.value === u.role)?.label || u.role},${u.restaurant_users?.[0]?.restaurants?.name || 'Unassigned'},${new Date(u.created_at).toLocaleDateString()}`).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `users_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
-              <div className="dropdown-wrapper">
-                <button className="btn-ghost" style={{ padding: '10px 16px', borderRadius: '12px', background: 'var(--surface-hover)', border: '1px solid var(--border-color)', gap: '8px', fontSize: '0.9rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
-                  <SlidersHorizontal size={18} />
-                  {sortBy === 'newest' ? 'Sort By' : `Sorted: ${sortBy.charAt(0).toUpperCase() + sortBy.slice(1)}`}
+  return (
+    <div className="space-y-3 w-full">
+      {/* List Control */}
+      <div className="flex items-center gap-3 w-full bg-white p-2 rounded-xl shadow-sm border border-border">
+        {/* Search Box */}
+        <div className="relative w-full max-w-[260px] shrink-0">
+          <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
+          <input
+            type="text"
+            placeholder="Search users..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full py-2 pl-4 pr-10 bg-surface-hover border border-border rounded-full text-text-main text-[13px] focus:outline-none focus:ring-1 focus:ring-accent-primary transition-all"
+          />
+        </div>
+
+        {/* Inline Active Filters (Scrollable horizontally if needed) */}
+        <div className="flex-1 flex items-center gap-1.5 overflow-x-auto no-scrollbar min-w-0 px-2 border-x border-border/50">
+          {(searchQuery || filterRole !== 'all' || sortBy !== 'newest') ? (
+            <>
+              <span className="text-[11px] text-text-muted font-medium uppercase tracking-wider shrink-0 mr-1">Active:</span>
+              {searchQuery && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 text-[11px] font-medium border border-blue-500/20 shrink-0">
+                  "{searchQuery}"
+                  <button onClick={() => setSearchQuery('')} className="hover:text-blue-800 focus:outline-none flex items-center justify-center bg-transparent border-none cursor-pointer p-0 ml-1"><X size={10} /></button>
+                </span>
+              )}
+              {filterRole !== 'all' && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 text-[11px] font-medium border border-blue-500/20 shrink-0">
+                  {roleOptions.find(r => r.value === filterRole)?.label || filterRole}
+                  <button onClick={() => setFilterRole('all')} className="hover:text-blue-800 focus:outline-none flex items-center justify-center bg-transparent border-none cursor-pointer p-0 ml-1"><X size={10} /></button>
+                </span>
+              )}
+              {sortBy !== 'newest' && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 text-[11px] font-medium border border-blue-500/20 shrink-0">
+                  {sortBy === 'oldest' ? 'Oldest' : sortBy === 'name' ? 'A-Z' : sortBy === 'role' ? 'Role' : sortBy}
+                  <button onClick={() => setSortBy('newest')} className="hover:text-blue-800 focus:outline-none flex items-center justify-center bg-transparent border-none cursor-pointer p-0 ml-1"><X size={10} /></button>
+                </span>
+              )}
+              <button 
+                onClick={() => { setSearchQuery(''); setFilterRole('all'); setSortBy('newest'); setPage(1); }}
+                className="text-[11px] text-text-muted hover:text-red-500 transition-colors ml-1 bg-transparent border-none cursor-pointer font-medium shrink-0"
+              >
+                Clear
+              </button>
+            </>
+          ) : (
+            <span className="text-[11px] text-text-muted italic opacity-50">No active filters</span>
+          )}
+        </div>
+
+        {/* Pagination Controls */}
+        <div className="flex items-center gap-1 shrink-0 border-x border-border/50 px-3">
+          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
+            <ChevronLeft size={14} />
+          </button>
+          {getPaginationPages().map((p, i) => p === '...' ? (
+            <span key={`ellipsis-${i}`} className="text-[11px] text-text-muted px-1">…</span>
+          ) : (
+            <button key={p} onClick={() => setPage(p)} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
+          ))}
+          <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
+            <ChevronRight size={14} />
+          </button>
+        </div>
+
+        {/* Per-page & Actions */}
+        <div className="flex gap-2 shrink-0">
+          <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1); }} className="py-1.5 px-2 rounded-lg border border-border bg-surface text-text-main text-[12px] focus:outline-none focus:ring-1 focus:ring-accent-primary cursor-pointer">
+            {[8, 20, 50, 100].map(n => <option key={n} value={n}>{n} / page</option>)}
+          </select>
+          <div className="relative group">
+            <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface text-text-main hover:bg-surface-hover transition-colors text-[12px] font-medium">
+              <Filter size={14} className="text-accent-primary" /> Role
+            </button>
+            <div className="absolute right-0 top-full mt-2 w-48 bg-surface border border-border rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 flex flex-col overflow-hidden py-1">
+              {roleOptions.map(option => (
+                <button key={option.value} onClick={() => setFilterRole(option.value)} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${filterRole === option.value ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>
+                  {option.label}
                 </button>
-                <div className="dropdown-content">
-                  <button onClick={() => setSortBy('newest')} className={sortBy === 'newest' ? 'active' : ''}>Newest First</button>
-                  <button onClick={() => setSortBy('oldest')} className={sortBy === 'oldest' ? 'active' : ''}>Oldest First</button>
-                  <button onClick={() => setSortBy('name')} className={sortBy === 'name' ? 'active' : ''}>User Name (A-Z)</button>
-                  <button onClick={() => setSortBy('role')} className={sortBy === 'role' ? 'active' : ''}>Access Level</button>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
-        </Card>
 
-        <div className="table-container">
-          <table className="premium-table">
-            <thead>
-              <tr>
-                <th className="sortable-header" onClick={() => toggleSort('name')}>
-                  <div className="flex items-center gap-2">
-                    User / Identity {getSortIcon('name')}
-                  </div>
-                </th>
-                <th className="sortable-header" onClick={() => toggleSort('role')}>
-                  <div className="flex items-center gap-2">
-                    Access Level {getSortIcon('role')}
-                  </div>
-                </th>
-                <th>Restaurant</th>
-                <th className="sortable-header" onClick={() => toggleSort('newest')}>
-                  <div className="flex items-center gap-2">
-                    Joined {getSortIcon('newest')}
-                  </div>
-                </th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: '4rem' }}>
-                    <div className="loader" style={{ margin: '0 auto' }}></div>
-                    <p style={{ marginTop: '1rem', color: 'var(--text-muted)' }}>Retrieving user directory...</p>
-                  </td>
-                </tr>
-              ) : filteredUsers.length === 0 ? (
-                <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>
-                    No users found matching your criteria.
-                  </td>
-                </tr>
-              ) : (
-                filteredUsers.map((user) => (
-                  <tr
-                    key={user.id}
-                    className="clickable-row"
-                    onClick={(e) => {
-                      // Don't navigate if clicking action buttons or the menu or if it's protected
-                      if (e.target.closest('.actions-cell') || e.target.closest('.action-trigger') || e.target.closest('.actions-menu')) {
-                        return;
-                      }
-                      navigate(`/users/${user.id}`);
-                    }}
-                  >
-                    <td>
-                      <div className="user-cell">
-                        <div className="user-avatar">
-                          {user.email[0].toUpperCase()}
-                        </div>
-                        <div className="user-info-text">
-                          <span className="user-name">{user.name || 'Anonymous User'}</span>
-                          <span className="user-email">{user.email}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <span className={`role-badge role-${user.role}`}>
-                        {roleOptions.find(r => r.value === user.role)?.label || user.role}
-                      </span>
-                    </td>
-                    <td>
-                      {['restaurant_admin', 'restaurant_staff'].includes(user.role) ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
-                          <Store size={14} style={{ opacity: 0.6 }} />
-                          <span style={{ fontWeight: 500 }}>{user.restaurant_users?.[0]?.restaurants?.name || 'Unassigned'}</span>
-                        </div>
-                      ) : (
-                        <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>-</span>
-                      )}
-                    </td>
-                    <td>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                        {new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                      </span>
-                    </td>
-                    <td className="actions-cell">
-                      {user.role === 'super_admin' ? (
-                        <div style={{ width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', opacity: 0.5 }} title="Protected System Account">
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-                        </div>
-                      ) : (
-                        <>
-                          <button className="action-trigger">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" /></svg>
-                          </button>
-                          <div className="actions-menu">
-                            <button
-                              className="action-btn edit"
-                              onClick={() => navigate(`/users/${user.id}`, { state: { edit: true } })}
-                              title="View Profile Details"
-                            >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
-                            </button>
-                            <button
-                              className="action-btn delete"
-                              onClick={() => handleDeleteUser(user.id)}
-                              title="Delete User"
-                            >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /></svg>
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+          <div className="relative group">
+            <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface text-text-main hover:bg-surface-hover transition-colors text-[12px] font-medium">
+              <SlidersHorizontal size={14} className="text-accent-primary" /> Sort
+            </button>
+            <div className="absolute right-0 top-full mt-2 w-48 bg-surface border border-border rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 flex flex-col overflow-hidden py-1">
+              <button onClick={() => setSortBy('newest')} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${sortBy === 'newest' ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>Newest First</button>
+              <button onClick={() => setSortBy('oldest')} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${sortBy === 'oldest' ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>Oldest First</button>
+              <button onClick={() => setSortBy('name')} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${sortBy === 'name' ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>Name (A-Z)</button>
+              <button onClick={() => setSortBy('role')} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${sortBy === 'role' ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>Role</button>
+            </div>
+          </div>
+          
+          <button 
+            onClick={handleExport}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent-primary text-white hover:bg-accent-hover transition-colors text-[12px] font-medium shadow-sm ml-2 cursor-pointer border-none"
+          >
+            <Download size={14} /> Export
+          </button>
         </div>
-      </section>
+      </div>
 
+      {/* Users Table */}
+      <div className="w-full overflow-x-auto bg-white rounded-xl shadow-sm border border-border">
+        <table className="w-full text-left border-collapse whitespace-nowrap">
+          <thead>
+            <tr className="border-b border-border">
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[20%]" onClick={() => toggleSort('name')}>
+                <div className="flex items-center gap-2">
+                  User {getSortIcon('name')}
+                </div>
+              </th>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[25%]">Email</th>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[15%]" onClick={() => toggleSort('role')}>
+                <div className="flex items-center gap-2">
+                  Role {getSortIcon('role')}
+                </div>
+              </th>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[25%]">Restaurant</th>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[15%]" onClick={() => toggleSort('newest')}>
+                <div className="flex items-center gap-2">
+                  Joined {getSortIcon('newest')}
+                </div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <TableRowsSkeleton rows={perPage} columns={5} />
+            ) : filteredUsers.length === 0 ? (
+              <tr>
+                <td colSpan="5" className="text-center py-10 text-text-muted text-[13px]">
+                  No users found matching your criteria.
+                </td>
+              </tr>
+            ) : (
+              pagedUsers.map((user) => (
+                <tr
+                  key={user.id}
+                  className="group hover:bg-surface-hover border-b border-border/40 last:border-b-0 cursor-pointer transition-colors"
+                  onClick={(e) => navigate(`/users/${user.id}`)}
+                >
+                  <td className="py-2.5 px-4 align-middle">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center font-bold text-blue-600 text-[12px] shrink-0">
+                        {(user.name || user.email)[0].toUpperCase()}
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-semibold text-text-main text-[13px] truncate group-hover:text-accent-primary transition-colors max-w-[200px]" title={user.name || 'Anonymous User'}>{user.name || 'Anonymous User'}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="py-2.5 px-4 align-middle">
+                    <div className="flex items-center gap-2 text-[12px] text-text-main">
+                      <Mail size={12} className="text-blue-500 shrink-0" />
+                      <span className="max-w-[200px] inline-block truncate" title={user.email}>{user.email}</span>
+                    </div>
+                  </td>
+                  <td className="py-2.5 px-4 align-middle">
+                    <span className={`text-[12px] font-bold ${user.role === 'super_admin' ? 'text-green-500' : user.role === 'restaurant_admin' ? 'text-violet-500' : user.role === 'restaurant_staff' ? 'text-blue-500' : 'text-text-muted'}`}>
+                      {(roleOptions.find(r => r.value === user.role)?.label || user.role).toUpperCase()}
+                    </span>
+                  </td>
+                  <td className="py-2.5 px-4 align-middle">
+                    {['restaurant_admin', 'restaurant_staff'].includes(user.role) ? (
+                      <div className="flex items-center gap-2 text-[12px]">
+                        <Store size={14} className="opacity-60 shrink-0 text-accent-primary" />
+                        <span className="font-medium text-text-main truncate max-w-[220px]" title={user.restaurant_users?.[0]?.restaurants?.name || 'Unassigned'}>
+                          {user.restaurant_users?.[0]?.restaurants?.name || 'Unassigned'}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-text-muted text-[12px] opacity-60">—</span>
+                    )}
+                  </td>
+                  <td className="py-2.5 px-4 align-middle">
+                    <span className="text-text-muted text-[12px] font-medium">
+                      {new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </span>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

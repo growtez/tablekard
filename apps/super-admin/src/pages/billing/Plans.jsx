@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../supabaseClient';
 import { Card, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
-import { CheckCircle, Zap, Award, Sparkles, Clock, Calendar, AlertCircle, Edit, Save, Trash2, Plus, X, RefreshCw } from 'lucide-react';
+import { CheckCircle, Zap, Award, Sparkles, Clock, Calendar, AlertCircle, Trash2, Plus } from 'lucide-react';
+import { PlansPageSkeleton } from '../../components/ui/Skeleton';
 
 const ICON_MAP = {
     Clock: Clock,
@@ -93,7 +94,7 @@ const DEFAULT_PLANS = [
     },
 ];
 
-export default function Plans({ setSyncAction }) {
+export default function Plans({ setSyncAction, setHeaderData }) {
     const [plans, setPlans] = useState([]);
     const [editedPlans, setEditedPlans] = useState([]);
     const [isEditing, setIsEditing] = useState(false);
@@ -104,6 +105,10 @@ export default function Plans({ setSyncAction }) {
     
     // Feature temp states
     const [newFeatureText, setNewFeatureText] = useState({});
+
+    const saveRef = useRef(null);
+    const cancelRef = useRef(null);
+    const startEditRef = useRef(null);
 
     const fetchData = async () => {
         setLoading(true);
@@ -247,59 +252,50 @@ export default function Plans({ setSyncAction }) {
         }
     };
 
+    saveRef.current = handleSave;
+    cancelRef.current = handleCancelEdit;
+    startEditRef.current = handleStartEdit;
+
+    useEffect(() => {
+        if (!setHeaderData || loading) return;
+
+        setHeaderData({
+            name: 'Pricing Plans',
+            showAvatar: false,
+            onEdit: !isEditing ? () => startEditRef.current?.() : null,
+            isEditing,
+            onSave: () => saveRef.current?.(),
+            onCancel: () => cancelRef.current?.(),
+            saving,
+            editLabel: 'Edit Pricing Plans',
+        });
+
+        return () => setHeaderData(null);
+    }, [loading, isEditing, saving, setHeaderData]);
+
     if (loading) {
-        return (
-            <div style={{ textAlign: 'center', padding: '6rem' }}>
-                <RefreshCw className="animate-spin" size={32} style={{ color: 'var(--accent-primary)', margin: '0 auto' }} />
-                <p style={{ marginTop: '1rem', color: 'var(--text-muted)' }}>Loading platform billing configurations...</p>
-            </div>
-        );
+        return <PlansPageSkeleton />;
     }
 
     return (
-        <div className="animate-fade-in" style={{ paddingBottom: '3rem' }}>
-            {/* Header controls bar */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '2rem' }}>
-                <div>
-                    <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.25rem' }}>Pricing & Billing Plans</h2>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: 0 }}>
-                        Currently synchronized with Supabase <code style={{ background: 'var(--surface-hover)', padding: '1px 5px', borderRadius: '4px' }}>platform_settings</code>.
-                    </p>
-                </div>
-                {!isEditing ? (
-                    <button onClick={handleStartEdit} style={{ background: 'var(--accent-primary-glow)', color: 'var(--accent-primary)', border: '1px solid hsla(155,100%,50%,0.2)', padding: '10px 20px', borderRadius: '10px', fontSize: '0.85rem', fontWeight: 600, gap: '8px', display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                        <Edit size={16} /> Edit Pricing Plans
-                    </button>
-                ) : (
-                    <div style={{ display: 'flex', gap: '0.75rem' }}>
-                        <button onClick={handleCancelEdit} style={{ background: 'var(--surface-hover)', border: '1px solid var(--border-color)', color: 'var(--text-muted)', padding: '10px 20px', borderRadius: '10px', fontSize: '0.85rem', gap: '6px', display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                            <X size={16} /> Cancel
-                        </button>
-                        <button onClick={handleSave} disabled={saving} style={{ background: 'var(--accent-primary)', color: '#FFFFFF', border: 'none', padding: '10px 24px', borderRadius: '10px', fontSize: '0.85rem', fontWeight: 700, gap: '6px', display: 'flex', alignItems: 'center', cursor: 'pointer', boxShadow: '0 4px 12px rgba(5, 150, 105, 0.3)' }}>
-                            {saving ? <RefreshCw className="animate-spin" size={16} /> : <Save size={16} />} 
-                            {saving ? 'Saving...' : 'Save Changes'}
-                        </button>
-                    </div>
-                )}
-            </div>
-
+        <div className="animate-fade-in pb-12">
             {/* Error / Success banners */}
             {error && (
-                <div style={{ padding: '0.85rem 1.25rem', background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.2)', borderRadius: '12px', color: '#dc2626', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '2rem' }}>
+                <div className="px-5 py-3.5 bg-red-500/10 border border-red-500/20 rounded-xl text-red-600 text-sm flex items-center gap-2.5 mb-8">
                     <AlertCircle size={18} /> {error}
                 </div>
             )}
 
             {successMsg && (
-                <div style={{ padding: '0.85rem 1.25rem', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '12px', color: '#065f46', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '2rem' }}>
-                    <CheckCircle size={18} style={{ color: '#10b981' }} /> {successMsg}
+                <div className="px-5 py-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-800 text-sm flex items-center gap-2.5 mb-8">
+                    <CheckCircle size={18} className="text-emerald-500" /> {successMsg}
                 </div>
             )}
 
             {/* Active Plans Display (Read-Only) */}
             {!isEditing ? (
                 <>
-                    <div className="plans-grid">
+                    <div className="grid grid-cols-4 gap-5">
                         {plans.map(plan => {
                             const IconComponent = ICON_MAP[plan.iconName] || Clock;
                             const perMonth = Math.round(plan.price / plan.duration);
@@ -307,173 +303,160 @@ export default function Plans({ setSyncAction }) {
                             return (
                                 <div
                                     key={plan.id}
-                                    className="premium-card"
-                                    style={{
-                                        border: plan.recommended ? `2px solid ${plan.color}` : '1px solid var(--border-color)',
-                                        position: 'relative',
-                                        overflow: 'hidden',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        justifyContent: 'space-between',
-                                        minHeight: '440px'
-                                    }}
+                                    className="relative bg-white rounded-2xl overflow-hidden flex flex-col transition-all hover:-translate-y-1 hover:shadow-xl"
+                                    style={{ border: plan.recommended ? `2px solid ${plan.color}` : '1px solid #e5e7eb', boxShadow: plan.recommended ? `0 8px 32px ${plan.color}22` : '0 2px 12px rgba(0,0,0,0.04)' }}
                                 >
-                                    <div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-                                            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: `${plan.color}15`, color: plan.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                <IconComponent size={24} />
+                                    {/* Recommended ribbon */}
+                                    {plan.recommended && (
+                                        <div className="absolute top-4 right-0 text-white text-[10px] font-bold px-3 py-1 rounded-l-full uppercase tracking-wider z-10" style={{ background: plan.color }}>
+                                            Best Value
+                                        </div>
+                                    )}
+
+                                    {/* Color top band */}
+                                    <div className="h-1.5 w-full" style={{ background: `linear-gradient(90deg, ${plan.color}, ${plan.color}88)` }} />
+
+                                    <div className="p-6 flex flex-col flex-1">
+                                        {/* Icon + Title */}
+                                        <div className="flex items-center gap-3 mb-5">
+                                            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${plan.color}18`, color: plan.color }}>
+                                                <IconComponent size={20} />
                                             </div>
-                                            <div style={{ flex: 1, minWidth: 0 }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                                    <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>{plan.name}</h3>
-                                                    {plan.recommended && (
-                                                        <span style={{
-                                                            background: plan.color, color: '#FFFFFF', fontSize: '0.65rem',
-                                                            fontWeight: 700, padding: '2px 8px', borderRadius: '12px',
-                                                            letterSpacing: '0.05em', textTransform: 'uppercase', whiteSpace: 'nowrap'
-                                                        }}>
-                                                            Best Value
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0, marginTop: '4px' }}>{plan.description}</p>
+                                            <div>
+                                                <h3 className="text-[15px] font-bold text-text-main m-0 leading-tight">{plan.name}</h3>
+                                                <p className="text-[11px] text-text-muted m-0 mt-0.5 leading-snug">{plan.description}</p>
                                             </div>
                                         </div>
 
-                                        <div style={{ marginBottom: '1.5rem' }}>
-                                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-                                                <span style={{ fontSize: '2.25rem', fontWeight: 800, color: plan.color }}>₹{plan.price.toLocaleString('en-IN')}</span>
-                                                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>/ {plan.duration} {plan.duration === 1 ? 'Month' : 'Months'}</span>
+                                        {/* Pricing */}
+                                        <div className="mb-5 pb-5 border-b border-border">
+                                            <div className="flex items-baseline gap-1.5">
+                                                <span className="text-[38px] font-extrabold leading-none" style={{ color: plan.color }}>₹{plan.price.toLocaleString('en-IN')}</span>
                                             </div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '0.35rem' }}>
-                                                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>₹{perMonth}/month</span>
+                                            <div className="flex items-center gap-2 mt-1.5">
+                                                <span className="text-[12px] text-text-muted font-medium">{plan.duration} {plan.duration === 1 ? 'month' : 'months'} · ₹{perMonth}/mo</span>
                                                 {plan.savings > 0 && (
-                                                    <span style={{ fontSize: '0.72rem', background: 'rgba(16, 185, 129, 0.15)', color: '#065f46', padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>
+                                                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-full" style={{ background: `${plan.color}18`, color: plan.color }}>
                                                         Save {plan.savings}%
                                                     </span>
                                                 )}
                                             </div>
                                         </div>
 
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '2rem' }}>
+                                        {/* Features */}
+                                        <div className="flex flex-col gap-2 flex-1">
                                             {plan.features?.map(f => (
-                                                <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                                                    <CheckCircle size={14} style={{ color: plan.color, flexShrink: 0 }} />
-                                                    <span style={{ fontSize: '0.875rem', color: 'var(--text-main)' }}>{f}</span>
+                                                <div key={f} className="flex items-start gap-2.5">
+                                                    <CheckCircle size={13} className="shrink-0 mt-0.5" style={{ color: plan.color }} />
+                                                    <span className="text-[12px] text-text-main leading-snug">{f}</span>
                                                 </div>
                                             ))}
                                         </div>
-                                    </div>
 
-                                    <div style={{ paddingTop: '1rem', borderTop: '1px solid var(--border-color)', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                                        Plan key: <code style={{ background: 'var(--surface-hover)', padding: '1px 6px', borderRadius: '4px' }}>{plan.id}</code>
+                                        {/* Footer */}
+                                        <div className="mt-5 pt-4 border-t border-border flex items-center justify-between">
+                                            <code className="text-[10px] text-text-muted bg-surface-hover px-1.5 py-0.5 rounded">{plan.id}</code>
+                                            <span className="text-[11px] font-semibold" style={{ color: plan.color }}>{plan.duration}M Plan</span>
+                                        </div>
                                     </div>
                                 </div>
                             );
                         })}
                     </div>
 
-                    <div className="premium-card" style={{ marginTop: '2rem', background: 'rgba(5, 150, 105, 0.05)', border: '1px solid rgba(5, 150, 105, 0.15)' }}>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.7 }}>
-                            <strong style={{ color: 'var(--text-main)' }}>ℹ️ Pricing Synchronization</strong><br />
-                            These tiers mirror the exact subscription models processed via Razorpay in the restaurant dashboard. Subscriptions are processed securely and credited instantly to restaurant profiles upon checkout completion.
-                        </div>
-                    </div>
+                    
                 </>
             ) : (
                 /* Editable Form Grid */
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.5rem' }}>
+                <div className="flex flex-col gap-8">
+                    <div className="grid grid-cols-[repeat(auto-fit,minmax(360px,1fr))] gap-6">
                         {editedPlans.map((plan, idx) => {
                             return (
                                 <div
                                     key={plan.id}
-                                    className="premium-card animate-fade-in"
+                                    className="bg-surface rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.04)] p-6 relative animate-fade-in"
                                     style={{
                                         border: `2px dashed ${plan.color}`,
-                                        position: 'relative',
-                                        padding: '1.5rem',
-                                        background: 'var(--surface-color)'
                                     }}
                                 >
                                     {/* Delete Plan Icon */}
                                     <button 
                                         onClick={() => handleDeletePlan(idx)}
-                                        style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', background: 'rgba(220,38,38,0.1)', color: '#dc2626', border: '1px solid rgba(220,38,38,0.2)', padding: '8px', borderRadius: '8px', cursor: 'pointer' }}
+                                        className="absolute top-5 right-5 bg-red-500/10 text-red-600 border border-red-500/20 p-2 rounded-lg cursor-pointer hover:bg-red-500/20 transition-colors"
                                         title="Delete Plan"
                                     >
                                         <Trash2 size={16} />
                                     </button>
 
-                                    <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <h3 className="text-base font-bold mb-5 border-b border-border pb-2.5 flex items-center gap-2.5">
                                         <Badge style={{ background: plan.color, color: 'white' }}>Plan #{idx + 1}</Badge>
                                         Editing {plan.name || 'Untitled Plan'}
                                     </h3>
 
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                    <div className="flex flex-col gap-4">
                                         <div>
-                                            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>Package Name</label>
+                                            <label className="text-xs font-semibold text-text-muted">Package Name</label>
                                             <input 
                                                 value={plan.name} 
                                                 onChange={e => handlePlanChange(idx, 'name', e.target.value)}
-                                                style={{ marginTop: '4px', width: '100%', fontSize: '0.85rem' }} 
+                                                className="mt-1 w-full text-[13px] px-3 py-2 rounded-lg border border-border bg-surface text-text-main focus:outline-none focus:border-accent-primary"
                                                 placeholder="e.g. 6 Months Package"
                                             />
                                         </div>
 
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                        <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>Price (₹)</label>
+                                                <label className="text-xs font-semibold text-text-muted">Price (₹)</label>
                                                 <input 
                                                     type="number"
                                                     value={plan.price} 
                                                     onChange={e => handlePlanChange(idx, 'price', parseInt(e.target.value) || 0)}
-                                                    style={{ marginTop: '4px', width: '100%', fontSize: '0.85rem' }} 
+                                                    className="mt-1 w-full text-[13px] px-3 py-2 rounded-lg border border-border bg-surface text-text-main focus:outline-none focus:border-accent-primary"
                                                 />
                                             </div>
                                             <div>
-                                                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>Duration (Months)</label>
+                                                <label className="text-xs font-semibold text-text-muted">Duration (Months)</label>
                                                 <input 
                                                     type="number"
                                                     value={plan.duration} 
                                                     onChange={e => handlePlanChange(idx, 'duration', parseInt(e.target.value) || 1)}
-                                                    style={{ marginTop: '4px', width: '100%', fontSize: '0.85rem' }} 
+                                                    className="mt-1 w-full text-[13px] px-3 py-2 rounded-lg border border-border bg-surface text-text-main focus:outline-none focus:border-accent-primary"
                                                 />
                                             </div>
                                         </div>
 
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                        <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>Savings %</label>
+                                                <label className="text-xs font-semibold text-text-muted">Savings %</label>
                                                 <input 
                                                     type="number"
                                                     value={plan.savings || 0} 
                                                     onChange={e => handlePlanChange(idx, 'savings', parseInt(e.target.value) || 0)}
-                                                    style={{ marginTop: '4px', width: '100%', fontSize: '0.85rem' }} 
+                                                    className="mt-1 w-full text-[13px] px-3 py-2 rounded-lg border border-border bg-surface text-text-main focus:outline-none focus:border-accent-primary"
                                                 />
                                             </div>
                                             <div>
-                                                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>Best Value Tag</label>
-                                                <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <label className="text-xs font-semibold text-text-muted">Best Value Tag</label>
+                                                <div className="mt-2 flex items-center gap-2">
                                                     <input 
                                                         type="checkbox"
                                                         id={`rec-${plan.id}`}
                                                         checked={!!plan.recommended}
                                                         onChange={e => handlePlanChange(idx, 'recommended', e.target.checked)}
-                                                        style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                                                        className="w-4 h-4 cursor-pointer"
                                                     />
-                                                    <label htmlFor={`rec-${plan.id}`} style={{ fontSize: '0.85rem', cursor: 'pointer' }}>Featured Plan</label>
+                                                    <label htmlFor={`rec-${plan.id}`} className="text-[13px] cursor-pointer text-text-main">Featured Plan</label>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                        <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>Visual Icon</label>
+                                                <label className="text-xs font-semibold text-text-muted">Visual Icon</label>
                                                 <select 
                                                     value={plan.iconName || 'Zap'}
                                                     onChange={e => handlePlanChange(idx, 'iconName', e.target.value)}
-                                                    style={{ marginTop: '4px', width: '100%', fontSize: '0.85rem', padding: '8px', background: 'var(--surface-color)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-main)' }}
+                                                    className="mt-1 w-full text-[13px] px-3 py-2 rounded-lg border border-border bg-surface text-text-main focus:outline-none focus:border-accent-primary"
                                                 >
                                                     {Object.keys(ICON_MAP).map(k => (
                                                         <option key={k} value={k}>{k}</option>
@@ -481,11 +464,11 @@ export default function Plans({ setSyncAction }) {
                                                 </select>
                                             </div>
                                             <div>
-                                                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>Color Theme</label>
+                                                <label className="text-xs font-semibold text-text-muted">Color Theme</label>
                                                 <select 
                                                     value={plan.color}
                                                     onChange={e => handlePlanChange(idx, 'color', e.target.value)}
-                                                    style={{ marginTop: '4px', width: '100%', fontSize: '0.85rem', padding: '8px', background: 'var(--surface-color)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-main)' }}
+                                                    className="mt-1 w-full text-[13px] px-3 py-2 rounded-lg border border-border bg-surface text-text-main focus:outline-none focus:border-accent-primary"
                                                 >
                                                     {COLOR_OPTIONS.map(opt => (
                                                         <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -495,25 +478,25 @@ export default function Plans({ setSyncAction }) {
                                         </div>
 
                                         <div>
-                                            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>Short Description</label>
+                                            <label className="text-xs font-semibold text-text-muted">Short Description</label>
                                             <textarea 
                                                 value={plan.description} 
                                                 onChange={e => handlePlanChange(idx, 'description', e.target.value)}
                                                 rows={2}
-                                                style={{ marginTop: '4px', width: '100%', fontSize: '0.85rem', padding: '8px', background: 'var(--surface-color)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-main)', resize: 'vertical' }}
+                                                className="mt-1 w-full text-[13px] px-3 py-2 rounded-lg border border-border bg-surface text-text-main focus:outline-none focus:border-accent-primary resize-y"
                                                 placeholder="e.g. Standard medium-term package..."
                                             />
                                         </div>
 
                                         <div>
-                                            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>Features list</label>
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '6px', maxEndSize: '200px', overflowY: 'auto' }}>
+                                            <label className="text-xs font-semibold text-text-muted">Features list</label>
+                                            <div className="flex flex-col gap-1.5 mt-1.5 max-h-48 overflow-y-auto">
                                                 {plan.features?.map((f, fIdx) => (
-                                                    <div key={fIdx} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--surface-hover)', padding: '4px 8px', borderRadius: '6px' }}>
-                                                        <span style={{ flex: 1, fontSize: '0.8rem', color: 'var(--text-main)' }}>{f}</span>
+                                                    <div key={fIdx} className="flex items-center gap-1.5 bg-surface-hover px-2 py-1 rounded-md">
+                                                        <span className="flex-1 text-xs text-text-main">{f}</span>
                                                         <button 
                                                             onClick={() => handleFeatureDelete(idx, fIdx)}
-                                                            style={{ border: 'none', background: 'transparent', color: '#dc2626', padding: '2px', cursor: 'pointer' }}
+                                                            className="border-none bg-transparent text-red-600 p-0.5 cursor-pointer hover:bg-red-500/10 rounded"
                                                         >
                                                             <Trash2 size={12} />
                                                         </button>
@@ -521,24 +504,24 @@ export default function Plans({ setSyncAction }) {
                                                 ))}
                                             </div>
                                             {/* Add feature line */}
-                                            <div style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
+                                            <div className="flex gap-1.5 mt-2">
                                                 <input 
                                                     value={newFeatureText[idx] || ''}
                                                     onChange={e => setNewFeatureText(prev => ({ ...prev, [idx]: e.target.value }))}
                                                     placeholder="Add feature..."
-                                                    style={{ flex: 1, padding: '4px 8px', fontSize: '0.8rem', border: '1px dashed var(--border-color)' }}
+                                                    className="flex-1 px-2 py-1 text-xs border border-dashed border-border rounded bg-surface text-text-main focus:outline-none focus:border-accent-primary"
                                                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleFeatureAdd(idx); } }}
                                                 />
                                                 <button 
                                                     onClick={() => handleFeatureAdd(idx)}
-                                                    style={{ background: 'var(--accent-primary)', border: 'none', color: '#FFFFFF', padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}
+                                                    className="bg-accent-primary border-none text-white px-2.5 py-1 rounded text-xs font-semibold cursor-pointer hover:bg-emerald-600"
                                                 >
                                                     Add
                                                 </button>
                                             </div>
                                         </div>
 
-                                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', paddingTop: '0.75rem', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <div className="text-[11px] text-text-muted pt-3 border-t border-border flex justify-between items-center mt-2">
                                             <span>Identifier Key: <strong>{plan.id}</strong></span>
                                         </div>
                                     </div>
@@ -549,25 +532,11 @@ export default function Plans({ setSyncAction }) {
                         {/* Add New Plan Card */}
                         <div
                             onClick={handleAddPlan}
-                            style={{
-                                border: '2px dashed var(--border-color)',
-                                borderRadius: 'var(--radius-md)',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                minHeight: '440px',
-                                cursor: 'pointer',
-                                transition: 'var(--transition)',
-                                background: 'rgba(0,0,0,0.01)',
-                            }}
-                            className="clickable-card"
-                            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent-primary)'; e.currentTarget.style.background = 'rgba(5, 150, 105, 0.02)'; }}
-                            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.background = 'rgba(0,0,0,0.01)'; }}
+                            className="border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center min-h-[440px] cursor-pointer transition-colors bg-black/5 hover:border-accent-primary hover:bg-emerald-500/5 group"
                         >
-                            <Plus size={36} style={{ color: 'var(--text-muted)', marginBottom: '0.75rem' }} />
-                            <span style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '0.95rem' }}>Create New Pricing Plan</span>
-                            <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '4px' }}>Add a customizable duration package</span>
+                            <Plus size={36} className="text-text-muted mb-3 group-hover:text-accent-primary transition-colors" />
+                            <span className="font-semibold text-[15px] text-text-main">Create New Pricing Plan</span>
+                            <span className="text-xs text-text-muted mt-1">Add a customizable duration package</span>
                         </div>
                     </div>
                 </div>

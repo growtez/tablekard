@@ -52,16 +52,16 @@ const CustomTooltip = ({ active, payload, label }) => {
             <div style={{
                 padding: '0.75rem 1rem',
                 borderRadius: '10px',
-                border: '1px solid var(--border-color)',
-                backgroundColor: 'var(--surface-color)',
+                border: '1px solid #E2E8F0',
+                backgroundColor: '#FFFFFF',
                 boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
             }}>
-                <p style={{ margin: '0 0 0.5rem 0', fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-main)' }}>{label}</p>
+                <p style={{ margin: '0 0 0.5rem 0', fontWeight: 700, fontSize: '0.9rem', color: '#1A202C' }}>{label}</p>
                 {payload.map((entry, index) => (
                     <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.25rem 0' }}>
-                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: entry.color || entry.fill || 'var(--accent-primary)' }} />
-                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{entry.name}:</span>
-                        <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-main)' }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: entry.color || entry.fill || '#059669' }} />
+                        <span style={{ fontSize: '0.8rem', color: '#718096' }}>{entry.name}:</span>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#1A202C' }}>
                             {entry.dataKey === 'revenue' ? `₹${Number(entry.value).toLocaleString()}` : entry.value}
                         </span>
                     </div>
@@ -170,60 +170,28 @@ export default function Dashboard({ setSyncAction }) {
     }, [loading, setSyncAction]);
 
     const StatSkeleton = () => (
-        <div style={{ height: '1.5rem', width: '4rem', borderRadius: '6px', background: 'var(--surface-hover)', animation: 'pulse 1.5s infinite' }} />
+        <div style={{ height: '1.5rem', width: '4rem', borderRadius: '6px', background: '#F7FAFC', animation: 'pulse 1.5s infinite' }} />
     );
 
     return (
-        <div className="animate-fade-in">
-            {/* ── Stat Cards Row ── */}
-            <div className="dashboard-stat-grid">
-                <StatCard
-                    label="Total Restaurants"
-                    value={loading ? '—' : stats.totalRestaurants.toLocaleString()}
-                    icon={Store}
-                    color="green"
-                    path="/restaurants"
-                />
-                <StatCard
-                    label="Total Users"
-                    value={loading ? '—' : stats.totalUsers.toLocaleString()}
-                    icon={Users}
-                    color="blue"
-                    path="/users"
-                />
-                <StatCard
-                    label="Total Subscriptions"
-                    value={loading ? '—' : stats.totalSubscriptions.toLocaleString()}
-                    icon={CreditCard}
-                    color="purple"
-                    path="/subscriptions"
-                />
-                <StatCard
-                    label="Platform Revenue"
-                    value={loading ? '—' : `₹${stats.totalRevenue.toLocaleString()}`}
-                    icon={TrendingUp}
-                    color="orange"
-                    path="/subscriptions"
-                />
-            </div>
-
+        <div className="animate-fade-in w-full">
             {/* ── Charts Row ── */}
-            <div className="dashboard-chart-grid">
-                <Card style={{ gridColumn: 'span 8', minWidth: 0 }}>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <Card className="lg:col-span-8 min-w-0">
                     <CardHeader>
                         <CardTitle>Subscription Revenue (Last 6 Months)</CardTitle>
                     </CardHeader>
-                    <div style={{ height: '300px', width: '100%' }}>
+                    <div className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={revenueChartData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
-                                <XAxis dataKey="month" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
-                                <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => v === 0 ? '₹0' : `₹${(v / 1000).toFixed(0)}k`} />
-                                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--surface-hover)' }} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
+                                <XAxis dataKey="month" stroke="#718096" fontSize={12} tickLine={false} axisLine={false} />
+                                <YAxis stroke="#718096" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => v === 0 ? '₹0' : `₹${(v / 1000).toFixed(0)}k`} />
+                                <Tooltip content={<CustomTooltip />} cursor={{ fill: '#F7FAFC' }} />
                                 <Bar 
                                     dataKey="revenue" 
                                     name="Revenue" 
-                                    fill="var(--accent-primary)" 
+                                    fill="#059669" 
                                     radius={[6, 6, 0, 0]} 
                                     maxBarSize={45} 
                                     onClick={() => navigate('/subscriptions')}
@@ -234,41 +202,41 @@ export default function Dashboard({ setSyncAction }) {
                     </div>
                 </Card>
 
-                <Card style={{ gridColumn: 'span 4' }}>
+                <Card className="lg:col-span-4">
                     <CardHeader>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <CardTitle>Recent Subscriptions</CardTitle>
-                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Live</span>
-                        </div>
+                            <div className="flex items-center gap-1.5">
+                                <span className="w-2 h-2 rounded-full bg-accent-primary animate-pulse"></span>
+                                <span className="text-xs font-medium text-accent-primary uppercase tracking-wider">Live</span>
+                            </div>
                     </CardHeader>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '300px', overflowY: 'auto', paddingRight: '4px' }}>
+                    <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto pr-1">
                         {loading ? (
                             [...Array(4)].map((_, i) => (
-                                <div key={i} style={{ padding: '0.75rem', borderRadius: '10px', background: 'var(--surface-hover)', height: '56px', animation: 'pulse 1.5s infinite' }} />
+                                <div key={i} className="p-3 rounded-xl bg-surface-hover h-14 animate-pulse" />
                             ))
                         ) : recentSubscriptions.length === 0 ? (
-                            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                                <CreditCard size={28} style={{ marginBottom: '0.5rem', opacity: 0.3 }} />
+                            <div className="text-center p-8 text-text-muted text-sm flex flex-col items-center">
+                                <CreditCard size={28} className="mb-2 opacity-30" />
                                 <p>No subscriptions yet</p>
                             </div>
                         ) : recentSubscriptions.map(sub => (
                             <div 
                                 key={sub.id} 
                                 onClick={() => navigate(`/subscriptions/${sub.id}`)}
-                                className="clickable-stat"
-                                style={{ display: 'flex', gap: '0.75rem', padding: '0.6rem', borderRadius: '10px', background: 'var(--surface-hover)', alignItems: 'center', cursor: 'pointer' }}
+                                className="flex gap-3 p-2.5 rounded-xl bg-surface-hover items-center cursor-pointer transition-colors hover:bg-border group/sub"
                             >
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                    <div style={{ fontSize: '0.8rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-sm font-semibold whitespace-nowrap overflow-hidden text-ellipsis text-text-main group-hover/sub:text-accent-primary transition-colors">
                                         {sub.restaurants?.name || 'Unknown'}
                                     </div>
-                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                                    <div className="text-xs text-text-muted">
                                         {sub.plan_duration} Days Plan
                                     </div>
                                 </div>
-                                <div style={{ textAlign: 'right' }}>
-                                    <div style={{ fontSize: '0.8rem', fontWeight: 700 }}>₹{Number(sub.amount).toLocaleString()}</div>
-                                    <Badge variant={sub.status === 'paid' ? 'success' : 'warning'} style={{ fontSize: '0.6rem', padding: '0px 4px' }}>
+                                <div className="text-right">
+                                    <div className="text-sm font-bold text-text-main">₹{Number(sub.amount).toLocaleString()}</div>
+                                    <Badge variant={sub.status === 'paid' ? 'success' : 'warning'} className="text-[10px] px-1.5 py-0.5 mt-1">
                                         {sub.status?.toUpperCase()}
                                     </Badge>
                                 </div>

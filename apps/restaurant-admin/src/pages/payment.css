@@ -10,20 +10,16 @@
 }
 
 .main-content {
-  margin-left: 240px;
-  /* Same width as sidebar */
+  /* margin-left: 240px; */
   flex: 1;
-  padding: 24px;
+  /* padding: 24px; */
   padding-left: 32px;
-  /* Extra padding on left for visual separation */
   overflow-y: auto;
   min-height: 100vh;
   width: calc(100% - 240px);
-  background-color: #f7f8fa;
-  border-radius: 32px 0 0 32px;
-  /* Rounded corners on left side */
-  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12);
-  /* Shadow on left edge */
+  background-color: var(--tk-bg-surface, var(--tk-bg-surface));
+  border-radius: 0;
+  box-shadow: none;
   transition: all 0.3s ease;
 }
 
@@ -41,7 +37,7 @@
 }
 
 .page-title {
-  font-size: 32px;
+  font-size: 24px;
   font-weight: 600;
   color: #1A202C;
   margin: 0;
@@ -80,7 +76,7 @@
 }
 
 /* Revenue Cards */
-.revenue-grid {
+.payment-revenue-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 24px;
@@ -111,11 +107,11 @@
 }
 
 .card-top-bar-green {
-  background: linear-gradient(to right, var(--tk-burgundy, #8B3A1E), var(--tk-burgundy, #8B3A1E));
+  background: linear-gradient(to right, #8B3A1E, #D4816B);
 }
 
 .card-top-bar-blue {
-  background: linear-gradient(to right, #455689, #4C51BF);
+  background: linear-gradient(to right, #5C7A7A, #8AABAB);
 }
 
 .card-title {
@@ -262,7 +258,7 @@
 }
 
 .table-title {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
   color: #1A202C;
   margin: 0;
@@ -678,7 +674,7 @@
 
 /* Responsive Design */
 @media (max-width: 1200px) {
-  .revenue-grid {
+  .payment-revenue-grid {
     grid-template-columns: 1fr;
   }
 
@@ -710,8 +706,13 @@
     width: 100%;
     border-radius: 0;
     padding: 16px;
-    padding-top: 72px;
-    /* Space for mobile hamburger menu */
+    padding-top: 16px;
+  }
+
+  .page-title {
+    font-size: 24px;
+    margin-left: 64px;
+    margin-top: 4px;
   }
 
   .filter-buttons {
