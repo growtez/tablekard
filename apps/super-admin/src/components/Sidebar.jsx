@@ -56,11 +56,11 @@ const NavItemComponent = ({ item, collapsed }) => {
         return (
             <div className="nav-item-group">
                 <button
-                    className={`nav-item ${isSubItemActive ? 'group-active' : ''}`}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 text-[14px] font-medium rounded-lg mb-1 transition-colors ${isSubItemActive ? 'bg-sidebar-hover text-sidebar-text' : 'text-sidebar-text-muted bg-transparent hover:bg-sidebar-hover hover:text-sidebar-text'}`}
                     onClick={() => setIsOpen(!isOpen)}
                 >
-                    <div className="flex items-center gap-sm">
-                        <item.icon className="nav-item-icon" />
+                    <div className="flex items-center gap-3">
+                        <item.icon className="w-5 h-5 shrink-0" />
                         {!collapsed && <span>{item.label}</span>}
                     </div>
                     {!collapsed && (
@@ -68,13 +68,13 @@ const NavItemComponent = ({ item, collapsed }) => {
                     )}
                 </button>
                 {isOpen && !collapsed && (
-                    <div className="nav-sub-items">
+                    <div className="flex flex-col pl-7 mt-0.5 ml-5 border-l border-sidebar-border">
                         {item.subItems.map((sub, idx) => (
                             <NavLink
                                 key={idx}
                                 to={sub.path}
                                 className={({ isActive }) =>
-                                    `nav-sub-item ${isActive ? 'active' : ''}`
+                                    `px-3 py-2 text-[13px] rounded transition-colors mb-0.5 block ${isActive ? 'text-sidebar-accent font-semibold bg-[#A0D9B4]/15' : 'text-sidebar-text-muted hover:text-sidebar-text hover:bg-sidebar-hover'}`
                                 }
                             >
                                 {sub.label}
@@ -90,11 +90,11 @@ const NavItemComponent = ({ item, collapsed }) => {
         <NavLink
             to={item.path}
             className={({ isActive }) =>
-                `nav-item ${isActive ? 'active' : ''}`
+                `w-full flex items-center gap-3 px-3 py-2.5 text-[14px] font-medium rounded-lg mb-1 transition-colors ${isActive ? 'bg-sidebar-accent text-[#1A202C] border border-sidebar-accent font-semibold' : 'text-sidebar-text-muted bg-transparent hover:bg-sidebar-hover hover:text-sidebar-text'}`
             }
             title={collapsed ? item.label : undefined}
         >
-            <item.icon className="nav-item-icon" />
+            <item.icon className="w-5 h-5 shrink-0" />
             {!collapsed && <span>{item.label}</span>}
         </NavLink>
     );
@@ -106,14 +106,14 @@ export default function Sidebar({ collapsed: isLocked = true, setCollapsed: setI
 
     return (
         <aside
-            className={`sidebar ${effectiveCollapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`}
+            className={`fixed top-0 left-0 h-screen flex flex-col bg-sidebar-bg border-r border-sidebar-border z-50 transition-all duration-300 ${effectiveCollapsed ? 'w-[80px]' : 'w-[260px]'} ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
-            <div className="sidebar-header" style={{ padding: effectiveCollapsed ? '1.5rem 0' : '1.5rem 1.25rem' }}>
-                <div className="sidebar-logo-container flex items-center w-full" style={{ gap: effectiveCollapsed ? '0' : '0.75rem', justifyContent: effectiveCollapsed ? 'center' : 'flex-start' }}>
+            <div className={`border-b border-sidebar-border ${effectiveCollapsed ? 'py-6 px-0' : 'p-6 pb-5'}`}>
+                <div className={`flex items-center w-full ${effectiveCollapsed ? 'justify-center gap-0' : 'justify-start gap-3'}`}>
                     <button
-                        className={`sidebar-toggle-btn ${!isLocked ? 'active' : ''}`}
+                        className={`p-2 rounded-lg flex items-center justify-center transition-colors ${!isLocked ? 'bg-accent-primary/10 text-accent-primary border border-accent-primary/10' : 'bg-surface-hover hover:bg-border text-text-muted'}`}
                         onClick={(e) => {
                             e.stopPropagation();
                             setIsLocked(!isLocked);
@@ -122,33 +122,33 @@ export default function Sidebar({ collapsed: isLocked = true, setCollapsed: setI
                     >
                         <Menu size={20} />
                     </button>
-                    <div className="sidebar-logo flex items-center">
-                        {!effectiveCollapsed && <span className="sidebar-logo-text" style={{ fontSize: '1.25rem', fontWeight: 800, background: 'linear-gradient(135deg, white 0%, var(--text-muted) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.02em' }}>TableKard</span>}
+                    <div className="flex items-center">
+                        {!effectiveCollapsed && <span className="text-xl font-extrabold bg-gradient-to-br from-white to-sidebar-text-muted text-transparent bg-clip-text tracking-tight font-poppins">TableKard</span>}
                     </div>
                 </div>
             </div>
 
-            <nav className="sidebar-nav">
+            <nav className="flex-1 overflow-y-auto px-2 mt-4">
                 {navItems.map((item, idx) => (
                     <NavItemComponent key={idx} item={item} collapsed={effectiveCollapsed} />
                 ))}
             </nav>
 
-            <div className="sidebar-footer">
-                <div className="sidebar-user">
-                    <div className="sidebar-user-avatar">
+            <div className={`mt-auto border-t border-sidebar-border flex flex-col gap-4 ${effectiveCollapsed ? 'py-5 items-center' : 'p-5'}`}>
+                <div className={`flex items-center gap-3 p-2 w-full overflow-hidden ${effectiveCollapsed ? 'justify-center p-0' : ''}`}>
+                    <div className="w-9 h-9 rounded-lg bg-accent-primary/15 text-accent-primary flex items-center justify-center font-bold text-sm border border-accent-primary/15 shrink-0">
                         {session?.user?.email?.[0]?.toUpperCase() || 'A'}
                     </div>
                     {!effectiveCollapsed && (
-                        <div className="sidebar-user-info">
-                            <span className="sidebar-user-email">{session?.user?.email}</span>
-                            <span className="sidebar-user-role">Super Admin</span>
+                        <div className="flex flex-col min-w-0 flex-1">
+                            <span className="text-[13px] text-sidebar-text font-semibold truncate block w-full">{session?.user?.email}</span>
+                            <span className="text-[11px] text-sidebar-text-muted">Super Admin</span>
                         </div>
                     )}
                 </div>
 
-                <button className="sidebar-logout-btn" onClick={onLogout} title="Logout">
-                    <LogOut size={20} />
+                <button className="flex items-center gap-3 px-3 py-2.5 w-full bg-transparent border-none rounded-lg text-sidebar-text-muted text-sm font-medium transition-colors hover:bg-red-500/10 hover:text-red-400 cursor-pointer" onClick={onLogout} title="Logout">
+                    <LogOut size={20} className={effectiveCollapsed ? 'mx-auto' : ''} />
                     {!effectiveCollapsed && <span>Logout</span>}
                 </button>
             </div>

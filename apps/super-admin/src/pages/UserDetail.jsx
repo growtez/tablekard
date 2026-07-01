@@ -224,20 +224,20 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
 
     if (loading) {
         return (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: '1.5rem' }}>
-                <div className="loader" />
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Fetching user profile...</p>
+            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
+                <div className="w-8 h-8 border-4 border-surface-hover border-t-accent-primary rounded-full animate-spin" />
+                <p className="text-sm text-text-muted">Fetching user profile...</p>
             </div>
         );
     }
 
     if (error || !profile) {
         return (
-            <div className="animate-fade-in" style={{ padding: '2rem', textAlign: 'center' }}>
-                <AlertCircle size={48} color="#ef4444" style={{ marginBottom: '1rem', opacity: 0.5 }} />
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>User Not Found</h2>
-                <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>{error || 'The requested user profile could not be located.'}</p>
-                <button onClick={() => navigate('/users')} className="btn-primary">
+            <div className="animate-fade-in p-8 text-center">
+                <AlertCircle size={48} className="text-red-500 opacity-50 mb-4 mx-auto" />
+                <h2 className="text-2xl font-bold mb-2">User Not Found</h2>
+                <p className="text-text-muted mb-6">{error || 'The requested user profile could not be located.'}</p>
+                <button onClick={() => navigate('/users')} className="flex items-center gap-2 px-4 py-2 bg-accent-primary text-black font-bold rounded-xl mx-auto shadow-sm hover:shadow-md transition-all">
                     <ChevronLeft size={18} /> Back to Users
                 </button>
             </div>
@@ -247,13 +247,13 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
     const renderField = (label, field, type = 'text', options = []) => {
         return (
             <div className="space-y-2">
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</label>
+                <label className="text-xs text-text-muted uppercase tracking-wider">{label}</label>
                 {isEditing ? (
                     type === 'select' ? (
                         <select
                             value={formData[field] || ''}
                             onChange={(e) => updateField(field, e.target.value)}
-                            className="edit-input"
+                            className="w-full bg-surface-hover border border-border rounded-xl px-4 h-12 text-sm text-text-main focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all appearance-none"
                         >
                             {options.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                         </select>
@@ -262,12 +262,12 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
                             type={type}
                             value={formData[field] || ''}
                             onChange={(e) => updateField(field, e.target.value)}
-                            className="edit-input"
+                            className="w-full bg-surface-hover border border-border rounded-xl px-4 h-12 text-sm text-text-main focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all"
                             placeholder={`Enter ${label.toLowerCase()}`}
                         />
                     )
                 ) : (
-                    <div style={{ fontSize: '1rem', fontWeight: 600 }}>
+                    <div className="text-base font-semibold text-text-main">
                         {field === 'role' ? profile.role?.replace('_', ' ').toUpperCase() : (profile[field] || '—')}
                     </div>
                 )}
@@ -284,10 +284,10 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
     };
 
     return (
-        <div className="animate-fade-in" style={{ maxWidth: '1000px', margin: '0 auto', paddingBottom: '3rem' }}>
+        <div className="animate-fade-in max-w-[1000px] mx-auto pb-12">
 
             {/* Tabs Navigation */}
-            <div style={{ display: 'flex', gap: '2rem', borderBottom: '1px solid var(--border-color)', marginBottom: '2rem' }}>
+            <div className="flex gap-8 border-b border-border mb-8 overflow-x-auto whitespace-nowrap scrollbar-hide">
                 {[
                     { id: 'overview', label: 'Overview', icon: User },
                     { id: 'activity', label: 'Order History', icon: ShoppingBag },
@@ -296,20 +296,7 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            padding: '1rem 0',
-                            fontSize: '0.95rem',
-                            fontWeight: 600,
-                            color: activeTab === tab.id ? 'var(--accent-primary)' : 'var(--text-muted)',
-                            borderBottom: `2px solid ${activeTab === tab.id ? 'var(--accent-primary)' : 'transparent'}`,
-                            transition: 'all 0.2s',
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer'
-                        }}
+                        className={`flex items-center gap-2 py-4 text-sm font-semibold border-b-2 transition-all bg-transparent cursor-pointer ${activeTab === tab.id ? 'text-accent-primary border-accent-primary' : 'text-text-muted border-transparent hover:text-text-main'}`}
                     >
                         <tab.icon size={18} />
                         {tab.label}
@@ -319,16 +306,16 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
 
             <div className="tab-content">
                 {activeTab === 'overview' && (
-                    <div className="dashboard-chart-grid" style={{ gridTemplateColumns: 'repeat(12, 1fr)', gap: '1.5rem' }}>
-                        <div style={{ gridColumn: 'span 8', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                        <div className="lg:col-span-8 flex flex-col gap-6">
                             <Card>
                                 <CardHeader>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                        <Info size={18} color="var(--accent-primary)" />
-                                        <CardTitle>Profile Information</CardTitle>
+                                    <div className="flex items-center gap-3">
+                                        <Info size={18} className="text-accent-primary" />
+                                        <CardTitle className="m-0">Profile Information</CardTitle>
                                     </div>
                                 </CardHeader>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     {renderField("Full Name", "name")}
                                     {renderField("Email Address", "email", "static")}
                                     {renderField("Access Role", "role", "select", [
@@ -348,17 +335,17 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
                             </Card>
 
                             {['restaurant_admin', 'restaurant_staff'].includes(profile.role) && !isEditing && (
-                                <Card style={{ background: 'linear-gradient(90deg, var(--surface-color) 0%, rgba(16, 185, 129, 0.05) 100%)' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-                                            <Store size={24} color="#10b981" />
+                                <Card className="bg-gradient-to-r from-surface to-emerald-500/5 border-emerald-500/10">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-5">
+                                            <Store size={24} className="text-emerald-500" />
                                             <div>
-                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Affiliated Restaurant</div>
-                                                <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{restaurants.find(r => r.id === formData.restaurant_id)?.name || 'Not Linked'}</div>
+                                                <div className="text-xs font-bold text-text-muted uppercase tracking-wider">Affiliated Restaurant</div>
+                                                <div className="text-xl font-bold text-text-main mt-1">{restaurants.find(r => r.id === formData.restaurant_id)?.name || 'Not Linked'}</div>
                                             </div>
                                         </div>
                                         {formData.restaurant_id && (
-                                            <button onClick={() => navigate(`/restaurants/${formData.restaurant_id}`)} className="btn-ghost" style={{ border: '1px solid var(--border-color)' }}>
+                                            <button onClick={() => navigate(`/restaurants/${formData.restaurant_id}`)} className="px-4 py-2 bg-transparent text-text-main font-semibold border border-border rounded-lg hover:bg-surface-hover hover:border-text-muted transition-all flex items-center gap-2 cursor-pointer">
                                                 View <ArrowUpRight size={16} />
                                             </button>
                                         )}
@@ -367,27 +354,27 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
                             )}
                         </div>
 
-                        <div style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                        <div className="lg:col-span-4 flex flex-col gap-6">
                             <Card>
-                                <CardHeader><CardTitle>User Stats</CardTitle></CardHeader>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                    <div style={{ background: 'var(--surface-hover)', padding: '1rem', borderRadius: '12px', textAlign: 'center' }}>
-                                        <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--accent-primary)' }}>{orders.length}</div>
-                                        <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Orders</div>
+                                <CardHeader><CardTitle className="m-0">User Stats</CardTitle></CardHeader>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="bg-surface-hover p-4 rounded-2xl text-center">
+                                        <div className="text-3xl font-extrabold text-accent-primary">{orders.length}</div>
+                                        <div className="text-[10px] font-bold text-text-muted uppercase tracking-wider mt-1">Orders</div>
                                     </div>
-                                    <div style={{ background: 'var(--surface-hover)', padding: '1rem', borderRadius: '12px', textAlign: 'center' }}>
-                                        <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#065f46' }}>{orders.filter(o => o.status === 'completed' || o.status === 'delivered').length}</div>
-                                        <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Done</div>
+                                    <div className="bg-surface-hover p-4 rounded-2xl text-center">
+                                        <div className="text-3xl font-extrabold text-emerald-600">{orders.filter(o => o.status === 'completed' || o.status === 'delivered').length}</div>
+                                        <div className="text-[10px] font-bold text-text-muted uppercase tracking-wider mt-1">Done</div>
                                     </div>
                                 </div>
-                                <div className="space-y-4" style={{ marginTop: '1.5rem' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                                        <span style={{ color: 'var(--text-muted)' }}>Spent Total</span>
-                                        <span style={{ fontWeight: 700 }}>₹{orders.filter(o => o.payment_status === 'paid' || o.payment_status === 'completed').reduce((sum, o) => sum + Number(o.total), 0).toLocaleString()}</span>
+                                <div className="space-y-4 mt-6 pt-6 border-t border-border">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-text-muted">Spent Total</span>
+                                        <span className="font-bold">₹{orders.filter(o => o.payment_status === 'paid' || o.payment_status === 'completed').reduce((sum, o) => sum + Number(o.total), 0).toLocaleString()}</span>
                                     </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                                        <span style={{ color: 'var(--text-muted)' }}>Avg Order</span>
-                                        <span style={{ fontWeight: 600 }}>₹{orders.length > 0 ? Math.round(orders.reduce((sum, o) => sum + Number(o.total), 0) / orders.length) : 0}</span>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-text-muted">Avg Order</span>
+                                        <span className="font-semibold">₹{orders.length > 0 ? Math.round(orders.reduce((sum, o) => sum + Number(o.total), 0) / orders.length) : 0}</span>
                                     </div>
                                 </div>
                             </Card>
@@ -398,47 +385,46 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
                 {activeTab === 'activity' && (
                     <Card>
                         <CardHeader>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                    <ShoppingBag size={18} color="var(--accent-primary)" />
-                                    <CardTitle>Recent Food Orders</CardTitle>
+                            <div className="flex items-center justify-between w-full">
+                                <div className="flex items-center gap-3">
+                                    <ShoppingBag size={18} className="text-accent-primary" />
+                                    <CardTitle className="m-0">Recent Food Orders</CardTitle>
                                 </div>
                                 <Badge variant="secondary">{orders.length} Total Orders</Badge>
                             </div>
                         </CardHeader>
                         <div className="space-y-4">
                             {orders.length > 0 ? orders.map((order, i) => (
-                                <div key={order.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: 'var(--surface-hover)', borderRadius: '12px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                        <div style={{ width: '44px', height: '44px', borderRadius: '10px', background: 'var(--surface-color)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            <Utensils size={20} color="var(--accent-primary)" />
+                                <div key={order.id} className="flex items-center justify-between p-4 bg-surface-hover rounded-2xl">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-xl bg-surface flex items-center justify-center shrink-0">
+                                            <Utensils size={20} className="text-accent-primary" />
                                         </div>
                                         <div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <span style={{ fontSize: '0.95rem', fontWeight: 700 }}>#{order.order_number}</span>
-                                                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>at {order.restaurants?.name}</span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-bold text-[15px] text-text-main">#{order.order_number}</span>
+                                                <span className="text-sm text-text-muted">at {order.restaurants?.name}</span>
                                             </div>
-                                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                            <div className="text-xs text-text-muted mt-1">
                                                 {new Date(order.created_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
                                             </div>
                                         </div>
                                     </div>
-                                    <div style={{ textAlign: 'right' }}>
-                                        <div style={{ fontSize: '1rem', fontWeight: 800 }}>₹{Number(order.total).toLocaleString()}</div>
+                                    <div className="text-right shrink-0">
+                                        <div className="text-base font-extrabold text-text-main mb-1">₹{Number(order.total).toLocaleString()}</div>
                                         <Badge style={{
                                             background: `${ORDER_STATUS_COLORS[order.status] || '#71717a'}15`,
                                             color: ORDER_STATUS_COLORS[order.status] || '#71717a',
                                             border: `1px solid ${ORDER_STATUS_COLORS[order.status] || '#71717a'}30`,
-                                            fontSize: '0.65rem'
-                                        }}>
-                                            {order.status?.toUpperCase()}
+                                        }} className="text-[10px] px-2 py-0.5 font-bold uppercase tracking-wider">
+                                            {order.status}
                                         </Badge>
                                     </div>
                                 </div>
                             )) : (
-                                <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-                                    <Receipt size={40} style={{ opacity: 0.2, marginBottom: '1rem' }} />
-                                    <p>No food orders found for this user.</p>
+                                <div className="text-center py-12 text-text-muted">
+                                    <Receipt size={40} className="opacity-20 mb-4 mx-auto" />
+                                    <p className="text-sm">No food orders found for this user.</p>
                                 </div>
                             )}
                         </div>
@@ -446,42 +432,42 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
                 )}
 
                 {activeTab === 'security' && (
-                    <div className="dashboard-chart-grid" style={{ gridTemplateColumns: 'repeat(12, 1fr)', gap: '1.5rem' }}>
-                        <div style={{ gridColumn: 'span 7' }}>
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                        <div className="lg:col-span-7">
                             <Card>
                                 <CardHeader>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                        <ShieldCheck size={18} color="#10b981" />
-                                        <CardTitle>Access Control</CardTitle>
+                                    <div className="flex items-center gap-3">
+                                        <ShieldCheck size={18} className="text-emerald-500" />
+                                        <CardTitle className="m-0">Access Control</CardTitle>
                                     </div>
                                 </CardHeader>
                                 <div className="space-y-6">
-                                    <div style={{ padding: '1rem', background: 'var(--surface-hover)', borderRadius: '12px' }}>
-                                        <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>Two-Factor Authentication</div>
-                                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>Secure account access with an additional verification step.</p>
-                                        <Badge variant="warning" style={{ marginTop: '10px' }}>Not Configured</Badge>
+                                    <div className="p-4 bg-surface-hover rounded-xl">
+                                        <div className="font-semibold text-[15px] text-text-main">Two-Factor Authentication</div>
+                                        <p className="text-sm text-text-muted mt-1">Secure account access with an additional verification step.</p>
+                                        <Badge variant="warning" className="mt-3">Not Configured</Badge>
                                     </div>
-                                    <div style={{ padding: '1rem', background: 'var(--surface-hover)', borderRadius: '12px' }}>
-                                        <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>Account Status</div>
-                                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>Current standing of the user account on the platform.</p>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px', color: '#065f46', fontWeight: 600 }}>
+                                    <div className="p-4 bg-surface-hover rounded-xl">
+                                        <div className="font-semibold text-[15px] text-text-main">Account Status</div>
+                                        <p className="text-sm text-text-muted mt-1">Current standing of the user account on the platform.</p>
+                                        <div className="flex items-center gap-2 mt-3 text-emerald-600 font-semibold text-sm">
                                             <CheckCircle2 size={16} /> Fully Operational
                                         </div>
                                     </div>
                                 </div>
                             </Card>
                         </div>
-                        <div style={{ gridColumn: 'span 5' }}>
+                        <div className="lg:col-span-5">
                             <Card>
-                                <CardHeader><CardTitle>System Meta</CardTitle></CardHeader>
+                                <CardHeader><CardTitle className="m-0">System Meta</CardTitle></CardHeader>
                                 <div className="space-y-4">
                                     <div>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Internal UUID</div>
-                                        <code style={{ fontSize: '0.8rem', display: 'block', padding: '8px', background: 'var(--surface-hover)', borderRadius: '6px', marginTop: '4px' }}>{profile.id}</code>
+                                        <div className="text-xs font-bold text-text-muted uppercase tracking-wider mb-2">Internal UUID</div>
+                                        <code className="block p-2 bg-surface-hover rounded-lg text-xs text-text-main font-mono overflow-x-auto">{profile.id}</code>
                                     </div>
                                     <div>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Last Heartbeat</div>
-                                        <div style={{ fontSize: '0.9rem', marginTop: '4px' }}>{new Date(profile.updated_at).toLocaleString()}</div>
+                                        <div className="text-xs font-bold text-text-muted uppercase tracking-wider mb-1">Last Heartbeat</div>
+                                        <div className="text-sm text-text-main">{new Date(profile.updated_at).toLocaleString()}</div>
                                     </div>
                                 </div>
                             </Card>

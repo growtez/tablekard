@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
 import { Card, CardContent } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
-import { Download, Search, Filter, Mail, Phone, Calendar, ArrowUpDown, Loader2, MapPin, Store, User, Inbox, X, Eye, Trash2, AlertTriangle } from 'lucide-react';
-import '../AdminPanel.css'; // Reuse existing styles
+import { Download, Search, Filter, Mail, Phone, Calendar, ArrowUpDown, Loader2, MapPin, Store, User, Inbox, X, Eye, Trash2, AlertTriangle, Building, MessageCircle } from 'lucide-react';
 
 const PAGE_SIZE = 12;
 
@@ -246,82 +245,40 @@ export default function LandingLeads() {
   };
 
   return (
-    <div className="animate-fade-in" style={{ paddingBottom: '4rem' }}>
+    <div className="animate-fade-in pb-16">
       
-      {/* Header Section */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', padding: '0.5rem 0' }}>
-        <div>
-          <h2 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
-            Landing Page Leads
-          </h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginTop: '6px' }}>
-            Manage and track potential restaurants from your public website.
-          </p>
-        </div>
-        <button 
-          onClick={handleDownload} 
-          className="btn-primary" 
-          style={{ 
-            display: 'flex', alignItems: 'center', gap: '8px', 
-            padding: '10px 20px', borderRadius: '12px',
-            boxShadow: '0 4px 12px rgba(11, 14, 23, 0.15)',
-            transition: 'all 0.2s ease'
-          }}
-        >
-          <Download size={18} /> Export as CSV
-        </button>
-      </div>
-
       {/* Filters Card */}
-      <Card style={{ marginBottom: '2rem', border: 'none', boxShadow: '0 2px 16px rgba(0,0,0,0.04)' }}>
-        <CardContent style={{ padding: '1.25rem', display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+      <Card className="mb-8 border-none shadow-[0_2px_16px_rgba(0,0,0,0.04)]">
+        <CardContent className="p-5 flex gap-4 flex-wrap items-center justify-between">
           
-          <div style={{ position: 'relative', flex: 1, minWidth: '300px' }}>
+          <div className="relative flex-1 min-w-[300px]">
             <Search 
-              size={18} 
-              color="var(--text-muted)" 
-              style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }} 
+              size={16} 
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" 
             />
             <input 
               type="text" 
               placeholder="Search leads by restaurant, owner, email or phone..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                width: '100%', padding: '12px 16px 12px 44px',
-                borderRadius: '12px', border: '1px solid var(--border-color)',
-                background: 'var(--surface-color)', color: 'var(--text-main)',
-                fontSize: '0.95rem', outline: 'none', transition: 'border-color 0.2s'
-              }}
-              onFocus={(e) => e.target.style.borderColor = 'var(--accent-primary)'}
-              onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
+              className="w-full py-2 pl-9 pr-3 bg-surface-hover border border-border rounded-xl text-text-main text-sm focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all"
             />
           </div>
 
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div className="flex gap-4 items-center flex-wrap">
             
             {/* Date Picker Filter */}
-            <div style={{ position: 'relative' }}>
+            <div className="relative">
               <input 
                 type="date"
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
-                style={{
-                  padding: '10px 16px', borderRadius: '10px',
-                  border: '1px solid var(--border-color)', background: 'var(--surface-color)',
-                  color: dateFilter ? 'var(--text-main)' : 'var(--text-muted)', fontSize: '0.9rem', cursor: 'pointer',
-                  outline: 'none', fontFamily: 'inherit'
-                }}
+                className={`py-2.5 px-4 rounded-xl border border-border bg-surface text-sm cursor-pointer focus:outline-none font-sans ${dateFilter ? 'text-text-main' : 'text-text-muted'}`}
               />
               {dateFilter && (
                 <button 
                   onClick={() => setDateFilter('')}
-                  style={{
-                    position: 'absolute', right: '36px', top: '50%', transform: 'translateY(-50%)',
-                    background: 'var(--surface-hover)', border: 'none', borderRadius: '50%',
-                    width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    cursor: 'pointer', color: 'var(--text-muted)'
-                  }}
+                  className="absolute right-9 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-surface-hover flex items-center justify-center text-text-muted hover:bg-border transition-colors border-none cursor-pointer"
                   title="Clear Date"
                 >
                   <X size={12} />
@@ -329,17 +286,12 @@ export default function LandingLeads() {
               )}
             </div>
 
-            <div style={{ position: 'relative' }}>
-              <Filter size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+            <div className="relative">
+              <Filter size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
               <select 
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                style={{
-                  padding: '10px 36px 10px 36px', borderRadius: '10px',
-                  border: '1px solid var(--border-color)', background: 'var(--surface-color)',
-                  color: 'var(--text-main)', fontSize: '0.9rem', cursor: 'pointer',
-                  appearance: 'none', outline: 'none'
-                }}
+                className="py-2.5 pl-9 pr-9 rounded-xl border border-border bg-surface text-text-main text-sm cursor-pointer appearance-none focus:outline-none focus:border-accent-primary transition-colors"
               >
                 <option value="all">All Statuses</option>
                 <option value="new">New</option>
@@ -351,44 +303,43 @@ export default function LandingLeads() {
 
             <button 
               onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
-              style={{ 
-                display: 'flex', alignItems: 'center', gap: '8px', 
-                padding: '10px 16px', borderRadius: '10px',
-                background: 'var(--surface-hover)', border: '1px solid transparent',
-                color: 'var(--text-main)', fontSize: '0.9rem', cursor: 'pointer',
-                fontWeight: 600, transition: 'all 0.2s', minWidth: '160px', justifyContent: 'center'
-              }}
-              onMouseEnter={(e) => e.target.style.background = 'var(--border-color)'}
-              onMouseLeave={(e) => e.target.style.background = 'var(--surface-hover)'}
+              className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-surface-hover hover:bg-border border border-transparent text-text-main text-sm font-semibold cursor-pointer min-w-[160px] transition-colors"
             >
               <ArrowUpDown size={16} />
               {sortOrder === 'desc' ? 'Sort: Date (Newest)' : 'Sort: Date (Oldest)'}
+            </button>
+            <button 
+              onClick={handleDownload} 
+              className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-surface-hover hover:bg-border border border-border text-text-main text-sm font-semibold cursor-pointer transition-colors"
+            >
+              <Download size={16} />
+              Export CSV
             </button>
           </div>
         </CardContent>
       </Card>
 
       {error && (
-        <div style={{ padding: '1rem', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: '12px', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="p-4 bg-red-500/10 text-red-500 rounded-xl mb-6 flex items-center gap-2">
           <Loader2 size={18} /> {error}
         </div>
       )}
 
       {/* Modern Profile Card Grid View */}
       {loading && leads.length === 0 ? (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '6rem 2rem', gap: '1rem', color: 'var(--text-muted)' }}>
-          <Loader2 className="animate-spin" size={36} color="var(--accent-primary)" />
-          <span style={{ fontWeight: 500, fontSize: '1.1rem' }}>Fetching latest leads...</span>
+        <div className="flex flex-col items-center justify-center py-24 px-8 gap-4 text-text-muted">
+          <Loader2 className="animate-spin text-accent-primary" size={36} />
+          <span className="font-medium text-[1.1rem]">Fetching latest leads...</span>
         </div>
       ) : filteredLeads.length === 0 ? (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '6rem 2rem', gap: '1rem', color: 'var(--text-muted)' }}>
-          <Inbox size={56} opacity={0.2} />
-          <span style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--text-main)' }}>No leads found</span>
-          <p style={{ margin: 0, fontSize: '0.95rem' }}>Try adjusting your search or filters.</p>
+        <div className="flex flex-col items-center justify-center py-24 px-8 gap-4 text-text-muted">
+          <Inbox size={56} className="opacity-20" />
+          <span className="text-xl font-semibold text-text-main">No leads found</span>
+          <p className="m-0 text-[15px]">Try adjusting your search or filters.</p>
         </div>
       ) : (
         <>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-6">
             {filteredLeads.map((lead, index) => {
               // Attach observer ref to the last card for lazy loading
               const isLastElement = index === filteredLeads.length - 1;
@@ -398,131 +349,72 @@ export default function LandingLeads() {
                   key={lead.id} 
                   ref={isLastElement ? lastLeadElementRef : null}
                   onClick={() => setSelectedLead(lead)}
-                  style={{ 
-                    border: '1px solid var(--border-color)', 
-                    borderRadius: '16px',
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
-                    transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease',
-                    overflow: 'hidden', display: 'flex', flexDirection: 'column',
-                    background: 'var(--surface-color)',
-                    cursor: 'pointer'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = '0 12px 30px rgba(0,0,0,0.08)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'none';
-                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.04)';
-                  }}
+                  className="border border-border rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(0,0,0,0.08)] transition-all overflow-hidden flex flex-col bg-surface cursor-pointer group"
                 >
                   {/* Colored Card Banner Top */}
-                  <div style={{ 
-                    height: '80px', 
-                    background: 'linear-gradient(135deg, rgba(11, 14, 23, 0.03) 0%, rgba(11, 14, 23, 0.08) 100%)',
-                    position: 'relative'
-                  }}>
+                  <div className="h-20 bg-gradient-to-br from-surface-hover to-border relative">
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
                         setDeleteConfirmId(lead.id);
                       }}
-                      style={{
-                        position: 'absolute', top: '12px', left: '12px', zIndex: 1,
-                        background: 'var(--surface-color)', border: 'none', cursor: 'pointer',
-                        color: '#ef4444', padding: '6px', borderRadius: '50%',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        transition: 'all 0.2s'
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.color = '#dc2626'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.color = '#ef4444'; }}
+                      className="absolute top-3 left-3 z-10 bg-surface border-none cursor-pointer text-red-500 p-1.5 rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.05)] flex items-center justify-center transition-all hover:scale-110 hover:text-red-600 disabled:opacity-50"
                       title="Delete Lead"
                       disabled={updatingId === lead.id}
                     >
                       {updatingId === lead.id ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
                     </button>
-                    <Badge variant={getStatusBadgeVariant(lead.status)} style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 1 }}>
-                      {lead.status.toUpperCase()}
+                    <Badge variant={getStatusBadgeVariant(lead.status)} className="absolute top-3 right-3 z-10 uppercase">
+                      {lead.status}
                     </Badge>
                   </div>
                   
-                  <CardContent style={{ padding: '0 1.5rem 1.5rem 1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '-36px' }}>
+                  <CardContent className="px-6 pb-6 pt-0 flex flex-col items-center -mt-9">
                     
                     {/* Floating Avatar Icon */}
-                    <div style={{ 
-                      width: '72px', height: '72px', borderRadius: '50%', 
-                      background: 'var(--surface-color)',
-                      border: '4px solid var(--surface-color)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                      color: 'var(--accent-primary)',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-                      marginBottom: '1rem',
-                      zIndex: 2
-                    }}>
-                      <div style={{ 
-                        width: '100%', height: '100%', borderRadius: '50%',
-                        background: 'linear-gradient(135deg, rgba(11,14,23,0.05) 0%, rgba(11,14,23,0.1) 100%)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                      }}>
+                    <div className="w-[72px] h-[72px] rounded-full bg-surface border-4 border-surface flex items-center justify-center text-accent-primary shadow-[0_4px_12px_rgba(0,0,0,0.05)] mb-4 z-10">
+                      <div className="w-full h-full rounded-full bg-surface-hover flex items-center justify-center">
                         <Store size={32} />
                       </div>
                     </div>
 
                     {/* Central Info */}
-                    <h3 style={{ margin: '0 0 6px 0', fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-main)', textAlign: 'center', width: '100%', ...truncateStyle }}>
+                    <h3 className="m-0 mb-1.5 text-xl font-bold text-text-main text-center w-full truncate">
                       {lead.restaurant_name}
                     </h3>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 500, marginBottom: '1.25rem' }}>
+                    <div className="flex items-center gap-1.5 text-text-muted text-[13px] font-medium mb-5">
                       <Calendar size={14} />
                       {new Date(lead.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                     </div>
 
-                    <div style={{ width: '100%', height: '1px', background: 'var(--border-color)', marginBottom: '1.25rem' }} />
+                    <div className="w-full h-px bg-border mb-5" />
 
                     {/* Micro List */}
-                    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '1.5rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 500 }}>
-                        <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'var(--surface-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <User size={14} color="var(--text-muted)" />
+                    <div className="w-full flex flex-col gap-3 mb-6">
+                      <div className="flex items-center gap-2.5 text-[14px] text-text-main font-medium">
+                        <div className="w-7 h-7 rounded-lg bg-surface-hover flex items-center justify-center shrink-0">
+                          <User size={14} className="text-text-muted" />
                         </div>
-                        <span style={truncateStyle}>{lead.owner_name}</span>
+                        <span className="truncate">{lead.owner_name}</span>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 500 }}>
-                        <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'var(--surface-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <Phone size={14} color="var(--text-muted)" />
+                      <div className="flex items-center gap-2.5 text-[14px] text-text-main font-medium">
+                        <div className="w-7 h-7 rounded-lg bg-surface-hover flex items-center justify-center shrink-0">
+                          <Phone size={14} className="text-text-muted" />
                         </div>
-                        <span style={truncateStyle}>{lead.phone_number}</span>
+                        <span className="truncate">{lead.phone_number}</span>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 500 }}>
-                        <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'var(--surface-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <MapPin size={14} color="var(--text-muted)" />
+                      <div className="flex items-center gap-2.5 text-[14px] text-text-main font-medium">
+                        <div className="w-7 h-7 rounded-lg bg-surface-hover flex items-center justify-center shrink-0">
+                          <MapPin size={14} className="text-text-muted" />
                         </div>
-                        <span style={truncateStyle}>{lead.district || lead.state || lead.country}</span>
+                        <span className="truncate">{lead.district || lead.state || lead.country}</span>
                       </div>
                     </div>
 
                     {/* View Details Button */}
                     <button 
                       onClick={(e) => { e.stopPropagation(); setSelectedLead(lead); }}
-                      style={{ 
-                        width: '100%', padding: '10px', borderRadius: '10px', 
-                        background: 'var(--surface-hover)', color: 'var(--text-main)',
-                        border: '1px solid transparent', cursor: 'pointer',
-                        fontWeight: 600, fontSize: '0.9rem',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                        transition: 'all 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'var(--surface-color)';
-                        e.currentTarget.style.borderColor = 'var(--border-color)';
-                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.05)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'var(--surface-hover)';
-                        e.currentTarget.style.borderColor = 'transparent';
-                        e.currentTarget.style.boxShadow = 'none';
-                      }}
+                      className="w-full p-2.5 rounded-xl bg-surface-hover hover:bg-surface hover:border-border border border-transparent text-text-main cursor-pointer font-semibold text-[14px] flex items-center justify-center gap-2 transition-all hover:shadow-[0_2px_8px_rgba(0,0,0,0.05)]"
                     >
                       <Eye size={16} /> View Details
                     </button>
@@ -535,10 +427,10 @@ export default function LandingLeads() {
 
           {/* Lazy Loading Spinner Indicator */}
           {loadingMore && (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem 0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-muted)', background: 'var(--surface-color)', padding: '8px 24px', borderRadius: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-                <Loader2 className="animate-spin" size={18} color="var(--accent-primary)" />
-                <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Loading more leads...</span>
+            <div className="flex justify-center py-8">
+              <div className="flex items-center gap-2.5 text-text-muted bg-surface px-6 py-2 rounded-full shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+                <Loader2 className="animate-spin text-accent-primary" size={18} />
+                <span className="text-[14px] font-semibold">Loading more leads...</span>
               </div>
             </div>
           )}
@@ -548,37 +440,24 @@ export default function LandingLeads() {
       {/* Details Modal - Redesigned UI */}
       {selectedLead && (
         <div 
-          style={{ 
-            position: 'fixed', inset: 0, backgroundColor: 'rgba(11, 14, 23, 0.5)', backdropFilter: 'blur(8px)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
-            padding: '1rem', animation: 'fadeIn 0.2s ease-out'
-          }}
+          className="fixed inset-0 bg-black/50 backdrop-blur-[8px] flex items-center justify-center z-[1000] p-4 animate-[fadeIn_0.2s_ease-out]"
           onClick={() => setSelectedLead(null)}
         >
           <div 
-            style={{ 
-              background: 'var(--surface-color)', borderRadius: '24px', width: '100%', maxWidth: '520px',
-              boxShadow: '0 24px 50px rgba(0,0,0,0.15)', overflow: 'hidden',
-              animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
-            }}
+            className="bg-surface rounded-[24px] w-full max-w-[520px] shadow-[0_24px_50px_rgba(0,0,0,0.15)] overflow-hidden animate-[slideUp_0.3s_cubic-bezier(0.16,1,0.3,1)]"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '2rem 2rem 1.5rem 2rem', borderBottom: '1px solid var(--border-color)', background: 'var(--surface-color)' }}>
-              <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                <div style={{ 
-                  width: '56px', height: '56px', borderRadius: '16px', 
-                  background: 'linear-gradient(135deg, rgba(11,14,23,0.04) 0%, rgba(11,14,23,0.08) 100%)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary)',
-                  boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.5)'
-                }}>
+            <div className="flex justify-between items-start pt-8 px-8 pb-6 border-b border-border bg-surface">
+              <div className="flex gap-4 items-center">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-surface-hover to-border flex items-center justify-center text-accent-primary shadow-[inset_0_2px_4px_rgba(255,255,255,0.05)]">
                   <Store size={28} />
                 </div>
                 <div>
-                  <h2 style={{ margin: '0 0 6px 0', fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
+                  <h2 className="m-0 mb-1.5 text-[1.4rem] font-extrabold text-text-main tracking-tight">
                     {selectedLead.restaurant_name}
                   </h2>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: 500 }}>
+                  <div className="flex items-center gap-2 text-text-muted text-[14px] font-medium">
                     <Calendar size={14} />
                     {new Date(selectedLead.created_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
                   </div>
@@ -586,56 +465,54 @@ export default function LandingLeads() {
               </div>
               <button 
                 onClick={() => setSelectedLead(null)}
-                style={{ background: 'var(--surface-hover)', border: 'none', cursor: 'pointer', color: 'var(--text-main)', padding: '8px', borderRadius: '50%', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--border-color)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--surface-hover)'; }}
+                className="bg-surface-hover hover:bg-border border-none cursor-pointer text-text-main p-2 rounded-full transition-colors flex items-center justify-center"
               >
                 <X size={20} />
               </button>
             </div>
 
             {/* Modal Body - Premium Soft Boxed Layout */}
-            <div style={{ padding: '1.5rem 2rem', display: 'flex', flexDirection: 'column', gap: '1rem', background: 'var(--surface-hover)' }}>
+            <div className="px-8 py-6 flex flex-col gap-4 bg-surface-hover">
               
-              <div style={{ background: 'var(--surface-color)', padding: '1rem 1.25rem', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '16px', border: '1px solid var(--glass-border)', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(37, 99, 235, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563eb' }}>
+              <div className="bg-surface px-5 py-4 rounded-2xl flex items-center gap-4 border border-border shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600">
                   <User size={20} />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', fontWeight: 700 }}>Owner Name</span>
-                  <span style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-main)' }}>{selectedLead.owner_name}</span>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[12px] uppercase tracking-wider text-text-muted font-bold">Owner Name</span>
+                  <span className="text-[16px] font-semibold text-text-main">{selectedLead.owner_name}</span>
                 </div>
               </div>
 
-              <div style={{ background: 'var(--surface-color)', padding: '1rem 1.25rem', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '16px', border: '1px solid var(--glass-border)', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(5, 150, 105, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669' }}>
+              <div className="bg-surface px-5 py-4 rounded-2xl flex items-center gap-4 border border-border shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
                   <Phone size={20} />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', fontWeight: 700 }}>Phone Number</span>
-                  <a href={`tel:${selectedLead.phone_number}`} style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-main)', textDecoration: 'none' }}>{selectedLead.phone_number}</a>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[12px] uppercase tracking-wider text-text-muted font-bold">Phone Number</span>
+                  <a href={`tel:${selectedLead.phone_number}`} className="text-[16px] font-semibold text-text-main no-underline hover:underline">{selectedLead.phone_number}</a>
                 </div>
               </div>
 
-              <div style={{ background: 'var(--surface-color)', padding: '1rem 1.25rem', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '16px', border: '1px solid var(--glass-border)', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(217, 119, 6, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d97706' }}>
+              <div className="bg-surface px-5 py-4 rounded-2xl flex items-center gap-4 border border-border shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600">
                   <Mail size={20} />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', fontWeight: 700 }}>Email Address</span>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[12px] uppercase tracking-wider text-text-muted font-bold">Email Address</span>
                   {selectedLead.email ? (
-                    <a href={`mailto:${selectedLead.email}`} style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-main)', textDecoration: 'none' }}>{selectedLead.email}</a>
-                  ) : <span style={{ fontSize: '1.05rem', fontStyle: 'italic', color: 'var(--text-muted)' }}>Not provided</span>}
+                    <a href={`mailto:${selectedLead.email}`} className="text-[16px] font-semibold text-text-main no-underline hover:underline">{selectedLead.email}</a>
+                  ) : <span className="text-[16px] italic text-text-muted">Not provided</span>}
                 </div>
               </div>
 
-              <div style={{ background: 'var(--surface-color)', padding: '1rem 1.25rem', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '16px', border: '1px solid var(--glass-border)', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(124, 58, 237, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7c3aed' }}>
+              <div className="bg-surface px-5 py-4 rounded-2xl flex items-center gap-4 border border-border shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+                <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-600">
                   <MapPin size={20} />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', fontWeight: 700 }}>Location Details</span>
-                  <span style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-main)', lineHeight: 1.4 }}>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[12px] uppercase tracking-wider text-text-muted font-bold">Location Details</span>
+                  <span className="text-[16px] font-semibold text-text-main leading-relaxed">
                     {selectedLead.district ? `${selectedLead.district}, ` : ''}
                     {selectedLead.state ? `${selectedLead.state}, ` : ''}
                     {selectedLead.country}
@@ -646,27 +523,18 @@ export default function LandingLeads() {
             </div>
 
             {/* Modal Footer */}
-            <div style={{ padding: '1.5rem 2rem', background: 'var(--surface-color)', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Current Status:</span>
-                <Badge variant={getStatusBadgeVariant(selectedLead.status)} style={{ padding: '6px 14px', fontSize: '0.85rem' }}>
-                  {selectedLead.status.toUpperCase()}
+            <div className="px-8 py-6 bg-surface border-t border-border flex justify-between items-center gap-6 flex-wrap">
+              <div className="flex items-center gap-3">
+                <span className="text-[14px] font-bold text-text-muted uppercase tracking-wider">Current Status:</span>
+                <Badge variant={getStatusBadgeVariant(selectedLead.status)} className="px-3.5 py-1.5 text-[13px] uppercase">
+                  {selectedLead.status}
                 </Badge>
               </div>
               <select
                 value={selectedLead.status}
                 disabled={updatingId === selectedLead.id}
                 onChange={(e) => handleStatusChange(selectedLead.id, e.target.value)}
-                style={{
-                  padding: '10px 18px', fontSize: '0.95rem', fontWeight: 700,
-                  borderRadius: '12px', border: '2px solid var(--border-color)',
-                  background: 'var(--surface-color)', color: 'var(--text-main)',
-                  cursor: updatingId === selectedLead.id ? 'wait' : 'pointer',
-                  outline: 'none', transition: 'all 0.2s', boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
-                  width: '160px'
-                }}
-                onFocus={(e) => e.target.style.borderColor = 'var(--accent-primary)'}
-                onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
+                className={`px-4 py-2.5 text-[15px] font-bold rounded-xl border-2 border-border bg-surface text-text-main focus:outline-none focus:border-accent-primary transition-all shadow-[0_2px_6px_rgba(0,0,0,0.03)] w-40 ${updatingId === selectedLead.id ? 'cursor-wait' : 'cursor-pointer'}`}
               >
                 <option value="new">Mark New</option>
                 <option value="contacted">Contacted</option>
@@ -688,44 +556,31 @@ export default function LandingLeads() {
       {/* Delete Confirmation Dialog */}
       {deleteConfirmId && (
         <div 
-          style={{ 
-            position: 'fixed', inset: 0, backgroundColor: 'rgba(11, 14, 23, 0.6)', backdropFilter: 'blur(4px)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1010,
-            padding: '1rem', animation: 'fadeIn 0.2s ease-out'
-          }}
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[1010] p-4 animate-[fadeIn_0.2s_ease-out]"
           onClick={() => setDeleteConfirmId(null)}
         >
           <div 
-            style={{ 
-              background: 'var(--surface-color)', borderRadius: '24px', width: '100%', maxWidth: '400px',
-              boxShadow: '0 24px 50px rgba(0,0,0,0.2)', overflow: 'hidden',
-              animation: 'slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1)', padding: '2.5rem 2rem',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center'
-            }}
+            className="bg-surface rounded-[24px] w-full max-w-[400px] shadow-[0_24px_50px_rgba(0,0,0,0.2)] overflow-hidden animate-[slideUp_0.2s_cubic-bezier(0.16,1,0.3,1)] py-10 px-8 flex flex-col items-center text-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', marginBottom: '1.5rem', boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.5)' }}>
+            <div className="w-[72px] h-[72px] rounded-full bg-red-500/10 flex items-center justify-center text-red-500 mb-6 shadow-[inset_0_2px_4px_rgba(255,255,255,0.05)]">
               <AlertTriangle size={36} />
             </div>
-            <h3 style={{ margin: '0 0 12px 0', fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>Delete this lead?</h3>
-            <p style={{ margin: '0 0 2rem 0', color: 'var(--text-muted)', fontSize: '1rem', lineHeight: 1.5 }}>
+            <h3 className="m-0 mb-3 text-2xl font-extrabold text-text-main tracking-tight">Delete this lead?</h3>
+            <p className="m-0 mb-8 text-text-muted text-base leading-relaxed">
               Are you sure you want to permanently delete this lead? This action cannot be undone.
             </p>
-            <div style={{ display: 'flex', gap: '1rem', width: '100%' }}>
+            <div className="flex gap-4 w-full">
               <button 
                 onClick={() => setDeleteConfirmId(null)}
-                style={{ flex: 1, padding: '14px', borderRadius: '14px', background: 'var(--surface-hover)', border: 'none', color: 'var(--text-main)', fontWeight: 700, fontSize: '1rem', cursor: 'pointer', transition: 'all 0.2s' }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--border-color)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'var(--surface-hover)'}
+                className="flex-1 py-3.5 rounded-xl bg-surface-hover hover:bg-border border-none text-text-main font-bold text-base cursor-pointer transition-colors"
               >
                 Cancel
               </button>
               <button 
                 onClick={handleDeleteLead}
                 disabled={updatingId === deleteConfirmId}
-                style={{ flex: 1, padding: '14px', borderRadius: '14px', background: '#ef4444', border: 'none', color: '#fff', fontWeight: 700, fontSize: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s', boxShadow: '0 4px 16px rgba(239, 68, 68, 0.2)' }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = '#dc2626'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(239, 68, 68, 0.3)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = '#ef4444'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(239, 68, 68, 0.2)'; }}
+                className="flex-1 py-3.5 rounded-xl bg-red-500 hover:bg-red-600 border-none text-white font-bold text-base cursor-pointer flex items-center justify-center gap-2 transition-colors shadow-[0_4px_16px_rgba(239,68,68,0.2)] hover:shadow-[0_6px_20px_rgba(239,68,68,0.3)] disabled:opacity-50"
               >
                 {updatingId === deleteConfirmId ? <Loader2 className="animate-spin" size={20} /> : 'Delete'}
               </button>

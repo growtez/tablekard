@@ -405,6 +405,10 @@ export default function RestaurantProfileView({
         </div>
         <div className="profile-form-grid">
           <div className="profile-info-item">
+            <span className="profile-info-label">Onboarded Date</span>
+            <span className="profile-info-value">{new Date(restaurant.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+          </div>
+          <div className="profile-info-item">
             <span className="profile-info-label">Opening Date</span>
             <span className="profile-info-value">{restaurant.opening_date || '—'}</span>
           </div>

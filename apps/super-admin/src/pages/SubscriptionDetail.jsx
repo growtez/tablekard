@@ -85,20 +85,20 @@ export default function SubscriptionDetail({ setHeaderData }) {
 
     if (loading) {
         return (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: '1.5rem' }}>
-                <div className="loader" />
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Fetching transaction details...</p>
+            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
+                <div className="w-8 h-8 border-4 border-surface-hover border-t-accent-primary rounded-full animate-spin" />
+                <p className="text-sm text-text-muted">Fetching transaction details...</p>
             </div>
         );
     }
 
     if (error || !data) {
         return (
-            <div className="animate-fade-in" style={{ padding: '2rem', textAlign: 'center' }}>
-                <AlertCircle size={48} color="#ef4444" style={{ marginBottom: '1rem', opacity: 0.5 }} />
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>Transaction Not Found</h2>
-                <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>{error || 'The requested transaction could not be located.'}</p>
-                <button onClick={() => navigate('/subscriptions')} className="btn-primary">
+            <div className="animate-fade-in p-8 text-center">
+                <AlertCircle size={48} className="text-red-500 opacity-50 mb-4 mx-auto" />
+                <h2 className="text-2xl font-bold mb-2">Transaction Not Found</h2>
+                <p className="text-text-muted mb-6">{error || 'The requested transaction could not be located.'}</p>
+                <button onClick={() => navigate('/subscriptions')} className="flex items-center gap-2 px-4 py-2 bg-accent-primary text-black font-bold rounded-xl mx-auto shadow-sm hover:shadow-md transition-all">
                     <ChevronLeft size={18} /> Back to Subscriptions
                 </button>
             </div>
@@ -110,32 +110,24 @@ export default function SubscriptionDetail({ setHeaderData }) {
     const isPending = data.status === 'pending';
 
     return (
-        <div className="animate-fade-in" style={{ maxWidth: '1000px', margin: '0 auto', paddingBottom: '3rem' }}>
+        <div className="animate-fade-in max-w-[1000px] mx-auto pb-12">
             {/* Context Area (Non-duplicated header) */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '2.5rem' }}>
-                <div style={{ 
-                    width: '56px', 
-                    height: '56px', 
-                    borderRadius: '16px', 
-                    background: 'var(--accent-primary-glow)', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center' 
-                }}>
-                    <Receipt size={28} color="var(--accent-primary)" />
+            <div className="flex items-center gap-6 mb-10">
+                <div className="w-14 h-14 rounded-2xl bg-accent-primary/10 flex items-center justify-center shrink-0">
+                    <Receipt size={28} className="text-accent-primary" />
                 </div>
                 <div>
-                    <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>
+                    <h2 className="text-xl font-extrabold m-0">
                         ₹{Number(data.amount).toLocaleString()} {data.currency}
                     </h2>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                    <p className="text-sm text-text-muted mt-1">
                         Settled via Razorpay • {formatDate(data.created_at, true)}
                     </p>
                 </div>
             </div>
 
             {/* Tabs Navigation */}
-            <div style={{ display: 'flex', gap: '2.5rem', borderBottom: '1px solid var(--border-color)', marginBottom: '2rem' }}>
+            <div className="flex gap-10 border-b border-border mb-8 overflow-x-auto whitespace-nowrap scrollbar-hide">
                 {[
                     { id: 'payment', label: 'Payment Details', icon: CreditCard },
                     { id: 'plan', label: 'Plan Scope', icon: ShieldCheck },
@@ -144,20 +136,7 @@ export default function SubscriptionDetail({ setHeaderData }) {
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            padding: '1rem 0',
-                            fontSize: '0.95rem',
-                            fontWeight: 600,
-                            color: activeTab === tab.id ? 'var(--accent-primary)' : 'var(--text-muted)',
-                            borderBottom: `2px solid ${activeTab === tab.id ? 'var(--accent-primary)' : 'transparent'}`,
-                            transition: 'all 0.2s',
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer'
-                        }}
+                        className={`flex items-center gap-2 py-4 text-sm font-semibold border-b-2 transition-all bg-transparent cursor-pointer ${activeTab === tab.id ? 'text-accent-primary border-accent-primary' : 'text-text-muted border-transparent hover:text-text-main'}`}
                     >
                         <tab.icon size={18} />
                         {tab.label}
@@ -167,78 +146,69 @@ export default function SubscriptionDetail({ setHeaderData }) {
 
             <div className="tab-content">
                 {activeTab === 'payment' && (
-                    <div className="dashboard-chart-grid" style={{ gridTemplateColumns: 'repeat(12, 1fr)', gap: '1.5rem' }}>
-                        <div style={{ gridColumn: 'span 8' }}>
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                        <div className="lg:col-span-8">
                             <Card>
                                 <CardHeader>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                        <CreditCard size={18} color="var(--accent-primary)" />
-                                        <CardTitle>Financial Summary</CardTitle>
+                                    <div className="flex items-center gap-3">
+                                        <CreditCard size={18} className="text-accent-primary" />
+                                        <CardTitle className="m-0">Financial Summary</CardTitle>
                                     </div>
                                 </CardHeader>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Amount Collected</div>
-                                        <div style={{ fontSize: '2.5rem', fontWeight: 800, color: isPaid ? 'var(--accent-primary)' : 'inherit' }}>
+                                        <div className="text-xs font-bold text-text-muted uppercase tracking-wider mb-2">Amount Collected</div>
+                                        <div className={`text-4xl font-extrabold ${isPaid ? 'text-accent-primary' : ''}`}>
                                             ₹{Number(data.amount).toLocaleString()}
-                                            <span style={{ fontSize: '1rem', fontWeight: 500, marginLeft: '8px', opacity: 0.6 }}>{data.currency}</span>
+                                            <span className="text-base font-medium ml-2 opacity-60">{data.currency}</span>
                                         </div>
                                     </div>
                                     <div>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Gateway Status</div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.25rem', fontWeight: 700 }}>
-                                            {isPaid && <CheckCircle2 size={24} color="#10b981" />}
-                                            {isFailed && <XCircle size={24} color="#ef4444" />}
-                                            {isPending && <Timer size={24} color="#f59e0b" />}
+                                        <div className="text-xs font-bold text-text-muted uppercase tracking-wider mb-2">Gateway Status</div>
+                                        <div className="flex items-center gap-2 text-xl font-bold">
+                                            {isPaid && <CheckCircle2 size={24} className="text-emerald-500" />}
+                                            {isFailed && <XCircle size={24} className="text-red-500" />}
+                                            {isPending && <Timer size={24} className="text-amber-500" />}
                                             {data.status.toUpperCase()}
                                         </div>
                                     </div>
                                 </div>
 
-                                <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '2rem 0' }} />
+                                <hr className="border-t border-border my-8" />
 
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div className="space-y-6">
                                         <div>
-                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Razorpay Payment ID</div>
-                                            <code style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--accent-primary)' }}>{data.razorpay_payment_id || '—'}</code>
+                                            <div className="text-xs font-bold text-text-muted uppercase tracking-wider mb-1">Razorpay Payment ID</div>
+                                            <code className="text-[15px] font-semibold text-accent-primary">{data.razorpay_payment_id || '—'}</code>
                                         </div>
                                         <div>
-                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Razorpay Order ID</div>
-                                            <code style={{ fontSize: '0.95rem' }}>{data.razorpay_order_id || '—'}</code>
+                                            <div className="text-xs font-bold text-text-muted uppercase tracking-wider mb-1">Razorpay Order ID</div>
+                                            <code className="text-[15px]">{data.razorpay_order_id || '—'}</code>
                                         </div>
                                     </div>
                                     <div className="space-y-6">
                                         <div>
-                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Initiated At</div>
-                                            <div style={{ fontSize: '0.95rem', fontWeight: 600 }}>{formatDate(data.created_at, true)}</div>
+                                            <div className="text-xs font-bold text-text-muted uppercase tracking-wider mb-1">Initiated At</div>
+                                            <div className="text-[15px] font-semibold">{formatDate(data.created_at, true)}</div>
                                         </div>
                                         <div>
-                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Payment Settled</div>
-                                            <div style={{ fontSize: '0.95rem', fontWeight: 600 }}>{formatDate(data.paid_at, true)}</div>
+                                            <div className="text-xs font-bold text-text-muted uppercase tracking-wider mb-1">Payment Settled</div>
+                                            <div className="text-[15px] font-semibold">{formatDate(data.paid_at, true)}</div>
                                         </div>
                                     </div>
                                 </div>
                             </Card>
                         </div>
-                        <div style={{ gridColumn: 'span 4' }}>
-                            <Card style={{ background: 'linear-gradient(135deg, var(--surface-color) 0%, rgba(140, 100, 255, 0.05) 100%)' }}>
-                                <CardHeader><CardTitle>Payment Method</CardTitle></CardHeader>
-                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '1rem 0', textAlign: 'center' }}>
-                                    <div style={{ 
-                                        width: '48px', 
-                                        height: '48px', 
-                                        borderRadius: '12px', 
-                                        background: 'var(--surface-hover)', 
-                                        display: 'flex', 
-                                        alignItems: 'center', 
-                                        justifyContent: 'center',
-                                        marginBottom: '1rem'
-                                    }}>
-                                        <Hash size={24} color="var(--accent-secondary)" />
+                        <div className="lg:col-span-4">
+                            <Card className="bg-gradient-to-br from-surface to-purple-500/5">
+                                <CardHeader><CardTitle className="m-0">Payment Method</CardTitle></CardHeader>
+                                <div className="flex flex-col items-center py-4 text-center">
+                                    <div className="w-12 h-12 rounded-xl bg-surface-hover flex items-center justify-center mb-4">
+                                        <Hash size={24} className="text-accent-secondary" />
                                     </div>
-                                    <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>Razorpay Gateway</div>
-                                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+                                    <div className="font-bold text-lg">Razorpay Gateway</div>
+                                    <p className="text-xs text-text-muted mt-2">
                                         Secure online payment processed via Razorpay API.
                                     </p>
                                 </div>
@@ -248,39 +218,39 @@ export default function SubscriptionDetail({ setHeaderData }) {
                 )}
 
                 {activeTab === 'plan' && (
-                    <div className="dashboard-chart-grid" style={{ gridTemplateColumns: 'repeat(12, 1fr)', gap: '1.5rem' }}>
-                        <div style={{ gridColumn: 'span 12' }}>
+                    <div className="grid grid-cols-1 gap-6">
+                        <div className="col-span-1">
                             <Card>
                                 <CardHeader>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                        <ShieldCheck size={18} color="#f59e0b" />
-                                        <CardTitle>Subscription Coverage</CardTitle>
+                                    <div className="flex items-center gap-3">
+                                        <ShieldCheck size={18} className="text-amber-500" />
+                                        <CardTitle className="m-0">Subscription Coverage</CardTitle>
                                     </div>
                                 </CardHeader>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '2rem', padding: '1rem 0' }}>
-                                    <div style={{ background: 'var(--surface-hover)', padding: '1.5rem', borderRadius: '16px', textAlign: 'center' }}>
-                                        <Clock size={28} color="#f59e0b" style={{ marginBottom: '1rem', opacity: 0.8 }} />
-                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Plan Duration</div>
-                                        <div style={{ fontSize: '1.75rem', fontWeight: 800 }}>{data.plan_duration} Days</div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 py-4">
+                                    <div className="bg-surface-hover p-6 rounded-2xl text-center">
+                                        <Clock size={28} className="text-amber-500 mb-4 opacity-80 mx-auto" />
+                                        <div className="text-xs font-bold text-text-muted uppercase tracking-wider mb-1">Plan Duration</div>
+                                        <div className="text-2xl font-extrabold">{data.plan_duration} Days</div>
                                     </div>
-                                    <div style={{ background: 'var(--surface-hover)', padding: '1.5rem', borderRadius: '16px', textAlign: 'center' }}>
-                                        <Calendar size={28} color="var(--accent-primary)" style={{ marginBottom: '1rem', opacity: 0.8 }} />
-                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Activation Date</div>
-                                        <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{formatDate(data.starts_at)}</div>
+                                    <div className="bg-surface-hover p-6 rounded-2xl text-center">
+                                        <Calendar size={28} className="text-accent-primary mb-4 opacity-80 mx-auto" />
+                                        <div className="text-xs font-bold text-text-muted uppercase tracking-wider mb-1">Activation Date</div>
+                                        <div className="text-xl font-bold">{formatDate(data.starts_at)}</div>
                                     </div>
-                                    <div style={{ background: 'var(--surface-hover)', padding: '1.5rem', borderRadius: '16px', textAlign: 'center' }}>
-                                        <Timer size={28} color={data.ends_at && new Date(data.ends_at) < new Date() ? '#ef4444' : 'var(--accent-secondary)'} style={{ marginBottom: '1rem', opacity: 0.8 }} />
-                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Expiration Date</div>
-                                        <div style={{ fontSize: '1.25rem', fontWeight: 700, color: data.ends_at && new Date(data.ends_at) < new Date() ? '#991b1b' : 'inherit' }}>
+                                    <div className="bg-surface-hover p-6 rounded-2xl text-center">
+                                        <Timer size={28} className={`${data.ends_at && new Date(data.ends_at) < new Date() ? 'text-red-500' : 'text-accent-secondary'} mb-4 opacity-80 mx-auto`} />
+                                        <div className="text-xs font-bold text-text-muted uppercase tracking-wider mb-1">Expiration Date</div>
+                                        <div className={`text-xl font-bold ${data.ends_at && new Date(data.ends_at) < new Date() ? 'text-red-700' : ''}`}>
                                             {formatDate(data.ends_at)}
                                         </div>
                                     </div>
                                 </div>
-                                <div style={{ marginTop: '2rem', padding: '1.5rem', borderRadius: '12px', background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.1)' }}>
-                                    <div style={{ fontWeight: 600, fontSize: '0.95rem', color: '#92400e', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <div className="mt-8 p-6 rounded-xl bg-amber-500/5 border border-amber-500/10">
+                                    <div className="font-semibold text-[15px] text-amber-700 flex items-center gap-2">
                                         <Info size={16} /> Plan Information
                                     </div>
-                                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '8px', lineHeight: 1.6 }}>
+                                    <p className="text-sm text-text-muted mt-2 leading-relaxed">
                                         This subscription grants the restaurant full access to the platform's features for the specified duration. 
                                         The plan type is determined by the pricing tier selected during checkout. 
                                         {data.ends_at && new Date(data.ends_at) < new Date() ? " This plan has already expired." : " This plan is currently active."}
@@ -292,61 +262,60 @@ export default function SubscriptionDetail({ setHeaderData }) {
                 )}
 
                 {activeTab === 'entities' && (
-                    <div className="dashboard-chart-grid" style={{ gridTemplateColumns: 'repeat(12, 1fr)', gap: '1.5rem' }}>
-                        <div style={{ gridColumn: 'span 6' }}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="col-span-1">
                             <Card>
                                 <CardHeader>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                        <Store size={18} color="#10b981" />
-                                        <CardTitle>Restaurant Profile</CardTitle>
+                                    <div className="flex items-center gap-3">
+                                        <Store size={18} className="text-emerald-500" />
+                                        <CardTitle className="m-0">Restaurant Profile</CardTitle>
                                     </div>
                                 </CardHeader>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginBottom: '2rem' }}>
-                                    <div className="user-avatar" style={{ width: '64px', height: '64px', borderRadius: '16px', fontSize: '1.5rem', border: '1px solid var(--border-color)' }}>
-                                        {data.restaurants?.logo_url ? <img src={data.restaurants.logo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : data.restaurants?.name?.[0]?.toUpperCase()}
+                                <div className="flex items-center gap-5 mb-8">
+                                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold bg-surface-hover border border-border overflow-hidden">
+                                        {data.restaurants?.logo_url ? <img src={data.restaurants.logo_url} alt="" className="w-full h-full object-cover" /> : data.restaurants?.name?.[0]?.toUpperCase()}
                                     </div>
                                     <div>
-                                        <div style={{ fontWeight: 800, fontSize: '1.25rem' }}>{data.restaurants?.name}</div>
-                                        <div style={{ fontSize: '0.85rem', color: 'var(--accent-primary)' }}>/{data.restaurants?.slug}</div>
+                                        <div className="font-extrabold text-xl">{data.restaurants?.name}</div>
+                                        <div className="text-sm text-accent-primary">/{data.restaurants?.slug}</div>
                                     </div>
                                 </div>
                                 <div className="space-y-4">
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Subscription Tier</span>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm text-text-muted">Subscription Tier</span>
                                         <Badge variant="info">{data.restaurants?.subscription_type || 'Lite Plan'}</Badge>
                                     </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Contact Email</span>
-                                        <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>{data.restaurants?.contact_email || '—'}</span>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm text-text-muted">Contact Email</span>
+                                        <span className="text-sm font-medium">{data.restaurants?.contact_email || '—'}</span>
                                     </div>
                                 </div>
                                 <button 
                                     onClick={() => navigate(`/restaurants/${data.restaurant_id}`)}
-                                    className="btn-primary" 
-                                    style={{ width: '100%', marginTop: '2rem', justifyContent: 'center' }}
+                                    className="w-full mt-8 flex items-center justify-center gap-2 px-4 py-2.5 bg-accent-primary text-black font-bold rounded-xl hover:shadow-md transition-all border-none cursor-pointer"
                                 >
-                                    Open Restaurant Details <ExternalLink size={14} style={{ marginLeft: '8px' }} />
+                                    Open Restaurant Details <ExternalLink size={14} />
                                 </button>
                             </Card>
                         </div>
-                        <div style={{ gridColumn: 'span 6' }}>
+                        <div className="col-span-1">
                             <Card>
                                 <CardHeader>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                        <User size={18} color="#3b82f6" />
-                                        <CardTitle>Payer Details</CardTitle>
+                                    <div className="flex items-center gap-3">
+                                        <User size={18} className="text-blue-500" />
+                                        <CardTitle className="m-0">Payer Details</CardTitle>
                                     </div>
                                 </CardHeader>
                                 <div className="space-y-6">
-                                    <div style={{ padding: '1.25rem', background: 'var(--surface-hover)', borderRadius: '16px' }}>
-                                        <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{data.profiles?.name || 'Unknown Payer'}</div>
-                                        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+                                    <div className="p-5 bg-surface-hover rounded-2xl">
+                                        <div className="text-lg font-bold">{data.profiles?.name || 'Unknown Payer'}</div>
+                                        <div className="text-sm text-text-muted flex items-center gap-2 mt-1">
                                             <Mail size={14} /> {data.profiles?.email}
                                         </div>
                                     </div>
                                     <div>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px' }}>Payer Identifier (UUID)</div>
-                                        <code style={{ fontSize: '0.85rem', display: 'block', padding: '12px', background: 'var(--surface-color)', border: '1px solid var(--border-color)', borderRadius: '8px', opacity: 0.7 }}>
+                                        <div className="text-xs font-bold text-text-muted uppercase tracking-wider mb-2">Payer Identifier (UUID)</div>
+                                        <code className="block text-sm p-3 bg-surface border border-border rounded-xl opacity-70 font-mono break-all">
                                             {data.user_id}
                                         </code>
                                     </div>

@@ -23,7 +23,6 @@ import Sidebar from './components/Sidebar'
 import QuickCreateDrawer from './components/QuickCreateDrawer'
 import { Plus, UserPlus, FilePlus, ChevronLeft, Edit, Save, X, RefreshCw, Menu } from 'lucide-react'
 import { Badge } from './components/ui/Badge'
-import './App.css'
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -41,16 +40,37 @@ export default function App() {
   const [syncAction, setSyncAction] = useState(null)
   const [globalStats, setGlobalStats] = useState({
     restaurants: { total: 0, active: 0, recent: 0 },
-    users: { total: 0, customers: 0, restAdmins: 0, restStaff: 0 }
+    users: { total: 0, customers: 0, restAdmins: 0, restStaff: 0 },
+    subscriptions: { total: 0 },
+    subscriptions_summary: { total: 0, paid: 0, pending: 0, failed: 0 },
+    transactions_summary: { total: 0, paid: 0, totalAmount: 0, refunded: 0 },
+    revenue: { total: 0 }
   });
 
   const fetchGlobalStats = async () => {
     try {
-      const [{ count: resCount }, { count: activeResCount }, { data: profiles }] = await Promise.all([
+      const [{ count: resCount }, { count: activeResCount }, { data: profiles }, { data: subPayments }, { data: allPayments }, { data: cashOrders }] = await Promise.all([
         supabase.from('restaurants').select('*', { count: 'exact', head: true }),
         supabase.from('restaurants').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-        supabase.from('profiles').select('role')
+        supabase.from('profiles').select('role'),
+        supabase.from('subscription_payments').select('amount, status'),
+        supabase.from('payments').select('amount, status, order_id'),
+        supabase.from('orders').select('id, total, payment_status').in('payment_method', ['cash', 'card'])
       ]);
+      const payments = subPayments || [];
+      const totalRevenue = payments.filter(p => p.status === 'paid').reduce((sum, p) => sum + Number(p.amount || 0), 0);
+      
+      const paymentsArr = allPayments || [];
+      const onlineOrderIds = new Set(paymentsArr.map(p => p.order_id).filter(Boolean));
+      const filteredCash = (cashOrders || []).filter(o => !onlineOrderIds.has(o.id));
+      const txTotal = paymentsArr.length + filteredCash.length;
+      const txPaid = paymentsArr.filter(p => p.status === 'paid' || p.status === 'completed').length + 
+                   filteredCash.filter(o => o.payment_status === 'paid' || o.payment_status === 'completed').length;
+      const txAmount = paymentsArr.filter(p => p.status === 'paid' || p.status === 'completed').reduce((s, p) => s + Number(p.amount || 0), 0) +
+                     filteredCash.filter(o => o.payment_status === 'paid' || o.payment_status === 'completed').reduce((s, o) => s + Number(o.total || 0), 0);
+      const txRefunded = paymentsArr.filter(p => p.status === 'refunded').length + 
+                       filteredCash.filter(o => o.payment_status === 'refunded').length;
+
       setGlobalStats({
         restaurants: { total: resCount || 0, active: activeResCount || 0, recent: resCount > 0 ? 1 : 0 },
         users: {
@@ -58,7 +78,21 @@ export default function App() {
           customers: profiles?.filter(p => p.role === 'customer').length || 0,
           restAdmins: profiles?.filter(p => p.role === 'restaurant_admin').length || 0,
           restStaff: profiles?.filter(p => p.role === 'restaurant_staff').length || 0
-        }
+        },
+        subscriptions: { total: payments.length },
+        subscriptions_summary: {
+          total: payments.length,
+          paid: payments.filter(p => p.status === 'paid').length,
+          pending: payments.filter(p => p.status === 'pending').length,
+          failed: payments.filter(p => p.status === 'failed').length
+        },
+        transactions_summary: {
+          total: txTotal,
+          paid: txPaid,
+          totalAmount: txAmount,
+          refunded: txRefunded
+        },
+        revenue: { total: totalRevenue }
       });
     } catch (err) { console.error('App: Global stats fetch failed:', err); }
   };
@@ -128,10 +162,10 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="login-page">
-        <div className="flex column items-center gap-4">
-          <div className="loader" style={{ width: '40px', height: '40px', borderWidth: '4px' }} />
-          <p style={{ color: 'var(--accent-primary)', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', fontSize: '0.8rem' }}>Initializing Session...</p>
+      <div className="min-h-screen flex items-center justify-center bg-bg p-4">
+        <div className="flex flex-col items-center gap-4">
+          <div className="loader w-10 h-10 border-4 border-surface-hover border-t-accent-primary rounded-full animate-spin" />
+          <p className="text-accent-primary font-semibold tracking-widest uppercase text-xs">Initializing Session...</p>
         </div>
       </div>
     )
@@ -141,24 +175,25 @@ export default function App() {
 
   if (!isAdmin) {
     return (
-      <div className="login-page">
-        <div className="login-card animate-fade-in" style={{ textAlign: 'center' }}>
-          <div className="login-header">
-            <div className="logo-icon" style={{ margin: '0 auto 1.5rem' }}>!</div>
-            <h1>Access Denied</h1><p>Insufficient Permissions</p>
+      <div className="min-h-screen flex items-center justify-center bg-bg p-4">
+        <div className="glass p-8 w-full max-w-md rounded-2xl text-center animate-fade-in">
+          <div className="mb-6">
+            <div className="w-12 h-12 bg-accent-primary text-white rounded-xl mx-auto mb-4 flex items-center justify-center text-xl font-bold">!</div>
+            <h1 className="text-2xl font-bold mb-1">Access Denied</h1>
+            <p className="text-text-muted">Insufficient Permissions</p>
           </div>
-          <div className="error-alert-modern" style={{ flexDirection: 'column', gap: '8px', marginBottom: '2rem', padding: '1.5rem' }}>
-            <div style={{ fontWeight: '700', fontSize: '1.1rem', marginBottom: '0.5rem' }}>Access Level Evaluation</div>
-            <div className="flex justify-between w-full" style={{ fontSize: '0.85rem' }}>
-              <span style={{ color: 'var(--text-muted)' }}>Detected Role:</span>
-              <code style={{ color: 'var(--accent-primary)', background: 'var(--surface-hover)', padding: '2px 6px', borderRadius: '4px' }}>{userRole || 'NotFound/Unknown'}</code>
+          <div className="flex flex-col gap-2 mb-8 p-6 bg-red-500/5 border border-red-500/10 rounded-xl text-left">
+            <div className="font-bold text-lg mb-2">Access Level Evaluation</div>
+            <div className="flex justify-between w-full text-sm">
+              <span className="text-text-muted">Detected Role:</span>
+              <code className="text-accent-primary bg-surface-hover px-2 py-0.5 rounded">{userRole || 'NotFound/Unknown'}</code>
             </div>
-            {authError && <div style={{ fontSize: '0.75rem', color: '#ff6b6b', marginTop: '4px', textAlign: 'left', background: 'rgba(255,0,0,0.05)', padding: '8px', borderRadius: '8px' }}><strong>Database Error:</strong> {authError}</div>}
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '8px', borderTop: '1px solid var(--border-color)', paddingTop: '8px' }}>User ID: <span style={{ opacity: 0.8 }}>{session?.user?.id}</span></div>
+            {authError && <div className="text-xs text-red-500 mt-1 bg-red-500/5 p-2 rounded-lg"><strong>Database Error:</strong> {authError}</div>}
+            <div className="text-xs text-text-muted mt-2 border-t border-border pt-2">User ID: <span className="opacity-80">{session?.user?.id}</span></div>
           </div>
-          <div className="flex column gap-3" style={{ width: '100%' }}>
-            <button onClick={() => checkIsAdmin(session)} className="primary" style={{ width: '100%' }}>Refresh Permissions</button>
-            <button onClick={handleLogout} style={{ width: '100%', background: 'var(--surface-hover)' }}>Sign Out & Try Another Account</button>
+          <div className="flex flex-col gap-3 w-full">
+            <button onClick={() => checkIsAdmin(session)} className="w-full bg-accent-primary hover:bg-accent-secondary text-white py-2.5 rounded-xl font-semibold transition-all">Refresh Permissions</button>
+            <button onClick={handleLogout} className="w-full bg-surface-hover hover:bg-border text-text-main py-2.5 rounded-xl font-semibold transition-all">Sign Out & Try Another Account</button>
           </div>
         </div>
       </div>
@@ -167,11 +202,37 @@ export default function App() {
 
   const getPageTitle = () => {
     const path = location.pathname;
-    if (path === '/' || path === '/dashboard') return { title: 'Dashboard', stats: [{ label: 'Total Restaurants', value: String(globalStats.restaurants.total), path: '/restaurants' }, { label: 'Total Users', value: String(globalStats.users.total), path: '/users' }] };
+    if (path === '/' || path === '/dashboard') return { 
+        title: 'Dashboard', 
+        stats: [
+            { label: 'Total Restaurants', value: String(globalStats.restaurants.total || 0), path: '/restaurants', change: '+0%' },
+            { label: 'Total Users', value: String(globalStats.users.total || 0), path: '/users', change: '+0%' },
+            { label: 'Total Subscriptions', value: String(globalStats.subscriptions?.total || 0), path: '/subscriptions', change: '+0%' }, 
+            { label: 'Platform Revenue', value: '₹' + (globalStats.revenue?.total?.toLocaleString() || '0'), path: '/subscriptions', change: '+0%' }
+        ] 
+    };
     if (path === '/restaurants') return { title: 'Restaurants', stats: [{ label: 'Total', value: String(globalStats.restaurants.total) }, { label: 'Active', value: String(globalStats.restaurants.active) }] };
     if (path === '/users') return { title: 'Users', stats: [{ label: 'Total', value: String(globalStats.users.total) }, { label: 'Admins', value: String(globalStats.users.restAdmins) }, { label: 'Staff', value: String(globalStats.users.restStaff) }] };
-    if (path === '/subscriptions') return { title: 'Subscriptions' };
-    if (path === '/billing/transactions') return { title: 'Transactions & Refunds' };
+    if (path === '/subscriptions') return { 
+        title: 'Subscriptions',
+        stats: [
+            { label: 'Total Records', value: String(globalStats.subscriptions_summary?.total || 0) },
+            { label: 'Paid', value: String(globalStats.subscriptions_summary?.paid || 0) },
+            { label: 'Pending', value: String(globalStats.subscriptions_summary?.pending || 0) },
+            { label: 'Failed', value: String(globalStats.subscriptions_summary?.failed || 0) },
+            { label: 'Total Collected', value: '₹' + (globalStats.revenue?.total?.toLocaleString() || '0') }
+        ]
+    };
+    if (path === '/billing/transactions') return { 
+        title: 'Transactions & Refunds',
+        stats: [
+            { label: 'Total Transactions', value: String(globalStats.transactions_summary?.total || 0) },
+            { label: 'Successful', value: String(globalStats.transactions_summary?.paid || 0) },
+            { label: 'Revenue Collected', value: '₹' + (globalStats.transactions_summary?.totalAmount?.toLocaleString() || '0') },
+            { label: 'Refunded', value: String(globalStats.transactions_summary?.refunded || 0) }
+        ]
+    };
+    if (path === '/leads') return { title: 'Landing Page Leads' };
     if (path === '/billing/plans') return { title: 'Pricing Plans' };
     // if (path === '/support/complaints') return { title: 'Complaints & Disputes' };
     // if (path === '/support/reviews') return { title: 'Reviews Moderation' };
@@ -186,9 +247,9 @@ export default function App() {
   const { title, stats } = getPageTitle();
 
   return (
-    <div className="app-shell">
+    <div className="min-h-screen bg-bg">
       {/* Mobile overlay */}
-      {mobileSidebarOpen && <div className="mobile-sidebar-overlay" onClick={() => setMobileSidebarOpen(false)} />}
+      {mobileSidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setMobileSidebarOpen(false)} />}
 
       <Sidebar
         collapsed={sidebarCollapsed}
@@ -199,39 +260,39 @@ export default function App() {
         setMobileOpen={setMobileSidebarOpen}
       />
 
-      <div className={`main-wrapper ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
-        <header className="top-nav">
-          <div className="nav-container">
-            <div className="flex items-center gap-4">
+      <div className={`flex flex-col min-h-screen transition-[margin] duration-300 ml-0 ${sidebarCollapsed ? 'md:ml-[80px]' : 'md:ml-[260px]'}`}>
+        <header className="sticky top-0 z-30 h-14 md:h-14 flex items-center border-b border-border bg-surface/80 backdrop-blur-md">
+          <div className="w-full max-w-[1400px] mx-auto px-4 md:px-8 flex justify-between items-center">
+            <div className="flex items-center gap-3 md:gap-4">
               {/* Mobile hamburger */}
-              <button className="mobile-hamburger" onClick={() => setMobileSidebarOpen(true)} title="Open menu">
+              <button className="md:hidden p-2 rounded-lg bg-surface-hover text-text-muted hover:text-text-main hover:bg-border transition-colors" onClick={() => setMobileSidebarOpen(true)} title="Open menu">
                 <Menu size={20} />
               </button>
 
               {headerData ? (
-                <div className="flex items-center gap-4 animate-fade-in">
-                  <Link to={headerData.backPath || '/restaurants'} className="btn-back-nav-icon" title={headerData.backTitle || 'Back'} onClick={() => setHeaderData(null)}>
+                <div className="flex items-center gap-2 md:gap-4 animate-fade-in">
+                  <Link to={headerData.backPath || '/restaurants'} className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-lg bg-surface-hover text-text-muted border border-border hover:bg-border hover:text-text-main transition-all" title={headerData.backTitle || 'Back'} onClick={() => setHeaderData(null)}>
                     <ChevronLeft size={20} />
                   </Link>
-                  <div className="h-6 w-[1px] bg-white/10 mx-1" />
-                  <div className="flex items-center" style={{ gap: '1rem' }}>
-                    <div className="res-avatar-small">
-                      {headerData.logo_url ? <img src={headerData.logo_url} alt="" /> : <span>{headerData.name?.[0] || '?'}</span>}
+                  <div className="h-6 w-[1px] bg-border mx-0 md:mx-1" />
+                  <div className="flex items-center gap-2 md:gap-4">
+                    <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-surface-hover border border-border flex items-center justify-center text-sm font-bold overflow-hidden">
+                      {headerData.logo_url ? <img src={headerData.logo_url} alt="" className="w-full h-full object-cover" /> : <span>{headerData.name?.[0] || '?'}</span>}
                     </div>
-                    <h2 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0 }}>{headerData.name}</h2>
+                    <h2 className="text-base md:text-lg font-bold m-0 line-clamp-1">{headerData.name}</h2>
                   </div>
-                  <div className="flex items-center gap-2" style={{ marginLeft: '1rem' }}>
+                  <div className="flex items-center gap-2 ml-2 md:ml-4">
                     {headerData.isEditing ? (
                       <>
-                        <button onClick={headerData.onSave} className="btn-save" disabled={headerData.saving} style={{ padding: '6px 16px', gap: '8px', fontSize: '0.85rem' }}>
-                          {headerData.saving ? <RefreshCw className="animate-spin" size={16} /> : <Save size={16} />} Save
+                        <button onClick={headerData.onSave} className="flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-semibold rounded-lg bg-accent-primary text-white hover:bg-accent-secondary transition-colors" disabled={headerData.saving}>
+                          {headerData.saving ? <RefreshCw className="animate-spin" size={16} /> : <Save size={16} />} <span className="hidden md:inline">Save</span>
                         </button>
-                        <button onClick={headerData.onCancel} className="btn-cancel" disabled={headerData.saving} style={{ padding: '6px 16px', gap: '8px', fontSize: '0.85rem' }}>
-                          <X size={16} /> Cancel
+                        <button onClick={headerData.onCancel} className="flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-semibold rounded-lg bg-surface-hover text-text-main border border-border hover:bg-border transition-colors" disabled={headerData.saving}>
+                          <X size={16} /> <span className="hidden md:inline">Cancel</span>
                         </button>
                       </>
                     ) : headerData.onEdit && (
-                      <button onClick={headerData.onEdit} className="btn-ghost" style={{ padding: '6px 12px', gap: '6px', fontSize: '0.8rem', opacity: 0.8 }}>
+                      <button onClick={headerData.onEdit} className="flex items-center gap-1.5 px-3 py-1.5 text-xs md:text-sm rounded-lg bg-surface-hover border border-border text-text-main hover:bg-border transition-colors">
                         <Edit size={14} /> Edit
                       </button>
                     )}
@@ -239,47 +300,50 @@ export default function App() {
                 </div>
               ) : (
                 <div className="flex items-center">
-                  <h2 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>{title}</h2>
+                  <h2 className="text-base md:text-lg font-bold m-0">{title}</h2>
                 </div>
               )}
             </div>
 
             {!headerData && stats && (
-              <div className="header-stats">
+              <div className="hidden lg:flex items-center gap-10 mx-auto">
                 {stats.map((stat, idx) => {
                   const content = (
                     <>
-                      <span className="header-stat-label">{stat.label}</span>
-                      <div className="header-stat-value-group">
-                        <span className="header-stat-value">{stat.value}</span>
+                      <span className="text-[10px] text-text-muted font-bold uppercase tracking-wider -mb-1">{stat.label}</span>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-base font-bold text-text-main">{stat.value}</span>
+                        {stat.change && (
+                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${stat.change.startsWith('+') ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                            {stat.change}
+                          </span>
+                        )}
                       </div>
                     </>
                   );
                   return stat.path ? (
-                    <Link key={idx} to={stat.path} className="header-stat-card clickable" style={{ textDecoration: 'none' }}>{content}</Link>
+                    <Link key={idx} to={stat.path} className="flex flex-col hover:-translate-y-0.5 transition-transform group cursor-pointer">{content}</Link>
                   ) : (
-                    <div key={idx} className="header-stat-card">{content}</div>
+                    <div key={idx} className="flex flex-col">{content}</div>
                   );
                 })}
               </div>
             )}
 
-            <div className="nav-actions">
+            <div className="flex items-center gap-3 md:gap-6">
               {syncAction && (
-                <button onClick={() => { syncAction.onSync?.(); fetchGlobalStats(); }} className="btn-ghost"
-                  style={{ padding: '8px 16px', gap: '8px', fontSize: '0.85rem', display: 'flex', alignItems: 'center' }}>
+                <button onClick={() => { syncAction.onSync?.(); fetchGlobalStats(); }} className="flex items-center justify-center w-8 h-8 md:w-9 md:h-9 rounded-lg bg-surface-hover border border-border text-text-main hover:bg-border transition-colors" title="Sync Data">
                   <RefreshCw size={16} className={syncAction.loading ? 'animate-spin' : ''} />
-                  <span className="sync-label">Sync</span>
                 </button>
               )}
-              <div className="quick-create-wrapper">
-                <button className="btn-quick-create" onClick={() => openDrawer('user')}>
-                  <Plus size={18} /> <span>Quick Create</span>
+              <div className="relative group">
+                <button className="flex items-center justify-center w-8 h-8 md:w-9 md:h-9 bg-accent-primary hover:bg-accent-secondary text-white rounded-lg shadow-[0_2px_6px_rgba(5,150,105,0.2)] hover:shadow-[0_4px_12px_rgba(5,150,105,0.4)] transition-all hover:-translate-y-0.5" onClick={() => openDrawer('restaurant')} title="Quick Create">
+                  <Plus size={18} />
                 </button>
-                <div className="quick-create-menu">
-                  <div className="menu-content">
-                    <button className="menu-item" onClick={() => openDrawer('user')}><UserPlus /> Add New User</button>
-                    <button className="menu-item" onClick={() => openDrawer('restaurant')}><FilePlus /> Add Restaurant</button>
+                <div className="absolute top-full right-0 pt-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible translate-y-2 group-hover:translate-y-0 transition-all z-50">
+                  <div className="bg-surface border border-border rounded-xl shadow-md min-w-[180px] flex flex-col overflow-hidden">
+                    <button className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-text-muted hover:text-accent-primary hover:bg-surface-hover hover:pl-5 transition-all text-left w-full" onClick={() => openDrawer('restaurant')}><FilePlus size={16}/> Add Restaurant</button>
+                    <button className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-text-muted hover:text-accent-primary hover:bg-surface-hover hover:pl-5 transition-all text-left w-full" onClick={() => openDrawer('user')}><UserPlus size={16}/> Add New User</button>
                   </div>
                 </div>
               </div>
@@ -287,8 +351,8 @@ export default function App() {
           </div>
         </header>
 
-        <main className="main-content animate-fade-in">
-          <div className="content-container">
+        <main className="flex-1 animate-fade-in relative z-10">
+          <div className="w-full max-w-[1400px] mx-auto px-4 md:px-6 pt-3 pb-6">
             <Routes>
               <Route path="/" element={<Dashboard setSyncAction={setSyncAction} />} />
               <Route path="/dashboard" element={<Dashboard setSyncAction={setSyncAction} />} />

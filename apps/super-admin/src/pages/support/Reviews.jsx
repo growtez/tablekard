@@ -72,9 +72,9 @@ export default function Reviews({ setSyncAction }) {
 
             <Card>
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                    <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
-                        <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={16} />
-                        <input type="text" placeholder="Search by comment, customer, or restaurant..." value={search} onChange={e => setSearch(e.target.value)} style={{ width: '100%', padding: '10px 10px 10px 38px', background: 'var(--surface-hover)', border: '1px solid var(--border-color)', borderRadius: '10px', color: 'var(--text-main)', fontSize: '0.875rem' }} />
+                    <div className="relative flex-1 min-w-[200px]">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
+                        <input type="text" placeholder="Search by comment, customer, or restaurant..." value={search} onChange={e => setSearch(e.target.value)} className="w-full py-2 pl-9 pr-3 bg-surface-hover border border-border rounded-xl text-text-main text-sm focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all" />
                     </div>
                     <div className="dropdown-wrapper">
                         <button className="btn-ghost" style={{ padding: '10px 14px', borderRadius: '10px', background: filterRating !== 'all' ? 'rgba(59,130,246,0.1)' : 'var(--surface-hover)', border: `1px solid ${filterRating !== 'all' ? 'var(--accent-primary)' : 'var(--border-color)'}`, gap: '6px', fontSize: '0.85rem', color: filterRating !== 'all' ? 'var(--accent-primary)' : 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>

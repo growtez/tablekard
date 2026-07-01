@@ -133,126 +133,118 @@ export default function Transactions({ setSyncAction }) {
     const fmt = d => d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
 
     return (
-        <div className="animate-fade-in space-y-6">
-            {/* Summary */}
-            <div className="subscriptions-summary-grid">
-                {[
-                    { label: 'Total Transactions', value: summary.total, color: '#1e40af' },
-                    { label: 'Successful', value: summary.paid, color: '#065f46' },
-                    { label: 'Revenue Collected', value: `₹${summary.totalAmount.toLocaleString()}`, color: 'var(--accent-primary)' },
-                    { label: 'Refunded', value: summary.refunded, color: '#92400e' },
-                ].map(item => (
-                    <div key={item.label} className="premium-card" style={{ padding: '1rem 1.25rem' }}>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>{item.label}</div>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 700, color: item.color }}>{loading ? '—' : item.value}</div>
-                    </div>
-                ))}
-            </div>
-
+        <div className="animate-fade-in space-y-6 pb-8">
             {/* Filters */}
-            <Card>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                    <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
-                        <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={16} />
+            <Card className="border-none shadow-[0_2px_16px_rgba(0,0,0,0.04)] mb-6">
+                <div className="p-4 flex gap-4 items-center flex-wrap">
+                    <div className="relative flex-1 min-w-[200px]">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
                         <input type="text" placeholder="Search restaurant, order #, or payment ID..." value={search} onChange={e => setSearch(e.target.value)}
-                            style={{ width: '100%', padding: '10px 10px 10px 38px', background: 'var(--surface-hover)', border: '1px solid var(--border-color)', borderRadius: '10px', color: 'var(--text-main)', fontSize: '0.875rem' }} />
+                            className="w-full py-2 pl-9 pr-3 bg-surface-hover border border-border rounded-xl text-text-main text-sm focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all" />
                     </div>
 
-                    <div className="dropdown-wrapper">
-                        <button className="btn-ghost" style={{ padding: '10px 14px', borderRadius: '10px', background: filterStatus !== 'all' ? 'rgba(59,130,246,0.1)' : 'var(--surface-hover)', border: `1px solid ${filterStatus !== 'all' ? 'var(--accent-primary)' : 'var(--border-color)'}`, gap: '6px', fontSize: '0.85rem', color: filterStatus !== 'all' ? 'var(--accent-primary)' : 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+                    <div className="relative group">
+                        <button className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border text-[13px] font-semibold transition-colors cursor-pointer ${filterStatus !== 'all' ? 'bg-blue-500/10 border-accent-primary text-accent-primary' : 'bg-surface-hover border-border text-text-muted hover:bg-border'}`}>
                             <Filter size={16} /> {filterStatus === 'all' ? 'Status' : filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1)}
                         </button>
-                        <div className="dropdown-content">
+                        <div className="absolute right-0 mt-2 w-48 bg-surface rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-border overflow-hidden z-20 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all flex flex-col p-1.5">
                             {['all', 'paid', 'pending', 'failed', 'refunded'].map(s => (
-                                <button key={s} onClick={() => setFilterStatus(s)} className={filterStatus === s ? 'active' : ''}>{s === 'all' ? 'All Statuses' : s.charAt(0).toUpperCase() + s.slice(1)}</button>
+                                <button key={s} onClick={() => setFilterStatus(s)} className={`px-4 py-2.5 text-left text-sm font-semibold rounded-lg border-none cursor-pointer ${filterStatus === s ? 'bg-blue-500/10 text-accent-primary' : 'bg-transparent text-text-main hover:bg-surface-hover'}`}>{s === 'all' ? 'All Statuses' : s.charAt(0).toUpperCase() + s.slice(1)}</button>
                             ))}
                         </div>
                     </div>
 
-                    <div className="dropdown-wrapper">
-                        <button className="btn-ghost" style={{ padding: '10px 14px', borderRadius: '10px', background: filterGateway !== 'all' ? 'rgba(245,158,11,0.1)' : 'var(--surface-hover)', border: `1px solid ${filterGateway !== 'all' ? '#92400e' : 'var(--border-color)'}`, gap: '6px', fontSize: '0.85rem', color: filterGateway !== 'all' ? '#92400e' : 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+                    <div className="relative group">
+                        <button className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border text-[13px] font-semibold transition-colors cursor-pointer ${filterGateway !== 'all' ? 'bg-amber-500/10 border-amber-800 text-amber-800' : 'bg-surface-hover border-border text-text-muted hover:bg-border'}`}>
                             <Store size={16} /> {filterGateway === 'all' ? 'Gateway' : filterGateway === 'razorpay' ? 'Razorpay' : 'Pay at Counter'}
                         </button>
-                        <div className="dropdown-content">
-                            <button onClick={() => setFilterGateway('all')} className={filterGateway === 'all' ? 'active' : ''}>All Gateways</button>
-                            <button onClick={() => setFilterGateway('razorpay')} className={filterGateway === 'razorpay' ? 'active' : ''}>Razorpay</button>
-                            <button onClick={() => setFilterGateway('counter')} className={filterGateway === 'counter' ? 'active' : ''}>Pay at Counter</button>
+                        <div className="absolute right-0 mt-2 w-48 bg-surface rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-border overflow-hidden z-20 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all flex flex-col p-1.5">
+                            <button onClick={() => setFilterGateway('all')} className={`px-4 py-2.5 text-left text-sm font-semibold rounded-lg border-none cursor-pointer ${filterGateway === 'all' ? 'bg-amber-500/10 text-amber-800' : 'bg-transparent text-text-main hover:bg-surface-hover'}`}>All Gateways</button>
+                            <button onClick={() => setFilterGateway('razorpay')} className={`px-4 py-2.5 text-left text-sm font-semibold rounded-lg border-none cursor-pointer ${filterGateway === 'razorpay' ? 'bg-amber-500/10 text-amber-800' : 'bg-transparent text-text-main hover:bg-surface-hover'}`}>Razorpay</button>
+                            <button onClick={() => setFilterGateway('counter')} className={`px-4 py-2.5 text-left text-sm font-semibold rounded-lg border-none cursor-pointer ${filterGateway === 'counter' ? 'bg-amber-500/10 text-amber-800' : 'bg-transparent text-text-main hover:bg-surface-hover'}`}>Pay at Counter</button>
                         </div>
                     </div>
 
-                    <div className="dropdown-wrapper">
-                        <button className="btn-ghost" style={{ padding: '10px 14px', borderRadius: '10px', background: 'var(--surface-hover)', border: '1px solid var(--border-color)', gap: '6px', fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+                    <div className="relative group">
+                        <button className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-surface-hover hover:bg-border border border-border text-text-muted hover:text-text-main text-[13px] font-semibold cursor-pointer transition-colors">
                             <SlidersHorizontal size={16} /> Sort
                         </button>
-                        <div className="dropdown-content">
-                            <button onClick={() => setSortBy('newest')} className={sortBy === 'newest' ? 'active' : ''}>Newest First</button>
-                            <button onClick={() => setSortBy('oldest')} className={sortBy === 'oldest' ? 'active' : ''}>Oldest First</button>
-                            <button onClick={() => setSortBy('amount')} className={sortBy === 'amount' ? 'active' : ''}>Highest Amount</button>
+                        <div className="absolute right-0 mt-2 w-48 bg-surface rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-border overflow-hidden z-20 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all flex flex-col p-1.5">
+                            <button onClick={() => setSortBy('newest')} className={`px-4 py-2.5 text-left text-sm font-semibold rounded-lg border-none cursor-pointer ${sortBy === 'newest' ? 'bg-surface-hover text-text-main' : 'bg-transparent text-text-main hover:bg-surface-hover'}`}>Newest First</button>
+                            <button onClick={() => setSortBy('oldest')} className={`px-4 py-2.5 text-left text-sm font-semibold rounded-lg border-none cursor-pointer ${sortBy === 'oldest' ? 'bg-surface-hover text-text-main' : 'bg-transparent text-text-main hover:bg-surface-hover'}`}>Oldest First</button>
+                            <button onClick={() => setSortBy('amount')} className={`px-4 py-2.5 text-left text-sm font-semibold rounded-lg border-none cursor-pointer ${sortBy === 'amount' ? 'bg-surface-hover text-text-main' : 'bg-transparent text-text-main hover:bg-surface-hover'}`}>Highest Amount</button>
                         </div>
                     </div>
                 </div>
             </Card>
 
             {/* Table */}
-            <div className="table-container">
-                <table className="premium-table">
-                    <thead>
-                        <tr>
-                            <th>Restaurant</th>
-                            <th>Order #</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                            <th>Gateway</th>
-                            <th>Date</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {loading ? (
-                            <tr><td colSpan="6" style={{ textAlign: 'center', padding: '4rem' }}><div className="loader" style={{ margin: '0 auto' }} /></td></tr>
-                        ) : error ? (
-                            <tr><td colSpan="6" style={{ textAlign: 'center', padding: '4rem', color: '#ef4444' }}>{error}</td></tr>
-                        ) : filtered.length === 0 ? (
-                            <tr><td colSpan="6" style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>No transactions found.</td></tr>
-                        ) : filtered.map(row => (
-                            <tr key={`${row._source}-${row._id}`}>
-                                <td>
-                                    <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{row.restaurant_name}</div>
-                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>/{row.restaurant_slug}</div>
-                                </td>
-                                <td>
-                                    {row.order_number ? (
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                            <Hash size={11} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
-                                            <div>
-                                                <div style={{ fontSize: '0.82rem', fontWeight: 600, fontFamily: 'monospace' }}>{row.order_number}</div>
-                                                {row.order_type && <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{row.order_type.replace('_', ' ')}</div>}
-                                            </div>
-                                        </div>
-                                    ) : <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>—</span>}
-                                </td>
-                                <td>
-                                    <span style={{ fontWeight: 700 }}>₹{row.amount.toLocaleString()}</span>
-                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: '4px' }}>{row.currency}</span>
-                                </td>
-                                <td>
-                                    <Badge variant={STATUS_VARIANTS[row.status] || 'default'}>{row.status?.toUpperCase()}</Badge>
-                                    {row.failure_reason && (
-                                        <div style={{ fontSize: '0.65rem', color: '#991b1b', marginTop: '3px', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={row.failure_reason}>{row.failure_reason}</div>
-                                    )}
-                                </td>
-                                <td>
-                                    <span style={{ fontSize: '0.78rem', fontWeight: 600, color: row.gateway_color, background: `${row.gateway_color}15`, padding: '3px 8px', borderRadius: '6px', border: `1px solid ${row.gateway_color}30`, whiteSpace: 'nowrap' }}>
-                                        {row.gateway}
-                                    </span>
-                                    {row.razorpay_payment_id && (
-                                        <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '3px', fontFamily: 'monospace' }}>{row.razorpay_payment_id.slice(0, 14)}…</div>
-                                    )}
-                                </td>
-                                <td><span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{fmt(row.date)}</span></td>
+            <div className="bg-surface border border-border rounded-2xl shadow-[0_2px_16px_rgba(0,0,0,0.04)] overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                        <thead>
+                            <tr className="bg-surface-hover border-b border-border text-left">
+                                <th className="px-5 py-4 text-xs font-bold text-text-muted uppercase tracking-wider">Restaurant</th>
+                                <th className="px-5 py-4 text-xs font-bold text-text-muted uppercase tracking-wider">Order #</th>
+                                <th className="px-5 py-4 text-xs font-bold text-text-muted uppercase tracking-wider">Amount</th>
+                                <th className="px-5 py-4 text-xs font-bold text-text-muted uppercase tracking-wider">Status</th>
+                                <th className="px-5 py-4 text-xs font-bold text-text-muted uppercase tracking-wider">Gateway</th>
+                                <th className="px-5 py-4 text-xs font-bold text-text-muted uppercase tracking-wider text-right">Date</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                            {loading ? (
+                                <tr><td colSpan="6" className="text-center py-16"><div className="w-8 h-8 border-4 border-surface-hover border-t-accent-primary rounded-full animate-spin mx-auto" /></td></tr>
+                            ) : error ? (
+                                <tr><td colSpan="6" className="text-center py-16 text-red-500 font-semibold">{error}</td></tr>
+                            ) : filtered.length === 0 ? (
+                                <tr><td colSpan="6" className="text-center py-16 text-text-muted font-medium">No transactions found.</td></tr>
+                            ) : filtered.map(row => (
+                                <tr key={`${row._source}-${row._id}`} className="hover:bg-surface-hover/50 transition-colors">
+                                    <td className="px-5 py-4">
+                                        <div className="font-bold text-sm text-text-main">{row.restaurant_name}</div>
+                                        <div className="text-[11px] font-medium text-text-muted">/{row.restaurant_slug}</div>
+                                    </td>
+                                    <td className="px-5 py-4">
+                                        {row.order_number ? (
+                                            <div className="flex items-center gap-1.5">
+                                                <Hash size={11} className="text-text-muted shrink-0" />
+                                                <div>
+                                                    <div className="text-[13px] font-bold font-mono text-text-main">{row.order_number}</div>
+                                                    {row.order_type && <div className="text-[11px] font-medium text-text-muted">{row.order_type.replace('_', ' ')}</div>}
+                                                </div>
+                                            </div>
+                                        ) : <span className="text-text-muted text-xs">—</span>}
+                                    </td>
+                                    <td className="px-5 py-4">
+                                        <span className="font-extrabold text-[15px] text-text-main">₹{row.amount.toLocaleString()}</span>
+                                        <span className="text-[11px] font-bold text-text-muted ml-1 uppercase">{row.currency}</span>
+                                    </td>
+                                    <td className="px-5 py-4">
+                                        <Badge variant={STATUS_VARIANTS[row.status] || 'default'} className="uppercase text-[10px] tracking-wider font-bold">{row.status?.toUpperCase()}</Badge>
+                                        {row.failure_reason && (
+                                            <div className="text-[10px] font-medium text-red-800 mt-1 max-w-[120px] truncate" title={row.failure_reason}>{row.failure_reason}</div>
+                                        )}
+                                    </td>
+                                    <td className="px-5 py-4">
+                                        <span 
+                                            className="text-[12px] font-bold px-2 py-1 rounded-md border whitespace-nowrap"
+                                            style={{ color: row.gateway_color, backgroundColor: `${row.gateway_color}15`, borderColor: `${row.gateway_color}30` }}
+                                        >
+                                            {row.gateway}
+                                        </span>
+                                        {row.razorpay_payment_id && (
+                                            <div className="text-[11px] font-medium font-mono text-text-muted mt-1">{row.razorpay_payment_id.slice(0, 14)}…</div>
+                                        )}
+                                    </td>
+                                    <td className="px-5 py-4 text-right">
+                                        <span className="text-[13px] font-medium text-text-muted">{fmt(row.date)}</span>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );

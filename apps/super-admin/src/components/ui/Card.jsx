@@ -1,27 +1,23 @@
 export const Card = ({ children, className = '', ...props }) => (
-    <div className={`premium-card ${className}`} {...props}>
+    <div className={`bg-surface border border-border rounded-2xl p-4 md:p-6 shadow-sm ${className}`} {...props}>
         {children}
     </div>
 );
 
-export const CardHeader = ({ children, className = '', style = {}, ...props }) => (
-    <div
-        className={`card-header-modern ${className}`}
-        style={{ marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border-color)', ...style }}
-        {...props}
-    >
+export const CardHeader = ({ children, className = '', ...props }) => (
+    <div className={`mb-4 pb-2 border-b border-border flex items-center justify-between ${className}`} {...props}>
         {children}
     </div>
 );
 
 export const CardTitle = ({ children, className = '', ...props }) => (
-    <h3 className={`text-lg font-semibold ${className}`} style={{ margin: 0 }} {...props}>
+    <h3 className={`text-lg font-semibold m-0 text-text-main ${className}`} {...props}>
         {children}
     </h3>
 );
 
-export const CardContent = ({ children, className = '', style = {}, ...props }) => (
-    <div className={`card-content ${className}`} style={style} {...props}>
+export const CardContent = ({ children, className = '', ...props }) => (
+    <div className={`${className}`} {...props}>
         {children}
     </div>
 );

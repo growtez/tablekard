@@ -100,134 +100,123 @@ export default function Subscriptions({ setSyncAction }) {
 
     return (
         <div className="animate-fade-in space-y-6">
-            {/* Summary Cards */}
-            <div className="subscriptions-summary-grid">
-                {[
-                    { label: 'Total Records', value: summary.total, color: '#1e40af' },
-                    { label: 'Paid', value: summary.paid, color: '#065f46' },
-                    { label: 'Pending', value: summary.pending, color: '#92400e' },
-                    { label: 'Failed', value: summary.failed, color: '#991b1b' },
-                    { label: 'Total Collected', value: `₹${summary.totalRevenue.toLocaleString()}`, color: 'var(--accent-primary)' },
-                ].map(item => (
-                    <div key={item.label} className="premium-card" style={{ padding: '1rem 1.25rem' }}>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>{item.label}</div>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 700, color: item.color }}>{loading ? '—' : item.value}</div>
-                    </div>
-                ))}
-            </div>
 
             {/* Filter Bar */}
             <Card>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                    <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
-                        <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={16} />
+                <div className="flex gap-4 items-center flex-wrap w-full">
+                    <div className="relative flex-1 min-w-[200px]">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
                         <input
                             type="text"
                             placeholder="Search restaurant or payment ID..."
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            style={{ width: '100%', padding: '10px 10px 10px 38px', background: 'var(--surface-hover)', border: '1px solid var(--border-color)', borderRadius: '10px', color: 'var(--text-main)', fontSize: '0.875rem' }}
+                            className="w-full py-2 pl-9 pr-3 bg-surface-hover border border-border rounded-xl text-text-main text-sm focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all"
                         />
                     </div>
-                    <div className="dropdown-wrapper">
-                        <button className="btn-ghost" style={{ padding: '10px 14px', borderRadius: '10px', background: filterStatus !== 'all' ? 'rgba(59,130,246,0.1)' : 'var(--surface-hover)', border: `1px solid ${filterStatus !== 'all' ? 'var(--accent-primary)' : 'var(--border-color)'}`, gap: '6px', fontSize: '0.85rem', color: filterStatus !== 'all' ? 'var(--accent-primary)' : 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+                    <div className="relative group">
+                        <button className={`px-3 py-2.5 rounded-xl border flex items-center gap-1.5 text-sm font-semibold transition-colors cursor-pointer ${filterStatus !== 'all' ? 'bg-blue-500/10 border-accent-primary text-accent-primary' : 'bg-surface-hover border-border text-text-muted hover:text-text-main'}`}>
                             <Filter size={16} /> {filterStatus === 'all' ? 'Status' : filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1)}
                         </button>
-                        <div className="dropdown-content">
+                        <div className="absolute right-0 top-full mt-2 w-48 bg-surface border border-border rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 py-2 flex flex-col">
                             {['all', 'paid', 'pending', 'failed'].map(s => (
-                                <button key={s} onClick={() => setFilterStatus(s)} className={filterStatus === s ? 'active' : ''}>{s === 'all' ? 'All Statuses' : s.charAt(0).toUpperCase() + s.slice(1)}</button>
+                                <button key={s} onClick={() => setFilterStatus(s)} className={`px-4 py-2 text-left text-sm hover:bg-surface-hover transition-colors cursor-pointer bg-transparent border-none ${filterStatus === s ? 'text-accent-primary font-bold bg-accent-primary/5' : 'text-text-main'}`}>{s === 'all' ? 'All Statuses' : s.charAt(0).toUpperCase() + s.slice(1)}</button>
                             ))}
                         </div>
                     </div>
-                    <div className="dropdown-wrapper">
-                        <button className="btn-ghost" style={{ padding: '10px 14px', borderRadius: '10px', background: 'var(--surface-hover)', border: '1px solid var(--border-color)', gap: '6px', fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+                    <div className="relative group">
+                        <button className="px-3 py-2.5 rounded-xl bg-surface-hover border border-border flex items-center gap-1.5 text-sm font-semibold text-text-muted hover:text-text-main transition-colors cursor-pointer">
                             <SlidersHorizontal size={16} /> Sort
                         </button>
-                        <div className="dropdown-content">
-                            <button onClick={() => setSortBy('newest')} className={sortBy === 'newest' ? 'active' : ''}>Newest First</button>
-                            <button onClick={() => setSortBy('oldest')} className={sortBy === 'oldest' ? 'active' : ''}>Oldest First</button>
-                            <button onClick={() => setSortBy('amount')} className={sortBy === 'amount' ? 'active' : ''}>Highest Amount</button>
+                        <div className="absolute right-0 top-full mt-2 w-48 bg-surface border border-border rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 py-2 flex flex-col">
+                            <button onClick={() => setSortBy('newest')} className={`px-4 py-2 text-left text-sm hover:bg-surface-hover transition-colors cursor-pointer bg-transparent border-none ${sortBy === 'newest' ? 'text-accent-primary font-bold bg-accent-primary/5' : 'text-text-main'}`}>Newest First</button>
+                            <button onClick={() => setSortBy('oldest')} className={`px-4 py-2 text-left text-sm hover:bg-surface-hover transition-colors cursor-pointer bg-transparent border-none ${sortBy === 'oldest' ? 'text-accent-primary font-bold bg-accent-primary/5' : 'text-text-main'}`}>Oldest First</button>
+                            <button onClick={() => setSortBy('amount')} className={`px-4 py-2 text-left text-sm hover:bg-surface-hover transition-colors cursor-pointer bg-transparent border-none ${sortBy === 'amount' ? 'text-accent-primary font-bold bg-accent-primary/5' : 'text-text-main'}`}>Highest Amount</button>
                         </div>
                     </div>
                 </div>
             </Card>
 
             {/* Table */}
-            <div className="table-container">
-                <table className="premium-table">
-                    <thead>
-                        <tr>
-                            <th>Restaurant</th>
-                            <th>Plan</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                            <th>Duration</th>
-                            <th>Validity</th>
-                            <th>Created</th>
-                            <th>Payment ID</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {loading ? (
-                            <tr><td colSpan="8" style={{ textAlign: 'center', padding: '4rem' }}>
-                                <div className="loader" style={{ margin: '0 auto' }} />
-                                <p style={{ marginTop: '1rem', color: 'var(--text-muted)' }}>Loading subscription records...</p>
-                            </td></tr>
-                        ) : error ? (
-                            <tr><td colSpan="8" style={{ textAlign: 'center', padding: '4rem', color: '#ef4444' }}>{error}</td></tr>
-                        ) : filtered.length === 0 ? (
-                            <tr><td colSpan="8" style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>No subscription records found.</td></tr>
-                        ) : filtered.map(row => (
-                            <tr key={row.id} onClick={() => navigate(`/subscriptions/${row.id}`)} style={{ cursor: 'pointer' }} className="clickable-row">
-                                <td>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                        <div className="user-avatar" style={{ borderRadius: '8px', fontSize: '0.8rem', width: '32px', height: '32px' }}>
-                                            {row.restaurants?.name?.[0]?.toUpperCase() || '?'}
-                                        </div>
-                                        <div>
-                                            <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{row.restaurants?.name || 'Unknown'}</div>
-                                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>/{row.restaurants?.slug}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent-primary)' }}>
-                                        {row.restaurants?.subscription_type || 'Standard'}
-                                    </span>
-                                </td>
-                                <td>
-                                    <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>₹{Number(row.amount).toLocaleString()}</span>
-                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: '4px' }}>{row.currency}</span>
-                                </td>
-                                <td>
-                                    <Badge variant={STATUS_VARIANTS[row.status] || 'default'}>{row.status?.toUpperCase()}</Badge>
-                                </td>
-                                <td>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' }}>
-                                        <Clock size={12} style={{ opacity: 0.6 }} />
-                                        {row.plan_duration} days
-                                    </div>
-                                </td>
-                                <td>
-                                    <div style={{ fontSize: '0.78rem', lineHeight: 1.6 }}>
-                                        <div style={{ color: 'var(--text-muted)' }}>From: {formatDate(row.starts_at)}</div>
-                                        <div style={{ color: row.ends_at && new Date(row.ends_at) < new Date() ? '#991b1b' : 'var(--text-main)' }}>
-                                            To: {formatDate(row.ends_at)}
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{formatDate(row.created_at)}</div>
-                                </td>
-                                <td>
-                                    <code style={{ fontSize: '0.7rem', opacity: 0.6, background: 'var(--surface-hover)', padding: '2px 6px', borderRadius: '4px' }}>
-                                        {row.razorpay_payment_id ? row.razorpay_payment_id.slice(0, 14) + '…' : '—'}
-                                    </code>
-                                </td>
+            <div className="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden">
+                <div className="overflow-x-auto w-full">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-surface-hover border-b border-border">
+                                <th className="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-wider whitespace-nowrap">Restaurant</th>
+                                <th className="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-wider whitespace-nowrap">Plan</th>
+                                <th className="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-wider whitespace-nowrap">Amount</th>
+                                <th className="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-wider whitespace-nowrap">Status</th>
+                                <th className="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-wider whitespace-nowrap">Duration</th>
+                                <th className="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-wider whitespace-nowrap">Validity</th>
+                                <th className="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-wider whitespace-nowrap">Created</th>
+                                <th className="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-wider whitespace-nowrap">Payment ID</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                            {loading ? (
+                                <tr><td colSpan="8" className="px-6 py-16 text-center">
+                                    <div className="w-8 h-8 border-4 border-surface-hover border-t-accent-primary rounded-full animate-spin mx-auto" />
+                                    <p className="mt-4 text-sm text-text-muted">Loading subscription records...</p>
+                                </td></tr>
+                            ) : error ? (
+                                <tr><td colSpan="8" className="px-6 py-16 text-center text-red-500 font-medium">{error}</td></tr>
+                            ) : filtered.length === 0 ? (
+                                <tr><td colSpan="8" className="px-6 py-16 text-center text-text-muted text-sm">No subscription records found.</td></tr>
+                            ) : filtered.map(row => (
+                                <tr key={row.id} onClick={() => navigate(`/subscriptions/${row.id}`)} className="hover:bg-surface-hover transition-colors cursor-pointer group">
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-lg bg-surface-hover flex items-center justify-center text-xs font-bold border border-border group-hover:border-accent-primary/30 transition-colors">
+                                                {row.restaurants?.name?.[0]?.toUpperCase() || '?'}
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <div className="font-semibold text-sm text-text-main">{row.restaurants?.name || 'Unknown'}</div>
+                                                <div className="text-[11px] text-text-muted">/{row.restaurants?.slug}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <span className="text-xs font-bold text-accent-primary bg-accent-primary/10 px-2 py-1 rounded-md">
+                                            {row.restaurants?.subscription_type || 'Standard'}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="flex items-baseline gap-1">
+                                            <span className="font-extrabold text-sm text-text-main">₹{Number(row.amount).toLocaleString()}</span>
+                                            <span className="text-[10px] text-text-muted font-semibold uppercase">{row.currency}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <Badge variant={STATUS_VARIANTS[row.status] || 'default'} className="text-[10px] px-2 py-0.5">{row.status?.toUpperCase()}</Badge>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="flex items-center gap-1.5 text-xs text-text-muted font-medium">
+                                            <Clock size={12} className="opacity-60" />
+                                            {row.plan_duration} days
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="flex flex-col text-[11px] leading-relaxed">
+                                            <div className="text-text-muted"><span className="opacity-60">From:</span> <span className="font-medium text-text-main">{formatDate(row.starts_at)}</span></div>
+                                            <div className={`${row.ends_at && new Date(row.ends_at) < new Date() ? 'text-red-500 font-bold' : 'text-text-muted'}`}>
+                                                <span className={`${row.ends_at && new Date(row.ends_at) < new Date() ? '' : 'opacity-60'}`}>To:</span> <span className={`${row.ends_at && new Date(row.ends_at) < new Date() ? '' : 'font-medium text-text-main'}`}>{formatDate(row.ends_at)}</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="text-xs text-text-muted">{formatDate(row.created_at)}</div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <code className="text-[10px] text-text-muted bg-surface-hover px-1.5 py-1 rounded border border-border group-hover:border-text-muted/30 transition-colors">
+                                            {row.razorpay_payment_id ? row.razorpay_payment_id.slice(0, 14) + '…' : '—'}
+                                        </code>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );
