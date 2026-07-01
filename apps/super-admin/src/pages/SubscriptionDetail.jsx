@@ -114,7 +114,7 @@ export default function SubscriptionDetail({ setHeaderData }) {
                 </div>
                 <div>
                     <h2 className="text-xl font-extrabold m-0">
-                        ₹{Number(data.amount).toLocaleString()} {data.currency}
+                        ₹{Number(data.amount).toLocaleString()}
                     </h2>
                     <p className="text-sm text-text-muted mt-1">
                         Settled via Razorpay • {formatDate(data.created_at, true)}

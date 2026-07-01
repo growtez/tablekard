@@ -211,17 +211,16 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
   const pagedUsers = filteredUsers.slice((safePage - 1) * perPage, safePage * perPage);
 
   const getPaginationPages = () => {
-    const pages = [];
-    if (totalPages <= 5) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i);
-    } else {
-      pages.push(1);
-      if (safePage > 3) pages.push('...');
-      for (let i = Math.max(2, safePage - 1); i <= Math.min(totalPages - 1, safePage + 1); i++) pages.push(i);
-      if (safePage < totalPages - 2) pages.push('...');
-      pages.push(totalPages);
+    if (totalPages <= 3) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
     }
-    return pages;
+    if (safePage === totalPages) {
+      return [1, '...', totalPages];
+    }
+    if (safePage === totalPages - 1) {
+      return [safePage - 1, safePage, totalPages];
+    }
+    return [safePage, '...', totalPages];
   };
 
   const toggleSort = (newSort) => {
@@ -307,11 +306,13 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
           <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
             <ChevronLeft size={14} />
           </button>
-          {getPaginationPages().map((p, i) => p === '...' ? (
-            <span key={`ellipsis-${i}`} className="text-[11px] text-text-muted px-1">…</span>
-          ) : (
-            <button key={p} onClick={() => setPage(p)} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
-          ))}
+          <div className="flex items-center justify-center gap-1 w-[80px]">
+            {getPaginationPages().map((p, i) => p === '...' ? (
+              <div key={`ellipsis-${i}`} className="w-6 h-6 flex items-center justify-center text-[11px] text-text-muted">…</div>
+            ) : (
+              <button key={p} onClick={() => setPage(p)} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
+            ))}
+          </div>
           <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
             <ChevronRight size={14} />
           </button>
@@ -335,17 +336,7 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
             </div>
           </div>
 
-          <div className="relative group">
-            <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface text-text-main hover:bg-surface-hover transition-colors text-[12px] font-medium">
-              <SlidersHorizontal size={14} className="text-accent-primary" /> Sort
-            </button>
-            <div className="absolute right-0 top-full mt-2 w-48 bg-surface border border-border rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 flex flex-col overflow-hidden py-1">
-              <button onClick={() => setSortBy('newest')} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${sortBy === 'newest' ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>Newest First</button>
-              <button onClick={() => setSortBy('oldest')} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${sortBy === 'oldest' ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>Oldest First</button>
-              <button onClick={() => setSortBy('name')} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${sortBy === 'name' ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>Name (A-Z)</button>
-              <button onClick={() => setSortBy('role')} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${sortBy === 'role' ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>Role</button>
-            </div>
-          </div>
+
           
           <button 
             onClick={handleExport}
@@ -358,10 +349,10 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
 
       {/* Users Table */}
       <div className="w-full overflow-x-auto bg-white rounded-xl shadow-sm border border-border">
-        <table className="w-full text-left border-collapse whitespace-nowrap">
+        <table className="w-full text-left border-collapse whitespace-nowrap table-fixed">
           <thead>
             <tr className="border-b border-border">
-              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[20%]" onClick={() => toggleSort('name')}>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[30%]" onClick={() => toggleSort('name')}>
                 <div className="flex items-center gap-2">
                   User {getSortIcon('name')}
                 </div>
@@ -372,8 +363,8 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
                   Role {getSortIcon('role')}
                 </div>
               </th>
-              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[25%]">Restaurant</th>
-              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[15%]" onClick={() => toggleSort('newest')}>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[20%]">Restaurant</th>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[10%]" onClick={() => toggleSort('newest')}>
                 <div className="flex items-center gap-2">
                   Joined {getSortIcon('newest')}
                 </div>
@@ -390,52 +381,61 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
                 </td>
               </tr>
             ) : (
-              pagedUsers.map((user) => (
-                <tr
-                  key={user.id}
-                  className="group hover:bg-surface-hover border-b border-border/40 last:border-b-0 cursor-pointer transition-colors"
-                  onClick={(e) => navigate(`/users/${user.id}`)}
-                >
-                  <td className="py-2.5 px-4 align-middle">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center font-bold text-blue-600 text-[12px] shrink-0">
-                        {(user.name || user.email)[0].toUpperCase()}
+              <>
+                {pagedUsers.map((user) => (
+                  <tr
+                    key={user.id}
+                    className="group even:bg-bg hover:bg-surface-hover border-b border-border/40 last:border-b-0 cursor-pointer transition-colors"
+                    onClick={(e) => navigate(`/users/${user.id}`)}
+                  >
+                    <td className="py-2.5 px-4 align-middle">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center font-bold text-blue-600 text-[12px] shrink-0">
+                          {(user.name || user.email)[0].toUpperCase()}
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <span className="font-semibold text-text-main text-[13px] truncate group-hover:text-accent-primary transition-colors max-w-[200px]" title={user.name || 'Anonymous User'}>{user.name || 'Anonymous User'}</span>
+                        </div>
                       </div>
-                      <div className="flex flex-col min-w-0">
-                        <span className="font-semibold text-text-main text-[13px] truncate group-hover:text-accent-primary transition-colors max-w-[200px]" title={user.name || 'Anonymous User'}>{user.name || 'Anonymous User'}</span>
+                    </td>
+                    <td className="py-2.5 px-4 align-middle">
+                      <div className="flex items-center gap-2 text-[12px] text-text-main">
+                        <Mail size={12} className="text-blue-500 shrink-0" />
+                        <span className="max-w-[200px] inline-block truncate" title={user.email}>{user.email}</span>
                       </div>
-                    </div>
-                  </td>
-                  <td className="py-2.5 px-4 align-middle">
-                    <div className="flex items-center gap-2 text-[12px] text-text-main">
-                      <Mail size={12} className="text-blue-500 shrink-0" />
-                      <span className="max-w-[200px] inline-block truncate" title={user.email}>{user.email}</span>
-                    </div>
-                  </td>
-                  <td className="py-2.5 px-4 align-middle">
-                    <span className={`text-[12px] font-bold ${user.role === 'super_admin' ? 'text-green-500' : user.role === 'restaurant_admin' ? 'text-violet-500' : user.role === 'restaurant_staff' ? 'text-blue-500' : 'text-text-muted'}`}>
-                      {(roleOptions.find(r => r.value === user.role)?.label || user.role).toUpperCase()}
-                    </span>
-                  </td>
-                  <td className="py-2.5 px-4 align-middle">
-                    {['restaurant_admin', 'restaurant_staff'].includes(user.role) ? (
-                      <div className="flex items-center gap-2 text-[12px]">
-                        <Store size={14} className="opacity-60 shrink-0 text-accent-primary" />
-                        <span className="font-medium text-text-main truncate max-w-[220px]" title={user.restaurant_users?.[0]?.restaurants?.name || 'Unassigned'}>
-                          {user.restaurant_users?.[0]?.restaurants?.name || 'Unassigned'}
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="text-text-muted text-[12px] opacity-60">—</span>
-                    )}
-                  </td>
-                  <td className="py-2.5 px-4 align-middle">
-                    <span className="text-text-muted text-[12px] font-medium">
-                      {new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                    </span>
-                  </td>
-                </tr>
-              ))
+                    </td>
+                    <td className="py-2.5 px-4 align-middle">
+                      <span className={`text-[12px] font-bold ${user.role === 'super_admin' ? 'text-green-600' : user.role === 'restaurant_admin' ? 'text-violet-600' : user.role === 'restaurant_staff' ? 'text-blue-600' : 'text-text-muted'}`}>
+                        {(roleOptions.find(r => r.value === user.role)?.label || user.role).toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-4 align-middle">
+                      {['restaurant_admin', 'restaurant_staff'].includes(user.role) ? (
+                        <div className="flex items-center gap-2 text-[12px]">
+                          <Store size={14} className="opacity-60 shrink-0 text-accent-primary" />
+                          <span className="font-medium text-text-main truncate max-w-[220px]" title={user.restaurant_users?.[0]?.restaurants?.name || 'Unassigned'}>
+                            {user.restaurant_users?.[0]?.restaurants?.name || 'Unassigned'}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-text-muted text-[12px] opacity-60">—</span>
+                      )}
+                    </td>
+                    <td className="py-2.5 px-4 align-middle">
+                      <span className="text-text-muted text-[12px] font-medium">
+                        {new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+                {perPage - pagedUsers.length > 0 && Array.from({ length: perPage - pagedUsers.length }).map((_, idx) => (
+                  <tr key={`empty-${idx}`} className="border-b border-border/40 last:border-b-0 opacity-0 pointer-events-none">
+                    <td colSpan="5" className="py-2.5 px-4 align-middle">
+                      <div className="h-8"></div>
+                    </td>
+                  </tr>
+                ))}
+              </>
             )}
           </tbody>
         </table>
