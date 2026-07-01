@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Search, TrendingUp, Calendar, Eye, Package } from 'lucide-react';
+import { Search, TrendingUp, Calendar, Package, ChevronLeft, ChevronRight } from 'lucide-react';
 import Sidebar from '../components/sidebar';
 import { useAuth } from '../context/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
@@ -31,15 +31,23 @@ const Order: React.FC = () => {
   const [selectedTable, setSelectedTable] = useState('All Tables');
   const [selectedPayment, setSelectedPayment] = useState('Payment Method');
   const [selectedStatus, setSelectedStatus] = useState('Status');
-  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedDateRange, setSelectedDateRange] = useState<string>('today');
+  const [customDate, setCustomDate] = useState<string>('');
+  const [weekOffset, setWeekOffset] = useState<number>(0);
+  const [monthOffset, setMonthOffset] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<DashboardOrder | null>(null);
   const [visibleCount, setVisibleCount] = useState(20);
 
+  useEffect(() => {
+    setWeekOffset(0);
+    setMonthOffset(0);
+  }, [selectedDateRange]);
+
   // Reset visible count when filters change
   useEffect(() => {
     setVisibleCount(20);
-  }, [searchQuery, selectedTable, selectedPayment, selectedStatus, selectedDate]);
+  }, [searchQuery, selectedTable, selectedPayment, selectedStatus, selectedDateRange, customDate, weekOffset, monthOffset]);
 
   const { data: orders = [], isLoading: loading } = useDashboardOrders(activeRestaurantId);
   const { data: revenueData = [], isLoading: loadingRevenue } = useRevenueData(activeRestaurantId);
@@ -178,18 +186,58 @@ const Order: React.FC = () => {
         selectedStatus === 'Status' ||
         o.status.toLowerCase() === selectedStatus.toLowerCase();
       const matchesDate = (() => {
-        if (!selectedDate) return true;
-        const orderDay = new Date(o.createdAt).toISOString().slice(0, 10);
-        return orderDay === selectedDate;
+        const tDate = new Date(o.createdAt);
+        const now = new Date();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+
+        if (selectedDateRange === 'today') {
+          return tDate >= startOfToday;
+        } else if (selectedDateRange === 'yesterday') {
+          return tDate >= startOfYesterday && tDate < startOfToday;
+        } else if (selectedDateRange === 'week') {
+          const startOfThisWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+          const startOfWeekN = new Date(startOfThisWeek);
+          startOfWeekN.setDate(startOfWeekN.getDate() - weekOffset * 7);
+          const endOfWeekN = new Date(startOfWeekN);
+          endOfWeekN.setDate(endOfWeekN.getDate() + 7);
+          return tDate >= startOfWeekN && tDate < endOfWeekN;
+        } else if (selectedDateRange === 'month') {
+          const startOfMonthN = new Date(now.getFullYear(), now.getMonth() - monthOffset, 1);
+          const endOfMonthN = new Date(now.getFullYear(), now.getMonth() - monthOffset + 1, 1);
+          return tDate >= startOfMonthN && tDate < endOfMonthN;
+        } else if (selectedDateRange === 'all') {
+          return true;
+        } else if (selectedDateRange === 'custom' && customDate) {
+          const selectedDay = new Date(customDate).toDateString();
+          return tDate.toDateString() === selectedDay;
+        }
+        return true;
       })();
       return matchesSearch && matchesTable && matchesPayment && matchesStatus && matchesDate;
     });
-  }, [orders, searchQuery, selectedTable, selectedPayment, selectedStatus, selectedDate]);
+  }, [orders, searchQuery, selectedTable, selectedPayment, selectedStatus, selectedDateRange, customDate, weekOffset, monthOffset]);
 
-  const dateOrderCount = useMemo(() => {
-    if (!selectedDate) return 0;
-    return orders.filter(o => new Date(o.createdAt).toISOString().slice(0, 10) === selectedDate).length;
-  }, [orders, selectedDate]);
+  // Helper to get week start and end dates
+  const getWeekDateRange = (offset: number) => {
+    const now = new Date();
+    const startOfThisWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+    const startOfWeek = new Date(startOfThisWeek);
+    startOfWeek.setDate(startOfWeek.getDate() - offset * 7);
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(endOfWeek.getDate() + 6);
+    const formatDate = (d: Date) => {
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    };
+    return `${formatDate(startOfWeek)} - ${formatDate(endOfWeek)}, ${endOfWeek.getFullYear()}`;
+  };
+
+  // Helper to get month label
+  const getMonthLabel = (offset: number) => {
+    const now = new Date();
+    const targetMonth = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+    return targetMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  };
 
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
@@ -278,17 +326,75 @@ const Order: React.FC = () => {
           <div className="order-filter-group">
             <div className="order-date-filter-wrapper">
               <Calendar size={14} className="order-date-icon" />
-              <input
-                type="date"
-                className="order-filter-select order-date-input"
-                value={selectedDate}
-                onChange={e => setSelectedDate(e.target.value)}
-                title="Filter by date"
-              />
-              {selectedDate && (
-                <button className="order-date-clear" onClick={() => setSelectedDate('')} title="Clear">×</button>
+              <select
+                className="order-filter-select"
+                value={selectedDateRange}
+                onChange={(e) => setSelectedDateRange(e.target.value)}
+                style={{ paddingLeft: '32px' }}
+              >
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="week">Week</option>
+                <option value="month">Month</option>
+                <option value="all">All</option>
+                <option value="custom">Custom Range</option>
+              </select>
+              {selectedDateRange === 'custom' && (
+                <input
+                  type="date"
+                  className="order-filter-select order-date-input"
+                  value={customDate}
+                  onChange={(e) => setCustomDate(e.target.value)}
+                  style={{ marginLeft: '8px' }}
+                />
               )}
             </div>
+
+            {selectedDateRange === 'week' && (
+              <div className="pager-filter-group" style={{ height: '38px' }}>
+                <button
+                  type="button"
+                  className="pager-arrow-btn"
+                  onClick={() => setWeekOffset(prev => prev + 1)}
+                  title="Previous Week"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <span className="pager-label">{getWeekDateRange(weekOffset)}</span>
+                <button
+                  type="button"
+                  className="pager-arrow-btn"
+                  onClick={() => setWeekOffset(prev => Math.max(0, prev - 1))}
+                  disabled={weekOffset === 0}
+                  title="Next Week"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            )}
+
+            {selectedDateRange === 'month' && (
+              <div className="pager-filter-group" style={{ height: '38px' }}>
+                <button
+                  type="button"
+                  className="pager-arrow-btn"
+                  onClick={() => setMonthOffset(prev => prev + 1)}
+                  title="Previous Month"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <span className="pager-label">{getMonthLabel(monthOffset)}</span>
+                <button
+                  type="button"
+                  className="pager-arrow-btn"
+                  onClick={() => setMonthOffset(prev => Math.max(0, prev - 1))}
+                  disabled={monthOffset === 0}
+                  title="Next Month"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            )}
 
             <select className="order-filter-select" value={selectedTable} onChange={e => setSelectedTable(e.target.value)}>
               <option value="All Tables">All Tables</option>
@@ -311,15 +417,6 @@ const Order: React.FC = () => {
               <option value="cancelled">Cancelled</option>
             </select>
           </div>
-
-          {selectedDate && (
-            <div className="order-date-tag-group">
-              <span className="order-date-tag">
-                📅 {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-              </span>
-              <span className="order-date-count-badge">{dateOrderCount}</span>
-            </div>
-          )}
         </div>
 
         {/* Orders List */}
@@ -406,13 +503,6 @@ const Order: React.FC = () => {
                       </div>
                       <div className="ocard-total-action">
                         <span className="ocard-total">₹{order.total.toLocaleString('en-IN')}</span>
-                        <button
-                          className="ocard-view-btn"
-                          onClick={(e) => { e.stopPropagation(); setSelectedOrder(order); }}
-                          title="View Details"
-                        >
-                          <Eye size={15} />
-                        </button>
                       </div>
                     </div>
                   </div>

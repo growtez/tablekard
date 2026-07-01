@@ -304,7 +304,7 @@ const SubscriptionPage: React.FC = () => {
                             </>
                         ) : (
                             <>
-                                💳 {statusInfo.status === 'active' ? 'Extend' : 'Subscribe'} — ₹{activePlan.price.toLocaleString('en-IN')} for {activePlan.label}
+                                 {statusInfo.status === 'active' ? 'Extend' : 'Subscribe'} — ₹{activePlan.price.toLocaleString('en-IN')} for {activePlan.label}
                             </>
                         )}
                     </button>

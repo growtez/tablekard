@@ -80,8 +80,8 @@ interface OrderRow {
 }
 
 export interface RestaurantProfileUpdateInput {
-    name: string;
-    contactEmail: string;
+    name?: string;
+    contactEmail?: string;
     contactPhone?: string | null;
     contactAddress?: string | null;
     logoUrl?: string | null;
@@ -208,30 +208,31 @@ export const updateRestaurantProfile = async (
     restaurantId: string,
     input: RestaurantProfileUpdateInput
 ): Promise<Restaurant> => {
+    const updatePayload: any = {};
+    if (input.name !== undefined) updatePayload.name = input.name;
+    if (input.contactEmail !== undefined) updatePayload.contact_email = input.contactEmail;
+    if (input.contactPhone !== undefined) updatePayload.contact_phone = input.contactPhone;
+    if (input.contactAddress !== undefined) updatePayload.contact_address = input.contactAddress;
+    if (input.logoUrl !== undefined) updatePayload.logo_url = input.logoUrl;
+    if (input.primaryColor !== undefined) updatePayload.primary_color = input.primaryColor;
+    if (input.secondaryColor !== undefined) updatePayload.secondary_color = input.secondaryColor;
+    if (input.latitude !== undefined) updatePayload.latitude = input.latitude;
+    if (input.longitude !== undefined) updatePayload.longitude = input.longitude;
+    if (input.allowedRadius !== undefined) updatePayload.allowed_radius = input.allowedRadius;
+    if (input.openingDate !== undefined) updatePayload.opening_date = input.openingDate;
+    if (input.tagline !== undefined) updatePayload.tagline = input.tagline;
+    if (input.manifesto !== undefined) updatePayload.manifesto = input.manifesto;
+    if (input.operatingHoursWeekdays !== undefined) updatePayload.operating_hours_weekdays = input.operatingHoursWeekdays;
+    if (input.operatingHoursWeekends !== undefined) updatePayload.operating_hours_weekends = input.operatingHoursWeekends;
+    if (input.instagramUrl !== undefined) updatePayload.instagram_url = input.instagramUrl;
+    if (input.facebookUrl !== undefined) updatePayload.facebook_url = input.facebookUrl;
+    if (input.websiteUrl !== undefined) updatePayload.website_url = input.websiteUrl;
+    if (input.slug !== undefined) updatePayload.slug = input.slug;
+    if (input.pay_online !== undefined) updatePayload.pay_online = input.pay_online;
+
     const { data, error } = await db
         .from('restaurants')
-        .update({
-            name: input.name,
-            contact_email: input.contactEmail,
-            contact_phone: input.contactPhone ?? null,
-            contact_address: input.contactAddress ?? null,
-            logo_url: input.logoUrl ?? null,
-            primary_color: input.primaryColor ?? null,
-            secondary_color: input.secondaryColor ?? null,
-            latitude: input.latitude ?? null,
-            longitude: input.longitude ?? null,
-            allowed_radius: input.allowedRadius ?? null,
-            opening_date: input.openingDate ?? null,
-            tagline: input.tagline ?? null,
-            manifesto: input.manifesto ?? null,
-            operating_hours_weekdays: input.operatingHoursWeekdays ?? null,
-            operating_hours_weekends: input.operatingHoursWeekends ?? null,
-            instagram_url: input.instagramUrl ?? null,
-            facebook_url: input.facebookUrl ?? null,
-            website_url: input.websiteUrl ?? null,
-            slug: input.slug ?? null,
-            pay_online: input.pay_online ?? null
-        })
+        .update(updatePayload)
         .eq('id', restaurantId)
         .select('*')
         .single();
@@ -918,12 +919,21 @@ export interface RevenueRecord {
     updatedAt: string;
 }
 
-export const getRevenueData = async (restaurantId: string): Promise<RevenueRecord[]> => {
+export const getRevenueData = async (
+    restaurantId: string,
+    startDate?: Date,
+    endDate?: Date
+): Promise<RevenueRecord[]> => {
+    const startStr = startDate ? startDate.toISOString().split('T')[0] : '1970-01-01';
+    const endStr = endDate ? endDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+
     const { data, error } = await db
         .from('revenue')
         .select('*')
         .eq('restaurant_id', restaurantId)
-        .order('revenue_date', { ascending: false });
+        .gte('revenue_date', startStr)
+        .lte('revenue_date', endStr)
+        .order('revenue_date', { ascending: true });
     if (error) throw error;
     return (data || []).map((row: any) => ({
         id: row.id,
@@ -1138,12 +1148,22 @@ export const getTotalMenuItemsCount = async (restaurantId: string): Promise<numb
 // heatData[dayIndex][hourIndex] = order count (dayIndex: 0=Mon, hourIndex: 0=12am)
 export type PeakHourData = number[][];
 
-export const getPeakHourData = async (restaurantId: string): Promise<PeakHourData> => {
-    // Fetch created_at for all orders of this restaurant
-    const { data, error } = await db
+export const getPeakHourData = async (
+    restaurantId: string,
+    startDate?: Date,
+    endDate?: Date
+): Promise<PeakHourData> => {
+    // Fetch created_at for orders in the given date range (or all-time if no range provided)
+    let query = db
         .from('orders')
         .select('created_at')
-        .eq('restaurant_id', restaurantId);
+        .eq('restaurant_id', restaurantId)
+        .eq('payment_status', 'paid');
+
+    if (startDate) query = query.gte('created_at', startDate.toISOString());
+    if (endDate) query = query.lte('created_at', endDate.toISOString());
+
+    const { data, error } = await query;
 
     if (error) {
         console.error('Error fetching peak hour data:', error);
@@ -1177,37 +1197,61 @@ export interface BestSellingDish {
     image: string;
 }
 
-export const getBestSellingDishes = async (restaurantId: string): Promise<BestSellingDish[]> => {
-    // Fetch top 5 items by sales_count from menu_items
+const _getEmojiForDish = (name: string): string => {
+    const lower = name.toLowerCase();
+    if (lower.includes('chicken') || lower.includes('meat')) return '🍗';
+    if (lower.includes('paneer') || lower.includes('cheese')) return '🧀';
+    if (lower.includes('biryani') || lower.includes('rice')) return '🍛';
+    if (lower.includes('naan') || lower.includes('roti') || lower.includes('bread')) return '🫓';
+    if (lower.includes('drink') || lower.includes('lassi') || lower.includes('coffee')) return '🥤';
+    return '🍽️';
+};
+
+/**
+ * Returns best-selling dishes for the given date range by aggregating order_items.
+ * Uses order_items + orders join so rankings reflect the selected timeframe, not all-time totals.
+ */
+export const getBestSellingDishes = async (
+    restaurantId: string,
+    startDate?: Date,
+    endDate?: Date
+): Promise<BestSellingDish[]> => {
+    const startStr = startDate ? startDate.toISOString() : new Date(0).toISOString();
+    const endStr = endDate ? endDate.toISOString() : new Date().toISOString();
+
+    // Fetch all paid order_items within the date window for this restaurant.
+    // We pull order_items joined through orders (filtered by restaurant + date + paid).
     const { data, error } = await db
-        .from('menu_items')
-        .select('name, sales_count, price')
-        .eq('restaurant_id', restaurantId)
-        .gt('sales_count', 0)
-        .order('sales_count', { ascending: false });
+        .from('order_items')
+        .select('name, quantity, total, orders!inner(restaurant_id, payment_status, created_at)')
+        .eq('orders.restaurant_id', restaurantId)
+        .eq('orders.payment_status', 'paid')
+        .gte('orders.created_at', startStr)
+        .lte('orders.created_at', endStr);
 
     if (error) {
-        console.error("Error fetching best selling from menu_items:", error);
+        console.error('Error fetching best selling dishes:', error);
         return [];
     }
 
-    const getEmojiForDish = (name: string) => {
-        const lower = name.toLowerCase();
-        if (lower.includes('chicken') || lower.includes('meat')) return '🍗';
-        if (lower.includes('paneer') || lower.includes('cheese')) return '🧀';
-        if (lower.includes('biryani') || lower.includes('rice')) return '🍛';
-        if (lower.includes('naan') || lower.includes('roti') || lower.includes('bread')) return '🫓';
-        if (lower.includes('drink') || lower.includes('lassi') || lower.includes('coffee')) return '🥤';
-        return '🍽️';
-    };
+    // Aggregate by item name client-side
+    const aggregated: Record<string, { sold: number; revenue: number }> = {};
+    (data || []).forEach((row: any) => {
+        const name: string = row.name;
+        if (!aggregated[name]) aggregated[name] = { sold: 0, revenue: 0 };
+        aggregated[name].sold += Number(row.quantity) || 0;
+        aggregated[name].revenue += Number(row.total) || 0;
+    });
 
-    return (data || []).map((row: any) => ({
-        name: row.name,
-        sold: row.sales_count || 0,
-        trend: row.sales_count > 20 ? '🔥 Top Pick' : 'Trending',
-        revenue: (row.sales_count || 0) * (Number(row.price) || 0),
-        image: getEmojiForDish(row.name)
-    }));
+    return Object.entries(aggregated)
+        .map(([name, stats]) => ({
+            name,
+            sold: stats.sold,
+            revenue: stats.revenue,
+            trend: stats.sold > 20 ? '🔥 Top Pick' : 'Trending',
+            image: _getEmojiForDish(name)
+        }))
+        .sort((a, b) => b.sold - a.sold);
 };
 
 // ==========================================
