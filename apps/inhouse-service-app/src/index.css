@@ -815,3 +815,233 @@ body {
 .deny-dialog-btn--confirm:hover {
   background: #f1babb;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   TABLET  (iPad / 768px – 1199px)
+   ═══════════════════════════════════════════════════════════ */
+@media (min-width: 768px) {
+  body {
+    background-color: #1e1e1e;
+  }
+
+  #root {
+    max-width: 100%;
+    box-shadow: none;
+  }
+
+  /* ── Header scales up ── */
+  .header {
+    padding: 14px 24px;
+    border-bottom: 1px solid #eee;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #fff;
+  }
+
+  .logo {
+    font-size: 22px;
+    letter-spacing: 6px;
+  }
+
+  .btn-refresh {
+    padding: 8px;
+    border-radius: 24px;
+  }
+
+  /* ── Section bars ── */
+  .section-bar {
+    padding: 10px 24px;
+    font-size: 20px;
+    letter-spacing: 1px;
+    top: 69px; /* below sticky header */
+  }
+
+  /* ── Orders container → 2-column grid ── */
+  .orders-container {
+    padding: 16px 24px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  /* Empty state spans full grid */
+  .empty-state {
+    grid-column: 1 / -1;
+    padding: 32px 20px;
+    font-size: 14px;
+  }
+
+  /* ── Order cards scale up ── */
+  .order-card {
+    padding: 20px;
+    gap: 16px;
+    border-radius: 18px;
+  }
+
+  .table-label {
+    font-size: 12px;
+  }
+
+  .table-number-oval {
+    width: 82px;
+    height: 60px;
+  }
+
+  .table-number-value {
+    font-size: 32px;
+  }
+
+  .order-badge {
+    font-size: 14px;
+    padding: 4px 12px;
+  }
+
+  .order-time {
+    font-size: 12px;
+  }
+
+  .order-items-trigger {
+    font-size: 14px;
+  }
+
+  /* ── Action buttons ── */
+  .btn {
+    padding: 14px;
+    font-size: 14px;
+    border-radius: 14px;
+  }
+
+  /* ── Item-level ── */
+  .item-action-btn {
+    padding: 6px 14px;
+    font-size: 12px;
+  }
+
+  .item-ready-toggle {
+    width: 40px;
+    height: 40px;
+  }
+
+  .expand-item {
+    padding: 12px 14px;
+    border-radius: 12px;
+  }
+
+  .expand-item-name {
+    font-size: 14px;
+  }
+
+  .expand-item-qty {
+    font-size: 13px;
+  }
+
+  /* ── Login card grows ── */
+  .login-card {
+    max-width: 380px;
+  }
+
+  .login-logo {
+    font-size: 28px;
+  }
+
+  .login-form input {
+    padding: 14px 16px;
+    font-size: 15px;
+  }
+
+  .login-btn {
+    padding: 14px;
+    font-size: 16px;
+  }
+
+  /* ── Deny dialog ── */
+  .deny-dialog {
+    max-width: 380px;
+    padding: 32px 28px 26px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   LAPTOP / DESKTOP  (≥ 1200px)
+   Split-panel: PREPARING | ORDER QUEUE side by side
+   ═══════════════════════════════════════════════════════════ */
+@media (min-width: 1200px) {
+  /* Root becomes a full-height flex column, locked to viewport */
+  #root {
+    max-width: 100%;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Header stays at top */
+  .header {
+    padding: 16px 40px;
+  }
+
+  .logo {
+    font-size: 24px;
+    letter-spacing: 8px;
+  }
+
+  /* The main orders layout: two side-by-side panels */
+  .orders-layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  /* Each panel (preparing / queue) becomes a sticky scroll column */
+  .orders-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    min-height: 0;
+    border-right: 1px solid #e5e5e5;
+  }
+
+  .orders-panel:last-child {
+    border-right: none;
+  }
+
+  /* Section bars are sticky within their own panel */
+  .section-bar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    padding: 12px 32px;
+    font-size: 22px;
+  }
+
+  /* 3-column cards grid inside each panel */
+  .orders-container {
+    padding: 20px 32px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+  }
+
+  /* Slightly larger card details on desktop */
+  .order-card {
+    padding: 22px;
+  }
+
+  .table-number-oval {
+    width: 90px;
+    height: 66px;
+  }
+
+  .table-number-value {
+    font-size: 36px;
+  }
+
+  .expand-item-name {
+    font-size: 15px;
+  }
+
+  /* Wider deny dialog on desktop */
+  .deny-dialog {
+    max-width: 420px;
+  }
+}
