@@ -69,17 +69,16 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
     const pagedRestaurants = filteredRestaurants.slice((safePage - 1) * perPage, safePage * perPage);
 
     const getPaginationPages = () => {
-        const pages = [];
-        if (totalPages <= 5) {
-            for (let i = 1; i <= totalPages; i++) pages.push(i);
-        } else {
-            pages.push(1);
-            if (safePage > 3) pages.push('...');
-            for (let i = Math.max(2, safePage - 1); i <= Math.min(totalPages - 1, safePage + 1); i++) pages.push(i);
-            if (safePage < totalPages - 2) pages.push('...');
-            pages.push(totalPages);
+        if (totalPages <= 3) {
+            return Array.from({ length: totalPages }, (_, i) => i + 1);
         }
-        return pages;
+        if (safePage === totalPages) {
+            return [1, '...', totalPages];
+        }
+        if (safePage === totalPages - 1) {
+            return [safePage - 1, safePage, totalPages];
+        }
+        return [safePage, '...', totalPages];
     };
 
     const toggleSort = (newSort) => {
@@ -165,11 +164,13 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                     <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
                         <ChevronLeft size={14} />
                     </button>
-                    {getPaginationPages().map((p, i) => p === '...' ? (
-                        <span key={`ellipsis-${i}`} className="text-[11px] text-text-muted px-1">…</span>
-                    ) : (
-                        <button key={p} onClick={() => setPage(p)} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
-                    ))}
+                    <div className="flex items-center justify-center gap-1 w-[80px]">
+                        {getPaginationPages().map((p, i) => p === '...' ? (
+                            <div key={`ellipsis-${i}`} className="w-6 h-6 flex items-center justify-center text-[11px] text-text-muted">…</div>
+                        ) : (
+                            <button key={p} onClick={() => setPage(p)} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
+                        ))}
+                    </div>
                     <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
                         <ChevronRight size={14} />
                     </button>
@@ -193,17 +194,7 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                         </div>
                     </div>
 
-                    <div className="relative group">
-                        <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface text-text-main hover:bg-surface-hover transition-colors text-[12px] font-medium">
-                            <SlidersHorizontal size={14} className="text-accent-primary" /> Sort
-                        </button>
-                        <div className="absolute right-0 top-full mt-2 w-48 bg-surface border border-border rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 flex flex-col overflow-hidden py-1">
-                            <button onClick={() => setSortBy('newest')} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${sortBy === 'newest' ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>Newest First</button>
-                            <button onClick={() => setSortBy('oldest')} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${sortBy === 'oldest' ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>Oldest First</button>
-                            <button onClick={() => setSortBy('name')} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${sortBy === 'name' ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>Brand Name (A-Z)</button>
-                            <button onClick={() => setSortBy('status')} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${sortBy === 'status' ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>Current Status</button>
-                        </div>
-                    </div>
+
                     
                     <button 
                         onClick={handleExport}
@@ -216,7 +207,7 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
 
             {/* Restaurants Table */}
             <div className="w-full overflow-x-auto bg-white rounded-xl shadow-sm border border-border">
-                <table className="w-full text-left border-collapse whitespace-nowrap">
+                <table className="w-full text-left border-collapse whitespace-nowrap table-fixed">
                     <thead>
                         <tr className="border-b border-border">
                             <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[25%]" onClick={() => toggleSort('name')}>
@@ -224,15 +215,15 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                                     Name {getSortIcon('name')}
                                 </div>
                             </th>
-                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[25%]">Slug</th>
-                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[1%]" onClick={() => toggleSort('status')}>
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[20%]">Slug</th>
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[10%]" onClick={() => toggleSort('status')}>
                                 <div className="flex items-center gap-2 whitespace-nowrap">
                                     Status {getSortIcon('status')}
                                 </div>
                             </th>
-                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[1%]">Plan</th>
-                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[25%]">Email</th>
-                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[1%]">Phone</th>
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[10%]">Plan</th>
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[20%]">Email</th>
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[15%]">Phone</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -245,54 +236,63 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                                 </td>
                             </tr>
                         ) : (
-                            pagedRestaurants.map((res) => (
-                                <tr
-                                    key={res.id}
-                                    className="group hover:bg-surface-hover border-b border-border/40 last:border-b-0 cursor-pointer transition-colors"
-                                    onClick={(e) => {
-                                        if (e.target.closest('a')) {
-                                            return;
-                                        }
-                                        navigate(`/restaurants/${res.id}`);
-                                    }}
-                                >
-                                    <td className="py-2.5 px-4 align-middle">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center font-bold text-blue-600 text-[12px] shrink-0">
-                                                {res.name[0].toUpperCase()}
+                            <>
+                                {pagedRestaurants.map((res) => (
+                                    <tr
+                                        key={res.id}
+                                        className="group even:bg-bg hover:bg-surface-hover border-b border-border/40 last:border-b-0 cursor-pointer transition-colors"
+                                        onClick={(e) => {
+                                            if (e.target.closest('a')) {
+                                                return;
+                                            }
+                                            navigate(`/restaurants/${res.id}`);
+                                        }}
+                                    >
+                                        <td className="py-2.5 px-4 align-middle">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center font-bold text-blue-600 text-[12px] shrink-0">
+                                                    {res.name[0].toUpperCase()}
+                                                </div>
+                                                <span className="font-semibold text-text-main text-[13px] group-hover:text-accent-primary transition-colors max-w-[220px] truncate block" title={res.name}>{res.name}</span>
                                             </div>
-                                            <span className="font-semibold text-text-main text-[13px] group-hover:text-accent-primary transition-colors max-w-[220px] truncate block" title={res.name}>{res.name}</span>
-                                        </div>
-                                    </td>
-                                    <td className="py-2.5 px-4 align-middle">
-                                        <a href={`https://${res.slug}.tablekard.com`} target="_blank" rel="noreferrer" className="text-[12px] text-blue-500 hover:text-blue-600 font-medium max-w-[220px] inline-block truncate hover:underline" title={`${res.slug}.tablekard.com`} onClick={(e) => e.stopPropagation()}>
-                                            {res.slug}.tablekard.com
-                                        </a>
-                                    </td>
-                                    <td className="py-2.5 px-4 align-middle">
-                                        <span className={`text-[12px] font-bold ${res.status === 'active' ? 'text-green-500' : res.status === 'pending' ? 'text-amber-500' : 'text-red-500'}`}>
-                                            {(res.status || 'pending').toUpperCase()}
-                                        </span>
-                                    </td>
-                                    <td className="py-2.5 px-4 align-middle">
-                                        <span className={`text-[12px] font-bold ${res.subscription_status ? 'text-blue-500' : 'text-text-muted opacity-80'}`}>
-                                            {(res.subscription_type || (res.subscription_status ? 'PRO PLAN' : 'TRIAL PLAN')).toUpperCase()}
-                                        </span>
-                                    </td>
-                                    <td className="py-2.5 px-4 align-middle">
-                                        <div className="flex items-center gap-2 text-[12px] text-text-main">
-                                            <Mail size={12} className="text-blue-500 shrink-0" />
-                                            <span className="max-w-[200px] inline-block truncate" title={res.contact_email || '—'}>{res.contact_email || '—'}</span>
-                                        </div>
-                                    </td>
-                                    <td className="py-2.5 px-4 align-middle">
-                                        <div className="flex items-center gap-2 text-[12px] text-text-main">
-                                            <Phone size={12} className="text-blue-500 shrink-0" />
-                                            <span className="max-w-[110px] inline-block truncate" title={res.contact_phone || '—'}>{res.contact_phone || '—'}</span>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))
+                                        </td>
+                                        <td className="py-2.5 px-4 align-middle">
+                                            <a href={`https://${res.slug}.tablekard.com`} target="_blank" rel="noreferrer" className="text-[12px] text-blue-500 hover:text-blue-600 font-medium max-w-[220px] inline-block truncate hover:underline" title={`${res.slug}.tablekard.com`} onClick={(e) => e.stopPropagation()}>
+                                                {res.slug}.tablekard.com
+                                            </a>
+                                        </td>
+                                        <td className="py-2.5 px-4 align-middle">
+                                            <span className={`text-[12px] font-bold ${res.status === 'active' ? 'text-green-600' : res.status === 'pending' ? 'text-amber-600' : 'text-red-600'}`}>
+                                                {(res.status || 'pending').toUpperCase()}
+                                            </span>
+                                        </td>
+                                        <td className="py-2.5 px-4 align-middle">
+                                            <span className={`text-[12px] font-bold ${res.subscription_status ? 'text-blue-600' : 'text-text-muted opacity-80'}`}>
+                                                {(res.subscription_type || (res.subscription_status ? 'PRO PLAN' : 'TRIAL PLAN')).toUpperCase()}
+                                            </span>
+                                        </td>
+                                        <td className="py-2.5 px-4 align-middle">
+                                            <div className="flex items-center gap-2 text-[12px] text-text-main">
+                                                <Mail size={12} className="text-blue-500 shrink-0" />
+                                                <span className="max-w-[200px] inline-block truncate" title={res.contact_email || '—'}>{res.contact_email || '—'}</span>
+                                            </div>
+                                        </td>
+                                        <td className="py-2.5 px-4 align-middle">
+                                            <div className="flex items-center gap-2 text-[12px] text-text-main">
+                                                <Phone size={12} className="text-blue-500 shrink-0" />
+                                                <span className="max-w-[110px] inline-block truncate" title={res.contact_phone || '—'}>{res.contact_phone || '—'}</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {perPage - pagedRestaurants.length > 0 && Array.from({ length: perPage - pagedRestaurants.length }).map((_, idx) => (
+                                    <tr key={`empty-${idx}`} className="border-b border-border/40 last:border-b-0 opacity-0 pointer-events-none">
+                                        <td colSpan="6" className="py-2.5 px-4 align-middle">
+                                            <div className="h-8"></div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </>
                         )}
                     </tbody>
                 </table>

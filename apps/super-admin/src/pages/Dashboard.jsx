@@ -119,7 +119,12 @@ export default function Dashboard({ setSyncAction }) {
             for (let i = 5; i >= 0; i--) {
                 const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
                 const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-                chartData.push({ month: MONTH_NAMES[d.getMonth()], revenue: monthlyMap[key]?.revenue || 0, orders: monthlyMap[key]?.orders || 0 });
+                chartData.push({ 
+                    month: MONTH_NAMES[d.getMonth()], 
+                    revenue: monthlyMap[key]?.revenue || 0, 
+                    orders: monthlyMap[key]?.orders || 0,
+                    monthKey: key 
+                });
             }
             setRevenueChartData(chartData);
 
@@ -194,7 +199,13 @@ export default function Dashboard({ setSyncAction }) {
                                     fill="#059669" 
                                     radius={[6, 6, 0, 0]} 
                                     maxBarSize={45} 
-                                    onClick={() => navigate('/subscriptions')}
+                                    onClick={(data) => {
+                                        if (data && data.monthKey) {
+                                            navigate(`/subscriptions?month=${data.monthKey}`);
+                                        } else {
+                                            navigate('/subscriptions');
+                                        }
+                                    }}
                                     style={{ cursor: 'pointer' }}
                                 />
                             </BarChart>
@@ -224,19 +235,19 @@ export default function Dashboard({ setSyncAction }) {
                             <div 
                                 key={sub.id} 
                                 onClick={() => navigate(`/subscriptions/${sub.id}`)}
-                                className="flex gap-3 p-2.5 rounded-xl bg-surface-hover items-center cursor-pointer transition-colors hover:bg-border group/sub"
+                                className="flex gap-3 p-2 rounded-xl bg-surface-hover items-center cursor-pointer transition-colors hover:bg-border group/sub"
                             >
                                 <div className="flex-1 min-w-0">
-                                    <div className="text-sm font-semibold whitespace-nowrap overflow-hidden text-ellipsis text-text-main group-hover/sub:text-accent-primary transition-colors">
+                                    <div className="text-[13px] font-semibold whitespace-nowrap overflow-hidden text-ellipsis text-text-main group-hover/sub:text-accent-primary transition-colors">
                                         {sub.restaurants?.name || 'Unknown'}
                                     </div>
-                                    <div className="text-xs text-text-muted">
+                                    <div className="text-[11px] text-text-muted">
                                         {sub.plan_duration} Days Plan
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <div className="text-sm font-bold text-text-main">₹{Number(sub.amount).toLocaleString()}</div>
-                                    <Badge variant={sub.status === 'paid' ? 'success' : 'warning'} className="text-[10px] px-1.5 py-0.5 mt-1">
+                                    <div className="text-[13px] font-bold text-text-main">₹{Number(sub.amount).toLocaleString()}</div>
+                                    <Badge variant={sub.status === 'paid' ? 'success' : 'warning'} className="text-[10px] px-1.5 py-0.5 mt-1 font-bold">
                                         {sub.status?.toUpperCase()}
                                     </Badge>
                                 </div>

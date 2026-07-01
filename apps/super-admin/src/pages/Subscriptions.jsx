@@ -1,19 +1,25 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import { Search, Filter, SlidersHorizontal, Download, X, ChevronLeft, ChevronRight, Clock, Store } from 'lucide-react';
+import { Search, Filter, SlidersHorizontal, Download, X, ChevronLeft, ChevronRight, Clock, Store, Calendar, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { TableRowsSkeleton } from '../components/ui/Skeleton';
 
 export default function Subscriptions({ setSyncAction }) {
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [search, setSearch] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
+    const [filterMonth, setFilterMonth] = useState(searchParams.get('month') || 'all');
     const [sortBy, setSortBy] = useState('newest');
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(8);
+
+    useEffect(() => {
+        setFilterMonth(searchParams.get('month') || 'all');
+    }, [searchParams]);
 
     const fetchData = async () => {
         setLoading(true);
@@ -53,6 +59,28 @@ export default function Subscriptions({ setSyncAction }) {
     useEffect(() => { fetchData(); }, []);
     useEffect(() => { if (setSyncAction) setSyncAction({ onSync: fetchData, loading }); }, [loading, setSyncAction]);
 
+    const getAvailableMonths = () => {
+        const monthsMap = {};
+        data.forEach(row => {
+            if (!row.created_at) return;
+            const d = new Date(row.created_at);
+            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            const label = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            monthsMap[key] = label;
+        });
+        return Object.entries(monthsMap).sort((a, b) => b[0].localeCompare(a[0]));
+    };
+
+    const handleMonthChange = (val) => {
+        setPage(1);
+        if (val === 'all') {
+            searchParams.delete('month');
+        } else {
+            searchParams.set('month', val);
+        }
+        setSearchParams(searchParams);
+    };
+
     const filtered = data
         .filter(row => {
             const matchSearch = !search ||
@@ -60,7 +88,13 @@ export default function Subscriptions({ setSyncAction }) {
                 row.restaurants?.slug?.toLowerCase().includes(search.toLowerCase()) ||
                 row.razorpay_payment_id?.toLowerCase().includes(search.toLowerCase());
             const matchStatus = filterStatus === 'all' || row.status === filterStatus;
-            return matchSearch && matchStatus;
+            let matchMonth = true;
+            if (filterMonth !== 'all' && row.created_at) {
+                const d = new Date(row.created_at);
+                const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                matchMonth = key === filterMonth;
+            }
+            return matchSearch && matchStatus && matchMonth;
         })
         .sort((a, b) => {
             if (sortBy === 'newest') return new Date(b.created_at) - new Date(a.created_at);
@@ -74,17 +108,37 @@ export default function Subscriptions({ setSyncAction }) {
     const paged = filtered.slice((safePage - 1) * perPage, safePage * perPage);
 
     const getPaginationPages = () => {
-        const pages = [];
-        if (totalPages <= 5) {
-            for (let i = 1; i <= totalPages; i++) pages.push(i);
-        } else {
-            pages.push(1);
-            if (safePage > 3) pages.push('...');
-            for (let i = Math.max(2, safePage - 1); i <= Math.min(totalPages - 1, safePage + 1); i++) pages.push(i);
-            if (safePage < totalPages - 2) pages.push('...');
-            pages.push(totalPages);
+        if (totalPages <= 3) {
+            return Array.from({ length: totalPages }, (_, i) => i + 1);
         }
-        return pages;
+        if (safePage === totalPages) {
+            return [1, '...', totalPages];
+        }
+        if (safePage === totalPages - 1) {
+            return [safePage - 1, safePage, totalPages];
+        }
+        return [safePage, '...', totalPages];
+    };
+
+    const toggleSort = (newSort) => {
+        setPage(1);
+        if (newSort === 'newest') {
+            setSortBy(sortBy === 'newest' ? 'oldest' : 'newest');
+        } else if (sortBy === newSort) {
+            setSortBy('newest');
+        } else {
+            setSortBy(newSort);
+        }
+    };
+
+    const getSortIcon = (field) => {
+        if (field === 'newest') {
+            if (sortBy === 'newest') return <ArrowUp size={14} />;
+            if (sortBy === 'oldest') return <ArrowDown size={14} />;
+            return <ArrowUpDown size={14} style={{ opacity: 0.3 }} />;
+        }
+        if (sortBy === field) return <ArrowDown size={14} />;
+        return <ArrowUpDown size={14} style={{ opacity: 0.3 }} />;
     };
 
     const handleExport = () => {
@@ -101,7 +155,7 @@ export default function Subscriptions({ setSyncAction }) {
 
     const formatDate = d => d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
 
-    const statusColor = s => s === 'paid' ? 'text-green-500' : s === 'pending' ? 'text-amber-500' : 'text-red-500';
+    const statusColor = s => s === 'paid' ? 'text-green-600' : s === 'pending' ? 'text-amber-600' : 'text-red-600';
 
     return (
         <div className="space-y-3">
@@ -121,7 +175,7 @@ export default function Subscriptions({ setSyncAction }) {
 
                 {/* Active Filter Pills */}
                 <div className="flex-1 flex items-center gap-1.5 overflow-x-auto no-scrollbar min-w-0 px-2 border-x border-border/50">
-                    {(search || filterStatus !== 'all' || sortBy !== 'newest') ? (
+                    {(search || filterStatus !== 'all' || filterMonth !== 'all') ? (
                         <>
                             <span className="text-[11px] text-text-muted font-medium uppercase tracking-wider shrink-0 mr-1">Active:</span>
                             {search && (
@@ -136,13 +190,17 @@ export default function Subscriptions({ setSyncAction }) {
                                     <button onClick={() => { setFilterStatus('all'); setPage(1); }} className="hover:text-blue-800 focus:outline-none flex items-center justify-center bg-transparent border-none cursor-pointer p-0 ml-1"><X size={10} /></button>
                                 </span>
                             )}
-                            {sortBy !== 'newest' && (
+                            {filterMonth !== 'all' && (
                                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 text-[11px] font-medium border border-blue-500/20 shrink-0">
-                                    {sortBy === 'oldest' ? 'Oldest' : sortBy === 'amount' ? 'Amount ↓' : sortBy}
-                                    <button onClick={() => { setSortBy('newest'); setPage(1); }} className="hover:text-blue-800 focus:outline-none flex items-center justify-center bg-transparent border-none cursor-pointer p-0 ml-1"><X size={10} /></button>
+                                    {(() => {
+                                        const [year, month] = filterMonth.split('-');
+                                        const d = new Date(parseInt(year), parseInt(month) - 1, 1);
+                                        return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                                    })()}
+                                    <button onClick={() => handleMonthChange('all')} className="hover:text-blue-800 focus:outline-none flex items-center justify-center bg-transparent border-none cursor-pointer p-0 ml-1"><X size={10} /></button>
                                 </span>
                             )}
-                            <button onClick={() => { setSearch(''); setFilterStatus('all'); setSortBy('newest'); setPage(1); }} className="text-[11px] text-text-muted hover:text-red-500 transition-colors ml-1 bg-transparent border-none cursor-pointer font-medium shrink-0">Clear</button>
+                            <button onClick={() => { setSearch(''); setFilterStatus('all'); handleMonthChange('all'); setSortBy('newest'); }} className="text-[11px] text-text-muted hover:text-red-500 transition-colors ml-1 bg-transparent border-none cursor-pointer font-medium shrink-0">Clear</button>
                         </>
                     ) : (
                         <span className="text-[11px] text-text-muted italic opacity-50">No active filters</span>
@@ -154,11 +212,13 @@ export default function Subscriptions({ setSyncAction }) {
                     <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
                         <ChevronLeft size={14} />
                     </button>
-                    {getPaginationPages().map((p, i) => p === '...' ? (
-                        <span key={`e-${i}`} className="text-[11px] text-text-muted px-1">…</span>
-                    ) : (
-                        <button key={p} onClick={() => setPage(p)} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
-                    ))}
+                    <div className="flex items-center justify-center gap-1 w-[80px]">
+                        {getPaginationPages().map((p, i) => p === '...' ? (
+                            <div key={`ellipsis-${i}`} className="w-6 h-6 flex items-center justify-center text-[11px] text-text-muted">…</div>
+                        ) : (
+                            <button key={p} onClick={() => setPage(p)} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
+                        ))}
+                    </div>
                     <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
                         <ChevronRight size={14} />
                     </button>
@@ -185,12 +245,17 @@ export default function Subscriptions({ setSyncAction }) {
 
                     <div className="relative group">
                         <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface text-text-main hover:bg-surface-hover transition-colors text-[12px] font-medium">
-                            <SlidersHorizontal size={14} className="text-accent-primary" /> Sort
+                            <Calendar size={14} className="text-accent-primary" /> Month
                         </button>
-                        <div className="absolute right-0 top-full mt-2 w-44 bg-surface border border-border rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 flex flex-col overflow-hidden py-1">
-                            <button onClick={() => { setSortBy('newest'); setPage(1); }} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${sortBy === 'newest' ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>Newest First</button>
-                            <button onClick={() => { setSortBy('oldest'); setPage(1); }} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${sortBy === 'oldest' ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>Oldest First</button>
-                            <button onClick={() => { setSortBy('amount'); setPage(1); }} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${sortBy === 'amount' ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>Highest Amount</button>
+                        <div className="absolute right-0 top-full mt-2 w-44 bg-surface border border-border rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 flex flex-col overflow-hidden py-1 max-h-60 overflow-y-auto">
+                            <button onClick={() => handleMonthChange('all')} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${filterMonth === 'all' ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>
+                                All Months
+                            </button>
+                            {getAvailableMonths().map(([key, label]) => (
+                                <button key={key} onClick={() => handleMonthChange(key)} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${filterMonth === key ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>
+                                    {label}
+                                </button>
+                            ))}
                         </div>
                     </div>
 
@@ -202,73 +267,85 @@ export default function Subscriptions({ setSyncAction }) {
 
             {/* Table */}
             <div className="w-full overflow-x-auto bg-white rounded-xl shadow-sm border border-border">
-                <table className="w-full text-left border-collapse whitespace-nowrap">
+                <table className="w-full text-left border-collapse whitespace-nowrap table-fixed">
                     <thead>
                         <tr className="border-b border-border">
-                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[25%]">Restaurant</th>
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[30%]">Restaurant</th>
                             <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[10%]">Plan</th>
-                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[10%]">Amount</th>
-                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[1%]">Status</th>
-                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[1%]">Duration</th>
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[10%]" onClick={() => toggleSort('amount')}>
+                                <div className="flex items-center gap-2">
+                                    Amount {getSortIcon('amount')}
+                                </div>
+                            </th>
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[10%]">Status</th>
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[10%]">Duration</th>
                             <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[20%]">Validity</th>
-                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[10%]">Created</th>
-                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[15%]">Payment ID</th>
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[10%]" onClick={() => toggleSort('newest')}>
+                                <div className="flex items-center gap-2">
+                                    Created {getSortIcon('newest')}
+                                </div>
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
                         {loading ? (
-                            <TableRowsSkeleton rows={perPage} columns={8} />
+                            <TableRowsSkeleton rows={perPage} columns={7} />
                         ) : error ? (
-                            <tr><td colSpan="8" className="text-center py-10 text-red-500 text-[13px] font-medium">{error}</td></tr>
+                            <tr><td colSpan="7" className="text-center py-10 text-red-500 text-[13px] font-medium">{error}</td></tr>
                         ) : paged.length === 0 ? (
-                            <tr><td colSpan="8" className="text-center py-10 text-text-muted text-[13px]">No subscription records found.</td></tr>
-                        ) : paged.map(row => (
-                            <tr key={row.id} onClick={() => navigate(`/subscriptions/${row.id}`)} className="group hover:bg-surface-hover border-b border-border/40 last:border-b-0 cursor-pointer transition-colors">
-                                <td className="py-2.5 px-4 align-middle">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center font-bold text-blue-600 text-[12px] shrink-0">
-                                            {row.restaurants?.name?.[0]?.toUpperCase() || '?'}
-                                        </div>
-                                        <div className="flex flex-col min-w-0">
-                                            <span className="font-semibold text-text-main text-[13px] truncate group-hover:text-accent-primary transition-colors max-w-[180px]" title={row.restaurants?.name}>{row.restaurants?.name || 'Unknown'}</span>
-                                            <span className="text-[11px] text-text-muted">/{row.restaurants?.slug}</span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="py-2.5 px-4 align-middle">
-                                    <span className="text-[12px] font-bold text-accent-primary">{row.restaurants?.subscription_type || 'Standard'}</span>
-                                </td>
-                                <td className="py-2.5 px-4 align-middle">
-                                    <span className="font-bold text-[13px] text-text-main">₹{Number(row.amount).toLocaleString()}</span>
-                                    <span className="text-[10px] text-text-muted ml-1 uppercase">{row.currency}</span>
-                                </td>
-                                <td className="py-2.5 px-4 align-middle">
-                                    <span className={`text-[12px] font-bold ${statusColor(row.status)}`}>{(row.status || '').toUpperCase()}</span>
-                                </td>
-                                <td className="py-2.5 px-4 align-middle">
-                                    <div className="flex items-center gap-1 text-[12px] text-text-muted font-medium">
-                                        <Clock size={11} className="opacity-60" />
-                                        {row.plan_duration}d
-                                    </div>
-                                </td>
-                                <td className="py-2.5 px-4 align-middle">
-                                    <div className="flex flex-col text-[11px] leading-relaxed">
-                                        <span className="text-text-muted"><span className="opacity-60">From:</span> <span className="font-medium text-text-main">{formatDate(row.starts_at)}</span></span>
-                                        <span className={row.ends_at && new Date(row.ends_at) < new Date() ? 'text-red-500 font-bold' : 'text-text-muted'}>
-                                            <span className="opacity-60">To:</span> <span className="font-medium">{formatDate(row.ends_at)}</span>
-                                        </span>
-                                    </div>
-                                </td>
-                                <td className="py-2.5 px-4 align-middle">
-                                    <span className="text-[12px] text-text-muted font-medium">{formatDate(row.created_at)}</span>
-                                </td>
-                                <td className="py-2.5 px-4 align-middle">
-                                    <code className="text-[11px] text-text-muted bg-surface-hover px-1.5 py-0.5 rounded border border-border">
-                                        {row.razorpay_payment_id ? row.razorpay_payment_id.slice(0, 14) + '…' : '—'}
-                                    </code>
-                                </td>
-                            </tr>
-                        ))}
+                            <tr><td colSpan="7" className="text-center py-10 text-text-muted text-[13px]">No subscription records found.</td></tr>
+                        ) : (
+                            <>
+                                {paged.map(row => (
+                                    <tr key={row.id} onClick={() => navigate(`/subscriptions/${row.id}`)} className="group even:bg-bg hover:bg-surface-hover border-b border-border/40 last:border-b-0 cursor-pointer transition-colors">
+                                        <td className="py-2.5 px-4 align-middle">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center font-bold text-blue-600 text-[12px] shrink-0">
+                                                    {row.restaurants?.name?.[0]?.toUpperCase() || '?'}
+                                                </div>
+                                                <div className="flex flex-col min-w-0">
+                                                    <span className="font-semibold text-text-main text-[13px] truncate group-hover:text-accent-primary transition-colors max-w-[180px]" title={row.restaurants?.name}>{row.restaurants?.name || 'Unknown'}</span>
+                                                    <span className="text-[11px] text-text-muted">/{row.restaurants?.slug}</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="py-2.5 px-4 align-middle">
+                                            <span className="text-[12px] font-bold text-accent-primary">{row.restaurants?.subscription_type || 'Standard'}</span>
+                                        </td>
+                                        <td className="py-2.5 px-4 align-middle">
+                                            <span className="font-bold text-[13px] text-text-main">₹{Number(row.amount).toLocaleString()}</span>
+                                        </td>
+                                        <td className="py-2.5 px-4 align-middle">
+                                            <span className={`text-[12px] font-bold ${statusColor(row.status)}`}>{(row.status || '').toUpperCase()}</span>
+                                        </td>
+                                        <td className="py-2.5 px-4 align-middle">
+                                            <div className="flex items-center gap-1 text-[12px] text-text-muted font-medium">
+                                                <Clock size={11} className="opacity-60" />
+                                                {row.plan_duration}d
+                                            </div>
+                                        </td>
+                                        <td className="py-2.5 px-4 align-middle">
+                                            <div className="flex flex-col text-[11px] leading-relaxed">
+                                                <span className="text-text-muted"><span className="opacity-60">From:</span> <span className="font-medium text-text-main">{formatDate(row.starts_at)}</span></span>
+                                                <span className={row.ends_at && new Date(row.ends_at) < new Date() ? 'text-red-500 font-bold' : 'text-text-muted'}>
+                                                    <span className="opacity-60">To:</span> <span className="font-medium">{formatDate(row.ends_at)}</span>
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td className="py-2.5 px-4 align-middle">
+                                            <span className="text-[12px] text-text-muted font-medium">{formatDate(row.created_at)}</span>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {perPage - paged.length > 0 && Array.from({ length: perPage - paged.length }).map((_, idx) => (
+                                    <tr key={`empty-${idx}`} className="border-b border-border/40 last:border-b-0 opacity-0 pointer-events-none">
+                                        <td colSpan="7" className="py-2.5 px-4 align-middle">
+                                            <div className="h-8"></div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </>
+                        )}
                     </tbody>
                 </table>
             </div>

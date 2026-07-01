@@ -22,7 +22,7 @@ import LandingLeads from './pages/LandingLeads'
 // import EmailTemplates from './pages/settings/Email'
 import Sidebar from './components/Sidebar'
 import QuickCreateDrawer from './components/QuickCreateDrawer'
-import { Plus, UserPlus, FilePlus, ChevronLeft, Edit, Save, X, RefreshCw, Menu } from 'lucide-react'
+import { Plus, UserPlus, FilePlus, ChevronLeft, Edit, Save, X, RefreshCw, Menu, LogOut } from 'lucide-react'
 import { Badge } from './components/ui/Badge'
 
 export default function App() {
@@ -33,6 +33,7 @@ export default function App() {
   const [authError, setAuthError] = useState(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+  const [showProfileMenu, setShowProfileMenu] = useState(false)
   const [activeForm, setActiveForm] = useState('user')
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [editingData, setEditingData] = useState(null)
@@ -99,6 +100,20 @@ export default function App() {
   };
 
   useEffect(() => { if (session && isAdmin) fetchGlobalStats(); }, [session, isAdmin]);
+
+  useEffect(() => {
+    if (!showProfileMenu) return;
+
+    const handleClickOutside = (event) => {
+      const trigger = document.getElementById('header-admin-menu-trigger');
+      const menu = document.getElementById('header-admin-menu');
+      if (trigger?.contains(event.target) || menu?.contains(event.target)) return;
+      setShowProfileMenu(false);
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showProfileMenu]);
 
   const openDrawer = (formType, data = null, onRefresh = null) => {
     setActiveForm(formType); setEditingData(data); setRefreshCallback(() => onRefresh); setIsDrawerOpen(true);
@@ -254,7 +269,7 @@ export default function App() {
         setMobileOpen={setMobileSidebarOpen}
       />
 
-      <div className={`flex flex-col min-h-screen transition-[margin] duration-300 ml-0 ${sidebarCollapsed ? 'md:ml-[80px]' : 'md:ml-[260px]'}`}>
+      <div className={`flex flex-col min-h-screen transition-[margin] duration-300 ml-0 ${sidebarCollapsed ? 'md:ml-[52px]' : 'md:ml-[180px]'}`}>
         <header className="sticky top-0 z-30 h-14 md:h-14 flex items-center border-b border-border bg-surface/80 backdrop-blur-md">
           <div className="w-full max-w-[1400px] mx-auto px-4 md:px-8 flex justify-between items-center">
             <div className="flex items-center gap-3 md:gap-4">
@@ -344,6 +359,34 @@ export default function App() {
                   <div className="bg-surface border border-border rounded-xl shadow-md min-w-[180px] flex flex-col overflow-hidden">
                     <button className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-text-muted hover:text-accent-primary hover:bg-surface-hover hover:pl-5 transition-all text-left w-full" onClick={() => openDrawer('restaurant')}><FilePlus size={16}/> Add Restaurant</button>
                     <button className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-text-muted hover:text-accent-primary hover:bg-surface-hover hover:pl-5 transition-all text-left w-full" onClick={() => openDrawer('user')}><UserPlus size={16}/> Add New User</button>
+                  </div>
+                </div>
+              </div>
+              <div className="relative group">
+                <button
+                  id="header-admin-menu-trigger"
+                  className="w-9 h-9 rounded-lg bg-accent-primary/15 text-accent-primary flex items-center justify-center font-bold text-sm border border-accent-primary/15 hover:bg-accent-primary/20 transition-colors"
+                  onClick={() => setShowProfileMenu(prev => !prev)}
+                  title="Admin menu"
+                >
+                  {session?.user?.email?.[0]?.toUpperCase() || 'A'}
+                </button>
+                <div className="absolute top-full right-0 pt-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible translate-y-2 group-hover:translate-y-0 transition-all z-50">
+                  <div id="header-admin-menu" className="w-48 rounded-xl border border-border bg-surface shadow-xl p-3">
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-[12px] text-text-main font-semibold truncate block w-full">{session?.user?.email}</span>
+                      <span className="text-[10px] text-text-muted">Super Admin</span>
+                    </div>
+                    <button
+                      className="mt-3 flex items-center gap-2 px-2.5 py-2 w-full bg-transparent border-none rounded-lg text-text-muted text-sm font-medium transition-colors hover:bg-red-500/10 hover:text-red-400 cursor-pointer"
+                      onClick={() => {
+                        setShowProfileMenu(false);
+                        handleLogout();
+                      }}
+                    >
+                      <LogOut size={16} />
+                      <span>Logout</span>
+                    </button>
                   </div>
                 </div>
               </div>

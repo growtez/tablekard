@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { Download, Search, Filter, SlidersHorizontal, Mail, Phone, MapPin, Store, User, X, Trash2, AlertTriangle, Loader2, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { Download, Search, Filter, SlidersHorizontal, Mail, Phone, MapPin, Store, User, X, Trash2, AlertTriangle, Loader2, ChevronLeft, ChevronRight, Calendar, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { TableRowsSkeleton } from '../components/ui/Skeleton';
 
 export default function LandingLeads() {
@@ -104,17 +104,37 @@ export default function LandingLeads() {
   const paged = filteredLeads.slice((safePage - 1) * perPage, safePage * perPage);
 
   const getPaginationPages = () => {
-    const pages = [];
-    if (totalPages <= 5) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i);
-    } else {
-      pages.push(1);
-      if (safePage > 3) pages.push('...');
-      for (let i = Math.max(2, safePage - 1); i <= Math.min(totalPages - 1, safePage + 1); i++) pages.push(i);
-      if (safePage < totalPages - 2) pages.push('...');
-      pages.push(totalPages);
+    if (totalPages <= 3) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
     }
-    return pages;
+    if (safePage === totalPages) {
+      return [1, '...', totalPages];
+    }
+    if (safePage === totalPages - 1) {
+      return [safePage - 1, safePage, totalPages];
+    }
+    return [safePage, '...', totalPages];
+  };
+
+  const toggleSort = (newSort) => {
+    setPage(1);
+    if (newSort === 'newest') {
+      setSortOrder(sortOrder === 'newest' ? 'oldest' : 'newest');
+    } else if (sortOrder === newSort) {
+      setSortOrder('newest');
+    } else {
+      setSortOrder(newSort);
+    }
+  };
+
+  const getSortIcon = (field) => {
+    if (field === 'newest') {
+      if (sortOrder === 'newest') return <ArrowUp size={14} />;
+      if (sortOrder === 'oldest') return <ArrowDown size={14} />;
+      return <ArrowUpDown size={14} style={{ opacity: 0.3 }} />;
+    }
+    if (sortOrder === field) return <ArrowDown size={14} />;
+    return <ArrowUpDown size={14} style={{ opacity: 0.3 }} />;
   };
 
   const handleExport = () => {
@@ -141,8 +161,8 @@ export default function LandingLeads() {
     document.body.removeChild(link);
   };
 
-  const statusColor = s => s === 'converted' ? 'text-green-500' : s === 'contacted' ? 'text-amber-500' : s === 'rejected' ? 'text-red-500' : 'text-blue-500';
-  const hasActiveFilters = searchTerm || statusFilter !== 'all' || sortOrder !== 'newest' || dateFilter;
+  const statusColor = s => s === 'converted' ? 'text-green-600' : s === 'contacted' ? 'text-amber-600' : s === 'rejected' ? 'text-red-600' : 'text-blue-600';
+  const hasActiveFilters = searchTerm || statusFilter !== 'all' || dateFilter;
 
   return (
     <div className="space-y-3">
@@ -183,12 +203,6 @@ export default function LandingLeads() {
                   <button onClick={() => { setDateFilter(''); setPage(1); }} className="hover:text-blue-800 focus:outline-none flex items-center bg-transparent border-none cursor-pointer p-0 ml-1"><X size={10} /></button>
                 </span>
               )}
-              {sortOrder !== 'newest' && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 text-[11px] font-medium border border-blue-500/20 shrink-0">
-                  {sortOrder === 'oldest' ? 'Oldest' : 'A-Z'}
-                  <button onClick={() => { setSortOrder('newest'); setPage(1); }} className="hover:text-blue-800 focus:outline-none flex items-center bg-transparent border-none cursor-pointer p-0 ml-1"><X size={10} /></button>
-                </span>
-              )}
               <button onClick={() => { setSearchTerm(''); setStatusFilter('all'); setSortOrder('newest'); setDateFilter(''); setPage(1); }} className="text-[11px] text-text-muted hover:text-red-500 transition-colors ml-1 bg-transparent border-none cursor-pointer font-medium shrink-0">Clear</button>
             </>
           ) : (
@@ -201,11 +215,13 @@ export default function LandingLeads() {
           <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
             <ChevronLeft size={14} />
           </button>
-          {getPaginationPages().map((p, i) => p === '...' ? (
-            <span key={`e-${i}`} className="text-[11px] text-text-muted px-1">…</span>
-          ) : (
-            <button key={p} onClick={() => setPage(p)} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
-          ))}
+          <div className="flex items-center justify-center gap-1 w-[80px]">
+            {getPaginationPages().map((p, i) => p === '...' ? (
+              <div key={`ellipsis-${i}`} className="w-6 h-6 flex items-center justify-center text-[11px] text-text-muted">…</div>
+            ) : (
+              <button key={p} onClick={() => setPage(p)} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
+            ))}
+          </div>
           <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
             <ChevronRight size={14} />
           </button>
@@ -241,17 +257,6 @@ export default function LandingLeads() {
             </div>
           </div>
 
-          <div className="relative group">
-            <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface text-text-main hover:bg-surface-hover transition-colors text-[12px] font-medium">
-              <SlidersHorizontal size={14} className="text-accent-primary" /> Sort
-            </button>
-            <div className="absolute right-0 top-full mt-2 w-44 bg-surface border border-border rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 flex flex-col overflow-hidden py-1">
-              <button onClick={() => { setSortOrder('newest'); setPage(1); }} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${sortOrder === 'newest' ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>Newest First</button>
-              <button onClick={() => { setSortOrder('oldest'); setPage(1); }} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${sortOrder === 'oldest' ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>Oldest First</button>
-              <button onClick={() => { setSortOrder('name'); setPage(1); }} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${sortOrder === 'name' ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>Name (A-Z)</button>
-            </div>
-          </div>
-
           <button onClick={handleExport} className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent-primary text-white hover:bg-accent-hover transition-colors text-[12px] font-medium shadow-sm ml-2 cursor-pointer border-none">
             <Download size={14} /> Export
           </button>
@@ -260,16 +265,24 @@ export default function LandingLeads() {
 
       {/* Table */}
       <div className="w-full overflow-x-auto bg-white rounded-xl shadow-sm border border-border">
-        <table className="w-full text-left border-collapse whitespace-nowrap">
+        <table className="w-full text-left border-collapse whitespace-nowrap table-fixed">
           <thead>
             <tr className="border-b border-border">
-              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[22%]">Restaurant</th>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[22%]" onClick={() => toggleSort('name')}>
+                <div className="flex items-center gap-2">
+                  Restaurant {getSortIcon('name')}
+                </div>
+              </th>
               <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[16%]">Owner</th>
               <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[14%]">Phone</th>
               <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[20%]">Email</th>
               <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[15%]">Location</th>
               <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[1%]">Status</th>
-              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[10%]">Date</th>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[10%]" onClick={() => toggleSort('newest')}>
+                <div className="flex items-center gap-2">
+                  Date {getSortIcon('newest')}
+                </div>
+              </th>
               <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[2%]"></th>
             </tr>
           </thead>
@@ -280,58 +293,69 @@ export default function LandingLeads() {
               <tr><td colSpan="8" className="text-center py-10 text-red-500 text-[13px] font-medium">{error}</td></tr>
             ) : paged.length === 0 ? (
               <tr><td colSpan="8" className="text-center py-10 text-text-muted text-[13px]">No leads found matching your criteria.</td></tr>
-            ) : paged.map(lead => (
-              <tr key={lead.id} className="group hover:bg-surface-hover border-b border-border/40 last:border-b-0 cursor-pointer transition-colors" onClick={() => setSelectedLead(lead)}>
-                <td className="py-2.5 px-4 align-middle">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center font-bold text-blue-600 text-[12px] shrink-0">
-                      {(lead.restaurant_name || '?')[0].toUpperCase()}
-                    </div>
-                    <span className="font-semibold text-text-main text-[13px] truncate group-hover:text-accent-primary transition-colors max-w-[160px]" title={lead.restaurant_name}>{lead.restaurant_name}</span>
-                  </div>
-                </td>
-                <td className="py-2.5 px-4 align-middle">
-                  <div className="flex items-center gap-1.5 text-[12px] text-text-main">
-                    <User size={11} className="text-text-muted shrink-0" />
-                    <span className="truncate max-w-[120px]" title={lead.owner_name}>{lead.owner_name || '—'}</span>
-                  </div>
-                </td>
-                <td className="py-2.5 px-4 align-middle">
-                  <div className="flex items-center gap-1.5 text-[12px] text-text-main">
-                    <Phone size={11} className="text-text-muted shrink-0" />
-                    <span>{lead.phone_number || '—'}</span>
-                  </div>
-                </td>
-                <td className="py-2.5 px-4 align-middle">
-                  <div className="flex items-center gap-1.5 text-[12px] text-text-main">
-                    <Mail size={11} className="text-blue-500 shrink-0" />
-                    <span className="truncate max-w-[170px]" title={lead.email}>{lead.email || '—'}</span>
-                  </div>
-                </td>
-                <td className="py-2.5 px-4 align-middle">
-                  <div className="flex items-center gap-1.5 text-[12px] text-text-muted">
-                    <MapPin size={11} className="shrink-0" />
-                    <span className="truncate max-w-[120px]">{[lead.district, lead.state, lead.country].filter(Boolean).join(', ') || '—'}</span>
-                  </div>
-                </td>
-                <td className="py-2.5 px-4 align-middle">
-                  <span className={`text-[12px] font-bold ${statusColor(lead.status)}`}>{(lead.status || 'new').toUpperCase()}</span>
-                </td>
-                <td className="py-2.5 px-4 align-middle">
-                  <span className="text-[12px] text-text-muted font-medium">{new Date(lead.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                </td>
-                <td className="py-2.5 px-4 align-middle">
-                  <button
-                    onClick={e => { e.stopPropagation(); setDeleteConfirmId(lead.id); }}
-                    disabled={updatingId === lead.id}
-                    className="w-7 h-7 flex items-center justify-center rounded-full text-text-muted hover:bg-red-500/10 hover:text-red-500 transition-colors bg-transparent border-none cursor-pointer opacity-0 group-hover:opacity-100"
-                    title="Delete Lead"
-                  >
-                    {updatingId === lead.id ? <Loader2 className="animate-spin" size={13} /> : <Trash2 size={13} />}
-                  </button>
-                </td>
-              </tr>
-            ))}
+            ) : (
+              <>
+                {paged.map(lead => (
+                  <tr key={lead.id} className="group even:bg-bg hover:bg-surface-hover border-b border-border/40 last:border-b-0 cursor-pointer transition-colors" onClick={() => setSelectedLead(lead)}>
+                    <td className="py-2.5 px-4 align-middle">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center font-bold text-blue-600 text-[12px] shrink-0">
+                          {(lead.restaurant_name || '?')[0].toUpperCase()}
+                        </div>
+                        <span className="font-semibold text-text-main text-[13px] truncate group-hover:text-accent-primary transition-colors max-w-[160px]" title={lead.restaurant_name}>{lead.restaurant_name}</span>
+                      </div>
+                    </td>
+                    <td className="py-2.5 px-4 align-middle">
+                      <div className="flex items-center gap-1.5 text-[12px] text-text-main">
+                        <User size={11} className="text-text-muted shrink-0" />
+                        <span className="truncate max-w-[120px]" title={lead.owner_name}>{lead.owner_name || '—'}</span>
+                      </div>
+                    </td>
+                    <td className="py-2.5 px-4 align-middle">
+                      <div className="flex items-center gap-1.5 text-[12px] text-text-main">
+                        <Phone size={11} className="text-text-muted shrink-0" />
+                        <span>{lead.phone_number || '—'}</span>
+                      </div>
+                    </td>
+                    <td className="py-2.5 px-4 align-middle">
+                      <div className="flex items-center gap-1.5 text-[12px] text-text-main">
+                        <Mail size={11} className="text-blue-500 shrink-0" />
+                        <span className="truncate max-w-[170px]" title={lead.email}>{lead.email || '—'}</span>
+                      </div>
+                    </td>
+                    <td className="py-2.5 px-4 align-middle">
+                      <div className="flex items-center gap-1.5 text-[12px] text-text-muted">
+                        <MapPin size={11} className="shrink-0" />
+                        <span className="truncate max-w-[120px]">{[lead.district, lead.state, lead.country].filter(Boolean).join(', ') || '—'}</span>
+                      </div>
+                    </td>
+                    <td className="py-2.5 px-4 align-middle">
+                      <span className={`text-[12px] font-bold ${statusColor(lead.status)}`}>{(lead.status || 'new').toUpperCase()}</span>
+                    </td>
+                    <td className="py-2.5 px-4 align-middle">
+                      <span className="text-[12px] text-text-muted font-medium">{new Date(lead.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                    </td>
+                    <td className="py-2.5 px-4 align-middle">
+                      <button
+                        onClick={e => { e.stopPropagation(); setDeleteConfirmId(lead.id); }}
+                        disabled={updatingId === lead.id}
+                        className="w-7 h-7 flex items-center justify-center rounded-full text-text-muted hover:bg-red-500/10 hover:text-red-500 transition-colors bg-transparent border-none cursor-pointer opacity-0 group-hover:opacity-100"
+                        title="Delete Lead"
+                      >
+                        {updatingId === lead.id ? <Loader2 className="animate-spin" size={13} /> : <Trash2 size={13} />}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {perPage - paged.length > 0 && Array.from({ length: perPage - paged.length }).map((_, idx) => (
+                  <tr key={`empty-${idx}`} className="border-b border-border/40 last:border-b-0 opacity-0 pointer-events-none">
+                    <td colSpan="8" className="py-2.5 px-4 align-middle">
+                      <div className="h-8"></div>
+                    </td>
+                  </tr>
+                ))}
+              </>
+            )}
           </tbody>
         </table>
       </div>
