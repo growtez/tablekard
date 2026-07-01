@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import { Mail, Phone, Calendar, Search, ExternalLink, Filter, SlidersHorizontal, ArrowUpDown, ArrowUp, ArrowDown, Download, X } from 'lucide-react';
+import { Mail, Phone, Calendar, Search, ExternalLink, Filter, SlidersHorizontal, ArrowUpDown, ArrowUp, ArrowDown, Download, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { TableRowsSkeleton } from '../components/ui/Skeleton';
 
 export default function Restaurants({ openDrawer, setSyncAction }) {
     const navigate = useNavigate();
@@ -11,6 +12,8 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
     const [filterStatus, setFilterStatus] = useState('all');
     const [sortBy, setSortBy] = useState('newest');
     const [error, setError] = useState(null);
+    const [page, setPage] = useState(1);
+    const [perPage, setPerPage] = useState(8);
 
     useEffect(() => {
         fetchRestaurants();
@@ -60,6 +63,24 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
             if (sortBy === 'name') return a.name.localeCompare(b.name);
             if (sortBy === 'status') return (a.status || '').localeCompare(b.status || '');
         });
+
+    const totalPages = Math.max(1, Math.ceil(filteredRestaurants.length / perPage));
+    const safePage = Math.min(page, totalPages);
+    const pagedRestaurants = filteredRestaurants.slice((safePage - 1) * perPage, safePage * perPage);
+
+    const getPaginationPages = () => {
+        const pages = [];
+        if (totalPages <= 5) {
+            for (let i = 1; i <= totalPages; i++) pages.push(i);
+        } else {
+            pages.push(1);
+            if (safePage > 3) pages.push('...');
+            for (let i = Math.max(2, safePage - 1); i <= Math.min(totalPages - 1, safePage + 1); i++) pages.push(i);
+            if (safePage < totalPages - 2) pages.push('...');
+            pages.push(totalPages);
+        }
+        return pages;
+    };
 
     const toggleSort = (newSort) => {
         if (sortBy === newSort) {
@@ -128,7 +149,7 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                                 </span>
                             )}
                             <button 
-                                onClick={() => { setSearchQuery(''); setFilterStatus('all'); setSortBy('newest'); }}
+                                onClick={() => { setSearchQuery(''); setFilterStatus('all'); setSortBy('newest'); setPage(1); }}
                                 className="text-[11px] text-text-muted hover:text-red-500 transition-colors ml-1 bg-transparent border-none cursor-pointer font-medium shrink-0"
                             >
                                 Clear
@@ -139,8 +160,26 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                     )}
                 </div>
 
-                {/* Dropdowns & Actions */}
+                {/* Pagination Controls */}
+                <div className="flex items-center gap-1 shrink-0 border-x border-border/50 px-3">
+                    <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
+                        <ChevronLeft size={14} />
+                    </button>
+                    {getPaginationPages().map((p, i) => p === '...' ? (
+                        <span key={`ellipsis-${i}`} className="text-[11px] text-text-muted px-1">…</span>
+                    ) : (
+                        <button key={p} onClick={() => setPage(p)} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
+                    ))}
+                    <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
+                        <ChevronRight size={14} />
+                    </button>
+                </div>
+
+                {/* Per-page & Actions */}
                 <div className="flex gap-2 shrink-0">
+                    <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1); }} className="py-1.5 px-2 rounded-lg border border-border bg-surface text-text-main text-[12px] focus:outline-none focus:ring-1 focus:ring-accent-primary cursor-pointer">
+                        {[8, 20, 50, 100].map(n => <option key={n} value={n}>{n} / page</option>)}
+                    </select>
                     <div className="relative group">
                         <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface text-text-main hover:bg-surface-hover transition-colors text-[12px] font-medium">
                             <Filter size={14} className="text-accent-primary" /> Filter
@@ -198,12 +237,7 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr>
-                                <td colSpan="6" className="text-center py-10">
-                                    <div className="w-8 h-8 border-4 border-surface-hover border-t-accent-primary rounded-full animate-spin mx-auto"></div>
-                                    <p className="mt-4 text-[13px] text-text-muted">Scanning restaurant records...</p>
-                                </td>
-                            </tr>
+                            <TableRowsSkeleton rows={perPage} columns={6} />
                         ) : filteredRestaurants.length === 0 ? (
                             <tr>
                                 <td colSpan="6" className="text-center py-10 text-text-muted text-[13px]">
@@ -211,7 +245,7 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                                 </td>
                             </tr>
                         ) : (
-                            filteredRestaurants.map((res) => (
+                            pagedRestaurants.map((res) => (
                                 <tr
                                     key={res.id}
                                     className="group hover:bg-surface-hover border-b border-border/40 last:border-b-0 cursor-pointer transition-colors"

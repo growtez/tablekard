@@ -1,143 +1,65 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { Card, CardContent } from '../components/ui/Card';
-import { Badge } from '../components/ui/Badge';
-import { Download, Search, Filter, Mail, Phone, Calendar, ArrowUpDown, Loader2, MapPin, Store, User, Inbox, X, Eye, Trash2, AlertTriangle, Building, MessageCircle } from 'lucide-react';
-
-const PAGE_SIZE = 12;
+import { Download, Search, Filter, SlidersHorizontal, Mail, Phone, MapPin, Store, User, X, Trash2, AlertTriangle, Loader2, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { TableRowsSkeleton } from '../components/ui/Skeleton';
 
 export default function LandingLeads() {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(null);
-  
-  // Pagination State
-  const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
 
-  // Sorting and Filtering
-  const [sortOrder, setSortOrder] = useState('desc'); // 'desc' = Newest first, 'asc' = Oldest first
-  const [statusFilter, setStatusFilter] = useState('all');
+  // Filtering & Sorting
   const [searchTerm, setSearchTerm] = useState('');
-  const [dateFilter, setDateFilter] = useState(''); // Specific date calendar filter
-  
-  // Updating Status
-  const [updatingId, setUpdatingId] = useState(null);
-  
-  // Modal State
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sortOrder, setSortOrder] = useState('newest');
+  const [dateFilter, setDateFilter] = useState('');
+
+  // Pagination
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(8);
+
+  // Modal & Actions
   const [selectedLead, setSelectedLead] = useState(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+  const [updatingId, setUpdatingId] = useState(null);
 
-  // Intersection Observer for Lazy Loading
-  const observer = useRef();
-  const lastLeadElementRef = useCallback(node => {
-    if (loading || loadingMore) return;
-    if (observer.current) observer.current.disconnect();
-    
-    observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore) {
-        fetchMoreLeads();
-      }
-    });
-    
-    if (node) observer.current.observe(node);
-  }, [loading, loadingMore, hasMore]);
-
-  useEffect(() => {
-    fetchLeads();
-  }, [sortOrder]); // Re-fetch from start when sort changes
-
-  // Prevent background scrolling when any modal is open
-  useEffect(() => {
-    if (selectedLead || deleteConfirmId) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [selectedLead, deleteConfirmId]);
-
-  // Client-side filtering is applied to the fetched leads. 
-  // For true server-side filtering, we would put these in the supabase query.
-  // Since we have search/filter, lazy loading might act weird if we only filter locally.
-  // To keep it robust, we will fetch normally, but if search/filters are active, 
-  // we rely on the loaded data so far.
-  
   const fetchLeads = async () => {
     setLoading(true);
     setError(null);
-    setPage(0);
     try {
       const { data, error: fetchError } = await supabase
         .from('landing_leads')
         .select('*')
-        .order('created_at', { ascending: sortOrder === 'asc' })
-        .range(0, PAGE_SIZE - 1);
-
+        .order('created_at', { ascending: false });
       if (fetchError) throw fetchError;
-      
       setLeads(data || []);
-      setHasMore(data.length === PAGE_SIZE);
     } catch (err) {
-      console.error('Error fetching leads:', err);
       setError('Failed to fetch leads: ' + err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchMoreLeads = async () => {
-    if (!hasMore || loadingMore) return;
-    
-    setLoadingMore(true);
-    const nextPage = page + 1;
-    const from = nextPage * PAGE_SIZE;
-    const to = from + PAGE_SIZE - 1;
-    
-    try {
-      const { data, error: fetchError } = await supabase
-        .from('landing_leads')
-        .select('*')
-        .order('created_at', { ascending: sortOrder === 'asc' })
-        .range(from, to);
+  useEffect(() => { fetchLeads(); }, []);
 
-      if (fetchError) throw fetchError;
-      
-      setLeads(prev => [...prev, ...(data || [])]);
-      setPage(nextPage);
-      setHasMore(data.length === PAGE_SIZE);
-    } catch (err) {
-      console.error('Error fetching more leads:', err);
-    } finally {
-      setLoadingMore(false);
+  useEffect(() => {
+    if (selectedLead || deleteConfirmId) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
     }
-  };
+    return () => { document.body.style.overflow = 'unset'; };
+  }, [selectedLead, deleteConfirmId]);
 
   const handleStatusChange = async (leadId, newStatus) => {
     setUpdatingId(leadId);
     try {
       const { error: updateError } = await supabase
-        .from('landing_leads')
-        .update({ status: newStatus })
-        .eq('id', leadId);
-
+        .from('landing_leads').update({ status: newStatus }).eq('id', leadId);
       if (updateError) throw updateError;
-      
-      // Update local state
-      setLeads(leads.map(lead => 
-        lead.id === leadId ? { ...lead, status: newStatus } : lead
-      ));
-      
-      // Update selected lead if it's currently open
-      if (selectedLead && selectedLead.id === leadId) {
-        setSelectedLead({ ...selectedLead, status: newStatus });
-      }
+      setLeads(leads.map(l => l.id === leadId ? { ...l, status: newStatus } : l));
+      if (selectedLead?.id === leadId) setSelectedLead({ ...selectedLead, status: newStatus });
     } catch (err) {
-      console.error('Error updating status:', err);
       alert('Failed to update status: ' + err.message);
     } finally {
       setUpdatingId(null);
@@ -146,395 +68,323 @@ export default function LandingLeads() {
 
   const handleDeleteLead = async () => {
     if (!deleteConfirmId) return;
-    
     setUpdatingId(deleteConfirmId);
     try {
-      const { error: deleteError } = await supabase
-        .from('landing_leads')
-        .delete()
-        .eq('id', deleteConfirmId);
-
+      const { error: deleteError } = await supabase.from('landing_leads').delete().eq('id', deleteConfirmId);
       if (deleteError) throw deleteError;
-      
-      setLeads(prev => prev.filter(lead => lead.id !== deleteConfirmId));
-      if (selectedLead && selectedLead.id === deleteConfirmId) setSelectedLead(null);
+      setLeads(prev => prev.filter(l => l.id !== deleteConfirmId));
+      if (selectedLead?.id === deleteConfirmId) setSelectedLead(null);
       setDeleteConfirmId(null);
     } catch (err) {
-      console.error('Error deleting lead:', err);
       alert('Failed to delete lead: ' + err.message);
     } finally {
       setUpdatingId(null);
     }
   };
 
-  const handleDownload = () => {
-    if (window.confirm("Are you sure you want to download the leads as a CSV file?")) {
-      downloadCSV();
+  const filteredLeads = leads.filter(lead => {
+    const matchesSearch =
+      lead.restaurant_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lead.owner_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lead.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lead.phone_number?.includes(searchTerm);
+    const matchesStatus = statusFilter === 'all' || lead.status === statusFilter;
+    const leadDateStr = new Date(lead.created_at).toISOString().split('T')[0];
+    const matchesDate = !dateFilter || leadDateStr === dateFilter;
+    return matchesSearch && matchesStatus && matchesDate;
+  }).sort((a, b) => {
+    if (sortOrder === 'newest') return new Date(b.created_at) - new Date(a.created_at);
+    if (sortOrder === 'oldest') return new Date(a.created_at) - new Date(b.created_at);
+    if (sortOrder === 'name') return (a.restaurant_name || '').localeCompare(b.restaurant_name || '');
+    return 0;
+  });
+
+  const totalPages = Math.max(1, Math.ceil(filteredLeads.length / perPage));
+  const safePage = Math.min(page, totalPages);
+  const paged = filteredLeads.slice((safePage - 1) * perPage, safePage * perPage);
+
+  const getPaginationPages = () => {
+    const pages = [];
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (safePage > 3) pages.push('...');
+      for (let i = Math.max(2, safePage - 1); i <= Math.min(totalPages - 1, safePage + 1); i++) pages.push(i);
+      if (safePage < totalPages - 2) pages.push('...');
+      pages.push(totalPages);
     }
+    return pages;
   };
 
-  const downloadCSV = () => {
-    if (leads.length === 0) return;
-    
-    // Define headers
+  const handleExport = () => {
     const headers = ['Date', 'Restaurant Name', 'Owner Name', 'Phone', 'Email', 'Country', 'State', 'District', 'Status'];
-    
-    // Format data rows
     const csvRows = [
-      headers.join(','), // Header row
-      ...filteredLeads.map(lead => {
-        const dateStr = `" ${new Date(lead.created_at).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}"`;
-        
-        // Force Excel to parse phone as string using Tab character prefix
-        const phoneStr = `"\t${lead.phone_number || ''}"`;
-        
-        return [
-          dateStr,
-          `"${lead.restaurant_name || ''}"`,
-          `"${lead.owner_name || ''}"`,
-          phoneStr,
-          `"${lead.email || ''}"`,
-          `"${lead.country || ''}"`,
-          `"${lead.state || ''}"`,
-          `"${lead.district || ''}"`,
-          `"${lead.status || ''}"`
-        ].join(',');
-      })
+      headers.join(','),
+      ...filteredLeads.map(lead => [
+        `"${new Date(lead.created_at).toLocaleDateString()}"`,
+        `"${lead.restaurant_name || ''}"`,
+        `"${lead.owner_name || ''}"`,
+        `"\t${lead.phone_number || ''}"`,
+        `"${lead.email || ''}"`,
+        `"${lead.country || ''}"`,
+        `"${lead.state || ''}"`,
+        `"${lead.district || ''}"`,
+        `"${lead.status || ''}"`,
+      ].join(','))
     ];
-
-    const csvContent = "data:text/csv;charset=utf-8," + csvRows.join('\n');
-    const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    link.setAttribute("href", encodeURI("data:text/csv;charset=utf-8," + csvRows.join('\n')));
     link.setAttribute("download", `landing_leads_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  const getStatusBadgeVariant = (status) => {
-    switch (status) {
-      case 'new': return 'info';
-      case 'contacted': return 'warning';
-      case 'converted': return 'success';
-      case 'rejected': return 'error';
-      default: return 'default';
-    }
-  };
-
-  const filteredLeads = leads.filter(lead => {
-    const matchesSearch = 
-      lead.restaurant_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead.owner_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead.phone_number?.includes(searchTerm);
-      
-    const matchesStatus = statusFilter === 'all' || lead.status === statusFilter;
-    
-    const leadDateStr = new Date(lead.created_at).toISOString().split('T')[0];
-    const matchesDate = !dateFilter || leadDateStr === dateFilter;
-    
-    return matchesSearch && matchesStatus && matchesDate;
-  });
-
-  const truncateStyle = {
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    display: 'block'
-  };
+  const statusColor = s => s === 'converted' ? 'text-green-500' : s === 'contacted' ? 'text-amber-500' : s === 'rejected' ? 'text-red-500' : 'text-blue-500';
+  const hasActiveFilters = searchTerm || statusFilter !== 'all' || sortOrder !== 'newest' || dateFilter;
 
   return (
-    <div className="animate-fade-in pb-16">
-      
-      {/* Filters Card */}
-      <Card className="mb-8 border-none shadow-[0_2px_16px_rgba(0,0,0,0.04)]">
-        <CardContent className="p-5 flex gap-4 flex-wrap items-center justify-between">
-          
-          <div className="relative flex-1 min-w-[300px]">
-            <Search 
-              size={16} 
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" 
-            />
-            <input 
-              type="text" 
-              placeholder="Search leads by restaurant, owner, email or phone..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full py-2 pl-9 pr-3 bg-surface-hover border border-border rounded-xl text-text-main text-sm focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all"
-            />
-          </div>
+    <div className="space-y-3">
+      {/* Control Bar */}
+      <div className="flex items-center gap-3 w-full bg-white p-2 rounded-xl shadow-sm border border-border">
+        {/* Search */}
+        <div className="relative w-full max-w-[260px] shrink-0">
+          <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
+          <input
+            type="text"
+            placeholder="Search leads..."
+            value={searchTerm}
+            onChange={e => { setSearchTerm(e.target.value); setPage(1); }}
+            className="w-full py-2 pl-4 pr-10 bg-surface-hover border border-border rounded-full text-text-main text-[13px] focus:outline-none focus:ring-1 focus:ring-accent-primary transition-all"
+          />
+        </div>
 
-          <div className="flex gap-4 items-center flex-wrap">
-            
-            {/* Date Picker Filter */}
-            <div className="relative">
-              <input 
-                type="date"
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-                className={`py-2.5 px-4 rounded-xl border border-border bg-surface text-sm cursor-pointer focus:outline-none font-sans ${dateFilter ? 'text-text-main' : 'text-text-muted'}`}
-              />
-              {dateFilter && (
-                <button 
-                  onClick={() => setDateFilter('')}
-                  className="absolute right-9 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-surface-hover flex items-center justify-center text-text-muted hover:bg-border transition-colors border-none cursor-pointer"
-                  title="Clear Date"
-                >
-                  <X size={12} />
-                </button>
+        {/* Active Filter Pills */}
+        <div className="flex-1 flex items-center gap-1.5 overflow-x-auto no-scrollbar min-w-0 px-2 border-x border-border/50">
+          {hasActiveFilters ? (
+            <>
+              <span className="text-[11px] text-text-muted font-medium uppercase tracking-wider shrink-0 mr-1">Active:</span>
+              {searchTerm && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 text-[11px] font-medium border border-blue-500/20 shrink-0">
+                  "{searchTerm}"
+                  <button onClick={() => { setSearchTerm(''); setPage(1); }} className="hover:text-blue-800 focus:outline-none flex items-center bg-transparent border-none cursor-pointer p-0 ml-1"><X size={10} /></button>
+                </span>
               )}
-            </div>
-
-            <div className="relative">
-              <Filter size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
-              <select 
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="py-2.5 pl-9 pr-9 rounded-xl border border-border bg-surface text-text-main text-sm cursor-pointer appearance-none focus:outline-none focus:border-accent-primary transition-colors"
-              >
-                <option value="all">All Statuses</option>
-                <option value="new">New</option>
-                <option value="contacted">Contacted</option>
-                <option value="converted">Converted</option>
-                <option value="rejected">Rejected</option>
-              </select>
-            </div>
-
-            <button 
-              onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
-              className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-surface-hover hover:bg-border border border-transparent text-text-main text-sm font-semibold cursor-pointer min-w-[160px] transition-colors"
-            >
-              <ArrowUpDown size={16} />
-              {sortOrder === 'desc' ? 'Sort: Date (Newest)' : 'Sort: Date (Oldest)'}
-            </button>
-            <button 
-              onClick={handleDownload} 
-              className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-surface-hover hover:bg-border border border-border text-text-main text-sm font-semibold cursor-pointer transition-colors"
-            >
-              <Download size={16} />
-              Export CSV
-            </button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {error && (
-        <div className="p-4 bg-red-500/10 text-red-500 rounded-xl mb-6 flex items-center gap-2">
-          <Loader2 size={18} /> {error}
-        </div>
-      )}
-
-      {/* Modern Profile Card Grid View */}
-      {loading && leads.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 px-8 gap-4 text-text-muted">
-          <Loader2 className="animate-spin text-accent-primary" size={36} />
-          <span className="font-medium text-[1.1rem]">Fetching latest leads...</span>
-        </div>
-      ) : filteredLeads.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 px-8 gap-4 text-text-muted">
-          <Inbox size={56} className="opacity-20" />
-          <span className="text-xl font-semibold text-text-main">No leads found</span>
-          <p className="m-0 text-[15px]">Try adjusting your search or filters.</p>
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-6">
-            {filteredLeads.map((lead, index) => {
-              // Attach observer ref to the last card for lazy loading
-              const isLastElement = index === filteredLeads.length - 1;
-              
-              return (
-                <Card 
-                  key={lead.id} 
-                  ref={isLastElement ? lastLeadElementRef : null}
-                  onClick={() => setSelectedLead(lead)}
-                  className="border border-border rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(0,0,0,0.08)] transition-all overflow-hidden flex flex-col bg-surface cursor-pointer group"
-                >
-                  {/* Colored Card Banner Top */}
-                  <div className="h-20 bg-gradient-to-br from-surface-hover to-border relative">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeleteConfirmId(lead.id);
-                      }}
-                      className="absolute top-3 left-3 z-10 bg-surface border-none cursor-pointer text-red-500 p-1.5 rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.05)] flex items-center justify-center transition-all hover:scale-110 hover:text-red-600 disabled:opacity-50"
-                      title="Delete Lead"
-                      disabled={updatingId === lead.id}
-                    >
-                      {updatingId === lead.id ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
-                    </button>
-                    <Badge variant={getStatusBadgeVariant(lead.status)} className="absolute top-3 right-3 z-10 uppercase">
-                      {lead.status}
-                    </Badge>
-                  </div>
-                  
-                  <CardContent className="px-6 pb-6 pt-0 flex flex-col items-center -mt-9">
-                    
-                    {/* Floating Avatar Icon */}
-                    <div className="w-[72px] h-[72px] rounded-full bg-surface border-4 border-surface flex items-center justify-center text-accent-primary shadow-[0_4px_12px_rgba(0,0,0,0.05)] mb-4 z-10">
-                      <div className="w-full h-full rounded-full bg-surface-hover flex items-center justify-center">
-                        <Store size={32} />
-                      </div>
-                    </div>
-
-                    {/* Central Info */}
-                    <h3 className="m-0 mb-1.5 text-xl font-bold text-text-main text-center w-full truncate">
-                      {lead.restaurant_name}
-                    </h3>
-                    <div className="flex items-center gap-1.5 text-text-muted text-[13px] font-medium mb-5">
-                      <Calendar size={14} />
-                      {new Date(lead.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                    </div>
-
-                    <div className="w-full h-px bg-border mb-5" />
-
-                    {/* Micro List */}
-                    <div className="w-full flex flex-col gap-3 mb-6">
-                      <div className="flex items-center gap-2.5 text-[14px] text-text-main font-medium">
-                        <div className="w-7 h-7 rounded-lg bg-surface-hover flex items-center justify-center shrink-0">
-                          <User size={14} className="text-text-muted" />
-                        </div>
-                        <span className="truncate">{lead.owner_name}</span>
-                      </div>
-                      <div className="flex items-center gap-2.5 text-[14px] text-text-main font-medium">
-                        <div className="w-7 h-7 rounded-lg bg-surface-hover flex items-center justify-center shrink-0">
-                          <Phone size={14} className="text-text-muted" />
-                        </div>
-                        <span className="truncate">{lead.phone_number}</span>
-                      </div>
-                      <div className="flex items-center gap-2.5 text-[14px] text-text-main font-medium">
-                        <div className="w-7 h-7 rounded-lg bg-surface-hover flex items-center justify-center shrink-0">
-                          <MapPin size={14} className="text-text-muted" />
-                        </div>
-                        <span className="truncate">{lead.district || lead.state || lead.country}</span>
-                      </div>
-                    </div>
-
-                    {/* View Details Button */}
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); setSelectedLead(lead); }}
-                      className="w-full p-2.5 rounded-xl bg-surface-hover hover:bg-surface hover:border-border border border-transparent text-text-main cursor-pointer font-semibold text-[14px] flex items-center justify-center gap-2 transition-all hover:shadow-[0_2px_8px_rgba(0,0,0,0.05)]"
-                    >
-                      <Eye size={16} /> View Details
-                    </button>
-
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-
-          {/* Lazy Loading Spinner Indicator */}
-          {loadingMore && (
-            <div className="flex justify-center py-8">
-              <div className="flex items-center gap-2.5 text-text-muted bg-surface px-6 py-2 rounded-full shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
-                <Loader2 className="animate-spin text-accent-primary" size={18} />
-                <span className="text-[14px] font-semibold">Loading more leads...</span>
-              </div>
-            </div>
+              {statusFilter !== 'all' && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 text-[11px] font-medium border border-blue-500/20 shrink-0">
+                  {statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}
+                  <button onClick={() => { setStatusFilter('all'); setPage(1); }} className="hover:text-blue-800 focus:outline-none flex items-center bg-transparent border-none cursor-pointer p-0 ml-1"><X size={10} /></button>
+                </span>
+              )}
+              {dateFilter && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 text-[11px] font-medium border border-blue-500/20 shrink-0">
+                  {dateFilter}
+                  <button onClick={() => { setDateFilter(''); setPage(1); }} className="hover:text-blue-800 focus:outline-none flex items-center bg-transparent border-none cursor-pointer p-0 ml-1"><X size={10} /></button>
+                </span>
+              )}
+              {sortOrder !== 'newest' && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 text-[11px] font-medium border border-blue-500/20 shrink-0">
+                  {sortOrder === 'oldest' ? 'Oldest' : 'A-Z'}
+                  <button onClick={() => { setSortOrder('newest'); setPage(1); }} className="hover:text-blue-800 focus:outline-none flex items-center bg-transparent border-none cursor-pointer p-0 ml-1"><X size={10} /></button>
+                </span>
+              )}
+              <button onClick={() => { setSearchTerm(''); setStatusFilter('all'); setSortOrder('newest'); setDateFilter(''); setPage(1); }} className="text-[11px] text-text-muted hover:text-red-500 transition-colors ml-1 bg-transparent border-none cursor-pointer font-medium shrink-0">Clear</button>
+            </>
+          ) : (
+            <span className="text-[11px] text-text-muted italic opacity-50">No active filters</span>
           )}
-        </>
-      )}
+        </div>
 
-      {/* Details Modal - Redesigned UI */}
+        {/* Pagination */}
+        <div className="flex items-center gap-1 shrink-0 border-x border-border/50 px-3">
+          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
+            <ChevronLeft size={14} />
+          </button>
+          {getPaginationPages().map((p, i) => p === '...' ? (
+            <span key={`e-${i}`} className="text-[11px] text-text-muted px-1">…</span>
+          ) : (
+            <button key={p} onClick={() => setPage(p)} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
+          ))}
+          <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
+            <ChevronRight size={14} />
+          </button>
+        </div>
+
+        {/* Per-page & Dropdowns */}
+        <div className="flex gap-2 shrink-0">
+          <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1); }} className="py-1.5 px-2 rounded-lg border border-border bg-surface text-text-main text-[12px] focus:outline-none focus:ring-1 focus:ring-accent-primary cursor-pointer">
+            {[8, 20, 50, 100].map(n => <option key={n} value={n}>{n} / page</option>)}
+          </select>
+
+          {/* Date filter */}
+          <div className="relative">
+            <input
+              type="date"
+              value={dateFilter}
+              onChange={e => { setDateFilter(e.target.value); setPage(1); }}
+              className="py-1.5 px-2 rounded-lg border border-border bg-surface text-[12px] focus:outline-none focus:ring-1 focus:ring-accent-primary cursor-pointer text-text-main"
+              title="Filter by date"
+            />
+          </div>
+
+          <div className="relative group">
+            <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface text-text-main hover:bg-surface-hover transition-colors text-[12px] font-medium">
+              <Filter size={14} className="text-accent-primary" /> Status
+            </button>
+            <div className="absolute right-0 top-full mt-2 w-44 bg-surface border border-border rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 flex flex-col overflow-hidden py-1">
+              {['all', 'new', 'contacted', 'converted', 'rejected'].map(s => (
+                <button key={s} onClick={() => { setStatusFilter(s); setPage(1); }} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${statusFilter === s ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>
+                  {s === 'all' ? 'All Statuses' : s.charAt(0).toUpperCase() + s.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="relative group">
+            <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface text-text-main hover:bg-surface-hover transition-colors text-[12px] font-medium">
+              <SlidersHorizontal size={14} className="text-accent-primary" /> Sort
+            </button>
+            <div className="absolute right-0 top-full mt-2 w-44 bg-surface border border-border rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 flex flex-col overflow-hidden py-1">
+              <button onClick={() => { setSortOrder('newest'); setPage(1); }} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${sortOrder === 'newest' ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>Newest First</button>
+              <button onClick={() => { setSortOrder('oldest'); setPage(1); }} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${sortOrder === 'oldest' ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>Oldest First</button>
+              <button onClick={() => { setSortOrder('name'); setPage(1); }} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${sortOrder === 'name' ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>Name (A-Z)</button>
+            </div>
+          </div>
+
+          <button onClick={handleExport} className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent-primary text-white hover:bg-accent-hover transition-colors text-[12px] font-medium shadow-sm ml-2 cursor-pointer border-none">
+            <Download size={14} /> Export
+          </button>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="w-full overflow-x-auto bg-white rounded-xl shadow-sm border border-border">
+        <table className="w-full text-left border-collapse whitespace-nowrap">
+          <thead>
+            <tr className="border-b border-border">
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[22%]">Restaurant</th>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[16%]">Owner</th>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[14%]">Phone</th>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[20%]">Email</th>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[15%]">Location</th>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[1%]">Status</th>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[10%]">Date</th>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[2%]"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <TableRowsSkeleton rows={perPage} columns={8} />
+            ) : error ? (
+              <tr><td colSpan="8" className="text-center py-10 text-red-500 text-[13px] font-medium">{error}</td></tr>
+            ) : paged.length === 0 ? (
+              <tr><td colSpan="8" className="text-center py-10 text-text-muted text-[13px]">No leads found matching your criteria.</td></tr>
+            ) : paged.map(lead => (
+              <tr key={lead.id} className="group hover:bg-surface-hover border-b border-border/40 last:border-b-0 cursor-pointer transition-colors" onClick={() => setSelectedLead(lead)}>
+                <td className="py-2.5 px-4 align-middle">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center font-bold text-blue-600 text-[12px] shrink-0">
+                      {(lead.restaurant_name || '?')[0].toUpperCase()}
+                    </div>
+                    <span className="font-semibold text-text-main text-[13px] truncate group-hover:text-accent-primary transition-colors max-w-[160px]" title={lead.restaurant_name}>{lead.restaurant_name}</span>
+                  </div>
+                </td>
+                <td className="py-2.5 px-4 align-middle">
+                  <div className="flex items-center gap-1.5 text-[12px] text-text-main">
+                    <User size={11} className="text-text-muted shrink-0" />
+                    <span className="truncate max-w-[120px]" title={lead.owner_name}>{lead.owner_name || '—'}</span>
+                  </div>
+                </td>
+                <td className="py-2.5 px-4 align-middle">
+                  <div className="flex items-center gap-1.5 text-[12px] text-text-main">
+                    <Phone size={11} className="text-text-muted shrink-0" />
+                    <span>{lead.phone_number || '—'}</span>
+                  </div>
+                </td>
+                <td className="py-2.5 px-4 align-middle">
+                  <div className="flex items-center gap-1.5 text-[12px] text-text-main">
+                    <Mail size={11} className="text-blue-500 shrink-0" />
+                    <span className="truncate max-w-[170px]" title={lead.email}>{lead.email || '—'}</span>
+                  </div>
+                </td>
+                <td className="py-2.5 px-4 align-middle">
+                  <div className="flex items-center gap-1.5 text-[12px] text-text-muted">
+                    <MapPin size={11} className="shrink-0" />
+                    <span className="truncate max-w-[120px]">{[lead.district, lead.state, lead.country].filter(Boolean).join(', ') || '—'}</span>
+                  </div>
+                </td>
+                <td className="py-2.5 px-4 align-middle">
+                  <span className={`text-[12px] font-bold ${statusColor(lead.status)}`}>{(lead.status || 'new').toUpperCase()}</span>
+                </td>
+                <td className="py-2.5 px-4 align-middle">
+                  <span className="text-[12px] text-text-muted font-medium">{new Date(lead.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                </td>
+                <td className="py-2.5 px-4 align-middle">
+                  <button
+                    onClick={e => { e.stopPropagation(); setDeleteConfirmId(lead.id); }}
+                    disabled={updatingId === lead.id}
+                    className="w-7 h-7 flex items-center justify-center rounded-full text-text-muted hover:bg-red-500/10 hover:text-red-500 transition-colors bg-transparent border-none cursor-pointer opacity-0 group-hover:opacity-100"
+                    title="Delete Lead"
+                  >
+                    {updatingId === lead.id ? <Loader2 className="animate-spin" size={13} /> : <Trash2 size={13} />}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Details Modal */}
       {selectedLead && (
-        <div 
-          className="fixed inset-0 bg-black/50 backdrop-blur-[8px] flex items-center justify-center z-[1000] p-4 animate-[fadeIn_0.2s_ease-out]"
-          onClick={() => setSelectedLead(null)}
-        >
-          <div 
-            className="bg-surface rounded-[24px] w-full max-w-[520px] shadow-[0_24px_50px_rgba(0,0,0,0.15)] overflow-hidden animate-[slideUp_0.3s_cubic-bezier(0.16,1,0.3,1)]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="flex justify-between items-start pt-8 px-8 pb-6 border-b border-border bg-surface">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-[8px] flex items-center justify-center z-[1000] p-4" onClick={() => setSelectedLead(null)}>
+          <div className="bg-surface rounded-[24px] w-full max-w-[520px] shadow-[0_24px_50px_rgba(0,0,0,0.15)] overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-start pt-8 px-8 pb-6 border-b border-border">
               <div className="flex gap-4 items-center">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-surface-hover to-border flex items-center justify-center text-accent-primary shadow-[inset_0_2px_4px_rgba(255,255,255,0.05)]">
+                <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-600">
                   <Store size={28} />
                 </div>
                 <div>
-                  <h2 className="m-0 mb-1.5 text-[1.4rem] font-extrabold text-text-main tracking-tight">
-                    {selectedLead.restaurant_name}
-                  </h2>
+                  <h2 className="m-0 mb-1.5 text-[1.4rem] font-extrabold text-text-main tracking-tight">{selectedLead.restaurant_name}</h2>
                   <div className="flex items-center gap-2 text-text-muted text-[14px] font-medium">
                     <Calendar size={14} />
                     {new Date(selectedLead.created_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
                   </div>
                 </div>
               </div>
-              <button 
-                onClick={() => setSelectedLead(null)}
-                className="bg-surface-hover hover:bg-border border-none cursor-pointer text-text-main p-2 rounded-full transition-colors flex items-center justify-center"
-              >
+              <button onClick={() => setSelectedLead(null)} className="bg-surface-hover hover:bg-border border-none cursor-pointer text-text-main p-2 rounded-full transition-colors flex items-center justify-center">
                 <X size={20} />
               </button>
             </div>
 
-            {/* Modal Body - Premium Soft Boxed Layout */}
             <div className="px-8 py-6 flex flex-col gap-4 bg-surface-hover">
-              
-              <div className="bg-surface px-5 py-4 rounded-2xl flex items-center gap-4 border border-border shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-                <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600">
-                  <User size={20} />
+              {[
+                { icon: <User size={20} />, color: 'bg-blue-500/10 text-blue-600', label: 'Owner Name', value: selectedLead.owner_name },
+                { icon: <Phone size={20} />, color: 'bg-emerald-500/10 text-emerald-600', label: 'Phone Number', value: <a href={`tel:${selectedLead.phone_number}`} className="text-[16px] font-semibold text-text-main no-underline hover:underline">{selectedLead.phone_number}</a> },
+                { icon: <Mail size={20} />, color: 'bg-amber-500/10 text-amber-600', label: 'Email Address', value: selectedLead.email ? <a href={`mailto:${selectedLead.email}`} className="text-[16px] font-semibold text-text-main no-underline hover:underline">{selectedLead.email}</a> : <span className="text-[16px] italic text-text-muted">Not provided</span> },
+                { icon: <MapPin size={20} />, color: 'bg-purple-500/10 text-purple-600', label: 'Location', value: [selectedLead.district, selectedLead.state, selectedLead.country].filter(Boolean).join(', ') || '—' },
+              ].map(({ icon, color, label, value }) => (
+                <div key={label} className="bg-surface px-5 py-4 rounded-2xl flex items-center gap-4 border border-border">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color}`}>{icon}</div>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[12px] uppercase tracking-wider text-text-muted font-bold">{label}</span>
+                    {typeof value === 'string' ? <span className="text-[16px] font-semibold text-text-main">{value}</span> : value}
+                  </div>
                 </div>
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-[12px] uppercase tracking-wider text-text-muted font-bold">Owner Name</span>
-                  <span className="text-[16px] font-semibold text-text-main">{selectedLead.owner_name}</span>
-                </div>
-              </div>
-
-              <div className="bg-surface px-5 py-4 rounded-2xl flex items-center gap-4 border border-border shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
-                  <Phone size={20} />
-                </div>
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-[12px] uppercase tracking-wider text-text-muted font-bold">Phone Number</span>
-                  <a href={`tel:${selectedLead.phone_number}`} className="text-[16px] font-semibold text-text-main no-underline hover:underline">{selectedLead.phone_number}</a>
-                </div>
-              </div>
-
-              <div className="bg-surface px-5 py-4 rounded-2xl flex items-center gap-4 border border-border shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600">
-                  <Mail size={20} />
-                </div>
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-[12px] uppercase tracking-wider text-text-muted font-bold">Email Address</span>
-                  {selectedLead.email ? (
-                    <a href={`mailto:${selectedLead.email}`} className="text-[16px] font-semibold text-text-main no-underline hover:underline">{selectedLead.email}</a>
-                  ) : <span className="text-[16px] italic text-text-muted">Not provided</span>}
-                </div>
-              </div>
-
-              <div className="bg-surface px-5 py-4 rounded-2xl flex items-center gap-4 border border-border shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-                <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-600">
-                  <MapPin size={20} />
-                </div>
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-[12px] uppercase tracking-wider text-text-muted font-bold">Location Details</span>
-                  <span className="text-[16px] font-semibold text-text-main leading-relaxed">
-                    {selectedLead.district ? `${selectedLead.district}, ` : ''}
-                    {selectedLead.state ? `${selectedLead.state}, ` : ''}
-                    {selectedLead.country}
-                  </span>
-                </div>
-              </div>
-
+              ))}
             </div>
 
-            {/* Modal Footer */}
             <div className="px-8 py-6 bg-surface border-t border-border flex justify-between items-center gap-6 flex-wrap">
               <div className="flex items-center gap-3">
-                <span className="text-[14px] font-bold text-text-muted uppercase tracking-wider">Current Status:</span>
-                <Badge variant={getStatusBadgeVariant(selectedLead.status)} className="px-3.5 py-1.5 text-[13px] uppercase">
-                  {selectedLead.status}
-                </Badge>
+                <span className="text-[14px] font-bold text-text-muted uppercase tracking-wider">Status:</span>
+                <span className={`text-[14px] font-bold ${statusColor(selectedLead.status)}`}>{(selectedLead.status || 'new').toUpperCase()}</span>
               </div>
               <select
                 value={selectedLead.status}
                 disabled={updatingId === selectedLead.id}
-                onChange={(e) => handleStatusChange(selectedLead.id, e.target.value)}
-                className={`px-4 py-2.5 text-[15px] font-bold rounded-xl border-2 border-border bg-surface text-text-main focus:outline-none focus:border-accent-primary transition-all shadow-[0_2px_6px_rgba(0,0,0,0.03)] w-40 ${updatingId === selectedLead.id ? 'cursor-wait' : 'cursor-pointer'}`}
+                onChange={e => handleStatusChange(selectedLead.id, e.target.value)}
+                className={`px-4 py-2.5 text-[14px] font-bold rounded-xl border-2 border-border bg-surface text-text-main focus:outline-none focus:border-accent-primary transition-all w-40 ${updatingId === selectedLead.id ? 'cursor-wait' : 'cursor-pointer'}`}
               >
                 <option value="new">Mark New</option>
                 <option value="contacted">Contacted</option>
@@ -542,46 +392,22 @@ export default function LandingLeads() {
                 <option value="rejected">Rejected</option>
               </select>
             </div>
-
           </div>
         </div>
       )}
 
-      {/* Basic Keyframe Animations for Modal */}
-      <style dangerouslySetInnerHTML={{__html: `
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-      `}} />
-
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Confirmation */}
       {deleteConfirmId && (
-        <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[1010] p-4 animate-[fadeIn_0.2s_ease-out]"
-          onClick={() => setDeleteConfirmId(null)}
-        >
-          <div 
-            className="bg-surface rounded-[24px] w-full max-w-[400px] shadow-[0_24px_50px_rgba(0,0,0,0.2)] overflow-hidden animate-[slideUp_0.2s_cubic-bezier(0.16,1,0.3,1)] py-10 px-8 flex flex-col items-center text-center"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="w-[72px] h-[72px] rounded-full bg-red-500/10 flex items-center justify-center text-red-500 mb-6 shadow-[inset_0_2px_4px_rgba(255,255,255,0.05)]">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[1010] p-4" onClick={() => setDeleteConfirmId(null)}>
+          <div className="bg-surface rounded-[24px] w-full max-w-[400px] shadow-[0_24px_50px_rgba(0,0,0,0.2)] overflow-hidden py-10 px-8 flex flex-col items-center text-center" onClick={e => e.stopPropagation()}>
+            <div className="w-[72px] h-[72px] rounded-full bg-red-500/10 flex items-center justify-center text-red-500 mb-6">
               <AlertTriangle size={36} />
             </div>
             <h3 className="m-0 mb-3 text-2xl font-extrabold text-text-main tracking-tight">Delete this lead?</h3>
-            <p className="m-0 mb-8 text-text-muted text-base leading-relaxed">
-              Are you sure you want to permanently delete this lead? This action cannot be undone.
-            </p>
+            <p className="m-0 mb-8 text-text-muted text-base leading-relaxed">Are you sure you want to permanently delete this lead? This action cannot be undone.</p>
             <div className="flex gap-4 w-full">
-              <button 
-                onClick={() => setDeleteConfirmId(null)}
-                className="flex-1 py-3.5 rounded-xl bg-surface-hover hover:bg-border border-none text-text-main font-bold text-base cursor-pointer transition-colors"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={handleDeleteLead}
-                disabled={updatingId === deleteConfirmId}
-                className="flex-1 py-3.5 rounded-xl bg-red-500 hover:bg-red-600 border-none text-white font-bold text-base cursor-pointer flex items-center justify-center gap-2 transition-colors shadow-[0_4px_16px_rgba(239,68,68,0.2)] hover:shadow-[0_6px_20px_rgba(239,68,68,0.3)] disabled:opacity-50"
-              >
+              <button onClick={() => setDeleteConfirmId(null)} className="flex-1 py-3.5 rounded-xl bg-surface-hover hover:bg-border border-none text-text-main font-bold text-base cursor-pointer transition-colors">Cancel</button>
+              <button onClick={handleDeleteLead} disabled={updatingId === deleteConfirmId} className="flex-1 py-3.5 rounded-xl bg-red-500 hover:bg-red-600 border-none text-white font-bold text-base cursor-pointer flex items-center justify-center gap-2 transition-colors disabled:opacity-50">
                 {updatingId === deleteConfirmId ? <Loader2 className="animate-spin" size={20} /> : 'Delete'}
               </button>
             </div>
@@ -589,6 +415,10 @@ export default function LandingLeads() {
         </div>
       )}
 
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+      `}} />
     </div>
   );
 }

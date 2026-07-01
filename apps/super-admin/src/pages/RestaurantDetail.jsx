@@ -13,6 +13,7 @@ import { Badge } from '../components/ui/Badge';
 import QuickAddCategoryDrawer from '../components/QuickAddCategoryDrawer';
 import QuickAddMenuItemDrawer from '../components/QuickAddMenuItemDrawer';
 import RestaurantProfileView from '../components/RestaurantProfileView';
+import { DetailPageSkeleton } from '../components/ui/Skeleton';
 
 const TIME_OPTIONS = [
     { value: 'Closed', label: 'Closed' }
@@ -178,12 +179,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
     };
 
     if (loading) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
-                <div className="w-8 h-8 border-4 border-surface-hover border-t-accent-primary rounded-full animate-spin" />
-                <p className="text-sm text-text-muted">Fetching restaurant profile...</p>
-            </div>
-        );
+        return <DetailPageSkeleton />;
     }
 
     if (error || !restaurant) {

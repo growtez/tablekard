@@ -3,6 +3,7 @@ import { supabase } from '../../supabaseClient';
 import { Card, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Search, MessageSquare, Star } from 'lucide-react';
+import { CardListSkeleton } from '../../components/ui/Skeleton';
 
 // feedback: id, order_id, user_id, rating (1-5), comment, created_at
 // Joins: orders -> restaurants, profiles (via user_id)
@@ -88,7 +89,7 @@ export default function Reviews({ setSyncAction }) {
                 </div>
             </Card>
 
-            {loading ? <div style={{ textAlign: 'center', padding: '4rem' }}><div className="loader" style={{ margin: '0 auto' }} /></div>
+            {loading ? <CardListSkeleton count={5} />
              : error ? <div style={{ textAlign: 'center', padding: '2rem', color: '#ef4444' }}>{error}</div>
              : filtered.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>

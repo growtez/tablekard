@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Routes, Route, useNavigate, useLocation, Link } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import Login from './Login'
+import { AppLoadingSkeleton } from './components/ui/Skeleton'
 import AdminPanel from './AdminPanel'
 import Dashboard from './pages/Dashboard'
 import Restaurants from './pages/Restaurants'
@@ -161,14 +162,7 @@ export default function App() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-bg p-4">
-        <div className="flex flex-col items-center gap-4">
-          <div className="loader w-10 h-10 border-4 border-surface-hover border-t-accent-primary rounded-full animate-spin" />
-          <p className="text-accent-primary font-semibold tracking-widest uppercase text-xs">Initializing Session...</p>
-        </div>
-      </div>
-    )
+    return <AppLoadingSkeleton />
   }
 
   if (!session) return <Login />
@@ -271,29 +265,35 @@ export default function App() {
 
               {headerData ? (
                 <div className="flex items-center gap-2 md:gap-4 animate-fade-in">
-                  <Link to={headerData.backPath || '/restaurants'} className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-lg bg-surface-hover text-text-muted border border-border hover:bg-border hover:text-text-main transition-all" title={headerData.backTitle || 'Back'} onClick={() => setHeaderData(null)}>
-                    <ChevronLeft size={20} />
-                  </Link>
-                  <div className="h-6 w-[1px] bg-border mx-0 md:mx-1" />
+                  {headerData.backPath && (
+                    <>
+                      <Link to={headerData.backPath} className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-lg bg-surface-hover text-text-muted border border-border hover:bg-border hover:text-text-main transition-all" title={headerData.backTitle || 'Back'} onClick={() => setHeaderData(null)}>
+                        <ChevronLeft size={20} />
+                      </Link>
+                      <div className="h-6 w-[1px] bg-border mx-0 md:mx-1" />
+                    </>
+                  )}
                   <div className="flex items-center gap-2 md:gap-4">
-                    <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-surface-hover border border-border flex items-center justify-center text-sm font-bold overflow-hidden">
-                      {headerData.logo_url ? <img src={headerData.logo_url} alt="" className="w-full h-full object-cover" /> : <span>{headerData.name?.[0] || '?'}</span>}
-                    </div>
+                    {headerData.showAvatar !== false && (
+                      <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-surface-hover border border-border flex items-center justify-center text-sm font-bold overflow-hidden">
+                        {headerData.logo_url ? <img src={headerData.logo_url} alt="" className="w-full h-full object-cover" /> : <span>{headerData.name?.[0] || '?'}</span>}
+                      </div>
+                    )}
                     <h2 className="text-base md:text-lg font-bold m-0 line-clamp-1">{headerData.name}</h2>
                   </div>
                   <div className="flex items-center gap-2 ml-2 md:ml-4">
                     {headerData.isEditing ? (
                       <>
                         <button onClick={headerData.onSave} className="flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-semibold rounded-lg bg-accent-primary text-white hover:bg-accent-secondary transition-colors" disabled={headerData.saving}>
-                          {headerData.saving ? <RefreshCw className="animate-spin" size={16} /> : <Save size={16} />} <span className="hidden md:inline">Save</span>
+                          {headerData.saving ? <RefreshCw className="animate-spin" size={16} /> : <Save size={16} />} <span className="hidden md:inline">{headerData.saving ? 'Saving...' : 'Save Changes'}</span>
                         </button>
                         <button onClick={headerData.onCancel} className="flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-semibold rounded-lg bg-surface-hover text-text-main border border-border hover:bg-border transition-colors" disabled={headerData.saving}>
                           <X size={16} /> <span className="hidden md:inline">Cancel</span>
                         </button>
                       </>
                     ) : headerData.onEdit && (
-                      <button onClick={headerData.onEdit} className="flex items-center gap-1.5 px-3 py-1.5 text-xs md:text-sm rounded-lg bg-surface-hover border border-border text-text-main hover:bg-border transition-colors">
-                        <Edit size={14} /> Edit
+                      <button onClick={headerData.onEdit} className="flex items-center gap-1.5 px-3 py-1.5 text-xs md:text-sm rounded-lg bg-accent-primary/10 border border-accent-primary/20 text-accent-primary hover:bg-accent-primary/20 transition-colors">
+                        <Edit size={14} /> <span className="hidden sm:inline">{headerData.editLabel || 'Edit'}</span>
                       </button>
                     )}
                   </div>
@@ -365,7 +365,7 @@ export default function App() {
               <Route path="/subscriptions" element={<Subscriptions setSyncAction={setSyncAction} />} />
           <Route path="/subscriptions/:id" element={<SubscriptionDetail setHeaderData={setHeaderData} />} />
               <Route path="/billing/transactions" element={<Transactions setSyncAction={setSyncAction} />} />
-              <Route path="/billing/plans" element={<Plans />} />
+              <Route path="/billing/plans" element={<Plans setSyncAction={setSyncAction} setHeaderData={setHeaderData} />} />
               {/* Support */}
               {/* <Route path="/support/complaints" element={<Complaints setSyncAction={setSyncAction} />} />
               <Route path="/support/reviews" element={<Reviews setSyncAction={setSyncAction} />} />

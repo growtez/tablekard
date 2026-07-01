@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../supabaseClient';
 import { Card, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
-import { CheckCircle, Zap, Award, Sparkles, Clock, Calendar, AlertCircle, Edit, Save, Trash2, Plus, X, RefreshCw } from 'lucide-react';
+import { CheckCircle, Zap, Award, Sparkles, Clock, Calendar, AlertCircle, Trash2, Plus } from 'lucide-react';
+import { PlansPageSkeleton } from '../../components/ui/Skeleton';
 
 const ICON_MAP = {
     Clock: Clock,
@@ -93,7 +94,7 @@ const DEFAULT_PLANS = [
     },
 ];
 
-export default function Plans({ setSyncAction }) {
+export default function Plans({ setSyncAction, setHeaderData }) {
     const [plans, setPlans] = useState([]);
     const [editedPlans, setEditedPlans] = useState([]);
     const [isEditing, setIsEditing] = useState(false);
@@ -104,6 +105,10 @@ export default function Plans({ setSyncAction }) {
     
     // Feature temp states
     const [newFeatureText, setNewFeatureText] = useState({});
+
+    const saveRef = useRef(null);
+    const cancelRef = useRef(null);
+    const startEditRef = useRef(null);
 
     const fetchData = async () => {
         setLoading(true);
@@ -247,42 +252,33 @@ export default function Plans({ setSyncAction }) {
         }
     };
 
+    saveRef.current = handleSave;
+    cancelRef.current = handleCancelEdit;
+    startEditRef.current = handleStartEdit;
+
+    useEffect(() => {
+        if (!setHeaderData || loading) return;
+
+        setHeaderData({
+            name: 'Pricing Plans',
+            showAvatar: false,
+            onEdit: !isEditing ? () => startEditRef.current?.() : null,
+            isEditing,
+            onSave: () => saveRef.current?.(),
+            onCancel: () => cancelRef.current?.(),
+            saving,
+            editLabel: 'Edit Pricing Plans',
+        });
+
+        return () => setHeaderData(null);
+    }, [loading, isEditing, saving, setHeaderData]);
+
     if (loading) {
-        return (
-            <div className="text-center py-24">
-                <RefreshCw className="animate-spin text-accent-primary mx-auto" size={32} />
-                <p className="mt-4 text-text-muted">Loading platform billing configurations...</p>
-            </div>
-        );
+        return <PlansPageSkeleton />;
     }
 
     return (
         <div className="animate-fade-in pb-12">
-            {/* Header controls bar */}
-            <div className="flex justify-between items-center flex-wrap gap-4 mb-8">
-                <div>
-                    <h2 className="text-xl font-bold mb-1">Pricing & Billing Plans</h2>
-                    <p className="text-text-muted text-[13px] m-0">
-                        Currently synchronized with Supabase <code className="bg-surface-hover px-1.5 py-0.5 rounded-md">platform_settings</code>.
-                    </p>
-                </div>
-                {!isEditing ? (
-                    <button onClick={handleStartEdit} className="bg-accent-primary/10 text-accent-primary border border-accent-primary/20 px-5 py-2.5 rounded-xl text-[13px] font-semibold flex items-center gap-2 cursor-pointer hover:bg-accent-primary/20 transition-colors">
-                        <Edit size={16} /> Edit Pricing Plans
-                    </button>
-                ) : (
-                    <div className="flex gap-3">
-                        <button onClick={handleCancelEdit} className="bg-surface-hover border border-border text-text-muted px-5 py-2.5 rounded-xl text-[13px] font-medium flex items-center gap-1.5 cursor-pointer hover:bg-border transition-colors">
-                            <X size={16} /> Cancel
-                        </button>
-                        <button onClick={handleSave} disabled={saving} className="bg-accent-primary text-white border-none px-6 py-2.5 rounded-xl text-[13px] font-bold flex items-center gap-1.5 cursor-pointer shadow-[0_4px_12px_rgba(5,150,105,0.3)] hover:bg-emerald-600 transition-colors disabled:opacity-70">
-                            {saving ? <RefreshCw className="animate-spin" size={16} /> : <Save size={16} />} 
-                            {saving ? 'Saving...' : 'Save Changes'}
-                        </button>
-                    </div>
-                )}
-            </div>
-
             {/* Error / Success banners */}
             {error && (
                 <div className="px-5 py-3.5 bg-red-500/10 border border-red-500/20 rounded-xl text-red-600 text-sm flex items-center gap-2.5 mb-8">
@@ -299,7 +295,7 @@ export default function Plans({ setSyncAction }) {
             {/* Active Plans Display (Read-Only) */}
             {!isEditing ? (
                 <>
-                    <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-6">
+                    <div className="grid grid-cols-4 gap-5">
                         {plans.map(plan => {
                             const IconComponent = ICON_MAP[plan.iconName] || Clock;
                             const perMonth = Math.round(plan.price / plan.duration);
@@ -307,68 +303,68 @@ export default function Plans({ setSyncAction }) {
                             return (
                                 <div
                                     key={plan.id}
-                                    className="bg-surface rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.04)] p-6 flex flex-col justify-between min-h-[440px] relative transition-transform hover:-translate-y-1"
-                                    style={{
-                                        border: plan.recommended ? `2px solid ${plan.color}` : '1px solid var(--border-color)',
-                                    }}
+                                    className="relative bg-white rounded-2xl overflow-hidden flex flex-col transition-all hover:-translate-y-1 hover:shadow-xl"
+                                    style={{ border: plan.recommended ? `2px solid ${plan.color}` : '1px solid #e5e7eb', boxShadow: plan.recommended ? `0 8px 32px ${plan.color}22` : '0 2px 12px rgba(0,0,0,0.04)' }}
                                 >
-                                    <div>
-                                        <div className="flex items-center gap-4 mb-6">
-                                            <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${plan.color}15`, color: plan.color }}>
-                                                <IconComponent size={24} />
+                                    {/* Recommended ribbon */}
+                                    {plan.recommended && (
+                                        <div className="absolute top-4 right-0 text-white text-[10px] font-bold px-3 py-1 rounded-l-full uppercase tracking-wider z-10" style={{ background: plan.color }}>
+                                            Best Value
+                                        </div>
+                                    )}
+
+                                    {/* Color top band */}
+                                    <div className="h-1.5 w-full" style={{ background: `linear-gradient(90deg, ${plan.color}, ${plan.color}88)` }} />
+
+                                    <div className="p-6 flex flex-col flex-1">
+                                        {/* Icon + Title */}
+                                        <div className="flex items-center gap-3 mb-5">
+                                            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${plan.color}18`, color: plan.color }}>
+                                                <IconComponent size={20} />
                                             </div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2 flex-wrap">
-                                                    <h3 className="text-lg font-bold m-0">{plan.name}</h3>
-                                                    {plan.recommended && (
-                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full tracking-wider uppercase whitespace-nowrap text-white" style={{ background: plan.color }}>
-                                                            Best Value
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <p className="text-xs text-text-muted m-0 mt-1">{plan.description}</p>
+                                            <div>
+                                                <h3 className="text-[15px] font-bold text-text-main m-0 leading-tight">{plan.name}</h3>
+                                                <p className="text-[11px] text-text-muted m-0 mt-0.5 leading-snug">{plan.description}</p>
                                             </div>
                                         </div>
 
-                                        <div className="mb-6">
-                                            <div className="flex items-baseline gap-1">
-                                                <span className="text-4xl font-extrabold" style={{ color: plan.color }}>₹{plan.price.toLocaleString('en-IN')}</span>
-                                                <span className="text-sm text-text-muted">/ {plan.duration} {plan.duration === 1 ? 'Month' : 'Months'}</span>
+                                        {/* Pricing */}
+                                        <div className="mb-5 pb-5 border-b border-border">
+                                            <div className="flex items-baseline gap-1.5">
+                                                <span className="text-[38px] font-extrabold leading-none" style={{ color: plan.color }}>₹{plan.price.toLocaleString('en-IN')}</span>
                                             </div>
                                             <div className="flex items-center gap-2 mt-1.5">
-                                                <span className="text-xs text-text-muted font-semibold">₹{perMonth}/month</span>
+                                                <span className="text-[12px] text-text-muted font-medium">{plan.duration} {plan.duration === 1 ? 'month' : 'months'} · ₹{perMonth}/mo</span>
                                                 {plan.savings > 0 && (
-                                                    <span className="text-[11px] bg-emerald-500/15 text-emerald-700 px-2 py-0.5 rounded-full font-bold">
+                                                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-full" style={{ background: `${plan.color}18`, color: plan.color }}>
                                                         Save {plan.savings}%
                                                     </span>
                                                 )}
                                             </div>
                                         </div>
 
-                                        <div className="flex flex-col gap-2.5 mb-8">
+                                        {/* Features */}
+                                        <div className="flex flex-col gap-2 flex-1">
                                             {plan.features?.map(f => (
-                                                <div key={f} className="flex items-center gap-2.5">
-                                                    <CheckCircle size={14} className="shrink-0" style={{ color: plan.color }} />
-                                                    <span className="text-sm text-text-main">{f}</span>
+                                                <div key={f} className="flex items-start gap-2.5">
+                                                    <CheckCircle size={13} className="shrink-0 mt-0.5" style={{ color: plan.color }} />
+                                                    <span className="text-[12px] text-text-main leading-snug">{f}</span>
                                                 </div>
                                             ))}
                                         </div>
-                                    </div>
 
-                                    <div className="pt-4 border-t border-border text-xs text-text-muted">
-                                        Plan key: <code className="bg-surface-hover px-1.5 py-0.5 rounded-md">{plan.id}</code>
+                                        {/* Footer */}
+                                        <div className="mt-5 pt-4 border-t border-border flex items-center justify-between">
+                                            <code className="text-[10px] text-text-muted bg-surface-hover px-1.5 py-0.5 rounded">{plan.id}</code>
+                                            <span className="text-[11px] font-semibold" style={{ color: plan.color }}>{plan.duration}M Plan</span>
+                                        </div>
                                     </div>
                                 </div>
                             );
                         })}
                     </div>
 
-                    <div className="bg-emerald-500/5 border border-emerald-500/15 rounded-2xl p-5 mt-8 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
-                        <div className="text-[13px] text-text-muted leading-relaxed">
-                            <strong className="text-text-main">ℹ️ Pricing Synchronization</strong><br />
-                            These tiers mirror the exact subscription models processed via Razorpay in the restaurant dashboard. Subscriptions are processed securely and credited instantly to restaurant profiles upon checkout completion.
-                        </div>
-                    </div>
+                    
                 </>
             ) : (
                 /* Editable Form Grid */
