@@ -1076,6 +1076,62 @@
 [data-theme="dark"] .view-all-btn { background-color: var(--tk-bg-elevated); color: var(--tk-text-secondary); border-color: var(--tk-border); }
 [data-theme="dark"] .view-all-btn:hover { background-color: var(--tk-bg-hover); color: var(--tk-text); }
 
+/* ── Chart bar clickable ── */
+.chart-bar-clickable {
+    cursor: pointer;
+}
+
+.chart-bar-clickable:hover .chart-bar {
+    filter: brightness(1.15);
+    transform: scaleY(1.03);
+    transform-origin: bottom;
+    transition: filter 0.15s ease, transform 0.15s ease;
+}
+
+.chart-bar-clickable:hover .chart-label {
+    color: #4C51BF;
+    font-weight: 600;
+}
+
+/* ── View button inside revenue card ── */
+.rom-view-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 10px;
+    border: 1.5px solid #E2E8F0;
+    background: #FFFFFF;
+    color: #4C51BF;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Outfit', sans-serif;
+    white-space: nowrap;
+}
+
+.rom-view-btn:hover {
+    background: #4C51BF;
+    color: #FFFFFF;
+    border-color: #4C51BF;
+    box-shadow: 0 4px 12px rgba(76, 81, 191, 0.25);
+    transform: translateY(-1px);
+}
+
+[data-theme="dark"] .rom-view-btn {
+    background: var(--tk-bg-elevated);
+    border-color: var(--tk-border);
+    color: #9F7AEA;
+}
+
+[data-theme="dark"] .rom-view-btn:hover {
+    background: #553C9A;
+    color: #FFFFFF;
+    border-color: #553C9A;
+}
+
+
 /* ── Pager Date Filter Styles ──────────────────────────────── */
 .pager-filter-group {
   display: flex;
