@@ -4,7 +4,7 @@ import './dashboard.css';
 import Sidebar from '../components/sidebar';
 
 import { useAuth } from '../context/AuthContext';
-import { useDashboardOrders, useInvalidateQueries, useRevenueData } from '../hooks/useSupabaseQuery';
+import { useDashboardOrders, useInvalidateQueries, useRevenueData, useMenuItems } from '../hooks/useSupabaseQuery';
 import { updateOrderStatus, updatePaymentStatus } from '../services/supabaseService';
 import type { DashboardOrder } from '../services/supabaseService';
 
@@ -247,7 +247,10 @@ const Dashboard: React.FC = () => {
   // React Query cached orders
   const { data: orders = [], isLoading } = useDashboardOrders(activeRestaurantId);
   useRevenueData(activeRestaurantId);
+  const { data: menuItems = [] } = useMenuItems(activeRestaurantId);
   const { invalidateOrders } = useInvalidateQueries();
+  
+  const outOfStockItems = menuItems.filter(item => !item.available);
 
   const [selectedOrder, setSelectedOrder] = useState<DashboardOrder | null>(null);
   const [showAllOrders, setShowAllOrders] = useState<boolean>(false);
@@ -342,7 +345,7 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="revenue-card">
+          <div className="revenue-card hide-on-tablet">
             <div className="card-top-bar card-top-bar-blue"></div>
             <h3 className="card-title">Revenue This Week</h3>
             <div className="revenue-amount">₹ {isLoading ? '...' : revenueThisWeek.toLocaleString()}</div>
@@ -351,6 +354,18 @@ const Dashboard: React.FC = () => {
                 {weekChange > 0 ? '+' : ''}{weekChange}% vs last week
               </span>
               <TrendingUp size={16} color={weekChange >= 0 ? "#7F9CF5" : "#E53E3E"} className="trend-icon" style={weekChange < 0 ? { transform: 'rotate(180deg)' } : undefined} />
+            </div>
+          </div>
+          <div className="revenue-card hide-on-mobile">
+            <div className="card-top-bar card-top-bar-red" style={{ background: 'linear-gradient(to right, #E53E3E, #FC8181)' }}></div>
+            <h3 className="card-title">Out of Stock Items</h3>
+            <div className="revenue-amount" style={{ color: outOfStockItems.length > 0 ? '#E53E3E' : 'var(--tk-text)' }}>
+              {isLoading ? '...' : outOfStockItems.length}
+            </div>
+            <div className="revenue-change">
+              <span className="change-text" style={{ color: 'var(--tk-text-muted)' }}>
+                Need restocking
+              </span>
             </div>
           </div>
         </div>

@@ -121,11 +121,11 @@
 }
 
 .order-card-green {
-  background: linear-gradient(to right, var(--tk-burgundy, #8B3A1E), var(--tk-burgundy, #8B3A1E));
+  background: linear-gradient(to right, #8B3A1E, #D4816B);
 }
 
 .order-card-blue {
-  background: linear-gradient(to right, #455689, #4C51BF);
+  background: linear-gradient(to right, #5C7A7A, #8AABAB);
 }
 
 .order-stat-title {

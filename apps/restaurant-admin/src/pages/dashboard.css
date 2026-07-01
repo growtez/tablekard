@@ -20,9 +20,9 @@ body {
 
 
 .main-content {
-  margin-left: 240px;
+  /* margin-left: 240px; */
   flex: 1;
-  padding: 24px;
+  /* padding: 24px; */
   padding-left: 32px;
   overflow-y: auto;
   min-height: 100vh;
@@ -46,7 +46,7 @@ body {
 }
 
 .page-title {
-  font-size: 32px;
+  font-size: 24px;
   font-weight: 600;
   color: var(--tk-text);
 }
@@ -122,14 +122,14 @@ body {
 
 .revenue-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 24px;
   margin-bottom: 32px;
 }
 
 .revenue-card {
   background-color: var(--tk-bg-card);
-  padding: 24px;
+  padding: 12px;
   border-radius: 20px;
   border: var(--tk-border-card);
   box-shadow: none;
@@ -169,7 +169,7 @@ body {
 }
 
 .revenue-amount {
-  font-size: 36px;
+  font-size: 28px;
   font-weight: 700;
   color: var(--tk-text);
   margin-bottom: 12px;
@@ -183,7 +183,7 @@ body {
 }
 
 .change-text {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
 }
 
@@ -213,7 +213,7 @@ body {
 
 .table-card {
   background-color: var(--tk-bg-card);
-  padding: 24px;
+  padding: 12px;
   border-radius: 20px;
   border: var(--tk-border-card);
   box-shadow: none;
@@ -223,22 +223,22 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  /* margin-bottom: 24px; */
 }
 
 .table-title {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--tk-text);
 }
 
 .view-all-btn {
-  padding: 10px 24px;
+  padding: 8px 16px;
   background: var(--tk-burgundy, #8B3A1E);
   color: #FFFFFF;
   border: none;
-  border-radius: 12px;
-  font-size: 13px;
+  border-radius: 8px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -268,8 +268,8 @@ body {
 
 .orders-table th {
   text-align: left;
-  padding: 12px 16px;
-  font-size: 13px;
+  padding: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--tk-text-secondary);
   border-bottom: 2px solid var(--tk-border);
@@ -292,8 +292,8 @@ body {
 
 .status-pill {
   display: inline-block;
-  padding: 6px 14px;
-  border-radius: 12px;
+  padding: 4px 8px;
+  border-radius: 8px;
   font-size: 12px;
   font-weight: 600;
 }
@@ -315,8 +315,8 @@ body {
 
 .payment-badge {
   display: inline-block;
-  padding: 6px 16px;
-  border-radius: 12px;
+  padding: 4px 8px;
+  border-radius: 8px;
   font-size: 12px;
   font-weight: 600;
 }
@@ -332,11 +332,11 @@ body {
 }
 
 .payment-action-btn {
-  padding: 6px 16px;
+  padding: 6px 12px;
   background-color: #68D391;
   color: #22543D;
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -351,11 +351,11 @@ body {
 }
 
 .ready-action-btn {
-  padding: 6px 16px;
+  padding: 6px 12px;
   background-color: #C6F6D5;
   color: #22543D;
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -633,7 +633,7 @@ body {
 }
 
 .dialog-title {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 600;
   color: var(--tk-text);
 }
@@ -832,14 +832,26 @@ body {
   text-align: center;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1024px) {
   .content-grid {
     grid-template-columns: 1fr;
+  }
+  .revenue-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .right-sidebar {
     grid-template-columns: repeat(2, 1fr);
     display: grid;
+  }
+}
+
+@media (max-width: 1024px) {
+  .hide-on-tablet {
+    display: none;
+  }
+  .revenue-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -850,16 +862,11 @@ body {
     margin-left: 0;
     width: 100%;
     padding: 16px;
-    padding-top: 72px;
-    /* Space for mobile hamburger menu */
+    padding-top: 16px;
   }
 
   .sidebar {
     transform: translateX(-100%);
-  }
-
-  .revenue-grid {
-    grid-template-columns: 1fr;
   }
 
   .header {
@@ -871,6 +878,8 @@ body {
   .search-bar {
     width: 100%;
   }
+
+
 
   .right-sidebar {
     grid-template-columns: 1fr;
@@ -890,6 +899,8 @@ body {
 
   .page-title {
     font-size: 24px;
+    margin-left: 64px; /* Increased space for the hamburger icon */
+    margin-top: 4px;
   }
 
   .revenue-amount {
@@ -903,6 +914,20 @@ body {
 
   .chart-dialog {
     max-width: 95%;
+  }
+}
+
+@media (max-width: 480px) {
+  .hide-on-mobile {
+    display: none !important;
+  }
+
+ .revenue-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .orders-table {
+    min-width: 400px;
   }
 }
 
