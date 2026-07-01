@@ -1,11 +1,11 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Download, Calendar, CreditCard, CheckCircle, Eye, Trash2, X, Search, User, Hash, Clock, Utensils } from 'lucide-react';
+import { Download, Calendar, CreditCard, CheckCircle, X, Search, User, Hash, Clock, Utensils, ChevronLeft, ChevronRight } from 'lucide-react';
 import './payment.css';
 import Sidebar from '../components/sidebar';
 import { useAuth } from '../context/AuthContext';
 import { updatePaymentStatus } from '../services/supabaseService';
 import type { PaymentTransaction } from '../services/supabaseService';
-import { usePaymentTransactions, useInvalidateQueries, useRevenueData, queryKeys } from '../hooks/useSupabaseQuery';
+import { usePaymentTransactions, useInvalidateQueries, queryKeys } from '../hooks/useSupabaseQuery';
 import { useQueryClient } from '@tanstack/react-query';
 
 // Main Payment Component
@@ -18,31 +18,27 @@ const Payment: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [selectedTransaction, setSelectedTransaction] = useState<PaymentTransaction | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
-
-  // Hidden (locally removed) transaction IDs – for the "hide" button
-  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
+  const [weekOffset, setWeekOffset] = useState<number>(0);
+  const [monthOffset, setMonthOffset] = useState<number>(0);
 
   const [visibleCount, setVisibleCount] = useState(20);
   const loadMoreRef = useRef<HTMLTableRowElement>(null);
 
   useEffect(() => {
+    setWeekOffset(0);
+    setMonthOffset(0);
+  }, [selectedDateRange]);
+
+  useEffect(() => {
     setVisibleCount(20);
-  }, [selectedDateRange, selectedPaymentMethod, selectedPaymentStatus, customDate, searchQuery]);
+  }, [selectedDateRange, selectedPaymentMethod, selectedPaymentStatus, customDate, searchQuery, weekOffset, monthOffset]);
 
   // React Query: cached, auto-retries, refetches on tab focus
   const { data: allTransactions = [], isLoading: loading } = usePaymentTransactions(activeRestaurantId);
-  const { data: revenueData = [], isLoading: loadingRevenue } = useRevenueData(activeRestaurantId);
   const { invalidatePayments } = useInvalidateQueries();
   const queryClient = useQueryClient();
 
-  const [revenuePeriod, setRevenuePeriod] = useState<string>('today');
-  const [revenueCustomDate, setRevenueCustomDate] = useState<string>('');
-
-  // Filter out locally hidden rows
-  const transactions = useMemo(
-    () => allTransactions.filter(t => !hiddenIds.has(t.id)),
-    [allTransactions, hiddenIds]
-  );
+  const transactions = allTransactions;
 
   // Filter transactions based on selected filters
   const filteredTransactions = transactions.filter(transaction => {
@@ -59,15 +55,25 @@ const Payment: React.FC = () => {
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
 
     let dateMatch = true;
     if (selectedDateRange === 'today') {
       dateMatch = tDate >= startOfToday;
     } else if (selectedDateRange === 'yesterday') {
       dateMatch = tDate >= startOfYesterday && tDate < startOfToday;
-    } else if (selectedDateRange === 'this-week') {
-      dateMatch = tDate >= startOfWeek;
+    } else if (selectedDateRange === 'week') {
+      const startOfThisWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+      const startOfWeekN = new Date(startOfThisWeek);
+      startOfWeekN.setDate(startOfWeekN.getDate() - weekOffset * 7);
+      const endOfWeekN = new Date(startOfWeekN);
+      endOfWeekN.setDate(endOfWeekN.getDate() + 7);
+      dateMatch = tDate >= startOfWeekN && tDate < endOfWeekN;
+    } else if (selectedDateRange === 'month') {
+      const startOfMonthN = new Date(now.getFullYear(), now.getMonth() - monthOffset, 1);
+      const endOfMonthN = new Date(now.getFullYear(), now.getMonth() - monthOffset + 1, 1);
+      dateMatch = tDate >= startOfMonthN && tDate < endOfMonthN;
+    } else if (selectedDateRange === 'all') {
+      dateMatch = true;
     } else if (selectedDateRange === 'custom' && customDate) {
       const selectedDay = new Date(customDate).toDateString();
       dateMatch = tDate.toDateString() === selectedDay;
@@ -91,42 +97,15 @@ const Payment: React.FC = () => {
     let totalRevenue = 0;
     let totalOrders = 0;
 
-    const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-    revenueData.forEach(r => {
-      // parse YYYY-MM-DD
-      const [year, month, day] = r.revenueDate.split('-');
-      const rDate = new Date(Number(year), Number(month) - 1, Number(day));
-
-      let match = false;
-      if (revenuePeriod === 'today') {
-        match = rDate.getTime() === startOfToday.getTime();
-      } else if (revenuePeriod === 'yesterday') {
-        match = rDate.getTime() === startOfYesterday.getTime();
-      } else if (revenuePeriod === 'this-week') {
-        match = rDate >= startOfWeek;
-      } else if (revenuePeriod === 'this-month') {
-        match = rDate >= startOfMonth;
-      } else if (revenuePeriod === 'custom' && revenueCustomDate) {
-        const [cy, cm, cd] = revenueCustomDate.split('-');
-        if (cy && cm && cd) {
-          const cDate = new Date(Number(cy), Number(cm) - 1, Number(cd));
-          match = rDate.getTime() === cDate.getTime();
-        }
-      }
-
-      if (match) {
-        totalRevenue += r.totalRevenue;
-        totalOrders += r.totalOrders;
+    filteredTransactions.forEach(t => {
+      totalOrders++;
+      if (t.paymentStatus.toLowerCase() === 'paid') {
+        totalRevenue += t.amount;
       }
     });
 
     return { totalRevenue, totalOrders };
-  }, [revenueData, revenuePeriod, revenueCustomDate]);
+  }, [filteredTransactions]);
 
   const handleExportReport = () => {
     console.log('Exporting report...');
@@ -175,10 +154,27 @@ const Payment: React.FC = () => {
     }
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this transaction from view? (Not deleted from DB)')) {
-      setHiddenIds(prev => new Set(prev).add(id));
-    }
+
+
+  // Helper to get week start and end dates
+  const getWeekDateRange = (offset: number) => {
+    const now = new Date();
+    const startOfThisWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+    const startOfWeek = new Date(startOfThisWeek);
+    startOfWeek.setDate(startOfWeek.getDate() - offset * 7);
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(endOfWeek.getDate() + 6);
+    const formatDate = (d: Date) => {
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    };
+    return `${formatDate(startOfWeek)} - ${formatDate(endOfWeek)}, ${endOfWeek.getFullYear()}`;
+  };
+
+  // Helper to get month label
+  const getMonthLabel = (offset: number) => {
+    const now = new Date();
+    const targetMonth = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+    return targetMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   };
 
   const closeModal = () => {
@@ -207,43 +203,21 @@ const Payment: React.FC = () => {
           </div>
         </div>
 
-        <div className="revenue-section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', marginTop: '24px' }}>
+        <div className="revenue-section-header" style={{ marginBottom: '16px', marginTop: '24px' }}>
           <h2 className="section-title" style={{ margin: 0 }}>Revenue Overview</h2>
-          <div className="filter-group" style={{ margin: 0 }}>
-            <Calendar size={16} color="#718096" />
-            <select
-              className="filter-select"
-              value={revenuePeriod}
-              onChange={(e) => setRevenuePeriod(e.target.value)}
-            >
-              <option value="today">Today</option>
-              <option value="yesterday">Yesterday</option>
-              <option value="this-week">This Week</option>
-              <option value="this-month">This Month</option>
-              <option value="custom">Custom Range</option>
-            </select>
-            {revenuePeriod === 'custom' && (
-              <input
-                type="date"
-                className="custom-date-picker"
-                value={revenueCustomDate}
-                onChange={(e) => setRevenueCustomDate(e.target.value)}
-              />
-            )}
-          </div>
         </div>
 
         <div className="payment-revenue-grid">
           <div className="revenue-card">
             <div className="card-top-bar card-top-bar-green"></div>
             <h3 className="card-title">Total Revenue</h3>
-            <div className="revenue-amount">₹ {loadingRevenue ? '...' : filteredRevenue.totalRevenue.toLocaleString()}</div>
+            <div className="revenue-amount">₹ {loading ? '...' : filteredRevenue.totalRevenue.toLocaleString()}</div>
           </div>
 
           <div className="revenue-card">
             <div className="card-top-bar card-top-bar-blue"></div>
             <h3 className="card-title">Total Orders</h3>
-            <div className="revenue-amount">{loadingRevenue ? '...' : filteredRevenue.totalOrders.toLocaleString()}</div>
+            <div className="revenue-amount">{loading ? '...' : filteredRevenue.totalOrders.toLocaleString()}</div>
           </div>
         </div>
 
@@ -258,7 +232,9 @@ const Payment: React.FC = () => {
               >
                 <option value="today">Today</option>
                 <option value="yesterday">Yesterday</option>
-                <option value="this-week">This Week</option>
+                <option value="week">Week</option>
+                <option value="month">Month</option>
+                <option value="all">All</option>
                 <option value="custom">Custom Range</option>
               </select>
               {selectedDateRange === 'custom' && (
@@ -270,6 +246,52 @@ const Payment: React.FC = () => {
                 />
               )}
             </div>
+
+            {selectedDateRange === 'week' && (
+              <div className="pager-filter-group">
+                <button
+                  type="button"
+                  className="pager-arrow-btn"
+                  onClick={() => setWeekOffset(prev => prev + 1)}
+                  title="Previous Week"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <span className="pager-label">{getWeekDateRange(weekOffset)}</span>
+                <button
+                  type="button"
+                  className="pager-arrow-btn"
+                  onClick={() => setWeekOffset(prev => Math.max(0, prev - 1))}
+                  disabled={weekOffset === 0}
+                  title="Next Week"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            )}
+
+            {selectedDateRange === 'month' && (
+              <div className="pager-filter-group">
+                <button
+                  type="button"
+                  className="pager-arrow-btn"
+                  onClick={() => setMonthOffset(prev => prev + 1)}
+                  title="Previous Month"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <span className="pager-label">{getMonthLabel(monthOffset)}</span>
+                <button
+                  type="button"
+                  className="pager-arrow-btn"
+                  onClick={() => setMonthOffset(prev => Math.max(0, prev - 1))}
+                  disabled={monthOffset === 0}
+                  title="Next Month"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            )}
 
             <div className="filter-group">
               <CreditCard size={16} color="#718096" />
@@ -321,7 +343,6 @@ const Payment: React.FC = () => {
                   <th>Payment Method</th>
                   <th>Payment Status</th>
                   <th>Amount</th>
-                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -339,7 +360,7 @@ const Payment: React.FC = () => {
                   </tr>
                 ) : (
                   filteredTransactions.slice(0, visibleCount).map((transaction) => (
-                    <tr key={transaction.id}>
+                    <tr key={transaction.id} onClick={() => handleView(transaction.id)}>
                       <td data-label="Order ID">
                         <div className="order-id-cell">{transaction.orderNumber}</div>
                       </td>
@@ -354,7 +375,7 @@ const Payment: React.FC = () => {
                           {transaction.paymentMethod}
                         </span>
                       </td>
-                      <td data-label="Payment Status">
+                      <td data-label="Payment Status" onClick={(e) => e.stopPropagation()}>
                         <select
                           className={`payment-status-pill status-${transaction.statusColor}`}
                           value={transaction.paymentStatus}
@@ -371,30 +392,12 @@ const Payment: React.FC = () => {
                       <td data-label="Amount">
                         <div className="amount-cell">₹{transaction.amount.toLocaleString()}</div>
                       </td>
-                      <td data-label="Actions">
-                        <div className="action-buttons">
-                          <button
-                            className="action-btn view-btn"
-                            onClick={() => handleView(transaction.id)}
-                            title="View Details"
-                          >
-                            <Eye size={14} />
-                          </button>
-                          <button
-                            className="action-btn delete-btn"
-                            onClick={() => handleDelete(transaction.id)}
-                            title="Hide Transaction"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </td>
                     </tr>
                   ))
                 )}
                 {visibleCount < filteredTransactions.length && (
                   <tr ref={loadMoreRef}>
-                    <td colSpan={7} style={{ textAlign: 'center', padding: '24px', color: '#718096', fontSize: '13px', fontFamily: "'Outfit', sans-serif" }}>
+                    <td colSpan={6} style={{ textAlign: 'center', padding: '24px', color: '#718096', fontSize: '13px', fontFamily: "'Outfit', sans-serif" }}>
                       Loading more transactions...
                     </td>
                   </tr>

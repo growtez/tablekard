@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Calendar, ArrowUpRight, ArrowDownRight, Loader2, Info } from 'lucide-react';
+import { Download, Calendar, ArrowUpRight, ArrowDownRight, Loader2, Info, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import Sidebar from '../components/sidebar';
 import './reports.css';
 import { useAuth } from '../context/AuthContext';
@@ -38,6 +38,8 @@ const heatColor = (count: number, max: number): string => {
 const Reports: React.FC = () => {
     const { activeRestaurantId } = useAuth();
     const [timeframe, setTimeframe] = useState('week');
+    const [weekOffset, setWeekOffset] = useState<number>(0);
+    const [monthOffset, setMonthOffset] = useState<number>(0);
     const [loading, setLoading] = useState(true);
 
     const [summary, setSummary] = useState<AnalyticsSummary>({
@@ -61,6 +63,32 @@ const Reports: React.FC = () => {
 
     const formatCurrency = (val: number) => `₹${val.toLocaleString()}`;
 
+    // Helper to get week start and end dates
+    const getWeekDateRange = (offset: number) => {
+        const now = new Date();
+        const startOfThisWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+        const startOfWeek = new Date(startOfThisWeek);
+        startOfWeek.setDate(startOfWeek.getDate() - offset * 7);
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(endOfWeek.getDate() + 6);
+        const formatDate = (d: Date) => {
+            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        };
+        return `${formatDate(startOfWeek)} - ${formatDate(endOfWeek)}, ${endOfWeek.getFullYear()}`;
+    };
+
+    // Helper to get month label
+    const getMonthLabel = (offset: number) => {
+        const now = new Date();
+        const targetMonth = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+        return targetMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    };
+
+    useEffect(() => {
+        setWeekOffset(0);
+        setMonthOffset(0);
+    }, [timeframe]);
+
     const fetchData = async () => {
         if (!activeRestaurantId) return;
         setLoading(true);
@@ -72,9 +100,23 @@ const Reports: React.FC = () => {
             if (timeframe === 'today') {
                 startDate.setHours(0, 0, 0, 0);
             } else if (timeframe === 'week') {
-                startDate.setDate(now.getDate() - 7);
+                const startOfThisWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+                startDate = new Date(startOfThisWeek);
+                startDate.setDate(startDate.getDate() - weekOffset * 7);
+                startDate.setHours(0, 0, 0, 0);
+
+                endDate = new Date(startDate);
+                endDate.setDate(endDate.getDate() + 7);
+                endDate.setMilliseconds(endDate.getMilliseconds() - 1);
             } else if (timeframe === 'month') {
-                startDate.setMonth(now.getMonth() - 1);
+                startDate = new Date(now.getFullYear(), now.getMonth() - monthOffset, 1);
+                startDate.setHours(0, 0, 0, 0);
+
+                endDate = new Date(now.getFullYear(), now.getMonth() - monthOffset + 1, 1);
+                endDate.setMilliseconds(endDate.getMilliseconds() - 1);
+            } else if (timeframe === 'all') {
+                startDate = new Date(0);
+                endDate = new Date();
             } else if (timeframe === 'custom' && customStart && customEnd) {
                 startDate = new Date(customStart);
                 endDate = new Date(customEnd);
@@ -92,9 +134,9 @@ const Reports: React.FC = () => {
             ] = await Promise.all([
                 getAnalyticsSummary(activeRestaurantId, startDate, endDate),
                 getActiveTablesCount(activeRestaurantId),
-                getBestSellingDishes(activeRestaurantId),
-                getRevenueData(activeRestaurantId),
-                getPeakHourData(activeRestaurantId),
+                getBestSellingDishes(activeRestaurantId, startDate, endDate),
+                getRevenueData(activeRestaurantId, startDate, endDate),
+                getPeakHourData(activeRestaurantId, startDate, endDate),
                 getAdvancedAnalytics(activeRestaurantId, startDate, endDate),
                 getRecentFeedback(activeRestaurantId)
             ]);
@@ -102,18 +144,20 @@ const Reports: React.FC = () => {
             setSummary(analyticsSummary);
             setActiveTables(tablesCount);
             setTopItems(bestDishes);
-            // Process revenue history to include zero-revenue days for the last 7 days
-            const last7Days: RevenueRecord[] = [];
-            for (let i = 6; i >= 0; i--) {
-                const d = new Date();
-                d.setDate(now.getDate() - i);
-                const dateStr = d.toISOString().split('T')[0];
 
-                const existing = revenueData.find(record => record.revenueDate === dateStr);
-                if (existing) {
-                    last7Days.push(existing);
-                } else {
-                    last7Days.push({
+            // Build a complete day-by-day record for the selected range,
+            // filling in zeros for days with no revenue data.
+            const filledRevenue: RevenueRecord[] = [];
+            const startDay = new Date(startDate);
+            startDay.setHours(0, 0, 0, 0);
+            const endDay = new Date(endDate);
+            endDay.setHours(0, 0, 0, 0);
+
+            for (const d = new Date(startDay); d <= endDay; d.setDate(d.getDate() + 1)) {
+                const dateStr = d.toISOString().split('T')[0];
+                const existing = revenueData.find(r => r.revenueDate === dateStr);
+                filledRevenue.push(
+                    existing ?? {
                         id: `zero-${dateStr}`,
                         restaurantId: activeRestaurantId,
                         revenueDate: dateStr,
@@ -123,10 +167,10 @@ const Reports: React.FC = () => {
                         totalDiscount: 0,
                         createdAt: d.toISOString(),
                         updatedAt: d.toISOString()
-                    });
-                }
+                    }
+                );
             }
-            setRevenueHistory(last7Days);
+            setRevenueHistory(filledRevenue);
             setPeakData(heatmap);
             setAdvanced(advancedData);
             setFeedbackData(recentFeedback);
@@ -143,9 +187,101 @@ const Reports: React.FC = () => {
         } else {
             fetchData();
         }
-    }, [activeRestaurantId, timeframe, customStart, customEnd]);
+    }, [activeRestaurantId, timeframe, customStart, customEnd, weekOffset, monthOffset]);
 
-    const maxRevenue = Math.max(...revenueHistory.map(d => d.totalRevenue), 1);
+    // For month view: aggregate daily revenue into weekly buckets so the chart stays readable.
+    const getChartData = (): { label: string; revenue: number; orders: number }[] => {
+        if (timeframe === 'month' && revenueHistory.length > 0) {
+            // Group days into week-sized buckets anchored to the 1st of the month
+            const buckets: { label: string; revenue: number; orders: number }[] = [];
+            let bucketRevenue = 0;
+            let bucketOrders = 0;
+            let bucketStart: Date | null = null;
+
+            revenueHistory.forEach((record, idx) => {
+                const d = new Date(record.revenueDate);
+                const dayOfMonth = d.getDate(); // 1-indexed
+                const bucketIndex = Math.floor((dayOfMonth - 1) / 7); // 0,1,2,3
+
+                if (bucketStart === null) {
+                    bucketStart = d;
+                }
+
+                bucketRevenue += record.totalRevenue;
+                bucketOrders += record.totalOrders;
+
+                // Flush bucket at week boundary or last record
+                const nextRecord = revenueHistory[idx + 1];
+                const nextBucketIndex = nextRecord
+                    ? Math.floor((new Date(nextRecord.revenueDate).getDate() - 1) / 7)
+                    : -1;
+
+                if (nextBucketIndex !== bucketIndex || !nextRecord) {
+                    const weekNum = bucketIndex + 1;
+                    buckets.push({
+                        label: `Wk ${weekNum}`,
+                        revenue: bucketRevenue,
+                        orders: bucketOrders
+                    });
+                    bucketRevenue = 0;
+                    bucketOrders = 0;
+                    bucketStart = null;
+                }
+            });
+
+            return buckets;
+        }
+
+        // All other timeframes: one bar per day
+        return revenueHistory.map(record => {
+            const d = new Date(record.revenueDate);
+            let label: string;
+            if (revenueHistory.length > 14) {
+                label = d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+            } else {
+                label = d.toLocaleDateString('en-US', { weekday: 'short' });
+            }
+            return { label, revenue: record.totalRevenue, orders: record.totalOrders };
+        });
+    };
+
+    const chartData = getChartData();
+    const maxChartRevenue = Math.max(...chartData.map(b => b.revenue), 1);
+
+    // Dynamic chart section title
+    const chartTitle = (): string => {
+        if (timeframe === 'today') return 'Revenue Overview (Today)';
+        if (timeframe === 'week') return `Revenue Overview (${getWeekDateRange(weekOffset)})`;
+        if (timeframe === 'month') return `Revenue Overview (${getMonthLabel(monthOffset)})`;
+        if (timeframe === 'custom' && customStart && customEnd) return `Revenue Overview (${customStart} → ${customEnd})`;
+        return 'Revenue Overview (All Time)';
+    };
+
+    // CSV Export handler
+    const handleExportCSV = () => {
+        const rows: string[][] = [
+            ['Date', 'Total Revenue (₹)', 'Total Orders', 'Tax (₹)', 'Discount (₹)'],
+            ...revenueHistory.map(r => [
+                r.revenueDate,
+                r.totalRevenue.toFixed(2),
+                String(r.totalOrders),
+                r.totalTax.toFixed(2),
+                r.totalDiscount.toFixed(2)
+            ]),
+            [],
+            ['Item Name', 'Units Sold', 'Revenue (₹)'],
+            ...topItems.map(i => [i.name, String(i.sold), i.revenue.toFixed(2)])
+        ];
+
+        const csvContent = rows.map(r => r.join(',')).join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `tablekard_report_${timeframe}_${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+    };
 
     // Max count across all visible hours for heatmap scaling
     const peakMax = Math.max(
@@ -183,8 +319,9 @@ const Reports: React.FC = () => {
                 {/* Filters */}
                 <div className="reports-filters">
                     <button className={`report-filter-btn ${timeframe === 'today' ? 'active' : ''}`} onClick={() => setTimeframe('today')}>Today</button>
-                    <button className={`report-filter-btn ${timeframe === 'week' ? 'active' : ''}`} onClick={() => setTimeframe('week')}>This Week</button>
-                    <button className={`report-filter-btn ${timeframe === 'month' ? 'active' : ''}`} onClick={() => setTimeframe('month')}>This Month</button>
+                    <button className={`report-filter-btn ${timeframe === 'week' ? 'active' : ''}`} onClick={() => setTimeframe('week')}>Week</button>
+                    <button className={`report-filter-btn ${timeframe === 'month' ? 'active' : ''}`} onClick={() => setTimeframe('month')}>Month</button>
+                    <button className={`report-filter-btn ${timeframe === 'all' ? 'active' : ''}`} onClick={() => setTimeframe('all')}>All</button>
 
                     <div className="custom-range-container">
                         <button className={`report-filter-btn ${timeframe === 'custom' ? 'active' : ''}`} onClick={() => setTimeframe('custom')}>
@@ -199,8 +336,54 @@ const Reports: React.FC = () => {
                         )}
                     </div>
 
-                    <button className="report-export-btn">
-                        <Download size={16} /> Export Report
+                    {timeframe === 'week' && (
+                      <div className="pager-filter-group" style={{ height: '42px', marginLeft: '12px' }}>
+                        <button
+                          type="button"
+                          className="pager-arrow-btn"
+                          onClick={() => setWeekOffset(prev => prev + 1)}
+                          title="Previous Week"
+                        >
+                          <ChevronLeft size={16} />
+                        </button>
+                        <span className="pager-label">{getWeekDateRange(weekOffset)}</span>
+                        <button
+                          type="button"
+                          className="pager-arrow-btn"
+                          onClick={() => setWeekOffset(prev => Math.max(0, prev - 1))}
+                          disabled={weekOffset === 0}
+                          title="Next Week"
+                        >
+                          <ChevronRight size={16} />
+                        </button>
+                      </div>
+                    )}
+
+                    {timeframe === 'month' && (
+                      <div className="pager-filter-group" style={{ height: '42px', marginLeft: '12px' }}>
+                        <button
+                          type="button"
+                          className="pager-arrow-btn"
+                          onClick={() => setMonthOffset(prev => prev + 1)}
+                          title="Previous Month"
+                        >
+                          <ChevronLeft size={16} />
+                        </button>
+                        <span className="pager-label">{getMonthLabel(monthOffset)}</span>
+                        <button
+                          type="button"
+                          className="pager-arrow-btn"
+                          onClick={() => setMonthOffset(prev => Math.max(0, prev - 1))}
+                          disabled={monthOffset === 0}
+                          title="Next Month"
+                        >
+                          <ChevronRight size={16} />
+                        </button>
+                      </div>
+                    )}
+
+                    <button className="report-export-btn" onClick={handleExportCSV}>
+                        <Download size={16} /> Export CSV
                     </button>
                 </div>
 
@@ -294,25 +477,24 @@ const Reports: React.FC = () => {
                     <div className="dashboard-card">
                         <div className="dashboard-card-header">
                             <h3 className="dashboard-card-title">
-                                Revenue Overview (Last 7 Days)
+                                {chartTitle()}
                                 <span className="info-icon">
                                     <Info size={14} />
-                                    <span className="tooltip">Daily revenue trends over the past week.</span>
+                                    <span className="tooltip">Daily revenue trends for the selected period.</span>
                                 </span>
                             </h3>
                         </div>
                         <div className="chart-container">
-                            {revenueHistory.length === 0 ? (
+                            {chartData.length === 0 ? (
                                 <div style={{ color: '#A0AEC0', margin: 'auto' }}>No data available</div>
                             ) : (
-                                revenueHistory.map((data, index) => {
-                                    const heightPercentage = (data.totalRevenue / maxRevenue) * 100;
-                                    const dayName = new Date(data.revenueDate).toLocaleDateString('en-US', { weekday: 'short' });
+                                chartData.map((bar, index) => {
+                                    const heightPercentage = (bar.revenue / maxChartRevenue) * 100;
                                     return (
                                         <div key={index} className="chart-bar-group">
-                                            <div className="chart-tooltip">{formatCurrency(data.totalRevenue)}</div>
+                                            <div className="chart-tooltip">{formatCurrency(bar.revenue)}</div>
                                             <div className="chart-bar" style={{ height: `${heightPercentage}%` }}></div>
-                                            <span className="chart-label">{dayName}</span>
+                                            <span className="chart-label">{bar.label}</span>
                                         </div>
                                     );
                                 })
@@ -339,8 +521,8 @@ const Reports: React.FC = () => {
                                     }}>
                                         <div className="donut-hole"></div>
                                         <div className="donut-label">
-                                            <span style={{ fontWeight: 600, fontSize: '18px', color: '#1A202C' }}>{Math.round(advanced?.orderTypeSplit.dineIn || 0)}%</span>
-                                            <span style={{ fontSize: '11px', color: '#718096' }}>Dine-in</span>
+                                            <span className="donut-percentage">{Math.round(advanced?.orderTypeSplit.dineIn || 0)}%</span>
+                                            <span className="donut-sublabel">Dine-in</span>
                                         </div>
                                     </div>
                                     <div className="donut-legend">
@@ -360,8 +542,8 @@ const Reports: React.FC = () => {
                                     }}>
                                         <div className="donut-hole"></div>
                                         <div className="donut-label">
-                                            <span style={{ fontWeight: 600, fontSize: '18px', color: '#1A202C' }}>{Math.round(advanced?.paymentMethodSplit.online || 0)}%</span>
-                                            <span style={{ fontSize: '11px', color: '#718096' }}>Online</span>
+                                            <span className="donut-percentage">{Math.round(advanced?.paymentMethodSplit.online || 0)}%</span>
+                                            <span className="donut-sublabel">Online</span>
                                         </div>
                                     </div>
                                     <div className="donut-legend">
@@ -406,7 +588,7 @@ const Reports: React.FC = () => {
                                     {topItems.length === 0 ? (
                                         <tr><td colSpan={3} style={{ textAlign: 'center', padding: '24px', color: '#A0AEC0' }}>No sales recorded</td></tr>
                                     ) : (
-                                        topItems.slice(0, 5).map((item, index) => (
+                                        topItems.slice(0, 3).map((item, index) => (
                                             <tr key={index}>
                                                 <td>
                                                     <div className="item-name-cell">
@@ -523,7 +705,7 @@ const Reports: React.FC = () => {
                                     <p className="reports-modal-subtitle">Performance breakdown of all items in your menu</p>
                                 </div>
                                 <button className="reports-modal-close" onClick={() => setShowAllItemsModal(false)}>
-                                    <Info size={20} />
+                                    <X size={20} />
                                 </button>
                             </div>
 

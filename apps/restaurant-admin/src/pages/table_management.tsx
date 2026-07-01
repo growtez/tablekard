@@ -9,8 +9,8 @@ import {
     CheckCircle,
     AlertCircle,
     Plus,
-    Pen,
-    Trash,
+    Edit3,
+    Trash2,
     X,
     Save,
     Users
@@ -331,14 +331,14 @@ const TableManagementPage: React.FC = () => {
                                                 onClick={() => handleEditTable(table)}
                                                 title="Edit table"
                                             >
-                                                <Pen size={14} />
+                                                <Edit3 size={14} />
                                             </button>
                                             <button
                                                 className="tm-icon-btn delete"
                                                 onClick={() => handleDeleteTable(table)}
                                                 title="Delete table"
                                             >
-                                                <Trash size={14} />
+                                                <Trash2 size={14} />
                                             </button>
                                         </div>
                                     </div>
@@ -577,7 +577,7 @@ const TableManagementPage: React.FC = () => {
                                 onClick={handleConfirmDelete}
                                 disabled={submitting}
                             >
-                                <Trash size={16} />
+                                <Trash2 size={16} />
                                 {submitting ? 'Deleting...' : 'Delete Table'}
                             </button>
                         </div>
