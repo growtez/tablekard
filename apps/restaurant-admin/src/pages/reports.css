@@ -422,6 +422,15 @@
     align-items: center;
     z-index: 2;
 }
+.donut-percentage {
+    font-weight: 600;
+    font-size: 18px;
+    color: #1A202C;
+}
+.donut-sublabel {
+    font-size: 11px;
+    color: #718096;
+}
 .donut-legend {
     display: flex;
     flex-direction: column;
@@ -1016,6 +1025,7 @@
 [data-theme="dark"] .feedback-name,
 [data-theme="dark"] .item-sold-count,
 [data-theme="dark"] .item-revenue-text,
+[data-theme="dark"] .donut-percentage,
 [data-theme="dark"] .legend-item { color: var(--tk-text); }
 
 [data-theme="dark"] .metric-title,
@@ -1026,6 +1036,7 @@
 [data-theme="dark"] .feedback-comment,
 [data-theme="dark"] .reports-loading-text,
 [data-theme="dark"] .reports-modal-subtitle,
+[data-theme="dark"] .donut-sublabel,
 [data-theme="dark"] .heatmap-day-label { color: var(--tk-text-secondary); }
 
 [data-theme="dark"] .heatmap-hour-label { color: var(--tk-text-muted); }
@@ -1064,3 +1075,77 @@
 
 [data-theme="dark"] .view-all-btn { background-color: var(--tk-bg-elevated); color: var(--tk-text-secondary); border-color: var(--tk-border); }
 [data-theme="dark"] .view-all-btn:hover { background-color: var(--tk-bg-hover); color: var(--tk-text); }
+
+/* ── Pager Date Filter Styles ──────────────────────────────── */
+.pager-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: #FFFFFF;
+  padding: 8px 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s;
+  border: 1px solid #E2E8F0;
+}
+
+.pager-filter-group:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.pager-arrow-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid #E2E8F0;
+  background-color: #F7FAFC;
+  color: #4A5568;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.pager-arrow-btn:hover:not(:disabled) {
+  background-color: #EDF2F7;
+  color: #1A202C;
+  border-color: #CBD5E0;
+}
+
+.pager-arrow-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pager-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2D3748;
+  font-family: 'Outfit', sans-serif;
+  min-width: 140px;
+  text-align: center;
+  user-select: none;
+}
+
+/* Dark Mode Pager styles */
+[data-theme="dark"] .pager-filter-group {
+  background-color: var(--tk-bg-card);
+  border-color: var(--tk-border);
+}
+
+[data-theme="dark"] .pager-arrow-btn {
+  background-color: var(--tk-bg-elevated);
+  border-color: var(--tk-border);
+  color: var(--tk-text);
+}
+
+[data-theme="dark"] .pager-arrow-btn:hover:not(:disabled) {
+  background-color: var(--tk-bg-hover);
+  color: var(--tk-text);
+}
+
+[data-theme="dark"] .pager-label {
+  color: var(--tk-text);
+}

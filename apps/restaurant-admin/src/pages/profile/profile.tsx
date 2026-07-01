@@ -250,7 +250,7 @@ const ProfilePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
   const [isRestaurantEditing, setIsRestaurantEditing] = useState(false);
-  const [editingSection, setEditingSection] = useState<'core' | 'contact' | 'branding' | 'story' | 'payments' | null>(null);
+  const [editingSections, setEditingSections] = useState<Record<string, boolean>>({});
   const [isAdminEditing, setIsAdminEditing] = useState(false);
   const [isRestaurantSaving, setIsRestaurantSaving] = useState(false);
   const [isAdminSaving, setIsAdminSaving] = useState(false);
@@ -693,16 +693,25 @@ const ProfilePage: React.FC = () => {
     setCropType(null);
   };
 
-  const startRestaurantEdit = (section: 'core' | 'contact' | 'branding' | 'story') => {
-    resetRestaurantForm();
+  const startRestaurantEdit = (section: 'core' | 'contact' | 'branding' | 'story' | 'payments') => {
+    const alreadyEditing = Object.values(editingSections).some(Boolean);
+    if (!alreadyEditing) {
+      resetRestaurantForm();
+    }
     setFeedback(null);
-    setEditingSection(section);
+    setEditingSections(prev => ({ ...prev, [section]: true }));
     setIsRestaurantEditing(true);
   };
-  const cancelRestaurantEdit = () => {
-    resetRestaurantForm();
-    setEditingSection(null);
-    setIsRestaurantEditing(false);
+  const cancelRestaurantEdit = (section: 'core' | 'contact' | 'branding' | 'story' | 'payments') => {
+    setEditingSections(prev => {
+      const next = { ...prev, [section]: false };
+      const stillEditing = Object.values(next).some(Boolean);
+      if (!stillEditing) {
+        setIsRestaurantEditing(false);
+        resetRestaurantForm();
+      }
+      return next;
+    });
   };
   const startAdminEdit = () => {
     resetAdminForm();
@@ -715,10 +724,8 @@ const ProfilePage: React.FC = () => {
   };
 
   const handleRestaurantSave = async (
-    event: React.FormEvent<HTMLFormElement>,
+    section: 'core' | 'contact' | 'branding' | 'story'
   ) => {
-    event.preventDefault();
-
     if (!activeRestaurantId || !restaurantForm) {
       return;
     }
@@ -765,8 +772,14 @@ const ProfilePage: React.FC = () => {
 
       setRestaurant(updatedRestaurant);
       setRestaurantForm(createRestaurantFormState(updatedRestaurant));
-      setEditingSection(null);
-      setIsRestaurantEditing(false);
+      setEditingSections(prev => {
+        const next = { ...prev, [section]: false };
+        const stillEditing = Object.values(next).some(Boolean);
+        if (!stillEditing) {
+          setIsRestaurantEditing(false);
+        }
+        return next;
+      });
       setFeedback({
         tone: "success",
         message: "Restaurant information updated successfully.",
@@ -848,20 +861,21 @@ const ProfilePage: React.FC = () => {
 
   const renderRestaurantActions = (section: 'core' | 'contact' | 'branding' | 'story') => (
     <div className="profile-card-actions">
-      {editingSection === section ? (
+      {editingSections[section] ? (
         <>
           <button
             type="button"
             className="profile-secondary-action"
-            onClick={cancelRestaurantEdit}
+            onClick={() => cancelRestaurantEdit(section)}
             disabled={isRestaurantSaving}
           >
             <X size={16} /> Cancel
           </button>
           <button
-            type="submit"
+            type="button"
             className="profile-primary-action"
             disabled={isRestaurantSaving || !restaurantForm}
+            onClick={() => handleRestaurantSave(section)}
           >
             <Save size={16} /> {isRestaurantSaving ? "Saving..." : "Save"}
           </button>
@@ -871,7 +885,7 @@ const ProfilePage: React.FC = () => {
           type="button"
           className="profile-secondary-action"
           onClick={() => startRestaurantEdit(section)}
-          disabled={!restaurant || (editingSection !== null && editingSection !== section)}
+          disabled={!restaurant}
         >
           <Edit3 size={16} /> Edit
         </button>
@@ -942,7 +956,7 @@ const ProfilePage: React.FC = () => {
               </div>
               {renderRestaurantActions("core")}
             </div>
-            {editingSection === "core" ? (
+             {editingSections.core ? (
               <div className="profile-form-grid">
                 <label className="profile-field">
                   <span className="profile-field-label">Restaurant Name</span>
@@ -1007,16 +1021,6 @@ const ProfilePage: React.FC = () => {
                     }
                     placeholder="A short catchy phrase"
                   />
-                </label>
-
-                <label className="profile-field profile-field-span-2" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', border: '1px solid #CBD5E0', borderRadius: '14px', marginTop: '8px' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <span className="profile-field-label">Enable Online Payments</span>
-                    <span className="profile-field-help" style={{ margin: 0 }}>Allow customers to pay online from their phones</span>
-                  </div>
-                  <div className={`profile-toggle-switch ${restaurantForm.payOnline ? 'active' : ''}`} onClick={() => handleRestaurantFieldChange("payOnline", !restaurantForm.payOnline as any)}>
-                     <div className="profile-toggle-thumb" />
-                  </div>
                 </label>
 
                 <div className="profile-info-item">
@@ -1084,12 +1088,7 @@ const ProfilePage: React.FC = () => {
                   </span>
                 </div>
 
-                <div className="profile-info-item">
-                  <span className="profile-info-label">Online Payments</span>
-                  <span className="profile-info-value">
-                    {(restaurant as any)?.pay_online === false ? "Disabled" : "Enabled"}
-                  </span>
-                </div>
+
 
                 <div className="profile-info-item">
                   <span className="profile-info-label">Status</span>
@@ -1129,7 +1128,7 @@ const ProfilePage: React.FC = () => {
               </div>
               {renderRestaurantActions("contact")}
             </div>
-            {editingSection === "contact" ? (
+             {editingSections.contact ? (
               <div className="profile-form-grid">
                 <div
                   className="profile-field-span-2"
@@ -1428,7 +1427,7 @@ const ProfilePage: React.FC = () => {
             </div>
             {renderRestaurantActions("branding")}
           </div>
-          {editingSection === "branding" ? (
+           {editingSections.branding ? (
             <div className="profile-form-grid">
               <div className="profile-field">
                 <span className="profile-field-label">Logo</span>
@@ -1751,7 +1750,7 @@ const ProfilePage: React.FC = () => {
             </div>
             {renderRestaurantActions("story")}
           </div>
-          {editingSection === "story" ? (
+           {editingSections.story ? (
             <div className="profile-form-grid">
               <label className="profile-field">
                 <span className="profile-field-label">Opening Date</span>
@@ -1901,13 +1900,13 @@ const ProfilePage: React.FC = () => {
                 <h3>Restaurant Razorpay</h3>
                 <p>Customer food payments settle directly into this restaurant's own Razorpay account.</p>
               </div>
-              {editingSection === "payments" ? (
+              {editingSections.payments ? (
                 <div style={{ display: "flex", gap: "8px" }}>
                   <button
                     type="button"
                     className="profile-btn profile-btn-secondary"
                     onClick={() => {
-                      setEditingSection(null);
+                      cancelRestaurantEdit("payments");
                       setPaymentForm({
                         razorpayKeyId: paymentSettings.razorpayKeyId,
                         razorpayKeySecret: "",
@@ -1923,15 +1922,28 @@ const ProfilePage: React.FC = () => {
                     className="profile-btn profile-btn-primary"
                     disabled={isPaymentSaving}
                     onClick={async () => {
-                      if (!activeRestaurantId) return;
+                      if (!activeRestaurantId || !restaurantForm) return;
                       setIsPaymentSaving(true);
                       try {
+                        // 1. Update payment settings
                         const updated = await updateRestaurantPaymentSettings(activeRestaurantId, {
                           razorpayKeyId: paymentForm.razorpayKeyId.trim() || null,
                           razorpayKeySecret: paymentForm.razorpayKeySecret.trim() || null,
                           razorpayWebhookSecret: paymentForm.razorpayWebhookSecret.trim() || null,
-                          onlinePaymentsEnabled: paymentForm.onlinePaymentsEnabled,
+                          onlinePaymentsEnabled: restaurantForm.payOnline,
                         });
+
+                        // 2. Update restaurant table's pay_online column
+                        const updatedRestaurant = await updateRestaurantProfile(
+                          activeRestaurantId,
+                          {
+                            pay_online: restaurantForm.payOnline,
+                          }
+                        );
+
+                        setRestaurant(updatedRestaurant);
+                        setRestaurantForm(createRestaurantFormState(updatedRestaurant));
+
                         const ps = {
                           razorpayKeyId: updated.razorpayKeyId ?? "",
                           hasRazorpayKeySecret: updated.hasRazorpayKeySecret,
@@ -1940,7 +1952,7 @@ const ProfilePage: React.FC = () => {
                         };
                         setPaymentSettings(ps);
                         setPaymentForm({ ...paymentForm, razorpayKeySecret: "", razorpayWebhookSecret: "" });
-                        setEditingSection(null);
+                        setEditingSections(prev => ({ ...prev, payments: false }));
                         setFeedback({ tone: "success", message: "Payment settings saved." });
                       } catch (err) {
                         setFeedback({ tone: "error", message: getErrorMessage(err, "Failed to save payment settings.") });
@@ -1956,22 +1968,23 @@ const ProfilePage: React.FC = () => {
                 <button
                   type="button"
                   className="profile-btn profile-btn-secondary"
-                  onClick={() => setEditingSection("payments")}
+                  onClick={() => startRestaurantEdit("payments")}
                 >
                   <Edit3 size={14} /> Edit
                 </button>
               )}
             </div>
 
-            {editingSection === "payments" ? (
+            {editingSections.payments ? (
               <div className="profile-form-grid">
-                <label className="profile-field profile-field-span-2" style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", border: "1px solid #CBD5E0", borderRadius: "8px" }}>
-                  <span className="profile-field-label" style={{ marginBottom: 0 }}>Enable Online Food Payments</span>
-                  <button
-                    type="button"
-                    className={`profile-toggle-switch ${paymentForm.onlinePaymentsEnabled ? "active" : ""}`}
-                    onClick={() => setPaymentForm(f => ({ ...f, onlinePaymentsEnabled: !f.onlinePaymentsEnabled }))}
-                  />
+                <label className="profile-field profile-field-span-2" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', border: '1px solid #CBD5E0', borderRadius: '8px', marginTop: '8px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <span className="profile-field-label">Enable Online Payments</span>
+                    <span className="profile-field-help" style={{ margin: 0 }}>Allow customers to pay online from their phones</span>
+                  </div>
+                  <div className={`profile-toggle-switch ${restaurantForm?.payOnline ? 'active' : ''}`} onClick={() => handleRestaurantFieldChange("payOnline", (!restaurantForm?.payOnline) as any)}>
+                     <div className="profile-toggle-thumb" />
+                  </div>
                 </label>
 
                 <label className="profile-field">
@@ -2013,9 +2026,9 @@ const ProfilePage: React.FC = () => {
             ) : (
               <div className="profile-form-grid">
                 <div className="profile-info-item">
-                  <span className="profile-info-label">Online Food Payments</span>
+                  <span className="profile-info-label">Online Payments</span>
                   <span className="profile-info-value">
-                    {paymentSettings.onlinePaymentsEnabled ? "✅ Enabled" : "❌ Disabled"}
+                    {(restaurant as any)?.pay_online === false ? "❌ Disabled" : "✅ Enabled"}
                   </span>
                 </div>
                 <div className="profile-info-item">
@@ -2394,7 +2407,7 @@ const ProfilePage: React.FC = () => {
 
         <div className="profile-content-grid" style={{ display: "block" }}>
           <form
-            onSubmit={handleRestaurantSave}
+            onSubmit={(e) => e.preventDefault()}
             style={{
               display: activeTab !== "admin" ? "flex" : "none",
               flexDirection: "column",

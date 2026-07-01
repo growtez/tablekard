@@ -324,6 +324,7 @@
     cursor: pointer;
     transition: all 0.2s;
     background-color: #F7FAFC;
+    padding: 0;
 }
 
 .tm-icon-btn.edit {

@@ -734,3 +734,82 @@
 [data-theme="dark"] .ps-pending { background-color: rgba(254, 243, 199, 0.15); color: #FCD34D; }
 [data-theme="dark"] .ps-failed { background-color: rgba(254, 226, 226, 0.15); color: #FCA5A5; }
 [data-theme="dark"] .ps-refunded { background-color: rgba(237, 233, 254, 0.15); color: #C4B5FD; }
+
+/* ── Pager Date Filter Styles ──────────────────────────────── */
+.pager-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: #FFFFFF;
+  padding: 8px 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s;
+  border: 1px solid #E2E8F0;
+}
+
+.pager-filter-group:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.pager-arrow-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid #E2E8F0;
+  background-color: #F7FAFC;
+  color: #4A5568;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.pager-arrow-btn:hover:not(:disabled) {
+  background-color: #EDF2F7;
+  color: #1A202C;
+  border-color: #CBD5E0;
+}
+
+.pager-arrow-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pager-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2D3748;
+  font-family: 'Outfit', sans-serif;
+  min-width: 140px;
+  text-align: center;
+  user-select: none;
+}
+
+/* Dark Mode Pager styles */
+[data-theme="dark"] .pager-filter-group {
+  background-color: var(--tk-bg-card);
+  border-color: var(--tk-border);
+}
+
+[data-theme="dark"] .pager-arrow-btn {
+  background-color: var(--tk-bg-elevated);
+  border-color: var(--tk-border);
+  color: var(--tk-text);
+}
+
+[data-theme="dark"] .pager-arrow-btn:hover:not(:disabled) {
+  background-color: var(--tk-bg-hover);
+  color: var(--tk-text);
+}
+
+[data-theme="dark"] .pager-label {
+  color: var(--tk-text);
+}
+
+[data-theme="dark"] .order-filter-select option {
+  background-color: var(--tk-bg-card);
+  color: var(--tk-text);
+}
