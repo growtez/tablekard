@@ -406,57 +406,61 @@ function OrdersView({ onSignOut }) {
           <span>Loading orders…</span>
         </div>
       ) : (
-        <>
-          {/* ── PREPARING section ─────────────────────────── */}
-          <div className="section-bar section-preparing">PREPARING</div>
-          <div className="orders-container">
-            {preparingOrders.length === 0 ? (
-              <EmptyState message="No orders being prepared" />
-            ) : (
-              preparingOrders.map((order) => (
-                <OrderCard
-                  key={order.id}
-                  id={order.id}
-                  orderNumber={order.order_number}
-                  tableNumber={getTableNumber(order)}
-                  type={order.type}
-                  createdAt={order.created_at}
-                  items={order.order_items ?? []}
-                  status={order.status}
-                  onMarkReady={handleMarkReady}
-                  onPromote={handlePromote}
-                  onCancel={(id) => requestDeny(id, order.order_number)}
-                  onUpdateItemStatus={handleUpdateItemStatus}
-                />
-              ))
-            )}
+        <div className="orders-layout">
+          {/* ── PREPARING panel ───────────────────────────── */}
+          <div className="orders-panel">
+            <div className="section-bar section-preparing">PREPARING</div>
+            <div className="orders-container">
+              {preparingOrders.length === 0 ? (
+                <EmptyState message="No orders being prepared" />
+              ) : (
+                preparingOrders.map((order) => (
+                  <OrderCard
+                    key={order.id}
+                    id={order.id}
+                    orderNumber={order.order_number}
+                    tableNumber={getTableNumber(order)}
+                    type={order.type}
+                    createdAt={order.created_at}
+                    items={order.order_items ?? []}
+                    status={order.status}
+                    onMarkReady={handleMarkReady}
+                    onPromote={handlePromote}
+                    onCancel={(id) => requestDeny(id, order.order_number)}
+                    onUpdateItemStatus={handleUpdateItemStatus}
+                  />
+                ))
+              )}
+            </div>
           </div>
 
-          {/* ── ORDER QUEUE section ───────────────────────── */}
-          <div className="section-bar section-queue">ORDER QUEUE</div>
-          <div className="orders-container">
-            {queueOrders.length === 0 ? (
-              <EmptyState message="No orders in queue" />
-            ) : (
-              queueOrders.map((order) => (
-                <OrderCard
-                  key={order.id}
-                  id={order.id}
-                  orderNumber={order.order_number}
-                  tableNumber={getTableNumber(order)}
-                  type={order.type}
-                  createdAt={order.created_at}
-                  items={order.order_items ?? []}
-                  status={order.status}
-                  onMarkReady={handleMarkReady}
-                  onPromote={handlePromote}
-                  onCancel={(id) => requestDeny(id, order.order_number)}
-                  onUpdateItemStatus={handleUpdateItemStatus}
-                />
-              ))
-            )}
+          {/* ── ORDER QUEUE panel ─────────────────────────── */}
+          <div className="orders-panel">
+            <div className="section-bar section-queue">ORDER QUEUE</div>
+            <div className="orders-container">
+              {queueOrders.length === 0 ? (
+                <EmptyState message="No orders in queue" />
+              ) : (
+                queueOrders.map((order) => (
+                  <OrderCard
+                    key={order.id}
+                    id={order.id}
+                    orderNumber={order.order_number}
+                    tableNumber={getTableNumber(order)}
+                    type={order.type}
+                    createdAt={order.created_at}
+                    items={order.order_items ?? []}
+                    status={order.status}
+                    onMarkReady={handleMarkReady}
+                    onPromote={handlePromote}
+                    onCancel={(id) => requestDeny(id, order.order_number)}
+                    onUpdateItemStatus={handleUpdateItemStatus}
+                  />
+                ))
+              )}
+            </div>
           </div>
-        </>
+        </div>
       )}
 
       {/* Deny confirmation dialog */}
