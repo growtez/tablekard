@@ -69,6 +69,14 @@ export function CartProvider({ children }) {
         );
     };
 
+    const updateSpecialInstructions = (itemId, text) => {
+        setCartItems(prev =>
+            prev.map(item =>
+                item.id === itemId ? { ...item, specialInstructions: text } : item
+            )
+        );
+    };
+
     const getItemQuantity = (itemId) => {
         const item = cartItems.find(i => i.id === itemId);
         return item ? item.quantity : 0;
@@ -89,6 +97,7 @@ export function CartProvider({ children }) {
             removeFromCart,
             deleteFromCart,
             updateQuantity,
+            updateSpecialInstructions,
             getItemQuantity,
             clearCart,
             cartTotal,
