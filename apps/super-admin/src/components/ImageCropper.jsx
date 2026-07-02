@@ -35,7 +35,10 @@ const ImageCropper = ({
       image.src = url;
     });
 
-  const getCroppedImg = async (imageSrc, pixelCrop) => {
+  const getCroppedImg = async (
+    imageSrc,
+    pixelCrop
+  ) => {
     const image = await createImage(imageSrc);
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
@@ -86,7 +89,7 @@ const ImageCropper = ({
       <div className="cropper-modal-container">
         <div className="cropper-modal-header">
           <h3>Crop Image</h3>
-          <button type="button" className="cropper-close-btn" onClick={onCancel}>
+          <button className="cropper-close-btn" onClick={onCancel}>
             <X size={20} />
           </button>
         </div>
@@ -118,10 +121,10 @@ const ImageCropper = ({
             />
           </div>
           <div className="cropper-actions">
-            <button type="button" className="cropper-btn-cancel" onClick={onCancel}>
+            <button className="cropper-btn-cancel" onClick={onCancel}>
               Cancel
             </button>
-            <button type="button" className="cropper-btn-done" onClick={handleDone}>
+            <button className="cropper-btn-done" onClick={handleDone}>
               <Check size={18} />
               Done
             </button>

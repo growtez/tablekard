@@ -985,13 +985,18 @@ export interface RevenueRecord {
     updatedAt: string;
 }
 
+const toISTDateString = (d: Date): string => {
+    const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+    return new Date(d.getTime() + IST_OFFSET_MS).toISOString().split('T')[0];
+};
+
 export const getRevenueData = async (
     restaurantId: string,
     startDate?: Date,
     endDate?: Date
 ): Promise<RevenueRecord[]> => {
-    const startStr = startDate ? startDate.toISOString().split('T')[0] : '1970-01-01';
-    const endStr = endDate ? endDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+    const startStr = startDate ? toISTDateString(startDate) : '1970-01-01';
+    const endStr = endDate ? toISTDateString(endDate) : toISTDateString(new Date());
 
     const { data, error } = await db
         .from('revenue')
@@ -1030,44 +1035,52 @@ export const getAnalyticsSummary = async (
     startDate: Date,
     endDate: Date
 ): Promise<AnalyticsSummary> => {
-    // 1. Fetch current period data from revenue table
-    const startStr = startDate.toISOString().split('T')[0];
-    const endStr = endDate.toISOString().split('T')[0];
+    // 1. Fetch current period data from orders table
+    const startStr = startDate.toISOString();
+    const endStr = endDate.toISOString();
 
-    const { data, error } = await db
-        .from('revenue')
-        .select('total_revenue, total_orders')
+    const { data: currentOrders, error } = await db
+        .from('orders')
+        .select('total, payment_status')
         .eq('restaurant_id', restaurantId)
-        .gte('revenue_date', startStr)
-        .lte('revenue_date', endStr);
+        .gte('created_at', startStr)
+        .lte('created_at', endStr);
 
     if (error) throw error;
 
-    const totalRevenue = (data || []).reduce((sum: number, row: any) => sum + Number(row.total_revenue), 0);
-    const totalOrders = (data || []).reduce((sum: number, row: any) => sum + Number(row.total_orders), 0);
+    const totalOrders = (currentOrders || []).filter((o: any) => o.payment_status?.toLowerCase() === 'paid').length;
+    const totalRevenue = (currentOrders || []).reduce((sum: number, o: any) => {
+        const ps = o.payment_status?.toLowerCase();
+        if (ps === 'failed' || ps === 'refunded') return sum;
+        return sum + Number(o.total || 0);
+    }, 0);
 
     // 2. Fetch previous period for comparison
     const diff = endDate.getTime() - startDate.getTime();
     const prevStartDate = new Date(startDate.getTime() - diff - 86400000);
     const prevEndDate = new Date(startDate.getTime() - 86400000);
 
-    const prevStartStr = prevStartDate.toISOString().split('T')[0];
-    const prevEndStr = prevEndDate.toISOString().split('T')[0];
+    const prevStartStr = prevStartDate.toISOString();
+    const prevEndStr = prevEndDate.toISOString();
 
-    const { data: prevData, error: prevError } = await db
-        .from('revenue')
-        .select('total_revenue, total_orders')
+    const { data: prevOrders, error: prevError } = await db
+        .from('orders')
+        .select('total, payment_status')
         .eq('restaurant_id', restaurantId)
-        .gte('revenue_date', prevStartStr)
-        .lte('revenue_date', prevEndStr);
+        .gte('created_at', prevStartStr)
+        .lte('created_at', prevEndStr);
 
     if (prevError) throw prevError;
 
-    const prevRevenue = (prevData || []).reduce((sum: number, row: any) => sum + Number(row.total_revenue), 0);
-    const prevOrders = (prevData || []).reduce((sum: number, row: any) => sum + Number(row.total_orders), 0);
+    const prevTotalOrders = (prevOrders || []).filter((o: any) => o.payment_status?.toLowerCase() === 'paid').length;
+    const prevRevenue = (prevOrders || []).reduce((sum: number, o: any) => {
+        const ps = o.payment_status?.toLowerCase();
+        if (ps === 'failed' || ps === 'refunded') return sum;
+        return sum + Number(o.total || 0);
+    }, 0);
 
     const revenueChange = prevRevenue === 0 ? (totalRevenue > 0 ? 100 : 0) : ((totalRevenue - prevRevenue) / prevRevenue) * 100;
-    const ordersChange = prevOrders === 0 ? (totalOrders > 0 ? 100 : 0) : ((totalOrders - prevOrders) / prevOrders) * 100;
+    const ordersChange = prevTotalOrders === 0 ? (totalOrders > 0 ? 100 : 0) : ((totalOrders - prevTotalOrders) / prevTotalOrders) * 100;
 
     return {
         totalRevenue,
