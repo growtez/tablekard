@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Download, Calendar, CreditCard, CheckCircle, X, Search, User, Hash, Clock, Utensils, ChevronLeft, ChevronRight } from 'lucide-react';
-import './payment.css';
 import Sidebar from '../components/sidebar';
 import { useAuth } from '../context/AuthContext';
 import { updatePaymentStatus } from '../services/supabaseService';
@@ -183,19 +182,19 @@ const Payment: React.FC = () => {
   };
 
   return (
-    <div className="dashboard-container">
+    <div className="flex min-h-screen bg-tk-bg relative font-['Outfit',sans-serif]">
       <Sidebar />
 
-      <div className="main-content">
-        <div className="header">
-          <h1 className="page-title">Payments & Billing</h1>
-          <div className="header-right">
-            <div className="search-bar">
+      <div className="flex-1 p-5 overflow-y-auto min-h-screen transition-all duration-300 ml-[240px] [.sidebar-collapsed_&]:ml-[80px] max-md:!ml-0 max-md:!p-4 max-md:!pt-[72px] bg-tk-bg-surface md:pl-8">
+        <div className="flex justify-between items-center mb-8 max-md:flex-col max-md:items-start max-md:gap-4 max-md:mt-4">
+          <h1 className="text-2xl font-semibold text-[#1A202C] m-0 max-md:ml-16">Payments & Billing</h1>
+          <div className="flex items-center gap-4 max-md:w-full">
+            <div className="flex items-center gap-3 bg-white px-5 py-2.5 rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.04),inset_0_1px_2px_rgba(0,0,0,0.02)] w-[280px] max-md:w-full">
               <Search size={18} color="#718096" />
               <input
                 type="text"
                 placeholder="Search by Order ID or Name..."
-                className="search-input"
+                className="border-none outline-none text-sm text-[#1A202C] bg-transparent w-full placeholder:text-[#A0AEC0]"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -203,44 +202,44 @@ const Payment: React.FC = () => {
           </div>
         </div>
 
-        <div className="revenue-section-header" style={{ marginBottom: '16px', marginTop: '24px' }}>
-          <h2 className="section-title" style={{ margin: 0 }}>Revenue Overview</h2>
+        <div className="mb-4 mt-6">
+          <h2 className="text-base font-semibold text-[#1A202C] m-0">Revenue Overview</h2>
         </div>
 
-        <div className="payment-revenue-grid">
-          <div className="revenue-card">
-            <div className="card-top-bar card-top-bar-green"></div>
-            <h3 className="card-title">Total Revenue</h3>
-            <div className="revenue-amount">₹ {loading ? '...' : filteredRevenue.totalRevenue.toLocaleString()}</div>
+        <div className="grid grid-cols-2 gap-6 mb-8 max-xl:grid-cols-1">
+          <div className="bg-white p-6 rounded-3xl shadow-[0_4px_16px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.02)] relative overflow-hidden transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)]">
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#8B3A1E] to-[#D4816B]"></div>
+            <h3 className="text-sm text-[#718096] mb-3 font-medium mt-1">Total Revenue</h3>
+            <div className="text-4xl font-bold text-[#1A202C] mb-3">₹ {loading ? '...' : filteredRevenue.totalRevenue.toLocaleString()}</div>
           </div>
 
-          <div className="revenue-card">
-            <div className="card-top-bar card-top-bar-blue"></div>
-            <h3 className="card-title">Total Orders</h3>
-            <div className="revenue-amount">{loading ? '...' : filteredRevenue.totalOrders.toLocaleString()}</div>
+          <div className="bg-white p-6 rounded-3xl shadow-[0_4px_16px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.02)] relative overflow-hidden transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)]">
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#5C7A7A] to-[#8AABAB]"></div>
+            <h3 className="text-sm text-[#718096] mb-3 font-medium mt-1">Total Orders</h3>
+            <div className="text-4xl font-bold text-[#1A202C] mb-3">{loading ? '...' : filteredRevenue.totalOrders.toLocaleString()}</div>
           </div>
         </div>
 
-        <div className="filter-section">
-          <div className="filter-buttons">
-            <div className="filter-group">
+        <div className="flex justify-between items-center mb-8 gap-4 flex-wrap max-xl:flex-col max-xl:items-stretch">
+          <div className="flex gap-3 flex-wrap max-xl:w-full max-md:flex-col">
+            <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] max-xl:flex-1 max-xl:min-w-[150px] max-md:w-full">
               <Calendar size={16} color="#718096" />
               <select
-                className="filter-select"
+                className="border-none outline-none text-sm font-medium text-[#1A202C] bg-transparent cursor-pointer min-w-[120px] max-md:w-full"
                 value={selectedDateRange}
                 onChange={(e) => setSelectedDateRange(e.target.value)}
               >
-                <option value="today">Today</option>
-                <option value="yesterday">Yesterday</option>
-                <option value="week">Week</option>
-                <option value="month">Month</option>
-                <option value="all">All</option>
-                <option value="custom">Custom Range</option>
+                <option value="today" className="p-2">Today</option>
+                <option value="yesterday" className="p-2">Yesterday</option>
+                <option value="week" className="p-2">Week</option>
+                <option value="month" className="p-2">Month</option>
+                <option value="all" className="p-2">All</option>
+                <option value="custom" className="p-2">Custom Range</option>
               </select>
               {selectedDateRange === 'custom' && (
                 <input
                   type="date"
-                  className="custom-date-picker"
+                  className="border border-[#E2E8F0] rounded-lg px-3 py-1.5 text-sm text-[#1A202C] outline-none ml-2 bg-[#F7FAFC] transition-all duration-200 focus:border-tk-burgundy focus:shadow-[0_0_0_2px_rgba(79,117,92,0.1)]"
                   value={customDate}
                   onChange={(e) => setCustomDate(e.target.value)}
                 />
@@ -248,19 +247,19 @@ const Payment: React.FC = () => {
             </div>
 
             {selectedDateRange === 'week' && (
-              <div className="pager-filter-group">
+              <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all duration-200 border border-[#E2E8F0] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)]">
                 <button
                   type="button"
-                  className="pager-arrow-btn"
+                  className="flex items-center justify-center w-7 h-7 rounded-md border border-[#E2E8F0] bg-[#F7FAFC] text-[#4A5568] cursor-pointer transition-all duration-200 p-0 hover:not-disabled:bg-[#EDF2F7] hover:not-disabled:text-[#1A202C] hover:not-disabled:border-[#CBD5E0] disabled:opacity-40 disabled:cursor-not-allowed"
                   onClick={() => setWeekOffset(prev => prev + 1)}
                   title="Previous Week"
                 >
                   <ChevronLeft size={16} />
                 </button>
-                <span className="pager-label">{getWeekDateRange(weekOffset)}</span>
+                <span className="text-sm font-semibold text-[#2D3748] min-w-[140px] text-center select-none">{getWeekDateRange(weekOffset)}</span>
                 <button
                   type="button"
-                  className="pager-arrow-btn"
+                  className="flex items-center justify-center w-7 h-7 rounded-md border border-[#E2E8F0] bg-[#F7FAFC] text-[#4A5568] cursor-pointer transition-all duration-200 p-0 hover:not-disabled:bg-[#EDF2F7] hover:not-disabled:text-[#1A202C] hover:not-disabled:border-[#CBD5E0] disabled:opacity-40 disabled:cursor-not-allowed"
                   onClick={() => setWeekOffset(prev => Math.max(0, prev - 1))}
                   disabled={weekOffset === 0}
                   title="Next Week"
@@ -271,19 +270,19 @@ const Payment: React.FC = () => {
             )}
 
             {selectedDateRange === 'month' && (
-              <div className="pager-filter-group">
+              <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all duration-200 border border-[#E2E8F0] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)]">
                 <button
                   type="button"
-                  className="pager-arrow-btn"
+                  className="flex items-center justify-center w-7 h-7 rounded-md border border-[#E2E8F0] bg-[#F7FAFC] text-[#4A5568] cursor-pointer transition-all duration-200 p-0 hover:not-disabled:bg-[#EDF2F7] hover:not-disabled:text-[#1A202C] hover:not-disabled:border-[#CBD5E0] disabled:opacity-40 disabled:cursor-not-allowed"
                   onClick={() => setMonthOffset(prev => prev + 1)}
                   title="Previous Month"
                 >
                   <ChevronLeft size={16} />
                 </button>
-                <span className="pager-label">{getMonthLabel(monthOffset)}</span>
+                <span className="text-sm font-semibold text-[#2D3748] min-w-[140px] text-center select-none">{getMonthLabel(monthOffset)}</span>
                 <button
                   type="button"
-                  className="pager-arrow-btn"
+                  className="flex items-center justify-center w-7 h-7 rounded-md border border-[#E2E8F0] bg-[#F7FAFC] text-[#4A5568] cursor-pointer transition-all duration-200 p-0 hover:not-disabled:bg-[#EDF2F7] hover:not-disabled:text-[#1A202C] hover:not-disabled:border-[#CBD5E0] disabled:opacity-40 disabled:cursor-not-allowed"
                   onClick={() => setMonthOffset(prev => Math.max(0, prev - 1))}
                   disabled={monthOffset === 0}
                   title="Next Month"
@@ -293,95 +292,94 @@ const Payment: React.FC = () => {
               </div>
             )}
 
-            <div className="filter-group">
+            <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] max-xl:flex-1 max-xl:min-w-[150px] max-md:w-full">
               <CreditCard size={16} color="#718096" />
               <select
-                className="filter-select"
+                className="border-none outline-none text-sm font-medium text-[#1A202C] bg-transparent cursor-pointer min-w-[120px] max-md:w-full"
                 value={selectedPaymentMethod}
                 onChange={(e) => setSelectedPaymentMethod(e.target.value)}
               >
-                <option value="all">All Methods</option>
-                <option value="Cash">Cash</option>
-                <option value="Online">Online</option>
+                <option value="all" className="p-2">All Methods</option>
+                <option value="Cash" className="p-2">Cash</option>
+                <option value="Online" className="p-2">Online</option>
               </select>
             </div>
 
-            <div className="filter-group">
+            <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] max-xl:flex-1 max-xl:min-w-[150px] max-md:w-full">
               <CheckCircle size={16} color="#718096" />
               <select
-                className="filter-select"
+                className="border-none outline-none text-sm font-medium text-[#1A202C] bg-transparent cursor-pointer min-w-[120px] max-md:w-full"
                 value={selectedPaymentStatus}
                 onChange={(e) => setSelectedPaymentStatus(e.target.value)}
               >
-                <option value="all">All Status</option>
-                <option value="Paid">Paid</option>
-                <option value="Pending">Pending</option>
-                <option value="Failed">Failed</option>
-                <option value="Refunded">Refunded</option>
+                <option value="all" className="p-2">All Status</option>
+                <option value="Paid" className="p-2">Paid</option>
+                <option value="Pending" className="p-2">Pending</option>
+                <option value="Failed" className="p-2">Failed</option>
+                <option value="Refunded" className="p-2">Refunded</option>
               </select>
             </div>
           </div>
 
-          <button className="export-btn" onClick={handleExportReport}>
+          <button className="flex items-center justify-center gap-2 px-6 py-2.5 bg-tk-burgundy text-white border-none rounded-xl text-sm font-semibold cursor-pointer transition-all duration-300 shadow-[0_4px_12px_rgba(139,58,30,0.3)] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(139,58,30,0.4)] hover:bg-[#6B2A15] max-xl:w-full" onClick={handleExportReport}>
             <Download size={16} />
             <span>Export Report</span>
           </button>
         </div>
 
-        <div className="table-card">
-          <div className="table-header">
-            <h2 className="table-title">Payments Table</h2>
+        <div className="bg-white p-6 rounded-3xl shadow-[0_4px_16px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.02)] max-md:overflow-visible">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-lg font-semibold text-[#1A202C] m-0">Payments Table</h2>
           </div>
 
-          <div className="table-wrapper" style={{ overflowX: 'auto' }}>
-            <table className="orders-table">
-              <thead>
-                <tr>
-                  <th>Order ID</th>
-                  <th>Customer Name</th>
-                  <th>Date & Time</th>
-                  <th>Payment Method</th>
-                  <th>Payment Status</th>
-                  <th>Amount</th>
+          <div className="overflow-x-auto">
+            <table className="w-full border-separate border-spacing-y-2 max-md:block max-md:min-w-full">
+              <thead className="max-md:hidden">
+                <tr className="border-b-2 border-[#E2E8F0]">
+                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-[#718096] border-b-2 border-[#E2E8F0] whitespace-nowrap">Order ID</th>
+                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-[#718096] border-b-2 border-[#E2E8F0] whitespace-nowrap">Customer Name</th>
+                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-[#718096] border-b-2 border-[#E2E8F0] whitespace-nowrap">Date & Time</th>
+                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-[#718096] border-b-2 border-[#E2E8F0] whitespace-nowrap">Payment Method</th>
+                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-[#718096] border-b-2 border-[#E2E8F0] whitespace-nowrap">Payment Status</th>
+                  <th className="text-left px-4 py-3 text-[13px] font-semibold text-[#718096] border-b-2 border-[#E2E8F0] whitespace-nowrap">Amount</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="max-md:block max-md:w-full">
                 {loading ? (
-                  <tr>
-                    <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>
+                  <tr className="max-md:block max-md:w-full">
+                    <td colSpan={6} className="text-center p-8 text-[#A0AEC0] max-md:block max-md:w-full">
                       Loading transactions...
                     </td>
                   </tr>
                 ) : filteredTransactions.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>
+                  <tr className="max-md:block max-md:w-full">
+                    <td colSpan={6} className="text-center p-8 text-[#A0AEC0] max-md:block max-md:w-full">
                       No transactions found matching the selected filters
                     </td>
                   </tr>
                 ) : (
                   filteredTransactions.slice(0, visibleCount).map((transaction) => (
-                    <tr key={transaction.id} onClick={() => handleView(transaction.id)}>
-                      <td data-label="Order ID">
-                        <div className="order-id-cell">{transaction.orderNumber}</div>
+                    <tr key={transaction.id} onClick={() => handleView(transaction.id)} className="transition-colors duration-200 hover:bg-[#F7FAFC] cursor-pointer max-md:block max-md:w-full">
+                      <td data-label="Order ID" className="p-4 text-sm text-[#1A202C] max-md:block max-md:w-full">
+                        <div className="font-semibold text-[#1A202C] text-sm">{transaction.orderNumber}</div>
                       </td>
-                      <td data-label="Customer Name">
-                        <div className="customer-name-cell">{transaction.customerName}</div>
+                      <td data-label="Customer Name" className="p-4 text-sm text-[#1A202C] max-md:block max-md:w-full">
+                        <div className="text-[#1A202C] text-sm font-medium">{transaction.customerName}</div>
                       </td>
-                      <td data-label="Date & Time">
-                        <div className="datetime-cell">{transaction.dateTime}</div>
+                      <td data-label="Date & Time" className="p-4 text-sm text-[#1A202C] max-md:block max-md:w-full">
+                        <div className="text-[#1A202C] text-[13px]">{transaction.dateTime}</div>
                       </td>
-                      <td data-label="Payment Method">
-                        <span className={`method-badge method-${transaction.paymentMethod.toLowerCase()}`}>
+                      <td data-label="Payment Method" className="p-4 text-sm text-[#1A202C] max-md:block max-md:w-full">
+                        <span className={`inline-block px-3.5 py-1.5 rounded-xl text-xs font-semibold ${transaction.paymentMethod.toLowerCase() === 'cash' ? 'bg-[#FED7D7] text-[#742A2A]' : 'bg-[#EBF8FF] text-[#2B6CB0]'}`}>
                           {transaction.paymentMethod}
                         </span>
                       </td>
-                      <td data-label="Payment Status" onClick={(e) => e.stopPropagation()}>
+                      <td data-label="Payment Status" onClick={(e) => e.stopPropagation()} className="p-4 text-sm text-[#1A202C] max-md:block max-md:w-full">
                         <select
-                          className={`payment-status-pill status-${transaction.statusColor}`}
+                          className={`inline-block px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap cursor-pointer outline-none ${transaction.statusColor === 'paid' ? 'bg-[#C6F6D5] text-[#22543D]' : transaction.statusColor === 'pending' ? 'bg-[#FEEA9A] text-[#744210]' : transaction.statusColor === 'failed' ? 'bg-[#FED7D7] text-[#742A2A]' : 'bg-[#E9D8FD] text-[#553C9A]'}`}
                           value={transaction.paymentStatus}
                           onChange={(e) => handleStatusChange(transaction.id, e.target.value)}
                           title="Change payment status"
-                          style={{ cursor: 'pointer', outline: 'none' }}
                         >
                           <option value="Paid">Paid</option>
                           <option value="Pending">Pending</option>
@@ -389,15 +387,15 @@ const Payment: React.FC = () => {
                           <option value="Refunded">Refunded</option>
                         </select>
                       </td>
-                      <td data-label="Amount">
-                        <div className="amount-cell">₹{transaction.amount.toLocaleString()}</div>
+                      <td data-label="Amount" className="p-4 text-sm text-[#1A202C] max-md:block max-md:w-full">
+                        <div className="font-bold text-tk-burgundy text-[15px]">₹{transaction.amount.toLocaleString()}</div>
                       </td>
                     </tr>
                   ))
                 )}
                 {visibleCount < filteredTransactions.length && (
-                  <tr ref={loadMoreRef}>
-                    <td colSpan={6} style={{ textAlign: 'center', padding: '24px', color: '#718096', fontSize: '13px', fontFamily: "'Outfit', sans-serif" }}>
+                  <tr ref={loadMoreRef} className="max-md:block max-md:w-full">
+                    <td colSpan={6} className="text-center p-6 text-[#718096] text-[13px] max-md:block max-md:w-full">
                       Loading more transactions...
                     </td>
                   </tr>
@@ -409,84 +407,84 @@ const Payment: React.FC = () => {
 
         {/* Transaction Details Modal */}
         {isModalOpen && selectedTransaction && (
-          <div className="modal-overlay" onClick={closeModal}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
-                <h3 className="modal-title">Transaction Detail</h3>
-                <button className="modal-close-btn" onClick={closeModal}>
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[1000] p-5" onClick={closeModal}>
+            <div className="bg-white rounded-3xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] max-w-[900px] w-[95%] max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="flex justify-between items-center p-6 sm:px-8 sm:py-6 border-b border-[#E2E8F0]">
+                <h3 className="text-xl font-semibold text-[#1A202C] m-0">Transaction Detail</h3>
+                <button className="bg-transparent border-none cursor-pointer text-[#718096] transition-colors duration-200 p-1 rounded hover:text-[#2D3748] hover:bg-[#F7FAFC]" onClick={closeModal}>
                   <X size={20} />
                 </button>
               </div>
 
-              <div className="modal-body">
-                <div className="transaction-info-grid">
-                  <div className="info-card">
-                    <div className="info-icon"><Hash size={18} /></div>
-                    <div className="info-content">
-                      <span className="info-label">Order ID</span>
-                      <span className="info-value">{selectedTransaction.orderNumber}</span>
+              <div className="p-8">
+                <div className="grid grid-cols-2 gap-4 mb-8 max-sm:grid-cols-1">
+                  <div className="flex items-center gap-4 bg-[#F7FAFC] p-4 rounded-xl transition-all duration-200 hover:bg-[#EDF2F7] hover:-translate-y-0.5">
+                    <div className="flex items-center justify-center w-10 h-10 bg-white text-tk-burgundy rounded-lg shadow-[0_2px_6px_rgba(0,0,0,0.04)]"><Hash size={18} /></div>
+                    <div className="flex flex-col">
+                      <span className="text-[11px] text-[#718096] font-semibold uppercase tracking-wider mb-0.5">Order ID</span>
+                      <span className="text-sm font-semibold text-[#1A202C]">{selectedTransaction.orderNumber}</span>
                     </div>
                   </div>
-                  <div className="info-card">
-                    <div className="info-icon"><User size={18} /></div>
-                    <div className="info-content">
-                      <span className="info-label">Customer</span>
-                      <span className="info-value">{selectedTransaction.customerName}</span>
+                  <div className="flex items-center gap-4 bg-[#F7FAFC] p-4 rounded-xl transition-all duration-200 hover:bg-[#EDF2F7] hover:-translate-y-0.5">
+                    <div className="flex items-center justify-center w-10 h-10 bg-white text-tk-burgundy rounded-lg shadow-[0_2px_6px_rgba(0,0,0,0.04)]"><User size={18} /></div>
+                    <div className="flex flex-col">
+                      <span className="text-[11px] text-[#718096] font-semibold uppercase tracking-wider mb-0.5">Customer</span>
+                      <span className="text-sm font-semibold text-[#1A202C]">{selectedTransaction.customerName}</span>
                     </div>
                   </div>
-                  <div className="info-card">
-                    <div className="info-icon"><Utensils size={18} /></div>
-                    <div className="info-content">
-                      <span className="info-label">Table No</span>
-                      <span className="info-value">{selectedTransaction.tableNo}</span>
+                  <div className="flex items-center gap-4 bg-[#F7FAFC] p-4 rounded-xl transition-all duration-200 hover:bg-[#EDF2F7] hover:-translate-y-0.5">
+                    <div className="flex items-center justify-center w-10 h-10 bg-white text-tk-burgundy rounded-lg shadow-[0_2px_6px_rgba(0,0,0,0.04)]"><Utensils size={18} /></div>
+                    <div className="flex flex-col">
+                      <span className="text-[11px] text-[#718096] font-semibold uppercase tracking-wider mb-0.5">Table No</span>
+                      <span className="text-sm font-semibold text-[#1A202C]">{selectedTransaction.tableNo}</span>
                     </div>
                   </div>
-                  <div className="info-card">
-                    <div className="info-icon"><Clock size={18} /></div>
-                    <div className="info-content">
-                      <span className="info-label">Date & Time</span>
-                      <span className="info-value">{selectedTransaction.dateTime}</span>
+                  <div className="flex items-center gap-4 bg-[#F7FAFC] p-4 rounded-xl transition-all duration-200 hover:bg-[#EDF2F7] hover:-translate-y-0.5">
+                    <div className="flex items-center justify-center w-10 h-10 bg-white text-tk-burgundy rounded-lg shadow-[0_2px_6px_rgba(0,0,0,0.04)]"><Clock size={18} /></div>
+                    <div className="flex flex-col">
+                      <span className="text-[11px] text-[#718096] font-semibold uppercase tracking-wider mb-0.5">Date & Time</span>
+                      <span className="text-sm font-semibold text-[#1A202C]">{selectedTransaction.dateTime}</span>
                     </div>
                   </div>
-                  <div className="info-card">
-                    <div className="info-icon"><CreditCard size={18} /></div>
-                    <div className="info-content">
-                      <span className="info-label">Method</span>
-                      <span className={`method-badge method-${selectedTransaction.paymentMethod.toLowerCase()}`}>
+                  <div className="flex items-center gap-4 bg-[#F7FAFC] p-4 rounded-xl transition-all duration-200 hover:bg-[#EDF2F7] hover:-translate-y-0.5">
+                    <div className="flex items-center justify-center w-10 h-10 bg-white text-tk-burgundy rounded-lg shadow-[0_2px_6px_rgba(0,0,0,0.04)]"><CreditCard size={18} /></div>
+                    <div className="flex flex-col">
+                      <span className="text-[11px] text-[#718096] font-semibold uppercase tracking-wider mb-0.5">Method</span>
+                      <span className={`inline-block px-3.5 py-1.5 rounded-xl text-xs font-semibold mt-1 w-max ${selectedTransaction.paymentMethod.toLowerCase() === 'cash' ? 'bg-[#FED7D7] text-[#742A2A]' : 'bg-[#EBF8FF] text-[#2B6CB0]'}`}>
                         {selectedTransaction.paymentMethod}
                       </span>
                     </div>
                   </div>
-                  <div className="info-card">
-                    <div className="info-icon"><CheckCircle size={18} /></div>
-                    <div className="info-content">
-                      <span className="info-label">Status</span>
-                      <span className={`payment-status-pill status-${selectedTransaction.statusColor}`}>
+                  <div className="flex items-center gap-4 bg-[#F7FAFC] p-4 rounded-xl transition-all duration-200 hover:bg-[#EDF2F7] hover:-translate-y-0.5">
+                    <div className="flex items-center justify-center w-10 h-10 bg-white text-tk-burgundy rounded-lg shadow-[0_2px_6px_rgba(0,0,0,0.04)]"><CheckCircle size={18} /></div>
+                    <div className="flex flex-col">
+                      <span className="text-[11px] text-[#718096] font-semibold uppercase tracking-wider mb-0.5">Status</span>
+                      <span className={`inline-block px-3.5 py-1.5 rounded-xl text-xs font-semibold mt-1 w-max ${selectedTransaction.statusColor === 'paid' ? 'bg-[#C6F6D5] text-[#22543D]' : selectedTransaction.statusColor === 'pending' ? 'bg-[#FEEA9A] text-[#744210]' : selectedTransaction.statusColor === 'failed' ? 'bg-[#FED7D7] text-[#742A2A]' : 'bg-[#E9D8FD] text-[#553C9A]'}`}>
                         {selectedTransaction.paymentStatus}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="order-items-section">
-                  <h4 className="section-title">Order Summary</h4>
-                  <div className="items-container">
-                    <table className="items-table">
+                <div className="mb-6">
+                  <h4 className="text-base font-semibold text-[#1A202C] mb-4">Order Summary</h4>
+                  <div className="bg-white rounded-xl border border-[#E2E8F0] overflow-hidden mb-6">
+                    <table className="w-full border-collapse">
                       <thead>
                         <tr>
-                          <th>Item Name</th>
-                          <th>Qty</th>
-                          <th>Price</th>
-                          <th>Total</th>
+                          <th className="bg-[#F7FAFC] text-left px-4 py-3 text-[11px] font-semibold text-[#718096] uppercase border-b border-[#E2E8F0] tracking-wider">Item Name</th>
+                          <th className="bg-[#F7FAFC] text-left px-4 py-3 text-[11px] font-semibold text-[#718096] uppercase border-b border-[#E2E8F0] tracking-wider">Qty</th>
+                          <th className="bg-[#F7FAFC] text-left px-4 py-3 text-[11px] font-semibold text-[#718096] uppercase border-b border-[#E2E8F0] tracking-wider">Price</th>
+                          <th className="bg-[#F7FAFC] text-left px-4 py-3 text-[11px] font-semibold text-[#718096] uppercase border-b border-[#E2E8F0] tracking-wider">Total</th>
                         </tr>
                       </thead>
                       <tbody>
                         {selectedTransaction.orderItems.map((item, index) => (
-                          <tr key={index}>
-                            <td>{item.name}</td>
-                            <td>{item.quantity}</td>
-                            <td>₹{item.price}</td>
-                            <td>₹{item.price * item.quantity}</td>
+                          <tr key={index} className="[&>td]:border-b [&>td]:border-[#F7FAFC] last:[&>td]:border-none">
+                            <td className="px-4 py-3 text-sm text-[#1A202C]">{item.name}</td>
+                            <td className="px-4 py-3 text-sm text-[#1A202C]">{item.quantity}</td>
+                            <td className="px-4 py-3 text-sm text-[#1A202C]">₹{item.price}</td>
+                            <td className="px-4 py-3 text-sm text-[#1A202C]">₹{item.price * item.quantity}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -494,12 +492,12 @@ const Payment: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="payment-summary-box">
-                  <div className="summary-row">
+                <div className="bg-[#F7FAFC] p-5 rounded-xl border border-[#E2E8F0]">
+                  <div className="flex justify-between mb-2 text-sm text-[#718096] font-medium">
                     <span>Subtotal</span>
                     <span>₹{selectedTransaction.amount.toLocaleString()}</span>
                   </div>
-                  <div className="summary-row grand-total">
+                  <div className="flex justify-between mt-3 pt-3 border-t-2 border-dashed border-[#E2E8F0] text-[#1A202C] font-bold text-lg [&>span:last-child]:text-tk-burgundy">
                     <span>Total Amount</span>
                     <span>₹{selectedTransaction.amount.toLocaleString()}</span>
                   </div>

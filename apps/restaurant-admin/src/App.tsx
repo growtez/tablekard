@@ -17,31 +17,11 @@ const SubscriptionPage = lazy(() => import("./pages/subscription/subscription"))
 
 // Loading fallback for Suspense
 const PageLoader = () => (
-  <div style={{
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: '100vh',
-    background: '#F4F6F9',
-    color: '#1E293B',
-    fontFamily: "'Outfit', sans-serif",
-    fontSize: '16px',
-    fontWeight: 500
-  }}>
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
-      <div style={{ 
-        width: '40px', 
-        height: '40px', 
-        border: '3px solid #E2E8F0', 
-        borderTopColor: '#8B3A1E', 
-        borderRadius: '50%', 
-        animation: 'spin 1s linear infinite' 
-      }}></div>
+  <div className="flex justify-center items-center h-screen bg-[#F4F6F9] text-[#1E293B] font-sans text-base font-medium">
+    <div className="flex flex-col items-center gap-4">
+      <div className="w-10 h-10 rounded-full border-4 border-[#E2E8F0] border-t-tk-burgundy animate-spin"></div>
       <span>Loading...</span>
     </div>
-    <style>{`
-      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    `}</style>
   </div>
 );
 

@@ -6,7 +6,7 @@ import type { SubscriptionPaymentRecord } from '../../services/supabaseService';
 import { processSubscriptionPayment } from '../../services/subscriptionService';
 import type { Restaurant } from '@restaurant-saas/types';
 import { supabase } from '@restaurant-saas/supabase';
-import './subscription.css';
+
 
 // ──────────────────────────────────────────────
 // Plan definitions (display only — pricing enforced server-side)
@@ -202,12 +202,12 @@ const SubscriptionPage: React.FC = () => {
     // ── Loading state ──
     if (isLoading) {
         return (
-            <div className="subscription-container">
+            <div className="flex min-h-screen bg-tk-bg text-[#1A202C]">
                 <Sidebar />
-                <div className="subscription-main">
-                    <div className="subscription-loading">
-                        <div className="subscription-loading-spinner" />
-                        <p>Loading subscription information...</p>
+                <div className="flex-1 p-5 overflow-y-auto min-h-screen transition-all duration-300 ml-[240px] [.sidebar-collapsed_&]:ml-[80px] max-md:!ml-0 max-md:!p-4 max-md:!pt-[72px] bg-[#f7f8fa] rounded-l-[32px] shadow-[-8px_0_24px_rgba(0,0,0,0.12)] dark:bg-tk-bg-surface max-md:rounded-none">
+                    <div className="flex flex-col items-center justify-center h-[60vh] gap-4 text-[#718096] dark:text-tk-text-secondary">
+                        <div className="w-9 h-9 border-3 border-[#E2E8F0] border-t-tk-burgundy rounded-full animate-spin" />
+                        <p className="text-[0.9rem] text-[#718096] dark:text-tk-text-secondary">Loading subscription information...</p>
                     </div>
                 </div>
             </div>
@@ -215,73 +215,73 @@ const SubscriptionPage: React.FC = () => {
     }
 
     return (
-        <div className="subscription-container">
+        <div className="flex min-h-screen bg-tk-bg text-[#1A202C]">
             <Sidebar />
 
-            <div className="subscription-main">
+            <div className="flex-1 p-5 overflow-y-auto min-h-screen transition-all duration-300 ml-[240px] [.sidebar-collapsed_&]:ml-[80px] max-md:!ml-0 max-md:!p-4 max-md:!pt-[72px] bg-[#f7f8fa] rounded-l-[32px] shadow-[-8px_0_24px_rgba(0,0,0,0.12)] dark:bg-tk-bg-surface max-md:rounded-none">
                 {/* Header */}
-                <div className="subscription-header">
-                    <h1>Subscription</h1>
-                    <p>Manage your restaurant's subscription plan and billing.</p>
+                <div className="mb-8">
+                    <h1 className="text-[24px] font-bold text-[#1A202C] m-0 mb-1 dark:text-tk-text">Subscription</h1>
+                    <p className="text-[0.925rem] text-[#718096] m-0 dark:text-tk-text-secondary">Manage your restaurant's subscription plan and billing.</p>
                 </div>
 
                 {/* Feedback */}
                 {feedback && (
-                    <div className={`subscription-banner subscription-banner-${feedback.tone}`}>
-                        <span className="subscription-banner-dot" />
+                    <div className={`flex items-center gap-3 px-5 py-3.5 rounded-3xl mb-6 text-[0.9rem] font-medium animate-[sub-fadeIn_0.3s_ease] subscription-banner-${feedback.tone}`}>
+                        <span className="w-2 h-2 rounded-full shrink-0" />
                         <span>{feedback.message}</span>
                     </div>
                 )}
 
                 {/* Status Card */}
-                <div className="subscription-status-card">
-                    <div className="subscription-status-left">
-                        <div className={`subscription-status-icon ${statusInfo.status}`}>
+                <div className="bg-white border border-[#E2E8F0] rounded-3xl py-7 px-8 mb-8 flex items-center justify-between gap-8 flex-wrap shadow-[0_4px_16px_rgba(0,0,0,0.06)] dark:bg-tk-bg-card dark:border-tk-border max-md:flex-col max-md:items-start max-md:gap-5">
+                    <div className="flex items-center gap-5">
+                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shrink-0 ${statusInfo.status}`}>
                             {statusInfo.icon}
                         </div>
-                        <div className="subscription-status-info">
-                            <h3>
+                        <div className="flex flex-col">
+                            <h3 className="text-[1.1rem] font-semibold m-0 mb-1 text-[#1A202C] dark:text-tk-text">
                                 Subscription Status{' '}
-                                <span className={`subscription-status-badge ${statusInfo.status}`}>
+                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[0.8rem] font-semibold uppercase tracking-[0.03em] ${statusInfo.status}`}>
                                     {statusInfo.label}
                                 </span>
                             </h3>
-                            <p>{statusInfo.message}</p>
+                            <p className="text-[0.875rem] text-[#718096] m-0 dark:text-tk-text-secondary">{statusInfo.message}</p>
                         </div>
                     </div>
                     {statusInfo.status === 'active' && (
-                        <div className="subscription-status-right">
-                            <div className="subscription-days-remaining">{days}</div>
-                            <div className="subscription-days-label">Days Remaining</div>
+                        <div className="flex flex-col items-end gap-2 max-md:items-start max-md:flex-row">
+                            <div className="text-2xl font-bold text-[#1A202C] leading-none dark:text-tk-text">{days}</div>
+                            <div className="text-[0.8rem] text-[#718096] uppercase tracking-[0.05em] dark:text-tk-text-secondary">Days Remaining</div>
                         </div>
                     )}
                 </div>
 
                 {/* Plan Selection */}
-                <div className="subscription-plans-section">
-                    <h2>{statusInfo.status === 'active' ? 'Extend Your Plan' : 'Choose a Plan'}</h2>
-                    <div className="subscription-plans-grid">
+                <div className="mb-8">
+                    <h2 className="text-[18px] font-semibold text-[#1A202C] m-0 mb-4 dark:text-tk-text">{statusInfo.status === 'active' ? 'Extend Your Plan' : 'Choose a Plan'}</h2>
+                    <div className="grid grid-cols-4 gap-4 max-lg:grid-cols-2 max-md:grid-cols-2 max-sm:grid-cols-1 max-md:gap-3">
                         {dbPlans.map((plan) => (
                             <div
                                 key={plan.duration}
-                                className={`subscription-plan-card${selectedPlan === plan.duration ? ' selected' : ''}${plan.popular ? ' popular' : ''}`}
+                                className={`subscription-plan-card${selectedPlan === plan.duration ? ' border-tk-burgundy bg-[linear-gradient(135deg,#f0faf3_0%,#ffffff_100%)] shadow-[0_0_0_1px_rgba(139,58,30,0.3),0_8px_24px_rgba(139,58,30,0.12)] dark:bg-tk-bg-hover dark:border-tk-burgundy' : ''}${plan.popular ? ' relative' : ''}`}
                                 onClick={() => setSelectedPlan(plan.duration)}
                             >
                                 {plan.popular && (
-                                    <div className="subscription-plan-popular-tag">Best Value</div>
+                                    <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-[linear-gradient(135deg,var(--tk-burgundy),#6B2A15)] text-white text-[0.7rem] font-bold px-3 py-1 rounded-full uppercase tracking-[0.05em] whitespace-nowrap">Best Value</div>
                                 )}
                                 {selectedPlan === plan.duration && (
-                                    <div className="subscription-plan-check">✓</div>
+                                    <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-tk-burgundy flex items-center justify-center text-white text-[0.75rem]">✓</div>
                                 )}
-                                <div className="subscription-plan-duration">{plan.label}</div>
-                                <div className="subscription-plan-price">
+                                <div className="text-[0.85rem] font-semibold text-[#718096] mb-3 uppercase tracking-[0.04em] dark:text-tk-text-secondary">{plan.label}</div>
+                                <div className="text-3xl font-extrabold text-[#1A202C] mb-1 leading-[1.1] dark:text-tk-text max-md:text-[1.5rem]">
                                     ₹{plan.price.toLocaleString('en-IN')}
                                 </div>
-                                <div className="subscription-plan-per-month">
+                                <div className="text-[0.825rem] text-[#718096] mb-3 dark:text-tk-text-secondary">
                                     ₹{plan.perMonth}/month
                                 </div>
                                 {plan.savings > 0 && (
-                                    <div className="subscription-plan-savings">
+                                    <div className="inline-block bg-[rgba(72,187,120,0.12)] text-[#22543D] text-[0.75rem] font-semibold px-2.5 py-1 rounded-md">
                                         Save {plan.savings}%
                                     </div>
                                 )}
@@ -291,15 +291,15 @@ const SubscriptionPage: React.FC = () => {
                 </div>
 
                 {/* Pay Button */}
-                <div className="subscription-pay-section">
+                <div className="flex justify-center mb-10">
                     <button
-                        className="subscription-pay-btn"
+                        className="inline-flex items-center gap-2.5 px-10 py-3.5 bg-[linear-gradient(135deg,var(--tk-burgundy)_0%,#6B2A15_100%)] text-white text-base font-semibold border-none rounded-2xl cursor-pointer transition-all duration-250 shadow-[0_4px_16px_rgba(139,58,30,0.3)] hover:not(:disabled):-translate-y-px hover:not(:disabled):shadow-[0_6px_20px_rgba(139,58,30,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
                         disabled={isProcessing || !activeRestaurantId}
                         onClick={handleRenew}
                     >
                         {isProcessing ? (
                             <>
-                                <span className="spinner" />
+                                <span className="inline-block w-4 h-4 border-2 border-[rgba(255,255,255,0.3)] border-t-white rounded-full animate-[sub-spin_0.6s_linear_infinite]" />
                                 Processing...
                             </>
                         ) : (
@@ -311,31 +311,31 @@ const SubscriptionPage: React.FC = () => {
                 </div>
 
                 {/* Payment History */}
-                <div className="subscription-history-section">
-                    <h2>Payment History</h2>
-                    <div className="subscription-history-card">
+                <div className="mb-8">
+                    <h2 className="text-[18px] font-semibold text-[#1A202C] m-0 mb-4 dark:text-tk-text">Payment History</h2>
+                    <div className="bg-white border border-[#E2E8F0] rounded-3xl overflow-hidden shadow-[0_4px_16px_rgba(0,0,0,0.06)] dark:bg-tk-bg-card dark:border-tk-border">
                         {payments.length === 0 ? (
-                            <div className="subscription-empty-history">
+                            <div className="p-10 text-center text-[#718096] text-[0.9rem] dark:text-tk-text-secondary">
                                 No subscription payments yet.
                             </div>
                         ) : (
-                            <div className="table-wrapper">
-                                <table>
+                            <div className="w-full overflow-x-auto">
+                                <table className="w-full border-collapse">
                                     <thead>
                                         <tr>
-                                            <th>Date</th>
-                                            <th>Plan</th>
-                                            <th>Amount</th>
-                                            <th>Period</th>
-                                            <th>Status</th>
+                                            <th className="text-left px-5 py-3.5 text-[0.8rem] font-semibold text-[#718096] uppercase tracking-[0.05em] border-b-2 border-[#E2E8F0] bg-[#F7FAFC] dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text-secondary">Date</th>
+                                            <th className="text-left px-5 py-3.5 text-[0.8rem] font-semibold text-[#718096] uppercase tracking-[0.05em] border-b-2 border-[#E2E8F0] bg-[#F7FAFC] dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text-secondary">Plan</th>
+                                            <th className="text-left px-5 py-3.5 text-[0.8rem] font-semibold text-[#718096] uppercase tracking-[0.05em] border-b-2 border-[#E2E8F0] bg-[#F7FAFC] dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text-secondary">Amount</th>
+                                            <th className="text-left px-5 py-3.5 text-[0.8rem] font-semibold text-[#718096] uppercase tracking-[0.05em] border-b-2 border-[#E2E8F0] bg-[#F7FAFC] dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text-secondary">Period</th>
+                                            <th className="text-left px-5 py-3.5 text-[0.8rem] font-semibold text-[#718096] uppercase tracking-[0.05em] border-b-2 border-[#E2E8F0] bg-[#F7FAFC] dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text-secondary">Status</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {payments.map((payment) => (
-                                            <tr key={payment.id}>
-                                                <td>{formatDate(payment.createdAt)}</td>
-                                                <td>{planLabel(payment.planDuration)}</td>
-                                                <td style={{ fontWeight: 600 }}>
+                                            <tr key={payment.id} className="hover:bg-[#F7FAFC] dark:hover:bg-tk-bg-hover">
+                                                <td className="px-5 py-3.5 text-[0.9rem] text-[#1A202C] border-b border-[#E2E8F0] dark:border-tk-border dark:text-tk-text">{formatDate(payment.createdAt)}</td>
+                                                <td className="px-5 py-3.5 text-[0.9rem] text-[#1A202C] border-b border-[#E2E8F0] dark:border-tk-border dark:text-tk-text">{planLabel(payment.planDuration)}</td>
+                                                <td className="px-5 py-3.5 text-[0.9rem] text-[#1A202C] border-b border-[#E2E8F0] dark:border-tk-border dark:text-tk-text font-semibold">
                                                     ₹{payment.amount.toLocaleString('en-IN')}
                                                 </td>
                                                 <td>

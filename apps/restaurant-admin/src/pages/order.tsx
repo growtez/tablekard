@@ -6,10 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { updateOrderStatus, updatePaymentStatus, updateOrderItemStatus } from '../services/supabaseService';
 import type { DashboardOrder } from '../services/supabaseService';
 import { useDashboardOrders, useInvalidateQueries, queryKeys, useRevenueData } from '../hooks/useSupabaseQuery';
-import OrderDetailModal from '../components/OrderDetailModal';
-import './order.css';
-
-// ── Status transition rules ──────────────────────────────────────────
+import OrderDetailModal from '../components/OrderDetailModal';// ── Status transition rules ──────────────────────────────────────────
 // Once an order is "ready", it can ONLY go to "cancelled".
 // Once "cancelled", no further changes allowed.
 const getAvailableStatuses = (currentStatus: string) => {
@@ -254,23 +251,23 @@ const Order: React.FC = () => {
   }, [visibleCount, filteredOrders.length]);
 
   return (
-    <div className="order-container">
+    <div className="flex min-h-screen bg-tk-bg relative font-['Outfit',sans-serif]">
       <Sidebar />
 
-      <div className="order-main-content">
+      <div className="flex-1 p-5 overflow-y-auto min-h-screen transition-all duration-300 ml-[240px] [.sidebar-collapsed_&]:ml-[80px] max-md:!ml-0 max-md:!p-4 max-md:!pt-[72px] bg-[#F4F6F9] dark:bg-tk-bg-surface md:pl-8 scrollbar-hide md:rounded-l-[32px] md:shadow-[-8px_0_24px_rgba(0,0,0,0.12)]">
         {/* Header */}
-        <div className="order-header">
+        <div className="flex justify-between items-start mb-6 max-md:flex-col max-md:gap-3 max-md:mt-4">
           <div>
-            <h1 className="order-page-title">Orders</h1>
-            <p className="order-page-subtitle">Manage and track all your restaurant orders</p>
+            <h1 className="text-[26px] font-bold text-[#0F172A] m-0 max-md:ml-16 dark:text-tk-text">Orders</h1>
+            <p className="text-[13px] text-[#94A3B8] mt-1 mb-0 dark:text-tk-text-secondary max-md:ml-16">Manage and track all your restaurant orders</p>
           </div>
-          <div className="order-header-right">
-            <div className="order-search-bar">
+          <div className="flex items-center gap-3 max-md:w-full">
+            <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl border-[1.5px] border-[#E2E8F0] w-[240px] transition-all duration-200 focus-within:border-tk-burgundy focus-within:shadow-[0_0_0_3px_rgba(139,58,30,0.06)] max-md:w-full dark:bg-tk-bg-card dark:border-tk-border">
               <Search size={16} color="#94A3B8" />
               <input
                 type="text"
                 placeholder="Search orders..."
-                className="order-search-input"
+                className="border-none outline-none text-[13px] text-[#0F172A] bg-transparent w-full placeholder:text-[#CBD5E1] dark:text-tk-text dark:placeholder:text-tk-text-muted"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -279,42 +276,40 @@ const Order: React.FC = () => {
         </div>
 
         {/* Statistics Cards */}
-        <div className="order-stats-grid">
-          <div className="order-stat-card">
-            <div className="order-card-top-bar order-card-green"></div>
-            <h3 className="order-stat-title">Total Orders Today</h3>
-            <div className="order-stat-number">{loadingRevenue ? '...' : stats.today}</div>
-            <div className="order-stat-change">
+        <div className="grid grid-cols-2 gap-6 mb-8 max-md:grid-cols-1">
+          <div className="bg-white p-6 rounded-[24px] shadow-[0_4px_16px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.02)] relative overflow-hidden transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] border-[1.5px] border-transparent dark:bg-tk-bg-card dark:border-tk-border">
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#8B3A1E] to-[#D4816B]"></div>
+            <h3 className="text-sm text-[#718096] mb-3 font-medium mt-1 normal-case tracking-normal dark:text-tk-text-secondary">Total Orders Today</h3>
+            <div className="text-4xl font-bold text-[#1A202C] mb-3 dark:text-tk-text">{loadingRevenue ? '...' : stats.today}</div>
+            <div className="flex items-center text-[13px]">
               <span
-                className={stats.todayChange >= 0 ? 'order-change-positive' : 'order-change-negative'}
-                style={{ color: stats.todayChange < 0 ? '#E53E3E' : undefined }}
+                className={`font-medium ${stats.todayChange >= 0 ? 'text-[#68D391]' : 'text-[#E53E3E]'}`}
               >
                 {stats.todayChange > 0 ? '+' : ''}{stats.todayChange}% vs yesterday
               </span>
               <TrendingUp
                 size={16}
                 color={stats.todayChange >= 0 ? '#68D391' : '#E53E3E'}
-                className="order-trend-icon"
+                className="ml-auto"
                 style={stats.todayChange < 0 ? { transform: 'rotate(180deg)' } : undefined}
               />
             </div>
           </div>
 
-          <div className="order-stat-card">
-            <div className="order-card-top-bar order-card-blue"></div>
-            <h3 className="order-stat-title">Total Orders This Week</h3>
-            <div className="order-stat-number">{loadingRevenue ? '...' : stats.week}</div>
-            <div className="order-stat-change">
+          <div className="bg-white p-6 rounded-[24px] shadow-[0_4px_16px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.02)] relative overflow-hidden transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] border-[1.5px] border-transparent dark:bg-tk-bg-card dark:border-tk-border">
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#5C7A7A] to-[#8AABAB]"></div>
+            <h3 className="text-sm text-[#718096] mb-3 font-medium mt-1 normal-case tracking-normal dark:text-tk-text-secondary">Total Orders This Week</h3>
+            <div className="text-4xl font-bold text-[#1A202C] mb-3 dark:text-tk-text">{loadingRevenue ? '...' : stats.week}</div>
+            <div className="flex items-center text-[13px]">
               <span
-                className={stats.weekChange >= 0 ? 'order-change-blue' : 'order-change-negative'}
-                style={{ color: stats.weekChange < 0 ? '#E53E3E' : undefined }}
+                className={`font-medium ${stats.weekChange >= 0 ? 'text-[#7F9CF5]' : 'text-[#E53E3E]'}`}
               >
                 {stats.weekChange > 0 ? '+' : ''}{stats.weekChange}% vs last week
               </span>
               <TrendingUp
                 size={16}
                 color={stats.weekChange >= 0 ? '#7F9CF5' : '#E53E3E'}
-                className="order-trend-icon"
+                className="ml-auto"
                 style={stats.weekChange < 0 ? { transform: 'rotate(180deg)' } : undefined}
               />
             </div>
@@ -322,15 +317,14 @@ const Order: React.FC = () => {
         </div>
 
         {/* Filter Bar */}
-        <div className="order-filter-bar">
-          <div className="order-filter-group">
-            <div className="order-date-filter-wrapper">
-              <Calendar size={14} className="order-date-icon" />
+        <div className="flex items-center justify-between gap-3 mb-5 flex-wrap">
+          <div className="flex gap-2 items-center flex-wrap max-md:flex-col max-md:w-full max-md:items-stretch">
+            <div className="relative flex items-center max-md:w-full">
+              <Calendar size={14} className="absolute left-3 text-[#94A3B8] pointer-events-none z-[1]" />
               <select
-                className="order-filter-select"
+                className="px-3 py-2 pl-8 bg-white border-[1.5px] border-[#E2E8F0] rounded-lg text-[13px] font-medium text-[#334155] cursor-pointer outline-none transition-colors duration-200 focus:border-tk-burgundy max-md:w-full dark:bg-tk-bg-card dark:border-tk-border dark:text-tk-text appearance-none pr-8 bg-[url('data:image/svg+xml,%3Csvg_xmlns=%22http://www.w3.org/2000/svg%22_width=%2210%22_height=%2210%22_viewBox=%220_0_24_24%22_fill=%22none%22_stroke=%22%2394A3B8%22_stroke-width=%223%22_stroke-linecap=%22round%22_stroke-linejoin=%22round%22%3E%3Cpath_d=%22m6_9_6_6_6-6%22/%3E%3C/svg%3E')] bg-no-repeat bg-[position:right_10px_center]"
                 value={selectedDateRange}
                 onChange={(e) => setSelectedDateRange(e.target.value)}
-                style={{ paddingLeft: '32px' }}
               >
                 <option value="today">Today</option>
                 <option value="yesterday">Yesterday</option>
@@ -342,28 +336,27 @@ const Order: React.FC = () => {
               {selectedDateRange === 'custom' && (
                 <input
                   type="date"
-                  className="order-filter-select order-date-input"
+                  className="px-3 py-2 ml-2 bg-white border-[1.5px] border-[#E2E8F0] rounded-lg text-[13px] font-medium text-[#334155] outline-none transition-colors duration-200 focus:border-tk-burgundy min-w-[140px] dark:bg-tk-bg-card dark:border-tk-border dark:text-tk-text"
                   value={customDate}
                   onChange={(e) => setCustomDate(e.target.value)}
-                  style={{ marginLeft: '8px' }}
                 />
               )}
             </div>
 
             {selectedDateRange === 'week' && (
-              <div className="pager-filter-group" style={{ height: '38px' }}>
+              <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-[#E2E8F0] shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] h-[38px] max-md:w-full max-md:justify-center dark:bg-tk-bg-card dark:border-tk-border">
                 <button
                   type="button"
-                  className="pager-arrow-btn"
+                  className="flex items-center justify-center w-7 h-7 rounded-md border border-[#E2E8F0] bg-[#F7FAFC] text-[#4A5568] cursor-pointer transition-all duration-200 p-0 hover:not-disabled:bg-[#EDF2F7] hover:not-disabled:text-[#1A202C] hover:not-disabled:border-[#CBD5E0] disabled:opacity-40 disabled:cursor-not-allowed dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text"
                   onClick={() => setWeekOffset(prev => prev + 1)}
                   title="Previous Week"
                 >
                   <ChevronLeft size={16} />
                 </button>
-                <span className="pager-label">{getWeekDateRange(weekOffset)}</span>
+                <span className="text-[13px] font-semibold text-[#2D3748] min-w-[140px] text-center select-none dark:text-tk-text">{getWeekDateRange(weekOffset)}</span>
                 <button
                   type="button"
-                  className="pager-arrow-btn"
+                  className="flex items-center justify-center w-7 h-7 rounded-md border border-[#E2E8F0] bg-[#F7FAFC] text-[#4A5568] cursor-pointer transition-all duration-200 p-0 hover:not-disabled:bg-[#EDF2F7] hover:not-disabled:text-[#1A202C] hover:not-disabled:border-[#CBD5E0] disabled:opacity-40 disabled:cursor-not-allowed dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text"
                   onClick={() => setWeekOffset(prev => Math.max(0, prev - 1))}
                   disabled={weekOffset === 0}
                   title="Next Week"
@@ -374,19 +367,19 @@ const Order: React.FC = () => {
             )}
 
             {selectedDateRange === 'month' && (
-              <div className="pager-filter-group" style={{ height: '38px' }}>
+              <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-[#E2E8F0] shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] h-[38px] max-md:w-full max-md:justify-center dark:bg-tk-bg-card dark:border-tk-border">
                 <button
                   type="button"
-                  className="pager-arrow-btn"
+                  className="flex items-center justify-center w-7 h-7 rounded-md border border-[#E2E8F0] bg-[#F7FAFC] text-[#4A5568] cursor-pointer transition-all duration-200 p-0 hover:not-disabled:bg-[#EDF2F7] hover:not-disabled:text-[#1A202C] hover:not-disabled:border-[#CBD5E0] disabled:opacity-40 disabled:cursor-not-allowed dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text"
                   onClick={() => setMonthOffset(prev => prev + 1)}
                   title="Previous Month"
                 >
                   <ChevronLeft size={16} />
                 </button>
-                <span className="pager-label">{getMonthLabel(monthOffset)}</span>
+                <span className="text-[13px] font-semibold text-[#2D3748] min-w-[140px] text-center select-none dark:text-tk-text">{getMonthLabel(monthOffset)}</span>
                 <button
                   type="button"
-                  className="pager-arrow-btn"
+                  className="flex items-center justify-center w-7 h-7 rounded-md border border-[#E2E8F0] bg-[#F7FAFC] text-[#4A5568] cursor-pointer transition-all duration-200 p-0 hover:not-disabled:bg-[#EDF2F7] hover:not-disabled:text-[#1A202C] hover:not-disabled:border-[#CBD5E0] disabled:opacity-40 disabled:cursor-not-allowed dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text"
                   onClick={() => setMonthOffset(prev => Math.max(0, prev - 1))}
                   disabled={monthOffset === 0}
                   title="Next Month"
@@ -396,20 +389,20 @@ const Order: React.FC = () => {
               </div>
             )}
 
-            <select className="order-filter-select" value={selectedTable} onChange={e => setSelectedTable(e.target.value)}>
+            <select className="px-3 py-2 pr-8 bg-white border-[1.5px] border-[#E2E8F0] rounded-lg text-[13px] font-medium text-[#334155] cursor-pointer outline-none transition-colors duration-200 focus:border-tk-burgundy max-md:w-full appearance-none bg-[url('data:image/svg+xml,%3Csvg_xmlns=%22http://www.w3.org/2000/svg%22_width=%2210%22_height=%2210%22_viewBox=%220_0_24_24%22_fill=%22none%22_stroke=%22%2394A3B8%22_stroke-width=%223%22_stroke-linecap=%22round%22_stroke-linejoin=%22round%22%3E%3Cpath_d=%22m6_9_6_6_6-6%22/%3E%3C/svg%3E')] bg-no-repeat bg-[position:right_10px_center] dark:bg-tk-bg-card dark:border-tk-border dark:text-tk-text" value={selectedTable} onChange={e => setSelectedTable(e.target.value)}>
               <option value="All Tables">All Tables</option>
               {Array.from(new Set(orders.map(o => o.table))).map(table => (
                 table !== 'N/A' && <option key={table} value={table}>{table}</option>
               ))}
             </select>
 
-            <select className="order-filter-select" value={selectedPayment} onChange={e => setSelectedPayment(e.target.value)}>
+            <select className="px-3 py-2 pr-8 bg-white border-[1.5px] border-[#E2E8F0] rounded-lg text-[13px] font-medium text-[#334155] cursor-pointer outline-none transition-colors duration-200 focus:border-tk-burgundy max-md:w-full appearance-none bg-[url('data:image/svg+xml,%3Csvg_xmlns=%22http://www.w3.org/2000/svg%22_width=%2210%22_height=%2210%22_viewBox=%220_0_24_24%22_fill=%22none%22_stroke=%22%2394A3B8%22_stroke-width=%223%22_stroke-linecap=%22round%22_stroke-linejoin=%22round%22%3E%3Cpath_d=%22m6_9_6_6_6-6%22/%3E%3C/svg%3E')] bg-no-repeat bg-[position:right_10px_center] dark:bg-tk-bg-card dark:border-tk-border dark:text-tk-text" value={selectedPayment} onChange={e => setSelectedPayment(e.target.value)}>
               <option value="Payment Method">All Payment</option>
               <option value="cash">Cash</option>
               <option value="online">Online</option>
             </select>
 
-            <select className="order-filter-select" value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)}>
+            <select className="px-3 py-2 pr-8 bg-white border-[1.5px] border-[#E2E8F0] rounded-lg text-[13px] font-medium text-[#334155] cursor-pointer outline-none transition-colors duration-200 focus:border-tk-burgundy max-md:w-full appearance-none bg-[url('data:image/svg+xml,%3Csvg_xmlns=%22http://www.w3.org/2000/svg%22_width=%2210%22_height=%2210%22_viewBox=%220_0_24_24%22_fill=%22none%22_stroke=%22%2394A3B8%22_stroke-width=%223%22_stroke-linecap=%22round%22_stroke-linejoin=%22round%22%3E%3Cpath_d=%22m6_9_6_6_6-6%22/%3E%3C/svg%3E')] bg-no-repeat bg-[position:right_10px_center] dark:bg-tk-bg-card dark:border-tk-border dark:text-tk-text" value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)}>
               <option value="Status">All Status</option>
               <option value="pending">Placed</option>
               <option value="preparing">Preparing</option>
@@ -420,89 +413,104 @@ const Order: React.FC = () => {
         </div>
 
         {/* Orders List */}
-        <div className="order-list-section">
-          <div className="order-list-header">
-            <h2 className="order-list-title">All Orders</h2>
-            <span className="order-list-count">{filteredOrders.length} order{filteredOrders.length !== 1 ? 's' : ''}</span>
+        <div className="bg-white rounded-2xl border border-[#EEF2F6] p-6 dark:bg-tk-bg-card dark:border-tk-border">
+          <div className="flex justify-between items-center mb-5">
+            <h2 className="text-lg font-semibold text-[#0F172A] m-0 dark:text-tk-text">All Orders</h2>
+            <span className="text-xs text-[#94A3B8] font-medium bg-[#F1F5F9] px-3 py-1 rounded-full dark:bg-tk-bg-hover dark:text-tk-text-secondary">{filteredOrders.length} order{filteredOrders.length !== 1 ? 's' : ''}</span>
           </div>
 
           {loading ? (
-            <div className="order-loading">
-              <div className="order-skeleton" />
-              <div className="order-skeleton" />
-              <div className="order-skeleton" />
+            <div className="flex flex-col gap-3">
+              <div className="h-[120px] rounded-xl bg-gradient-to-r from-[#F1F5F9] via-[#E2E8F0] to-[#F1F5F9] bg-[length:200%_100%] animate-[shimmer_1.5s_infinite]" />
+              <div className="h-[120px] rounded-xl bg-gradient-to-r from-[#F1F5F9] via-[#E2E8F0] to-[#F1F5F9] bg-[length:200%_100%] animate-[shimmer_1.5s_infinite]" />
+              <div className="h-[120px] rounded-xl bg-gradient-to-r from-[#F1F5F9] via-[#E2E8F0] to-[#F1F5F9] bg-[length:200%_100%] animate-[shimmer_1.5s_infinite]" />
             </div>
           ) : filteredOrders.length === 0 ? (
-            <div className="order-empty">
-              <Package size={48} color="#CBD5E1" />
-              <h3>No orders found</h3>
-              <p>Try adjusting your filters or search query</p>
+            <div className="flex flex-col items-center justify-center p-[60px_20px] text-center">
+              <Package size={48} className="text-[#CBD5E1] dark:text-tk-text-muted" />
+              <h3 className="text-base font-semibold text-[#475569] mt-4 mb-1 dark:text-tk-text">No orders found</h3>
+              <p className="text-[13px] text-[#94A3B8] m-0 dark:text-tk-text-secondary">Try adjusting your filters or search query</p>
             </div>
           ) : (
             <>
-              <div className="order-cards-grid">
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(340px,1fr))] gap-3.5 max-md:grid-cols-1">
               {filteredOrders.slice(0, visibleCount).map((order) => {
                 const st = order.status.toLowerCase();
                 const availableStatuses = getAvailableStatuses(st);
                 const isLocked = st === 'cancelled';
 
+                const statusBorderClass = st === 'pending' ? 'before:bg-[#F59E0B]' :
+                                        st === 'preparing' ? 'before:bg-[#3B82F6]' :
+                                        (st === 'ready' || st === 'served' || st === 'completed') ? 'before:bg-[#10B981]' :
+                                        'before:bg-[#EF4444]';
+                
+                const selectColorClass = st === 'pending' ? 'bg-[#FEF3C7] text-[#92400E] dark:bg-[#FEF3C726] dark:text-[#FCD34D]' :
+                                       st === 'preparing' ? 'bg-[#DBEAFE] text-[#1E40AF] dark:bg-[#DBEAFE26] dark:text-[#93C5FD]' :
+                                       (st === 'ready' || st === 'served' || st === 'completed') ? 'bg-[#D1FAE5] text-[#065F46] dark:bg-[#D1FAE526] dark:text-[#6EE7B7]' :
+                                       'bg-[#FEE2E2] text-[#991B1B] dark:bg-[#FEE2E226] dark:text-[#FCA5A5]';
+
+                const paymentStatusColorClass = order.paymentStatusColor === 'paid' ? 'bg-[#D1FAE5] text-[#065F46] dark:bg-[#D1FAE526] dark:text-[#6EE7B7]' :
+                                              order.paymentStatusColor === 'pending' ? 'bg-[#FEF3C7] text-[#92400E] dark:bg-[#FEF3C726] dark:text-[#FCD34D]' :
+                                              order.paymentStatusColor === 'failed' ? 'bg-[#FEE2E2] text-[#991B1B] dark:bg-[#FEE2E226] dark:text-[#FCA5A5]' :
+                                              'bg-[#EDE9FE] text-[#5B21B6] dark:bg-[#EDE9FE26] dark:text-[#C4B5FD]';
+
                 return (
                   <div
-                    className={`order-card ord-status-${st}`}
+                    className={`bg-white border-[1.5px] border-[#EEF2F6] rounded-xl p-0 cursor-pointer transition-all duration-200 overflow-hidden relative hover:border-[#CBD5E1] hover:shadow-[0_4px_20px_rgba(0,0,0,0.06)] hover:-translate-y-[1px] dark:bg-tk-bg-card dark:border-tk-border before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-[3px] ${statusBorderClass}`}
                     key={order.id}
                     onClick={() => setSelectedOrder(order)}
                   >
                     {/* Card top row: ID + Status */}
-                    <div className="ocard-top">
-                      <div className="ocard-id-group">
-                        <span className="ocard-id">{order.orderNumber}</span>
-                        <span className="ocard-time">{order.time}</span>
+                    <div className="flex justify-between items-center pt-3.5 px-4 pb-0">
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-[13px] font-bold text-[#0F172A] dark:text-tk-text">{order.orderNumber}</span>
+                        <span className="text-[11px] text-[#94A3B8] font-medium dark:text-tk-text-secondary">{order.time}</span>
                       </div>
                       <div onClick={(e) => e.stopPropagation()}>
                         <select
-                          className={`ocard-status-select st-${st}`}
+                          className={`text-[11px] font-bold py-1 pr-6 pl-2.5 rounded-lg border-none cursor-pointer appearance-none bg-[url('data:image/svg+xml,%3Csvg_xmlns=%22http://www.w3.org/2000/svg%22_width=%228%22_height=%228%22_viewBox=%220_0_24_24%22_fill=%22none%22_stroke=%22currentColor%22_stroke-width=%223%22_stroke-linecap=%22round%22_stroke-linejoin=%22round%22%3E%3Cpath_d=%22m6_9_6_6_6-6%22/%3E%3C/svg%3E')] bg-no-repeat bg-[position:right_8px_center] transition-opacity duration-200 uppercase tracking-[0.3px] outline-none disabled:cursor-not-allowed disabled:opacity-70 dark:bg-tk-bg-card dark:border-tk-border ${selectColorClass}`}
                           value={st === 'pending' ? 'pending' : st}
                           onChange={(e) => handleStatusChange(order.id, e.target.value)}
                           disabled={isLocked}
                         >
                           {availableStatuses.map(s => (
-                            <option key={s.value} value={s.value}>{s.label}</option>
+                            <option key={s.value} value={s.value} className="bg-white text-[#334155] font-medium normal-case dark:bg-tk-bg-card dark:text-tk-text">{s.label}</option>
                           ))}
                         </select>
                       </div>
                     </div>
 
                     {/* Card body: customer + details */}
-                    <div className="ocard-body">
-                      <div className="ocard-customer">{order.customerName}</div>
-                      <div className="ocard-meta-row">
-                        <span className="ocard-meta-chip">{order.table}</span>
-                        <span className="ocard-meta-chip type">{order.orderType?.replace('_', ' ')}</span>
+                    <div className="pt-2.5 px-4 pb-0">
+                      <div className="text-[15px] font-semibold text-[#1E293B] mb-1.5 dark:text-tk-text">{order.customerName}</div>
+                      <div className="flex gap-1.5 flex-wrap">
+                        <span className="inline-flex items-center text-[10px] font-semibold text-[#64748B] bg-[#F1F5F9] py-0.5 px-2 rounded-[5px] capitalize dark:bg-tk-bg-hover dark:text-tk-text-secondary">{order.table}</span>
+                        <span className="inline-flex items-center text-[10px] font-semibold bg-[#EEF2FF] text-[#4338CA] py-0.5 px-2 rounded-[5px] capitalize dark:bg-[rgba(67,56,202,0.2)] dark:text-[#818CF8]">{order.orderType?.replace('_', ' ')}</span>
                       </div>
                     </div>
 
                     {/* Items preview */}
-                    <div className="ocard-items" title={order.items}>
+                    <div className="px-4 py-2 text-xs text-[#94A3B8] leading-[1.4] whitespace-nowrap overflow-hidden text-ellipsis border-t border-dashed border-[#F1F5F9] mt-2 dark:text-tk-text-secondary dark:border-tk-border dark:border-t-solid" title={order.items}>
                       {order.items}
                     </div>
 
                     {/* Card footer: payment + total + action */}
-                    <div className="ocard-footer">
-                      <div className="ocard-payment" onClick={(e) => e.stopPropagation()}>
-                        <span className="ocard-pay-method">{order.paymentMethod}</span>
+                    <div className="flex justify-between items-center py-2.5 px-4 pb-3.5 border-t border-solid border-[#F8FAFC] dark:border-tk-border">
+                      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                        <span className="text-[13px] font-semibold text-[#64748B] bg-[#F8FAFC] py-1.5 px-2.5 rounded-md capitalize dark:bg-tk-bg-hover dark:text-tk-text-secondary">{order.paymentMethod}</span>
                         <select
-                          className={`ocard-pay-status ps-${order.paymentStatusColor}`}
+                          className={`text-[13px] font-bold py-1.5 pr-6 pl-3 rounded-lg border-none cursor-pointer appearance-none bg-[url('data:image/svg+xml,%3Csvg_xmlns=%22http://www.w3.org/2000/svg%22_width=%2210%22_height=%2210%22_viewBox=%220_0_24_24%22_fill=%22none%22_stroke=%22currentColor%22_stroke-width=%223%22_stroke-linecap=%22round%22_stroke-linejoin=%22round%22%3E%3Cpath_d=%22m6_9_6_6_6-6%22/%3E%3C/svg%3E')] bg-no-repeat bg-[position:right_10px_center] outline-none dark:bg-tk-bg-card dark:border-tk-border ${paymentStatusColorClass}`}
                           value={order.paymentStatus}
                           onChange={(e) => handlePaymentStatusChange(order.id, e.target.value)}
                         >
-                          <option value="Paid">Paid</option>
-                          <option value="Pending">Pending</option>
-                          <option value="Failed">Failed</option>
-                          <option value="Refunded">Refunded</option>
+                          <option value="Paid" className="bg-white text-[#334155] font-medium dark:bg-tk-bg-card dark:text-tk-text">Paid</option>
+                          <option value="Pending" className="bg-white text-[#334155] font-medium dark:bg-tk-bg-card dark:text-tk-text">Pending</option>
+                          <option value="Failed" className="bg-white text-[#334155] font-medium dark:bg-tk-bg-card dark:text-tk-text">Failed</option>
+                          <option value="Refunded" className="bg-white text-[#334155] font-medium dark:bg-tk-bg-card dark:text-tk-text">Refunded</option>
                         </select>
                       </div>
-                      <div className="ocard-total-action">
-                        <span className="ocard-total">₹{order.total.toLocaleString('en-IN')}</span>
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-base font-bold text-[#0F172A] dark:text-tk-text">₹{order.total.toLocaleString('en-IN')}</span>
                       </div>
                     </div>
                   </div>
@@ -510,7 +518,7 @@ const Order: React.FC = () => {
               })}
             </div>
             {visibleCount < filteredOrders.length && (
-              <div ref={loadMoreRef} style={{ textAlign: 'center', padding: '24px', color: '#94A3B8', fontSize: '13px', fontFamily: "'Outfit', sans-serif" }}>
+              <div ref={loadMoreRef} className="text-center p-6 text-[#94A3B8] text-[13px]">
                 Loading more orders...
               </div>
             )}

@@ -1,5 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Syncopate:wght@400;700&display=swap');
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   /* ── TableKard Brand – Burgundy / Outlined ────────── */
 
@@ -35,7 +39,7 @@
   --tk-info: #5C7A7A;
 
   /* Borders – Outlined style */
-  --tk-border: #E8E1DD;
+  --tk-border: #B8ADA9;
   --tk-border-strong: #1A1A1A;
   --tk-border-card: 1.5px solid #1A1A1A;
 
@@ -99,9 +103,9 @@
   --tk-info: #6B9A9A;
 
   /* Borders */
-  --tk-border: #2E2E2E;
+  --tk-border: #4A4542;
   --tk-border-strong: #F0EDE8;
-  --tk-border-card: 1.5px solid #2E2E2E;
+  --tk-border-card: 1.5px solid #4A4542;
 
   /* Shadows */
   --tk-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
@@ -112,50 +116,3 @@
   background-color: var(--tk-bg-surface);
 }
 
-a {
-  font-weight: 500;
-  color: var(--tk-burgundy);
-  text-decoration: inherit;
-}
-a:hover {
-  color: var(--tk-burgundy-dark);
-}
-
-body {
-  margin: 0;
-  display: block;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: var(--tk-radius-sm);
-  border: 1px solid var(--tk-border);
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: var(--tk-bg);
-  color: var(--tk-text);
-  cursor: pointer;
-  transition: all 0.25s ease;
-}
-button:hover {
-  border-color: var(--tk-burgundy);
-  background-color: var(--tk-bg-hover);
-}
-button:focus,
-button:focus-visible {
-  outline: 2px solid var(--tk-burgundy);
-  outline-offset: 2px;
-}
-
-.table-wrapper {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}

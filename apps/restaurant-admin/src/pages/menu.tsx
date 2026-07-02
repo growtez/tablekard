@@ -23,7 +23,7 @@ import {
 import type { OfferRow } from '../services/supabaseService';
 import { useMenuItems, useMenuCategories, useOffers, useInvalidateQueries } from '../hooks/useSupabaseQuery';
 import type { MenuItem, MenuCategory } from '@restaurant-saas/types';
-import './menu.css';
+
 
 const Menu: React.FC = () => {
   const { activeRestaurantId, activeRestaurantName } = useAuth();
@@ -362,61 +362,61 @@ const Menu: React.FC = () => {
   const topSellingItem = menuItems.length > 0 ? menuItems[0].name : '-';
 
   return (
-    <div className="menu-container">
+    <div className="flex min-h-screen bg-tk-bg relative">
       <Sidebar />
 
-      <div className="main-content">
+      <div className="flex-1 p-5 overflow-y-auto min-h-screen transition-all duration-300 ml-[240px] [.sidebar-collapsed_&]:ml-[80px] max-md:!ml-0 max-md:!p-4 max-md:!pt-[72px] bg-tk-bg-surface">
         {/* Header */}
-        <div className="header">
-          <h1 className="page-title">Menu Management</h1>
-          <div className="header-right">
-            <div className="search-bar">
+        <div className="flex justify-between items-center mb-8 max-md:flex-col max-md:items-start max-md:gap-4">
+          <h1 className="text-2xl font-semibold text-tk-text max-md:ml-16 max-md:mt-1">Menu Management</h1>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 bg-tk-bg-card px-5 py-2.5 rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.04),inset_0_1px_2px_rgba(0,0,0,0.02)] border border-transparent dark:border-tk-border w-[280px] max-md:w-full">
               <Search size={18} color="#718096" />
               <input
                 type="text"
                 placeholder="Search menu items..."
-                className="search-input"
+                className="border-none outline-none text-sm text-tk-text bg-transparent w-full placeholder:text-tk-text-muted"
               />
             </div>
           </div>
         </div>
 
         {/* Stats Cards */}
-        <div className="stats-grid">
-          <div className="stats-card">
-            <div className="card-top-bar card-top-bar-green"></div>
-            <h3 className="card-title">Active Menu Items</h3>
-            <div className="stats-number">{loading ? '...' : activeItems}</div>
-            <div className="stats-subtitle">Currently available</div>
+        <div className="grid grid-cols-3 gap-6 mb-8 max-xl:grid-cols-2 max-md:grid-cols-1">
+          <div className="bg-tk-bg-card p-6 rounded-[24px] shadow-[0_4px_16px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.02)] relative overflow-hidden transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] dark:border dark:border-tk-border">
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#8B3A1E] to-[#D4816B]"></div>
+            <h3 className="text-sm text-tk-text-secondary mb-3 font-medium mt-1">Active Menu Items</h3>
+            <div className="text-[36px] font-bold text-tk-text mb-2">{loading ? '...' : activeItems}</div>
+            <div className="text-[13px] text-tk-text-secondary font-medium">Currently available</div>
           </div>
 
-          <div className="stats-card">
-            <div className="card-top-bar card-top-bar-red"></div>
-            <h3 className="card-title">Out of Stock Items</h3>
-            <div className="stats-number">{loading ? '...' : outOfStockItems}</div>
-            <div className="stats-subtitle">Need restocking</div>
+          <div className="bg-tk-bg-card p-6 rounded-[24px] shadow-[0_4px_16px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.02)] relative overflow-hidden transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] dark:border dark:border-tk-border">
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#E53E3E] to-[#FC8181]"></div>
+            <h3 className="text-sm text-tk-text-secondary mb-3 font-medium mt-1">Out of Stock Items</h3>
+            <div className="text-[36px] font-bold text-tk-text mb-2">{loading ? '...' : outOfStockItems}</div>
+            <div className="text-[13px] text-tk-text-secondary font-medium">Need restocking</div>
           </div>
 
-          <div className="stats-card">
-            <div className="card-top-bar card-top-bar-blue"></div>
-            <h3 className="card-title">Top Selling Items (This Week)</h3>
-            <div className="top-selling-item">
-              <span className="top-selling-name">{loading ? '...' : topSellingItem}</span>
+          <div className="bg-tk-bg-card p-6 rounded-[24px] shadow-[0_4px_16px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.02)] relative overflow-hidden transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] dark:border dark:border-tk-border">
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#5C7A7A] to-[#8AABAB]"></div>
+            <h3 className="text-sm text-tk-text-secondary mb-3 font-medium mt-1">Top Selling Items (This Week)</h3>
+            <div className="flex items-center gap-3 mb-2">
+              <span className="text-[18px] font-semibold text-tk-text">{loading ? '...' : topSellingItem}</span>
             </div>
-            <div className="stats-subtitle">Calculated dynamically</div>
+            <div className="text-[13px] text-tk-text-secondary font-medium">Calculated dynamically</div>
           </div>
         </div>
 
         {/* Tab Navigation */}
-        <div className="tab-navigation">
+        <div className="flex gap-1 mb-8 bg-[#F7FAFC] dark:bg-tk-bg-elevated p-1.5 rounded-[16px] w-fit max-md:w-full max-md:justify-center">
           <button
-            className={`tab-button ${activeTab === 'menu-items' ? 'active' : ''}`}
+            className={`px-6 py-3 border-none bg-transparent rounded-xl text-base font-semibold text-tk-text-secondary cursor-pointer transition-all duration-200 hover:text-[#4A5568] hover:bg-white/60 dark:hover:text-tk-text font-['Outfit'] ${activeTab === 'menu-items' ? '!bg-tk-bg-card !text-tk-text shadow-[0_2px_8px_rgba(0,0,0,0.08)]' : ''}` }
             onClick={() => setActiveTab('menu-items')}
           >
             Menu Items
           </button>
           <button
-            className={`tab-button ${activeTab === 'offers' ? 'active' : ''}`}
+            className={`px-6 py-3 border-none bg-transparent rounded-xl text-base font-semibold text-tk-text-secondary cursor-pointer transition-all duration-200 hover:text-[#4A5568] hover:bg-white/60 dark:hover:text-tk-text font-['Outfit'] ${activeTab === 'offers' ? '!bg-tk-bg-card !text-tk-text shadow-[0_2px_8px_rgba(0,0,0,0.08)]' : ''}` }
             onClick={() => setActiveTab('offers')}
           >
             Offers
@@ -425,20 +425,20 @@ const Menu: React.FC = () => {
 
         {/* Tab Content */}
         {activeTab === 'menu-items' && (
-          <div className="tab-content">
-            <div className="content-header">
-              <h2 className="content-title">Menu Items & Categories</h2>
+          <div className="animate-[fadeIn_0.3s_ease-in-out]">
+            <div className="flex justify-between items-center mb-6 max-md:flex-col max-md:items-start max-md:gap-4">
+              <h2 className="text-[18px] font-semibold text-tk-text">Menu Items & Categories</h2>
               <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                 {isSaving && (
                   <div style={{ display: 'flex', alignItems: 'center', animation: 'spin 1s linear infinite' }}>
                     <Loader2 size={18} color="#718096" />
                   </div>
                 )}
-                <button className="add-category-btn" onClick={handleAddCategory}>
+                <button className="flex items-center gap-2 px-5 py-3 bg-[#E2E8F0] dark:bg-tk-bg-hover text-tk-text border-none rounded-xl text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-[#CBD5E0] dark:hover:bg-tk-border font-['Outfit']" onClick={handleAddCategory}>
                   <Layers size={16} />
                   New Category
                 </button>
-                <button className="add-button" onClick={handleAddMenuItem}>
+                <button className="flex items-center gap-2 px-5 py-3 bg-tk-burgundy text-white border-none rounded-xl text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-tk-burgundy hover:-translate-y-[2px] font-['Outfit']" onClick={handleAddMenuItem}>
                   <Plus size={16} />
                   Add New Item
                 </button>
@@ -446,9 +446,9 @@ const Menu: React.FC = () => {
             </div>
 
             {/* Category Filter */}
-            <div className="category-filter" style={{ display: 'flex', alignItems: 'center', gap: '12px', overflowX: 'auto', paddingBottom: '8px' }}>
+            <div className="flex items-center gap-3 overflow-x-auto pb-2 mb-6 max-md:justify-center">
               <button
-                className={`category-button ${selectedCategoryId === 'all' ? 'active' : ''}`}
+                className={`px-5 py-2.5 border-2 border-[#E2E8F0] dark:border-tk-border bg-tk-bg-card rounded-xl text-sm font-medium text-tk-text-secondary cursor-pointer transition-all duration-200 hover:border-[#CBD5E0] hover:bg-[#F7FAFC] dark:hover:bg-tk-bg-hover dark:hover:border-tk-border dark:hover:text-tk-text font-['Outfit'] ${selectedCategoryId === 'all' ? '!bg-tk-burgundy !text-white !border-tk-burgundy' : ''}` }
                 onClick={() => setSelectedCategoryId('all')}
               >
                 All
@@ -456,14 +456,14 @@ const Menu: React.FC = () => {
               {categories.map((category) => (
                 <div key={category.id} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <button
-                    className={`category-button ${selectedCategoryId === category.id ? 'active' : ''}`}
+                    className={`px-5 py-2.5 border-2 border-[#E2E8F0] dark:border-tk-border bg-tk-bg-card rounded-xl text-sm font-medium text-tk-text-secondary cursor-pointer transition-all duration-200 hover:border-[#CBD5E0] hover:bg-[#F7FAFC] dark:hover:bg-tk-bg-hover dark:hover:border-tk-border dark:hover:text-tk-text font-['Outfit'] ${selectedCategoryId === category.id ? '!bg-tk-burgundy !text-white !border-tk-burgundy' : ''}` }
                     onClick={() => setSelectedCategoryId(category.id)}
                   >
                     {category.name}
                   </button>
                   {selectedCategoryId === category.id && (
                     <button
-                      className="edit-category-btn"
+                      className="bg-transparent border-none cursor-pointer text-tk-text-secondary p-1 hover:text-tk-text"
                       onClick={(e) => { e.stopPropagation(); handleEditCategory(category); }}
                       title="Edit Category"
                     >
@@ -475,51 +475,51 @@ const Menu: React.FC = () => {
             </div>
 
             {loading ? (
-              <div className="menu-empty-state">Loading menu...</div>
+              <div className="p-10 text-center text-tk-text-secondary">Loading menu...</div>
             ) : filteredMenuItems.length === 0 ? (
-              <div className="menu-empty-state">No menu items found. Add one to get started!</div>
+              <div className="p-10 text-center text-tk-text-secondary">No menu items found. Add one to get started!</div>
             ) : (
-              <div className="menu-grid">
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-6 max-xl:grid-cols-[repeat(auto-fill,minmax(280px,1fr))] max-lg:grid-cols-2 max-sm:grid-cols-1">
                 {filteredMenuItems.slice(0, visibleItemCount).map((item) => (
-                  <div key={item.id} className="menu-card">
-                    <div className="menu-image">
+                  <div key={item.id} className="bg-tk-bg-card p-6 rounded-[20px] shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] dark:border dark:border-tk-border">
+                    <div className="w-20 h-20 rounded-xl bg-[#FFF5E6] flex items-center justify-center text-[40px] mb-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden">
                       {(item.images && item.images.length > 0) ? (
                         <img src={item.images[0].url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : '🍽️'}
                     </div>
-                    <div className="menu-info">
-                      <h3 className="menu-name">
+                    <div className="mb-5">
+                      <h3 className="text-[18px] font-semibold text-tk-text mb-1">
                         <span style={{ fontSize: '12px', marginRight: '6px' }}>
                           {item.isVeg ? '🟩' : '🟥'}
                         </span>
                         {item.name}
                       </h3>
-                      <p className="menu-category">{getCategoryName(item.categoryId)}</p>
+                      <p className="text-[13px] text-tk-text-secondary mb-2">{getCategoryName(item.categoryId)}</p>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div className="menu-price">₹{item.price}</div>
-                        <div className="menu-serves">👥 Serves {item.serves}</div>
+                        <div className="text-[20px] font-bold text-tk-burgundy">₹{item.price}</div>
+                        <div className="text-[12px] text-tk-text-secondary">👥 Serves {item.serves}</div>
                       </div>
                     </div>
-                    <div className="menu-actions" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '12px' }}>
-                      <div className="stock-toggle">
-                        <label className="toggle-switch">
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-center gap-3">
+                        <label className="relative inline-block w-11 h-6">
                           <input
                             type="checkbox"
                             checked={item.available}
                             onChange={() => toggleStock(item)}
                           />
-                          <span className="toggle-slider"></span>
+                          <span className="absolute cursor-pointer inset-0 bg-[#CBD5E0] dark:bg-tk-bg-elevated dark:border dark:border-tk-border transition-all duration-300 rounded-[24px] before:absolute before:content-[''] before:h-[18px] before:w-[18px] before:left-[3px] before:bottom-[2px] before:bg-white before:transition-all before:duration-300 before:rounded-full before:shadow-[0_2px_4px_rgba(0,0,0,0.2)] peer-checked:bg-tk-burgundy peer-checked:border-tk-burgundy peer-checked:before:translate-x-[20px]"></span>
                         </label>
-                        <span className={`stock-status ${item.available ? 'in-stock' : 'out-of-stock'}`}>
+                        <span className={`text-[12px] font-medium ${item.available ? 'text-[#22543D]' : 'text-[#E53E3E]'}` }>
                           {item.available ? 'In Stock' : 'Out of Stock'}
                         </span>
                       </div>
                       <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-                        <button className="edit-button" style={{ flex: 1 }} onClick={() => handleEditMenuItem(item)}>
+                        <button className="flex-1 flex items-center gap-2 px-4 py-2 bg-tk-bg-hover text-tk-text-secondary border-none rounded-lg text-[13px] font-medium cursor-pointer transition-all duration-200 hover:bg-tk-border hover:text-tk-text font-['Outfit']" onClick={() => handleEditMenuItem(item)}>
                           <Edit3 size={16} />
                           Edit
                         </button>
-                        <button className="item-delete-btn" onClick={() => handleDeleteMenuItem(item.id)}>
+                        <button className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 border border-[#FC8181] rounded-lg bg-transparent text-[#E53E3E] cursor-pointer hover:bg-[#FED7D7]" onClick={() => handleDeleteMenuItem(item.id)}>
                           <Trash2 size={16} />
                           Delete
                         </button>
@@ -538,62 +538,62 @@ const Menu: React.FC = () => {
         )}
 
         {activeTab === 'offers' && (
-          <div className="tab-content">
-            <div className="content-header">
-              <h2 className="content-title">Offers & Promotions</h2>
-              <button className="add-button" onClick={handleAddOffer}>
+          <div className="animate-[fadeIn_0.3s_ease-in-out]">
+            <div className="flex justify-between items-center mb-6 max-md:flex-col max-md:items-start max-md:gap-4">
+              <h2 className="text-[18px] font-semibold text-tk-text">Offers & Promotions</h2>
+              <button className="flex items-center gap-2 px-5 py-3 bg-tk-burgundy text-white border-none rounded-xl text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-tk-burgundy hover:-translate-y-[2px] font-['Outfit']" onClick={handleAddOffer}>
                 <Plus size={16} />
                 Add New Offer
               </button>
             </div>
 
             {loadingOffers ? (
-              <div className="menu-empty-state">Loading offers...</div>
+              <div className="p-10 text-center text-tk-text-secondary">Loading offers...</div>
             ) : offers.length === 0 ? (
-              <div className="menu-empty-state">No offers yet. Click "Add New Offer" to create one!</div>
+              <div className="p-10 text-center text-tk-text-secondary">No offers yet. Click "Add New Offer" to create one!</div>
             ) : (
-              <div className="offers-grid">
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(350px,1fr))] gap-6 max-xl:grid-cols-[repeat(auto-fill,minmax(300px,1fr))] max-lg:grid-cols-2 max-sm:grid-cols-1">
                 {offers.slice(0, visibleOfferCount).map((offer) => {
                   const linkedItem = menuItems.find(m => m.id === offer.menu_item_id);
                   const originalPrice = linkedItem?.price;
                   return (
-                    <div key={offer.id} className="offer-card">
-                      <div className="offer-header">
-                        <h3 className="offer-title">{offer.title}</h3>
-                        <span className={`offer-status ${offer.is_active ? 'active' : 'inactive'}`}>
+                    <div key={offer.id} className="bg-tk-bg-card p-6 rounded-[20px] shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] dark:border dark:border-tk-border">
+                      <div className="flex justify-between items-start mb-3">
+                        <h3 className="text-[18px] font-semibold text-tk-text">{offer.title}</h3>
+                        <span className={`px-3 py-1 rounded-xl text-[11px] font-semibold uppercase ${offer.is_active ? 'bg-tk-burgundy text-white' : 'bg-[#FEB2B2] text-[#742A2A]'}` }>
                           {offer.is_active ? 'Active' : 'Inactive'}
                         </span>
                       </div>
-                      <div className="offer-details">
-                        <div className="offer-dish">
+                      <div className="mb-3">
+                        <div className="text-[14px] font-medium text-tk-text mb-2">
                           {linkedItem ? `${linkedItem.isVeg ? '🟩' : '🟥'} ${linkedItem.name}` : '—'}
                         </div>
-                        <div className="offer-pricing">
+                        <div className="flex items-center gap-3">
                           {originalPrice !== undefined && (
-                            <span className="original-price">₹{originalPrice}</span>
+                            <span className="text-[14px] text-tk-text-muted line-through">₹{originalPrice}</span>
                           )}
-                          <span className="discounted-price">₹{offer.discount_price}</span>
+                          <span className="text-[16px] font-semibold text-[#68D391]">₹{offer.discount_price}</span>
                         </div>
                       </div>
                       {offer.valid_until && (
-                        <div className="offer-validity">Valid until: {new Date(offer.valid_until).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
+                        <div className="text-[12px] text-tk-text-secondary mb-5">Valid until: {new Date(offer.valid_until).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
                       )}
-                      <div className="offer-actions">
-                        <div className="offer-toggle">
-                          <label className="toggle-switch">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center">
+                          <label className="relative inline-block w-11 h-6">
                             <input
                               type="checkbox"
                               checked={offer.is_active}
                               onChange={() => toggleOffer(offer)}
                             />
-                            <span className="toggle-slider"></span>
+                            <span className="absolute cursor-pointer inset-0 bg-[#CBD5E0] dark:bg-tk-bg-elevated dark:border dark:border-tk-border transition-all duration-300 rounded-[24px] before:absolute before:content-[''] before:h-[18px] before:w-[18px] before:left-[3px] before:bottom-[2px] before:bg-white before:transition-all before:duration-300 before:rounded-full before:shadow-[0_2px_4px_rgba(0,0,0,0.2)] peer-checked:bg-tk-burgundy peer-checked:border-tk-burgundy peer-checked:before:translate-x-[20px]"></span>
                           </label>
                         </div>
-                        <button className="edit-button" onClick={() => handleEditOffer(offer)}>
+                        <button className="flex items-center gap-2 px-4 py-2 bg-tk-bg-hover text-tk-text-secondary border-none rounded-lg text-[13px] font-medium cursor-pointer transition-all duration-200 hover:bg-tk-border hover:text-tk-text font-['Outfit']" onClick={() => handleEditOffer(offer)}>
                           <Edit3 size={16} />
                           Edit
                         </button>
-                        <button className="delete-button" onClick={() => handleDeleteOffer(offer.id)}>
+                        <button className="flex items-center gap-2 px-4 py-2 bg-[#FED7D7] text-[#E53E3E] border-none rounded-lg text-[13px] font-medium cursor-pointer transition-all duration-200 hover:bg-[#FEB2B2] hover:text-[#742A2A] font-['Outfit']" onClick={() => handleDeleteOffer(offer.id)}>
                           <Trash2 size={16} />
                           Delete
                         </button>

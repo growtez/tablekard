@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import './sidebar.css';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface NavItem {
   icon: (active: boolean) => React.ReactNode;
@@ -182,60 +182,65 @@ const Sidebar: React.FC = () => {
       <div
         className={`sidebar-overlay ${!isCollapsed ? 'visible' : ''}`}
         onClick={() => setIsCollapsed(true)}
-      />
+      />      <div className={`fixed left-0 top-0 h-screen bg-tk-bg py-4 flex flex-col z-[100] font-sans transition-[width,transform] duration-300 ease-in-out border-r-[1.5px] border-tk-border md:translate-x-0 ${isCollapsed ? 'w-[80px] -translate-x-full md:w-[80px] px-3' : 'w-[280px] translate-x-0 md:w-[240px] px-3'} overflow-y-auto no-scrollbar shadow-[4px_0_24px_rgba(0,0,0,0.08)] md:shadow-none`}>
 
-      <div className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
+        <button 
+          className={`hidden md:flex absolute top-5 w-7 h-7 bg-tk-bg text-tk-text-secondary border-[1.5px] border-tk-border rounded-full items-center justify-center cursor-pointer z-[110] shadow-sm hover:scale-105 hover:text-tk-text hover:border-tk-text-secondary transition-all duration-200 ${isCollapsed ? 'left-1/2 -translate-x-1/2' : 'right-3'}`} 
+          onClick={() => setIsCollapsed(!isCollapsed)}
+        >
+          {isCollapsed ? <ChevronRight size={16} strokeWidth={2.5} /> : <ChevronLeft size={16} strokeWidth={2.5} />}
+        </button>
 
-        <div className="sidebar-toggle" onClick={() => setIsCollapsed(!isCollapsed)}>
-          {isCollapsed ? '»' : '«'}
-        </div>
-
-        <div className="profile">
-          <div className="profile-avatar">
+        <div className="flex flex-col items-center mb-5 shrink-0">
+          <div className={`rounded-full bg-tk-burgundy-bg flex items-center justify-center overflow-hidden border-2 border-tk-burgundy transition-all duration-300 hover:scale-105 hover:shadow-[0_4px_12px_rgba(139,58,30,0.15)] ${isCollapsed && !isMobile ? 'w-10 h-10 mb-0 mt-12' : 'w-14 h-14 mb-2'}`}>
             {showImage ? (
               <img
                 src={activeRestaurantLogo}
                 alt={`${activeRestaurantName} logo`}
-                className="avatar-img"
+                className="w-full h-full object-cover"
                 onError={() => setLogoError(true)}
               />
             ) : (
-              <span className="avatar-initial">{initial}</span>
+              <span className="text-2xl font-bold text-tk-burgundy leading-none select-none">{initial}</span>
             )}
           </div>
-          {showLabels && <div className="profile-name">{activeRestaurantName}</div>}
+          {showLabels && <div className="text-tk-text text-[14px] font-semibold w-full text-center px-1 break-words leading-tight mt-1">{activeRestaurantName}</div>}
         </div>
 
-        <nav className="nav">
+        <nav className="flex flex-col gap-1 flex-1">
           {navItems.map((item) => {
             const isActive = activeTab === item.id;
             return (
               <div
                 key={item.id}
-                className={`nav-item ${isActive ? 'nav-item-active' : ''}`}
+                className={`flex items-center rounded-tk-md cursor-pointer transition-all duration-200 text-[13px] border-[1.5px] ${isCollapsed && !isMobile ? 'justify-center p-2.5 gap-0' : 'gap-2.5 py-2 px-3'} ${isActive ? 'bg-tk-burgundy text-white font-semibold border-tk-burgundy shadow-[0_4px_12px_rgba(139,58,30,0.25)]' : 'text-tk-text-secondary border-transparent hover:bg-tk-burgundy-bg hover:text-tk-burgundy hover:border-tk-burgundy/15 font-medium'}`}
                 onClick={() => handleNavClick(item)}
                 title={isCollapsed && !isMobile ? item.label : undefined}
               >
-                <span className="nav-icon">{item.icon(isActive)}</span>
-                {showLabels && <span className="nav-label">{item.label}</span>}
+                <span className="text-[17px] flex items-center justify-center shrink-0">{item.icon(isActive)}</span>
+                {showLabels && <span className="font-inherit">{item.label}</span>}
               </div>
             );
           })}
         </nav>
 
-        <div className={`help-button ${activeTab === 'profile' ? 'help-button-active' : ''}`} onClick={() => { navigate('/profile'); if (window.innerWidth <= 768) setIsCollapsed(true); }} title={isCollapsed && !isMobile ? "Profile" : undefined}>
-          <span className="help-icon"><ProfileIcon active={activeTab === 'profile'} /></span>
-          {showLabels && <span className="help-text">Profile</span>}
+        <div 
+          className={`flex items-center rounded-tk-md cursor-pointer mt-4 text-[13px] transition-all duration-200 border-[1.5px] ${isCollapsed && !isMobile ? 'justify-center p-2.5 gap-0' : 'gap-2.5 py-2 px-3'} ${activeTab === 'profile' ? 'bg-tk-burgundy text-white border-tk-burgundy font-semibold shadow-[0_4px_12px_rgba(139,58,30,0.25)]' : 'bg-tk-bg-card text-tk-text-secondary border-tk-border hover:bg-tk-burgundy-bg hover:text-tk-burgundy hover:border-tk-burgundy/20 hover:-translate-y-[1px]'}`} 
+          onClick={() => { navigate('/profile'); if (window.innerWidth <= 768) setIsCollapsed(true); }} 
+          title={isCollapsed && !isMobile ? "Profile" : undefined}
+        >
+          <span className="text-[17px] flex items-center justify-center shrink-0"><ProfileIcon active={activeTab === 'profile'} /></span>
+          {showLabels && <span className="font-inherit">Profile</span>}
         </div>
 
         {/* Dark Mode Toggle */}
         <button
-          className="theme-toggle-btn"
+          className={`flex items-center border border-tk-border rounded-tk-md cursor-pointer bg-transparent text-tk-text-secondary transition-all duration-200 mt-2.5 hover:bg-tk-bg-hover hover:text-tk-burgundy text-[13px] ${isCollapsed && !isMobile ? 'justify-center p-2.5 gap-0' : 'gap-2.5 py-2 px-3'}`}
           onClick={toggleTheme}
           title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           aria-label={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
         >
-          <span className="theme-toggle-icon">
+          <span className="text-[17px] flex items-center justify-center shrink-0">
             {isDark ? (
               // Sun icon
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -257,7 +262,7 @@ const Sidebar: React.FC = () => {
             )}
           </span>
           {showLabels && (
-            <span className="theme-toggle-label">
+            <span className="font-inherit font-medium">
               {isDark ? 'Light Mode' : 'Dark Mode'}
             </span>
           )}
