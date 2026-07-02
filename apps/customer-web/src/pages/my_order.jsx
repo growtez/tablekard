@@ -594,12 +594,12 @@ const MyOrderPage = () => {
                         </div>
                       </div>
                       {item.variant && (
-                        <div className="item-customization-info" style={{ fontSize: '11px', color: '#8B3A1E', fontWeight: 600, marginTop: '2px', marginBottom: '2px' }}>
+                        <div className="item-customization-info" style={{ textAlign: 'left', fontSize: '11px', color: '#8B3A1E', fontWeight: 600, marginTop: '2px', marginBottom: '2px' }}>
                           Variant: {item.variant.name} (+₹{item.variant.price})
                         </div>
                       )}
                       {item.addons && item.addons.length > 0 && (
-                        <div className="item-customization-info" style={{ fontSize: '11px', color: '#666', marginTop: '2px', marginBottom: '2px' }}>
+                        <div className="item-customization-info" style={{ textAlign: 'left', fontSize: '11px', color: '#666', marginTop: '2px', marginBottom: '2px' }}>
                           Add-ons: {item.addons.map(a => `${a.name} (+₹${a.price})`).join(', ')}
                         </div>
                       )}

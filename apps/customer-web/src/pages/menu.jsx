@@ -30,6 +30,8 @@ const MenuPage = () => {
   const [categories, setCategories] = useState([]);
   const [menuLoading, setMenuLoading] = useState(true);
   const [vegOnly, setVegOnly] = useState(false);
+  const [activeImageIdx, setActiveImageIdx] = useState(0);
+  const imageSliderRef = useRef(null);
 
   const getBaseItemQuantity = (baseItemId) => {
     return cart
@@ -229,6 +231,7 @@ const MenuPage = () => {
     setSelectedItem(item);
     setSelectedVariant(item.variants && item.variants.length > 0 ? item.variants[0] : null);
     setSelectedAddons([]);
+    setActiveImageIdx(0);
     setShowItemModal(true);
   };
 
@@ -621,35 +624,65 @@ const MenuPage = () => {
             </button>
 
             <div className="modal-scrollable-content">
-              {/* Centered Dish Image */}
+              {/* Dish Slideshow */}
               <div className="modal-dish-showcase">
-                {selectedItem.images && selectedItem.images.length > 1 ? (
-                  <div className="dish-images-scroll-container">
-                    {selectedItem.images.map((imgUrl, idx) => (
-                      <div key={idx} className="dish-image-frame">
-                        <img src={imgUrl} alt={`${selectedItem.name} ${idx + 1}`} loading="lazy" />
+                {(() => {
+                  const imgs = (selectedItem.images && selectedItem.images.length > 0)
+                    ? selectedItem.images
+                    : [selectedItem.image];
+                  const hasMany = imgs.length > 1;
+                  return (
+                    <>
+                      <div
+                        className="dish-slideshow-track"
+                        ref={imageSliderRef}
+                        onScroll={(e) => {
+                          const el = e.currentTarget;
+                          const idx = Math.round(el.scrollLeft / el.offsetWidth);
+                          setActiveImageIdx(idx);
+                        }}
+                      >
+                        {imgs.map((imgUrl, idx) => (
+                          <div key={idx} className="dish-slide">
+                            <img src={imgUrl} alt={`${selectedItem.name} ${idx + 1}`} loading="lazy" />
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="dish-image-frame">
-                    <img src={selectedItem.image} alt={selectedItem.name} loading="lazy" />
-                  </div>
-                )}
-                <button
-                  className="modal-fav-floating"
-                  onClick={() => toggleFavorite(selectedItem.id)}
-                >
-                  <Heart
-                    size={20}
-                    fill={favorites.includes(selectedItem.id) ? '#8B3A1E' : 'transparent'}
-                    color="#8B3A1E"
-                  />
-                </button>
-                <div className="dish-rating-pill">
-                  <Star size={12} fill="#8B3A1E" color="#8B3A1E" />
-                  <span>{selectedItem.rating}</span>
-                </div>
+
+                      {/* Dot indicators */}
+                      {hasMany && (
+                        <div className="dish-slide-dots">
+                          {imgs.map((_, idx) => (
+                            <button
+                              key={idx}
+                              className={`dish-slide-dot${activeImageIdx === idx ? ' active' : ''}`}
+                              onClick={() => {
+                                setActiveImageIdx(idx);
+                                imageSliderRef.current?.scrollTo({ left: idx * imageSliderRef.current.offsetWidth, behavior: 'smooth' });
+                              }}
+                              aria-label={`Photo ${idx + 1}`}
+                            />
+                          ))}
+                        </div>
+                      )}
+
+                      <button
+                        className="modal-fav-floating"
+                        onClick={() => toggleFavorite(selectedItem.id)}
+                      >
+                        <Heart
+                          size={20}
+                          fill={favorites.includes(selectedItem.id) ? '#8B3A1E' : 'transparent'}
+                          color="#8B3A1E"
+                        />
+                      </button>
+                      <div className="dish-rating-pill">
+                        <Star size={12} fill="#8B3A1E" color="#8B3A1E" />
+                        <span>{selectedItem.rating}</span>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
 
               {/* Dish Info */}
