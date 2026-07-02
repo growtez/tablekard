@@ -23,19 +23,16 @@ body {
   display: flex;
   justify-content: center;
   min-height: 100vh;
-  background-color: #2b2b2b;
-  /* Dark outer background */
+  background-color: #1e1e1e;
 }
 
 #root {
   background-color: var(--bg-white);
   width: 100%;
-  max-width: 375px;
-  /* Mobile width */
+  max-width: 100%;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
 }
 
 /* ── Header ──────────────────────────────────────────────── */
@@ -104,6 +101,18 @@ body {
 .section-queue {
   background-color: var(--queue-bg);
   color: #ffffff;
+}
+
+/* ── Orders layout (global) ──────────────────────────────── */
+
+.orders-layout {
+  display: flex;
+  flex-direction: column;
+}
+
+.orders-panel {
+  display: flex;
+  flex-direction: column;
 }
 
 /* ── Orders container ────────────────────────────────────── */
@@ -826,7 +835,30 @@ body {
 
   #root {
     max-width: 100%;
+    height: 100vh;
+    overflow: hidden;
     box-shadow: none;
+  }
+
+  .orders-layout {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  .orders-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    min-height: 0;
+    border-bottom: 4px solid #e5e5e5;
+  }
+
+  .orders-panel:last-child {
+    border-bottom: none;
   }
 
   /* ── Header scales up ── */
@@ -854,15 +886,15 @@ body {
     padding: 10px 24px;
     font-size: 20px;
     letter-spacing: 1px;
-    top: 69px; /* below sticky header */
+    top: 0;
   }
 
-  /* ── Orders container → 2-column grid ── */
+  /* ── Orders container → Masonry 2-column ── */
   .orders-container {
     padding: 16px 24px;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+    display: block;
+    column-count: 2;
+    column-gap: 16px;
   }
 
   /* Empty state spans full grid */
@@ -877,6 +909,8 @@ body {
     padding: 20px;
     gap: 16px;
     border-radius: 18px;
+    break-inside: avoid;
+    margin-bottom: 16px;
   }
 
   .table-label {
@@ -986,19 +1020,12 @@ body {
 
   /* The main orders layout: two side-by-side panels */
   .orders-layout {
-    display: flex;
-    flex: 1;
-    overflow: hidden;
-    min-height: 0;
+    flex-direction: row;
   }
 
   /* Each panel (preparing / queue) becomes a sticky scroll column */
   .orders-panel {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-    min-height: 0;
+    border-bottom: none;
     border-right: 1px solid #e5e5e5;
   }
 
@@ -1015,16 +1042,19 @@ body {
     font-size: 22px;
   }
 
-  /* 3-column cards grid inside each panel */
+  /* Multi-column masonry cards inside each panel */
   .orders-container {
     padding: 20px 32px;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px;
+    display: block;
+    column-width: 280px;
+    column-count: auto;
+    column-gap: 20px;
   }
 
   /* Slightly larger card details on desktop */
   .order-card {
     padding: 22px;
+    margin-bottom: 20px;
   }
 
   .table-number-oval {
