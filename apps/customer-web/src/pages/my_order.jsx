@@ -52,7 +52,9 @@ const MyOrderPage = () => {
             quantity: item.quantity,
             price: item.price,
             status: item.status || 'placed',
-            specialInstructions: item.special_instructions || null
+            specialInstructions: item.special_instructions || null,
+            variant: item.variant || null,
+            addons: item.addons || null
           })),
           total: order.total,
           discount: order.discount || 0,
@@ -231,7 +233,14 @@ const MyOrderPage = () => {
         const newOrder = {
           id: result.orderNumber,
           status: 'placed',
-          items: cartItems.map(item => ({ name: item.name, quantity: item.quantity, price: item.price })),
+          items: cartItems.map(item => ({
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price,
+            variant: item.variant || null,
+            addons: item.addons || null,
+            specialInstructions: item.specialInstructions || null
+          })),
           total: getTotalPrice(),
           orderDate: 'Just now',
           paymentStatus: 'Paid Online',
@@ -298,7 +307,14 @@ const MyOrderPage = () => {
       const newOrder = {
         id: result.orderNumber,
         status: 'placed',
-        items: cartItems.map(item => ({ name: item.name, quantity: item.quantity, price: item.price })),
+        items: cartItems.map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          variant: item.variant || null,
+          addons: item.addons || null,
+          specialInstructions: item.specialInstructions || null
+        })),
         total: getTotalPrice(),
         orderDate: 'Just now',
         paymentStatus: 'Pay at Counter',
@@ -351,10 +367,31 @@ const MyOrderPage = () => {
 
     let y = 62;
     order.items.forEach(item => {
+      doc.setFont(undefined, 'bold');
       doc.text(item.name, 20, y);
+      doc.setFont(undefined, 'normal');
       doc.text(`x${item.quantity}`, 140, y);
       doc.text(`₹${item.price * item.quantity}`, 170, y);
-      y += 8;
+      y += 6;
+
+      if (item.variant) {
+        doc.setFontSize(9);
+        doc.setTextColor(120, 120, 120);
+        doc.text(`Variant: ${item.variant.name} (+₹${item.variant.price})`, 25, y);
+        doc.setFontSize(12);
+        doc.setTextColor(0, 0, 0);
+        y += 5;
+      }
+      if (item.addons && item.addons.length > 0) {
+        doc.setFontSize(9);
+        doc.setTextColor(120, 120, 120);
+        const addonsText = item.addons.map(a => `${a.name} (+₹${a.price})`).join(', ');
+        doc.text(`Add-ons: ${addonsText}`, 25, y);
+        doc.setFontSize(12);
+        doc.setTextColor(0, 0, 0);
+        y += 5;
+      }
+      y += 3;
     });
 
     doc.line(20, y, 190, y);
@@ -556,6 +593,16 @@ const MyOrderPage = () => {
                           </button>
                         </div>
                       </div>
+                      {item.variant && (
+                        <div className="item-customization-info" style={{ fontSize: '11px', color: '#8B3A1E', fontWeight: 600, marginTop: '2px', marginBottom: '2px' }}>
+                          Variant: {item.variant.name} (+₹{item.variant.price})
+                        </div>
+                      )}
+                      {item.addons && item.addons.length > 0 && (
+                        <div className="item-customization-info" style={{ fontSize: '11px', color: '#666', marginTop: '2px', marginBottom: '2px' }}>
+                          Add-ons: {item.addons.map(a => `${a.name} (+₹${a.price})`).join(', ')}
+                        </div>
+                      )}
                       {/* Row 2: meta */}
                       <div className="cart-meta">
                         <div className="cart-rating">
@@ -796,6 +843,16 @@ const MyOrderPage = () => {
                               </div>
                               <span className="oi-item-price">₹{item.price * item.quantity}</span>
                             </div>
+                            {item.variant && (
+                              <div style={{ fontSize: '11px', color: '#8B3A1E', fontStyle: 'italic', marginLeft: '24px', marginTop: '2px' }}>
+                                Variant: {item.variant.name} (+₹{item.variant.price})
+                              </div>
+                            )}
+                            {item.addons && item.addons.length > 0 && (
+                              <div style={{ fontSize: '11px', color: '#666', fontStyle: 'italic', marginLeft: '24px', marginTop: '2px' }}>
+                                Add-ons: {item.addons.map(a => `${a.name} (+₹${a.price})`).join(', ')}
+                              </div>
+                            )}
                             {item.specialInstructions && (
                               <div className="oi-item-note">
                                 <span>📝</span>

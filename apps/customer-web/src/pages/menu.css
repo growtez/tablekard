@@ -1501,3 +1501,140 @@ body {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   z-index: 2;
 }
+
+/* Customization Sections */
+.modal-customization-section {
+  padding: 16px 24px;
+  border-top: 1px solid #F0F0F0;
+}
+
+.customization-title-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.customization-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1A1A1A;
+  margin: 0;
+}
+
+.customization-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.customization-badge.required {
+  background: #FFF0ED;
+  color: #8B3A1E;
+}
+
+.customization-badge.optional {
+  background: #F5F5F5;
+  color: #666666;
+}
+
+.customization-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.customization-option-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #FAF9F9;
+  border-radius: 14px;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.customization-option-row:hover {
+  background: #FFF7F3;
+}
+
+.customization-option-row.active {
+  background: #FFF7F3;
+  border-color: #8B3A1E;
+}
+
+.customization-option-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Custom inputs styling */
+.custom-radio, .custom-checkbox {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #D8C3BD;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.custom-checkbox {
+  border-radius: 6px;
+}
+
+.customization-option-row.active .custom-radio {
+  border-color: #8B3A1E;
+}
+
+.customization-option-row.active .custom-checkbox {
+  border-color: #8B3A1E;
+  background-color: #8B3A1E;
+}
+
+.custom-radio-inner {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: transparent;
+  transition: all 0.2s ease;
+}
+
+.customization-option-row.active .custom-radio-inner {
+  background: #8B3A1E;
+}
+
+.custom-checkbox-inner {
+  width: 5px;
+  height: 9px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  opacity: 0;
+  margin-bottom: 2px;
+  transition: all 0.2s ease;
+}
+
+.customization-option-row.active .custom-checkbox-inner {
+  opacity: 1;
+}
+
+.customization-option-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1A1A1A;
+}
+
+.customization-option-price {
+  font-size: 14px;
+  font-weight: 700;
+  color: #8B3A1E;
+}

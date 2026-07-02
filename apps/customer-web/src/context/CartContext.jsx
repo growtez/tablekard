@@ -1,6 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-const CartContext = createContext(null);
+// Use a global singleton context to prevent HMR and duplicate import module issues in Vite
+if (!window.__TablekardCartContext) {
+    window.__TablekardCartContext = createContext(null);
+}
+const CartContext = window.__TablekardCartContext;
 
 const STORAGE_KEY = 'tablekard_cart';
 
@@ -8,7 +12,8 @@ export function CartProvider({ children }) {
     const [cartItems, setCartItems] = useState(() => {
         try {
             const saved = sessionStorage.getItem(STORAGE_KEY);
-            return saved ? JSON.parse(saved) : [];
+            const parsed = saved ? JSON.parse(saved) : [];
+            return Array.isArray(parsed) ? parsed : [];
         } catch {
             return [];
         }
@@ -19,35 +24,60 @@ export function CartProvider({ children }) {
         sessionStorage.setItem(STORAGE_KEY, JSON.stringify(cartItems));
     }, [cartItems]);
 
-    const addToCart = (item) => {
+    const addToCart = (item, selectedVariant = null, selectedAddons = []) => {
+        const addonIds = (selectedAddons || []).map(a => a.id).sort().join(',');
+        const variantId = selectedVariant ? selectedVariant.id : '';
+        const compositeId = `${item.id}_${variantId}_${addonIds}`;
+
         setCartItems(prev => {
-            const existing = prev.find(i => i.id === item.id);
+            const existing = prev.find(i => i.id === compositeId);
             if (existing) {
                 return prev.map(i =>
-                    i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+                    i.id === compositeId ? { ...i, quantity: i.quantity + 1 } : i
                 );
             }
+
+            const basePrice = selectedVariant ? selectedVariant.price : (item.discount_price || item.price);
+            const addonsPrice = (selectedAddons || []).reduce((sum, a) => sum + a.price, 0);
+            const totalPrice = basePrice + addonsPrice;
+
             return [...prev, {
-                id: item.id,
+                id: compositeId,
+                menuItemId: item.id,
                 name: item.name,
-                price: item.discount_price || item.price,
+                price: totalPrice,
                 image: item.image_url || item.image,
                 rating: item.rating || '4.5',
                 serves: item.serves || '1',
                 quantity: 1,
+                variant: selectedVariant,
+                addons: selectedAddons,
             }];
         });
     };
 
-    const removeFromCart = (itemId) => {
+    const removeFromCart = (id) => {
         setCartItems(prev => {
-            const existing = prev.find(i => i.id === itemId);
-            if (existing && existing.quantity > 1) {
-                return prev.map(i =>
-                    i.id === itemId ? { ...i, quantity: i.quantity - 1 } : i
-                );
+            const existing = prev.find(i => i.id === id);
+            if (existing) {
+                if (existing.quantity > 1) {
+                    return prev.map(i =>
+                        i.id === id ? { ...i, quantity: i.quantity - 1 } : i
+                    );
+                }
+                return prev.filter(i => i.id !== id);
+            } else {
+                // Treat id as base menuItemId and decrement the last added customized version
+                const matching = prev.filter(i => i.menuItemId === id || i.id === id || i.id.startsWith(id + '_'));
+                if (matching.length === 0) return prev;
+                const lastItem = matching[matching.length - 1];
+                if (lastItem.quantity > 1) {
+                    return prev.map(i =>
+                        i.id === lastItem.id ? { ...i, quantity: i.quantity - 1 } : i
+                    );
+                }
+                return prev.filter(i => i.id !== lastItem.id);
             }
-            return prev.filter(i => i.id !== itemId);
         });
     };
 
@@ -64,7 +94,6 @@ export function CartProvider({ children }) {
                     }
                     return item;
                 })
-                // Remove item if quantity drops to 0 or below
                 .filter(item => item.quantity > 0)
         );
     };
@@ -78,8 +107,9 @@ export function CartProvider({ children }) {
     };
 
     const getItemQuantity = (itemId) => {
-        const item = cartItems.find(i => i.id === itemId);
-        return item ? item.quantity : 0;
+        return cartItems
+            .filter(i => i.menuItemId === itemId || i.id === itemId || i.id.startsWith(itemId + '_'))
+            .reduce((sum, item) => sum + item.quantity, 0);
     };
 
     const clearCart = () => {
