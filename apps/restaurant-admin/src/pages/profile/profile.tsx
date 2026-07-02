@@ -2294,7 +2294,7 @@ const ProfilePage: React.FC = () => {
     return (
       <div className="flex min-h-screen bg-tk-bg relative">
         <Sidebar />
-        <div className="flex-1 p-5 overflow-y-auto min-h-screen transition-all duration-300 ml-[240px] [.sidebar-collapsed_&]:ml-[80px] max-md:!ml-0 max-md:!p-4 max-md:!pt-[72px] bg-[#f7f8fa] rounded-l-[32px] shadow-[-8px_0_24px_rgba(0,0,0,0.12)] dark:bg-tk-bg-surface max-md:rounded-none">
+        <div className="tk-main-content flex-1 p-5 overflow-y-auto min-h-screen transition-all duration-300 ml-[240px] max-md:!ml-0 max-md:!p-4 max-md:!pt-[72px] bg-tk-bg-surface">
           <div className="flex flex-col items-center justify-center h-[calc(100vh-160px)] text-[#718096] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
             <div className="w-10 h-10 border-3 border-[#E2E8F0] border-t-tk-burgundy rounded-full animate-spin mb-4"></div>
             <p>Loading profile information...</p>
@@ -2308,7 +2308,7 @@ const ProfilePage: React.FC = () => {
     <div className="flex min-h-screen bg-tk-bg relative">
       <Sidebar />
 
-      <div className="flex-1 p-5 overflow-y-auto min-h-screen transition-all duration-300 ml-[240px] [.sidebar-collapsed_&]:ml-[80px] max-md:!ml-0 max-md:!p-4 max-md:!pt-[72px] bg-[#f7f8fa] rounded-l-[32px] shadow-[-8px_0_24px_rgba(0,0,0,0.12)] dark:bg-tk-bg-surface max-md:rounded-none">
+      <div className="tk-main-content flex-1 p-5 overflow-y-auto min-h-screen transition-all duration-300 ml-[240px] max-md:!ml-0 max-md:!p-4 max-md:!pt-[72px] bg-tk-bg-surface">
         <div
           className="flex justify-between items-center mb-8"
           style={{ marginBottom: "32px", alignItems: "center" }}

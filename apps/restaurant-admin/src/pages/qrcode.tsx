@@ -79,7 +79,7 @@ const QRCodePage: React.FC = () => {
         <div className="flex min-h-screen bg-tk-bg relative font-['Outfit',sans-serif]">
             <Sidebar />
 
-            <div className="flex-1 p-5 overflow-y-auto min-h-screen transition-all duration-300 ml-[240px] [.sidebar-collapsed_&]:ml-[80px] max-md:!ml-0 max-md:!p-4 max-md:!pt-[72px] bg-[#f7f8fa] md:rounded-l-[32px] md:shadow-[-8px_0_24px_rgba(0,0,0,0.12)]">
+            <div className="tk-main-content flex-1 p-5 overflow-y-auto min-h-screen transition-all duration-300 ml-[240px] max-md:!ml-0 max-md:!p-4 max-md:!pt-[72px] bg-tk-bg-surface">
                 {/* Header */}
                 <div className="flex justify-between items-start mb-7 flex-wrap gap-4 max-md:flex-col">
                     <div>

@@ -1,9 +1,65 @@
 // Sidebar.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
+
+const Tooltip = ({
+  text,
+  showTooltip,
+  children,
+}: {
+  text: string;
+  showTooltip: boolean;
+  children: React.ReactNode;
+}) => {
+  const [show, setShow] = useState(false);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
+
+  const ref = useRef<HTMLDivElement>(null);
+
+  const handleMouseEnter = () => {
+    if (!showTooltip || !ref.current) return;
+
+    // Find the first icon span inside the nav item
+    const icon = ref.current.querySelector("span");
+
+    if (!icon) return;
+
+    const rect = icon.getBoundingClientRect();
+
+    setPos({
+      top: rect.top + rect.height / 2,
+      left: rect.right + 8,
+    });
+
+    setShow(true);
+  };
+
+  return (
+    <div
+      ref={ref}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={() => setShow(false)}
+      className="w-full"
+    >
+      {children}
+
+      {show && (
+        <div
+          className="fixed z-[9999] px-3 py-1.5 bg-tk-bg-elevated text-tk-text text-[13px] font-semibold rounded-md border border-tk-border shadow-[0_4px_20px_rgba(0,0,0,0.15)] whitespace-nowrap pointer-events-none -translate-y-1/2"
+          style={{
+            top: pos.top,
+            left: pos.left,
+          }}
+        >
+          {text}
+        </div>
+      )}
+    </div>
+  );
+};
 
 interface NavItem {
   icon: (active: boolean) => React.ReactNode;
@@ -14,7 +70,7 @@ interface NavItem {
 
 // Inline SVG icon components (Flaticon-style) — filled when active
 const DashboardIcon = ({ active }: { active: boolean }) => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="3" y="3" width="7" height="7" rx="1" />
     <rect x="14" y="3" width="7" height="7" rx="1" />
     <rect x="3" y="14" width="7" height="7" rx="1" />
@@ -23,7 +79,7 @@ const DashboardIcon = ({ active }: { active: boolean }) => (
 );
 
 const OrderIcon = ({ active }: { active: boolean }) => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M18 3H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2V5a2 2 0 00-2-2z" fill={active ? 'currentColor' : 'none'} />
     <line x1="7" y1="8" x2="17" y2="8" stroke={active ? 'var(--icon-stripe, #FFF0EC)' : 'currentColor'} />
     <line x1="7" y1="12" x2="17" y2="12" stroke={active ? 'var(--icon-stripe, #FFF0EC)' : 'currentColor'} />
@@ -32,21 +88,21 @@ const OrderIcon = ({ active }: { active: boolean }) => (
 );
 
 const MenuIcon = ({ active }: { active: boolean }) => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? '2.8' : '2'} strokeLinecap="round" strokeLinejoin="round">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? '2.8' : '2'} strokeLinecap="round" strokeLinejoin="round">
     <path d="M3 6h18M3 12h18M3 18h12" />
     <circle cx="20" cy="18" r="2" fill={active ? 'currentColor' : 'none'} />
   </svg>
 );
 
 const PaymentIcon = ({ active }: { active: boolean }) => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
     <line x1="1" y1="10" x2="23" y2="10" stroke={active ? 'var(--icon-stripe, #FFF0EC)' : 'currentColor'} />
   </svg>
 );
 
 const ReportIcon = ({ active }: { active: boolean }) => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? '3' : '2'} strokeLinecap="round" strokeLinejoin="round">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? '3' : '2'} strokeLinecap="round" strokeLinejoin="round">
     <line x1="18" y1="20" x2="18" y2="10" />
     <line x1="12" y1="20" x2="12" y2="4" />
     <line x1="6" y1="20" x2="6" y2="14" />
@@ -54,7 +110,7 @@ const ReportIcon = ({ active }: { active: boolean }) => (
 );
 
 const TableIcon = ({ active }: { active: boolean }) => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="3" y="4" width="18" height="4" rx="1" />
     <path d="M5 8v10" />
     <path d="M19 8v10" />
@@ -64,14 +120,14 @@ const TableIcon = ({ active }: { active: boolean }) => (
 );
 
 const ProfileIcon = ({ active }: { active: boolean }) => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
     <circle cx="12" cy="7" r="4" />
   </svg>
 );
 
 const SubscriptionIcon = ({ active }: { active: boolean }) => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M12 2v20M2 12h20" fill={active ? 'currentColor' : 'none'} stroke={active ? 'var(--icon-stripe, #FFF0EC)' : 'currentColor'} strokeWidth="1" />
     <path d="M20.88 18.09A5 5 0 0018 9h-1.26A8 8 0 103 16.29" fill={active ? 'currentColor' : 'none'} />
     <path d="M16 14l-4 4-4-4M12 18V9" stroke={active ? 'var(--icon-stripe, #FFF0EC)' : 'currentColor'} />
@@ -81,10 +137,11 @@ const SubscriptionIcon = ({ active }: { active: boolean }) => (
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { activeRestaurantName, activeRestaurantLogo } = useAuth();
+  const { activeRestaurantName, activeRestaurantLogo, signOut } = useAuth();
   const { isDark, toggleTheme } = useTheme();
 
   const [logoError, setLogoError] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // Reset logo error when the logo URL changes
   useEffect(() => {
@@ -168,8 +225,23 @@ const Sidebar: React.FC = () => {
   const showImage = activeRestaurantLogo && !logoError;
   const initial = activeRestaurantName.charAt(0).toUpperCase() || 'R';
 
+  const handleLogout = async () => {
+    setShowLogoutConfirm(false);
+
+    try {
+      await signOut();
+      navigate('/');
+    } catch (error) {
+      console.error('Failed to sign out', error);
+    }
+  };
+
   return (
     <>
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
       {/* Mobile Hamburger Button */}
       <button
         className={`mobile-menu-btn ${!isCollapsed ? 'hidden' : ''}`}
@@ -182,92 +254,162 @@ const Sidebar: React.FC = () => {
       <div
         className={`sidebar-overlay ${!isCollapsed ? 'visible' : ''}`}
         onClick={() => setIsCollapsed(true)}
-      />      <div className={`fixed left-0 top-0 h-screen bg-tk-bg py-4 flex flex-col z-[100] font-sans transition-[width,transform] duration-300 ease-in-out border-r-[1.5px] border-tk-border md:translate-x-0 ${isCollapsed ? 'w-[80px] -translate-x-full md:w-[80px] px-3' : 'w-[280px] translate-x-0 md:w-[240px] px-3'} overflow-y-auto no-scrollbar shadow-[4px_0_24px_rgba(0,0,0,0.08)] md:shadow-none`}>
+      />      <div className={`fixed left-0 top-0 h-screen bg-tk-bg py-4 flex flex-col z-[100] font-sans transition-[width,transform] duration-300 ease-in-out border-r-[1.5px] border-tk-border md:translate-x-0 ${isCollapsed ? 'w-[56px] -translate-x-full md:w-[56px] px-1.5' : 'w-[280px] translate-x-0 md:w-[240px] px-2'} shadow-[4px_0_24px_rgba(0,0,0,0.08)] md:shadow-none`}>
 
         <button 
-          className={`hidden md:flex absolute top-5 w-7 h-7 bg-tk-bg text-tk-text-secondary border-[1.5px] border-tk-border rounded-full items-center justify-center cursor-pointer z-[110] shadow-sm hover:scale-105 hover:text-tk-text hover:border-tk-text-secondary transition-all duration-200 ${isCollapsed ? 'left-1/2 -translate-x-1/2' : 'right-3'}`} 
+          className={`hidden md:flex absolute top-1 w-7 h-7 bg-tk-bg text-tk-text-secondary border-[1.5px] border-tk-border rounded-full items-center justify-center cursor-pointer z-[110] shadow-sm hover:scale-105 hover:text-tk-text hover:border-tk-text-secondary transition-all duration-200 -right-[14px]`} 
           onClick={() => setIsCollapsed(!isCollapsed)}
         >
           {isCollapsed ? <ChevronRight size={16} strokeWidth={2.5} /> : <ChevronLeft size={16} strokeWidth={2.5} />}
         </button>
 
-        <div className="flex flex-col items-center mb-5 shrink-0">
-          <div className={`rounded-full bg-tk-burgundy-bg flex items-center justify-center overflow-hidden border-2 border-tk-burgundy transition-all duration-300 hover:scale-105 hover:shadow-[0_4px_12px_rgba(139,58,30,0.15)] ${isCollapsed && !isMobile ? 'w-10 h-10 mb-0 mt-12' : 'w-14 h-14 mb-2'}`}>
-            {showImage ? (
-              <img
-                src={activeRestaurantLogo}
-                alt={`${activeRestaurantName} logo`}
-                className="w-full h-full object-cover"
-                onError={() => setLogoError(true)}
-              />
-            ) : (
-              <span className="text-2xl font-bold text-tk-burgundy leading-none select-none">{initial}</span>
-            )}
-          </div>
-          {showLabels && <div className="text-tk-text text-[14px] font-semibold w-full text-center px-1 break-words leading-tight mt-1">{activeRestaurantName}</div>}
-        </div>
-
-        <nav className="flex flex-col gap-1 flex-1">
-          {navItems.map((item) => {
-            const isActive = activeTab === item.id;
-            return (
-              <div
-                key={item.id}
-                className={`flex items-center rounded-tk-md cursor-pointer transition-all duration-200 text-[13px] border-[1.5px] ${isCollapsed && !isMobile ? 'justify-center p-2.5 gap-0' : 'gap-2.5 py-2 px-3'} ${isActive ? 'bg-tk-burgundy text-white font-semibold border-tk-burgundy shadow-[0_4px_12px_rgba(139,58,30,0.25)]' : 'text-tk-text-secondary border-transparent hover:bg-tk-burgundy-bg hover:text-tk-burgundy hover:border-tk-burgundy/15 font-medium'}`}
-                onClick={() => handleNavClick(item)}
-                title={isCollapsed && !isMobile ? item.label : undefined}
+        <div className="flex-1 w-full overflow-y-auto no-scrollbar flex flex-col">
+          <div className="flex flex-col items-center mb-5 shrink-0 mt-2">
+            {/* Fixed-size slot for the avatar so it never reflows surrounding elements, even though the avatar itself shrinks/grows on collapse */}
+            <div className="w-14 h-14 flex items-center justify-center mb-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => navigate('/dashboard')}
+                className={`rounded-full bg-tk-burgundy-bg flex items-center justify-center overflow-hidden border-2 border-tk-burgundy transition-all duration-300 hover:scale-105 hover:shadow-[0_4px_12px_rgba(139,58,30,0.15)] ${isCollapsed && !isMobile ? 'w-10 h-10' : 'w-14 h-14'}`}
+                aria-label="Go to dashboard"
               >
-                <span className="text-[17px] flex items-center justify-center shrink-0">{item.icon(isActive)}</span>
-                {showLabels && <span className="font-inherit">{item.label}</span>}
+                {showImage ? (
+                  <img
+                    src={activeRestaurantLogo}
+                    alt={`${activeRestaurantName} logo`}
+                    className="w-full h-full object-cover"
+                    onError={() => setLogoError(true)}
+                  />
+                ) : (
+                  <span className="text-2xl font-bold text-tk-burgundy leading-none select-none">{initial}</span>
+                )}
+              </button>
+            </div>
+            {/* Fixed-height slot for the name (always reserved, capped at 2 lines) so 1-line vs 2-line names never push the nav items */}
+            <div className="w-full h-9 flex items-start justify-center shrink-0">
+              {showLabels && (
+                <div className="text-tk-text text-[14px] font-semibold text-center px-1 leading-tight">
+                  {activeRestaurantName}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <nav className="flex flex-col gap-0 flex-1 w-full">
+            {navItems.map((item) => {
+              const isActive = activeTab === item.id;
+              return (
+                <Tooltip key={item.id} text={item.label} showTooltip={isCollapsed && !isMobile}>
+                  <div
+                    className={`flex items-center rounded-tk-md cursor-pointer transition-all duration-200 text-[13px] border-[1px] gap-2 p-2 ${isActive ? 'bg-tk-burgundy text-white font-semibold border-tk-burgundy shadow-[0_4px_12px_rgba(139,58,30,0.25)]' : 'text-tk-text-secondary border-transparent hover:bg-tk-burgundy-bg hover:text-tk-burgundy hover:border-tk-burgundy/15 font-medium'}`}
+                    onClick={() => handleNavClick(item)}
+                  >
+                    <span className="w-6 h-6 flex items-center justify-center shrink-0">{item.icon(isActive)}</span>
+                    {showLabels && <span className="font-inherit whitespace-nowrap">{item.label}</span>}
+                  </div>
+                </Tooltip>
+              );
+            })}
+          </nav>
+
+          <div className="w-full mt-4 flex flex-col gap-2">
+            <Tooltip text={isCollapsed ? 'Profile' : 'Profile'} showTooltip={isCollapsed && !isMobile}>
+              <div className={`flex items-center justify-between rounded-tk-md border-[1.5px] transition-all duration-200 ${activeTab === 'profile' ? 'bg-tk-burgundy text-white border-tk-burgundy font-semibold shadow-[0_4px_12px_rgba(139,58,30,0.25)]' : 'bg-tk-bg-card text-tk-text-secondary border-tk-border hover:bg-tk-burgundy-bg hover:text-tk-burgundy hover:border-tk-burgundy/20 hover:-translate-y-[1px]'}`}>
+                <div
+                  className={`flex items-center cursor-pointer text-[13px] gap-2 p-2 ${isCollapsed ? 'w-10 h-10 justify-center' : 'flex-1'}`}
+                  onClick={() => { navigate('/profile'); if (window.innerWidth <= 768) setIsCollapsed(true); }}
+                >
+                  <span className="w-6 h-6 flex items-center justify-center shrink-0"><ProfileIcon active={activeTab === 'profile'} /></span>
+                  {!isCollapsed && <span className="font-inherit whitespace-nowrap">Profile</span>}
+                </div>
+
+                {!isCollapsed && (
+                  <Tooltip text="Sign Out" showTooltip={false}>
+                    <button
+                      type="button"
+                      className="flex items-center justify-center border-l border-tk-border/70 cursor-pointer bg-transparent text-current transition-all duration-200 hover:bg-tk-burgundy-bg hover:text-tk-burgundy hover:border-tk-burgundy/20 px-2 h-10 ml-auto"
+                      onClick={() => setShowLogoutConfirm(true)}
+                      aria-label="Sign out"
+                    >
+                      <LogOut size={16} />
+                    </button>
+                  </Tooltip>
+                )}
               </div>
-            );
-          })}
-        </nav>
+            </Tooltip>
 
-        <div 
-          className={`flex items-center rounded-tk-md cursor-pointer mt-4 text-[13px] transition-all duration-200 border-[1.5px] ${isCollapsed && !isMobile ? 'justify-center p-2.5 gap-0' : 'gap-2.5 py-2 px-3'} ${activeTab === 'profile' ? 'bg-tk-burgundy text-white border-tk-burgundy font-semibold shadow-[0_4px_12px_rgba(139,58,30,0.25)]' : 'bg-tk-bg-card text-tk-text-secondary border-tk-border hover:bg-tk-burgundy-bg hover:text-tk-burgundy hover:border-tk-burgundy/20 hover:-translate-y-[1px]'}`} 
-          onClick={() => { navigate('/profile'); if (window.innerWidth <= 768) setIsCollapsed(true); }} 
-          title={isCollapsed && !isMobile ? "Profile" : undefined}
-        >
-          <span className="text-[17px] flex items-center justify-center shrink-0"><ProfileIcon active={activeTab === 'profile'} /></span>
-          {showLabels && <span className="font-inherit">Profile</span>}
+            {/* Dark Mode Toggle */}
+            <Tooltip text={isDark ? 'Light Mode' : 'Dark Mode'} showTooltip={isCollapsed && !isMobile}>
+              <button
+                className="w-full flex items-center border border-tk-border rounded-tk-md cursor-pointer bg-transparent text-tk-text-secondary transition-all duration-200 hover:bg-tk-bg-hover hover:text-tk-burgundy text-[13px] gap-2 p-2"
+                onClick={(event) => {
+                  const rect = event.currentTarget.getBoundingClientRect();
+                  toggleTheme({
+                    x: rect.left + rect.width / 2,
+                    y: rect.top + rect.height / 2,
+                  });
+                }}
+                aria-label={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              >
+                <span className="w-6 h-6 flex items-center justify-center shrink-0">
+                  {isDark ? (
+                    // Sun icon
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="5" />
+                      <line x1="12" y1="1" x2="12" y2="3" />
+                      <line x1="12" y1="21" x2="12" y2="23" />
+                      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                      <line x1="1" y1="12" x2="3" y2="12" />
+                      <line x1="21" y1="12" x2="23" y2="12" />
+                      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                    </svg>
+                  ) : (
+                    // Moon icon
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+                    </svg>
+                  )}
+                </span>
+                {showLabels && (
+                  <span className="font-inherit font-medium whitespace-nowrap">
+                    {isDark ? 'Light Mode' : 'Dark Mode'}
+                  </span>
+                )}
+              </button>
+            </Tooltip>
         </div>
-
-        {/* Dark Mode Toggle */}
-        <button
-          className={`flex items-center border border-tk-border rounded-tk-md cursor-pointer bg-transparent text-tk-text-secondary transition-all duration-200 mt-2.5 hover:bg-tk-bg-hover hover:text-tk-burgundy text-[13px] ${isCollapsed && !isMobile ? 'justify-center p-2.5 gap-0' : 'gap-2.5 py-2 px-3'}`}
-          onClick={toggleTheme}
-          title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-          aria-label={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-        >
-          <span className="text-[17px] flex items-center justify-center shrink-0">
-            {isDark ? (
-              // Sun icon
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="5" />
-                <line x1="12" y1="1" x2="12" y2="3" />
-                <line x1="12" y1="21" x2="12" y2="23" />
-                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                <line x1="1" y1="12" x2="3" y2="12" />
-                <line x1="21" y1="12" x2="23" y2="12" />
-                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-              </svg>
-            ) : (
-              // Moon icon
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
-              </svg>
-            )}
-          </span>
-          {showLabels && (
-            <span className="font-inherit font-medium">
-              {isDark ? 'Light Mode' : 'Dark Mode'}
-            </span>
-          )}
-        </button>
       </div>
+      </div>
+
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[120] p-5">
+          <div className="bg-white rounded-3xl p-8 max-w-[420px] w-full shadow-[0_24px_48px_rgba(0,0,0,0.12)] dark:bg-tk-bg-card dark:border dark:border-tk-border">
+            <div className="flex justify-between items-center mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-[#FEE2E2] text-[#DC2626] flex items-center justify-center">
+                <LogOut size={24} />
+              </div>
+              <h3 className="m-0 text-[20px] font-semibold text-tk-text dark:text-tk-text">Sign Out</h3>
+            </div>
+            <p className="m-0 text-[14px] text-tk-text-secondary dark:text-tk-text-secondary">Are you sure you want to sign out of your account?</p>
+            <div className="flex gap-3 justify-end mt-6">
+              <button
+                className="inline-flex items-center justify-center gap-2 min-h-[40px] px-4 border-none rounded-xl font-['Outfit',sans-serif] text-[13px] font-semibold cursor-pointer transition-all duration-200 bg-[#EDF2F7] text-[#2D3748] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none dark:bg-tk-bg-elevated dark:text-tk-text dark:hover:bg-tk-bg-hover"
+                onClick={() => setShowLogoutConfirm(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="inline-flex items-center justify-center gap-2 min-h-[40px] px-4 border-none rounded-xl font-['Outfit',sans-serif] text-[13px] font-semibold cursor-pointer transition-all duration-200 bg-[linear-gradient(135deg,var(--tk-burgundy),#6B2A15)] text-white shadow-[0_8px_18px_rgba(139,58,30,0.2)] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+                onClick={handleLogout}
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

@@ -204,7 +204,7 @@ const SubscriptionPage: React.FC = () => {
         return (
             <div className="flex min-h-screen bg-tk-bg text-[#1A202C]">
                 <Sidebar />
-                <div className="flex-1 p-5 overflow-y-auto min-h-screen transition-all duration-300 ml-[240px] [.sidebar-collapsed_&]:ml-[80px] max-md:!ml-0 max-md:!p-4 max-md:!pt-[72px] bg-[#f7f8fa] rounded-l-[32px] shadow-[-8px_0_24px_rgba(0,0,0,0.12)] dark:bg-tk-bg-surface max-md:rounded-none">
+        <div className="tk-main-content flex-1 p-5 overflow-y-auto min-h-screen transition-all duration-300 ml-[240px] max-md:!ml-0 max-md:!p-4 max-md:!pt-[72px] bg-tk-bg-surface">
                     <div className="flex flex-col items-center justify-center h-[60vh] gap-4 text-[#718096] dark:text-tk-text-secondary">
                         <div className="w-9 h-9 border-3 border-[#E2E8F0] border-t-tk-burgundy rounded-full animate-spin" />
                         <p className="text-[0.9rem] text-[#718096] dark:text-tk-text-secondary">Loading subscription information...</p>
@@ -218,7 +218,7 @@ const SubscriptionPage: React.FC = () => {
         <div className="flex min-h-screen bg-tk-bg text-[#1A202C]">
             <Sidebar />
 
-            <div className="flex-1 p-5 overflow-y-auto min-h-screen transition-all duration-300 ml-[240px] [.sidebar-collapsed_&]:ml-[80px] max-md:!ml-0 max-md:!p-4 max-md:!pt-[72px] bg-[#f7f8fa] rounded-l-[32px] shadow-[-8px_0_24px_rgba(0,0,0,0.12)] dark:bg-tk-bg-surface max-md:rounded-none">
+            <div className="tk-main-content flex-1 p-5 overflow-y-auto min-h-screen transition-all duration-300 ml-[240px] max-md:!ml-0 max-md:!p-4 max-md:!pt-[72px] bg-tk-bg-surface">
                 {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-[24px] font-bold text-[#1A202C] m-0 mb-1 dark:text-tk-text">Subscription</h1>

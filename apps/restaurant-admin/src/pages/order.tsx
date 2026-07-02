@@ -254,7 +254,7 @@ const Order: React.FC = () => {
     <div className="flex min-h-screen bg-tk-bg relative font-['Outfit',sans-serif]">
       <Sidebar />
 
-      <div className="flex-1 p-5 overflow-y-auto min-h-screen transition-all duration-300 ml-[240px] [.sidebar-collapsed_&]:ml-[80px] max-md:!ml-0 max-md:!p-4 max-md:!pt-[72px] bg-[#F4F6F9] dark:bg-tk-bg-surface md:pl-8 scrollbar-hide md:rounded-l-[32px] md:shadow-[-8px_0_24px_rgba(0,0,0,0.12)]">
+      <div className="tk-main-content flex-1 p-5 overflow-y-auto min-h-screen transition-all duration-300 ml-[240px] max-md:!ml-0 max-md:!p-4 max-md:!pt-[72px] bg-tk-bg-surface">
         {/* Header */}
         <div className="flex justify-between items-start mb-6 max-md:flex-col max-md:gap-3 max-md:mt-4">
           <div>
