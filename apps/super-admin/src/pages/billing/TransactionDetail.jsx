@@ -146,7 +146,7 @@ export default function TransactionDetail({ setHeaderData }) {
         if (txData && setHeaderData) {
             setHeaderData({
                 id: txData.id,
-                name: `${txData.restaurant?.name || 'Unknown'}${orderData?.order_number ? ` (Order #${orderData.order_number})` : ''}`,
+                name: txData.restaurant?.name || 'Unknown',
                 status: txData.status,
                 backPath: '/billing/transactions',
                 backTitle: 'Back to Transactions'

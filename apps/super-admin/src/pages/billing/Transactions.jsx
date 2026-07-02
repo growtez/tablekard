@@ -238,7 +238,7 @@ export default function Transactions({ setSyncAction }) {
                             <Filter size={14} className="text-accent-primary" /> Status
                         </button>
                         <div className="absolute right-0 top-full mt-2 w-44 bg-surface border border-border rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 flex flex-col overflow-hidden py-1">
-                            {['all', 'paid', 'pending', 'failed', 'refunded', 'completed'].map(s => (
+                            {['all', 'paid', 'pending', 'failed', 'refunded'].map(s => (
                                 <button key={s} onClick={() => { setFilterStatus(s); setPage(1); }} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${filterStatus === s ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>
                                     {s === 'all' ? 'All Statuses' : s.charAt(0).toUpperCase() + s.slice(1)}
                                 </button>

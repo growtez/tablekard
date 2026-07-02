@@ -268,17 +268,17 @@ export default function LandingLeads() {
         <table className="w-full text-left border-collapse whitespace-nowrap table-fixed">
           <thead>
             <tr className="border-b border-border">
-              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[22%]" onClick={() => toggleSort('name')}>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[20%]" onClick={() => toggleSort('name')}>
                 <div className="flex items-center gap-2">
                   Restaurant {getSortIcon('name')}
                 </div>
               </th>
-              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[16%]">Owner</th>
-              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[14%]">Phone</th>
-              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[20%]">Email</th>
-              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[15%]">Location</th>
-              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[1%]">Status</th>
-              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[10%]" onClick={() => toggleSort('newest')}>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[14%]">Owner</th>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[13%]">Phone</th>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[18%]">Email</th>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[14%]">Location</th>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[10%]">Status</th>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[9%]" onClick={() => toggleSort('newest')}>
                 <div className="flex items-center gap-2">
                   Date {getSortIcon('newest')}
                 </div>
@@ -363,8 +363,8 @@ export default function LandingLeads() {
       {/* Details Modal */}
       {selectedLead && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-[8px] flex items-center justify-center z-[1000] p-4" onClick={() => setSelectedLead(null)}>
-          <div className="bg-surface rounded-[24px] w-full max-w-[520px] shadow-[0_24px_50px_rgba(0,0,0,0.15)] overflow-hidden" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-start pt-8 px-8 pb-6 border-b border-border">
+          <div className="bg-surface rounded-[24px] w-full max-w-[520px] max-h-[90vh] shadow-[0_24px_50px_rgba(0,0,0,0.15)] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-start pt-8 px-8 pb-6 border-b border-border shrink-0">
               <div className="flex gap-4 items-center">
                 <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-600">
                   <Store size={28} />
@@ -382,7 +382,7 @@ export default function LandingLeads() {
               </button>
             </div>
 
-            <div className="px-8 py-6 flex flex-col gap-4 bg-surface-hover">
+            <div className="px-8 py-6 flex flex-col gap-4 bg-surface-hover overflow-y-auto min-h-0 flex-1">
               {[
                 { icon: <User size={20} />, color: 'bg-blue-500/10 text-blue-600', label: 'Owner Name', value: selectedLead.owner_name },
                 { icon: <Phone size={20} />, color: 'bg-emerald-500/10 text-emerald-600', label: 'Phone Number', value: <a href={`tel:${selectedLead.phone_number}`} className="text-[16px] font-semibold text-text-main no-underline hover:underline">{selectedLead.phone_number}</a> },
@@ -399,7 +399,7 @@ export default function LandingLeads() {
               ))}
             </div>
 
-            <div className="px-8 py-6 bg-surface border-t border-border flex justify-between items-center gap-6 flex-wrap">
+            <div className="px-8 py-6 bg-surface border-t border-border flex justify-between items-center gap-6 flex-wrap shrink-0">
               <div className="flex items-center gap-3">
                 <span className="text-[14px] font-bold text-text-muted uppercase tracking-wider">Status:</span>
                 <span className={`text-[14px] font-bold ${statusColor(selectedLead.status)}`}>{(selectedLead.status || 'new').toUpperCase()}</span>

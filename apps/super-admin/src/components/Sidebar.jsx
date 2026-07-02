@@ -8,6 +8,7 @@ import {
     Users,
     ChevronDown,
     ChevronRight,
+    ChevronLeft,
     FileText,
     Layers,
     Inbox,
@@ -50,7 +51,7 @@ const navItems = [
 const ICON_BOX = 20; // matches w-5/h-5
 const ICON_SIZE = 18; // rendered glyph size, slightly smaller than its box
 
-const NavItemComponent = ({ item, collapsed }) => {
+const NavItemComponent = ({ item, collapsed, onMouseEnter, onMouseLeave }) => {
     const location = useLocation();
 
     // Check if any subitem is active to keep accordion open
@@ -63,6 +64,8 @@ const NavItemComponent = ({ item, collapsed }) => {
                 <button
                     className={`w-full flex items-center justify-between px-2.5 py-2 text-[13px] font-medium rounded-lg mb-1 border transition-colors ${isSubItemActive ? 'bg-sidebar-hover text-sidebar-text border-transparent' : 'text-sidebar-text-muted bg-transparent border-transparent hover:bg-sidebar-hover hover:text-sidebar-text'}`}
                     onClick={() => setIsOpen(!isOpen)}
+                    onMouseEnter={(e) => onMouseEnter(e, item.label)}
+                    onMouseLeave={onMouseLeave}
                 >
                     <div className="flex items-center w-full h-5">
                         <div
@@ -106,7 +109,8 @@ const NavItemComponent = ({ item, collapsed }) => {
             className={({ isActive }) =>
                 `w-full flex items-center px-2.5 py-2 text-[13px] font-medium rounded-lg mb-1 border transition-colors ${isActive ? 'bg-sidebar-accent text-[#1A202C] border-sidebar-accent font-semibold' : 'text-sidebar-text-muted bg-transparent border-transparent hover:bg-sidebar-hover hover:text-sidebar-text'}`
             }
-            title={collapsed ? item.label : undefined}
+            onMouseEnter={(e) => onMouseEnter(e, item.label)}
+            onMouseLeave={onMouseLeave}
         >
             <span
                 className="flex items-center justify-center shrink-0 grow-0"
@@ -123,9 +127,22 @@ const NavItemComponent = ({ item, collapsed }) => {
     );
 };
 
-export default function Sidebar({ collapsed, session, onLogout, mobileOpen = false, setMobileOpen }) {
-    const [isHovered, setIsHovered] = useState(false);
+export default function Sidebar({ collapsed, setCollapsed, session, onLogout, mobileOpen = false, setMobileOpen }) {
     const [isDarkMode, setIsDarkMode] = useState(false);
+    const [tooltip, setTooltip] = useState(null);
+
+    const handleMouseEnter = (e, label) => {
+        if (!(collapsed && !mobileOpen)) return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        setTooltip({
+            label,
+            top: rect.top + rect.height / 2
+        });
+    };
+
+    const handleMouseLeave = () => {
+        setTooltip(null);
+    };
 
     useEffect(() => {
         if (localStorage.getItem('theme') === 'dark') {
@@ -183,28 +200,43 @@ export default function Sidebar({ collapsed, session, onLogout, mobileOpen = fal
         });
     };
 
-    const effectiveCollapsed = collapsed && !isHovered && !mobileOpen;
+    const effectiveCollapsed = collapsed && !mobileOpen;
 
     return (
         <aside
             className={`fixed top-0 left-0 h-screen flex flex-col bg-sidebar-bg border-r border-sidebar-border z-50 transition-[width] duration-150 ${effectiveCollapsed ? 'w-[52px]' : 'w-[180px]'} ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
         >
-            <div className="border-b border-sidebar-border py-4 pl-4 pr-4 flex items-center overflow-hidden">
-                <span className="text-lg font-extrabold bg-gradient-to-br from-white to-sidebar-text-muted text-transparent bg-clip-text tracking-tight font-poppins leading-none shrink-0 grow-0">
-                    T
-                </span>
-                <span
-                    className={`text-lg font-extrabold bg-gradient-to-br from-white to-sidebar-text-muted text-transparent bg-clip-text tracking-tight font-poppins leading-none overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-200 ease-in-out ${effectiveCollapsed ? 'max-w-0 opacity-0' : 'max-w-[140px] opacity-100'}`}
-                >
-                    ableKard
-                </span>
+            <div className="border-b border-sidebar-border py-4 pl-4 pr-4 flex items-center justify-between overflow-hidden">
+                <div className="flex items-center overflow-hidden">
+                    <span className="text-lg font-extrabold bg-gradient-to-br from-white to-sidebar-text-muted text-transparent bg-clip-text tracking-tight font-poppins leading-none shrink-0 grow-0">
+                        T
+                    </span>
+                    <span
+                        className={`text-lg font-extrabold bg-gradient-to-br from-white to-sidebar-text-muted text-transparent bg-clip-text tracking-tight font-poppins leading-none overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-200 ease-in-out ${effectiveCollapsed ? 'max-w-0 opacity-0' : 'max-w-[140px] opacity-100'}`}
+                    >
+                        ableKard
+                    </span>
+                </div>
+                {setCollapsed && (
+                    <button
+                        onClick={() => setCollapsed(!collapsed)}
+                        className={`hidden md:flex items-center justify-center shrink-0 grow-0 text-sidebar-text-muted hover:text-sidebar-text transition-colors ${effectiveCollapsed ? 'absolute -right-3 top-4 bg-sidebar-bg border border-sidebar-border rounded-full w-6 h-6 z-50' : ''}`}
+                        title={effectiveCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+                    >
+                        {effectiveCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={16} />}
+                    </button>
+                )}
             </div>
 
             <nav className="flex-1 overflow-y-auto px-1.5 mt-3">
                 {navItems.map((item, idx) => (
-                    <NavItemComponent key={idx} item={item} collapsed={effectiveCollapsed} />
+                    <NavItemComponent 
+                        key={idx} 
+                        item={item} 
+                        collapsed={effectiveCollapsed} 
+                        onMouseEnter={handleMouseEnter}
+                        onMouseLeave={handleMouseLeave}
+                    />
                 ))}
             </nav>
 
@@ -212,7 +244,8 @@ export default function Sidebar({ collapsed, session, onLogout, mobileOpen = fal
                 <button
                     onClick={toggleDarkMode}
                     className={`w-full flex items-center px-2.5 py-2 text-[13px] font-medium rounded-lg border border-transparent transition-colors text-sidebar-text-muted hover:bg-sidebar-hover hover:text-sidebar-text`}
-                    title={effectiveCollapsed ? (isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode') : undefined}
+                    onMouseEnter={(e) => handleMouseEnter(e, isDarkMode ? 'Light Mode' : 'Dark Mode')}
+                    onMouseLeave={handleMouseLeave}
                 >
                     <span className="flex items-center justify-center shrink-0 grow-0" style={{ width: ICON_BOX, height: ICON_BOX }}>
                         {isDarkMode ? <Sun size={ICON_SIZE} /> : <Moon size={ICON_SIZE} />}
@@ -222,6 +255,16 @@ export default function Sidebar({ collapsed, session, onLogout, mobileOpen = fal
                     </div>
                 </button>
             </div>
+
+            {tooltip && (
+                <div 
+                    className="fixed left-[60px] z-[100] px-3.5 py-2 bg-sidebar-bg border border-sidebar-border text-sidebar-text text-[14px] font-medium rounded-md shadow-xl pointer-events-none transform -translate-y-1/2 whitespace-nowrap flex items-center"
+                    style={{ top: tooltip.top }}
+                >
+                    <div className="absolute -left-[5px] w-2.5 h-2.5 bg-sidebar-bg border-l border-b border-sidebar-border transform rotate-45"></div>
+                    <span className="relative z-10">{tooltip.label}</span>
+                </div>
+            )}
 
         </aside>
     );

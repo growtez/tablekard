@@ -66,7 +66,7 @@ export default function SubscriptionDetail({ setHeaderData }) {
         if (data && setHeaderData) {
             setHeaderData({
                 id: data.id,
-                name: `${data.restaurants?.name || 'Unknown'}${data.razorpay_order_id ? ` (${data.razorpay_order_id})` : ''}`,
+                name: data.restaurants?.name || 'Unknown',
                 status: data.status,
                 backPath: '/subscriptions',
                 backTitle: 'Back to Subscriptions'
