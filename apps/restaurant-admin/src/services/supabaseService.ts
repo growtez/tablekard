@@ -887,6 +887,72 @@ export const getPaymentTransactions = async (restaurantId: string): Promise<Paym
     });
 };
 
+export interface TransactionDetailData extends PaymentTransaction {
+    subtotal: number;
+    taxes: number;
+    discount: number;
+    customerEmail?: string;
+    customerPhone?: string;
+    transactionId?: string;
+    orderType: string;
+}
+
+export const getTransactionDetails = async (orderId: string): Promise<TransactionDetailData | null> => {
+    const { data, error } = await db
+        .from('orders')
+        .select(`
+            id,
+            order_number,
+            created_at,
+            payment_method,
+            payment_status,
+            subtotal,
+            taxes,
+            discount,
+            total,
+            transaction_id,
+            type,
+            profiles(name, email),
+            restaurant_tables(table_number),
+            order_items(name, quantity, price)
+        `)
+        .eq('id', orderId)
+        .maybeSingle();
+
+    if (error) throw error;
+    if (!data) return null;
+
+    const row = data;
+    const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
+    const table = Array.isArray(row.restaurant_tables) ? row.restaurant_tables[0] : row.restaurant_tables;
+
+    let pStatus = (row.payment_status || 'pending').toLowerCase();
+    const createdDate = new Date(row.created_at);
+    
+    return {
+        id: row.id,
+        orderNumber: row.order_number || 'UNKNOWN',
+        customerName: profile?.name || 'Guest',
+        customerEmail: profile?.email || '',
+        tableNo: table?.table_number ? `Table ${table.table_number}` : 'N/A',
+        dateTime: createdDate.toLocaleString('en-US', {
+            month: 'short', day: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        }),
+        paymentMethod: row.payment_method || 'Cash',
+        paymentStatus: pStatus.charAt(0).toUpperCase() + pStatus.slice(1),
+        statusColor: pStatus,
+        subtotal: Number(row.subtotal) || 0,
+        taxes: Number(row.taxes) || 0,
+        discount: Number(row.discount) || 0,
+        amount: Number(row.total) || 0,
+        transactionId: row.transaction_id,
+        orderType: row.type || 'dine_in',
+        orderItems: Array.isArray(row.order_items) ? row.order_items : [],
+        createdAt: row.created_at
+    };
+};
+
 export const updatePaymentStatus = async (orderId: string, paymentStatus: string): Promise<void> => {
     const { error } = await db
         .from('orders')

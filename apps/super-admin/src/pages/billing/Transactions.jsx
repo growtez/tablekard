@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import { Search, Filter, SlidersHorizontal, Download, X, ChevronLeft, ChevronRight, Store, Hash, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { TableRowsSkeleton } from '../../components/ui/Skeleton';
@@ -54,6 +55,7 @@ export default function Transactions({ setSyncAction }) {
     const [sortBy, setSortBy] = useState('newest');
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(8);
+    const navigate = useNavigate();
 
     const fetchData = async () => {
         setLoading(true);
@@ -165,7 +167,7 @@ export default function Transactions({ setSyncAction }) {
     return (
         <div className="space-y-3">
             {/* Control Bar */}
-            <div className="flex items-center gap-3 w-full bg-white p-2 rounded-xl shadow-sm border border-border">
+            <div className="flex items-center gap-3 w-full bg-surface p-2 rounded-xl shadow-sm border border-border">
                 {/* Search */}
                 <div className="relative w-full max-w-[260px] shrink-0">
                     <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
@@ -262,7 +264,7 @@ export default function Transactions({ setSyncAction }) {
             </div>
 
             {/* Table */}
-            <div className="w-full overflow-x-auto bg-white rounded-xl shadow-sm border border-border">
+            <div className="w-full overflow-x-auto bg-surface rounded-xl shadow-sm border border-border">
                 <table className="w-full text-left border-collapse whitespace-nowrap table-fixed">
                     <thead>
                         <tr className="border-b border-border">
@@ -292,7 +294,7 @@ export default function Transactions({ setSyncAction }) {
                         ) : (
                             <>
                                 {paged.map(row => (
-                                    <tr key={`${row._source}-${row._id}`} className="group even:bg-bg hover:bg-surface-hover border-b border-border/40 last:border-b-0 transition-colors">
+                                    <tr key={`${row._source}-${row._id}`} onClick={() => navigate(`/billing/transactions/${row._source}/${row._id}`)} className="group even:bg-bg hover:bg-surface-hover border-b border-border/40 last:border-b-0 cursor-pointer transition-colors">
                                         <td className="py-2.5 px-4 align-middle">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center font-bold text-blue-600 text-[12px] shrink-0">
