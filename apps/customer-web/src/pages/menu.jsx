@@ -21,6 +21,8 @@ const MenuPage = () => {
   const { cartItems: cart, addToCart, removeFromCart, getItemQuantity, cartTotal, cartSubtotal } = useCart();
   const cartIconRef = useRef(null);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedVariant, setSelectedVariant] = useState(null);
+  const [selectedAddons, setSelectedAddons] = useState([]);
   const [showItemModal, setShowItemModal] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [modalQuantity, setModalQuantity] = useState(0);
@@ -28,10 +30,20 @@ const MenuPage = () => {
   const [categories, setCategories] = useState([]);
   const [menuLoading, setMenuLoading] = useState(true);
   const [vegOnly, setVegOnly] = useState(false);
+  const [activeImageIdx, setActiveImageIdx] = useState(0);
+  const imageSliderRef = useRef(null);
+
+  const getBaseItemQuantity = (baseItemId) => {
+    return cart
+      .filter(i => i.menuItemId === baseItemId || i.id === baseItemId || i.id.startsWith(baseItemId + '_'))
+      .reduce((sum, i) => sum + i.quantity, 0);
+  };
 
   const closeItemModal = () => {
     setShowItemModal(false);
     setSelectedItem(null);
+    setSelectedVariant(null);
+    setSelectedAddons([]);
   };
 
   // Load real menu items from database
@@ -78,8 +90,14 @@ const MenuPage = () => {
                   images: images.map(img => img.image_url),
                   dietType: item.is_veg ? 'veg' : 'non-veg',
                   tags: item.tags || [],
-                  variants: item.variants || [],
-                  addons: item.addons || [],
+                  variants: (item.variants || []).map((v, i) => ({
+                    ...v,
+                    _key: v.id ?? `${v.name}_${v.price}_${i}`,
+                  })),
+                  addons: (item.addons || []).map((a, i) => ({
+                    ...a,
+                    _key: a.id ?? `${a.name}_${a.price}_${i}`,
+                  })),
                   modelUrl: item.model_url || null,
                   isAvailable: item.is_available,
                 };
@@ -211,7 +229,17 @@ const MenuPage = () => {
 
   const handleItemClick = (item) => {
     setSelectedItem(item);
+    setSelectedVariant(item.variants && item.variants.length > 0 ? item.variants[0] : null);
+    setSelectedAddons([]);
+    setActiveImageIdx(0);
     setShowItemModal(true);
+  };
+
+  const getModalTotalPrice = () => {
+    if (!selectedItem) return 0;
+    const basePrice = selectedVariant ? selectedVariant.price : (selectedItem.price);
+    const addonsPrice = (selectedAddons || []).reduce((sum, a) => sum + a.price, 0);
+    return basePrice + addonsPrice;
   };
 
   // Safely determine the active category
@@ -496,6 +524,34 @@ const MenuPage = () => {
                     </div>
                     {isOutOfStock ? (
                       <span className="unavailable-tag">Unavailable</span>
+                    ) : (item.variants?.length > 0 || item.addons?.length > 0) ? (
+                      getItemQuantity(item.id) === 0 ? (
+                        <button
+                          className="add-btn-large"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleItemClick(item);
+                          }}
+                        >
+                          <Plus size={20} color="#FFFFFF" />
+                        </button>
+                      ) : (
+                        <div className="menu-qty-stepper" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            className="menu-stepper-btn"
+                            onClick={(e) => { e.stopPropagation(); removeFromCart(item.id); }}
+                          >
+                            <Minus size={16} />
+                          </button>
+                          <span className="menu-stepper-value">{getItemQuantity(item.id)}</span>
+                          <button
+                            className="menu-stepper-btn"
+                            onClick={(e) => { e.stopPropagation(); handleItemClick(item); }}
+                          >
+                            <Plus size={16} />
+                          </button>
+                        </div>
+                      )
                     ) : getItemQuantity(item.id) === 0 ? (
                       <button
                         className="add-btn-large"
@@ -568,35 +624,65 @@ const MenuPage = () => {
             </button>
 
             <div className="modal-scrollable-content">
-              {/* Centered Dish Image */}
+              {/* Dish Slideshow */}
               <div className="modal-dish-showcase">
-                {selectedItem.images && selectedItem.images.length > 1 ? (
-                  <div className="dish-images-scroll-container">
-                    {selectedItem.images.map((imgUrl, idx) => (
-                      <div key={idx} className="dish-image-frame">
-                        <img src={imgUrl} alt={`${selectedItem.name} ${idx + 1}`} loading="lazy" />
+                {(() => {
+                  const imgs = (selectedItem.images && selectedItem.images.length > 0)
+                    ? selectedItem.images
+                    : [selectedItem.image];
+                  const hasMany = imgs.length > 1;
+                  return (
+                    <>
+                      <div
+                        className="dish-slideshow-track"
+                        ref={imageSliderRef}
+                        onScroll={(e) => {
+                          const el = e.currentTarget;
+                          const idx = Math.round(el.scrollLeft / el.offsetWidth);
+                          setActiveImageIdx(idx);
+                        }}
+                      >
+                        {imgs.map((imgUrl, idx) => (
+                          <div key={idx} className="dish-slide">
+                            <img src={imgUrl} alt={`${selectedItem.name} ${idx + 1}`} loading="lazy" />
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="dish-image-frame">
-                    <img src={selectedItem.image} alt={selectedItem.name} loading="lazy" />
-                  </div>
-                )}
-                <button
-                  className="modal-fav-floating"
-                  onClick={() => toggleFavorite(selectedItem.id)}
-                >
-                  <Heart
-                    size={20}
-                    fill={favorites.includes(selectedItem.id) ? '#8B3A1E' : 'transparent'}
-                    color="#8B3A1E"
-                  />
-                </button>
-                <div className="dish-rating-pill">
-                  <Star size={12} fill="#8B3A1E" color="#8B3A1E" />
-                  <span>{selectedItem.rating}</span>
-                </div>
+
+                      {/* Dot indicators */}
+                      {hasMany && (
+                        <div className="dish-slide-dots">
+                          {imgs.map((_, idx) => (
+                            <button
+                              key={idx}
+                              className={`dish-slide-dot${activeImageIdx === idx ? ' active' : ''}`}
+                              onClick={() => {
+                                setActiveImageIdx(idx);
+                                imageSliderRef.current?.scrollTo({ left: idx * imageSliderRef.current.offsetWidth, behavior: 'smooth' });
+                              }}
+                              aria-label={`Photo ${idx + 1}`}
+                            />
+                          ))}
+                        </div>
+                      )}
+
+                      <button
+                        className="modal-fav-floating"
+                        onClick={() => toggleFavorite(selectedItem.id)}
+                      >
+                        <Heart
+                          size={20}
+                          fill={favorites.includes(selectedItem.id) ? '#8B3A1E' : 'transparent'}
+                          color="#8B3A1E"
+                        />
+                      </button>
+                      <div className="dish-rating-pill">
+                        <Star size={12} fill="#8B3A1E" color="#8B3A1E" />
+                        <span>{selectedItem.rating}</span>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
 
               {/* Dish Info */}
@@ -645,15 +731,93 @@ const MenuPage = () => {
                   </button>
                 )}
               </div>
+
+              {selectedItem.variants && selectedItem.variants.length > 0 && (
+                <div className="modal-customization-section">
+                  <div className="customization-title-container">
+                    <h3 className="customization-title">Choose Variant</h3>
+                    <span className="customization-badge required">Required</span>
+                  </div>
+                  <div className="customization-options-list">
+                    {selectedItem.variants.map((v) => {
+                      const vKey = v._key ?? v.id ?? v.name;
+                      const selKey = selectedVariant?._key ?? selectedVariant?.id ?? selectedVariant?.name;
+                      const isActive = vKey !== undefined && vKey === selKey;
+                      return (
+                        <div
+                          key={vKey}
+                          className={`customization-option-row ${isActive ? 'active' : ''}`}
+                          onClick={() => setSelectedVariant(v)}
+                        >
+                          <div className="customization-option-left">
+                            <div className="custom-radio">
+                              {isActive && <div className="custom-radio-inner" />}
+                            </div>
+                            <span className="customization-option-name">{v.name}</span>
+                          </div>
+                          <span className="customization-option-price">₹{v.price}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {selectedItem.addons && selectedItem.addons.length > 0 && (
+                <div className="modal-customization-section">
+                  <div className="customization-title-container">
+                    <h3 className="customization-title">Add-ons</h3>
+                    <span className="customization-badge optional">Optional</span>
+                  </div>
+                  <div className="customization-options-list">
+                    {selectedItem.addons.map((addon) => {
+                      const addonKey = addon._key ?? addon.id ?? addon.name;
+                      const isSelected = selectedAddons.some(a => (a._key ?? a.id ?? a.name) === addonKey);
+                      const handleToggleAddon = () => {
+                        if (isSelected) {
+                          setSelectedAddons(prev => prev.filter(a => (a._key ?? a.id ?? a.name) !== addonKey));
+                        } else {
+                          setSelectedAddons(prev => [...prev, addon]);
+                        }
+                      };
+                      return (
+                        <div
+                          key={addon.id}
+                          className={`customization-option-row ${isSelected ? 'active' : ''}`}
+                          onClick={handleToggleAddon}
+                        >
+                          <div className="customization-option-left">
+                            <div className="custom-checkbox">
+                              <div className="custom-checkbox-inner" />
+                            </div>
+                            <span className="customization-option-name">{addon.name}</span>
+                          </div>
+                          <span className="customization-option-price">+₹{addon.price}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Sticky Bottom Action Bar */}
             <div className="modal-bottom-bar">
               <div className="price-display">
-                <span className="price-rupee">₹{selectedItem.price}</span>
+                <span className="price-rupee">₹{getModalTotalPrice()}</span>
               </div>
 
-              {getItemQuantity(selectedItem.id) === 0 ? (
+              {(selectedItem.variants?.length > 0 || selectedItem.addons?.length > 0) ? (
+                <button
+                  className="add-to-order-btn"
+                  onClick={() => {
+                    addToCart(selectedItem, selectedVariant, selectedAddons);
+                    closeItemModal();
+                  }}
+                >
+                  Add to Order {getBaseItemQuantity(selectedItem.id) > 0 && `(${getBaseItemQuantity(selectedItem.id)} in cart)`}
+                </button>
+              ) : getItemQuantity(selectedItem.id) === 0 ? (
                 <button
                   className="add-to-order-btn"
                   onClick={() => addToCart(selectedItem)}
