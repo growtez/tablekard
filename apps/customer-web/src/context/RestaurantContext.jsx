@@ -45,7 +45,9 @@ export function RestaurantProvider({ children }) {
 
     // Restaurant data fetched from DB
     const [restaurant, setRestaurant] = useState(null);
-    const [restaurantLoading, setRestaurantLoading] = useState(false);
+    const [restaurantLoading, setRestaurantLoading] = useState(
+        () => !!(urlRestaurantId || sessionStorage.getItem(SESSION_KEY_RESTAURANT))
+    );
 
     // Table data fetched from DB
     const [table, setTable] = useState(null);
@@ -57,7 +59,11 @@ export function RestaurantProvider({ children }) {
     const [currentUserId, setCurrentUserId] = useState(null);
 
     // Geofencing states
-    const [geofenceStatus, setGeofenceStatus] = useState('not_checked'); // 'not_checked' | 'checking' | 'inside' | 'outside' | 'error' | 'disabled'
+    // Start as 'checking' if we already have a restaurantId (from session/URL) so the guard
+    // doesn't flash the ScanQR or inner pages before geofence resolves.
+    const [geofenceStatus, setGeofenceStatus] = useState(
+        () => (urlRestaurantId || sessionStorage.getItem(SESSION_KEY_RESTAURANT)) ? 'checking' : 'not_checked'
+    ); // 'not_checked' | 'checking' | 'inside' | 'outside' | 'error' | 'disabled'
     const [distance, setDistance] = useState(null);
     const [userCoords, setUserCoords] = useState(null);
 
@@ -67,9 +73,17 @@ export function RestaurantProvider({ children }) {
 
     const allowedRadius = rad ? Number(rad) : 150;
 
-    const checkGeofence = () => {
-        console.log('[Geofence] Checking location. Restaurant coords:', lat, lon, 'allowed radius:', allowedRadius);
-        if (lat === null || lat === undefined || lon === null || lon === undefined) {
+    // checkGeofence accepts an optional restaurantData argument so it can be called
+    // immediately after fetch without relying on stale closure values of lat/lon/rad.
+    const checkGeofence = (restaurantData) => {
+        const r = restaurantData || restaurant;
+        const rLat = r?.latitude !== undefined && r?.latitude !== null ? r.latitude : r?.location?.latitude;
+        const rLon = r?.longitude !== undefined && r?.longitude !== null ? r.longitude : r?.location?.longitude;
+        const rRad = r?.allowed_radius !== undefined && r?.allowed_radius !== null ? r.allowed_radius : r?.location?.allowedRadius;
+        const rAllowedRadius = rRad ? Number(rRad) : 150;
+
+        console.log('[Geofence] Checking location. Restaurant coords:', rLat, rLon, 'allowed radius:', rAllowedRadius);
+        if (rLat === null || rLat === undefined || rLon === null || rLon === undefined) {
             console.log('[Geofence] Geofencing disabled: restaurant lat/lon not configured');
             setGeofenceStatus('disabled');
             return;
@@ -89,20 +103,18 @@ export function RestaurantProvider({ children }) {
                     const uLon = position.coords.longitude;
                     setUserCoords({ latitude: uLat, longitude: uLon });
 
-                    const rLat = Number(lat);
-                    const rLon = Number(lon);
-                    const dist = getDistanceInMeters(uLat, uLon, rLat, rLon);
+                    const dist = getDistanceInMeters(uLat, uLon, Number(rLat), Number(rLon));
                     setDistance(dist);
                     const accuracy = position.coords.accuracy || 0;
 
                     console.log(`[Geofence] Attempt ${attempt} User coords:`, uLat, uLon, 'Distance:', dist, 'm', 'Accuracy:', accuracy, 'm');
 
-                    if (dist <= allowedRadius) {
+                    if (dist <= rAllowedRadius) {
                         setGeofenceStatus('inside');
                     } else {
                         // If they are 'outside' but accuracy is poor, retry automatically up to 3 times
                         // because the phone's GPS is still finding satellites.
-                        if (accuracy > allowedRadius && attempt < 3) {
+                        if (accuracy > rAllowedRadius && attempt < 3) {
                             console.log(`[Geofence] Poor accuracy. Retrying automatically in 2s...`);
                             setTimeout(() => attemptGeofence(attempt + 1), 2000);
                         } else {
@@ -114,25 +126,27 @@ export function RestaurantProvider({ children }) {
                     console.error('[RestaurantContext] Geolocation error:', error);
                     setGeofenceStatus('error');
                 },
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                // Allow up to 30s cached position for faster first-load; high accuracy for precision
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
             );
         };
         attemptGeofence(1);
     };
 
-    // Run automatically when restaurant data is loaded
+    // Run automatically when restaurant data is loaded.
+    // Pass `restaurant` directly to avoid stale-closure issues with lat/lon.
     useEffect(() => {
         if (restaurant) {
             const currentLat = restaurant?.latitude !== undefined && restaurant?.latitude !== null ? restaurant.latitude : restaurant?.location?.latitude;
             const currentLon = restaurant?.longitude !== undefined && restaurant?.longitude !== null ? restaurant.longitude : restaurant?.location?.longitude;
-            console.log('[Geofence] Restaurant loaded:', restaurant, 'lat:', currentLat, 'lon:', currentLon);
+            console.log('[Geofence] Restaurant loaded, lat:', currentLat, 'lon:', currentLon);
             if (currentLat !== null && currentLat !== undefined && currentLon !== null && currentLon !== undefined) {
-                checkGeofence();
+                checkGeofence(restaurant);
             } else {
                 setGeofenceStatus('disabled');
             }
         }
-    }, [restaurant]);
+    }, [restaurant]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Track Auth state for recommendations
     useEffect(() => {
