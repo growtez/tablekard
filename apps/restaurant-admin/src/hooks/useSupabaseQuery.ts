@@ -17,6 +17,7 @@ import {
   getDashboardOrders,
   getOrders,
   getPaymentTransactions,
+  getTransactionDetails,
   getRestaurantTables,
   getRestaurantById,
   getRevenueData,
@@ -24,7 +25,7 @@ import {
   getOffers,
 } from '../services/supabaseService';
 import type { MenuItem, MenuCategory, Restaurant, Order } from '@restaurant-saas/types';
-import type { DashboardOrder, PaymentTransaction, RestaurantTable, RevenueRecord, BestSellingDish, OfferRow } from '../services/supabaseService';
+import type { DashboardOrder, PaymentTransaction, TransactionDetailData, RestaurantTable, RevenueRecord, BestSellingDish, OfferRow } from '../services/supabaseService';
 
 // ─── Stale times ────────────────────────────────────────────────────
 const STALE_30S = 30 * 1000;   // data pages (orders, payments)
@@ -38,6 +39,7 @@ export const queryKeys = {
   dashboardOrders: (restaurantId: string) => ['dashboardOrders', restaurantId] as const,
   orders: (restaurantId: string) => ['orders', restaurantId] as const,
   payments: (restaurantId: string) => ['payments', restaurantId] as const,
+  transactionDetails: (orderId: string) => ['transactionDetails', orderId] as const,
   tables: (restaurantId: string) => ['tables', restaurantId] as const,
   revenue: (restaurantId: string) => ['revenue', restaurantId] as const,
   bestSelling: (restaurantId: string) => ['bestSelling', restaurantId] as const,
@@ -136,6 +138,16 @@ export function usePaymentTransactions(restaurantId: string | null) {
     staleTime: STALE_30S,
     refetchOnWindowFocus: false,
     refetchInterval: 5_000,
+    retry: 3,
+  });
+}
+
+export function useTransactionDetails(orderId: string | undefined) {
+  return useQuery<TransactionDetailData | null>({
+    queryKey: queryKeys.transactionDetails(orderId ?? ''),
+    queryFn: () => getTransactionDetails(orderId!),
+    enabled: !!orderId,
+    staleTime: STALE_30S,
     retry: 3,
   });
 }

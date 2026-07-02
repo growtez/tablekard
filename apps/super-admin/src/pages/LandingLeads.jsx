@@ -166,9 +166,9 @@ export default function LandingLeads() {
 
   return (
     <div className="space-y-3">
-      {/* Control Bar */}
-      <div className="flex items-center gap-3 w-full bg-white p-2 rounded-xl shadow-sm border border-border">
-        {/* Search */}
+      {/* List Control */}
+      <div className="flex items-center gap-3 w-full bg-surface p-2 rounded-xl shadow-sm border border-border">
+        {/* Search Box */}
         <div className="relative w-full max-w-[260px] shrink-0">
           <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
           <input
@@ -263,8 +263,8 @@ export default function LandingLeads() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="w-full overflow-x-auto bg-white rounded-xl shadow-sm border border-border">
+      {/* Leads Table */}
+      <div className="w-full overflow-x-auto bg-surface rounded-xl shadow-sm border border-border">
         <table className="w-full text-left border-collapse whitespace-nowrap table-fixed">
           <thead>
             <tr className="border-b border-border">

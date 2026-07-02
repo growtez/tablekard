@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard,
@@ -10,7 +10,9 @@ import {
     ChevronRight,
     FileText,
     Layers,
-    Inbox
+    Inbox,
+    Moon,
+    Sun
 } from 'lucide-react';
 
 const navItems = [
@@ -123,6 +125,64 @@ const NavItemComponent = ({ item, collapsed }) => {
 
 export default function Sidebar({ collapsed, session, onLogout, mobileOpen = false, setMobileOpen }) {
     const [isHovered, setIsHovered] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(false);
+
+    useEffect(() => {
+        if (localStorage.getItem('theme') === 'dark') {
+            setIsDarkMode(true);
+        } else {
+            setIsDarkMode(false);
+        }
+    }, []);
+
+    const toggleDarkMode = (event) => {
+        const isDark = !isDarkMode;
+        
+        const updateTheme = () => {
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                setIsDarkMode(true);
+            } else {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                setIsDarkMode(false);
+            }
+        };
+
+        if (!document.startViewTransition) {
+            updateTheme();
+            return;
+        }
+
+        const x = event.clientX;
+        const y = event.clientY;
+        const endRadius = Math.hypot(
+            Math.max(x, innerWidth - x),
+            Math.max(y, innerHeight - y)
+        );
+
+        const transition = document.startViewTransition(updateTheme);
+
+        transition.ready.then(() => {
+            const clipPath = [
+                `circle(0px at ${x}px ${y}px)`,
+                `circle(${endRadius}px at ${x}px ${y}px)`
+            ];
+
+            document.documentElement.animate(
+                {
+                    clipPath: clipPath,
+                },
+                {
+                    duration: 500,
+                    easing: 'ease-out',
+                    pseudoElement: '::view-transition-new(root)',
+                }
+            );
+        });
+    };
+
     const effectiveCollapsed = collapsed && !isHovered && !mobileOpen;
 
     return (
@@ -147,6 +207,21 @@ export default function Sidebar({ collapsed, session, onLogout, mobileOpen = fal
                     <NavItemComponent key={idx} item={item} collapsed={effectiveCollapsed} />
                 ))}
             </nav>
+
+            <div className="p-2 border-t border-sidebar-border mt-auto">
+                <button
+                    onClick={toggleDarkMode}
+                    className={`w-full flex items-center px-2.5 py-2 text-[13px] font-medium rounded-lg border border-transparent transition-colors text-sidebar-text-muted hover:bg-sidebar-hover hover:text-sidebar-text`}
+                    title={effectiveCollapsed ? (isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode') : undefined}
+                >
+                    <span className="flex items-center justify-center shrink-0 grow-0" style={{ width: ICON_BOX, height: ICON_BOX }}>
+                        {isDarkMode ? <Sun size={ICON_SIZE} /> : <Moon size={ICON_SIZE} />}
+                    </span>
+                    <div className={`ml-2.5 h-full flex items-center overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-200 ease-in-out ${effectiveCollapsed ? 'max-w-0 opacity-0' : 'max-w-[140px] opacity-100'}`}>
+                        <span className="truncate">{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
+                    </div>
+                </button>
+            </div>
 
         </aside>
     );

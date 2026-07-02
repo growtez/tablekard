@@ -162,17 +162,28 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
     };
 
     useEffect(() => {
-        if (restaurant && setHeaderData) {
-            setHeaderData({
-                id: restaurant.id,
-                name: restaurant.name,
-                logo_url: restaurant.logo_url,
-                status: restaurant.status,
-                backPath: '/restaurants',
-                backTitle: 'Back to Restaurants'
-            });
+        if (setHeaderData) {
+            if (restaurant) {
+                setHeaderData({
+                    id: restaurant.id,
+                    name: restaurant.name,
+                    logo_url: restaurant.logo_url,
+                    status: restaurant.status,
+                    backPath: '/restaurants',
+                    backTitle: 'Back to Restaurants'
+                });
+            } else if (location.state?.name) {
+                setHeaderData({
+                    id,
+                    name: location.state.name,
+                    logo_url: location.state.logo_url,
+                    status: location.state.status || 'active',
+                    backPath: '/restaurants',
+                    backTitle: 'Back to Restaurants'
+                });
+            }
         }
-    }, [restaurant, setHeaderData]);
+    }, [restaurant, location.state, id, setHeaderData]);
 
     const updateField = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));

@@ -4,6 +4,64 @@
 @import "tailwindcss";
 @config "../tailwind.config.js";
 
+:root {
+  --color-bg: #f7f8fa;
+  --color-surface: #FFFFFF;
+  --color-surface-hover: #F7FAFC;
+  
+  --color-accent-primary: #059669;
+  --color-accent-primary-glow: rgba(5, 150, 105, 0.15);
+  --color-accent-secondary: #10B981;
+  --color-accent-secondary-glow: rgba(16, 185, 129, 0.15);
+  
+  --color-text-main: #1A202C;
+  --color-text-muted: #718096;
+  
+  --color-border: #E2E8F0;
+  
+  --color-sidebar-bg: #343A40;
+  --color-sidebar-text: #FFFFFF;
+  --color-sidebar-text-muted: #A0AEC0;
+  --color-sidebar-hover: rgba(255, 255, 255, 0.05);
+  --color-sidebar-border: transparent;
+  --color-sidebar-accent: #A0D9B4;
+  
+  --color-glass-bg: rgba(255, 255, 255, 0.7);
+  --color-glass-border: rgba(226, 232, 240, 0.8);
+}
+
+.dark {
+  --color-bg: #0a0a0a;
+  --color-surface: #121212;
+  --color-surface-hover: #1e1e1e;
+  
+  --color-accent-primary: #059669;
+  --color-accent-primary-glow: rgba(5, 150, 105, 0.15);
+  --color-accent-secondary: #10B981;
+  --color-accent-secondary-glow: rgba(16, 185, 129, 0.15);
+  
+  --color-text-main: #f5f5f5;
+  --color-text-muted: #a3a3a3;
+  
+  --color-border: #262626;
+  
+  --color-sidebar-bg: #050505;
+  --color-sidebar-text: #f5f5f5;
+  --color-sidebar-text-muted: #a3a3a3;
+  --color-sidebar-hover: rgba(255, 255, 255, 0.05);
+  --color-sidebar-border: #262626;
+  --color-sidebar-accent: #059669;
+  
+  --color-glass-bg: rgba(18, 18, 18, 0.7);
+  --color-glass-border: rgba(38, 38, 38, 0.8);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
 @layer base {
   body {
     @apply min-h-screen bg-bg text-text-main overflow-x-hidden antialiased;

@@ -52,16 +52,16 @@ const CustomTooltip = ({ active, payload, label }) => {
             <div style={{
                 padding: '0.75rem 1rem',
                 borderRadius: '10px',
-                border: '1px solid #E2E8F0',
-                backgroundColor: '#FFFFFF',
-                boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+                border: '1px solid var(--color-border)',
+                backgroundColor: 'var(--color-surface)',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
             }}>
-                <p style={{ margin: '0 0 0.5rem 0', fontWeight: 700, fontSize: '0.9rem', color: '#1A202C' }}>{label}</p>
+                <p style={{ margin: '0 0 0.5rem 0', fontWeight: 700, fontSize: '0.9rem', color: 'var(--color-text-main)' }}>{label}</p>
                 {payload.map((entry, index) => (
                     <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.25rem 0' }}>
-                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: entry.color || entry.fill || '#059669' }} />
-                        <span style={{ fontSize: '0.8rem', color: '#718096' }}>{entry.name}:</span>
-                        <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#1A202C' }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: entry.color || entry.fill || 'var(--color-accent-primary)' }} />
+                        <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{entry.name}:</span>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-text-main)' }}>
                             {entry.dataKey === 'revenue' ? `₹${Number(entry.value).toLocaleString()}` : entry.value}
                         </span>
                     </div>
@@ -182,24 +182,28 @@ export default function Dashboard({ setSyncAction }) {
         <div className="animate-fade-in w-full">
             {/* ── Charts Row ── */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <Card className="lg:col-span-8 min-w-0">
-                    <CardHeader>
+                <Card 
+                    className="lg:col-span-8 min-w-0 cursor-pointer hover:border-accent-primary/40 transition-colors group/card"
+                    onClick={() => navigate('/subscriptions')}
+                >
+                    <CardHeader className="group-hover/card:text-accent-primary transition-colors">
                         <CardTitle>Subscription Revenue (Last 6 Months)</CardTitle>
                     </CardHeader>
-                    <div className="h-[300px] w-full">
+                    <div className="h-[300px] w-full" onClick={(e) => e.stopPropagation()}>
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={revenueChartData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
-                                <XAxis dataKey="month" stroke="#718096" fontSize={12} tickLine={false} axisLine={false} />
-                                <YAxis stroke="#718096" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => v === 0 ? '₹0' : `₹${(v / 1000).toFixed(0)}k`} />
-                                <Tooltip content={<CustomTooltip />} cursor={{ fill: '#F7FAFC' }} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+                                <XAxis dataKey="month" stroke="var(--color-text-muted)" fontSize={12} tickLine={false} axisLine={false} />
+                                <YAxis stroke="var(--color-text-muted)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => v === 0 ? '₹0' : `₹${(v / 1000).toFixed(0)}k`} />
+                                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--color-surface-hover)' }} />
                                 <Bar 
                                     dataKey="revenue" 
                                     name="Revenue" 
-                                    fill="#059669" 
+                                    fill="var(--color-accent-primary)" 
                                     radius={[6, 6, 0, 0]} 
                                     maxBarSize={45} 
-                                    onClick={(data) => {
+                                    onClick={(data, index, event) => {
+                                        if (event) event.stopPropagation();
                                         if (data && data.monthKey) {
                                             navigate(`/subscriptions?month=${data.monthKey}`);
                                         } else {
@@ -212,9 +216,12 @@ export default function Dashboard({ setSyncAction }) {
                         </ResponsiveContainer>
                     </div>
                 </Card>
-
-                <Card className="lg:col-span-4">
-                    <CardHeader>
+ 
+                <Card 
+                    className="lg:col-span-4 cursor-pointer hover:border-accent-primary/40 transition-colors group/card"
+                    onClick={() => navigate('/subscriptions')}
+                >
+                    <CardHeader className="group-hover/card:text-accent-primary transition-colors">
                             <CardTitle>Recent Subscriptions</CardTitle>
                             <div className="flex items-center gap-1.5">
                                 <span className="w-2 h-2 rounded-full bg-accent-primary animate-pulse"></span>
@@ -234,7 +241,10 @@ export default function Dashboard({ setSyncAction }) {
                         ) : recentSubscriptions.map(sub => (
                             <div 
                                 key={sub.id} 
-                                onClick={() => navigate(`/subscriptions/${sub.id}`)}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(`/subscriptions/${sub.id}`);
+                                }}
                                 className="flex gap-3 p-2 rounded-xl bg-surface-hover items-center cursor-pointer transition-colors hover:bg-border group/sub"
                             >
                                 <div className="flex-1 min-w-0">

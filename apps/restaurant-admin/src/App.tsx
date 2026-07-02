@@ -8,6 +8,7 @@ const Dashboard = lazy(() => import("./pages/dashboard"));
 const Order = lazy(() => import("./pages/order"));
 const Menu = lazy(() => import("./pages/menu"));
 const Payment = lazy(() => import("./pages/payment"));
+const TransactionDetail = lazy(() => import("./pages/transaction_detail"));
 const LoginPage = lazy(() => import("./pages/Login"));
 const Reports = lazy(() => import("./pages/reports"));
 const QRCodePage = lazy(() => import("./pages/qrcode"));
@@ -57,6 +58,9 @@ function AppRoutes() {
         } />
         <Route path="/payments" element={
           <ProtectedRoute><Payment /></ProtectedRoute>
+        } />
+        <Route path="/payments/:id" element={
+          <ProtectedRoute><TransactionDetail /></ProtectedRoute>
         } />
         <Route path="/reports" element={
           <ProtectedRoute><Reports /></ProtectedRoute>

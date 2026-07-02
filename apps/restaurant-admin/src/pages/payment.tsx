@@ -3,7 +3,7 @@ import { Download, Calendar, CreditCard, CheckCircle, X, Search, User, Hash, Clo
 import Sidebar from '../components/sidebar';
 import { useAuth } from '../context/AuthContext';
 import { updatePaymentStatus } from '../services/supabaseService';
-import type { PaymentTransaction } from '../services/supabaseService';
+
 import { usePaymentTransactions, useInvalidateQueries, queryKeys } from '../hooks/useSupabaseQuery';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -14,9 +14,8 @@ const Payment: React.FC = () => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('all');
   const [selectedPaymentStatus, setSelectedPaymentStatus] = useState<string>('all');
   const [customDate, setCustomDate] = useState<string>('');
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [selectedTransaction, setSelectedTransaction] = useState<PaymentTransaction | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const navigate = useNavigate();
   const [weekOffset, setWeekOffset] = useState<number>(0);
   const [monthOffset, setMonthOffset] = useState<number>(0);
 
@@ -111,11 +110,7 @@ const Payment: React.FC = () => {
   };
 
   const handleView = (id: string) => {
-    const transaction = transactions.find(t => t.id === id);
-    if (transaction) {
-      setSelectedTransaction(transaction);
-      setIsModalOpen(true);
-    }
+    navigate(`/payments/${id}`);
   };
 
   const handleStatusChange = async (id: string, newStatus: string) => {
@@ -176,10 +171,6 @@ const Payment: React.FC = () => {
     return targetMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   };
 
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setSelectedTransaction(null);
-  };
 
   return (
     <div className="flex min-h-screen bg-tk-bg relative font-['Outfit',sans-serif]">

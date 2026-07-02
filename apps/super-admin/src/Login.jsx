@@ -1,12 +1,69 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
+import { Sun, Moon } from 'lucide-react'
 import './index.css'
+
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [message, setMessage] = useState(null)
+  const [isDarkMode, setIsDarkMode] = useState(false)
+
+  useEffect(() => {
+    if (localStorage.getItem('theme') === 'dark') {
+      setIsDarkMode(true)
+    }
+  }, [])
+
+  const toggleDarkMode = (event) => {
+    const isDark = !isDarkMode;
+    
+    const updateTheme = () => {
+      if (isDark) {
+        document.documentElement.classList.add('dark')
+        localStorage.setItem('theme', 'dark')
+        setIsDarkMode(true)
+      } else {
+        document.documentElement.classList.remove('dark')
+        localStorage.setItem('theme', 'light')
+        setIsDarkMode(false)
+      }
+    };
+
+    if (!document.startViewTransition) {
+      updateTheme();
+      return;
+    }
+
+    const x = event.clientX;
+    const y = event.clientY;
+    const endRadius = Math.hypot(
+      Math.max(x, innerWidth - x),
+      Math.max(y, innerHeight - y)
+    );
+
+    const transition = document.startViewTransition(updateTheme);
+
+    transition.ready.then(() => {
+      const clipPath = [
+        `circle(0px at ${x}px ${y}px)`,
+        `circle(${endRadius}px at ${x}px ${y}px)`
+      ];
+
+      document.documentElement.animate(
+        {
+          clipPath: clipPath,
+        },
+        {
+          duration: 500,
+          easing: 'ease-out',
+          pseudoElement: '::view-transition-new(root)',
+        }
+      );
+    });
+  }
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -33,71 +90,102 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-4 md:p-8 bg-bg perspective-1000">
-      <div className="w-full max-w-[440px] p-8 md:p-12 rounded-2xl bg-glass-bg backdrop-blur-xl border border-glass-border shadow-[0_25px_50px_-12px_rgba(0,0,0,1),0_0_0_1px_rgba(255,255,255,0.05)] animate-[cardEntrance_0.8s_cubic-bezier(0.16,1,0.3,1)]">
-        <div className="text-center mb-10">
-          <h1 className="text-4xl text-text-main mb-2 font-bold font-poppins">TableKard</h1>
-          <p className="text-text-muted text-base font-medium">Management Portal</p>
+    <div className="min-h-screen w-full flex items-center justify-center p-4 md:p-8 bg-[#f5f5f5] dark:bg-[#050505] font-mono text-gray-800 dark:text-green-500 selection:bg-blue-500/20 dark:selection:bg-green-500/30 transition-colors duration-300">
+      <div className="w-full max-w-[550px] bg-white dark:bg-[#0a0a0a] rounded-lg border border-gray-300 dark:border-green-500/30 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none overflow-hidden transition-colors duration-300">
+        {/* Terminal Header */}
+        <div className="flex items-center justify-between px-4 py-3 bg-[#e8e8e8] dark:bg-[#111] border-b border-gray-300 dark:border-green-500/20 transition-colors duration-300">
+          <div className="flex gap-2">
+            <div className="w-3 h-3 rounded-full bg-red-400"></div>
+            <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+            <div className="w-3 h-3 rounded-full bg-green-400"></div>
+          </div>
+          <button 
+            onClick={toggleDarkMode}
+            className="text-gray-500 hover:text-gray-800 dark:text-green-700 dark:hover:text-green-400 transition-colors outline-none"
+            title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          >
+            {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
         </div>
 
-        {error && (
-          <div className="p-4 rounded-xl mb-6 text-sm font-medium flex items-center gap-3 bg-red-500/10 border border-red-500/20 text-red-400 animate-[shake_0.4s_cubic-bezier(0.36,0.07,0.19,0.97)]">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            {error}
-          </div>
-        )}
-        
-        {message && (
-          <div className="p-4 rounded-xl mb-6 text-sm font-medium flex items-center gap-3 bg-green-500/10 border border-green-500/20 text-green-400">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><polyline points="20 6 9 17 4 12"/></svg>
-            {message}
-          </div>
-        )}
-
-        <form onSubmit={handleLogin} className="flex flex-col">
-          <div className="mb-6 group">
-            <label htmlFor="email" className="block text-xs tracking-widest text-text-muted mb-2 uppercase transition-colors group-focus-within:text-accent-primary">Email Address</label>
-            <input
-              id="email"
-              type="email"
-              placeholder="e.g. admin@tablekard.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={loading}
-              autoComplete="email"
-              className="w-full bg-surface/50 backdrop-blur-sm h-14 rounded-xl px-5 text-base text-text-main border border-border focus:border-accent-primary focus:ring-4 focus:ring-accent-primary/20 outline-none transition-all"
-            />
+        {/* Terminal Body */}
+        <div className="p-6 md:p-8">
+          <div className="mb-8">
+            <div className="text-2xl font-bold mb-2 flex items-center gap-3">
+              <span className="text-gray-900 dark:text-green-400">TABLEKARD</span>
+            </div>
           </div>
 
-          <div className="mb-6 group">
-            <label htmlFor="password" className="block text-xs tracking-widest text-text-muted mb-2 uppercase transition-colors group-focus-within:text-accent-primary">Password</label>
-            <input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={loading}
-              autoComplete="current-password"
-              className="w-full bg-surface/50 backdrop-blur-sm h-14 rounded-xl px-5 text-base text-text-main border border-border focus:border-accent-primary focus:ring-4 focus:ring-accent-primary/20 outline-none transition-all"
-            />
-          </div>
+          {error && (
+            <div className="mb-6 text-sm flex items-start gap-3 bg-red-50 dark:bg-red-500/10 border-l-2 border-red-500 p-3">
+              <span className="text-red-600 dark:text-red-500 font-bold shrink-0">ERR!</span>
+              <span className="text-red-700 dark:text-red-400">{error}</span>
+            </div>
+          )}
+          
+          {message && (
+            <div className="mb-6 text-sm flex items-start gap-3 bg-green-50 dark:bg-green-500/10 border-l-2 border-green-500 p-3">
+              <span className="text-green-600 dark:text-green-500 font-bold shrink-0">OK!</span>
+              <span className="text-green-700 dark:text-green-400">{message}</span>
+            </div>
+          )}
 
-          <button type="submit" disabled={loading} className="group relative overflow-hidden w-full h-14 mt-8 text-lg tracking-wide bg-accent-primary text-black font-bold rounded-xl shadow-[0_4px_20px_rgba(5,150,105,0.15)] hover:shadow-[0_6px_25px_rgba(5,150,105,0.25)] transition-all flex items-center justify-center border-none cursor-pointer">
-            <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent group-hover:translate-x-full transition-transform duration-500" />
-            {loading ? (
-              <span className="flex items-center gap-2 relative z-10">
-                <span className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin"></span>
-                Authenticating...
-              </span>
-            ) : <span className="relative z-10">Sign In to Dashboard</span>}
-          </button>
-        </form>
+          <form onSubmit={handleLogin} className="flex flex-col gap-6">
+            <div className="group">
+              <div className="flex items-center bg-[#f9f9f9] dark:bg-[#050505] border border-gray-200 dark:border-green-500/30 group-focus-within:border-gray-400 dark:group-focus-within:border-green-500 group-focus-within:bg-white dark:group-focus-within:bg-[#0a0a0a] p-3 rounded-sm transition-colors shadow-inner dark:shadow-none">
+                <span className="text-gray-400 dark:text-green-700 mr-3 font-bold">{'>'}</span>
+                <input
+                  id="email"
+                  type="email"
+                  placeholder="<username>"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={loading}
+                  autoComplete="email"
+                  className="flex-1 bg-transparent border-none outline-none ring-0 text-gray-900 dark:text-green-500 placeholder:text-gray-400 dark:placeholder:text-green-800 caret-gray-900 dark:caret-green-500 py-0"
+                  spellCheck="false"
+                />
+              </div>
+            </div>
 
-        <div className="text-center mt-10 pt-8 border-t border-border text-sm text-text-muted font-medium">
-          <p>© {new Date().getFullYear()} TableKard. All Rights Reserved.</p>
+            <div className="group">
+              <div className="flex items-center bg-[#f9f9f9] dark:bg-[#050505] border border-gray-200 dark:border-green-500/30 group-focus-within:border-gray-400 dark:group-focus-within:border-green-500 group-focus-within:bg-white dark:group-focus-within:bg-[#0a0a0a] p-3 rounded-sm transition-colors shadow-inner dark:shadow-none">
+                <span className="text-gray-400 dark:text-green-700 mr-3 font-bold">{'>'}</span>
+                <input
+                  id="password"
+                  type="password"
+                  placeholder="<password>"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={loading}
+                  autoComplete="current-password"
+                  className="flex-1 bg-transparent border-none outline-none ring-0 text-gray-900 dark:text-green-500 placeholder:text-gray-400 dark:placeholder:text-green-800 caret-gray-900 dark:caret-green-500 py-0 tracking-widest"
+                />
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <button 
+                type="submit" 
+                disabled={loading} 
+                className="w-full py-4 bg-gray-50 dark:bg-transparent hover:bg-gray-100 dark:hover:bg-green-500/10 border border-gray-300 dark:border-green-500/50 text-gray-700 dark:text-green-500 transition-all flex justify-center items-center gap-3 group outline-none focus:border-gray-500 dark:focus:border-green-400 focus:bg-gray-100 dark:focus:bg-green-500/10 font-bold tracking-widest shadow-sm dark:shadow-none"
+              >
+                {loading ? (
+                  <>
+                    <span className="w-2 h-4 bg-gray-600 dark:bg-green-500 animate-pulse"></span>
+                    <span>AUTHENTICATING_USER...</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-gray-400 dark:text-green-700 group-hover:text-gray-600 dark:group-hover:text-green-500 transition-colors">./</span>
+                    <span>EXECUTE_LOGIN</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
