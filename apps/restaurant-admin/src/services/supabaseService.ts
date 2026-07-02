@@ -1566,3 +1566,78 @@ export const getRecentFeedback = async (restaurantId: string): Promise<FeedbackR
         };
     });
 };
+
+// ==========================================
+// Revenue Orders Report
+// ==========================================
+
+export interface ReportOrder {
+    id: string;
+    orderNumber: string;
+    createdAt: string;
+    customerName: string;
+    paymentMethod: string;
+    paymentStatus: string;
+    total: number;
+    items: string; // e.g. "Paneer Tikka x2, Naan x1"
+}
+
+export interface ReportOrdersResult {
+    orders: ReportOrder[];
+    totalCount: number;
+}
+
+/**
+ * Fetches paginated orders with customer name and items for the Revenue Overview modal.
+ * startDate/endDate are ISO strings (full timestamp).
+ */
+export const getOrdersForReport = async (
+    restaurantId: string,
+    startDate: Date,
+    endDate: Date,
+    page: number = 1,
+    pageSize: number = 20
+): Promise<ReportOrdersResult> => {
+    const startStr = startDate.toISOString();
+    const endStr = endDate.toISOString();
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    const { data, error, count } = await db
+        .from('orders')
+        .select(
+            `id, order_number, created_at, payment_method, payment_status, total,
+             profiles(name),
+             order_items(name, quantity)`,
+            { count: 'exact' }
+        )
+        .eq('restaurant_id', restaurantId)
+        .gte('created_at', startStr)
+        .lte('created_at', endStr)
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+    if (error) {
+        console.error('Error fetching orders for report:', error);
+        return { orders: [], totalCount: 0 };
+    }
+
+    const orders: ReportOrder[] = (data || []).map((row: any) => {
+        const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
+        const items: { name: string; quantity: number }[] = Array.isArray(row.order_items) ? row.order_items : [];
+        const itemsStr = items.map(i => `${i.name} x${i.quantity}`).join(', ');
+
+        return {
+            id: row.id,
+            orderNumber: row.order_number,
+            createdAt: row.created_at,
+            customerName: profile?.name || 'Guest',
+            paymentMethod: row.payment_method || '—',
+            paymentStatus: row.payment_status || '—',
+            total: Number(row.total) || 0,
+            items: itemsStr || '—'
+        };
+    });
+
+    return { orders, totalCount: count || 0 };
+};

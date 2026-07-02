@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Calendar, ArrowUpRight, ArrowDownRight, Loader2, Info, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Download, Calendar, ArrowUpRight, ArrowDownRight, Loader2, Info, ChevronLeft, ChevronRight, X, Eye } from 'lucide-react';
 import Sidebar from '../components/sidebar';
+import RevenueOrdersModal from '../components/RevenueOrdersModal';
 import './reports.css';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -52,6 +53,14 @@ const Reports: React.FC = () => {
     const [topItems, setTopItems] = useState<BestSellingDish[]>([]);
     const [showAllItemsModal, setShowAllItemsModal] = useState(false);
     const [revenueHistory, setRevenueHistory] = useState<RevenueRecord[]>([]);
+
+    // ── Revenue Orders Modal state ──
+    const [ordersModalOpen, setOrdersModalOpen]   = useState(false);
+    const [ordersModalStart, setOrdersModalStart] = useState<Date>(new Date());
+    const [ordersModalEnd, setOrdersModalEnd]     = useState<Date>(new Date());
+    const [ordersModalLabel, setOrdersModalLabel] = useState('');
+    // Persisted active range for the "View" button
+    const [activeDateRange, setActiveDateRange]   = useState<{ start: Date; end: Date } | null>(null);
     const [peakData, setPeakData] = useState<PeakHourData>(
         Array.from({ length: 7 }, () => Array(24).fill(0))
     );
@@ -148,12 +157,28 @@ const Reports: React.FC = () => {
             // Build a complete day-by-day record for the selected range,
             // filling in zeros for days with no revenue data.
             const filledRevenue: RevenueRecord[] = [];
-            const startDay = new Date(startDate);
+            let startDay = new Date(startDate);
+            if (timeframe === 'all') {
+                if (revenueData.length > 0) {
+                    // Start from the earliest recorded revenue date (sorted ascending)
+                    startDay = new Date(revenueData[0].revenueDate);
+                } else {
+                    // Fallback if no records exist: show the last 30 days of zeros
+                    const thirtyDaysAgo = new Date();
+                    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                    startDay = thirtyDaysAgo;
+                }
+            }
             startDay.setHours(0, 0, 0, 0);
             const endDay = new Date(endDate);
             endDay.setHours(0, 0, 0, 0);
 
-            for (const d = new Date(startDay); d <= endDay; d.setDate(d.getDate() + 1)) {
+            // Prevent infinite or extremely long loops by capping the range at 5 years
+            const dayDifference = Math.ceil((endDay.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24));
+            const maxDaysToLoop = 366 * 5;
+            const loopEndDate = dayDifference > maxDaysToLoop ? new Date(startDay.getTime() + maxDaysToLoop * 24 * 60 * 60 * 1000) : endDay;
+
+            for (const d = new Date(startDay); d <= loopEndDate; d.setDate(d.getDate() + 1)) {
                 const dateStr = d.toISOString().split('T')[0];
                 const existing = revenueData.find(r => r.revenueDate === dateStr);
                 filledRevenue.push(
@@ -171,6 +196,7 @@ const Reports: React.FC = () => {
                 );
             }
             setRevenueHistory(filledRevenue);
+            setActiveDateRange({ start: startDate, end: endDate }); // persist for View button
             setPeakData(heatmap);
             setAdvanced(advancedData);
             setFeedbackData(recentFeedback);
@@ -190,63 +216,119 @@ const Reports: React.FC = () => {
     }, [activeRestaurantId, timeframe, customStart, customEnd, weekOffset, monthOffset]);
 
     // For month view: aggregate daily revenue into weekly buckets so the chart stays readable.
-    const getChartData = (): { label: string; revenue: number; orders: number }[] => {
-        if (timeframe === 'month' && revenueHistory.length > 0) {
-            // Group days into week-sized buckets anchored to the 1st of the month
-            const buckets: { label: string; revenue: number; orders: number }[] = [];
+    // For 'all' or long custom ranges: aggregate by month.
+    // Each bucket carries dateStart/dateEnd for bar-click filtering.
+    const getChartData = (): { label: string; revenue: number; orders: number; dateStart: Date; dateEnd: Date }[] => {
+        if (revenueHistory.length === 0) return [];
+
+        if (timeframe === 'month') {
+            const buckets: { label: string; revenue: number; orders: number; dateStart: Date; dateEnd: Date }[] = [];
             let bucketRevenue = 0;
             let bucketOrders = 0;
-            let bucketStart: Date | null = null;
+            let bucketDayStart: Date | null = null;
+            let bucketDayEnd: Date | null = null;
 
             revenueHistory.forEach((record, idx) => {
                 const d = new Date(record.revenueDate);
-                const dayOfMonth = d.getDate(); // 1-indexed
-                const bucketIndex = Math.floor((dayOfMonth - 1) / 7); // 0,1,2,3
+                const dayOfMonth = d.getDate();
+                const bucketIndex = Math.floor((dayOfMonth - 1) / 7);
 
-                if (bucketStart === null) {
-                    bucketStart = d;
-                }
+                if (bucketDayStart === null) bucketDayStart = d;
+                bucketDayEnd = d;
 
                 bucketRevenue += record.totalRevenue;
-                bucketOrders += record.totalOrders;
+                bucketOrders  += record.totalOrders;
 
-                // Flush bucket at week boundary or last record
-                const nextRecord = revenueHistory[idx + 1];
-                const nextBucketIndex = nextRecord
+                const nextRecord       = revenueHistory[idx + 1];
+                const nextBucketIndex  = nextRecord
                     ? Math.floor((new Date(nextRecord.revenueDate).getDate() - 1) / 7)
                     : -1;
 
                 if (nextBucketIndex !== bucketIndex || !nextRecord) {
-                    const weekNum = bucketIndex + 1;
+                    const s = new Date(bucketDayStart!);
+                    s.setHours(0, 0, 0, 0);
+                    const e = new Date(bucketDayEnd!);
+                    e.setHours(23, 59, 59, 999);
                     buckets.push({
-                        label: `Wk ${weekNum}`,
-                        revenue: bucketRevenue,
-                        orders: bucketOrders
+                        label:     `Wk ${bucketIndex + 1}`,
+                        revenue:   bucketRevenue,
+                        orders:    bucketOrders,
+                        dateStart: s,
+                        dateEnd:   e
                     });
-                    bucketRevenue = 0;
-                    bucketOrders = 0;
-                    bucketStart = null;
+                    bucketRevenue  = 0;
+                    bucketOrders   = 0;
+                    bucketDayStart = null;
+                    bucketDayEnd   = null;
                 }
             });
 
             return buckets;
         }
 
-        // All other timeframes: one bar per day
+        // Group by month for 'all' or ranges > 31 days
+        if (timeframe === 'all' || revenueHistory.length > 31) {
+            const monthlyBuckets: Record<string, { label: string; revenue: number; orders: number; dateStart: Date; dateEnd: Date; date: Date }> = {};
+
+            revenueHistory.forEach(record => {
+                const d     = new Date(record.revenueDate);
+                const year  = d.getFullYear();
+                const month = d.getMonth();
+                const key   = `${year}-${month.toString().padStart(2, '0')}`;
+
+                if (!monthlyBuckets[key]) {
+                    const mStart = new Date(year, month, 1, 0, 0, 0, 0);
+                    const mEnd   = new Date(year, month + 1, 0, 23, 59, 59, 999);
+                    monthlyBuckets[key] = {
+                        label:     d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+                        revenue:   0,
+                        orders:    0,
+                        dateStart: mStart,
+                        dateEnd:   mEnd,
+                        date:      d
+                    };
+                }
+                monthlyBuckets[key].revenue += record.totalRevenue;
+                monthlyBuckets[key].orders  += record.totalOrders;
+            });
+
+            return Object.values(monthlyBuckets).sort((a, b) => a.date.getTime() - b.date.getTime());
+        }
+
+        // Today / week: one bar per day
         return revenueHistory.map(record => {
             const d = new Date(record.revenueDate);
+            const dayStart = new Date(d); dayStart.setHours(0, 0, 0, 0);
+            const dayEnd   = new Date(d); dayEnd.setHours(23, 59, 59, 999);
             let label: string;
             if (revenueHistory.length > 14) {
                 label = d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
             } else {
                 label = d.toLocaleDateString('en-US', { weekday: 'short' });
             }
-            return { label, revenue: record.totalRevenue, orders: record.totalOrders };
+            return { label, revenue: record.totalRevenue, orders: record.totalOrders, dateStart: dayStart, dateEnd: dayEnd };
         });
     };
 
-    const chartData = getChartData();
+    const chartData  = getChartData();
     const maxChartRevenue = Math.max(...chartData.map(b => b.revenue), 1);
+
+    // Opens the orders modal for the full currently-selected period
+    const openOrdersModalForFullRange = () => {
+        if (!activeDateRange) return;
+        setOrdersModalStart(activeDateRange.start);
+        setOrdersModalEnd(activeDateRange.end);
+        setOrdersModalLabel(chartTitle());
+        setOrdersModalOpen(true);
+    };
+
+    // Opens the orders modal filtered to a specific bar's date range
+    const openOrdersModalForBar = (bar: { label: string; dateStart: Date; dateEnd: Date }) => {
+        setOrdersModalStart(bar.dateStart);
+        setOrdersModalEnd(bar.dateEnd);
+        setOrdersModalLabel(bar.label);
+        setOrdersModalOpen(true);
+    };
 
     // Dynamic chart section title
     const chartTitle = (): string => {
@@ -305,6 +387,7 @@ const Reports: React.FC = () => {
     }
 
     return (
+        <>
         <div className="reports-container">
             <Sidebar />
 
@@ -480,9 +563,15 @@ const Reports: React.FC = () => {
                                 {chartTitle()}
                                 <span className="info-icon">
                                     <Info size={14} />
-                                    <span className="tooltip">Daily revenue trends for the selected period.</span>
+                                    <span className="tooltip">Click any bar to filter orders for that period. Click 'View' to see all orders.</span>
                                 </span>
                             </h3>
+                            <button
+                                className="view-all-btn rom-view-btn"
+                                onClick={openOrdersModalForFullRange}
+                            >
+                                <Eye size={14} /> View
+                            </button>
                         </div>
                         <div className="chart-container">
                             {chartData.length === 0 ? (
@@ -491,7 +580,12 @@ const Reports: React.FC = () => {
                                 chartData.map((bar, index) => {
                                     const heightPercentage = (bar.revenue / maxChartRevenue) * 100;
                                     return (
-                                        <div key={index} className="chart-bar-group">
+                                        <div
+                                            key={index}
+                                            className="chart-bar-group chart-bar-clickable"
+                                            onClick={() => openOrdersModalForBar(bar)}
+                                            title={`View orders for ${bar.label}`}
+                                        >
                                             <div className="chart-tooltip">{formatCurrency(bar.revenue)}</div>
                                             <div className="chart-bar" style={{ height: `${heightPercentage}%` }}></div>
                                             <span className="chart-label">{bar.label}</span>
@@ -751,12 +845,22 @@ const Reports: React.FC = () => {
                         </div>
                     </div>
                 )}
+
             </div>
         </div>
+
+        {/* Revenue Orders Modal */}
+        {ordersModalOpen && activeRestaurantId && (
+            <RevenueOrdersModal
+                restaurantId={activeRestaurantId}
+                startDate={ordersModalStart}
+                endDate={ordersModalEnd}
+                periodLabel={ordersModalLabel}
+                onClose={() => setOrdersModalOpen(false)}
+            />
+        )}
+    </>
     );
 };
 
 export default Reports;
-
-
-
