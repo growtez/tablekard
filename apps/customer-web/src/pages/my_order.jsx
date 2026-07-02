@@ -547,7 +547,7 @@ const MyOrderPage = () => {
                 </div>
               </div>
               {(geofenceStatus === 'outside' || geofenceStatus === 'error') && (
-                <button className="geofence-retry-btn" onClick={checkGeofence}>
+                <button className="geofence-retry-btn" onClick={() => checkGeofence()}>
                   Retry
                 </button>
               )}

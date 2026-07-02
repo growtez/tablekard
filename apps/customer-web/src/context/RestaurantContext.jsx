@@ -71,7 +71,7 @@ export function RestaurantProvider({ children }) {
     const lon = restaurant?.longitude !== undefined && restaurant?.longitude !== null ? restaurant.longitude : restaurant?.location?.longitude;
     const rad = restaurant?.allowed_radius !== undefined && restaurant?.allowed_radius !== null ? restaurant.allowed_radius : restaurant?.location?.allowedRadius;
 
-    const allowedRadius = rad ? Number(rad) : 150;
+    const allowedRadius = (rad !== undefined && rad !== null) ? Number(rad) : 150;
 
     // checkGeofence accepts an optional restaurantData argument so it can be called
     // immediately after fetch without relying on stale closure values of lat/lon/rad.
@@ -80,7 +80,7 @@ export function RestaurantProvider({ children }) {
         const rLat = r?.latitude !== undefined && r?.latitude !== null ? r.latitude : r?.location?.latitude;
         const rLon = r?.longitude !== undefined && r?.longitude !== null ? r.longitude : r?.location?.longitude;
         const rRad = r?.allowed_radius !== undefined && r?.allowed_radius !== null ? r.allowed_radius : r?.location?.allowedRadius;
-        const rAllowedRadius = rRad ? Number(rRad) : 150;
+        const rAllowedRadius = (rRad !== undefined && rRad !== null) ? Number(rRad) : 150;
 
         console.log('[Geofence] Checking location. Restaurant coords:', rLat, rLon, 'allowed radius:', rAllowedRadius);
         if (rLat === null || rLat === undefined || rLon === null || rLon === undefined) {
