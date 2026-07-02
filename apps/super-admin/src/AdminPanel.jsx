@@ -386,7 +386,7 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
                   <tr
                     key={user.id}
                     className="group even:bg-bg hover:bg-surface-hover border-b border-border/40 last:border-b-0 cursor-pointer transition-colors"
-                    onClick={(e) => navigate(`/users/${user.id}`)}
+                    onClick={(e) => navigate(`/users/${user.id}`, { state: { name: user.name || 'Anonymous User' } })}
                   >
                     <td className="py-2.5 px-4 align-middle">
                       <div className="flex items-center gap-3">

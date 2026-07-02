@@ -303,7 +303,7 @@ export default function Plans({ setSyncAction, setHeaderData }) {
                             return (
                                 <div
                                     key={plan.id}
-                                    className="relative bg-white rounded-2xl overflow-hidden flex flex-col transition-all hover:-translate-y-1 hover:shadow-xl"
+                                    className="relative bg-surface rounded-2xl overflow-hidden flex flex-col transition-all hover:-translate-y-1 hover:shadow-xl"
                                     style={{ border: plan.recommended ? `2px solid ${plan.color}` : '1px solid #e5e7eb', boxShadow: plan.recommended ? `0 8px 32px ${plan.color}22` : '0 2px 12px rgba(0,0,0,0.04)' }}
                                 >
                                     {/* Recommended ribbon */}

@@ -65,7 +65,7 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background-color: #FFFFFF;
+  background-color: var(--color-surface);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -103,7 +103,7 @@
 
 /* Profile Cards */
 .profile-card {
-  background-color: #FFFFFF;
+  background-color: var(--color-surface);
   padding: 24px;
   border-radius: 24px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06), inset 0 1px 2px rgba(0, 0, 0, 0.02);
@@ -363,7 +363,7 @@
   width: 100%;
   border: 1px solid #CBD5E0;
   border-radius: 14px;
-  background-color: #FFFFFF;
+  background-color: var(--color-surface);
   color: #1A202C;
   padding: 12px 14px;
   font-size: 14px;
@@ -395,7 +395,7 @@
   padding: 0;
   border: 1px solid #CBD5E0;
   border-radius: 14px;
-  background-color: #FFFFFF;
+  background-color: var(--color-surface);
   cursor: pointer;
   flex-shrink: 0;
 }
@@ -413,7 +413,7 @@
   border: 1px solid #E2E8F0;
   border-radius: 18px;
   padding: 18px;
-  background-color: #FFFFFF;
+  background-color: var(--color-surface);
 }
 
 .profile-section-header {
@@ -514,7 +514,7 @@
 .profile-summary-card {
   border: 1px solid #E2E8F0;
   border-radius: 16px;
-  background-color: #FFFFFF;
+  background-color: var(--color-surface);
   padding: 14px 16px;
   display: flex;
   flex-direction: column;
@@ -727,7 +727,7 @@
   object-fit: contain;
   border-radius: 10px;
   border: 1px solid #E2E8F0;
-  background-color: #FFFFFF;
+  background-color: var(--color-surface);
   flex-shrink: 0;
 }
 
@@ -806,7 +806,7 @@
 }
 
 .profile-modal-content {
-  background-color: #FFFFFF;
+  background-color: var(--color-surface);
   border-radius: 24px;
   padding: 32px;
   width: 100%;
