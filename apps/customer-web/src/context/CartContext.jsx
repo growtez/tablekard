@@ -19,10 +19,19 @@ export function CartProvider({ children }) {
         }
     });
 
+    const [orderSpecialInstructions, setOrderSpecialInstructions] = useState(() => {
+        try {
+            return sessionStorage.getItem('tablekard_special_instructions') || '';
+        } catch {
+            return '';
+        }
+    });
+
     // Persist cart to sessionStorage whenever it changes
     useEffect(() => {
         sessionStorage.setItem(STORAGE_KEY, JSON.stringify(cartItems));
-    }, [cartItems]);
+        sessionStorage.setItem('tablekard_special_instructions', orderSpecialInstructions);
+    }, [cartItems, orderSpecialInstructions]);
 
     const addToCart = (item, selectedVariant = null, selectedAddons = []) => {
         const addonIds = (selectedAddons || []).map(a => a.id).sort().join(',');
@@ -98,13 +107,7 @@ export function CartProvider({ children }) {
         );
     };
 
-    const updateSpecialInstructions = (itemId, text) => {
-        setCartItems(prev =>
-            prev.map(item =>
-                item.id === itemId ? { ...item, specialInstructions: text } : item
-            )
-        );
-    };
+
 
     const getItemQuantity = (itemId) => {
         return cartItems
@@ -114,6 +117,7 @@ export function CartProvider({ children }) {
 
     const clearCart = () => {
         setCartItems([]);
+        setOrderSpecialInstructions('');
     };
 
     const cartTotal = cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -127,7 +131,8 @@ export function CartProvider({ children }) {
             removeFromCart,
             deleteFromCart,
             updateQuantity,
-            updateSpecialInstructions,
+            orderSpecialInstructions,
+            setOrderSpecialInstructions,
             getItemQuantity,
             clearCart,
             cartTotal,

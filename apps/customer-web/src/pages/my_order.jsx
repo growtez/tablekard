@@ -16,13 +16,14 @@ import { supabase } from '@restaurant-saas/supabase';
 const MyOrderPage = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user, loading: authLoading } = useAuth();
-  const { cartItems, updateQuantity, deleteFromCart, cartSubtotal, clearCart, updateSpecialInstructions } = useCart();
+  const { cartItems, updateQuantity, deleteFromCart, cartSubtotal, clearCart, orderSpecialInstructions, setOrderSpecialInstructions } = useCart();
   const { restaurantId, tableId, geofenceStatus, distance, allowedRadius, checkGeofence, restaurant } = useRestaurant();
   const [activeTab, setActiveTab] = useState('cart');
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState('');
   const [error, setError] = useState('');
   const [orderType, setOrderType] = useState('dine_in');
+  const [showSpecialInstructions, setShowSpecialInstructions] = useState(!!orderSpecialInstructions);
 
 
   const [orders, setOrders] = useState([]);
@@ -135,7 +136,7 @@ const MyOrderPage = () => {
       if (pullDist > 0) {
         setPullY(Math.min(pullDist, 100)); // Cap at 100px
         if (pullDist > 10 && e.cancelable) {
-           e.preventDefault(); // prevent native pull-to-refresh
+          e.preventDefault(); // prevent native pull-to-refresh
         }
       }
     }
@@ -226,6 +227,7 @@ const MyOrderPage = () => {
         userName: user?.user_metadata?.full_name || '',
         userEmail: user?.email || '',
         userPhone: user?.phone || '',
+        specialInstructions: orderSpecialInstructions,
         onStatusChange: (status) => setPaymentStatus(status),
       });
 
@@ -238,8 +240,7 @@ const MyOrderPage = () => {
             quantity: item.quantity,
             price: item.price,
             variant: item.variant || null,
-            addons: item.addons || null,
-            specialInstructions: item.specialInstructions || null
+            addons: item.addons || null
           })),
           total: getTotalPrice(),
           orderDate: 'Just now',
@@ -302,6 +303,7 @@ const MyOrderPage = () => {
         items: cartItems,
         paymentMethod: 'cash',
         type: orderType,
+        specialInstructions: orderSpecialInstructions,
       });
 
       const newOrder = {
@@ -311,9 +313,7 @@ const MyOrderPage = () => {
           name: item.name,
           quantity: item.quantity,
           price: item.price,
-          variant: item.variant || null,
-          addons: item.addons || null,
-          specialInstructions: item.specialInstructions || null
+          addons: item.addons || null
         })),
         total: getTotalPrice(),
         orderDate: 'Just now',
@@ -429,7 +429,7 @@ const MyOrderPage = () => {
   }
 
   return (
-    <div 
+    <div
       className="myorder-container"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -446,13 +446,13 @@ const MyOrderPage = () => {
         backgroundColor: 'transparent'
       }}>
         {pullY > 0 && (
-          <Loader2 
-            size={24} 
-            color="#8B3A1E" 
-            style={{ 
-               transform: `rotate(${pullY * 2}deg)`,
-               ...(isPulling ? { animation: 'spin 1s linear infinite' } : {})
-            }} 
+          <Loader2
+            size={24}
+            color="#8B3A1E"
+            style={{
+              transform: `rotate(${pullY * 2}deg)`,
+              ...(isPulling ? { animation: 'spin 1s linear infinite' } : {})
+            }}
           />
         )}
       </div>
@@ -578,16 +578,6 @@ const MyOrderPage = () => {
                       <div className="cart-header">
                         <h3>{item.name}</h3>
                         <div className="cart-header-actions">
-                          <button
-                            className="si-icon-btn"
-                            title="Add special instructions"
-                            onClick={e => {
-                              e.currentTarget.closest('.cart-info').querySelector('.si-textarea-wrap').classList.toggle('open');
-                              e.currentTarget.classList.toggle('active');
-                            }}
-                          >
-                            <Pencil size={14} />
-                          </button>
                           <button className="remove-btn" onClick={() => removeItem(item.id)}>
                             <Trash2 size={14} />
                           </button>
@@ -629,37 +619,24 @@ const MyOrderPage = () => {
                         </div>
                         <div className="item-price">₹{(item.price * item.quantity)}</div>
                       </div>
-                      {/* Sliding textarea — opens when pencil is clicked */}
-                      <div className="si-textarea-wrap">
-                        <div className="si-textarea-inner">
-                          <textarea
-                            className="special-instructions-input"
-                            placeholder="e.g. Less spicy, no onions, extra sauce…"
-                            value={item.specialInstructions || ''}
-                            onChange={e => updateSpecialInstructions(item.id, e.target.value)}
-                            maxLength={200}
-                            rows={2}
-                          />
-                          <span className="si-char-count">{(item.specialInstructions || '').length}/200</span>
-                        </div>
-                      </div>
+
                     </div>
                   </div>
                 ))}
               </div>
-              
+
               {/* Order Type Selection - Premium Sliding Toggle */}
               <div className="order-type-wrapper">
                 <div className="order-type-toggle">
                   <div className={`toggle-slider ${orderType}`} />
-                  <button 
+                  <button
                     className={`toggle-btn ${orderType === 'dine_in' ? 'active' : ''}`}
                     onClick={() => setOrderType('dine_in')}
                   >
                     <Utensils size={18} />
                     <span>Dine In</span>
                   </button>
-                  <button 
+                  <button
                     className={`toggle-btn ${orderType === 'takeaway' ? 'active' : ''}`}
                     onClick={() => setOrderType('takeaway')}
                   >
@@ -667,6 +644,50 @@ const MyOrderPage = () => {
                     <span>Takeaway</span>
                   </button>
                 </div>
+              </div>
+
+              {/* Order Special Instructions */}
+              <div className="order-special-instructions-container" style={{ margin: '20px 0' }}>
+                {!showSpecialInstructions ? (
+                  <button
+                    className="add-special-instructions-btn"
+                    onClick={() => setShowSpecialInstructions(true)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '8px',
+                      background: 'transparent', border: '1px dashed #8B3A1E', color: '#8B3A1E',
+                      padding: '12px', borderRadius: '12px', width: '100%',
+                      justifyContent: 'center', fontSize: '14px', fontWeight: '500',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <Plus size={16} />
+                    Add cooking instructions or requests
+                  </button>
+                ) : (
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                      <h2 className="summary-title" style={{ margin: 0 }}>Special Instructions</h2>
+                      <button
+                        onClick={() => {
+                          setShowSpecialInstructions(false);
+                          setOrderSpecialInstructions('');
+                        }}
+                        style={{ background: 'none', border: 'none', color: '#EF4444', fontSize: '13px', cursor: 'pointer', padding: 0 }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <textarea
+                      className="special-instructions-input"
+                      placeholder="e.g. Please make it less spicy, extra napkins..."
+                      value={orderSpecialInstructions}
+                      onChange={e => setOrderSpecialInstructions(e.target.value)}
+                      maxLength={500}
+                      rows={3}
+                      style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #ddd', fontSize: '14px', resize: 'vertical' }}
+                    />
+                  </>
+                )}
               </div>
 
               {/* Order Summary */}
@@ -770,16 +791,16 @@ const MyOrderPage = () => {
             <div className="orders-list">
               {[1, 2, 3].map(i => (
                 <div key={i} className="skeleton-item" style={{ flexDirection: 'column', height: '140px' }}>
-                   <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                      <div className="skeleton-pulse skeleton-text title" style={{ width: '40%' }}></div>
-                      <div className="skeleton-pulse skeleton-text" style={{ width: '80px', borderRadius: '20px' }}></div>
-                   </div>
-                   <div className="skeleton-pulse skeleton-text short" style={{ marginTop: '12px' }}></div>
-                   <div className="skeleton-pulse skeleton-text" style={{ width: '30%', marginTop: 'auto' }}></div>
-                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px', borderTop: '1px solid #f0f0f0', paddingTop: '16px' }}>
-                      <div className="skeleton-pulse skeleton-text" style={{ width: '80px', height: '24px', borderRadius: '12px' }}></div>
-                      <div className="skeleton-pulse skeleton-text title" style={{ width: '60px' }}></div>
-                   </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                    <div className="skeleton-pulse skeleton-text title" style={{ width: '40%' }}></div>
+                    <div className="skeleton-pulse skeleton-text" style={{ width: '80px', borderRadius: '20px' }}></div>
+                  </div>
+                  <div className="skeleton-pulse skeleton-text short" style={{ marginTop: '12px' }}></div>
+                  <div className="skeleton-pulse skeleton-text" style={{ width: '30%', marginTop: 'auto' }}></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px', borderTop: '1px solid #f0f0f0', paddingTop: '16px' }}>
+                    <div className="skeleton-pulse skeleton-text" style={{ width: '80px', height: '24px', borderRadius: '12px' }}></div>
+                    <div className="skeleton-pulse skeleton-text title" style={{ width: '60px' }}></div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -801,97 +822,97 @@ const MyOrderPage = () => {
                   const statusLabel = order.status.charAt(0).toUpperCase() + order.status.slice(1);
 
                   return (
-                  <div key={order.id} className={`order-item${isCancelled ? ' order-item--cancelled' : ''}`}>
-                    {/* ── Tier 1: Identity Row ── */}
-                    <div className="oi-identity">
-                      <div className="oi-identity-left">
-                        <span className="oi-order-id">#{shortId}</span>
-                        <span className="oi-type-chip">{orderTypeName}</span>
-                      </div>
-                      <div className={`oi-payment-chip ${isPaid ? 'paid' : 'unpaid'}`}>
-                        <span className="oi-payment-symbol">₹</span>
-                        {isPaid ? 'Paid' : 'Pending'}
-                      </div>
-                    </div>
-
-                    {/* ── Tier 2: Items ── */}
-                    <div className="oi-items">
-                      {order.items.map((item, index) => {
-                        const itemStatus = item.status || 'placed';
-                        let badgeColor = '#FF9800'; // placed
-                        if (itemStatus === 'preparing') badgeColor = '#3B82F6';
-                        if (itemStatus === 'ready') badgeColor = '#22C55E';
-
-                        return (
-                          <div key={index} style={{ marginBottom: '8px' }}>
-                            <div className="oi-item-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span className="oi-item-qty">{item.quantity}×</span>
-                                <span className="oi-item-name">{item.name}</span>
-                                <span style={{ 
-                                  fontSize: '10px', 
-                                  padding: '2px 8px', 
-                                  borderRadius: '12px', 
-                                  fontWeight: 'bold',
-                                  color: badgeColor,
-                                  backgroundColor: badgeColor + '12',
-                                  border: `1px solid ${badgeColor}30`,
-                                  textTransform: 'capitalize'
-                                }}>
-                                  {itemStatus}
-                                </span>
-                              </div>
-                              <span className="oi-item-price">₹{item.price * item.quantity}</span>
-                            </div>
-                            {item.variant && (
-                              <div style={{ fontSize: '11px', color: '#8B3A1E', fontStyle: 'italic', marginLeft: '24px', marginTop: '2px' }}>
-                                Variant: {item.variant.name} (+₹{item.variant.price})
-                              </div>
-                            )}
-                            {item.addons && item.addons.length > 0 && (
-                              <div style={{ fontSize: '11px', color: '#666', fontStyle: 'italic', marginLeft: '24px', marginTop: '2px' }}>
-                                Add-ons: {item.addons.map(a => `${a.name} (+₹${a.price})`).join(', ')}
-                              </div>
-                            )}
-                            {item.specialInstructions && (
-                              <div className="oi-item-note">
-                                <span>📝</span>
-                                <span>{item.specialInstructions}</span>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* ── Tier 3: Footer ── */}
-                    <div className="oi-footer">
-                      <div className="oi-footer-left">
-                        <div className="oi-status" style={{
-                          color: getStatusColor(order.status),
-                          backgroundColor: getStatusColor(order.status) + '15',
-                          borderColor: getStatusColor(order.status) + '30',
-                        }}>
-                          {getStatusIcon(order.status)}
-                          <span>{statusLabel}</span>
+                    <div key={order.id} className={`order-item${isCancelled ? ' order-item--cancelled' : ''}`}>
+                      {/* ── Tier 1: Identity Row ── */}
+                      <div className="oi-identity">
+                        <div className="oi-identity-left">
+                          <span className="oi-order-id">#{shortId}</span>
+                          <span className="oi-type-chip">{orderTypeName}</span>
                         </div>
-                        <span className="oi-time">{order.orderDate}</span>
+                        <div className={`oi-payment-chip ${isPaid ? 'paid' : 'unpaid'}`}>
+                          <span className="oi-payment-symbol">₹</span>
+                          {isPaid ? 'Paid' : 'Pending'}
+                        </div>
                       </div>
-                      <div className="oi-footer-right">
-                        <span className="oi-total">₹{order.total}</span>
-                        <span className="oi-total-note">incl. taxes</span>
-                      </div>
-                    </div>
 
-                    {/* ── Invoice action ── */}
-                    <button
-                      className="oi-invoice-btn"
-                      onClick={() => downloadInvoice(order)}
-                    >
-                      <Download size={13} />
-                      Download Invoice
-                    </button>
-                  </div>
+                      {/* ── Tier 2: Items ── */}
+                      <div className="oi-items">
+                        {order.items.map((item, index) => {
+                          const itemStatus = item.status || 'placed';
+                          let badgeColor = '#FF9800'; // placed
+                          if (itemStatus === 'preparing') badgeColor = '#3B82F6';
+                          if (itemStatus === 'ready') badgeColor = '#22C55E';
+
+                          return (
+                            <div key={index} style={{ marginBottom: '8px' }}>
+                              <div className="oi-item-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <span className="oi-item-qty">{item.quantity}×</span>
+                                  <span className="oi-item-name">{item.name}</span>
+                                  <span style={{
+                                    fontSize: '10px',
+                                    padding: '2px 8px',
+                                    borderRadius: '12px',
+                                    fontWeight: 'bold',
+                                    color: badgeColor,
+                                    backgroundColor: badgeColor + '12',
+                                    border: `1px solid ${badgeColor}30`,
+                                    textTransform: 'capitalize'
+                                  }}>
+                                    {itemStatus}
+                                  </span>
+                                </div>
+                                <span className="oi-item-price">₹{item.price * item.quantity}</span>
+                              </div>
+                              {item.variant && (
+                                <div style={{ fontSize: '11px', color: '#8B3A1E', fontStyle: 'italic', marginLeft: '24px', marginTop: '2px' }}>
+                                  Variant: {item.variant.name} (+₹{item.variant.price})
+                                </div>
+                              )}
+                              {item.addons && item.addons.length > 0 && (
+                                <div style={{ fontSize: '11px', color: '#666', fontStyle: 'italic', marginLeft: '24px', marginTop: '2px' }}>
+                                  Add-ons: {item.addons.map(a => `${a.name} (+₹${a.price})`).join(', ')}
+                                </div>
+                              )}
+                              {item.specialInstructions && (
+                                <div className="oi-item-note">
+                                  <span>📝</span>
+                                  <span>{item.specialInstructions}</span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* ── Tier 3: Footer ── */}
+                      <div className="oi-footer">
+                        <div className="oi-footer-left">
+                          <div className="oi-status" style={{
+                            color: getStatusColor(order.status),
+                            backgroundColor: getStatusColor(order.status) + '15',
+                            borderColor: getStatusColor(order.status) + '30',
+                          }}>
+                            {getStatusIcon(order.status)}
+                            <span>{statusLabel}</span>
+                          </div>
+                          <span className="oi-time">{order.orderDate}</span>
+                        </div>
+                        <div className="oi-footer-right">
+                          <span className="oi-total">₹{order.total}</span>
+                          <span className="oi-total-note">incl. taxes</span>
+                        </div>
+                      </div>
+
+                      {/* ── Invoice action ── */}
+                      <button
+                        className="oi-invoice-btn"
+                        onClick={() => downloadInvoice(order)}
+                      >
+                        <Download size={13} />
+                        Download Invoice
+                      </button>
+                    </div>
                   );
                 })}
               </div>
@@ -913,14 +934,14 @@ const MyOrderPage = () => {
             <h3>Pay at Counter</h3>
             <p>Are you sure you want to place your order and pay at the counter?</p>
             <div className="modal-actions">
-              <button 
-                className="modal-btn-cancel" 
+              <button
+                className="modal-btn-cancel"
                 onClick={() => setShowPayCounterPopup(false)}
               >
                 Cancel
               </button>
-              <button 
-                className="modal-btn-confirm" 
+              <button
+                className="modal-btn-confirm"
                 onClick={confirmPayAtCounter}
               >
                 Confirm
