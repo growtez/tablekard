@@ -409,7 +409,6 @@ body {
 .title-desc {
   flex: 1;
   text-align: left;
-  height: 52px;
   overflow: hidden;
 }
 
@@ -431,10 +430,10 @@ body {
 }
 
 .menu-description {
-  font-size: 11px;
-  color: #666666;
-  margin: 6px 0 0;
-  line-height: 1.3;
+  font-size: 12px;
+  color: #777777;
+  margin: 4px 0 0;
+  line-height: 1.4;
   text-align: left;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -453,39 +452,39 @@ body {
 .details-meta {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 8px 0;
+  gap: 10px;
+  margin: 10px 0 12px;
   flex-wrap: nowrap;
 }
 
 .meta-item {
   display: flex;
   align-items: center;
-  gap: 3px;
-  font-size: 10px;
-  color: #1A1A1A;
-  font-weight: 600;
+  gap: 4px;
+  font-size: 11px;
+  color: #555555;
+  font-weight: 500;
   white-space: nowrap;
   flex-shrink: 0;
 }
 
 .meta-item span {
-  color: #1A1A1A;
+  color: #555555;
 }
 
 .meta-item:not(:first-child) span {
-  color: #1A1A1A;
+  color: #555555;
   font-weight: 500;
 }
 
 .serves-pill {
-  font-size: 9px;
-  font-weight: 700;
-  color: #1A1A1A;
-  background: #FFFFFF;
-  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #555555;
+  background: #F9F9F9;
+  padding: 3px 8px;
   border-radius: 20px;
-  border: 1px solid #1A1A1A;
+  border: 1px solid #E0E0E0;
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -494,6 +493,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-top: auto;
 }
 
 .price-vegan {
@@ -793,8 +793,9 @@ body {
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  width: 100vw;
-  padding: 32px calc(50vw - 140px) 10px;
+  width: 100%;
+  padding: 32px calc(50% - 140px) 40px;
+  /* Increased bottom padding to prevent shadow clipping */
   gap: 16px;
 }
 
@@ -849,8 +850,9 @@ body {
 /* Rating pill - absolute over the track bottom-right */
 .dish-rating-pill {
   position: absolute;
-  top: 299px;
-  right: calc(50% - 140px);
+  top: 335px;
+  right: calc(50% - 130px);
+  transform: translate(50%, -50%);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -862,6 +864,8 @@ body {
   font-weight: 700;
   pointer-events: none;
   z-index: 10;
+  white-space: nowrap;
+  height: fit-content;
 }
 
 
@@ -881,8 +885,9 @@ body {
 
 .modal-fav-floating {
   position: absolute;
-  top: 11px;
+  top: 63px;
   right: calc(50% - 140px);
+  transform: translate(50%, -50%);
   z-index: 10;
   width: 42px;
   height: 42px;
