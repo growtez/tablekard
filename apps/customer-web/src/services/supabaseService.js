@@ -105,7 +105,7 @@ export const createOrder = async ({
 
     const orderItems = items.map(item => ({
         order_id: order.id,
-        menu_item_id: item.id ?? null,
+        menu_item_id: item.menuItemId || (item.id ? item.id.split('_')[0] : null),
         name: item.name,
         price: item.price,
         quantity: item.quantity,
