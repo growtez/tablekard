@@ -134,7 +134,7 @@ export default function RestaurantProfileView({
                     value={formData.slug || ''}
                     onChange={(e) => updateField('slug', e.target.value)}
                   />
-                  <span style={{ display: 'flex', alignItems: 'center', padding: '0 12px', background: '#EDF2F7', border: '1px solid #E2E8F0', borderLeft: 'none', borderTopRightRadius: '8px', borderBottomRightRadius: '8px', fontSize: '14px', color: '#4A5568' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', padding: '0 12px', background: 'var(--color-surface-hover, #EDF2F7)', border: '1px solid var(--color-border, #E2E8F0)', borderLeft: 'none', borderTopRightRadius: '8px', borderBottomRightRadius: '8px', fontSize: '14px', color: 'var(--color-text-muted, #4A5568)' }}>
                     .tablekard.com
                   </span>
                 </div>
@@ -157,10 +157,15 @@ export default function RestaurantProfileView({
                   value={formData.status || 'pending'}
                   onChange={(e) => updateField('status', e.target.value)}
                 >
-                  <option value="pending">Pending</option>
-                  <option value="approved">Approved</option>
-                  <option value="active">Active</option>
-                  <option value="suspended">Suspended</option>
+                  <optgroup label="── Onboarding ──">
+                    <option value="pending">Pending — Awaiting Review</option>
+                    <option value="approved">Approved — Ready to Subscribe</option>
+                    <option value="rejected">Rejected</option>
+                  </optgroup>
+                  <optgroup label="── Subscription ──">
+                    <option value="active">Active — Subscribed &amp; Operational</option>
+                    <option value="suspended">Suspended — Service Halted</option>
+                  </optgroup>
                 </select>
               </label>
             </div>
@@ -204,7 +209,7 @@ export default function RestaurantProfileView({
           </div>
           {editingCard === 'contact' ? (
             <div className="profile-form-grid">
-              <div className="profile-field-span-2" style={{ fontSize: '13px', fontWeight: 600, color: '#718096', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid #EDF2F7', paddingBottom: '8px', marginBottom: '8px' }}>Contact</div>
+              <div className="profile-field-span-2" style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-muted, #718096)', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--color-border, #EDF2F7)', paddingBottom: '8px', marginBottom: '8px' }}>Contact</div>
               <label className="profile-field">
                 <span className="profile-field-label">Email Address</span>
                 <input className="profile-input" type="email" value={formData.contact_email || ''} onChange={(e) => updateField('contact_email', e.target.value)} />
@@ -217,7 +222,7 @@ export default function RestaurantProfileView({
                 <span className="profile-field-label">Physical Address</span>
                 <textarea className="profile-input profile-textarea" value={formData.contact_address || ''} onChange={(e) => updateField('contact_address', e.target.value)} rows={2} />
               </label>
-              <div className="profile-field-span-2" style={{ fontSize: '13px', fontWeight: 600, color: '#718096', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid #EDF2F7', paddingBottom: '8px', marginBottom: '8px', marginTop: '8px' }}>Operating Hours</div>
+              <div className="profile-field-span-2" style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-muted, #718096)', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--color-border, #EDF2F7)', paddingBottom: '8px', marginBottom: '8px', marginTop: '8px' }}>Operating Hours</div>
               <label className="profile-field">
                 <span className="profile-field-label">Weekdays</span>
                 <input className="profile-input" type="text" value={formData.operating_hours_weekdays || ''} onChange={(e) => updateField('operating_hours_weekdays', e.target.value)} placeholder="e.g., 9:00 AM - 10:00 PM" />
@@ -229,7 +234,7 @@ export default function RestaurantProfileView({
             </div>
           ) : (
             <div className="profile-form-grid">
-              <div className="profile-field-span-2" style={{ fontSize: '13px', fontWeight: 600, color: '#718096', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid #EDF2F7', paddingBottom: '8px', marginBottom: '8px' }}>Contact</div>
+              <div className="profile-field-span-2" style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-muted, #718096)', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--color-border, #EDF2F7)', paddingBottom: '8px', marginBottom: '8px' }}>Contact</div>
               <div className="profile-info-item">
                 <span className="profile-info-label">Email Address</span>
                 <span className="profile-info-value">{restaurant.contact_email ? <a href={`mailto:${restaurant.contact_email}`} className="profile-link">{restaurant.contact_email}</a> : "Not set"}</span>
@@ -242,7 +247,7 @@ export default function RestaurantProfileView({
                 <span className="profile-info-label">Physical Address</span>
                 <span className="profile-info-value">{restaurant.contact_address || "Not set"}</span>
               </div>
-              <div className="profile-field-span-2" style={{ fontSize: '13px', fontWeight: 600, color: '#718096', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid #EDF2F7', paddingBottom: '8px', marginBottom: '8px', marginTop: '8px' }}>Operating Hours</div>
+              <div className="profile-field-span-2" style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-muted, #718096)', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--color-border, #EDF2F7)', paddingBottom: '8px', marginBottom: '8px', marginTop: '8px' }}>Operating Hours</div>
               <div className="profile-info-item">
                 <span className="profile-info-label">Weekdays</span>
                 <span className="profile-info-value">{restaurant.operating_hours_weekdays || "Not set"}</span>
@@ -320,7 +325,7 @@ export default function RestaurantProfileView({
                     <div className="image-preview-container">
                       <img src={restaurant.logo_url} alt="Logo" className="image-preview" style={{ width: '120px', height: '120px', objectFit: 'cover' }} />
                     </div>
-                  ) : <div className="image-preview-container" style={{ width: '120px', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F7FAFC' }}><span style={{ color: '#A0AEC0', fontSize: '14px' }}>No logo</span></div>}
+                  ) : <div className="image-preview-container" style={{ width: '120px', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-surface-hover, #F7FAFC)' }}><span style={{ color: 'var(--color-text-muted, #A0AEC0)', fontSize: '14px' }}>No logo</span></div>}
                 </div>
                 <div className="profile-info-item">
                   <span className="profile-info-label">Cover Image</span>
@@ -328,7 +333,7 @@ export default function RestaurantProfileView({
                     <div className="image-preview-container">
                       <img src={restaurant.cover_image_url} alt="Cover" className="image-preview" style={{ width: '100%', height: '120px', objectFit: 'cover' }} />
                     </div>
-                  ) : <div className="image-preview-container" style={{ width: '100%', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F7FAFC' }}><span style={{ color: '#A0AEC0', fontSize: '14px' }}>No cover image</span></div>}
+                  ) : <div className="image-preview-container" style={{ width: '100%', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-surface-hover, #F7FAFC)' }}><span style={{ color: 'var(--color-text-muted, #A0AEC0)', fontSize: '14px' }}>No cover image</span></div>}
                 </div>
               </div>
             </div>
@@ -437,7 +442,7 @@ export default function RestaurantProfileView({
                     {admin.avatar_url ? (
                       <img src={admin.avatar_url} alt={admin.name} style={{ width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover' }} />
                     ) : (
-                      <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'var(--surface)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-main)', fontSize: '20px', fontWeight: 'bold' }}>
+                      <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'var(--color-surface, #F7FAFC)', border: '1px solid var(--color-border, #E2E8F0)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-main, #2D3748)', fontSize: '20px', fontWeight: 'bold' }}>
                         {(admin.name || admin.email || '?').charAt(0).toUpperCase()}
                       </div>
                     )}

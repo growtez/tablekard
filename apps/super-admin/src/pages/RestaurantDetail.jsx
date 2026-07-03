@@ -312,11 +312,11 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
     };
 
     const STATUS_COLORS = {
-        active: '#10b981',
-        approved: '#3b82f6',
-        pending: '#f59e0b',
+        active:    '#10b981',
+        approved:  '#3b82f6',
+        pending:   '#f59e0b',
         suspended: '#ef4444',
-        rejected: '#71717a'
+        rejected:  '#71717a',
     };
 
     return (

@@ -133,29 +133,44 @@ serve(async (req: Request) => {
 
         // ── 5. ✅ PAYMENT VERIFIED — Calculate subscription period ──
         const restaurantId = paymentRecord.restaurant_id;
-        const planDuration = paymentRecord.plan_duration;
+        const planDuration = paymentRecord.plan_duration; // in months
+        const planName = paymentRecord.plan_name;          // snapshotted at order creation
         const now = new Date();
 
-        // Fetch current subscription end date
+        // Fetch current restaurant status and subscription end date
         const { data: restaurant } = await supabaseAdmin
             .from("restaurants")
-            .select("subscription_status, subscription_end_at")
+            .select("status, subscription_end_at")
             .eq("id", restaurantId)
             .single();
 
-        // If restaurant has an active subscription with a future end date, stack from that date
+        // Guard: only 'approved' or 'active' restaurants can activate a subscription.
+        // 'pending' and 'rejected' must be onboarded by a super-admin first.
+        if (!restaurant || !["approved", "active"].includes(restaurant.status)) {
+            return new Response(
+                JSON.stringify({ error: "Restaurant must be approved before subscribing" }),
+                { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+        }
+
+        // Stack if currently 'active' with a future end date; otherwise start fresh.
+        // 'approved' restaurant (first payment) always starts from now.
         let startsAt: Date;
         if (
-            restaurant?.subscription_status === true &&
-            restaurant?.subscription_end_at &&
+            restaurant.status === "active" &&
+            restaurant.subscription_end_at &&
             new Date(restaurant.subscription_end_at) > now
         ) {
-            startsAt = new Date(restaurant.subscription_end_at);
+            startsAt = new Date(restaurant.subscription_end_at); // renewal — stack
         } else {
-            startsAt = now;
+            startsAt = now; // first payment or lapsed subscription
         }
 
         const endsAt = addMonths(startsAt, planDuration);
+
+        // 3-day grace period: restaurant stays 'active' for 3 extra days after expiry
+        const gracePeriodEndsAt = new Date(endsAt);
+        gracePeriodEndsAt.setDate(gracePeriodEndsAt.getDate() + 3);
 
         // ── 6. Update subscription_payments record ──
         await supabaseAdmin
@@ -171,12 +186,15 @@ serve(async (req: Request) => {
             .eq("id", payment_id);
 
         // ── 7. Activate / extend restaurant subscription ──
+        // NOTE: intentionally transitions 'approved' → 'active' on first payment.
         await supabaseAdmin
             .from("restaurants")
             .update({
-                subscription_status: true,
-                subscription_type: "QR",
+                status: "active",                                       // access control gate
+                subscription_status: true,                              // UI billing badge
+                subscription_type: planName ?? "QR",                   // plan name snapshot
                 subscription_end_at: endsAt.toISOString(),
+                grace_period_ends_at: gracePeriodEndsAt.toISOString(), // auto-suspend after this
             })
             .eq("id", restaurantId);
 
