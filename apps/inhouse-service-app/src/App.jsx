@@ -19,32 +19,24 @@ function formatTime(isoString) {
   });
 }
 
-/** Build a human-readable detail string from variant, addons, special_instructions */
-function buildDetailString(item) {
-  const parts = [];
-
-  // Variant
+function getVariantString(item) {
   if (item.variant) {
-    if (typeof item.variant === 'string') {
-      parts.push(item.variant);
-    } else if (item.variant.name) {
-      parts.push(item.variant.name);
-    } else if (item.variant.label) {
-      parts.push(item.variant.label);
-    }
+    if (typeof item.variant === 'string') return item.variant;
+    if (item.variant.name) return item.variant.name;
+    if (item.variant.label) return item.variant.label;
   }
+  return null;
+}
 
-  // Addons
+function getAddonStrings(item) {
   if (item.addons) {
     let addonList = item.addons;
     if (!Array.isArray(addonList)) addonList = [addonList];
-    const addonNames = addonList
+    return addonList
       .map((a) => (typeof a === 'string' ? a : a.name || a.label || ''))
       .filter(Boolean);
-    if (addonNames.length) parts.push(addonNames.join(', '));
   }
-
-  return parts.join(' · ');
+  return [];
 }
 
 /** Get table number from order's joined restaurant_tables */
@@ -100,7 +92,8 @@ const OrderCard = ({
       <div className="expand-empty">No items in this order</div>
     ) : (
       items.map((item) => {
-        const details = buildDetailString(item);
+        const variant = getVariantString(item);
+        const addons = getAddonStrings(item);
         const itemStatus = item.status || 'placed';
         return (
           <div key={item.id} className="queue-item">
@@ -126,10 +119,27 @@ const OrderCard = ({
                 </span>
               )}
             </div>
-            {details && <div className="expand-item-detail">{details}</div>}
-            {item.special_instructions && (
-              <div className="expand-item-instructions">
-                <AlertTriangle size={11} /> {item.special_instructions}
+            {(variant || addons.length > 0 || item.special_instructions) && (
+              <div className="item-details-container">
+                {variant && <div className="item-variant">{variant}</div>}
+                
+                {addons.length > 0 && (
+                  <div className="item-addons">
+                    <span className="item-addons-title">ADD-ONS:</span>
+                    <ul className="addon-list">
+                      {addons.map((addon, idx) => (
+                        <li key={idx}>{addon}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                
+                {item.special_instructions && (
+                  <div className="expand-item-instructions">
+                    <AlertTriangle size={13} strokeWidth={2.5} />
+                    <span><strong>NOTE:</strong> {item.special_instructions}</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -143,7 +153,8 @@ const OrderCard = ({
       <div className="expand-empty">No items in this order</div>
     ) : (
       items.map((item) => {
-        const details = buildDetailString(item);
+        const variant = getVariantString(item);
+        const addons = getAddonStrings(item);
         const itemStatus = item.status || 'placed';
         const isReady = itemStatus === 'ready';
         return (
@@ -186,10 +197,27 @@ const OrderCard = ({
                 </button>
               )}
             </div>
-            {details && <div className="expand-item-detail">{details}</div>}
-            {item.special_instructions && (
-              <div className="expand-item-instructions">
-                <AlertTriangle size={11} /> {item.special_instructions}
+            {(variant || addons.length > 0 || item.special_instructions) && (
+              <div className="item-details-container">
+                {variant && <div className="item-variant">{variant}</div>}
+                
+                {addons.length > 0 && (
+                  <div className="item-addons">
+                    <span className="item-addons-title">ADD-ONS:</span>
+                    <ul className="addon-list">
+                      {addons.map((addon, idx) => (
+                        <li key={idx}>{addon}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                
+                {item.special_instructions && (
+                  <div className="expand-item-instructions">
+                    <AlertTriangle size={13} strokeWidth={2.5} />
+                    <span><strong>NOTE:</strong> {item.special_instructions}</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -379,7 +407,7 @@ function OrdersView({ onSignOut }) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', flex: '1 1 auto', minHeight: 0 }}>
       <header className="header">
         <div className="header-row">
           <div className="logo">{restaurantName}</div>

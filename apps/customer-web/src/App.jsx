@@ -113,7 +113,7 @@ function RequireRestaurant({ children }) {
             To view the menu or place an order, you must be physically present at the restaurant. 
             
           </p>
-          <button className="geofence-retry-btn-large" onClick={checkGeofence}>
+          <button className="geofence-retry-btn-large" onClick={() => checkGeofence()}>
             Retry
           </button>
         </div>
@@ -132,7 +132,7 @@ function RequireRestaurant({ children }) {
           <p>
             This app requires location access to verify you are present at the restaurant before placing orders.
           </p>
-          <button className="geofence-retry-btn-large" onClick={checkGeofence}>
+          <button className="geofence-retry-btn-large" onClick={() => checkGeofence()}>
             Enable Location & Retry
           </button>
         </div>

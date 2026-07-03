@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { ExternalLink, Edit3, Save, X, Upload, ImageIcon } from 'lucide-react';
 import ImageCropper from './ImageCropper';
 import { uploadProfileImage } from '../storageService';
-import '../pages/RestaurantDetailProfile.css';
+import './RestaurantDetailProfile.css';  
 
 export default function RestaurantProfileView({
   restaurant,
@@ -13,7 +13,8 @@ export default function RestaurantProfileView({
   handleCancel,
   editingCard,
   setEditingCard,
-  activeTab
+  activeTab,
+  admins = []
 }) {
   const [cropModalConfig, setCropModalConfig] = useState({ isOpen: false, type: null, image: null });
   const [isUploading, setIsUploading] = useState(false);
@@ -429,9 +430,39 @@ export default function RestaurantProfileView({
             </div>
           </div>
           <div className="profile-form-grid">
-            <div className="profile-info-item" style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)', background: 'var(--surface-hover)', borderRadius: '12px' }}>
-              Administrator management and details will be displayed here.
-            </div>
+            {admins && admins.length > 0 ? (
+              admins.map((admin, idx) => (
+                <div key={admin.id} className="profile-info-item profile-field-span-2">
+                  <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+                    {admin.avatar_url ? (
+                      <img src={admin.avatar_url} alt={admin.name} style={{ width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'var(--surface)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-main)', fontSize: '20px', fontWeight: 'bold' }}>
+                        {(admin.name || admin.email || '?').charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px' }}>
+                      <div className="profile-info-item">
+                        <span className="profile-info-label">Full Name</span>
+                        <span className="profile-info-value">{admin.name || 'Unnamed Admin'}</span>
+                      </div>
+                      <div className="profile-info-item">
+                        <span className="profile-info-label">Email Address</span>
+                        <span className="profile-info-value">{admin.email ? <a href={`mailto:${admin.email}`} className="profile-link">{admin.email}</a> : 'N/A'}</span>
+                      </div>
+                      <div className="profile-info-item">
+                        <span className="profile-info-label">Account ID</span>
+                        <span className="profile-info-value" style={{ fontFamily: 'monospace', fontSize: '13px' }}>{admin.id}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="profile-info-item profile-field-span-2" style={{ textAlign: 'center', padding: '32px' }}>
+                <span className="profile-info-value" style={{ color: 'var(--text-muted)' }}>No administrators found for this restaurant.</span>
+              </div>
+            )}
           </div>
         </div>
       )}

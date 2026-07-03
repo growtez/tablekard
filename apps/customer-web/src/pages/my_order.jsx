@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Home, ShoppingBag, MessageCircle, User, Minus, Plus, Trash2, Clock, CheckCircle, Utensils, ShoppingCart, ListOrdered, ArrowRight, Star, Users, CreditCard, Wallet, Loader2, AlertCircle, Download } from 'lucide-react';
+import { Home, ShoppingBag, MessageCircle, User, Minus, Plus, Trash2, Clock, CheckCircle, Utensils, ShoppingCart, ListOrdered, ArrowRight, Star, Users, CreditCard, Wallet, Loader2, AlertCircle, Download, Pencil } from 'lucide-react';
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
@@ -16,7 +16,7 @@ import { supabase } from '@restaurant-saas/supabase';
 const MyOrderPage = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user, loading: authLoading } = useAuth();
-  const { cartItems, updateQuantity, deleteFromCart, cartSubtotal, clearCart } = useCart();
+  const { cartItems, updateQuantity, deleteFromCart, cartSubtotal, clearCart, updateSpecialInstructions } = useCart();
   const { restaurantId, tableId, geofenceStatus, distance, allowedRadius, checkGeofence, restaurant } = useRestaurant();
   const [activeTab, setActiveTab] = useState('cart');
   const [paymentLoading, setPaymentLoading] = useState(false);
@@ -51,7 +51,10 @@ const MyOrderPage = () => {
             name: item.name,
             quantity: item.quantity,
             price: item.price,
-            status: item.status || 'placed'
+            status: item.status || 'placed',
+            specialInstructions: item.special_instructions || null,
+            variant: item.variant || null,
+            addons: item.addons || null
           })),
           total: order.total,
           discount: order.discount || 0,
@@ -230,7 +233,14 @@ const MyOrderPage = () => {
         const newOrder = {
           id: result.orderNumber,
           status: 'placed',
-          items: cartItems.map(item => ({ name: item.name, quantity: item.quantity, price: item.price })),
+          items: cartItems.map(item => ({
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price,
+            variant: item.variant || null,
+            addons: item.addons || null,
+            specialInstructions: item.specialInstructions || null
+          })),
           total: getTotalPrice(),
           orderDate: 'Just now',
           paymentStatus: 'Paid Online',
@@ -297,7 +307,14 @@ const MyOrderPage = () => {
       const newOrder = {
         id: result.orderNumber,
         status: 'placed',
-        items: cartItems.map(item => ({ name: item.name, quantity: item.quantity, price: item.price })),
+        items: cartItems.map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          variant: item.variant || null,
+          addons: item.addons || null,
+          specialInstructions: item.specialInstructions || null
+        })),
         total: getTotalPrice(),
         orderDate: 'Just now',
         paymentStatus: 'Pay at Counter',
@@ -350,10 +367,31 @@ const MyOrderPage = () => {
 
     let y = 62;
     order.items.forEach(item => {
+      doc.setFont(undefined, 'bold');
       doc.text(item.name, 20, y);
+      doc.setFont(undefined, 'normal');
       doc.text(`x${item.quantity}`, 140, y);
       doc.text(`₹${item.price * item.quantity}`, 170, y);
-      y += 8;
+      y += 6;
+
+      if (item.variant) {
+        doc.setFontSize(9);
+        doc.setTextColor(120, 120, 120);
+        doc.text(`Variant: ${item.variant.name} (+₹${item.variant.price})`, 25, y);
+        doc.setFontSize(12);
+        doc.setTextColor(0, 0, 0);
+        y += 5;
+      }
+      if (item.addons && item.addons.length > 0) {
+        doc.setFontSize(9);
+        doc.setTextColor(120, 120, 120);
+        const addonsText = item.addons.map(a => `${a.name} (+₹${a.price})`).join(', ');
+        doc.text(`Add-ons: ${addonsText}`, 25, y);
+        doc.setFontSize(12);
+        doc.setTextColor(0, 0, 0);
+        y += 5;
+      }
+      y += 3;
     });
 
     doc.line(20, y, 190, y);
@@ -509,7 +547,7 @@ const MyOrderPage = () => {
                 </div>
               </div>
               {(geofenceStatus === 'outside' || geofenceStatus === 'error') && (
-                <button className="geofence-retry-btn" onClick={checkGeofence}>
+                <button className="geofence-retry-btn" onClick={() => checkGeofence()}>
                   Retry
                 </button>
               )}
@@ -536,15 +574,36 @@ const MyOrderPage = () => {
                       )}
                     </div>
                     <div className="cart-info">
+                      {/* Row 1: name + [pencil] [trash] */}
                       <div className="cart-header">
                         <h3>{item.name}</h3>
-                        <button
-                          className="remove-btn"
-                          onClick={() => removeItem(item.id)}
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <div className="cart-header-actions">
+                          <button
+                            className="si-icon-btn"
+                            title="Add special instructions"
+                            onClick={e => {
+                              e.currentTarget.closest('.cart-info').querySelector('.si-textarea-wrap').classList.toggle('open');
+                              e.currentTarget.classList.toggle('active');
+                            }}
+                          >
+                            <Pencil size={14} />
+                          </button>
+                          <button className="remove-btn" onClick={() => removeItem(item.id)}>
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
                       </div>
+                      {item.variant && (
+                        <div className="item-customization-info" style={{ textAlign: 'left', fontSize: '11px', color: '#8B3A1E', fontWeight: 600, marginTop: '2px', marginBottom: '2px' }}>
+                          Variant: {item.variant.name} (+₹{item.variant.price})
+                        </div>
+                      )}
+                      {item.addons && item.addons.length > 0 && (
+                        <div className="item-customization-info" style={{ textAlign: 'left', fontSize: '11px', color: '#666', marginTop: '2px', marginBottom: '2px' }}>
+                          Add-ons: {item.addons.map(a => `${a.name} (+₹${a.price})`).join(', ')}
+                        </div>
+                      )}
+                      {/* Row 2: meta */}
                       <div className="cart-meta">
                         <div className="cart-rating">
                           <Star size={12} fill="#8B3A1E" color="#8B3A1E" />
@@ -555,30 +614,33 @@ const MyOrderPage = () => {
                           <span>{item.serves}</span>
                         </div>
                       </div>
+                      {/* Row 3: qty + price */}
                       <div className="cart-bottom">
                         <div className="quantity-controls">
                           {item.outOfStock ? (
                             <span style={{ fontSize: '12px', color: '#EF4444', fontWeight: 'bold' }}>Out of stock</span>
                           ) : (
                             <>
-                              <button
-                                className="quantity-btn"
-                                onClick={() => updateQuantity(item.id, -1)}
-                              >
-                                <Minus size={14} />
-                              </button>
+                              <button className="quantity-btn" onClick={() => updateQuantity(item.id, -1)}><Minus size={14} /></button>
                               <span className="quantity">{item.quantity}</span>
-                              <button
-                                className="quantity-btn"
-                                onClick={() => updateQuantity(item.id, 1)}
-                              >
-                                <Plus size={14} />
-                              </button>
+                              <button className="quantity-btn" onClick={() => updateQuantity(item.id, 1)}><Plus size={14} /></button>
                             </>
                           )}
                         </div>
-                        <div className="item-price">
-                          ₹{(item.price * item.quantity)}
+                        <div className="item-price">₹{(item.price * item.quantity)}</div>
+                      </div>
+                      {/* Sliding textarea — opens when pencil is clicked */}
+                      <div className="si-textarea-wrap">
+                        <div className="si-textarea-inner">
+                          <textarea
+                            className="special-instructions-input"
+                            placeholder="e.g. Less spicy, no onions, extra sauce…"
+                            value={item.specialInstructions || ''}
+                            onChange={e => updateSpecialInstructions(item.id, e.target.value)}
+                            maxLength={200}
+                            rows={2}
+                          />
+                          <span className="si-char-count">{(item.specialInstructions || '').length}/200</span>
                         </div>
                       </div>
                     </div>
@@ -761,24 +823,42 @@ const MyOrderPage = () => {
                         if (itemStatus === 'ready') badgeColor = '#22C55E';
 
                         return (
-                          <div key={index} className="oi-item-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <span className="oi-item-qty">{item.quantity}×</span>
-                              <span className="oi-item-name">{item.name}</span>
-                              <span style={{ 
-                                fontSize: '10px', 
-                                padding: '2px 8px', 
-                                borderRadius: '12px', 
-                                fontWeight: 'bold',
-                                color: badgeColor,
-                                backgroundColor: badgeColor + '12',
-                                border: `1px solid ${badgeColor}30`,
-                                textTransform: 'capitalize'
-                              }}>
-                                {itemStatus}
-                              </span>
+                          <div key={index} style={{ marginBottom: '8px' }}>
+                            <div className="oi-item-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span className="oi-item-qty">{item.quantity}×</span>
+                                <span className="oi-item-name">{item.name}</span>
+                                <span style={{ 
+                                  fontSize: '10px', 
+                                  padding: '2px 8px', 
+                                  borderRadius: '12px', 
+                                  fontWeight: 'bold',
+                                  color: badgeColor,
+                                  backgroundColor: badgeColor + '12',
+                                  border: `1px solid ${badgeColor}30`,
+                                  textTransform: 'capitalize'
+                                }}>
+                                  {itemStatus}
+                                </span>
+                              </div>
+                              <span className="oi-item-price">₹{item.price * item.quantity}</span>
                             </div>
-                            <span className="oi-item-price">₹{item.price * item.quantity}</span>
+                            {item.variant && (
+                              <div style={{ fontSize: '11px', color: '#8B3A1E', fontStyle: 'italic', marginLeft: '24px', marginTop: '2px' }}>
+                                Variant: {item.variant.name} (+₹{item.variant.price})
+                              </div>
+                            )}
+                            {item.addons && item.addons.length > 0 && (
+                              <div style={{ fontSize: '11px', color: '#666', fontStyle: 'italic', marginLeft: '24px', marginTop: '2px' }}>
+                                Add-ons: {item.addons.map(a => `${a.name} (+₹${a.price})`).join(', ')}
+                              </div>
+                            )}
+                            {item.specialInstructions && (
+                              <div className="oi-item-note">
+                                <span>📝</span>
+                                <span>{item.specialInstructions}</span>
+                              </div>
+                            )}
                           </div>
                         );
                       })}

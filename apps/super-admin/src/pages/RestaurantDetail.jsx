@@ -6,7 +6,7 @@ import {
     Shield, Activity, CreditCard, MapPin, Settings as SettingsIcon,
     Clock, Tag, Info, AlertTriangle, AlertCircle, Edit, Save, X as CloseIcon, Loader2,
     Utensils, Layers, List, ArrowUpRight, CheckCircle2, XCircle, Timer,
-    Hash, Map, Palette, Image as ImageIcon, Box, Plus, BookOpen, User
+    Hash, Map, Palette, Image as ImageIcon, Box, Plus, BookOpen, User, ShoppingBag
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
@@ -14,6 +14,7 @@ import QuickAddCategoryDrawer from '../components/QuickAddCategoryDrawer';
 import QuickAddMenuItemDrawer from '../components/QuickAddMenuItemDrawer';
 import RestaurantProfileView from '../components/RestaurantProfileView';
 import { DetailPageSkeleton } from '../components/ui/Skeleton';
+import OrderHistoryTab from '../components/OrderHistoryTab';
 
 const TIME_OPTIONS = [
     { value: 'Closed', label: 'Closed' }
@@ -38,6 +39,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
     const [categories, setCategories] = useState([]);
     const [menuItems, setMenuItems] = useState([]);
     const [payments, setPayments] = useState([]);
+    const [admins, setAdmins] = useState([]);
     const [activeTab, setActiveTab] = useState('general');
 
     const [editingCard, setEditingCard] = useState(null);
@@ -107,7 +109,31 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
             if (error) throw error;
             setRestaurant(data);
             setFormData(data);
-            await Promise.all([fetchMenuData(), fetchPayments()]);
+
+            const fetchAdmins = async () => {
+                try {
+                    const { data: adminData, error: adminError } = await supabase
+                        .from('restaurant_users')
+                        .select(`
+                            role,
+                            profiles (
+                                id,
+                                name,
+                                email,
+                                avatar_url
+                            )
+                        `)
+                        .eq('restaurant_id', id)
+                        .eq('role', 'admin');
+                    
+                    if (adminError) throw adminError;
+                    setAdmins(adminData?.map(d => d.profiles).filter(Boolean) || []);
+                } catch (err) {
+                    console.error('Failed to fetch admins:', err);
+                }
+            };
+
+            await Promise.all([fetchMenuData(), fetchPayments(), fetchAdmins()]);
         } catch (err) {
             setError('Failed to fetch restaurant details: ' + err.message);
         } finally {
@@ -305,7 +331,8 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                     { id: 'story', label: 'Story & Socials', icon: BookOpen },
                     { id: 'admin', label: 'Admin Profile', icon: User },
                     { id: 'menu', label: 'Menu & Catalog', icon: Utensils },
-                    { id: 'billing', label: 'Billing & Sub', icon: CreditCard }
+                    { id: 'billing', label: 'Billing & Sub', icon: CreditCard },
+                    { id: 'orders', label: 'Order History', icon: ShoppingBag }
                 ].map(tab => (
                     <button
                         key={tab.id}
@@ -330,6 +357,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                         editingCard={editingCard}
                         setEditingCard={setEditingCard}
                         activeTab={activeTab}
+                        admins={admins}
                     />
                 )}
 
@@ -469,6 +497,10 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                             </Card>
                         </div>
                     </div>
+                )}
+
+                {activeTab === 'orders' && (
+                    <OrderHistoryTab restaurantId={id} />
                 )}
 
                 {activeTab === 'branding' && (
