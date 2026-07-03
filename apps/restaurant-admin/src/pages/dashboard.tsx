@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { TrendingUp, X, CheckCircle, Package, MoreVertical, CheckSquare } from 'lucide-react';
+import { TrendingUp, X, CheckCircle, Package, MoreVertical, CheckSquare, Check, ChevronUp, ChevronDown, Search, ArrowUpDown } from 'lucide-react';
 
 import Sidebar from '../components/sidebar';
 
@@ -254,6 +254,24 @@ const Dashboard: React.FC = () => {
 
   const [selectedOrder, setSelectedOrder] = useState<DashboardOrder | null>(null);
   const [activeTab, setActiveTab] = useState<string>('Active Orders');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const tableScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Auto-collapse the stat cards once the table body starts scrolling,
+  // and bring them back once scrolled back to the top.
+  const handleTableScroll = () => {
+    const el = tableScrollRef.current;
+    if (!el) return;
+    setIsHeaderVisible(el.scrollTop <= 8);
+  };
 
   const handlePaymentComplete = async (paymentId: string) => {
     try {
@@ -265,13 +283,13 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleMarkReady = async (orderId: string) => {
+  const handleUpdateStatus = async (orderId: string, nextStatus: string) => {
     try {
-      await updateOrderStatus(orderId, 'READY');
+      await updateOrderStatus(orderId, nextStatus as any);
       if (activeRestaurantId) invalidateOrders(activeRestaurantId);
     } catch (err) {
       console.error(err);
-      alert('Failed to mark order as ready');
+      alert('Failed to update status');
     }
   };
 
@@ -331,204 +349,358 @@ const Dashboard: React.FC = () => {
   };
 
   const filteredOrders = () => {
+    let result = orders;
     switch (activeTab) {
       case 'Active Orders':
-        return activeOrders;
+        result = activeOrders;
+        break;
       case 'Completed':
-        return completedOrders;
+        result = completedOrders;
+        break;
       case 'All Orders':
       default:
-        return orders;
+        result = orders;
+        break;
     }
+    
+    if (searchTerm) {
+      const lowerQuery = searchTerm.toLowerCase();
+      result = result.filter(order => {
+        const paymentStatusText = order.isPaid ? 'paid' : 'pending';
+        return (
+          (order.orderNumber && order.orderNumber.toLowerCase().includes(lowerQuery)) ||
+          (order.customer && order.customer.toLowerCase().includes(lowerQuery)) ||
+          (order.table && order.table.toLowerCase().includes(lowerQuery)) ||
+          (order.paymentMethod && order.paymentMethod.toLowerCase().includes(lowerQuery)) ||
+          (order.total && order.total.toString().includes(lowerQuery)) ||
+          paymentStatusText.includes(lowerQuery)
+        );
+      });
+    }
+    
+    result = result.sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+    });
+    
+    return result;
   };
 
   return (
     <div className="flex min-h-screen bg-tk-bg relative">
+      <style>{`
+      html {
+        overflow-y: scroll; /* fallback: always show scrollbar space */
+      }
+      @supports (scrollbar-gutter: stable) {
+        html {
+          overflow-y: auto;
+          scrollbar-gutter: stable; /* reserves space without forcing a visible bar */
+        }
+      }
+
+      /* Thin, subtle scrollbar for the table's scroll region */
+      .tk-table-scroll {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(113, 128, 150, 0.35) transparent;
+      }
+      .tk-table-scroll::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      .tk-table-scroll::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .tk-table-scroll::-webkit-scrollbar-thumb {
+        background-color: rgba(113, 128, 150, 0.32);
+        border-radius: 999px;
+        border: 2px solid transparent;
+        background-clip: padding-box;
+      }
+      .tk-table-scroll::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(113, 128, 150, 0.55);
+      }
+      .tk-table-scroll::-webkit-scrollbar-corner {
+        background: transparent;
+      }
+    `}</style>
       <Sidebar />
 
-      <div className="tk-main-content flex-1 p-8 overflow-y-auto min-h-screen transition-all duration-300 ml-[240px] max-md:!ml-0 max-md:!p-4 max-md:!pt-[72px] bg-tk-bg-surface">
-        <div className="flex items-center justify-between mb-8 gap-8 max-xl:flex-col max-xl:items-start max-xl:gap-6">
-          <h1 className="text-[22px] font-semibold text-tk-text whitespace-nowrap">Dashboard</h1>
-
-          <div className="grid grid-cols-4 gap-4 max-w-[850px] w-full max-xl:grid-cols-2 max-lg:grid-cols-2 max-md:grid-cols-1">
-            {/* Card 1: Active Orders */}
-            <div className="bg-tk-bg-card p-3 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="text-xs text-tk-text-secondary font-medium">Active Orders</h3>
-                <div className="w-7 h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
-                  <CheckSquare size={14} />
-                </div>
-              </div>
-              <div className="flex justify-between items-end">
-                <div className="text-[20px] font-bold text-tk-text">{isLoading ? '...' : activeOrders.length}</div>
-                <div className="flex items-center text-[11px] font-medium text-tk-success">
-                  <TrendingUp size={12} className="mr-1" />
-                  <span>On time</span>
-                </div>
-              </div>
+      <div className="tk-main-content flex-1 min-w-0 p-6 h-screen overflow-hidden flex flex-col transition-all duration-300 ml-[240px] max-md:!ml-0 max-md:!p-4 max-md:!pt-[72px] bg-tk-bg-surface">
+        <div className="flex-shrink-0">
+        <div className="flex items-center justify-between gap-4 mb-3">
+          <div className="flex items-center gap-4">
+            <h1 className="text-[22px] font-semibold text-tk-text whitespace-nowrap">Dashboard</h1>
+            <button 
+              onClick={() => setIsHeaderVisible(!isHeaderVisible)}
+              className="flex items-center justify-center w-7 h-7 rounded-full hover:bg-tk-bg-hover text-tk-text-secondary hover:text-tk-text transition-all duration-200"
+              title="Toggle Header"
+            >
+              <ChevronUp size={16} className={`transition-transform duration-300 ${!isHeaderVisible ? 'rotate-180' : ''}`} />
+            </button>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <div className="text-[14px] font-bold text-tk-burgundy tabular-nums tracking-tight">
+              {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
             </div>
+            <span className="text-tk-text-secondary opacity-50 text-[12px]">•</span>
+            <p className="text-[13px] text-tk-text-secondary font-medium whitespace-nowrap">
+              {currentTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            </p>
+          </div>
+        </div>
 
-            {/* Card 2: Revenue Today */}
-            <div className="bg-tk-bg-card p-3 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="text-xs text-tk-text-secondary font-medium">Revenue Today</h3>
-                <div className="w-7 h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
-                  <TrendingUp size={14} />
-                </div>
-              </div>
-              <div className="flex justify-between items-end">
-                <div className="text-[20px] font-bold text-tk-text">₹{isLoading ? '...' : revenueToday.toLocaleString()}</div>
-                <div className={`flex items-center text-[11px] font-medium ${todayChange >= 0 ? 'text-tk-success' : 'text-tk-error'}`}>
-                  <TrendingUp size={12} className="mr-1" style={todayChange < 0 ? { transform: 'rotate(180deg)' } : undefined} />
-                  <span>{Math.abs(todayChange)}%</span>
-                </div>
-              </div>
-            </div>
+        <div className={`grid transition-all duration-300 ease-in-out ${isHeaderVisible ? 'grid-rows-[1fr] opacity-100 mb-6' : 'grid-rows-[0fr] opacity-0 mb-0'}`}>
+          <div className="overflow-hidden">
+            <div className="grid grid-cols-4 gap-3 max-w-[850px] w-full max-xl:grid-cols-4 max-lg:grid-cols-2 max-md:grid-cols-1 pt-1">
 
-            {/* Card 3: Revenue This Week */}
-            <div className="bg-tk-bg-card p-3 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="text-xs text-tk-text-secondary font-medium">Revenue This Week</h3>
-                <div className="w-7 h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
-                  <TrendingUp size={14} />
+              {/* Card 2: Revenue Today */}
+              <div className="bg-tk-bg-card p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-xs text-tk-text-secondary font-medium">Revenue Today</h3>
+                  <div className="w-7 h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
+                    <TrendingUp size={14} />
+                  </div>
+                </div>
+                <div className="flex justify-between items-end">
+                  <div className="text-[20px] font-bold text-tk-text">₹{isLoading ? '...' : revenueToday.toLocaleString()}</div>
+                  <div className={`flex items-center text-[11px] font-medium ${todayChange >= 0 ? 'text-tk-success' : 'text-tk-error'}`}>
+                    <TrendingUp size={12} className="mr-1" style={todayChange < 0 ? { transform: 'rotate(180deg)' } : undefined} />
+                    <span>{Math.abs(todayChange)}%</span>
+                  </div>
                 </div>
               </div>
-              <div className="flex justify-between items-end">
-                <div className="text-[20px] font-bold text-tk-text">₹{isLoading ? '...' : revenueThisWeek.toLocaleString()}</div>
-                <div className={`flex items-center text-[11px] font-medium ${weekChange >= 0 ? 'text-tk-success' : 'text-tk-error'}`}>
-                  <TrendingUp size={12} className="mr-1" style={weekChange < 0 ? { transform: 'rotate(180deg)' } : undefined} />
-                  <span>{Math.abs(weekChange)}%</span>
-                </div>
-              </div>
-            </div>
 
-            {/* Card 4: Out of Stock */}
-            <div className="bg-tk-bg-card p-3 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="text-xs text-tk-text-secondary font-medium">Out of Stock Items</h3>
-                <div className="w-7 h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
-                  <X size={14} />
+              {/* Card 3: Revenue This Week */}
+              <div className="bg-tk-bg-card p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-xs text-tk-text-secondary font-medium">Revenue This Week</h3>
+                  <div className="w-7 h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
+                    <TrendingUp size={14} />
+                  </div>
+                </div>
+                <div className="flex justify-between items-end">
+                  <div className="text-[20px] font-bold text-tk-text">₹{isLoading ? '...' : revenueThisWeek.toLocaleString()}</div>
+                  <div className={`flex items-center text-[11px] font-medium ${weekChange >= 0 ? 'text-tk-success' : 'text-tk-error'}`}>
+                    <TrendingUp size={12} className="mr-1" style={weekChange < 0 ? { transform: 'rotate(180deg)' } : undefined} />
+                    <span>{Math.abs(weekChange)}%</span>
+                  </div>
                 </div>
               </div>
-              <div className="flex justify-between items-end">
-                <div className="text-[20px] font-bold text-tk-text">{isLoading ? '...' : outOfStockItems.length}</div>
-                <div className="flex items-center text-[11px] font-medium text-tk-error">
-                  <TrendingUp size={12} className="mr-1" style={{ transform: 'rotate(180deg)' }} />
-                  <span>Need restock</span>
+
+              {/* Card 4: Out of Stock */}
+              <div className="bg-tk-bg-card p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-xs text-tk-text-secondary font-medium">Out of Stock Items</h3>
+                </div>
+                <div className="flex justify-between items-end">
+                  <div className="text-[20px] font-bold text-tk-text">{isLoading ? '...' : outOfStockItems.length}</div>
+                  <div className="flex items-center text-[11px] font-medium text-tk-error">
+                    <TrendingUp size={12} className="mr-1" style={{ transform: 'rotate(180deg)' }} />
+                    <span>Need restock</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 5: Total Orders */}
+              <div className="bg-tk-bg-card p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-xs text-tk-text-secondary font-medium">Total Orders</h3>
+                  <div className="w-7 h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
+                    <Package size={14} />
+                  </div>
+                </div>
+                <div className="flex justify-between items-end">
+                  <div className="text-[20px] font-bold text-tk-text">{isLoading ? '...' : orders.length}</div>
+                  <div className="flex items-center text-[11px] font-medium text-tk-text-secondary">
+                    <span>All time</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex border-b border-tk-border mb-6 gap-8 overflow-x-auto hide-scrollbar">
-          {tabs.map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`pb-3 text-sm font-semibold whitespace-nowrap transition-colors duration-200 ${
-                activeTab === tab 
-                  ? 'text-tk-burgundy border-b-2 border-tk-burgundy' 
-                  : 'text-tk-text-secondary hover:text-tk-text'
-              }`}
-            >
-              {tab} <span className="ml-1 opacity-75">({tabCounts[tab]})</span>
-            </button>
-          ))}
-        </div>
+        <hr className="border-tk-border mb-4 transition-all duration-300" />
 
-        {/* Table */}
-        <div className="bg-tk-bg-card rounded-[12px] border-[1.5px] border-tk-border overflow-x-auto shadow-sm">
-          <table className="w-full text-left border-collapse">
+        {/* Tabs & Controls */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex gap-8 overflow-x-auto hide-scrollbar pt-1">
+            {tabs.map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`pb-2 text-sm font-semibold whitespace-nowrap transition-colors duration-200 ${
+                  activeTab === tab 
+                    ? 'text-tk-burgundy border-b-2 border-tk-burgundy' 
+                    : 'text-tk-text-secondary hover:text-tk-text'
+                }`}
+              >
+                {tab} <span className="ml-1 opacity-75">({tabCounts[tab]})</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-3 pb-2 ml-4">
+            <button
+              onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-tk-border bg-tk-bg-surface hover:bg-tk-bg-hover text-tk-text-secondary hover:text-tk-text text-[12px] font-semibold transition-colors whitespace-nowrap h-[32px] shrink-0"
+              title={sortOrder === 'desc' ? "Showing Newest First" : "Showing Oldest First"}
+            >
+              <ArrowUpDown size={13} />
+              {sortOrder === 'desc' ? 'Newest' : 'Oldest'}
+            </button>
+            <div className="relative w-[240px] shrink-0">
+            <Search className="absolute left-3 top-[calc(50%)] -translate-y-1/2 text-tk-text-secondary" size={14} />
+            <input
+              type="text"
+              placeholder="Search orders..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full h-[32px] pl-9 pr-8 bg-tk-bg-surface border border-tk-border rounded-full text-tk-text text-[13px] focus:outline-none focus:border-tk-burgundy transition-colors"
+            />
+            {searchTerm && (
+              <button 
+                onClick={() => setSearchTerm('')} 
+                className="absolute right-3 top-[calc(50%)] -translate-y-1/2 text-tk-text-secondary hover:text-tk-text focus:outline-none flex items-center justify-center p-0"
+              >
+                <X size={12} />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+      </div>
+
+      {/* Table — only this region scrolls; header + tabs stay pinned above it */}
+        <div
+          ref={tableScrollRef}
+          onScroll={handleTableScroll}
+          className={`tk-table-scroll bg-tk-bg-card rounded-[12px] border-[1.5px] border-tk-border shadow-sm flex-1 min-h-0 overflow-y-auto overflow-x-auto transition-shadow duration-300 ${!isHeaderVisible ? 'shadow-md' : ''}`}
+        >
+          <table className="w-full text-left border-collapse table-fixed min-w-[900px]">
             <thead>
               <tr className="bg-tk-bg-hover">
-                <th className="py-4 px-6 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border">Order ID</th>
-                <th className="py-4 px-6 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border">Table</th>
-                <th className="py-4 px-6 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border">Date & Time</th>
-                <th className="py-4 px-6 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border">Amount</th>
-                <th className="py-4 px-6 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border">Payment</th>
-                <th className="py-4 px-6 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border">Customer</th>
-                <th className="py-4 px-6 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border">Status</th>
-                <th className="py-4 px-6 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border">Action</th>
+                <th className="sticky top-0 z-20 bg-tk-bg-hover py-3 px-4 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[20%]">Order Details</th>
+                <th className="sticky top-0 z-20 bg-tk-bg-hover py-3 px-4 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[20%]">Customer Info</th>
+                <th className="sticky top-0 z-20 bg-tk-bg-hover py-3 px-4 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[25%]">Payment Info</th>
+                <th className="sticky top-0 z-20 bg-tk-bg-hover py-3 px-4 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[35%]">Order Tracking</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={8} className="py-8 text-center text-tk-text-secondary text-sm">Loading orders...</td>
+                  <td colSpan={4} className="py-8 text-center text-tk-text-secondary text-sm">Loading orders...</td>
                 </tr>
               ) : filteredOrders().length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-8 text-center text-tk-text-secondary text-sm">No orders found for this category.</td>
+                  <td colSpan={4} className="py-12 text-center text-tk-text-secondary">
+                    <p className="text-sm font-medium">
+                      {activeTab === 'Active Orders' 
+                        ? 'No active orders right now.' 
+                        : activeTab === 'Completed' 
+                          ? 'No completed orders yet.' 
+                          : 'No orders found.'}
+                    </p>
+                  </td>
                 </tr>
               ) : (
                 filteredOrders().map((order, idx) => (
                   <tr key={idx} className="border-b border-tk-border last:border-b-0 hover:bg-tk-bg-hover transition-colors group">
-                    <td className="py-4 px-6 text-sm text-tk-text font-medium cursor-pointer" onClick={() => setSelectedOrder(order)}>
-                      {order.orderNumber}
-                    </td>
-                    <td className="py-4 px-6 text-sm text-tk-text cursor-pointer" onClick={() => setSelectedOrder(order)}>
-                      {order.table}
-                    </td>
-                    <td className="py-4 px-6 text-sm text-tk-text cursor-pointer" onClick={() => setSelectedOrder(order)}>
-                      {order.time}
-                    </td>
-                    <td className="py-4 px-6 text-sm text-tk-text font-medium cursor-pointer" onClick={() => setSelectedOrder(order)}>
-                      ₹ {order.total}
-                    </td>
-                    <td className="py-4 px-6 text-sm">
-                      <div className="flex items-center gap-2">
-                        <span 
-                          className={`inline-flex px-2.5 py-1 rounded-md text-xs font-semibold cursor-pointer ${order.isPaid ? 'bg-[#C6F6D5] text-[#22543D]' : 'bg-[#FEF2F2] text-[#E53E3E]'}`}
-                          onClick={() => setSelectedOrder(order)}
-                        >
-                          {order.isPaid ? 'Paid' : 'Pending'}
-                        </span>
-                        {!order.isPaid && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handlePaymentComplete(order.id);
-                            }}
-                            className="p-1.5 bg-[#C6F6D5] text-[#22543D] rounded-md hover:bg-[#9AE6B4] transition-colors"
-                            title="Mark Paid"
-                          >
-                            <CheckCircle size={14} />
-                          </button>
-                        )}
+                    <td className="py-3 px-4 text-sm text-tk-text cursor-pointer" onClick={() => setSelectedOrder(order)}>
+                      <div className="flex flex-col">
+                        <span className="font-semibold">{order.orderNumber}</span>
+                        <span className="text-xs text-tk-text-secondary font-medium mt-0.5">{order.time}</span>
                       </div>
                     </td>
-                    <td className="py-4 px-6 text-sm text-tk-text cursor-pointer" onClick={() => setSelectedOrder(order)}>
-                      {order.customer}
+                    <td className="py-3 px-4 text-sm text-tk-text cursor-pointer" onClick={() => setSelectedOrder(order)}>
+                      <div className="flex flex-col">
+                        <span className="font-semibold">{order.customer}</span>
+                        <span className="text-xs text-tk-text-secondary font-medium mt-0.5">{order.table}</span>
+                      </div>
                     </td>
-                    <td className="py-4 px-6 text-sm cursor-pointer" onClick={() => setSelectedOrder(order)}>
-                      <span className={`inline-flex px-2.5 py-1 rounded-md text-xs font-semibold ${
-                        order.statusColor === 'Ready' || order.statusColor === 'ready' 
-                          ? 'bg-tk-burgundy text-white' 
-                          : order.statusColor === 'Preparing' || order.statusColor === 'preparing' 
-                            ? 'bg-[#FEEA9A] text-[#744210]' 
-                            : 'bg-[#90CDF4] text-[#2C5282]'
-                      }`}>
-                        {order.status}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6 text-sm">
-                      <div className="flex gap-2 items-center">
-                        {order.status !== 'Ready' && order.status !== 'Completed' && order.status !== 'Cancelled' && (
-                          <button
-                            className="px-3 py-1.5 bg-tk-burgundy text-white rounded-md text-xs font-semibold hover:bg-tk-burgundy-dark transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleMarkReady(order.id);
-                            }}
+                    <td className="py-3 px-4 text-sm cursor-pointer" onClick={() => setSelectedOrder(order)}>
+                      <div className="flex flex-col items-start gap-1.5">
+                        <span className="text-tk-text font-semibold">₹ {order.total}</span>
+                        <div className="flex items-center gap-1.5">
+                          <span 
+                            className={`inline-flex px-2.5 py-0.5 rounded text-[11px] font-bold ${order.isPaid ? 'bg-[#C6F6D5] text-[#22543D]' : 'bg-[#FEF2F2] text-[#E53E3E]'}`}
                           >
-                            Ready
-                          </button>
-                        )}
-                        <button className="p-1 text-tk-text-secondary hover:text-tk-text transition-colors">
-                          <MoreVertical size={16} />
-                        </button>
+                            {order.isPaid ? `Paid (${order.paymentMethod})` : 'Pending'}
+                          </span>
+                          {!order.isPaid && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handlePaymentComplete(order.id);
+                              }}
+                              className="p-1 bg-[#C6F6D5] text-[#22543D] rounded hover:bg-[#9AE6B4] transition-colors flex items-center justify-center"
+                              title="Mark Paid"
+                            >
+                              <CheckCircle size={12} strokeWidth={3} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-2 px-4">
+                      <div className="flex items-center w-full min-w-[250px] max-w-[400px] pb-4 pt-2 px-2" onClick={(e) => e.stopPropagation()}>
+                        {[
+                          { label: 'Confirmed', value: 'CONFIRMED' },
+                          { label: 'Preparing', value: 'PREPARING' },
+                          { label: 'Ready', value: 'READY' },
+                          { label: 'Completed', value: 'COMPLETED' }
+                        ].map((step, idx, arr) => {
+                          const getStatusIdx = (status: string) => {
+                            switch(status?.toUpperCase()) {
+                              case 'PENDING': return -1;
+                              case 'CONFIRMED': return 0;
+                              case 'PREPARING': return 1;
+                              case 'READY': return 2;
+                              case 'COMPLETED':
+                              case 'SERVED': return 3;
+                              default: return -1;
+                            }
+                          };
+                          const currentIndex = getStatusIdx(order.status);
+                          const isCompleted = idx <= currentIndex;
+                          const isNext = idx === currentIndex + 1;
+                          const isLast = idx === arr.length - 1;
+
+                          return (
+                            <React.Fragment key={step.value}>
+                              <div className="flex flex-col items-center relative group">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (isNext) handleUpdateStatus(order.id, step.value);
+                                  }}
+                                  disabled={!isNext}
+                                  className={`w-6 h-6 rounded-full flex items-center justify-center border-[2px] z-10 transition-colors
+                                    ${isCompleted ? 'bg-[#16a34a] border-[#16a34a] text-white' : 
+                                      isNext ? 'bg-white border-[#16a34a] cursor-pointer hover:bg-[#16a34a] hover:text-white' : 
+                                      'bg-white border-[#E2E8F0] cursor-default'}
+                                  `}
+                                  title={isNext ? `Mark as ${step.label}` : ''}
+                                >
+                                  {isCompleted && <Check size={14} className="text-white" strokeWidth={3} />}
+                                </button>
+                                <span className={`absolute top-7 text-[10px] font-medium whitespace-nowrap
+                                  ${isCompleted || isNext ? 'text-tk-text' : 'text-[#A0AEC0]'}
+                                `}>
+                                  {step.label}
+                                </span>
+                              </div>
+                              {!isLast && (
+                                <div className={`flex-1 h-[2px] mx-1 transition-colors mt-[-4px]
+                                  ${idx < currentIndex ? 'bg-[#16a34a]' : 'bg-[#E2E8F0]'}
+                                `} />
+                              )}
+                            </React.Fragment>
+                          );
+                        })}
                       </div>
                     </td>
                   </tr>
@@ -543,7 +715,7 @@ const Dashboard: React.FC = () => {
         <OrderDetailsDialog
           order={selectedOrder}
           onClose={() => setSelectedOrder(null)}
-          onMarkReady={handleMarkReady}
+          onMarkReady={(id) => handleUpdateStatus(id, 'READY')}
         />
       )}
     </div>
