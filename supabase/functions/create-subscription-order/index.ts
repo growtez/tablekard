@@ -3,14 +3,11 @@
 // supabase/functions/create-subscription-order/index.ts
 //
 // PURPOSE: Create a Razorpay order for SaaS subscription renewal.
-//          - Validates plan duration and looks up FIXED price server-side
+//          - Validates plan duration and resolves price + plan_name server-side from platform_settings
+//          - Guards against 'pending'/'rejected' restaurants (must be 'approved' or 'active')
 //          - Calls Razorpay Orders API
-//          - Inserts a subscription_payments record
+//          - Inserts a subscription_payments record (with plan_name snapshot)
 //          - Returns razorpay_order_id to the frontend
-//
-// NOTE: Currently uses the same platform Razorpay credentials.
-//       In the future, customer-web will use per-restaurant Razorpay keys,
-//       while this function will remain on the platform Razorpay account.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -22,9 +19,9 @@ const corsHeaders = {
 };
 
 // ──────────────────────────────────────────────
-// Fixed subscription pricing (server-side only)
+// Fallback pricing if platform_settings is unavailable
 // ──────────────────────────────────────────────
-const PLAN_PRICES: Record<number, number> = {
+const FALLBACK_PLAN_PRICES: Record<number, number> = {
     1: 499,
     3: 1399,
     6: 2699,
@@ -56,16 +53,7 @@ serve(async (req: Request) => {
             );
         }
 
-        // ── 2. Validate plan ──
-        const price = PLAN_PRICES[plan_duration];
-        if (!price) {
-            return new Response(
-                JSON.stringify({ error: `Invalid plan_duration. Allowed: ${Object.keys(PLAN_PRICES).join(", ")}` }),
-                { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-            );
-        }
-
-        // ── 3. Authenticate user ──
+        // ── 2. Authenticate user ──
         const authHeader = req.headers.get("Authorization");
         if (!authHeader) {
             return new Response(
@@ -89,6 +77,39 @@ serve(async (req: Request) => {
             );
         }
 
+        // ── 3. Resolve price + plan_name from platform_settings (server-side, not trusted from client) ──
+        let price: number;
+        let planName: string;
+        try {
+            const { data: settings } = await supabaseAdmin
+                .from("platform_settings")
+                .select("config")
+                .eq("id", "billing_plans")
+                .maybeSingle();
+
+            const plans: any[] = settings?.config?.plans || [];
+            const matchedPlan = plans.find((p: any) => Number(p.duration) === Number(plan_duration));
+
+            if (matchedPlan) {
+                price = matchedPlan.price;
+                planName = matchedPlan.name;
+            } else {
+                // Fallback to hardcoded prices if platform_settings unavailable
+                price = FALLBACK_PLAN_PRICES[plan_duration];
+                planName = `${plan_duration} Month${plan_duration > 1 ? 's' : ''} Package`;
+            }
+        } catch (_) {
+            price = FALLBACK_PLAN_PRICES[plan_duration];
+            planName = `${plan_duration} Month${plan_duration > 1 ? 's' : ''} Package`;
+        }
+
+        if (!price) {
+            return new Response(
+                JSON.stringify({ error: `Invalid plan_duration: ${plan_duration}. No matching plan found.` }),
+                { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+        }
+
         // ── 4. Verify restaurant membership ──
         const { data: membership, error: memberError } = await supabaseAdmin
             .from("restaurant_users")
@@ -105,12 +126,19 @@ serve(async (req: Request) => {
             );
         }
 
-        // ── 5. Fetch restaurant name for Razorpay notes ──
-        const { data: restaurant } = await supabaseAdmin
+        // ── 5. Guard: restaurant must be 'approved' or 'active' to subscribe ──
+        const { data: restaurantRow } = await supabaseAdmin
             .from("restaurants")
-            .select("name")
+            .select("name, status")
             .eq("id", restaurant_id)
             .single();
+
+        if (!restaurantRow || !["approved", "active"].includes(restaurantRow.status)) {
+            return new Response(
+                JSON.stringify({ error: "Restaurant must be approved before subscribing" }),
+                { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+        }
 
         // ── 6. Create Razorpay Order ──
         const amountInPaise = Math.round(price * 100);
@@ -127,8 +155,9 @@ serve(async (req: Request) => {
                 notes: {
                     type: "subscription",
                     restaurant_id,
-                    restaurant_name: restaurant?.name || "",
+                    restaurant_name: restaurantRow.name,
                     plan_duration: String(plan_duration),
+                    plan_name: planName,
                     user_id: user.id,
                 },
             }),
@@ -142,13 +171,14 @@ serve(async (req: Request) => {
 
         const razorpayOrder = await razorpayResponse.json();
 
-        // ── 7. Insert subscription_payments record ──
+        // ── 7. Insert subscription_payments record (with plan_name snapshot) ──
         const { data: payment, error: paymentError } = await supabaseAdmin
             .from("subscription_payments")
             .insert({
                 restaurant_id,
                 user_id: user.id,
                 plan_duration,
+                plan_name: planName,
                 amount: price,
                 currency: "INR",
                 razorpay_order_id: razorpayOrder.id,
@@ -172,6 +202,7 @@ serve(async (req: Request) => {
                 currency: "INR",
                 payment_id: payment.id,
                 plan_duration,
+                plan_name: planName,
                 plan_price: price,
             }),
             {
