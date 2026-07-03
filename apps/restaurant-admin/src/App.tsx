@@ -16,6 +16,7 @@ const QRCodePage = lazy(() => import("./pages/qrcode"));
 const TableManagement = lazy(() => import("./pages/table_management"));
 const ProfilePage = lazy(() => import("./pages/profile/profile"));
 const SubscriptionPage = lazy(() => import("./pages/subscription/subscription"));
+const Team = lazy(() => import("./pages/team"));
 
 // Loading fallback for Suspense
 const PageLoader = () => (
@@ -53,6 +54,9 @@ function AppRoutes() {
         } />
         <Route path="/orders" element={
           <ProtectedRoute><Order /></ProtectedRoute>
+        } />
+        <Route path="/team" element={
+          <ProtectedRoute><Team /></ProtectedRoute>
         } />
         <Route path="/menu" element={
           <ProtectedRoute><Menu /></ProtectedRoute>

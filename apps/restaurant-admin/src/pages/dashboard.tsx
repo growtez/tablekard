@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { TrendingUp, X, CheckCircle, Package, Check, ChevronUp, ChevronDown, Search, ArrowUpDown } from 'lucide-react';
+import { TrendingUp, X, CheckCircle, Package, Check, ChevronUp, ChevronDown, Search, ArrowUpDown, List, LayoutGrid } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext';
 import { useDashboardOrders, useInvalidateQueries, useRevenueData, useMenuItems } from '../hooks/useSupabaseQuery';
@@ -76,7 +76,7 @@ const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({ order, onClose,
             <div className="text-[20px] font-bold text-tk-burgundy">₹{order.total}</div>
           </div>
 
-          {order.status !== 'Ready' && order.status !== 'Completed' && (
+          {order.status?.toUpperCase() !== 'READY' && order.status?.toUpperCase() !== 'COMPLETED' && order.status?.toUpperCase() !== 'CANCELLED' && (
             <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
               <button
                 className="px-3 py-1.5 bg-[#C6F6D5] text-[#22543D] border-none rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 font-['Outfit'] hover:bg-[#68D391] hover:-translate-y-[1px] hover:shadow-[0_4px_8px_rgba(104,211,145,0.4)]"
@@ -111,7 +111,8 @@ const Dashboard: React.FC = () => {
   const [orderToCancel, setOrderToCancel] = useState<DashboardOrder | null>(null);
   const [activeTab, setActiveTab] = useState<string>('Active Orders');
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'amount_high' | 'amount_low'>('newest');
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'amount_high' | 'amount_low'>('oldest');
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
   const sortDropdownRef = useRef<HTMLDivElement>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -136,7 +137,19 @@ const Dashboard: React.FC = () => {
   const handleTableScroll = () => {
     const el = tableScrollRef.current;
     if (!el) return;
-    setIsHeaderVisible(el.scrollTop <= 8);
+    
+    setIsHeaderVisible(prev => {
+      const maxScroll = el.scrollHeight - el.clientHeight;
+
+      if (prev && maxScroll < 200) {
+        return true; 
+      }
+
+      if (prev && el.scrollTop > 24) return false;
+      if (!prev && el.scrollTop <= 8) return true;
+      
+      return prev;
+    });
   };
 
   const handlePaymentComplete = async (paymentId: string) => {
@@ -159,8 +172,16 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const activeOrders = orders.filter(order => order.status !== 'Completed' && order.status !== 'Cancelled' && (order.status !== 'Ready' || !order.isPaid));
-  const completedOrders = orders.filter(order => order.status === 'Completed' || (order.status === 'Ready' && order.isPaid));
+  // Fixed Case-Sensitivity in tabs
+  const activeOrders = orders.filter(order => {
+    const s = order.status?.toUpperCase();
+    return s !== 'COMPLETED' && s !== 'CANCELLED' && (s !== 'READY' || !order.isPaid);
+  });
+  const completedOrders = orders.filter(order => {
+    const s = order.status?.toUpperCase();
+    return s === 'COMPLETED' || (s === 'READY' && order.isPaid);
+  });
+  const cancelledOrders = orders.filter(order => order.status?.toUpperCase() === 'CANCELLED');
 
   const now = new Date();
   
@@ -181,7 +202,8 @@ const Dashboard: React.FC = () => {
   let revenueLastWeek = 0;
 
   orders.forEach(order => {
-    if (order.status !== 'Ready' && order.status !== 'Completed' && !order.isPaid) return;
+    const s = order.status?.toUpperCase();
+    if (s !== 'READY' && s !== 'COMPLETED' && !order.isPaid) return;
 
     const orderDate = new Date(order.createdAt);
     
@@ -201,12 +223,13 @@ const Dashboard: React.FC = () => {
   const todayChange = revenueYesterday === 0 ? (revenueToday > 0 ? 100 : 0) : Math.round(((revenueToday - revenueYesterday) / revenueYesterday) * 100);
   const weekChange = revenueLastWeek === 0 ? (revenueThisWeek > 0 ? 100 : 0) : Math.round(((revenueThisWeek - revenueLastWeek) / revenueLastWeek) * 100);
 
-  const tabs = ['Active Orders', 'Completed', 'All Orders'];
+  const tabs = ['Active Orders', 'Completed', 'Cancelled', 'All Orders'];
 
   const tabCounts: Record<string, number> = {
     'All Orders': orders.length,
     'Active Orders': activeOrders.length,
     'Completed': completedOrders.length,
+    'Cancelled': cancelledOrders.length,
   };
 
   const filteredOrders = () => {
@@ -217,6 +240,9 @@ const Dashboard: React.FC = () => {
         break;
       case 'Completed':
         result = completedOrders;
+        break;
+      case 'Cancelled':
+        result = cancelledOrders;
         break;
       case 'All Orders':
       default:
@@ -305,9 +331,9 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className={`grid transition-all duration-1000 ease-in-out ${isHeaderVisible ? 'grid-rows-[1fr] opacity-100 mb-6 mt-4 sm:mt-0' : 'grid-rows-[0fr] opacity-0 mb-0'}`}>
+          <div className={`grid transition-all duration-1000 ease-in-out ${isHeaderVisible ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
             <div className="overflow-hidden">
-              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 max-w-[850px] w-full pt-1">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 max-w-[850px] w-full pt-1 mb-6 mt-4 sm:mt-0">
                 {/* Card 1: Revenue Today */}
                 <div className="bg-tk-bg-card p-3 sm:p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
                   <div className="flex justify-between items-start mb-2">
@@ -397,6 +423,23 @@ const Dashboard: React.FC = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pb-2 w-full xl:w-auto xl:ml-4">
+              <div className="flex bg-tk-bg-surface border border-tk-border rounded-full p-0.5 shrink-0 self-start sm:self-auto">
+                <button
+                  onClick={() => setViewMode('table')}
+                  className={`p-1.5 sm:p-1.5 rounded-full transition-colors flex items-center justify-center ${viewMode === 'table' ? 'bg-tk-burgundy/10 text-tk-burgundy' : 'text-tk-text-secondary hover:text-tk-text'}`}
+                  title="Table View"
+                >
+                  <List size={16} />
+                </button>
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-1.5 sm:p-1.5 rounded-full transition-colors flex items-center justify-center ${viewMode === 'grid' ? 'bg-tk-burgundy/10 text-tk-burgundy' : 'text-tk-text-secondary hover:text-tk-text'}`}
+                  title="Grid View"
+                >
+                  <LayoutGrid size={16} />
+                </button>
+              </div>
+
               <div className="relative w-full sm:w-auto" ref={sortDropdownRef}>
                 <button
                   onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
@@ -462,14 +505,14 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Table Area */}
         <div
           ref={tableScrollRef}
           onScroll={handleTableScroll}
-          className="tk-table-scroll flex-1 min-h-0 overflow-y-auto overflow-x-auto w-full"
+          className="tk-table-scroll flex-1 min-h-0 overflow-y-scroll overflow-x-auto w-full"
         >
-          <table className="w-full text-left border-collapse table-fixed min-w-[950px]">
-            <thead>
+          {viewMode === 'table' ? (
+            <table className="w-full text-left border-collapse table-fixed min-w-[950px]">
+              <thead>
               <tr className="bg-tk-bg-hover">
                 <th className="sticky top-0 z-20 bg-tk-bg-hover py-3 px-4 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[6%] text-center">Sl No</th>
                 <th className="sticky top-0 z-20 bg-tk-bg-hover py-3 px-4 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[17%]">Order Details</th>
@@ -497,7 +540,7 @@ const Dashboard: React.FC = () => {
                 </tr>
               ) : (
                 filteredOrders().map((order, idx) => (
-                  <tr key={idx} className="border-b border-tk-border last:border-b-0 hover:bg-tk-bg-hover transition-colors group">
+                  <tr key={idx} className="border-b border-tk-border last:border-b-0 hover:bg-tk-burgundy/5 transition-colors group">
                     <td className="py-3 px-4 text-sm text-tk-text-secondary font-medium text-center">{idx + 1}</td>
                     <td className="py-3 px-4 text-sm text-tk-text cursor-pointer" onClick={() => setSelectedOrder(order)}>
                       <div className="flex flex-col">
@@ -537,12 +580,29 @@ const Dashboard: React.FC = () => {
                     </td>
                     <td className="py-2 px-4">
                       <div className="flex items-center w-full min-w-[250px] max-w-[400px] gap-4 pb-4 pt-2 px-2" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex-1 flex items-center relative">
-                        {[
-                          { label: 'Placed', value: 'CONFIRMED' },
-                          { label: 'Preparing', value: 'PREPARING' },
-                          { label: 'Ready', value: 'READY' }
-                        ].map((step, idx, arr) => {
+                        {order.status?.toUpperCase() === 'CANCELLED' ? (
+                          <div className="flex-1 flex items-center relative">
+                            <div className="flex flex-col items-center relative group">
+                              <div className="w-6 h-6 rounded-full flex items-center justify-center border-[2px] z-10 bg-[#E53E3E] border-[#E53E3E]">
+                                <Check size={14} className="text-white" strokeWidth={3} />
+                              </div>
+                              <span className="absolute top-7 text-[10px] font-medium text-[#E53E3E] whitespace-nowrap">Placed</span>
+                            </div>
+                            <div className="flex-1 h-[2px] mx-1 transition-colors mt-[-4px] bg-[#E53E3E]"></div>
+                            <div className="flex flex-col items-center relative group">
+                              <div className="w-6 h-6 rounded-full flex items-center justify-center border-[2px] z-10 bg-[#E53E3E] border-[#E53E3E]">
+                                <X size={14} className="text-white" strokeWidth={3} />
+                              </div>
+                              <span className="absolute top-7 text-[10px] font-bold text-[#E53E3E] whitespace-nowrap">Cancelled</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex-1 flex items-center relative">
+                          {[
+                            { label: 'Accept', value: 'CONFIRMED' },
+                            { label: 'Preparing', value: 'PREPARING' },
+                            { label: 'Ready', value: 'READY' }
+                          ].map((step, idx, arr) => {
                           const getStatusIdx = (status: string) => {
                             switch(status?.toUpperCase()) {
                               case 'PENDING': return -1;
@@ -592,7 +652,8 @@ const Dashboard: React.FC = () => {
                           );
                         })}
                         </div>
-                        {order.status !== 'CANCELLED' && order.status !== 'COMPLETED' && (
+                        )}
+                        {order.status?.toUpperCase() !== 'CANCELLED' && order.status?.toUpperCase() !== 'COMPLETED' && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -603,7 +664,7 @@ const Dashboard: React.FC = () => {
                             Cancel
                           </button>
                         )}
-                        {order.status === 'CANCELLED' && (
+                        {order.status?.toUpperCase() === 'CANCELLED' && (
                           <span className="px-3 py-1.5 bg-[#FEF2F2] text-[#E53E3E] rounded-lg text-xs font-bold">
                             Cancelled
                           </span>
@@ -615,6 +676,148 @@ const Dashboard: React.FC = () => {
               )}
             </tbody>
           </table>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4 min-w-full">
+              {isLoading ? (
+                <div className="col-span-full py-12 text-center text-tk-text-secondary text-sm">Loading orders...</div>
+              ) : filteredOrders().length === 0 ? (
+                <div className="col-span-full py-12 text-center text-tk-text-secondary font-medium">No orders found.</div>
+              ) : (
+                filteredOrders().map((order, idx) => {
+                  const getStatusIdx = (status: string) => {
+                    switch(status?.toUpperCase()) {
+                      case 'PENDING': return -1;
+                      case 'CONFIRMED': return 0;
+                      case 'PREPARING': return 1;
+                      case 'READY': return 2;
+                      case 'COMPLETED':
+                      case 'SERVED': return 2;
+                      default: return -1;
+                    }
+                  };
+                  const currentIndex = getStatusIdx(order.status);
+                  
+                  return (
+                    <div key={idx} className="bg-tk-bg-surface border border-tk-border rounded-xl p-4 flex flex-col gap-3 shadow-sm hover:shadow-md hover:border-tk-burgundy/50 transition-all cursor-pointer relative group" onClick={() => setSelectedOrder(order)}>
+                      <div className="flex justify-between items-start">
+                        <div className="flex flex-col">
+                          <span className="font-medium text-tk-text text-xs">{order.orderNumber}</span>
+                          <span className="text-[10px] text-tk-text-secondary font-medium mt-0.5">{order.time}</span>
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <span className="font-bold text-tk-text text-lg">₹ {order.total}</span>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <span className={`inline-flex px-2.5 py-0.5 rounded text-[11px] font-bold ${order.isPaid ? 'bg-[#C6F6D5] text-[#22543D]' : 'bg-[#FEF2F2] text-[#E53E3E]'}`}>
+                              {order.isPaid ? `Paid (${order.paymentMethod})` : 'Pending'}
+                            </span>
+                            {!order.isPaid && (
+                               <button
+                                 onClick={(e) => { e.stopPropagation(); handlePaymentComplete(order.id); }}
+                                 className="p-0.5 bg-[#C6F6D5] text-[#22543D] rounded hover:bg-[#9AE6B4] transition-colors flex items-center justify-center"
+                                 title="Mark Paid"
+                               >
+                                 <CheckCircle size={12} strokeWidth={3} />
+                               </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-between text-sm items-center mt-1">
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-tk-text">{order.customer}</span>
+                          <span className="text-xs text-tk-text-secondary">{order.table}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-3 pt-4 border-t border-tk-border w-full">
+                        <div className="flex items-center justify-between w-full px-2" onClick={(e) => e.stopPropagation()}>
+                          {order.status?.toUpperCase() === 'CANCELLED' ? (
+                            <div className="flex-1 flex items-center relative">
+                              <div className="flex flex-col items-center relative group">
+                                <div className="w-6 h-6 rounded-full flex items-center justify-center border-[2px] z-10 bg-[#E53E3E] border-[#E53E3E]">
+                                  <Check size={14} className="text-white" strokeWidth={3} />
+                                </div>
+                                <span className="absolute top-7 text-[10px] font-medium text-[#E53E3E] whitespace-nowrap">Placed</span>
+                              </div>
+                              <div className="flex-1 h-[2px] mx-1 transition-colors bg-[#E53E3E]"></div>
+                              <div className="flex flex-col items-center relative group">
+                                <div className="w-6 h-6 rounded-full flex items-center justify-center border-[2px] z-10 bg-[#E53E3E] border-[#E53E3E]">
+                                  <X size={14} className="text-white" strokeWidth={3} />
+                                </div>
+                                <span className="absolute top-7 text-[10px] font-bold text-[#E53E3E] whitespace-nowrap">Cancelled</span>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                            {[
+                              { label: 'Accept', value: 'CONFIRMED' },
+                              { label: 'Preparing', value: 'PREPARING' },
+                              { label: 'Ready', value: 'READY' }
+                            ].map((step, stepIdx, arr) => {
+                            const isCompleted = stepIdx <= currentIndex;
+                            const isNext = stepIdx === currentIndex + 1;
+                            const isLast = stepIdx === arr.length - 1;
+                            
+                            return (
+                              <React.Fragment key={step.value}>
+                                <div className="flex flex-col items-center relative group">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (isNext) handleUpdateStatus(order.id, step.value);
+                                    }}
+                                    disabled={!isNext}
+                                    className={`w-6 h-6 rounded-full flex items-center justify-center border-[2px] z-10 transition-colors
+                                      ${isCompleted ? 'bg-[#16a34a] border-[#16a34a] text-white' : 
+                                        isNext ? 'bg-white border-[#16a34a] cursor-pointer hover:bg-[#16a34a] hover:text-white' : 
+                                        'bg-white border-[#E2E8F0] cursor-default'}
+                                    `}
+                                  >
+                                    {isCompleted && <Check size={14} className="text-white" strokeWidth={3} />}
+                                  </button>
+                                  <span className={`absolute top-7 text-[10px] font-medium whitespace-nowrap
+                                    ${isCompleted || isNext ? 'text-tk-text' : 'text-[#A0AEC0]'}
+                                  `}>
+                                    {step.label}
+                                  </span>
+                                </div>
+                                {!isLast && (
+                                  <div className={`flex-1 h-[2px] mx-1 transition-colors
+                                    ${stepIdx < currentIndex ? 'bg-[#16a34a]' : 'bg-[#E2E8F0]'}
+                                  `} />
+                                )}
+                              </React.Fragment>
+                            );
+                          })}
+                          </>
+                          )}
+                        </div>
+                        <div className="mt-8 flex justify-end">
+                          {order.status?.toUpperCase() !== 'CANCELLED' && order.status?.toUpperCase() !== 'COMPLETED' && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOrderToCancel(order);
+                              }}
+                              className="px-3 py-1.5 bg-[#FEF2F2] text-[#E53E3E] border border-[#FC8181] rounded-lg text-xs font-semibold hover:bg-[#FED7D7] transition-colors"
+                            >
+                              Cancel
+                            </button>
+                          )}
+                          {order.status?.toUpperCase() === 'CANCELLED' && (
+                            <span className="px-3 py-1.5 bg-[#FEF2F2] text-[#E53E3E] rounded-lg text-xs font-bold">
+                              Cancelled
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
         </div>
       {selectedOrder && (
         <OrderDetailsDialog

@@ -109,6 +109,17 @@ export function useDashboardOrders(restaurantId: string | null) {
           queryClient.invalidateQueries({ queryKey });
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'order_items',
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey });
+        }
+      )
       .subscribe();
 
     return () => {
@@ -120,13 +131,53 @@ export function useDashboardOrders(restaurantId: string | null) {
 }
 
 export function useOrders(restaurantId: string | null, limit?: number) {
-  return useQuery<Order[]>({
-    queryKey: queryKeys.orders(restaurantId ?? ''),
+  const queryClient = useQueryClient();
+  const queryKey = queryKeys.orders(restaurantId ?? '');
+
+  const queryResult = useQuery<Order[]>({
+    queryKey,
     queryFn: () => getOrders(restaurantId!, limit),
     enabled: !!restaurantId,
     staleTime: STALE_30S,
     retry: 3,
   });
+
+  useEffect(() => {
+    if (!restaurantId) return;
+
+    const channel = supabase
+      .channel(`realtime-orders-page-${restaurantId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders',
+          filter: `restaurant_id=eq.${restaurantId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'order_items',
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [restaurantId, queryClient, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return queryResult;
 }
 
 // ─── Payments ───────────────────────────────────────────────────────
