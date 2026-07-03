@@ -108,6 +108,7 @@ const Dashboard: React.FC = () => {
   const outOfStockItems = menuItems.filter(item => !item.available);
 
   const [selectedOrder, setSelectedOrder] = useState<DashboardOrder | null>(null);
+  const [orderToCancel, setOrderToCancel] = useState<DashboardOrder | null>(null);
   const [activeTab, setActiveTab] = useState<string>('Active Orders');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'amount_high' | 'amount_low'>('newest');
@@ -304,7 +305,7 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className={`grid transition-all duration-300 ease-in-out ${isHeaderVisible ? 'grid-rows-[1fr] opacity-100 mb-6 mt-4 sm:mt-0' : 'grid-rows-[0fr] opacity-0 mb-0'}`}>
+          <div className={`grid transition-all duration-1000 ease-in-out ${isHeaderVisible ? 'grid-rows-[1fr] opacity-100 mb-6 mt-4 sm:mt-0' : 'grid-rows-[0fr] opacity-0 mb-0'}`}>
             <div className="overflow-hidden">
               <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 max-w-[850px] w-full pt-1">
                 {/* Card 1: Revenue Today */}
@@ -535,12 +536,12 @@ const Dashboard: React.FC = () => {
                       </div>
                     </td>
                     <td className="py-2 px-4">
-                      <div className="flex items-center w-full min-w-[250px] max-w-[400px] pb-4 pt-2 px-2" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center w-full min-w-[250px] max-w-[400px] gap-4 pb-4 pt-2 px-2" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex-1 flex items-center relative">
                         {[
-                          { label: 'Confirmed', value: 'CONFIRMED' },
+                          { label: 'Placed', value: 'CONFIRMED' },
                           { label: 'Preparing', value: 'PREPARING' },
-                          { label: 'Ready', value: 'READY' },
-                          { label: 'Completed', value: 'COMPLETED' }
+                          { label: 'Ready', value: 'READY' }
                         ].map((step, idx, arr) => {
                           const getStatusIdx = (status: string) => {
                             switch(status?.toUpperCase()) {
@@ -549,7 +550,7 @@ const Dashboard: React.FC = () => {
                               case 'PREPARING': return 1;
                               case 'READY': return 2;
                               case 'COMPLETED':
-                              case 'SERVED': return 3;
+                              case 'SERVED': return 2;
                               default: return -1;
                             }
                           };
@@ -590,6 +591,23 @@ const Dashboard: React.FC = () => {
                             </React.Fragment>
                           );
                         })}
+                        </div>
+                        {order.status !== 'CANCELLED' && order.status !== 'COMPLETED' && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOrderToCancel(order);
+                            }}
+                            className="px-3 py-1.5 bg-[#FEF2F2] text-[#E53E3E] border border-[#FC8181] rounded-lg text-xs font-semibold hover:bg-[#FED7D7] transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        )}
+                        {order.status === 'CANCELLED' && (
+                          <span className="px-3 py-1.5 bg-[#FEF2F2] text-[#E53E3E] rounded-lg text-xs font-bold">
+                            Cancelled
+                          </span>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -604,6 +622,33 @@ const Dashboard: React.FC = () => {
           onClose={() => setSelectedOrder(null)}
           onMarkReady={(id) => handleUpdateStatus(id, 'READY')}
         />
+      )}
+      {orderToCancel && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1100] p-4 animate-[fadeIn_0.2s_ease]" onClick={() => setOrderToCancel(null)}>
+          <div className="bg-tk-bg-card rounded-[24px] p-6 max-w-[400px] w-full border-[1.5px] border-tk-border shadow-[0_20px_60px_rgba(0,0,0,0.12)] animate-[slideUp_0.3s_ease]" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-xl font-bold text-tk-text mb-2">Cancel Order?</h3>
+            <p className="text-tk-text-secondary text-sm mb-6">
+              Are you sure you want to cancel order <strong>{orderToCancel.orderNumber}</strong>? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => setOrderToCancel(null)}
+                className="px-4 py-2 bg-tk-bg-hover text-tk-text-secondary rounded-xl text-sm font-semibold hover:bg-tk-border transition-colors"
+              >
+                No, Keep it
+              </button>
+              <button 
+                onClick={() => {
+                  handleUpdateStatus(orderToCancel.id, 'CANCELLED');
+                  setOrderToCancel(null);
+                }}
+                className="px-4 py-2 bg-[#E53E3E] text-white rounded-xl text-sm font-semibold hover:bg-[#C53030] transition-colors shadow-[0_4px_12px_rgba(229,62,62,0.3)]"
+              >
+                Yes, Cancel Order
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
