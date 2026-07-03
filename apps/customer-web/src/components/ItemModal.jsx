@@ -6,7 +6,7 @@ import './ItemModal.css';
 
 const ItemModal = ({ isOpen, onClose, item, favorites, onToggleFavorite }) => {
     const navigate = useNavigate();
-    const { cart, addToCart, removeFromCart, getItemQuantity } = useCart();
+    const { addToCart, removeFromCart, getItemQuantity } = useCart();
     
     const [activeImageIdx, setActiveImageIdx] = useState(0);
     const [selectedVariant, setSelectedVariant] = useState(item?.variants ? item.variants[0] : null);
@@ -25,10 +25,6 @@ const ItemModal = ({ isOpen, onClose, item, favorites, onToggleFavorite }) => {
             total += selectedAddons.reduce((sum, addon) => sum + addon.price, 0);
         }
         return total;
-    };
-
-    const getBaseItemQuantity = (id) => {
-        return cart.filter(c => c.id === id).reduce((sum, c) => sum + c.quantity, 0);
     };
 
     return (
@@ -225,7 +221,7 @@ const ItemModal = ({ isOpen, onClose, item, favorites, onToggleFavorite }) => {
                                 onClose();
                             }}
                         >
-                            Add to Order {getBaseItemQuantity(item.id) > 0 && `(${getBaseItemQuantity(item.id)} in cart)`}
+                            Add to Order {getItemQuantity(item.id) > 0 && `(${getItemQuantity(item.id)} in cart)`}
                         </button>
                     ) : getItemQuantity(item.id) === 0 ? (
                         <button

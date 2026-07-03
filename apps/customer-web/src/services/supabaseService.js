@@ -75,7 +75,8 @@ export const createOrder = async ({
     items,
     paymentMethod = 'cash',
     taxRate = 0.05,
-    type = 'dine_in'
+    type = 'dine_in',
+    specialInstructions = null
 }) => {
     const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const taxes = Math.round(total * 0.18) + Math.round(total * 0.05); // Just for reference/record
@@ -103,7 +104,7 @@ export const createOrder = async ({
 
     if (error) throw error;
 
-    const orderItems = items.map(item => ({
+    const orderItems = items.map((item, index) => ({
         order_id: order.id,
         menu_item_id: item.menuItemId || (item.id ? item.id.split('_')[0] : null),
         name: item.name,
@@ -112,7 +113,7 @@ export const createOrder = async ({
         total: item.price * item.quantity,
         variant: item.variant ?? null,
         addons: item.addons ?? null,
-        special_instructions: item.specialInstructions ?? null
+        special_instructions: index === 0 ? specialInstructions : null
     }));
 
     const { error: itemsError } = await supabase
