@@ -251,7 +251,7 @@ const TableManagementPage: React.FC = () => {
                 <div className="flex justify-between items-start mb-7 flex-wrap gap-4 max-md:flex-col">
                     <div>
                         <h1 className="text-2xl font-bold text-[#1A202C] m-0 mb-1 max-md:ml-16 max-md:mt-1 dark:text-tk-text">Table Management</h1>
-                        <p className="text-sm text-[#718096] m-0 dark:text-tk-text-secondary">
+                        <p className="text-sm text-[#4A5568] m-0 dark:text-tk-text-secondary">
                             Manage your restaurant tables and generate QR codes for customer access.
                         </p>
                     </div>
@@ -298,17 +298,17 @@ const TableManagementPage: React.FC = () => {
 
                 {/* States */}
                 {loading && (
-                    <div className="flex flex-col items-center justify-center gap-4 py-20 px-8 text-[#718096] text-center">
+                    <div className="flex flex-col items-center justify-center gap-4 py-20 px-8 text-[#4A5568] text-center">
                         <div className="w-10 h-10 border-4 border-[#E2E8F0] border-t-tk-burgundy rounded-full animate-spin"></div>
                         <p>Loading tables...</p>
                     </div>
                 )}
 
                 {!loading && tables.length === 0 && (
-                    <div className="flex flex-col items-center justify-center gap-4 py-20 px-8 text-[#718096] text-center">
+                    <div className="flex flex-col items-center justify-center gap-4 py-20 px-8 text-[#4A5568] text-center">
                         <QrCode size={64} color="#CBD5E0" />
                         <p className="text-xl font-semibold text-[#4A5568] m-0 dark:text-tk-text">No tables found</p>
-                        <p className="text-sm text-[#A0AEC0] max-w-[300px] m-0 dark:text-tk-text-secondary">Add your first table to get started with QR code generation.</p>
+                        <p className="text-sm text-[#718096] max-w-[300px] m-0 dark:text-tk-text-secondary">Add your first table to get started with QR code generation.</p>
                         <button className="flex items-center justify-center gap-2 px-5 py-2.5 bg-tk-burgundy border-none rounded-xl text-sm font-semibold text-white cursor-pointer transition-all duration-200 shadow-[0_4px_12px_rgba(139,58,30,0.3)] hover:bg-[#6B2A15] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(139,58,30,0.4)] max-md:flex-1" onClick={handleAddTable}>
                             <Plus size={16} />
                             Add First Table
@@ -368,8 +368,8 @@ const TableManagementPage: React.FC = () => {
                                     </div>
 
                                     <div className="w-full flex flex-col gap-2.5 items-center">
-                                        <p className="text-[10px] text-[#A0AEC0] break-all text-center m-0 leading-relaxed max-h-9 overflow-hidden line-clamp-2 dark:text-tk-text-secondary" title={url}>{url}</p>
-                                        <div className="flex gap-3 text-[13px] text-[#718096] font-medium dark:text-tk-text-secondary">
+                                        <p className="text-[10px] text-[#718096] break-all text-center m-0 leading-relaxed max-h-9 overflow-hidden line-clamp-2 dark:text-tk-text-secondary" title={url}>{url}</p>
+                                        <div className="flex gap-3 text-[13px] text-[#4A5568] font-medium dark:text-tk-text-secondary">
                                             <span className="flex items-center gap-1.5">
                                                 <Users size={14} />
                                                 {table.capacity} seats
@@ -407,7 +407,7 @@ const TableManagementPage: React.FC = () => {
                     <div className="bg-white rounded-[20px] w-full max-w-[500px] shadow-[0_20px_60px_rgba(0,0,0,0.3)] animate-[modalSlideIn_0.3s_ease-out] dark:bg-tk-bg-card dark:border-tk-border dark:border max-md:max-w-full max-md:mx-5" onClick={(e) => e.stopPropagation()}>
                         <div className="flex justify-between items-center p-6 border-b border-[#E2E8F0] dark:border-tk-border">
                             <h2>Add New Table</h2>
-                            <button className="bg-transparent border-none text-[#718096] cursor-pointer p-1 flex items-center justify-center rounded-lg transition-all duration-200 hover:bg-[#F7FAFC] hover:text-[#1A202C] dark:text-tk-text-secondary dark:hover:bg-tk-bg-elevated" onClick={() => setShowAddModal(false)}>
+                            <button className="bg-transparent border-none text-[#4A5568] cursor-pointer p-1 flex items-center justify-center rounded-lg transition-all duration-200 hover:bg-[#F7FAFC] hover:text-[#1A202C] dark:text-tk-text-secondary dark:hover:bg-tk-bg-elevated" onClick={() => setShowAddModal(false)}>
                                 <X size={20} />
                             </button>
                         </div>
@@ -478,7 +478,7 @@ const TableManagementPage: React.FC = () => {
                     <div className="bg-white rounded-[20px] w-full max-w-[500px] shadow-[0_20px_60px_rgba(0,0,0,0.3)] animate-[modalSlideIn_0.3s_ease-out] dark:bg-tk-bg-card dark:border-tk-border dark:border max-md:max-w-full max-md:mx-5" onClick={(e) => e.stopPropagation()}>
                         <div className="flex justify-between items-center p-6 border-b border-[#E2E8F0] dark:border-tk-border">
                             <h2>Edit Table {currentTable.table_number}</h2>
-                            <button className="bg-transparent border-none text-[#718096] cursor-pointer p-1 flex items-center justify-center rounded-lg transition-all duration-200 hover:bg-[#F7FAFC] hover:text-[#1A202C] dark:text-tk-text-secondary dark:hover:bg-tk-bg-elevated" onClick={() => setShowEditModal(false)}>
+                            <button className="bg-transparent border-none text-[#4A5568] cursor-pointer p-1 flex items-center justify-center rounded-lg transition-all duration-200 hover:bg-[#F7FAFC] hover:text-[#1A202C] dark:text-tk-text-secondary dark:hover:bg-tk-bg-elevated" onClick={() => setShowEditModal(false)}>
                                 <X size={20} />
                             </button>
                         </div>
@@ -550,7 +550,7 @@ const TableManagementPage: React.FC = () => {
                     <div className="bg-white rounded-[20px] w-full max-w-[500px] shadow-[0_20px_60px_rgba(0,0,0,0.3)] animate-[modalSlideIn_0.3s_ease-out] dark:bg-tk-bg-card dark:border-tk-border dark:border max-md:max-w-full max-md:mx-5 max-w-[400px]" onClick={(e) => e.stopPropagation()}>
                         <div className="flex justify-between items-center p-6 border-b border-[#E2E8F0] dark:border-tk-border">
                             <h2>Delete Table</h2>
-                            <button className="bg-transparent border-none text-[#718096] cursor-pointer p-1 flex items-center justify-center rounded-lg transition-all duration-200 hover:bg-[#F7FAFC] hover:text-[#1A202C] dark:text-tk-text-secondary dark:hover:bg-tk-bg-elevated" onClick={() => setShowDeleteModal(false)}>
+                            <button className="bg-transparent border-none text-[#4A5568] cursor-pointer p-1 flex items-center justify-center rounded-lg transition-all duration-200 hover:bg-[#F7FAFC] hover:text-[#1A202C] dark:text-tk-text-secondary dark:hover:bg-tk-bg-elevated" onClick={() => setShowDeleteModal(false)}>
                                 <X size={20} />
                             </button>
                         </div>
@@ -558,7 +558,7 @@ const TableManagementPage: React.FC = () => {
                             <p className="text-[15px] text-[#2D3748] m-0 mb-3 dark:text-tk-text-secondary">
                                 Are you sure you want to delete <strong>Table {currentTable.table_number}</strong>?
                             </p>
-                            <p className="text-[13px] text-[#718096] m-0 dark:text-tk-text-secondary">
+                            <p className="text-[13px] text-[#4A5568] m-0 dark:text-tk-text-secondary">
                                 This action cannot be undone. All associated QR codes will no longer work.
                             </p>
                         </div>

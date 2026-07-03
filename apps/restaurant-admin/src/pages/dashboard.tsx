@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { TrendingUp, X, CheckCircle } from 'lucide-react';
+import { TrendingUp, X, CheckCircle, Package, MoreVertical, CheckSquare } from 'lucide-react';
 
 import Sidebar from '../components/sidebar';
 
@@ -253,8 +253,7 @@ const Dashboard: React.FC = () => {
   const outOfStockItems = menuItems.filter(item => !item.available);
 
   const [selectedOrder, setSelectedOrder] = useState<DashboardOrder | null>(null);
-  const [showAllOrders, setShowAllOrders] = useState<boolean>(false);
-  const [showAllCompleted, setShowAllCompleted] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<string>('Active Orders');
 
   const handlePaymentComplete = async (paymentId: string) => {
     try {
@@ -323,248 +322,228 @@ const Dashboard: React.FC = () => {
 
 
 
+  const tabs = ['Active Orders', 'Completed', 'All Orders'];
+
+  const tabCounts: Record<string, number> = {
+    'All Orders': orders.length,
+    'Active Orders': activeOrders.length,
+    'Completed': completedOrders.length,
+  };
+
+  const filteredOrders = () => {
+    switch (activeTab) {
+      case 'Active Orders':
+        return activeOrders;
+      case 'Completed':
+        return completedOrders;
+      case 'All Orders':
+      default:
+        return orders;
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-tk-bg relative">
       <Sidebar />
 
-      <div className="tk-main-content flex-1 p-5 overflow-y-auto min-h-screen transition-all duration-300 ml-[240px] max-md:!ml-0 max-md:!p-4 max-md:!pt-[72px] bg-tk-bg-surface">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-semibold text-tk-text">Dashboard</h1>
+      <div className="tk-main-content flex-1 p-8 overflow-y-auto min-h-screen transition-all duration-300 ml-[240px] max-md:!ml-0 max-md:!p-4 max-md:!pt-[72px] bg-tk-bg-surface">
+        <div className="flex items-center justify-between mb-8 gap-8 max-xl:flex-col max-xl:items-start max-xl:gap-6">
+          <h1 className="text-[22px] font-semibold text-tk-text whitespace-nowrap">Dashboard</h1>
+
+          <div className="grid grid-cols-4 gap-4 max-w-[850px] w-full max-xl:grid-cols-2 max-lg:grid-cols-2 max-md:grid-cols-1">
+            {/* Card 1: Active Orders */}
+            <div className="bg-tk-bg-card p-3 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="text-xs text-tk-text-secondary font-medium">Active Orders</h3>
+                <div className="w-7 h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
+                  <CheckSquare size={14} />
+                </div>
+              </div>
+              <div className="flex justify-between items-end">
+                <div className="text-[20px] font-bold text-tk-text">{isLoading ? '...' : activeOrders.length}</div>
+                <div className="flex items-center text-[11px] font-medium text-tk-success">
+                  <TrendingUp size={12} className="mr-1" />
+                  <span>On time</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 2: Revenue Today */}
+            <div className="bg-tk-bg-card p-3 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="text-xs text-tk-text-secondary font-medium">Revenue Today</h3>
+                <div className="w-7 h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
+                  <TrendingUp size={14} />
+                </div>
+              </div>
+              <div className="flex justify-between items-end">
+                <div className="text-[20px] font-bold text-tk-text">₹{isLoading ? '...' : revenueToday.toLocaleString()}</div>
+                <div className={`flex items-center text-[11px] font-medium ${todayChange >= 0 ? 'text-tk-success' : 'text-tk-error'}`}>
+                  <TrendingUp size={12} className="mr-1" style={todayChange < 0 ? { transform: 'rotate(180deg)' } : undefined} />
+                  <span>{Math.abs(todayChange)}%</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3: Revenue This Week */}
+            <div className="bg-tk-bg-card p-3 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="text-xs text-tk-text-secondary font-medium">Revenue This Week</h3>
+                <div className="w-7 h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
+                  <TrendingUp size={14} />
+                </div>
+              </div>
+              <div className="flex justify-between items-end">
+                <div className="text-[20px] font-bold text-tk-text">₹{isLoading ? '...' : revenueThisWeek.toLocaleString()}</div>
+                <div className={`flex items-center text-[11px] font-medium ${weekChange >= 0 ? 'text-tk-success' : 'text-tk-error'}`}>
+                  <TrendingUp size={12} className="mr-1" style={weekChange < 0 ? { transform: 'rotate(180deg)' } : undefined} />
+                  <span>{Math.abs(weekChange)}%</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 4: Out of Stock */}
+            <div className="bg-tk-bg-card p-3 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="text-xs text-tk-text-secondary font-medium">Out of Stock Items</h3>
+                <div className="w-7 h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
+                  <X size={14} />
+                </div>
+              </div>
+              <div className="flex justify-between items-end">
+                <div className="text-[20px] font-bold text-tk-text">{isLoading ? '...' : outOfStockItems.length}</div>
+                <div className="flex items-center text-[11px] font-medium text-tk-error">
+                  <TrendingUp size={12} className="mr-1" style={{ transform: 'rotate(180deg)' }} />
+                  <span>Need restock</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-6 mb-8 max-md:grid-cols-1 max-lg:grid-cols-2">
-          <div className="bg-tk-bg-card p-3 rounded-[20px] border-[1.5px] border-tk-border relative overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#8B3A1E] to-[#D4816B]"></div>
-            <h3 className="text-sm text-tk-text-secondary mb-3 font-medium mt-1">Revenue Today</h3>
-            <div className="text-[28px] font-bold text-tk-text mb-3">₹ {isLoading ? '...' : revenueToday.toLocaleString()}</div>
-            <div className="flex items-center text-[13px] mb-1">
-              <span className={`text-[12px] font-medium ${todayChange >= 0 ? 'text-[#68D391]' : 'text-[#E53E3E]'}` } style={{ color: todayChange < 0 ? '#E53E3E' : undefined }}>
-                {todayChange > 0 ? '+' : ''}{todayChange}% vs yesterday
-              </span>
-              <TrendingUp size={16} color={todayChange >= 0 ? "#68D391" : "#E53E3E"} className="ml-auto" style={todayChange < 0 ? { transform: 'rotate(180deg)' } : undefined} />
-            </div>
-          </div>
-
-          <div className="bg-tk-bg-card p-3 rounded-[20px] border-[1.5px] border-tk-border relative overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] max-lg:hidden">
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#5C7A7A] to-[#8AABAB]"></div>
-            <h3 className="text-sm text-tk-text-secondary mb-3 font-medium mt-1">Revenue This Week</h3>
-            <div className="text-[28px] font-bold text-tk-text mb-3">₹ {isLoading ? '...' : revenueThisWeek.toLocaleString()}</div>
-            <div className="flex items-center text-[13px] mb-1">
-              <span className={`text-[12px] font-medium ${weekChange >= 0 ? 'text-[#7F9CF5]' : 'text-[#E53E3E]'}` } style={{ color: weekChange < 0 ? '#E53E3E' : undefined }}>
-                {weekChange > 0 ? '+' : ''}{weekChange}% vs last week
-              </span>
-              <TrendingUp size={16} color={weekChange >= 0 ? "#7F9CF5" : "#E53E3E"} className="ml-auto" style={weekChange < 0 ? { transform: 'rotate(180deg)' } : undefined} />
-            </div>
-          </div>
-          <div className="bg-tk-bg-card p-3 rounded-[20px] border-[1.5px] border-tk-border relative overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] max-md:hidden">
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#E53E3E] to-[#FC8181]" style={{ background: 'linear-gradient(to right, #E53E3E, #FC8181)' }}></div>
-            <h3 className="text-sm text-tk-text-secondary mb-3 font-medium mt-1">Out of Stock Items</h3>
-            <div className="text-[28px] font-bold text-tk-text mb-3" style={{ color: outOfStockItems.length > 0 ? '#E53E3E' : 'var(--tk-text)' }}>
-              {isLoading ? '...' : outOfStockItems.length}
-            </div>
-            <div className="flex items-center text-[13px] mb-1">
-              <span className="text-[12px] font-medium" style={{ color: 'var(--tk-text-muted)' }}>
-                Need restocking
-              </span>
-            </div>
-          </div>
+        {/* Tabs */}
+        <div className="flex border-b border-tk-border mb-6 gap-8 overflow-x-auto hide-scrollbar">
+          {tabs.map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`pb-3 text-sm font-semibold whitespace-nowrap transition-colors duration-200 ${
+                activeTab === tab 
+                  ? 'text-tk-burgundy border-b-2 border-tk-burgundy' 
+                  : 'text-tk-text-secondary hover:text-tk-text'
+              }`}
+            >
+              {tab} <span className="ml-1 opacity-75">({tabCounts[tab]})</span>
+            </button>
+          ))}
         </div>
 
-        <div className="grid grid-cols-1 gap-6">
-          <div>
-            <div className="bg-tk-bg-card p-3 rounded-[20px] border-[1.5px] border-tk-border">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-[18px] font-semibold text-tk-text">Active Orders</h2>
-                <button className="px-4 py-2 bg-tk-burgundy text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all duration-300 font-['Outfit'] shadow-[0_4px_12px_rgba(139,58,30,0.2)] hover:-translate-y-0.5 hover:bg-tk-burgundy-dark hover:shadow-[0_6px_20px_rgba(139,58,30,0.3)]" onClick={() => setShowAllOrders(true)}>View All</button>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full border-separate [border-spacing:0_8px]">
-                  <thead>
-                    <tr className="transition-colors duration-200 hover:bg-tk-bg-hover group">
-                      <th className="text-left p-4 text-sm font-semibold text-tk-text-secondary border-b-2 border-tk-border whitespace-nowrap">Order ID</th>
-                      <th className="text-left p-4 text-sm font-semibold text-tk-text-secondary border-b-2 border-tk-border whitespace-nowrap">Table</th>
-                      <th className="text-left p-4 text-sm font-semibold text-tk-text-secondary border-b-2 border-tk-border whitespace-nowrap">Ordered Time</th>
-                      <th className="text-left p-4 text-sm font-semibold text-tk-text-secondary border-b-2 border-tk-border whitespace-nowrap">Status</th>
-                      <th className="text-left p-4 text-sm font-semibold text-tk-text-secondary border-b-2 border-tk-border whitespace-nowrap">Payment</th>
-                      <th className="text-left p-4 text-sm font-semibold text-tk-text-secondary border-b-2 border-tk-border whitespace-nowrap">Customer</th>
-                      <th className="text-left p-4 text-sm font-semibold text-tk-text-secondary border-b-2 border-tk-border whitespace-nowrap">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {isLoading ? (
-                      <tr className="transition-colors duration-200 hover:bg-tk-bg-hover group"><td className="p-4 text-sm text-tk-text" colSpan={7} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>Loading active orders...</td></tr>
-                    ) : activeOrders.length === 0 ? (
-                      <tr className="transition-colors duration-200 hover:bg-tk-bg-hover group"><td className="p-4 text-sm text-tk-text" colSpan={7} style={{ textAlign: 'center', padding: '32px', color: '#A0AEC0' }}>No active orders</td></tr>
-                    ) : activeOrders.slice(0, 5).map((order, idx) => (
-                      <tr key={idx} className="transition-colors duration-200 hover:bg-tk-bg-hover group">
-                        <td className="p-4 text-sm text-tk-text" onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }} data-label="Order ID">
-                          {order.orderNumber}
-                        </td>
-                        <td className="p-4 text-sm text-tk-text" onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }} data-label="Table">
-                          {order.table}
-                        </td>
-                        <td className="p-4 text-sm text-tk-text" onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }} data-label="Ordered Time">
-                          {order.time}
-                        </td>
-                        <td className="p-4 text-sm text-tk-text" onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }} data-label="Status">
-                          <span className={`inline-block px-2 py-1 rounded-lg text-xs font-semibold ${order.statusColor === 'Ready' || order.statusColor === 'ready' ? 'bg-tk-burgundy text-white' : order.statusColor === 'Preparing' || order.statusColor === 'preparing' ? 'bg-[#FEEA9A] text-[#744210]' : 'bg-[#90CDF4] text-[#2C5282]'}` }>
-                            {order.status}
-                          </span>
-                        </td>
-                        <td className="p-4 text-sm text-tk-text" style={{ cursor: 'pointer' }} data-label="Payment">
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span 
-                              className={`inline-block px-2 py-1 rounded-lg text-xs font-semibold ${order.isPaid ? 'bg-[#C6F6D5] text-[#22543D]' : 'bg-[#FEF2F2] text-[#EF4444]'}` } 
-                              onClick={() => setSelectedOrder(order)}
-                            >
-                              {order.isPaid ? 'Paid' : 'Pending'}
-                            </span>
-                            {!order.isPaid && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handlePaymentComplete(order.id);
-                                }}
-                                className="p-1.5 bg-[#C6F6D5] text-[#22543D] border-none rounded-lg cursor-pointer transition-all duration-200 hover:bg-[#68D391] hover:-translate-y-[1px] hover:shadow-[0_4px_8px_rgba(104,211,145,0.4)] flex items-center justify-center"
-                                title="Mark Paid"
-                              >
-                                <CheckCircle size={16} />
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                        <td className="p-4 text-sm text-tk-text" onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }} data-label="Customer">
-                          {order.customer}
-                        </td>
-                        <td className="p-4 text-sm text-tk-text" data-label="Action">
-                          <div style={{ display: 'flex', gap: '8px' }}>
-                            {order.status !== 'Ready' && (
-                              <button
-                                className="px-3 py-1.5 bg-[#C6F6D5] text-[#22543D] border-none rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 font-['Outfit'] hover:bg-[#68D391] hover:-translate-y-[1px] hover:shadow-[0_4px_8px_rgba(104,211,145,0.4)]"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleMarkReady(order.id);
-                                }}
-                              >
-                                Ready
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div className="bg-tk-bg-card p-3 rounded-[16px] border-[1.5px] border-tk-border mt-4">
-              <div className="flex justify-between items-center mb-3">
-                <h2 className="text-[16px] font-semibold text-tk-text">Completed Orders</h2>
-                <button className="px-3 py-1.5 bg-tk-burgundy text-white border-none rounded-md text-xs font-semibold cursor-pointer transition-all duration-300 font-['Outfit'] shadow-[0_4px_12px_rgba(139,58,30,0.2)] hover:-translate-y-0.5 hover:bg-tk-burgundy-dark hover:shadow-[0_6px_20px_rgba(139,58,30,0.3)]" onClick={() => setShowAllCompleted(true)}>View All</button>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full border-separate [border-spacing:0_4px]">
-                  <thead>
-                    <tr className="transition-colors duration-200 hover:bg-tk-bg-hover group">
-                      <th className="text-left px-3 py-2 text-xs font-semibold text-tk-text-secondary border-b border-tk-border whitespace-nowrap">Order ID</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold text-tk-text-secondary border-b border-tk-border whitespace-nowrap">Table</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold text-tk-text-secondary border-b border-tk-border whitespace-nowrap">Ordered Time</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold text-tk-text-secondary border-b border-tk-border whitespace-nowrap">Status</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold text-tk-text-secondary border-b border-tk-border whitespace-nowrap">Payment</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold text-tk-text-secondary border-b border-tk-border whitespace-nowrap">Customer</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {isLoading ? (
-                      <tr className="transition-colors duration-200 hover:bg-tk-bg-hover group"><td className="px-3 py-2 text-xs text-tk-text" colSpan={6} style={{ textAlign: 'center', padding: '24px', color: '#A0AEC0' }}>Loading completed orders...</td></tr>
-                    ) : completedOrders.length === 0 ? (
-                      <tr className="transition-colors duration-200 hover:bg-tk-bg-hover group">
-                        <td className="px-3 py-2 text-xs text-tk-text" colSpan={6} style={{ textAlign: 'center', padding: '24px', color: '#A0AEC0' }}>
-                          No completed orders yet
-                        </td>
-                      </tr>
-                    ) : (
-                      completedOrders.slice(0, 5).map((order, idx) => (
-                        <tr key={idx} className="transition-colors duration-200 hover:bg-tk-bg-hover group">
-                          <td className="px-3 py-2 text-xs text-tk-text" onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }} data-label="Order ID">
-                            {order.orderNumber}
-                          </td>
-                          <td className="px-3 py-2 text-xs text-tk-text" onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }} data-label="Table">
-                            {order.table}
-                          </td>
-                          <td className="px-3 py-2 text-xs text-tk-text" onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }} data-label="Ordered Time">
-                            {order.time}
-                          </td>
-                          <td className="px-3 py-2 text-xs text-tk-text" onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }} data-label="Status">
-                            <span className={`inline-block px-2 py-1 rounded-lg text-xs font-semibold ${order.statusColor === 'Ready' || order.statusColor === 'ready' ? 'bg-tk-burgundy text-white' : order.statusColor === 'Preparing' || order.statusColor === 'preparing' ? 'bg-[#FEEA9A] text-[#744210]' : 'bg-[#90CDF4] text-[#2C5282]'}` }>
-                              {order.status}
-                            </span>
-                          </td>
-                          <td className="p-4 text-sm text-tk-text" style={{ cursor: 'pointer' }} data-label="Payment">
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <span 
-                                className={`inline-block px-2 py-1 rounded-lg text-xs font-semibold ${order.isPaid ? 'bg-[#C6F6D5] text-[#22543D]' : 'bg-[#FEF2F2] text-[#EF4444]'}` } 
-                                onClick={() => setSelectedOrder(order)}
-                              >
-                                {order.isPaid ? 'Paid' : 'Pending'}
-                              </span>
-                              {!order.isPaid && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handlePaymentComplete(order.id);
-                                  }}
-                                  className="p-1.5 bg-[#C6F6D5] text-[#22543D] border-none rounded-lg cursor-pointer transition-all duration-200 hover:bg-[#68D391] hover:-translate-y-[1px] hover:shadow-[0_4px_8px_rgba(104,211,145,0.4)] flex items-center justify-center"
-                                  title="Mark Paid"
-                                >
-                                  <CheckCircle size={16} />
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                          <td className="p-4 text-sm text-tk-text" onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }} data-label="Customer">
-                            {order.customer}
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
+        {/* Table */}
+        <div className="bg-tk-bg-card rounded-[12px] border-[1.5px] border-tk-border overflow-x-auto shadow-sm">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-tk-bg-hover">
+                <th className="py-4 px-6 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border">Order ID</th>
+                <th className="py-4 px-6 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border">Table</th>
+                <th className="py-4 px-6 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border">Date & Time</th>
+                <th className="py-4 px-6 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border">Amount</th>
+                <th className="py-4 px-6 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border">Payment</th>
+                <th className="py-4 px-6 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border">Customer</th>
+                <th className="py-4 px-6 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border">Status</th>
+                <th className="py-4 px-6 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={8} className="py-8 text-center text-tk-text-secondary text-sm">Loading orders...</td>
+                </tr>
+              ) : filteredOrders().length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-8 text-center text-tk-text-secondary text-sm">No orders found for this category.</td>
+                </tr>
+              ) : (
+                filteredOrders().map((order, idx) => (
+                  <tr key={idx} className="border-b border-tk-border last:border-b-0 hover:bg-tk-bg-hover transition-colors group">
+                    <td className="py-4 px-6 text-sm text-tk-text font-medium cursor-pointer" onClick={() => setSelectedOrder(order)}>
+                      {order.orderNumber}
+                    </td>
+                    <td className="py-4 px-6 text-sm text-tk-text cursor-pointer" onClick={() => setSelectedOrder(order)}>
+                      {order.table}
+                    </td>
+                    <td className="py-4 px-6 text-sm text-tk-text cursor-pointer" onClick={() => setSelectedOrder(order)}>
+                      {order.time}
+                    </td>
+                    <td className="py-4 px-6 text-sm text-tk-text font-medium cursor-pointer" onClick={() => setSelectedOrder(order)}>
+                      ₹ {order.total}
+                    </td>
+                    <td className="py-4 px-6 text-sm">
+                      <div className="flex items-center gap-2">
+                        <span 
+                          className={`inline-flex px-2.5 py-1 rounded-md text-xs font-semibold cursor-pointer ${order.isPaid ? 'bg-[#C6F6D5] text-[#22543D]' : 'bg-[#FEF2F2] text-[#E53E3E]'}`}
+                          onClick={() => setSelectedOrder(order)}
+                        >
+                          {order.isPaid ? 'Paid' : 'Pending'}
+                        </span>
+                        {!order.isPaid && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handlePaymentComplete(order.id);
+                            }}
+                            className="p-1.5 bg-[#C6F6D5] text-[#22543D] rounded-md hover:bg-[#9AE6B4] transition-colors"
+                            title="Mark Paid"
+                          >
+                            <CheckCircle size={14} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-4 px-6 text-sm text-tk-text cursor-pointer" onClick={() => setSelectedOrder(order)}>
+                      {order.customer}
+                    </td>
+                    <td className="py-4 px-6 text-sm cursor-pointer" onClick={() => setSelectedOrder(order)}>
+                      <span className={`inline-flex px-2.5 py-1 rounded-md text-xs font-semibold ${
+                        order.statusColor === 'Ready' || order.statusColor === 'ready' 
+                          ? 'bg-tk-burgundy text-white' 
+                          : order.statusColor === 'Preparing' || order.statusColor === 'preparing' 
+                            ? 'bg-[#FEEA9A] text-[#744210]' 
+                            : 'bg-[#90CDF4] text-[#2C5282]'
+                      }`}>
+                        {order.status}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6 text-sm">
+                      <div className="flex gap-2 items-center">
+                        {order.status !== 'Ready' && order.status !== 'Completed' && order.status !== 'Cancelled' && (
+                          <button
+                            className="px-3 py-1.5 bg-tk-burgundy text-white rounded-md text-xs font-semibold hover:bg-tk-burgundy-dark transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleMarkReady(order.id);
+                            }}
+                          >
+                            Ready
+                          </button>
+                        )}
+                        <button className="p-1 text-tk-text-secondary hover:text-tk-text transition-colors">
+                          <MoreVertical size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
-
 
       {selectedOrder && (
         <OrderDetailsDialog
           order={selectedOrder}
           onClose={() => setSelectedOrder(null)}
           onMarkReady={handleMarkReady}
-        />
-      )}
-
-      {showAllOrders && (
-        <AllOrdersDialog
-          orders={activeOrders}
-          onClose={() => setShowAllOrders(false)}
-          onSelectOrder={setSelectedOrder}
-          onMarkReady={handleMarkReady}
-          onMarkPaid={handlePaymentComplete}
-          showAction={true}
-        />
-      )}
-
-      {showAllCompleted && (
-        <AllOrdersDialog
-          orders={completedOrders}
-          onClose={() => setShowAllCompleted(false)}
-          onSelectOrder={setSelectedOrder}
-          onMarkReady={() => { }}
-          onMarkPaid={() => { }}
-          showAction={false}
         />
       )}
     </div>

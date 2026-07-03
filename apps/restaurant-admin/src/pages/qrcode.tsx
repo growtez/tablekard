@@ -84,7 +84,7 @@ const QRCodePage: React.FC = () => {
                 <div className="flex justify-between items-start mb-7 flex-wrap gap-4 max-md:flex-col">
                     <div>
                         <h1 className="text-[32px] font-bold text-[#1A202C] m-0 mb-1 max-md:text-2xl">QR Code Generator</h1>
-                        <p className="text-sm text-[#718096] m-0">
+                        <p className="text-sm text-[#4A5568] m-0">
                             Generate QR codes for your tables. Customers scan to open the menu.
                         </p>
                     </div>
@@ -124,7 +124,7 @@ const QRCodePage: React.FC = () => {
 
                 {/* States */}
                 {loading && (
-                    <div className="flex flex-col items-center justify-center gap-4 py-20 px-8 text-[#718096] text-center">
+                    <div className="flex flex-col items-center justify-center gap-4 py-20 px-8 text-[#4A5568] text-center">
                         <div className="w-10 h-10 border-4 border-[#E2E8F0] border-t-tk-burgundy rounded-full animate-spin"></div>
                         <p>Loading tables...</p>
                     </div>
@@ -139,10 +139,10 @@ const QRCodePage: React.FC = () => {
                 )}
 
                 {!loading && !error && tables.length === 0 && (
-                    <div className="flex flex-col items-center justify-center gap-4 py-20 px-8 text-[#718096] text-center">
+                    <div className="flex flex-col items-center justify-center gap-4 py-20 px-8 text-[#4A5568] text-center">
                         <QrCode size={64} color="#CBD5E0" />
                         <p className="text-xl font-semibold text-[#4A5568] m-0">No tables found</p>
-                        <p className="text-sm text-[#A0AEC0] max-w-[300px] m-0">Add tables to your restaurant to generate QR codes.</p>
+                        <p className="text-sm text-[#718096] max-w-[300px] m-0">Add tables to your restaurant to generate QR codes.</p>
                     </div>
                 )}
 
@@ -177,7 +177,7 @@ const QRCodePage: React.FC = () => {
                                     </div>
 
                                     <div className="w-full flex flex-col gap-2.5 items-center">
-                                        <div className="flex gap-3 text-xs text-[#718096] font-medium">
+                                        <div className="flex gap-3 text-xs text-[#4A5568] font-medium">
                                             <span className="qr-capacity">👥 Capacity: {table.capacity}</span>
                                         </div>
                                         <div className="flex gap-2.5 w-full">

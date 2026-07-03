@@ -205,9 +205,9 @@ const SubscriptionPage: React.FC = () => {
             <div className="flex min-h-screen bg-tk-bg text-[#1A202C]">
                 <Sidebar />
         <div className="tk-main-content flex-1 p-5 overflow-y-auto min-h-screen transition-all duration-300 ml-[240px] max-md:!ml-0 max-md:!p-4 max-md:!pt-[72px] bg-tk-bg-surface">
-                    <div className="flex flex-col items-center justify-center h-[60vh] gap-4 text-[#718096] dark:text-tk-text-secondary">
+                    <div className="flex flex-col items-center justify-center h-[60vh] gap-4 text-[#4A5568] dark:text-tk-text-secondary">
                         <div className="w-9 h-9 border-3 border-[#E2E8F0] border-t-tk-burgundy rounded-full animate-spin" />
-                        <p className="text-[0.9rem] text-[#718096] dark:text-tk-text-secondary">Loading subscription information...</p>
+                        <p className="text-[0.9rem] text-[#4A5568] dark:text-tk-text-secondary">Loading subscription information...</p>
                     </div>
                 </div>
             </div>
@@ -222,7 +222,7 @@ const SubscriptionPage: React.FC = () => {
                 {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-[24px] font-bold text-[#1A202C] m-0 mb-1 dark:text-tk-text">Subscription</h1>
-                    <p className="text-[0.925rem] text-[#718096] m-0 dark:text-tk-text-secondary">Manage your restaurant's subscription plan and billing.</p>
+                    <p className="text-[0.925rem] text-[#4A5568] m-0 dark:text-tk-text-secondary">Manage your restaurant's subscription plan and billing.</p>
                 </div>
 
                 {/* Feedback */}
@@ -246,13 +246,13 @@ const SubscriptionPage: React.FC = () => {
                                     {statusInfo.label}
                                 </span>
                             </h3>
-                            <p className="text-[0.875rem] text-[#718096] m-0 dark:text-tk-text-secondary">{statusInfo.message}</p>
+                            <p className="text-[0.875rem] text-[#4A5568] m-0 dark:text-tk-text-secondary">{statusInfo.message}</p>
                         </div>
                     </div>
                     {statusInfo.status === 'active' && (
                         <div className="flex flex-col items-end gap-2 max-md:items-start max-md:flex-row">
                             <div className="text-2xl font-bold text-[#1A202C] leading-none dark:text-tk-text">{days}</div>
-                            <div className="text-[0.8rem] text-[#718096] uppercase tracking-[0.05em] dark:text-tk-text-secondary">Days Remaining</div>
+                            <div className="text-[0.8rem] text-[#4A5568] uppercase tracking-[0.05em] dark:text-tk-text-secondary">Days Remaining</div>
                         </div>
                     )}
                 </div>
@@ -273,11 +273,11 @@ const SubscriptionPage: React.FC = () => {
                                 {selectedPlan === plan.duration && (
                                     <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-tk-burgundy flex items-center justify-center text-white text-[0.75rem]">✓</div>
                                 )}
-                                <div className="text-[0.85rem] font-semibold text-[#718096] mb-3 uppercase tracking-[0.04em] dark:text-tk-text-secondary">{plan.label}</div>
+                                <div className="text-[0.85rem] font-semibold text-[#4A5568] mb-3 uppercase tracking-[0.04em] dark:text-tk-text-secondary">{plan.label}</div>
                                 <div className="text-3xl font-extrabold text-[#1A202C] mb-1 leading-[1.1] dark:text-tk-text max-md:text-[1.5rem]">
                                     ₹{plan.price.toLocaleString('en-IN')}
                                 </div>
-                                <div className="text-[0.825rem] text-[#718096] mb-3 dark:text-tk-text-secondary">
+                                <div className="text-[0.825rem] text-[#4A5568] mb-3 dark:text-tk-text-secondary">
                                     ₹{plan.perMonth}/month
                                 </div>
                                 {plan.savings > 0 && (
@@ -315,7 +315,7 @@ const SubscriptionPage: React.FC = () => {
                     <h2 className="text-[18px] font-semibold text-[#1A202C] m-0 mb-4 dark:text-tk-text">Payment History</h2>
                     <div className="bg-white border border-[#E2E8F0] rounded-3xl overflow-hidden shadow-[0_4px_16px_rgba(0,0,0,0.06)] dark:bg-tk-bg-card dark:border-tk-border">
                         {payments.length === 0 ? (
-                            <div className="p-10 text-center text-[#718096] text-[0.9rem] dark:text-tk-text-secondary">
+                            <div className="p-10 text-center text-[#4A5568] text-[0.9rem] dark:text-tk-text-secondary">
                                 No subscription payments yet.
                             </div>
                         ) : (
@@ -323,11 +323,11 @@ const SubscriptionPage: React.FC = () => {
                                 <table className="w-full border-collapse">
                                     <thead>
                                         <tr>
-                                            <th className="text-left px-5 py-3.5 text-[0.8rem] font-semibold text-[#718096] uppercase tracking-[0.05em] border-b-2 border-[#E2E8F0] bg-[#F7FAFC] dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text-secondary">Date</th>
-                                            <th className="text-left px-5 py-3.5 text-[0.8rem] font-semibold text-[#718096] uppercase tracking-[0.05em] border-b-2 border-[#E2E8F0] bg-[#F7FAFC] dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text-secondary">Plan</th>
-                                            <th className="text-left px-5 py-3.5 text-[0.8rem] font-semibold text-[#718096] uppercase tracking-[0.05em] border-b-2 border-[#E2E8F0] bg-[#F7FAFC] dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text-secondary">Amount</th>
-                                            <th className="text-left px-5 py-3.5 text-[0.8rem] font-semibold text-[#718096] uppercase tracking-[0.05em] border-b-2 border-[#E2E8F0] bg-[#F7FAFC] dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text-secondary">Period</th>
-                                            <th className="text-left px-5 py-3.5 text-[0.8rem] font-semibold text-[#718096] uppercase tracking-[0.05em] border-b-2 border-[#E2E8F0] bg-[#F7FAFC] dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text-secondary">Status</th>
+                                            <th className="text-left px-5 py-3.5 text-[0.8rem] font-semibold text-[#4A5568] uppercase tracking-[0.05em] border-b-2 border-[#E2E8F0] bg-[#F7FAFC] dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text-secondary">Date</th>
+                                            <th className="text-left px-5 py-3.5 text-[0.8rem] font-semibold text-[#4A5568] uppercase tracking-[0.05em] border-b-2 border-[#E2E8F0] bg-[#F7FAFC] dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text-secondary">Plan</th>
+                                            <th className="text-left px-5 py-3.5 text-[0.8rem] font-semibold text-[#4A5568] uppercase tracking-[0.05em] border-b-2 border-[#E2E8F0] bg-[#F7FAFC] dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text-secondary">Amount</th>
+                                            <th className="text-left px-5 py-3.5 text-[0.8rem] font-semibold text-[#4A5568] uppercase tracking-[0.05em] border-b-2 border-[#E2E8F0] bg-[#F7FAFC] dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text-secondary">Period</th>
+                                            <th className="text-left px-5 py-3.5 text-[0.8rem] font-semibold text-[#4A5568] uppercase tracking-[0.05em] border-b-2 border-[#E2E8F0] bg-[#F7FAFC] dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text-secondary">Status</th>
                                         </tr>
                                     </thead>
                                     <tbody>

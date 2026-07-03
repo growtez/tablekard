@@ -259,7 +259,7 @@ const Order: React.FC = () => {
         <div className="flex justify-between items-start mb-6 max-md:flex-col max-md:gap-3 max-md:mt-4">
           <div>
             <h1 className="text-[26px] font-bold text-[#0F172A] m-0 max-md:ml-16 dark:text-tk-text">Orders</h1>
-            <p className="text-[13px] text-[#94A3B8] mt-1 mb-0 dark:text-tk-text-secondary max-md:ml-16">Manage and track all your restaurant orders</p>
+            <p className="text-[13px] text-[#475569] mt-1 mb-0 dark:text-tk-text-secondary max-md:ml-16">Manage and track all your restaurant orders</p>
           </div>
           <div className="flex items-center gap-3 max-md:w-full">
             <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl border-[1.5px] border-[#E2E8F0] w-[240px] transition-all duration-200 focus-within:border-tk-burgundy focus-within:shadow-[0_0_0_3px_rgba(139,58,30,0.06)] max-md:w-full dark:bg-tk-bg-card dark:border-tk-border">
@@ -267,7 +267,7 @@ const Order: React.FC = () => {
               <input
                 type="text"
                 placeholder="Search orders..."
-                className="border-none outline-none text-[13px] text-[#0F172A] bg-transparent w-full placeholder:text-[#CBD5E1] dark:text-tk-text dark:placeholder:text-tk-text-muted"
+                className="border-none outline-none text-[13px] text-[#0F172A] bg-transparent w-full placeholder:text-[#94A3B8] dark:text-tk-text dark:placeholder:text-tk-text-muted"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -279,7 +279,7 @@ const Order: React.FC = () => {
         <div className="grid grid-cols-2 gap-6 mb-8 max-md:grid-cols-1">
           <div className="bg-white p-6 rounded-[24px] shadow-[0_4px_16px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.02)] relative overflow-hidden transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] border-[1.5px] border-transparent dark:bg-tk-bg-card dark:border-tk-border">
             <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#8B3A1E] to-[#D4816B]"></div>
-            <h3 className="text-sm text-[#718096] mb-3 font-medium mt-1 normal-case tracking-normal dark:text-tk-text-secondary">Total Orders Today</h3>
+            <h3 className="text-sm text-[#4A5568] mb-3 font-medium mt-1 normal-case tracking-normal dark:text-tk-text-secondary">Total Orders Today</h3>
             <div className="text-4xl font-bold text-[#1A202C] mb-3 dark:text-tk-text">{loadingRevenue ? '...' : stats.today}</div>
             <div className="flex items-center text-[13px]">
               <span
@@ -298,7 +298,7 @@ const Order: React.FC = () => {
 
           <div className="bg-white p-6 rounded-[24px] shadow-[0_4px_16px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.02)] relative overflow-hidden transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] border-[1.5px] border-transparent dark:bg-tk-bg-card dark:border-tk-border">
             <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#5C7A7A] to-[#8AABAB]"></div>
-            <h3 className="text-sm text-[#718096] mb-3 font-medium mt-1 normal-case tracking-normal dark:text-tk-text-secondary">Total Orders This Week</h3>
+            <h3 className="text-sm text-[#4A5568] mb-3 font-medium mt-1 normal-case tracking-normal dark:text-tk-text-secondary">Total Orders This Week</h3>
             <div className="text-4xl font-bold text-[#1A202C] mb-3 dark:text-tk-text">{loadingRevenue ? '...' : stats.week}</div>
             <div className="flex items-center text-[13px]">
               <span
@@ -320,7 +320,7 @@ const Order: React.FC = () => {
         <div className="flex items-center justify-between gap-3 mb-5 flex-wrap">
           <div className="flex gap-2 items-center flex-wrap max-md:flex-col max-md:w-full max-md:items-stretch">
             <div className="relative flex items-center max-md:w-full">
-              <Calendar size={14} className="absolute left-3 text-[#94A3B8] pointer-events-none z-[1]" />
+              <Calendar size={14} className="absolute left-3 text-[#475569] pointer-events-none z-[1]" />
               <select
                 className="px-3 py-2 pl-8 bg-white border-[1.5px] border-[#E2E8F0] rounded-lg text-[13px] font-medium text-[#334155] cursor-pointer outline-none transition-colors duration-200 focus:border-tk-burgundy max-md:w-full dark:bg-tk-bg-card dark:border-tk-border dark:text-tk-text appearance-none pr-8 bg-[url('data:image/svg+xml,%3Csvg_xmlns=%22http://www.w3.org/2000/svg%22_width=%2210%22_height=%2210%22_viewBox=%220_0_24_24%22_fill=%22none%22_stroke=%22%2394A3B8%22_stroke-width=%223%22_stroke-linecap=%22round%22_stroke-linejoin=%22round%22%3E%3Cpath_d=%22m6_9_6_6_6-6%22/%3E%3C/svg%3E')] bg-no-repeat bg-[position:right_10px_center]"
                 value={selectedDateRange}
@@ -416,7 +416,7 @@ const Order: React.FC = () => {
         <div className="bg-white rounded-2xl border border-[#EEF2F6] p-6 dark:bg-tk-bg-card dark:border-tk-border">
           <div className="flex justify-between items-center mb-5">
             <h2 className="text-lg font-semibold text-[#0F172A] m-0 dark:text-tk-text">All Orders</h2>
-            <span className="text-xs text-[#94A3B8] font-medium bg-[#F1F5F9] px-3 py-1 rounded-full dark:bg-tk-bg-hover dark:text-tk-text-secondary">{filteredOrders.length} order{filteredOrders.length !== 1 ? 's' : ''}</span>
+            <span className="text-xs text-[#475569] font-medium bg-[#F1F5F9] px-3 py-1 rounded-full dark:bg-tk-bg-hover dark:text-tk-text-secondary">{filteredOrders.length} order{filteredOrders.length !== 1 ? 's' : ''}</span>
           </div>
 
           {loading ? (
@@ -427,9 +427,9 @@ const Order: React.FC = () => {
             </div>
           ) : filteredOrders.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-[60px_20px] text-center">
-              <Package size={48} className="text-[#CBD5E1] dark:text-tk-text-muted" />
+              <Package size={48} className="text-[#94A3B8] dark:text-tk-text-muted" />
               <h3 className="text-base font-semibold text-[#475569] mt-4 mb-1 dark:text-tk-text">No orders found</h3>
-              <p className="text-[13px] text-[#94A3B8] m-0 dark:text-tk-text-secondary">Try adjusting your filters or search query</p>
+              <p className="text-[13px] text-[#475569] m-0 dark:text-tk-text-secondary">Try adjusting your filters or search query</p>
             </div>
           ) : (
             <>
@@ -464,7 +464,7 @@ const Order: React.FC = () => {
                     <div className="flex justify-between items-center pt-3.5 px-4 pb-0">
                       <div className="flex items-center gap-2.5">
                         <span className="text-[13px] font-bold text-[#0F172A] dark:text-tk-text">{order.orderNumber}</span>
-                        <span className="text-[11px] text-[#94A3B8] font-medium dark:text-tk-text-secondary">{order.time}</span>
+                        <span className="text-[11px] text-[#475569] font-medium dark:text-tk-text-secondary">{order.time}</span>
                       </div>
                       <div onClick={(e) => e.stopPropagation()}>
                         <select
@@ -484,20 +484,20 @@ const Order: React.FC = () => {
                     <div className="pt-2.5 px-4 pb-0">
                       <div className="text-[15px] font-semibold text-[#1E293B] mb-1.5 dark:text-tk-text">{order.customerName}</div>
                       <div className="flex gap-1.5 flex-wrap">
-                        <span className="inline-flex items-center text-[10px] font-semibold text-[#64748B] bg-[#F1F5F9] py-0.5 px-2 rounded-[5px] capitalize dark:bg-tk-bg-hover dark:text-tk-text-secondary">{order.table}</span>
+                        <span className="inline-flex items-center text-[10px] font-semibold text-[#334155] bg-[#F1F5F9] py-0.5 px-2 rounded-[5px] capitalize dark:bg-tk-bg-hover dark:text-tk-text-secondary">{order.table}</span>
                         <span className="inline-flex items-center text-[10px] font-semibold bg-[#EEF2FF] text-[#4338CA] py-0.5 px-2 rounded-[5px] capitalize dark:bg-[rgba(67,56,202,0.2)] dark:text-[#818CF8]">{order.orderType?.replace('_', ' ')}</span>
                       </div>
                     </div>
 
                     {/* Items preview */}
-                    <div className="px-4 py-2 text-xs text-[#94A3B8] leading-[1.4] whitespace-nowrap overflow-hidden text-ellipsis border-t border-dashed border-[#F1F5F9] mt-2 dark:text-tk-text-secondary dark:border-tk-border dark:border-t-solid" title={order.items}>
+                    <div className="px-4 py-2 text-xs text-[#475569] leading-[1.4] whitespace-nowrap overflow-hidden text-ellipsis border-t border-dashed border-[#F1F5F9] mt-2 dark:text-tk-text-secondary dark:border-tk-border dark:border-t-solid" title={order.items}>
                       {order.items}
                     </div>
 
                     {/* Card footer: payment + total + action */}
                     <div className="flex justify-between items-center py-2.5 px-4 pb-3.5 border-t border-solid border-[#F8FAFC] dark:border-tk-border">
                       <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                        <span className="text-[13px] font-semibold text-[#64748B] bg-[#F8FAFC] py-1.5 px-2.5 rounded-md capitalize dark:bg-tk-bg-hover dark:text-tk-text-secondary">{order.paymentMethod}</span>
+                        <span className="text-[13px] font-semibold text-[#334155] bg-[#F8FAFC] py-1.5 px-2.5 rounded-md capitalize dark:bg-tk-bg-hover dark:text-tk-text-secondary">{order.paymentMethod}</span>
                         <select
                           className={`text-[13px] font-bold py-1.5 pr-6 pl-3 rounded-lg border-none cursor-pointer appearance-none bg-[url('data:image/svg+xml,%3Csvg_xmlns=%22http://www.w3.org/2000/svg%22_width=%2210%22_height=%2210%22_viewBox=%220_0_24_24%22_fill=%22none%22_stroke=%22currentColor%22_stroke-width=%223%22_stroke-linecap=%22round%22_stroke-linejoin=%22round%22%3E%3Cpath_d=%22m6_9_6_6_6-6%22/%3E%3C/svg%3E')] bg-no-repeat bg-[position:right_10px_center] outline-none dark:bg-tk-bg-card dark:border-tk-border ${paymentStatusColorClass}`}
                           value={order.paymentStatus}
@@ -518,7 +518,7 @@ const Order: React.FC = () => {
               })}
             </div>
             {visibleCount < filteredOrders.length && (
-              <div ref={loadMoreRef} className="text-center p-6 text-[#94A3B8] text-[13px]">
+              <div ref={loadMoreRef} className="text-center p-6 text-[#475569] text-[13px]">
                 Loading more orders...
               </div>
             )}

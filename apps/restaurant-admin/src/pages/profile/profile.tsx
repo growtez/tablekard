@@ -929,7 +929,7 @@ const ProfilePage: React.FC = () => {
   function renderRestaurantProfileContent(): React.ReactNode {
     if (!restaurant) {
       return (
-        <div className="border border-dashed border-[#CBD5E0] rounded-2xl p-[18px] text-[#718096] bg-[#F8FAFC] text-[14px] font-['Outfit',sans-serif] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text-secondary">
+        <div className="border border-dashed border-[#CBD5E0] rounded-2xl p-[18px] text-[#4A5568] bg-[#F8FAFC] text-[14px] font-['Outfit',sans-serif] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text-secondary">
           No restaurant is assigned to this account.
         </div>
       );
@@ -1024,7 +1024,7 @@ const ProfilePage: React.FC = () => {
                 </label>
 
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-[13px] text-[#718096] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Status</span>
+                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Status</span>
                   <span
                     className={`inline-flex items-center px-3.5 py-1.5 rounded-xl text-[12px] font-semibold capitalize w-fit font-['Outfit',sans-serif] ${String(restaurant?.status || "").toLowerCase()}`}
                   >
@@ -1033,7 +1033,7 @@ const ProfilePage: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-[13px] text-[#718096] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Subscription Status</span>
+                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Subscription Status</span>
                   <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text inline-flex items-center gap-2">
                     <CreditCardIcon
                       size={15}
@@ -1053,12 +1053,12 @@ const ProfilePage: React.FC = () => {
             ) : (
               <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-[13px] text-[#718096] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Restaurant Name</span>
+                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Restaurant Name</span>
                   <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">{restaurant?.name}</span>
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-[13px] text-[#718096] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Slug</span>
+                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Slug</span>
                   <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
                     {restaurant?.slug ? (
                       <a
@@ -1082,7 +1082,7 @@ const ProfilePage: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-[13px] text-[#718096] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Tagline</span>
+                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Tagline</span>
                   <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
                     {restaurant?.tagline || "Not set"}
                   </span>
@@ -1091,7 +1091,7 @@ const ProfilePage: React.FC = () => {
 
 
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-[13px] text-[#718096] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Status</span>
+                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Status</span>
                   <span
                     className={`inline-flex items-center px-3.5 py-1.5 rounded-xl text-[12px] font-semibold capitalize w-fit font-['Outfit',sans-serif] ${String(restaurant?.status || "").toLowerCase()}`}
                   >
@@ -1100,7 +1100,7 @@ const ProfilePage: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-[13px] text-[#718096] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Subscription Status</span>
+                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Subscription Status</span>
                   <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text inline-flex items-center gap-2">
                     <CreditCardIcon
                       size={15}
@@ -1396,7 +1396,7 @@ const ProfilePage: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-[13px] text-[#718096] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
+                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
                     Operating Hours (Weekdays)
                   </span>
                   <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
@@ -1404,7 +1404,7 @@ const ProfilePage: React.FC = () => {
                   </span>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-[13px] text-[#718096] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
+                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
                     Operating Hours (Weekends)
                   </span>
                   <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
@@ -1473,14 +1473,14 @@ const ProfilePage: React.FC = () => {
                       </span>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center justify-center gap-2 px-4 py-6 text-[#718096] font-['Outfit',sans-serif] text-center dark:text-tk-text-secondary">
+                    <div className="flex flex-col items-center justify-center gap-2 px-4 py-6 text-[#4A5568] font-['Outfit',sans-serif] text-center dark:text-tk-text-secondary">
                       <ImageIcon size={28} strokeWidth={1.5} />
                       <span>
                         {isUploadingLogo
                           ? "Uploading…"
                           : "Drop image here or click to browse"}
                       </span>
-                      <span className="!text-[11px] !text-[#A0AEC0] !font-normal dark:!text-tk-text-secondary">
+                      <span className="!text-[11px] !text-[#718096] !font-normal dark:!text-tk-text-secondary">
                         PNG, JPG, WebP, SVG • Max 2 MB
                       </span>
                     </div>
@@ -1598,7 +1598,7 @@ const ProfilePage: React.FC = () => {
                     />
                     {isLocating ? "Locating…" : "Use My Current Location"}
                   </button>
-                  <span className="text-[#718096] text-[12px] leading-relaxed font-['Outfit',sans-serif] dark:text-tk-text-secondary">
+                  <span className="text-[#4A5568] text-[12px] leading-relaxed font-['Outfit',sans-serif] dark:text-tk-text-secondary">
                     Drag the pin or click on the map to set location accurately.
                   </span>
                 </div>
@@ -1673,7 +1673,7 @@ const ProfilePage: React.FC = () => {
           ) : (
             <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
               <div className="flex flex-col gap-1.5">
-                <span className="text-[13px] text-[#718096] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Location</span>
+                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Location</span>
                 <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text inline-flex items-center gap-2">
                   <MapPinIcon size={15} />
                   {restaurant ? `${formatCoordinate(restaurant.location?.latitude)}, ${formatCoordinate(restaurant.location?.longitude)}` : "N/A"}
@@ -1681,7 +1681,7 @@ const ProfilePage: React.FC = () => {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <span className="text-[13px] text-[#718096] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Access Area Radius</span>
+                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Access Area Radius</span>
                 <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
                   {restaurant?.location?.allowedRadius != null
                     ? `${restaurant.location.allowedRadius} meters`
@@ -1690,7 +1690,7 @@ const ProfilePage: React.FC = () => {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <span className="text-[13px] text-[#718096] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Brand Colors</span>
+                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Brand Colors</span>
                 <div className="flex flex-wrap gap-2.5">
                   <span className="inline-flex items-center gap-2.5 px-3 py-2 rounded-full bg-[#EDF2F7] text-[#2D3748] text-[13px] font-medium font-['Outfit',sans-serif] dark:bg-tk-bg-elevated dark:text-tk-text">
                     <span
@@ -1716,7 +1716,7 @@ const ProfilePage: React.FC = () => {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <span className="text-[13px] text-[#718096] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Logo</span>
+                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Logo</span>
                 {restaurant?.branding?.logoUrl ? (
                   <div className="flex flex-col gap-2">
                     <img
@@ -1729,7 +1729,7 @@ const ProfilePage: React.FC = () => {
                     />
                   </div>
                 ) : (
-                  <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text text-[#718096] dark:text-tk-text-secondary">
+                  <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text text-[#4A5568] dark:text-tk-text-secondary">
                     Not set
                   </span>
                 )}
@@ -1822,21 +1822,21 @@ const ProfilePage: React.FC = () => {
           ) : (
             <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
               <div className="flex flex-col gap-1.5">
-                <span className="text-[13px] text-[#718096] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Opening Date</span>
+                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Opening Date</span>
                 <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
                   {restaurant?.openingDate || "Not set"}
                 </span>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <span className="text-[13px] text-[#718096] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Manifesto</span>
+                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Manifesto</span>
                 <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
                   {restaurant?.manifesto || "Not set"}
                 </span>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <span className="text-[13px] text-[#718096] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Instagram</span>
+                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Instagram</span>
                 <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
                   {restaurant?.instagramUrl ? (
                     <a
@@ -1854,7 +1854,7 @@ const ProfilePage: React.FC = () => {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <span className="text-[13px] text-[#718096] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Facebook</span>
+                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Facebook</span>
                 <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
                   {restaurant?.facebookUrl ? (
                     <a
@@ -1872,7 +1872,7 @@ const ProfilePage: React.FC = () => {
               </div>
 
               <div className="flex flex-col gap-1.5 col-span-2">
-                <span className="text-[13px] text-[#718096] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Website</span>
+                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Website</span>
                 <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
                   {restaurant?.websiteUrl ? (
                     <a
@@ -1980,7 +1980,7 @@ const ProfilePage: React.FC = () => {
                 <label className="flex flex-col gap-2 col-span-2" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', border: '1px solid #CBD5E0', borderRadius: '8px', marginTop: '8px' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Enable Online Payments</span>
-                    <span className="text-[#718096] text-[12px] leading-relaxed font-['Outfit',sans-serif] dark:text-tk-text-secondary" style={{ margin: 0 }}>Allow customers to pay online from their phones</span>
+                    <span className="text-[#4A5568] text-[12px] leading-relaxed font-['Outfit',sans-serif] dark:text-tk-text-secondary" style={{ margin: 0 }}>Allow customers to pay online from their phones</span>
                   </div>
                   <div className={`profile-toggle-switch ${restaurantForm?.payOnline ? 'bg-tk-burgundy text-white' : ''}`} onClick={() => handleRestaurantFieldChange("payOnline", (!restaurantForm?.payOnline) as any)}>
                      <div className="profile-toggle-thumb" />
@@ -2020,31 +2020,31 @@ const ProfilePage: React.FC = () => {
                     placeholder={paymentSettings.hasRazorpayWebhookSecret ? "Leave blank to keep existing" : "Enter webhook secret"}
                     autoComplete="new-password"
                   />
-                  <span className="text-[#718096] text-[12px] leading-relaxed font-['Outfit',sans-serif] dark:text-tk-text-secondary">Set this in your Razorpay Dashboard → Webhooks → Secret.</span>
+                  <span className="text-[#4A5568] text-[12px] leading-relaxed font-['Outfit',sans-serif] dark:text-tk-text-secondary">Set this in your Razorpay Dashboard → Webhooks → Secret.</span>
                 </label>
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-[13px] text-[#718096] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Online Payments</span>
+                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Online Payments</span>
                   <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
                     {(restaurant as any)?.pay_online === false ? "❌ Disabled" : "✅ Enabled"}
                   </span>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-[13px] text-[#718096] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Razorpay Key ID</span>
+                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Razorpay Key ID</span>
                   <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text text-[12px] text-[#4A5568] font-mono break-all dark:text-tk-text-secondary">
                     {paymentSettings.razorpayKeyId || "Not set"}
                   </span>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-[13px] text-[#718096] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Key Secret</span>
+                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Key Secret</span>
                   <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
                     {paymentSettings.hasRazorpayKeySecret ? "🔒 Configured" : "Not set"}
                   </span>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-[13px] text-[#718096] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Webhook Secret</span>
+                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Webhook Secret</span>
                   <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
                     {paymentSettings.hasRazorpayWebhookSecret ? "🔒 Configured" : "Not set"}
                   </span>
@@ -2059,7 +2059,7 @@ const ProfilePage: React.FC = () => {
   function renderAdminEditor(): React.ReactNode {
     if (!userProfile) {
       return (
-        <div className="border border-dashed border-[#CBD5E0] rounded-2xl p-[18px] text-[#718096] bg-[#F8FAFC] text-[14px] font-['Outfit',sans-serif] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text-secondary">
+        <div className="border border-dashed border-[#CBD5E0] rounded-2xl p-[18px] text-[#4A5568] bg-[#F8FAFC] text-[14px] font-['Outfit',sans-serif] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text-secondary">
           Administrator profile could not be loaded.
         </div>
       );
@@ -2103,7 +2103,7 @@ const ProfilePage: React.FC = () => {
                 placeholder="admin@restaurant.com"
                 required
               />
-              <span className="text-[#718096] text-[12px] leading-relaxed font-['Outfit',sans-serif] dark:text-tk-text-secondary">
+              <span className="text-[#4A5568] text-[12px] leading-relaxed font-['Outfit',sans-serif] dark:text-tk-text-secondary">
                 Changing email may require confirmation before it becomes
                 active.
               </span>
@@ -2153,14 +2153,14 @@ const ProfilePage: React.FC = () => {
                     </span>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center gap-2 px-4 py-6 text-[#718096] font-['Outfit',sans-serif] text-center dark:text-tk-text-secondary">
+                  <div className="flex flex-col items-center justify-center gap-2 px-4 py-6 text-[#4A5568] font-['Outfit',sans-serif] text-center dark:text-tk-text-secondary">
                     <ImageIcon size={28} strokeWidth={1.5} />
                     <span>
                       {isUploadingAvatar
                         ? "Uploading…"
                         : "Drop image here or click to browse"}
                     </span>
-                    <span className="!text-[11px] !text-[#A0AEC0] !font-normal dark:!text-tk-text-secondary">
+                    <span className="!text-[11px] !text-[#718096] !font-normal dark:!text-tk-text-secondary">
                       PNG, JPG, WebP, SVG • Max 2 MB
                     </span>
                   </div>
@@ -2172,13 +2172,13 @@ const ProfilePage: React.FC = () => {
 
         <div className="grid grid-cols-2 gap-3.5 max-sm:grid-cols-1">
           <div className="border border-[#E2E8F0] rounded-2xl bg-white px-4 py-3.5 flex flex-col gap-2.5 dark:bg-tk-bg-card dark:border-tk-border">
-            <span className="text-[13px] text-[#718096] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Global Role</span>
+            <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Global Role</span>
             <span className="inline-flex items-center px-3.5 py-1.5 rounded-xl text-[12px] font-semibold capitalize w-fit font-['Outfit',sans-serif] bg-[#D6BCFA] text-[#44337A] dark:bg-[rgba(214,188,250,0.15)] dark:text-[#D6BCFA]">
               {formatLabel(userProfile.role)}
             </span>
           </div>
           <div className="border border-[#E2E8F0] rounded-2xl bg-white px-4 py-3.5 flex flex-col gap-2.5 dark:bg-tk-bg-card dark:border-tk-border">
-            <span className="text-[13px] text-[#718096] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Restaurant Access Role</span>
+            <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Restaurant Access Role</span>
             <span
               className={`inline-flex items-center px-3.5 py-1.5 rounded-xl text-[12px] font-semibold capitalize w-fit font-['Outfit',sans-serif] ${
                 String(activeMembership?.role || "").toLowerCase() === "bg-[#D6BCFA] text-[#44337A] dark:bg-[rgba(214,188,250,0.15)] dark:text-[#D6BCFA]"
@@ -2190,7 +2190,7 @@ const ProfilePage: React.FC = () => {
             </span>
           </div>
           <div className="border border-[#E2E8F0] rounded-2xl bg-white px-4 py-3.5 flex flex-col gap-2.5 dark:bg-tk-bg-card dark:border-tk-border col-span-2">
-            <span className="text-[13px] text-[#718096] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Account ID</span>
+            <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Account ID</span>
             <span className="text-[12px] text-[#4A5568] font-mono break-all dark:text-tk-text-secondary" title={userProfile.id}>
               {userProfile.id}
             </span>
@@ -2203,7 +2203,7 @@ const ProfilePage: React.FC = () => {
   function renderAdminReadOnly(): React.ReactNode {
     if (!userProfile) {
       return (
-        <div className="border border-dashed border-[#CBD5E0] rounded-2xl p-[18px] text-[#718096] bg-[#F8FAFC] text-[14px] font-['Outfit',sans-serif] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text-secondary">
+        <div className="border border-dashed border-[#CBD5E0] rounded-2xl p-[18px] text-[#4A5568] bg-[#F8FAFC] text-[14px] font-['Outfit',sans-serif] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text-secondary">
           Administrator profile could not be loaded.
         </div>
       );
@@ -2221,21 +2221,21 @@ const ProfilePage: React.FC = () => {
           </div>
           <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
             <div className="flex flex-col gap-1.5">
-              <span className="text-[13px] text-[#718096] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Full Name</span>
+              <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Full Name</span>
               <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
                 {userProfile.name || "Admin User"}
               </span>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <span className="text-[13px] text-[#718096] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Email Address</span>
+              <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Email Address</span>
               <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
                 {userProfile.email || "N/A"}
               </span>
             </div>
 
             <div className="flex flex-col gap-1.5 col-span-2">
-              <span className="text-[13px] text-[#718096] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Avatar</span>
+              <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Avatar</span>
               {userProfile.avatarUrl ? (
                 <div className="flex flex-col gap-2">
                   <img
@@ -2248,7 +2248,7 @@ const ProfilePage: React.FC = () => {
                   />
                 </div>
               ) : (
-                <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text text-[#718096] dark:text-tk-text-secondary">
+                <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text text-[#4A5568] dark:text-tk-text-secondary">
                   Not set
                 </span>
               )}
@@ -2258,7 +2258,7 @@ const ProfilePage: React.FC = () => {
 
         <div className="grid grid-cols-2 gap-3.5 max-sm:grid-cols-1">
           <div className="border border-[#E2E8F0] rounded-2xl bg-white px-4 py-3.5 flex flex-col gap-2.5 dark:bg-tk-bg-card dark:border-tk-border">
-            <span className="text-[13px] text-[#718096] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Global Role</span>
+            <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Global Role</span>
             <span className="inline-flex items-center px-3.5 py-1.5 rounded-xl text-[12px] font-semibold capitalize w-fit font-['Outfit',sans-serif] bg-[#D6BCFA] text-[#44337A] dark:bg-[rgba(214,188,250,0.15)] dark:text-[#D6BCFA]">
               {formatLabel(userProfile.role)}
             </span>
@@ -2266,7 +2266,7 @@ const ProfilePage: React.FC = () => {
 
           {activeMembership && (
             <div className="border border-[#E2E8F0] rounded-2xl bg-white px-4 py-3.5 flex flex-col gap-2.5 dark:bg-tk-bg-card dark:border-tk-border">
-              <span className="text-[13px] text-[#718096] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Restaurant Access Role</span>
+              <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Restaurant Access Role</span>
               <span
                 className={`inline-flex items-center px-3.5 py-1.5 rounded-xl text-[12px] font-semibold capitalize w-fit font-['Outfit',sans-serif] ${
                   String(activeMembership.role).toLowerCase() === "bg-[#D6BCFA] text-[#44337A] dark:bg-[rgba(214,188,250,0.15)] dark:text-[#D6BCFA]"
@@ -2280,7 +2280,7 @@ const ProfilePage: React.FC = () => {
           )}
 
           <div className="border border-[#E2E8F0] rounded-2xl bg-white px-4 py-3.5 flex flex-col gap-2.5 dark:bg-tk-bg-card dark:border-tk-border col-span-2">
-            <span className="text-[13px] text-[#718096] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Account ID</span>
+            <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Account ID</span>
             <span className="text-[12px] text-[#4A5568] font-mono break-all dark:text-tk-text-secondary" title={userProfile.id}>
               {userProfile.id}
             </span>
@@ -2295,7 +2295,7 @@ const ProfilePage: React.FC = () => {
       <div className="flex min-h-screen bg-tk-bg relative">
         <Sidebar />
         <div className="tk-main-content flex-1 p-5 overflow-y-auto min-h-screen transition-all duration-300 ml-[240px] max-md:!ml-0 max-md:!p-4 max-md:!pt-[72px] bg-tk-bg-surface">
-          <div className="flex flex-col items-center justify-center h-[calc(100vh-160px)] text-[#718096] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
+          <div className="flex flex-col items-center justify-center h-[calc(100vh-160px)] text-[#4A5568] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
             <div className="w-10 h-10 border-3 border-[#E2E8F0] border-t-tk-burgundy rounded-full animate-spin mb-4"></div>
             <p>Loading profile information...</p>
           </div>
