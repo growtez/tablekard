@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { TrendingUp, X, CheckCircle, Package, MoreVertical, CheckSquare, Check, ChevronUp, ChevronDown, Search, ArrowUpDown } from 'lucide-react';
-
-import Sidebar from '../components/sidebar';
+import { TrendingUp, X, CheckCircle, Package, Check, ChevronUp, ChevronDown, Search, ArrowUpDown } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext';
 import { useDashboardOrders, useInvalidateQueries, useRevenueData, useMenuItems } from '../hooks/useSupabaseQuery';
@@ -9,28 +7,19 @@ import { updateOrderStatus, updatePaymentStatus } from '../services/supabaseServ
 import type { DashboardOrder } from '../services/supabaseService';
 
 
-// Component Props Interfaces
 interface OrderDetailsDialogProps {
   order: DashboardOrder | null;
   onClose: () => void;
   onMarkReady: (orderId: string) => void;
 }
 
-interface AllOrdersDialogProps {
-  orders: DashboardOrder[];
-  onClose: () => void;
-  onSelectOrder: (order: DashboardOrder) => void;
-  onMarkReady: (orderId: string) => void;
-  onMarkPaid: (orderId: string) => void;
-}
 
-// Order Details Dialog
 const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({ order, onClose, onMarkReady }) => {
   if (!order) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000] animate-[fadeIn_0.2s_ease]" onClick={onClose}>
-      <div className="bg-tk-bg-card rounded-[24px] p-8 max-w-[500px] w-[90%] max-h-[80vh] overflow-auto border-[1.5px] border-tk-border shadow-[0_20px_60px_rgba(0,0,0,0.12)] animate-[slideUp_0.3s_ease]" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000] p-4 animate-[fadeIn_0.2s_ease]" onClick={onClose}>
+      <div className="bg-tk-bg-card rounded-[24px] p-5 sm:p-8 max-w-[500px] w-full max-h-[80vh] overflow-auto border-[1.5px] border-tk-border shadow-[0_20px_60px_rgba(0,0,0,0.12)] animate-[slideUp_0.3s_ease]" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-[20px] font-semibold text-tk-text">Order Details</h2>
           <button className="bg-transparent border-none cursor-pointer p-2 rounded-full flex items-center justify-center transition-colors duration-200 hover:bg-tk-bg-hover" onClick={onClose}>
@@ -52,7 +41,7 @@ const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({ order, onClose,
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <div className="text-sm text-tk-text-secondary mb-1">Table</div>
               <div className="text-[18px] font-semibold text-tk-text">{order.table}</div>
@@ -107,144 +96,10 @@ const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({ order, onClose,
   );
 };
 
-const AllOrdersDialog: React.FC<AllOrdersDialogProps & { showAction?: boolean }> = ({ orders, onClose, onSelectOrder, onMarkReady, onMarkPaid, showAction = true }) => {
-  const [visibleCount, setVisibleCount] = useState(20);
-  const loadMoreRef = useRef<HTMLTableRowElement>(null);
 
-  useEffect(() => {
-    if (!loadMoreRef.current) return;
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting && visibleCount < orders.length) {
-        setVisibleCount(prev => prev + 20);
-      }
-    }, { rootMargin: '200px' });
-    observer.observe(loadMoreRef.current);
-    return () => observer.disconnect();
-  }, [visibleCount, orders.length]);
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000] animate-[fadeIn_0.2s_ease]" onClick={onClose}>
-      <div className="bg-tk-bg-card rounded-[24px] p-8 max-w-[800px] w-[90%] max-h-[80vh] overflow-auto border-[1.5px] border-tk-border shadow-[0_20px_60px_rgba(0,0,0,0.12)] animate-[slideUp_0.3s_ease]" onClick={(e) => e.stopPropagation()}>
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-[20px] font-semibold text-tk-text">All Orders</h2>
-          <button className="bg-transparent border-none cursor-pointer p-2 rounded-full flex items-center justify-center transition-colors duration-200 hover:bg-tk-bg-hover" onClick={onClose}>
-            <X size={24} color="#718096" />
-          </button>
-        </div>
-
-        <table className="w-full border-separate [border-spacing:0_8px]">
-          <thead>
-            <tr className="transition-colors duration-200 hover:bg-tk-bg-hover group">
-              <th className="text-left p-4 text-sm font-semibold text-tk-text-secondary border-b-2 border-tk-border whitespace-nowrap">Order ID</th>
-              <th className="text-left p-4 text-sm font-semibold text-tk-text-secondary border-b-2 border-tk-border whitespace-nowrap">Table</th>
-              <th className="text-left p-4 text-sm font-semibold text-tk-text-secondary border-b-2 border-tk-border whitespace-nowrap">Ordered Time</th>
-              <th className="text-left p-4 text-sm font-semibold text-tk-text-secondary border-b-2 border-tk-border whitespace-nowrap">Status</th>
-              <th className="text-left p-4 text-sm font-semibold text-tk-text-secondary border-b-2 border-tk-border whitespace-nowrap">Payment</th>
-              <th className="text-left p-4 text-sm font-semibold text-tk-text-secondary border-b-2 border-tk-border whitespace-nowrap">Customer</th>
-              {showAction && <th className="text-left p-4 text-sm font-semibold text-tk-text-secondary border-b-2 border-tk-border whitespace-nowrap">Action</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {orders.slice(0, visibleCount).map((order, idx) => (
-              <tr key={idx} className="transition-colors duration-200 hover:bg-tk-bg-hover group">
-                <td className="p-4 text-sm text-tk-text" onClick={() => {
-                  onClose();
-                  onSelectOrder(order);
-                }} style={{ cursor: 'pointer' }}>
-                  {order.orderNumber}
-                </td>
-                <td className="p-4 text-sm text-tk-text" onClick={() => {
-                  onClose();
-                  onSelectOrder(order);
-                }} style={{ cursor: 'pointer' }}>
-                  {order.table}
-                </td>
-                <td className="p-4 text-sm text-tk-text" onClick={() => {
-                  onClose();
-                  onSelectOrder(order);
-                }} style={{ cursor: 'pointer' }}>
-                  {order.time}
-                </td>
-                <td className="p-4 text-sm text-tk-text" onClick={() => {
-                  onClose();
-                  onSelectOrder(order);
-                }} style={{ cursor: 'pointer' }}>
-                  <span className={`inline-block px-2 py-1 rounded-lg text-xs font-semibold ${order.statusColor === 'Ready' || order.statusColor === 'ready' ? 'bg-tk-burgundy text-white' : order.statusColor === 'Preparing' || order.statusColor === 'preparing' ? 'bg-[#FEEA9A] text-[#744210]' : 'bg-[#90CDF4] text-[#2C5282]'}` }>
-                    {order.status}
-                  </span>
-                </td>
-                <td className="p-4 text-sm text-tk-text" style={{ cursor: 'pointer' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span 
-                      className={`inline-block px-2 py-1 rounded-lg text-xs font-semibold ${order.isPaid ? 'bg-[#C6F6D5] text-[#22543D]' : 'bg-[#FEF2F2] text-[#EF4444]'}` } 
-                      onClick={() => {
-                        onClose();
-                        onSelectOrder(order);
-                      }}
-                    >
-                      {order.isPaid ? 'Paid' : 'Pending'}
-                    </span>
-                    {!order.isPaid && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onMarkPaid(order.id);
-                        }}
-                        className="p-1.5 bg-[#C6F6D5] text-[#22543D] border-none rounded-lg cursor-pointer transition-all duration-200 hover:bg-[#68D391] hover:-translate-y-[1px] hover:shadow-[0_4px_8px_rgba(104,211,145,0.4)] flex items-center justify-center"
-                        title="Mark Paid"
-                      >
-                        <CheckCircle size={16} />
-                      </button>
-                    )}
-                  </div>
-                </td>
-                <td className="p-4 text-sm text-tk-text" onClick={() => {
-                  onClose();
-                  onSelectOrder(order);
-                }} style={{ cursor: 'pointer' }}>
-                  {order.customer}
-                </td>
-                {showAction && (
-                  <td>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      {order.status !== 'Ready' && order.status !== 'Completed' && (
-                        <button
-                          className="px-3 py-1.5 bg-[#C6F6D5] text-[#22543D] border-none rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 font-['Outfit'] hover:bg-[#68D391] hover:-translate-y-[1px] hover:shadow-[0_4px_8px_rgba(104,211,145,0.4)]"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onMarkReady(order.id);
-                          }}
-                        >
-                          Mark Ready
-                        </button>
-                      )}
-                      {order.status === 'Completed' || (order.status === 'Ready' && order.isPaid) ? (
-                        <span style={{ color: '#68D391', fontSize: '13px' }}>✓ Completed</span>
-                      ) : null}
-                    </div>
-                  </td>
-                )}
-              </tr>
-            ))}
-            {visibleCount < orders.length && (
-              <tr ref={loadMoreRef}>
-                <td className="p-4 text-sm text-tk-text" colSpan={7} style={{ textAlign: 'center', padding: '24px', color: '#718096', fontSize: '13px', fontFamily: "'Outfit', sans-serif" }}>
-                  Loading more orders...
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-};
-
-// Main Dashboard Component
 const Dashboard: React.FC = () => {
   const { activeRestaurantId } = useAuth();
 
-  // React Query cached orders
   const { data: orders = [], isLoading } = useDashboardOrders(activeRestaurantId);
   useRevenueData(activeRestaurantId);
   const { data: menuItems = [] } = useMenuItems(activeRestaurantId);
@@ -255,7 +110,9 @@ const Dashboard: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<DashboardOrder | null>(null);
   const [activeTab, setActiveTab] = useState<string>('Active Orders');
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'amount_high' | 'amount_low'>('newest');
+  const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
+  const sortDropdownRef = useRef<HTMLDivElement>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const tableScrollRef = useRef<HTMLDivElement>(null);
@@ -265,8 +122,16 @@ const Dashboard: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Auto-collapse the stat cards once the table body starts scrolling,
-  // and bring them back once scrolled back to the top.
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target as Node)) {
+        setIsSortDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleTableScroll = () => {
     const el = tableScrollRef.current;
     if (!el) return;
@@ -293,11 +158,9 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // Filter orders
   const activeOrders = orders.filter(order => order.status !== 'Completed' && order.status !== 'Cancelled' && (order.status !== 'Ready' || !order.isPaid));
   const completedOrders = orders.filter(order => order.status === 'Completed' || (order.status === 'Ready' && order.isPaid));
 
-  // Revenue calc from raw orders (more robust and uses local timezone)
   const now = new Date();
   
   const isSameDay = (d1: Date, d2: Date) => 
@@ -336,9 +199,6 @@ const Dashboard: React.FC = () => {
 
   const todayChange = revenueYesterday === 0 ? (revenueToday > 0 ? 100 : 0) : Math.round(((revenueToday - revenueYesterday) / revenueYesterday) * 100);
   const weekChange = revenueLastWeek === 0 ? (revenueThisWeek > 0 ? 100 : 0) : Math.round(((revenueThisWeek - revenueLastWeek) / revenueLastWeek) * 100);
-
-
-
 
   const tabs = ['Active Orders', 'Completed', 'All Orders'];
 
@@ -381,210 +241,238 @@ const Dashboard: React.FC = () => {
     result = result.sort((a, b) => {
       const dateA = new Date(a.createdAt).getTime();
       const dateB = new Date(b.createdAt).getTime();
-      return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+      
+      if (sortBy === 'newest') return dateB - dateA;
+      if (sortBy === 'oldest') return dateA - dateB;
+      if (sortBy === 'amount_high') return b.total - a.total;
+      if (sortBy === 'amount_low') return a.total - b.total;
+      return 0;
     });
     
     return result;
   };
 
   return (
-    <div className="flex min-h-screen bg-tk-bg relative">
+    <>
       <style>{`
-      html {
-        overflow-y: scroll; /* fallback: always show scrollbar space */
-      }
-      @supports (scrollbar-gutter: stable) {
-        html {
-          overflow-y: auto;
-          scrollbar-gutter: stable; /* reserves space without forcing a visible bar */
+        .tk-table-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(113, 128, 150, 0.35) transparent;
         }
-      }
-
-      /* Thin, subtle scrollbar for the table's scroll region */
-      .tk-table-scroll {
-        scrollbar-width: thin;
-        scrollbar-color: rgba(113, 128, 150, 0.35) transparent;
-      }
-      .tk-table-scroll::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-      }
-      .tk-table-scroll::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      .tk-table-scroll::-webkit-scrollbar-thumb {
-        background-color: rgba(113, 128, 150, 0.32);
-        border-radius: 999px;
-        border: 2px solid transparent;
-        background-clip: padding-box;
-      }
-      .tk-table-scroll::-webkit-scrollbar-thumb:hover {
-        background-color: rgba(113, 128, 150, 0.55);
-      }
-      .tk-table-scroll::-webkit-scrollbar-corner {
-        background: transparent;
-      }
-    `}</style>
-      <Sidebar />
-
-      <div className="tk-main-content flex-1 min-w-0 p-6 h-screen overflow-hidden flex flex-col transition-all duration-300 ml-[240px] max-md:!ml-0 max-md:!p-4 max-md:!pt-[72px] bg-tk-bg-surface">
+        .tk-table-scroll::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
+        }
+        .tk-table-scroll::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .tk-table-scroll::-webkit-scrollbar-thumb {
+          background-color: rgba(113, 128, 150, 0.32);
+          border-radius: 999px;
+          border: 2px solid transparent;
+          background-clip: padding-box;
+        }
+        .tk-table-scroll::-webkit-scrollbar-thumb:hover {
+          background-color: rgba(113, 128, 150, 0.55);
+        }
+        .tk-table-scroll::-webkit-scrollbar-corner {
+          background: transparent;
+        }
+      `}</style>
+      
         <div className="flex-shrink-0">
-        <div className="flex items-center justify-between gap-4 mb-3">
-          <div className="flex items-center gap-4">
-            <h1 className="text-[22px] font-semibold text-tk-text whitespace-nowrap">Dashboard</h1>
-            <button 
-              onClick={() => setIsHeaderVisible(!isHeaderVisible)}
-              className="flex items-center justify-center w-7 h-7 rounded-full hover:bg-tk-bg-hover text-tk-text-secondary hover:text-tk-text transition-all duration-200"
-              title="Toggle Header"
-            >
-              <ChevronUp size={16} className={`transition-transform duration-300 ${!isHeaderVisible ? 'rotate-180' : ''}`} />
-            </button>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <div className="text-[14px] font-bold text-tk-burgundy tabular-nums tracking-tight">
-              {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-            </div>
-            <span className="text-tk-text-secondary opacity-50 text-[12px]">•</span>
-            <p className="text-[13px] text-tk-text-secondary font-medium whitespace-nowrap">
-              {currentTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-            </p>
-          </div>
-        </div>
-
-        <div className={`grid transition-all duration-300 ease-in-out ${isHeaderVisible ? 'grid-rows-[1fr] opacity-100 mb-6' : 'grid-rows-[0fr] opacity-0 mb-0'}`}>
-          <div className="overflow-hidden">
-            <div className="grid grid-cols-4 gap-3 max-w-[850px] w-full max-xl:grid-cols-4 max-lg:grid-cols-2 max-md:grid-cols-1 pt-1">
-
-              {/* Card 2: Revenue Today */}
-              <div className="bg-tk-bg-card p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-xs text-tk-text-secondary font-medium">Revenue Today</h3>
-                  <div className="w-7 h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
-                    <TrendingUp size={14} />
-                  </div>
-                </div>
-                <div className="flex justify-between items-end">
-                  <div className="text-[20px] font-bold text-tk-text">₹{isLoading ? '...' : revenueToday.toLocaleString()}</div>
-                  <div className={`flex items-center text-[11px] font-medium ${todayChange >= 0 ? 'text-tk-success' : 'text-tk-error'}`}>
-                    <TrendingUp size={12} className="mr-1" style={todayChange < 0 ? { transform: 'rotate(180deg)' } : undefined} />
-                    <span>{Math.abs(todayChange)}%</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card 3: Revenue This Week */}
-              <div className="bg-tk-bg-card p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-xs text-tk-text-secondary font-medium">Revenue This Week</h3>
-                  <div className="w-7 h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
-                    <TrendingUp size={14} />
-                  </div>
-                </div>
-                <div className="flex justify-between items-end">
-                  <div className="text-[20px] font-bold text-tk-text">₹{isLoading ? '...' : revenueThisWeek.toLocaleString()}</div>
-                  <div className={`flex items-center text-[11px] font-medium ${weekChange >= 0 ? 'text-tk-success' : 'text-tk-error'}`}>
-                    <TrendingUp size={12} className="mr-1" style={weekChange < 0 ? { transform: 'rotate(180deg)' } : undefined} />
-                    <span>{Math.abs(weekChange)}%</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card 4: Out of Stock */}
-              <div className="bg-tk-bg-card p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-xs text-tk-text-secondary font-medium">Out of Stock Items</h3>
-                </div>
-                <div className="flex justify-between items-end">
-                  <div className="text-[20px] font-bold text-tk-text">{isLoading ? '...' : outOfStockItems.length}</div>
-                  <div className="flex items-center text-[11px] font-medium text-tk-error">
-                    <TrendingUp size={12} className="mr-1" style={{ transform: 'rotate(180deg)' }} />
-                    <span>Need restock</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card 5: Total Orders */}
-              <div className="bg-tk-bg-card p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-xs text-tk-text-secondary font-medium">Total Orders</h3>
-                  <div className="w-7 h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
-                    <Package size={14} />
-                  </div>
-                </div>
-                <div className="flex justify-between items-end">
-                  <div className="text-[20px] font-bold text-tk-text">{isLoading ? '...' : orders.length}</div>
-                  <div className="flex items-center text-[11px] font-medium text-tk-text-secondary">
-                    <span>All time</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <hr className="border-tk-border mb-4 transition-all duration-300" />
-
-        {/* Tabs & Controls */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex gap-8 overflow-x-auto hide-scrollbar pt-1">
-            {tabs.map(tab => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`pb-2 text-sm font-semibold whitespace-nowrap transition-colors duration-200 ${
-                  activeTab === tab 
-                    ? 'text-tk-burgundy border-b-2 border-tk-burgundy' 
-                    : 'text-tk-text-secondary hover:text-tk-text'
-                }`}
-              >
-                {tab} <span className="ml-1 opacity-75">({tabCounts[tab]})</span>
-              </button>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-3 pb-2 ml-4">
-            <button
-              onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-tk-border bg-tk-bg-surface hover:bg-tk-bg-hover text-tk-text-secondary hover:text-tk-text text-[12px] font-semibold transition-colors whitespace-nowrap h-[32px] shrink-0"
-              title={sortOrder === 'desc' ? "Showing Newest First" : "Showing Oldest First"}
-            >
-              <ArrowUpDown size={13} />
-              {sortOrder === 'desc' ? 'Newest' : 'Oldest'}
-            </button>
-            <div className="relative w-[240px] shrink-0">
-            <Search className="absolute left-3 top-[calc(50%)] -translate-y-1/2 text-tk-text-secondary" size={14} />
-            <input
-              type="text"
-              placeholder="Search orders..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-[32px] pl-9 pr-8 bg-tk-bg-surface border border-tk-border rounded-full text-tk-text text-[13px] focus:outline-none focus:border-tk-burgundy transition-colors"
-            />
-            {searchTerm && (
+          <div className="flex flex-row items-center justify-between gap-2 sm:gap-4 flex-wrap">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <h1 className="text-[20px] sm:text-[22px] font-semibold text-tk-text whitespace-nowrap">Dashboard</h1>
               <button 
-                onClick={() => setSearchTerm('')} 
-                className="absolute right-3 top-[calc(50%)] -translate-y-1/2 text-tk-text-secondary hover:text-tk-text focus:outline-none flex items-center justify-center p-0"
+                onClick={() => setIsHeaderVisible(!isHeaderVisible)}
+                className="flex items-center justify-center w-7 h-7 rounded-full hover:bg-tk-bg-hover text-tk-text-secondary hover:text-tk-text transition-all duration-200"
+                title="Toggle Header"
               >
-                <X size={12} />
+                <ChevronUp size={16} className={`transition-transform duration-300 ${!isHeaderVisible ? 'rotate-180' : ''}`} />
               </button>
-            )}
+            </div>
+            
+            <div className="flex items-center gap-2 mt-2 sm:mt-0">
+              <div className="text-[13px] sm:text-[14px] font-bold text-tk-burgundy tabular-nums tracking-tight">
+                {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              </div>
+              <span className="text-tk-text-secondary opacity-50 text-[12px] hidden sm:block">•</span>
+              <p className="text-[12px] sm:text-[13px] text-tk-text-secondary font-medium whitespace-nowrap hidden sm:block">
+                {currentTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              </p>
+            </div>
+          </div>
+
+          <div className={`grid transition-all duration-300 ease-in-out ${isHeaderVisible ? 'grid-rows-[1fr] opacity-100 mb-6 mt-4 sm:mt-0' : 'grid-rows-[0fr] opacity-0 mb-0'}`}>
+            <div className="overflow-hidden">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 max-w-[850px] w-full pt-1">
+                {/* Card 1: Revenue Today */}
+                <div className="bg-tk-bg-card p-3 sm:p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium">Revenue Today</h3>
+                    <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
+                      <TrendingUp size={14} />
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-end">
+                    <div className="text-[16px] sm:text-[20px] font-bold text-tk-text">₹{isLoading ? '...' : revenueToday.toLocaleString()}</div>
+                    <div className={`flex items-center text-[10px] sm:text-[11px] font-medium ${todayChange >= 0 ? 'text-tk-success' : 'text-tk-error'}`}>
+                      <TrendingUp size={10} className="mr-1 sm:w-[12px] sm:h-[12px]" style={todayChange < 0 ? { transform: 'rotate(180deg)' } : undefined} />
+                      <span>{Math.abs(todayChange)}%</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card 2: Revenue This Week */}
+                <div className="bg-tk-bg-card p-3 sm:p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium">Revenue This Week</h3>
+                    <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
+                      <TrendingUp size={14} />
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-end">
+                    <div className="text-[16px] sm:text-[20px] font-bold text-tk-text">₹{isLoading ? '...' : revenueThisWeek.toLocaleString()}</div>
+                    <div className={`flex items-center text-[10px] sm:text-[11px] font-medium ${weekChange >= 0 ? 'text-tk-success' : 'text-tk-error'}`}>
+                      <TrendingUp size={10} className="mr-1 sm:w-[12px] sm:h-[12px]" style={weekChange < 0 ? { transform: 'rotate(180deg)' } : undefined} />
+                      <span>{Math.abs(weekChange)}%</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card 3: Out of Stock */}
+                <div className="bg-tk-bg-card p-3 sm:p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium">Out of Stock Items</h3>
+                  </div>
+                  <div className="flex justify-between items-end">
+                    <div className="text-[16px] sm:text-[20px] font-bold text-tk-text">{isLoading ? '...' : outOfStockItems.length}</div>
+                    <div className="flex items-center text-[10px] sm:text-[11px] font-medium text-tk-error">
+                      <TrendingUp size={10} className="mr-1 sm:w-[12px] sm:h-[12px]" style={{ transform: 'rotate(180deg)' }} />
+                      <span>Need restock</span>
+                    </div>
+                  </div>
+                </div>
+
+
+                {/* Card 4: Total Orders */}
+                <div className="bg-tk-bg-card p-3 sm:p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium">Total Orders</h3>
+                    <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
+                      <Package size={14} />
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-end">
+                    <div className="text-[16px] sm:text-[20px] font-bold text-tk-text">{isLoading ? '...' : orders.length}</div>
+                    <div className="flex items-center text-[10px] sm:text-[11px] font-medium text-tk-text-secondary">
+                      <span>All time</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <hr className="border-tk-border mb-4 transition-all duration-300" />
+
+          {/* Tabs & Controls */}
+          <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 mb-2">
+            <div className="flex gap-4 sm:gap-8 overflow-x-auto hide-scrollbar pt-1 w-full xl:w-auto flex-1 pb-1">
+              {tabs.map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`pb-2 text-sm font-semibold whitespace-nowrap transition-colors duration-200 ${
+                    activeTab === tab 
+                      ? 'text-tk-burgundy border-b-2 border-tk-burgundy' 
+                      : 'text-tk-text-secondary hover:text-tk-text'
+                  }`}
+                >
+                  {tab} <span className="ml-1 opacity-75">({tabCounts[tab]})</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pb-2 w-full xl:w-auto xl:ml-4">
+              <div className="relative w-full sm:w-auto" ref={sortDropdownRef}>
+                <button
+                  onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
+                  className="flex justify-between sm:justify-start items-center gap-1.5 px-4 py-2 sm:px-3 sm:py-1.5 rounded-full border border-tk-border bg-tk-bg-surface hover:bg-tk-bg-hover text-tk-text-secondary hover:text-tk-text text-[13px] sm:text-[12px] font-semibold transition-colors whitespace-nowrap h-[36px] sm:h-[32px] w-full shrink-0"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <ArrowUpDown size={13} />
+                    <span className="opacity-70 font-medium">Sort by:</span>
+                    {sortBy === 'newest' && 'Newest First'}
+                    {sortBy === 'oldest' && 'Oldest First'}
+                    {sortBy === 'amount_high' && 'High to Low'}
+                    {sortBy === 'amount_low' && 'Low to High'}
+                  </div>
+                  <ChevronDown size={14} className="sm:hidden" />
+                </button>
+                
+                {isSortDropdownOpen && (
+                  <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-full sm:w-[180px] bg-tk-bg-surface border border-tk-border rounded-xl shadow-lg z-50 py-1 overflow-hidden animate-[fadeIn_0.15s_ease-out]">
+                    {[
+                      { value: 'newest', label: 'Newest First' },
+                      { value: 'oldest', label: 'Oldest First' },
+                      { value: 'amount_high', label: 'Amount: High to Low' },
+                      { value: 'amount_low', label: 'Amount: Low to High' }
+                    ].map(option => (
+                      <button
+                        key={option.value}
+                        onClick={() => {
+                          setSortBy(option.value as any);
+                          setIsSortDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-3 sm:py-2 text-[14px] sm:text-[13px] font-medium transition-colors ${
+                          sortBy === option.value 
+                            ? 'bg-tk-burgundy/10 text-tk-burgundy' 
+                            : 'text-tk-text hover:bg-tk-bg-hover'
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
+              <div className="relative w-full sm:w-[240px] shrink-0">
+                <Search className="absolute left-3 top-[calc(50%)] -translate-y-1/2 text-tk-text-secondary" size={14} />
+                <input
+                  type="text"
+                  placeholder="Search orders..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full h-[36px] sm:h-[32px] pl-9 pr-8 bg-tk-bg-surface border border-tk-border rounded-full text-tk-text text-[14px] sm:text-[13px] focus:outline-none focus:border-tk-burgundy transition-colors"
+                />
+                {searchTerm && (
+                  <button 
+                    onClick={() => setSearchTerm('')} 
+                    className="absolute right-3 top-[calc(50%)] -translate-y-1/2 text-tk-text-secondary hover:text-tk-text focus:outline-none flex items-center justify-center p-0"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-      </div>
 
-      {/* Table — only this region scrolls; header + tabs stay pinned above it */}
+        {/* Table Area */}
         <div
           ref={tableScrollRef}
           onScroll={handleTableScroll}
-          className={`tk-table-scroll bg-tk-bg-card rounded-[12px] border-[1.5px] border-tk-border shadow-sm flex-1 min-h-0 overflow-y-auto overflow-x-auto transition-shadow duration-300 ${!isHeaderVisible ? 'shadow-md' : ''}`}
+          className="tk-table-scroll flex-1 min-h-0 overflow-y-auto overflow-x-auto w-full"
         >
-          <table className="w-full text-left border-collapse table-fixed min-w-[900px]">
+          <table className="w-full text-left border-collapse table-fixed min-w-[950px]">
             <thead>
               <tr className="bg-tk-bg-hover">
-                <th className="sticky top-0 z-20 bg-tk-bg-hover py-3 px-4 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[20%]">Order Details</th>
-                <th className="sticky top-0 z-20 bg-tk-bg-hover py-3 px-4 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[20%]">Customer Info</th>
+                <th className="sticky top-0 z-20 bg-tk-bg-hover py-3 px-4 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[6%] text-center">Sl No</th>
+                <th className="sticky top-0 z-20 bg-tk-bg-hover py-3 px-4 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[17%]">Order Details</th>
+                <th className="sticky top-0 z-20 bg-tk-bg-hover py-3 px-4 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[17%]">Customer Info</th>
                 <th className="sticky top-0 z-20 bg-tk-bg-hover py-3 px-4 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[25%]">Payment Info</th>
                 <th className="sticky top-0 z-20 bg-tk-bg-hover py-3 px-4 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[35%]">Order Tracking</th>
               </tr>
@@ -592,11 +480,11 @@ const Dashboard: React.FC = () => {
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={4} className="py-8 text-center text-tk-text-secondary text-sm">Loading orders...</td>
+                  <td colSpan={5} className="py-8 text-center text-tk-text-secondary text-sm">Loading orders...</td>
                 </tr>
               ) : filteredOrders().length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="py-12 text-center text-tk-text-secondary">
+                  <td colSpan={5} className="py-12 text-center text-tk-text-secondary">
                     <p className="text-sm font-medium">
                       {activeTab === 'Active Orders' 
                         ? 'No active orders right now.' 
@@ -609,6 +497,7 @@ const Dashboard: React.FC = () => {
               ) : (
                 filteredOrders().map((order, idx) => (
                   <tr key={idx} className="border-b border-tk-border last:border-b-0 hover:bg-tk-bg-hover transition-colors group">
+                    <td className="py-3 px-4 text-sm text-tk-text-secondary font-medium text-center">{idx + 1}</td>
                     <td className="py-3 px-4 text-sm text-tk-text cursor-pointer" onClick={() => setSelectedOrder(order)}>
                       <div className="flex flex-col">
                         <span className="font-semibold">{order.orderNumber}</span>
@@ -709,8 +598,6 @@ const Dashboard: React.FC = () => {
             </tbody>
           </table>
         </div>
-      </div>
-
       {selectedOrder && (
         <OrderDetailsDialog
           order={selectedOrder}
@@ -718,7 +605,7 @@ const Dashboard: React.FC = () => {
           onMarkReady={(id) => handleUpdateStatus(id, 'READY')}
         />
       )}
-    </div>
+    </>
   );
 };
 

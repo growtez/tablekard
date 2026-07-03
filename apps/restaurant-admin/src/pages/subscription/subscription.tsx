@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import Sidebar from '../../components/sidebar';
 import { useAuth } from '../../context/AuthContext';
 import { getRestaurantById, getSubscriptionPayments } from '../../services/supabaseService';
 import type { SubscriptionPaymentRecord } from '../../services/supabaseService';
@@ -202,23 +201,17 @@ const SubscriptionPage: React.FC = () => {
     // ── Loading state ──
     if (isLoading) {
         return (
-            <div className="flex min-h-screen bg-tk-bg text-[#1A202C]">
-                <Sidebar />
-        <div className="tk-main-content flex-1 p-5 overflow-y-auto min-h-screen transition-all duration-300 ml-[240px] max-md:!ml-0 max-md:!p-4 max-md:!pt-[72px] bg-tk-bg-surface">
+            <div className="w-full h-full flex flex-col items-center justify-center">
                     <div className="flex flex-col items-center justify-center h-[60vh] gap-4 text-[#4A5568] dark:text-tk-text-secondary">
                         <div className="w-9 h-9 border-3 border-[#E2E8F0] border-t-tk-burgundy rounded-full animate-spin" />
                         <p className="text-[0.9rem] text-[#4A5568] dark:text-tk-text-secondary">Loading subscription information...</p>
                     </div>
-                </div>
             </div>
         );
     }
 
     return (
-        <div className="flex min-h-screen bg-tk-bg text-[#1A202C]">
-            <Sidebar />
-
-            <div className="tk-main-content flex-1 p-5 overflow-y-auto min-h-screen transition-all duration-300 ml-[240px] max-md:!ml-0 max-md:!p-4 max-md:!pt-[72px] bg-tk-bg-surface">
+        <>
                 {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-[24px] font-bold text-[#1A202C] m-0 mb-1 dark:text-tk-text">Subscription</h1>
@@ -356,8 +349,7 @@ const SubscriptionPage: React.FC = () => {
                         )}
                     </div>
                 </div>
-            </div>
-        </div>
+        </>
     );
 };
 

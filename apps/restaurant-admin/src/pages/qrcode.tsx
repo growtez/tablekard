@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { jsPDF } from 'jspdf';
 import { Download, RefreshCw, QrCode, Table2, CheckCircle, AlertCircle } from 'lucide-react';
-import Sidebar from '../components/sidebar';
 import { useAuth } from '../context/AuthContext';
 import { useRestaurantTables } from '../hooks/useSupabaseQuery';
 import { paintQrTemplate, CARD_MM_W, CARD_MM_H } from '../utils/qrTemplatePainter';
@@ -76,10 +75,7 @@ const QRCodePage: React.FC = () => {
     };
 
     return (
-        <div className="flex min-h-screen bg-tk-bg relative font-['Outfit',sans-serif]">
-            <Sidebar />
-
-            <div className="tk-main-content flex-1 p-5 overflow-y-auto min-h-screen transition-all duration-300 ml-[240px] max-md:!ml-0 max-md:!p-4 max-md:!pt-[72px] bg-tk-bg-surface">
+        <>
                 {/* Header */}
                 <div className="flex justify-between items-start mb-7 flex-wrap gap-4 max-md:flex-col">
                     <div>
@@ -204,8 +200,7 @@ const QRCodePage: React.FC = () => {
                         })}
                     </div>
                 )}
-            </div>
-        </div>
+        </>
     );
 };
 

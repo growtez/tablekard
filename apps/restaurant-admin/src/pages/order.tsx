@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Search, TrendingUp, Calendar, Package, ChevronLeft, ChevronRight } from 'lucide-react';
-import Sidebar from '../components/sidebar';
 import { useAuth } from '../context/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { updateOrderStatus, updatePaymentStatus, updateOrderItemStatus } from '../services/supabaseService';
@@ -251,10 +250,7 @@ const Order: React.FC = () => {
   }, [visibleCount, filteredOrders.length]);
 
   return (
-    <div className="flex min-h-screen bg-tk-bg relative font-['Outfit',sans-serif]">
-      <Sidebar />
-
-      <div className="tk-main-content flex-1 p-5 overflow-y-auto min-h-screen transition-all duration-300 ml-[240px] max-md:!ml-0 max-md:!p-4 max-md:!pt-[72px] bg-tk-bg-surface">
+    <>
         {/* Header */}
         <div className="flex justify-between items-start mb-6 max-md:flex-col max-md:gap-3 max-md:mt-4">
           <div>
@@ -525,8 +521,6 @@ const Order: React.FC = () => {
             </>
           )}
         </div>
-      </div>
-
       {activeDetailOrder && (
         <OrderDetailModal
           order={activeDetailOrder}
@@ -534,7 +528,7 @@ const Order: React.FC = () => {
           onUpdateItemStatus={handleItemStatusChange}
         />
       )}
-    </div>
+    </>
   );
 };
 

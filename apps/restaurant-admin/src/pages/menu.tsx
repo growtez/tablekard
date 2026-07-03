@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Plus, Edit3, Trash2, Layers, Loader2 } from 'lucide-react';
-import Sidebar from '../components/sidebar';
 import MenuDialog from '../components/menu_dialog';
 import CategoryDialog from '../components/category_dialog';
 import OfferDialog from '../components/offer_dialog';
@@ -362,10 +361,7 @@ const Menu: React.FC = () => {
   const topSellingItem = menuItems.length > 0 ? menuItems[0].name : '-';
 
   return (
-    <div className="flex min-h-screen bg-tk-bg relative">
-      <Sidebar />
-
-      <div className="tk-main-content flex-1 p-5 overflow-y-auto min-h-screen transition-all duration-300 ml-[240px] max-md:!ml-0 max-md:!p-4 max-md:!pt-[72px] bg-tk-bg-surface">
+    <>
         {/* Header */}
         <div className="flex justify-between items-center mb-8 max-md:flex-col max-md:items-start max-md:gap-4">
           <h1 className="text-2xl font-semibold text-tk-text max-md:ml-16 max-md:mt-1">Menu Management</h1>
@@ -610,8 +606,6 @@ const Menu: React.FC = () => {
             )}
           </div>
         )}
-      </div>
-
       {/* Toast Notification */}
       {toast && (
         <div style={{
@@ -668,7 +662,7 @@ const Menu: React.FC = () => {
         mode={dialogMode}
         menuItems={menuItems}
       />
-    </div>
+    </>
   );
 };
 

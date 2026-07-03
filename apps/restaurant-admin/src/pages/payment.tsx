@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Download, Calendar, CreditCard, CheckCircle, Search, ChevronLeft, ChevronRight } from 'lucide-react';
-import Sidebar from '../components/sidebar';
 import { useAuth } from '../context/AuthContext';
 import { updatePaymentStatus } from '../services/supabaseService';
 import { useNavigate } from 'react-router-dom';
@@ -174,10 +173,7 @@ const Payment: React.FC = () => {
 
 
   return (
-    <div className="flex min-h-screen bg-tk-bg relative font-['Outfit',sans-serif]">
-      <Sidebar />
-
-      <div className="tk-main-content flex-1 p-5 overflow-y-auto min-h-screen transition-all duration-300 ml-[240px] max-md:!ml-0 max-md:!p-4 max-md:!pt-[72px] bg-tk-bg-surface">
+    <>
         <div className="flex justify-between items-center mb-8 max-md:flex-col max-md:items-start max-md:gap-4 max-md:mt-4">
           <h1 className="text-2xl font-semibold text-[#1A202C] m-0 max-md:ml-16">Payments & Billing</h1>
           <div className="flex items-center gap-4 max-md:w-full">
@@ -396,8 +392,7 @@ const Payment: React.FC = () => {
             </table>
           </div>
         </div>
-      </div>
-    </div>
+    </>
   );
 };
 

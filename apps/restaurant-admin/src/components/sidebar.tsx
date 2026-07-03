@@ -1,9 +1,8 @@
-// Sidebar.tsx
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LogOut, Menu } from 'lucide-react';
 
 const Tooltip = ({
   text,
@@ -22,9 +21,7 @@ const Tooltip = ({
   const handleMouseEnter = () => {
     if (!showTooltip || !ref.current) return;
 
-    // Find the first icon span inside the nav item
     const icon = ref.current.querySelector("span");
-
     if (!icon) return;
 
     const rect = icon.getBoundingClientRect();
@@ -45,7 +42,6 @@ const Tooltip = ({
       className="w-full"
     >
       {children}
-
       {show && (
         <div
           className="fixed z-[9999] px-3 py-1.5 bg-tk-bg-elevated text-tk-text text-[13px] font-semibold rounded-md border border-tk-border shadow-[0_4px_20px_rgba(0,0,0,0.15)] whitespace-nowrap pointer-events-none -translate-y-1/2"
@@ -68,7 +64,6 @@ interface NavItem {
   path: string;
 }
 
-// Inline SVG icon components (Flaticon-style) — filled when active
 const DashboardIcon = ({ active }: { active: boolean }) => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="3" y="3" width="7" height="7" rx="1" />
@@ -143,12 +138,10 @@ const Sidebar: React.FC = () => {
   const [logoError, setLogoError] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  // Reset logo error when the logo URL changes
   useEffect(() => {
     setLogoError(false);
   }, [activeRestaurantLogo]);
 
-  // Determine active tab based on current path (reactive to location changes)
   const getActiveTab = () => {
     const path = location.pathname;
     if (path.includes('/profile')) return 'profile';
@@ -165,7 +158,6 @@ const Sidebar: React.FC = () => {
 
   const activeTab = getActiveTab();
 
-  // Collapse state - default to collapsed on mobile
   const [isCollapsed, setIsCollapsed] = useState(() => {
     if (typeof window !== 'undefined' && window.innerWidth <= 768) {
       return true;
@@ -173,7 +165,6 @@ const Sidebar: React.FC = () => {
     return localStorage.getItem('sidebar-collapsed') === 'true';
   });
 
-  // Apply class to body for global layout adjustments
   useEffect(() => {
     if (isCollapsed) {
       document.body.classList.add('sidebar-collapsed');
@@ -188,7 +179,6 @@ const Sidebar: React.FC = () => {
     }
   }, [isCollapsed]);
 
-  // Handle resize to auto-collapse on mobile
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth <= 768) {
@@ -207,7 +197,6 @@ const Sidebar: React.FC = () => {
     { icon: (active) => <MenuIcon active={active} />, label: 'Menu Management', id: 'menu', path: '/menu' },
     { icon: (active) => <PaymentIcon active={active} />, label: 'Payment Management', id: 'payment', path: '/payments' },
     { icon: (active) => <ReportIcon active={active} />, label: 'Report and Analytics', id: 'report', path: '/reports' },
-    // { icon: (active) => <MenuIcon active={active} />, label: "QR Menu", id: "qr-menu", path: "/qrcode" },
     { icon: (active) => <TableIcon active={active} />, label: "Table Management", id: "table-management", path: "/table-management" },
     { icon: (active) => <SubscriptionIcon active={active} />, label: 'Subscription', id: 'subscription', path: '/subscription' }
   ];
@@ -227,7 +216,6 @@ const Sidebar: React.FC = () => {
 
   const handleLogout = async () => {
     setShowLogoutConfirm(false);
-
     try {
       await signOut();
       navigate('/');
@@ -242,19 +230,22 @@ const Sidebar: React.FC = () => {
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
+      
       {/* Mobile Hamburger Button */}
       <button
-        className={`mobile-menu-btn ${!isCollapsed ? 'hidden' : ''}`}
+        className={`fixed top-4 left-4 z-[90] p-2 bg-tk-bg-surface border border-tk-border rounded-lg md:hidden shadow-sm transition-opacity duration-200 ${!isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
         onClick={() => setIsCollapsed(false)}
       >
-        <span className="hamburger-icon">☰</span>
+        <Menu size={24} className="text-tk-text" />
       </button>
 
       {/* Overlay for mobile when sidebar is open */}
       <div
-        className={`sidebar-overlay ${!isCollapsed ? 'visible' : ''}`}
+        className={`fixed inset-0 bg-black/50 z-[95] md:hidden transition-opacity duration-300 ${!isCollapsed ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setIsCollapsed(true)}
-      />      <div className={`fixed left-0 top-0 h-screen bg-tk-bg py-4 flex flex-col z-[100] font-sans transition-[width,transform] duration-300 ease-in-out border-r-[1.5px] border-tk-border md:translate-x-0 ${isCollapsed ? 'w-[56px] -translate-x-full md:w-[56px] px-1.5' : 'w-[280px] translate-x-0 md:w-[240px] px-2'} shadow-[4px_0_24px_rgba(0,0,0,0.08)] md:shadow-none`}>
+      />      
+      
+      <div className={`fixed left-0 top-0 h-screen bg-tk-bg py-4 flex flex-col z-[100] font-sans transition-[width,transform] duration-300 ease-in-out border-r-[1.5px] border-tk-border md:translate-x-0 ${isCollapsed ? '-translate-x-full w-[280px] md:w-[64px] px-1.5' : 'translate-x-0 w-[280px] md:w-[240px] px-2'} shadow-[4px_0_24px_rgba(0,0,0,0.08)] md:shadow-none`}>
 
         <button 
           className={`hidden md:flex absolute top-1 w-7 h-7 bg-tk-bg text-tk-text-secondary border-[1.5px] border-tk-border rounded-full items-center justify-center cursor-pointer z-[110] shadow-sm hover:scale-105 hover:text-tk-text hover:border-tk-text-secondary transition-all duration-200 -right-[14px]`} 
@@ -265,7 +256,6 @@ const Sidebar: React.FC = () => {
 
         <div className="flex-1 w-full overflow-y-auto no-scrollbar flex flex-col">
           <div className="flex flex-col items-center mb-5 shrink-0 mt-2">
-            {/* Fixed-size slot for the avatar so it never reflows surrounding elements, even though the avatar itself shrinks/grows on collapse */}
             <div className="w-14 h-14 flex items-center justify-center mb-2 shrink-0">
               <button
                 type="button"
@@ -285,7 +275,6 @@ const Sidebar: React.FC = () => {
                 )}
               </button>
             </div>
-            {/* Fixed-height slot for the name (always reserved, capped at 2 lines) so 1-line vs 2-line names never push the nav items */}
             <div className="w-full h-9 flex items-start justify-center shrink-0">
               {showLabels && (
                 <div className="text-tk-text text-[14px] font-semibold text-center px-1 leading-tight">
@@ -316,14 +305,14 @@ const Sidebar: React.FC = () => {
             <Tooltip text={isCollapsed ? 'Profile' : 'Profile'} showTooltip={isCollapsed && !isMobile}>
               <div className={`flex items-center justify-between rounded-tk-md border-[1.5px] transition-all duration-200 ${activeTab === 'profile' ? 'bg-tk-burgundy text-white border-tk-burgundy font-semibold shadow-[0_4px_12px_rgba(139,58,30,0.25)]' : 'bg-tk-bg-card text-tk-text-secondary border-tk-border hover:bg-tk-burgundy-bg hover:text-tk-burgundy hover:border-tk-burgundy/20 hover:-translate-y-[1px]'}`}>
                 <div
-                  className={`flex items-center cursor-pointer text-[13px] gap-2 p-2 ${isCollapsed ? 'w-10 h-10 justify-center' : 'flex-1'}`}
+                  className={`flex items-center cursor-pointer text-[13px] gap-2 p-2 ${isCollapsed && !isMobile ? 'w-10 h-10 justify-center' : 'flex-1'}`}
                   onClick={() => { navigate('/profile'); if (window.innerWidth <= 768) setIsCollapsed(true); }}
                 >
                   <span className="w-6 h-6 flex items-center justify-center shrink-0"><ProfileIcon active={activeTab === 'profile'} /></span>
-                  {!isCollapsed && <span className="font-inherit whitespace-nowrap">Profile</span>}
+                  {(!isCollapsed || isMobile) && <span className="font-inherit whitespace-nowrap">Profile</span>}
                 </div>
 
-                {!isCollapsed && (
+                {(!isCollapsed || isMobile) && (
                   <Tooltip text="Sign Out" showTooltip={false}>
                     <button
                       type="button"
@@ -353,7 +342,6 @@ const Sidebar: React.FC = () => {
               >
                 <span className="w-6 h-6 flex items-center justify-center shrink-0">
                   {isDark ? (
-                    // Sun icon
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="12" cy="12" r="5" />
                       <line x1="12" y1="1" x2="12" y2="3" />
@@ -366,7 +354,6 @@ const Sidebar: React.FC = () => {
                       <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
                     </svg>
                   ) : (
-                    // Moon icon
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
                     </svg>

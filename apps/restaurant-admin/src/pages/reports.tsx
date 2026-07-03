@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Download, Calendar, ArrowUpRight, ArrowDownRight, Loader2, Info, ChevronLeft, ChevronRight, X, Eye } from 'lucide-react';
-import Sidebar from '../components/sidebar';
 import RevenueOrdersModal from '../components/RevenueOrdersModal';
 import './reports.css';
 import { useAuth } from '../context/AuthContext';
@@ -391,13 +390,10 @@ const Reports: React.FC = () => {
     // ── Loading state ──
     if (loading && summary.totalRevenue === 0) {
         return (
-            <div className="reports-container">
-                <Sidebar />
-                <div className="reports-main-content">
-                    <div className="reports-loading-screen">
-                        <div className="reports-loading-spinner" />
-                        <p className="reports-loading-text">Generating your insights...</p>
-                    </div>
+            <div className="w-full h-full flex flex-col items-center justify-center">
+                <div className="reports-loading-screen">
+                    <div className="reports-loading-spinner" />
+                    <p className="reports-loading-text">Generating your insights...</p>
                 </div>
             </div>
         );
@@ -405,11 +401,7 @@ const Reports: React.FC = () => {
 
     return (
         <>
-        <div className="reports-container">
-            <Sidebar />
-
-            <div className="reports-main-content">
-                <div className="reports-header">
+            <div className="reports-header">
                     <h1 className="reports-page-title">Reports & Analytics</h1>
                     <div className="reports-header-right">
                         {loading && <Loader2 className="animate-spin" size={20} style={{ color: '#4C51BF' }} />}
@@ -862,9 +854,6 @@ const Reports: React.FC = () => {
                         </div>
                     </div>
                 )}
-
-            </div>
-        </div>
 
         {/* Revenue Orders Modal */}
         {ordersModalOpen && activeRestaurantId && (

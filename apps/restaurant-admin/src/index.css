@@ -116,10 +116,6 @@
   background-color: var(--tk-bg-surface);
 }
 
-/* ── Sidebar Layout Utilities ───────────────────────────── */
-body.sidebar-collapsed .tk-main-content {
-  margin-left: 40px !important;
-}
 
 @media (max-width: 768px) {
   body.sidebar-collapsed .tk-main-content {

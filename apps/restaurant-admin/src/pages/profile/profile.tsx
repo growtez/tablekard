@@ -14,7 +14,6 @@ import {
   X,
 } from "lucide-react";
 import type { Restaurant } from "@restaurant-saas/types";
-import Sidebar from "../../components/sidebar";
 import ImageCropper from "../../components/ImageCropper";
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -2292,23 +2291,17 @@ const ProfilePage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen bg-tk-bg relative">
-        <Sidebar />
-        <div className="tk-main-content flex-1 p-5 overflow-y-auto min-h-screen transition-all duration-300 ml-[240px] max-md:!ml-0 max-md:!p-4 max-md:!pt-[72px] bg-tk-bg-surface">
-          <div className="flex flex-col items-center justify-center h-[calc(100vh-160px)] text-[#4A5568] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
+      <div className="w-full h-full flex items-center justify-center min-h-[calc(100vh-80px)]">
+          <div className="flex flex-col items-center justify-center h-full text-[#4A5568] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
             <div className="w-10 h-10 border-3 border-[#E2E8F0] border-t-tk-burgundy rounded-full animate-spin mb-4"></div>
             <p>Loading profile information...</p>
           </div>
-        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-tk-bg relative">
-      <Sidebar />
-
-      <div className="tk-main-content flex-1 p-5 overflow-y-auto min-h-screen transition-all duration-300 ml-[240px] max-md:!ml-0 max-md:!p-4 max-md:!pt-[72px] bg-tk-bg-surface">
+    <>
         <div
           className="flex justify-between items-center mb-8"
           style={{ marginBottom: "32px", alignItems: "center" }}
@@ -2426,8 +2419,6 @@ const ProfilePage: React.FC = () => {
             {isAdminEditing ? renderAdminEditor() : renderAdminReadOnly()}
           </form>
         </div>
-      </div>
-
       {/* Image Cropper Modal */}
       {cropImage && (
         <ImageCropper
@@ -2469,7 +2460,7 @@ const ProfilePage: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 
