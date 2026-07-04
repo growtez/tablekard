@@ -5,6 +5,7 @@ import BottomNav from '../components/BottomNav';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { getFavorites, removeFavoriteFromDB } from '../services/supabaseService';
+import ItemModal from '../components/ItemModal';
 import './likes.css';
 
 const LikesPage = () => {
@@ -242,96 +243,25 @@ const LikesPage = () => {
             )}
 
             {/* Dish Details Modal - Elegant Minimalist Design (Synchronized with Menu) */}
-            {showItemModal && selectedItem && (
-                <div className={`item-modal-overlay ${showItemModal ? 'show' : ''}`} onClick={closeItemModal}>
-                    <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
-
-                        {/* Drag Indicator */}
-                        <div className="modal-drag-bar"></div>
-
-                        {/* Close Button */}
-                        <button className="modal-x-btn" onClick={closeItemModal}>
-                            <X size={18} />
-                        </button>
-
-                        <div className="modal-scrollable-content">
-                            {/* Centered Dish Image */}
-                            <div className="modal-dish-showcase">
-                                <div className="dish-image-frame">
-                                    <img src={selectedItem.image} alt={selectedItem.name} />
-                                </div>
-                                <button
-                                    className="modal-fav-floating active"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        removeFavorite(selectedItem.id);
-                                        closeItemModal();
-                                    }}
-                                >
-                                    <Heart
-                                        size={20}
-                                        fill="#8B3A1E"
-                                        color="#8B3A1E"
-                                    />
-                                </button>
-                                <div className="dish-rating-pill">
-                                    <Star size={12} fill="#8B3A1E" color="#8B3A1E" />
-                                    <span>{selectedItem.rating}</span>
-                                </div>
-                            </div>
-
-                            {/* Dish Info */}
-                            <div className="modal-dish-info">
-                                <h2 className="dish-title">{selectedItem.name}</h2>
-
-                                <div className="dish-meta-chips">
-                                    <span className="meta-chip"><Clock size={13} /> {selectedItem.raw?.preparation_time || '15'}min</span>
-                                    <span className="meta-chip"><Users size={13} /> Serves {selectedItem.serves}</span>
-                                    {selectedItem.raw?.is_veg ? (
-                                        <span className="meta-chip green">Veg</span>
-                                    ) : (
-                                        <span className="meta-chip red">Non-Veg</span>
-                                    )}
-                                </div>
-
-                                <p className="dish-full-desc">{selectedItem.raw?.long_description || selectedItem.description}</p>
-                            </div>
-                        </div>
-
-                        {/* Sticky Bottom Action Bar */}
-                        <div className="modal-bottom-bar">
-                            <div className="price-display">
-                                <span className="price-rupee">₹{selectedItem.price}</span>
-                            </div>
-
-                            {getItemQuantity(selectedItem.id) === 0 ? (
-                                <button
-                                    className="add-to-order-btn"
-                                    onClick={() => addToCart(selectedItem.raw)}
-                                >
-                                    Add to Order
-                                </button>
-                            ) : (
-                                <div className="qty-stepper">
-                                    <button
-                                        className="stepper-btn"
-                                        onClick={() => removeFromCart(selectedItem.id)}
-                                    >
-                                        <Minus size={18} />
-                                    </button>
-                                    <span className="stepper-count">{getItemQuantity(selectedItem.id)}</span>
-                                    <button
-                                        className="stepper-btn"
-                                        onClick={() => addToCart(selectedItem.raw)}
-                                    >
-                                        <Plus size={18} />
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
+            <ItemModal
+                isOpen={showItemModal}
+                onClose={closeItemModal}
+                item={selectedItem ? {
+                    ...selectedItem.raw,
+                    image: selectedItem.image,
+                    rating: selectedItem.rating,
+                    time: selectedItem.raw?.preparation_time ? `${selectedItem.raw.preparation_time}min` : '15min',
+                    serves: selectedItem.serves,
+                    dietType: selectedItem.raw?.is_veg ? 'veg' : 'non-veg',
+                    description: selectedItem.raw?.long_description || selectedItem.description,
+                    id: selectedItem.id // Ensure id is mapped correctly
+                } : null}
+                favorites={favorites.map(f => f.id)}
+                onToggleFavorite={(id) => {
+                    removeFavorite(id);
+                    closeItemModal();
+                }}
+            />
             {/* Bottom Navigation */}
             {!showItemModal && <BottomNav />}
         </div>

@@ -1,5 +1,5 @@
-/* ============================================================
-   SEARCH PAGE — PREMIUM UI
+﻿/* ============================================================
+   SEARCH PAGE â€” PREMIUM UI
    ============================================================ */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@1,700&display=swap');
 
@@ -175,7 +175,7 @@
 .skeleton-line.mid   { width: 45%; }
 
 /* ============================================================
-   RECOMMENDATIONS — BEAUTIFUL HERO TEXT
+   RECOMMENDATIONS â€” BEAUTIFUL HERO TEXT
    ============================================================ */
 .recommendations-section {
     padding: 28px 20px 0;
@@ -241,7 +241,7 @@
 }
 
 /* ============================================================
-   RECOMMENDATION LIST — PREMIUM CARDS
+   RECOMMENDATION LIST â€” PREMIUM CARDS
    ============================================================ */
 .rec-list {
     display: flex;
@@ -274,7 +274,7 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.07);
 }
 
-/* ── Thumbnail ── */
+/* â”€â”€ Thumbnail â”€â”€ */
 .rec-thumb {
     position: relative;
     width: 120px;
@@ -319,7 +319,7 @@
 .rec-veg-badge.veg     .rec-veg-dot { background: #2E7D32; }
 .rec-veg-badge.non-veg .rec-veg-dot { background: #C62828; }
 
-/* ── Info Column ── */
+/* â”€â”€ Info Column â”€â”€ */
 .rec-info {
     flex: 1;
     min-width: 0;
@@ -513,7 +513,7 @@
 }
 
 /* ============================================================
-   SEARCH RESULTS — COMPACT CARD LAYOUT
+   SEARCH RESULTS â€” COMPACT CARD LAYOUT
    ============================================================ */
 .sr-container {
     padding: 16px 20px 0;
@@ -738,7 +738,7 @@
     text-align: center;
 }
 
-/* ── Modern Frosted Glow Cart Indicator ── */
+/* â”€â”€ Modern Frosted Glow Cart Indicator â”€â”€ */
 .cart-modern-glow {
     position: fixed;
     bottom: 30px;
@@ -912,284 +912,4 @@
 }
 
 /* ===== MODAL - Elegant Minimalist Design ===== */
-.item-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0);
-  z-index: 9999;
-  opacity: 0;
-  transition: opacity 0.4s ease, -webkit-backdrop-filter 0.4s ease, backdrop-filter 0.4s ease;
-  -webkit-backdrop-filter: blur(0px);
-  backdrop-filter: blur(0px);
-  pointer-events: none;
-  display: flex;
-  align-items: flex-end;
-}
 
-.item-modal-overlay.show {
-  opacity: 1;
-  background: rgba(0, 0, 0, 0.7);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  pointer-events: auto;
-}
-
-/* Modal Sheet */
-.modal-sheet {
-  width: 100%;
-  background: #FFFFFF;
-  border-radius: 24px 24px 0 0;
-  max-height: 85vh;
-  transform: translateY(100%);
-  transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  padding-bottom: 0;
-}
-
-.modal-scrollable-content {
-  flex: 1;
-  overflow-y: auto;
-  scrollbar-width: none;
-}
-
-.modal-scrollable-content::-webkit-scrollbar {
-  display: none;
-}
-
-.item-modal-overlay.show .modal-sheet {
-  transform: translateY(0);
-}
-
-/* Drag Bar */
-.modal-drag-bar {
-  width: 40px;
-  height: 4px;
-  background: #E0E0E0;
-  border-radius: 2px;
-  margin: 12px auto 16px;
-}
-
-/* Close Button */
-.modal-x-btn {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: #F5F5F5;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #666666;
-  cursor: pointer;
-  z-index: 10;
-  transition: all 0.2s ease;
-}
-
-.modal-x-btn:active {
-  background: #8B3A1E;
-  color: #FFFFFF;
-  transform: scale(0.9);
-}
-
-/* Dish Showcase */
-.modal-dish-showcase {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 32px 24px 28px;
-  position: relative;
-}
-
-.dish-image-frame-scrollable {
-  display: flex;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  width: 280px;
-  height: 200px;
-  border-radius: 24px;
-  box-shadow: 0 16px 50px rgba(139, 58, 30, 0.18);
-  border: 5px solid #FFFFFF;
-  scrollbar-width: none;
-}
-.dish-image-frame-scrollable::-webkit-scrollbar {
-  display: none;
-}
-
-.dish-image-frame {
-  flex: 0 0 100%;
-  scroll-snap-align: center;
-  width: 100%;
-  height: 100%;
-  border-radius: 19px;
-  overflow: hidden;
-}
-
-.dish-image-frame img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.dish-rating-pill {
-  position: absolute;
-  bottom: 18px;
-  right: calc(50% - 140px);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: #1A1A1A;
-  color: #FFFFFF;
-  padding: 6px 12px;
-  border-radius: 14px;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-/* Dish Info */
-.modal-dish-info {
-  padding: 0 24px 24px;
-  text-align: center;
-}
-
-.dish-title {
-  font-size: 24px;
-  font-weight: 800;
-  color: #1A1A1A;
-  margin: 0 0 12px 0;
-  line-height: 1.2;
-}
-
-.dish-meta-chips {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-}
-
-.meta-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: #FFFFFF;
-  color: #1A1A1A;
-  padding: 6px 12px;
-  border-radius: 16px;
-  font-size: 12px;
-  font-weight: 600;
-  border: 1px solid #1A1A1A;
-}
-
-.meta-chip svg {
-  color: #1A1A1A;
-}
-
-.meta-chip.green {
-  background: #E8F5E9;
-  color: #2E7D32;
-  border-color: #2E7D32;
-}
-
-.meta-chip.vegan {
-  background: #E0F2F1;
-  color: #00695C;
-  border-color: #00695C;
-}
-
-.meta-chip.red {
-  background: #FFEBEE;
-  color: #C62828;
-  border-color: #C62828;
-}
-
-.dish-full-desc {
-  color: #666666;
-  font-size: 14px;
-  line-height: 1.7;
-  margin: 0;
-  text-align: center;
-  white-space: pre-wrap;
-}
-
-/* Bottom Action Bar */
-.modal-bottom-bar {
-  position: relative;
-  background: #FFFFFF;
-  padding: 16px 24px 28px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
-  border-top: 1px solid #F0F0F0;
-  z-index: 2010;
-}
-
-.price-display {
-  display: flex;
-  flex-direction: column;
-}
-
-.price-rupee {
-  font-size: 28px;
-  font-weight: 900;
-  color: #1A1A1A;
-}
-
-.add-to-order-btn {
-  background: #8B3A1E;
-  color: #FFFFFF;
-  border: none;
-  padding: 16px 32px;
-  border-radius: 14px;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.add-to-order-btn:active {
-  transform: scale(0.96);
-  background: #6F2D17;
-}
-
-.qty-stepper {
-  display: flex;
-  align-items: center;
-  background: #8B3A1E;
-  border-radius: 14px;
-  overflow: hidden;
-}
-
-.stepper-btn {
-  background: transparent;
-  border: none;
-  color: #FFFFFF;
-  width: 48px;
-  height: 52px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.stepper-btn:active {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.stepper-count {
-  color: #FFFFFF;
-  font-size: 18px;
-  font-weight: 800;
-  min-width: 36px;
-  text-align: center;
-}

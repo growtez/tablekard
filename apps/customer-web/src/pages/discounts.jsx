@@ -2,6 +2,7 @@ import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { ArrowLeft, Clock, Star, Heart, X, Plus, Minus, Users, View } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
+import ItemModal from '../components/ItemModal';
 import { useRestaurant } from '../context/RestaurantContext';
 import { getOffersForCustomer } from '../services/supabaseService';
 import PageSkeleton from '../components/PageSkeleton';
@@ -230,117 +231,13 @@ const DiscountsPage = () => {
             </div>
 
             {/* Dish Details Modal - Shared from Home */}
-            {showItemModal && selectedItem && (
-                <div className={`item-modal-overlay ${showItemModal ? 'show' : ''}`} onClick={closeItemModal}>
-                    <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-drag-bar"></div>
-                        <button className="modal-x-btn" onClick={closeItemModal}>
-                            <X size={18} />
-                        </button>
-
-                        <div className="modal-scrollable-content">
-                            <div className="modal-dish-showcase">
-                                {selectedItem.images && selectedItem.images.length > 1 ? (
-                                    <div className="dish-images-scroll-container">
-                                        {selectedItem.images.map((imgUrl, idx) => (
-                                            <div key={idx} className="dish-image-frame">
-                                                <img src={imgUrl} alt={`${selectedItem.name} ${idx + 1}`} />
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="dish-image-frame">
-                                        <img src={selectedItem.image} alt={selectedItem.name} />
-                                    </div>
-                                )}
-                                <button
-                                    className="modal-fav-floating"
-                                    onClick={(e) => toggleFavorite(selectedItem.id, e)}
-                                >
-                                    <Heart
-                                        size={20}
-                                        fill={favorites.includes(selectedItem.id) ? '#8B3A1E' : 'transparent'}
-                                        color="#8B3A1E"
-                                    />
-                                </button>
-                                <div className="dish-rating-pill">
-                                    <Star size={12} fill="#8B3A1E" color="#8B3A1E" />
-                                    <span>{selectedItem.rating}</span>
-                                </div>
-                            </div>
-
-                            <div className="modal-dish-info">
-                                <h2 className="dish-title">{selectedItem.name}</h2>
-                                <div className="dish-meta-chips">
-                                    <span className="meta-chip"><Clock size={13} /> {selectedItem.time}</span>
-                                    <span className="meta-chip"><Users size={13} /> {selectedItem.serves}</span>
-                                    {selectedItem.dietType === 'vegan' && <span className="meta-chip vegan">Vegan</span>}
-                                    {selectedItem.dietType === 'veg' && <span className="meta-chip green">Veg</span>}
-                                    {selectedItem.dietType === 'non-veg' && <span className="meta-chip red">Non-Veg</span>}
-                                </div>
-                                <p className="dish-full-desc">{selectedItem.description}</p>
-                                
-                                {selectedItem.modelUrl && (
-                                    <button 
-                                        className="view-ar-btn"
-                                        onClick={() => navigate(`/ar/${selectedItem.id}`, { state: { modelUrl: selectedItem.modelUrl } })}
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            gap: '8px',
-                                            width: '100%',
-                                            padding: '12px',
-                                            marginTop: '16px',
-                                            backgroundColor: '#f5ede9',
-                                            color: '#8B3A1E',
-                                            border: 'none',
-                                            borderRadius: '12px',
-                                            fontSize: '15px',
-                                            fontWeight: '600',
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        <View size={18} />
-                                        View in AR
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="modal-bottom-bar">
-                            <div className="price-display">
-                                <span className="price-rupee">₹{selectedItem.price}</span>
-                            </div>
-
-                            {getItemQuantity(selectedItem.id) === 0 ? (
-                                <button
-                                    className="add-to-order-btn"
-                                    onClick={() => addToCart(selectedItem)}
-                                >
-                                    Add to Order
-                                </button>
-                            ) : (
-                                <div className="qty-stepper">
-                                    <button
-                                        className="stepper-btn"
-                                        onClick={() => removeFromCart(selectedItem.id)}
-                                    >
-                                        <Minus size={18} />
-                                    </button>
-                                    <span className="stepper-count">{getItemQuantity(selectedItem.id)}</span>
-                                    <button
-                                        className="stepper-btn"
-                                        onClick={() => addToCart(selectedItem)}
-                                    >
-                                        <Plus size={18} />
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
+            <ItemModal
+                isOpen={showItemModal}
+                onClose={closeItemModal}
+                item={selectedItem}
+                favorites={favorites}
+                onToggleFavorite={toggleFavorite}
+            />
             {/* Bottom Navigation
             {!showItemModal && <BottomNav />} */}
         </div>

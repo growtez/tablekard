@@ -17,7 +17,7 @@ import { supabase } from '@restaurant-saas/supabase';
  * - Creates a Razorpay order
  * - Returns razorpay_order_id to open checkout
  */
-export const createRazorpayOrder = async ({ restaurantId, tableId, orderType, items }) => {
+export const createRazorpayOrder = async ({ restaurantId, tableId, orderType, items, specialInstructions }) => {
     // Debug: check auth state
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     console.log('[Payment Debug]', {
@@ -37,12 +37,12 @@ export const createRazorpayOrder = async ({ restaurantId, tableId, orderType, it
             restaurant_id: restaurantId,
             table_id: tableId || null,
             order_type: orderType || 'dine_in',
-            items: items.map(item => ({
+            items: items.map((item, index) => ({
                 menu_item_id: item.id,
                 quantity: item.quantity,
                 variant: item.variant || null,
                 addons: item.addons || null,
-                special_instructions: item.specialInstructions || null,
+                special_instructions: index === 0 ? specialInstructions : null,
             })),
         },
     });
@@ -185,6 +185,7 @@ export const processOnlinePayment = async ({
     userName,
     userEmail,
     userPhone,
+    specialInstructions,
     onStatusChange,     // Callback: (status) => {} for UI updates
 }) => {
     try {
@@ -196,6 +197,7 @@ export const processOnlinePayment = async ({
             tableId,
             orderType,
             items,
+            specialInstructions,
         });
 
         // Step 2: Open Razorpay Checkout

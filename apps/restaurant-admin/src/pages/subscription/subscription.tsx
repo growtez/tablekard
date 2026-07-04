@@ -46,7 +46,7 @@ function daysUntil(dateStr: string | null | undefined): number {
 
 function getStatusInfo(restaurant: Restaurant | null): {
     label: string;
-    status: 'active' | 'expired' | 'inactive';
+    status: 'active' | 'grace' | 'expired' | 'inactive';
     icon: string;
     message: string;
 } {
@@ -58,8 +58,12 @@ function getStatusInfo(restaurant: Restaurant | null): {
         return { label: 'Inactive', status: 'inactive', icon: '⏸️', message: 'Your subscription is inactive. Choose a plan to get started.' };
     }
 
+    const now = new Date();
     const endAt = restaurant.subscriptionEndAt;
-    if (endAt && new Date(endAt) > new Date()) {
+    const graceEnd = (restaurant as any).gracePeriodEndsAt;
+
+    if (endAt && new Date(endAt) > now) {
+        // Still within the paid subscription period
         const days = daysUntil(endAt);
         return {
             label: 'Active',
@@ -68,6 +72,17 @@ function getStatusInfo(restaurant: Restaurant | null): {
             message: days <= 7
                 ? `Expires on ${formatDate(endAt)} — renew soon to avoid interruption.`
                 : `Active until ${formatDate(endAt)}.`,
+        };
+    }
+
+    if (graceEnd && new Date(graceEnd) > now) {
+        // Subscription ended but within 3-day grace period
+        const graceDays = daysUntil(graceEnd);
+        return {
+            label: 'Grace Period',
+            status: 'grace',
+            icon: '⏳',
+            message: `Your subscription has expired. You have ${graceDays} day${graceDays !== 1 ? 's' : ''} remaining before services are suspended. Renew now to avoid interruption!`,
         };
     }
 
