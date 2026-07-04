@@ -13,7 +13,7 @@
 }
 
 .cropper-modal-container {
-  background-color: #ffffff;
+  background-color: var(--color-surface, #ffffff);
   border-radius: 16px;
   width: 90%;
   max-width: 800px;
@@ -29,13 +29,13 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--color-border, #f0f0f0);
 }
 
 .cropper-modal-header h3 {
   margin: 0;
   font-size: 1.25rem;
-  color: #1a202c;
+  color: var(--color-text-main, #1a202c);
   font-weight: 700;
 }
 
@@ -53,8 +53,8 @@
 }
 
 .cropper-close-btn:hover {
-  background-color: #f7fafc;
-  color: #4a5568;
+  background-color: var(--color-surface-hover, #f7fafc);
+  color: var(--color-text-muted, #4a5568);
 }
 
 .cropper-wrapper {
@@ -80,15 +80,14 @@
 .zoom-control span {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #4a5568;
+  color: var(--color-text-muted, #4a5568);
   min-width: 50px;
 }
 
 .zoom-range {
   flex: 1;
   height: 6px;
-  background: #e2e8f0;
-  border-radius: 3px;
+  background: var(--color-border, #e2e8f0);
   outline: none;
   cursor: pointer;
 }
@@ -102,9 +101,9 @@
 .cropper-btn-cancel {
   padding: 10px 20px;
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  background-color: #ffffff;
-  color: #4a5568;
+  border: 1px solid var(--color-border, #e2e8f0);
+  background-color: var(--color-surface, #ffffff);
+  color: var(--color-text-muted, #4a5568);
   font-weight: 600;
   font-size: 0.875rem;
   cursor: pointer;
@@ -112,8 +111,8 @@
 }
 
 .cropper-btn-cancel:hover {
-  background-color: #f7fafc;
-  border-color: #cbd5e0;
+  background-color: var(--color-surface-hover, #f7fafc);
+  border-color: var(--color-border, #cbd5e0);
 }
 
 .cropper-btn-done {

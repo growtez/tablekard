@@ -227,7 +227,9 @@ export default function SubscriptionDetail({ setHeaderData }) {
                                     <div className="bg-surface-hover p-6 rounded-2xl text-center">
                                         <Clock size={28} className="text-amber-500 mb-4 opacity-80 mx-auto" />
                                         <div className="text-xs font-bold text-text-muted uppercase tracking-wider mb-1">Plan Duration</div>
-                                        <div className="text-2xl font-extrabold">{data.plan_duration} Days</div>
+                                        <div className="text-2xl font-extrabold">
+                                            {data.plan_duration} {data.plan_duration === 1 ? 'Month' : 'Months'}
+                                        </div>
                                     </div>
                                     <div className="bg-surface-hover p-6 rounded-2xl text-center">
                                         <Calendar size={28} className="text-accent-primary mb-4 opacity-80 mx-auto" />

@@ -28,7 +28,7 @@ interface RestaurantRow {
     contact_email: string | null; contact_phone: string | null; contact_address: string | null;
     logo_url: string | null; primary_color: string | null; secondary_color: string | null;
     profile_urls: string[] | null; settings: Record<string, unknown> | null;
-    subscription_status: boolean; subscription_type: string | null; subscription_end_at: string | null;
+    subscription_status: boolean; subscription_type: string | null; subscription_end_at: string | null; grace_period_ends_at: string | null;
     latitude: number | null; longitude: number | null; allowed_radius: number | null;
     opening_date: string | null; tagline: string | null; manifesto: string | null;
     operating_hours_weekdays: string | null; operating_hours_weekends: string | null;
@@ -153,6 +153,7 @@ const mapRestaurantRow = (row: RestaurantRow): Restaurant => ({
     subscriptionStatus: row.subscription_status,
     subscriptionType: row.subscription_type,
     subscriptionEndAt: row.subscription_end_at,
+    gracePeriodEndsAt: row.grace_period_ends_at,
     profileUrls: row.profile_urls ?? [],
     location: {
         latitude: row.latitude,

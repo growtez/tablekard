@@ -19,27 +19,34 @@ function formatTime(isoString) {
   });
 }
 
-function getVariantString(item) {
-  if (item.variant) {
-    if (typeof item.variant === 'string') return item.variant;
-    if (item.variant.name) return item.variant.name;
-    if (item.variant.label) return item.variant.label;
-  }
-  return null;
+/** Extract variant name string from an item */
+function getVariantName(item) {
+  if (!item.variant) return null;
+  if (typeof item.variant === 'string') return item.variant;
+  return item.variant.name || item.variant.label || null;
 }
 
-function getAddonStrings(item) {
-  if (item.addons) {
-    let addonList = item.addons;
-    if (!Array.isArray(addonList)) addonList = [addonList];
-    return addonList
-      .map((a) => (typeof a === 'string' ? a : a.name || a.label || ''))
-      .filter(Boolean);
-  }
-  return [];
+/** Extract addon names array from an item */
+function getAddonNames(item) {
+  if (!item.addons) return [];
+  let addonList = item.addons;
+  if (!Array.isArray(addonList)) addonList = [addonList];
+  return addonList
+    .map((a) => (typeof a === 'string' ? a : a.name || a.label || ''))
+    .filter(Boolean);
 }
 
-/** Get table number from order's joined restaurant_tables */
+/** Build a human-readable detail string from variant and addons (kept for backward compat) */
+function buildDetailString(item) {
+  const parts = [];
+  const variant = getVariantName(item);
+  if (variant) parts.push(variant);
+  const addons = getAddonNames(item);
+  if (addons.length) parts.push(addons.join(', '));
+  return parts.join(' · ');
+}
+
+/** Get table number from order's restaurant_tables FK join */
 function getTableNumber(order) {
   if (order.restaurant_tables && order.restaurant_tables.table_number != null) {
     return String(order.restaurant_tables.table_number).padStart(2, '0');
@@ -68,13 +75,14 @@ const OrderCard = ({
   createdAt,
   items,
   status,
+  expanded,
+  onToggleExpand,
   onMarkReady,
   onPromote,
   onCancel,
   onUpdateItemStatus,
 }) => {
   const isPreparingCard = status === 'preparing';
-  const [expanded, setExpanded] = useState(false);
 
   const readyCount = items.filter((i) => i.status === 'ready').length;
   const allItemsReady = items.length > 0 && readyCount === items.length;
@@ -87,143 +95,159 @@ const OrderCard = ({
   }, [isPreparingCard, allItemsReady, id, onMarkReady]);
 
   /* ── Queue items — PREPARE per item, no READY ────────── */
-  const renderQueueItems = () =>
-    items.length === 0 ? (
-      <div className="expand-empty">No items in this order</div>
-    ) : (
-      items.map((item) => {
-        const variant = getVariantString(item);
-        const addons = getAddonStrings(item);
-        const itemStatus = item.status || 'placed';
-        return (
-          <div key={item.id} className="queue-item">
-            <div className="queue-item-main">
-              <div className="queue-item-info">
-                <span className="expand-item-name">{item.name}</span>
-                <span className="expand-item-qty">×{item.quantity}</span>
+  const renderQueueItems = () => {
+    if (items.length === 0) return <div className="expand-empty">No items in this order</div>;
+
+    // Collect the first non-empty special instructions (order-level)
+    const orderInstructions = items.map((i) => i.special_instructions).find(Boolean);
+
+    return (
+      <>
+        {items.map((item) => {
+          const variant = getVariantName(item);
+          const addons = getAddonNames(item);
+          const itemStatus = item.status || 'placed';
+          return (
+            <div key={item.id} className="queue-item">
+              <div className="queue-item-main">
+                <div className="queue-item-info">
+                  <span className="expand-item-name">{item.name}</span>
+                  <span className="expand-item-qty">×{item.quantity}</span>
+                </div>
+                {itemStatus === 'placed' && (
+                  <button
+                    className="item-action-btn item-action-btn--prepare"
+                    onClick={() => onUpdateItemStatus(item.id, 'preparing')}
+                  >
+                    PREPARE
+                  </button>
+                )}
+                {itemStatus === 'preparing' && (
+                  <span className="queue-item-preparing">● IN PROGRESS</span>
+                )}
+                {itemStatus === 'ready' && (
+                  <span className="item-done-label">
+                    <Check size={12} strokeWidth={3} /> READY
+                  </span>
+                )}
               </div>
-              {itemStatus === 'placed' && (
-                <button
-                  className="item-action-btn item-action-btn--prepare"
-                  onClick={() => onUpdateItemStatus(item.id, 'preparing')}
-                >
-                  PREPARE
-                </button>
-              )}
-              {itemStatus === 'preparing' && (
-                <span className="queue-item-preparing">● IN PROGRESS</span>
-              )}
-              {itemStatus === 'ready' && (
-                <span className="item-done-label">
-                  <Check size={12} strokeWidth={3} /> READY
-                </span>
+              {(variant || addons.length > 0) && (
+                <div className="queue-item-details">
+                  {variant && (
+                    <div className="queue-item-detail-row">
+                      <span className="queue-detail-label">Variant</span>
+                      <span className="queue-detail-value">{variant}</span>
+                    </div>
+                  )}
+                  {addons.length > 0 && (
+                    <div className="queue-item-detail-row">
+                      <span className="queue-detail-label">Add-ons</span>
+                      <span className="queue-detail-value">{addons.join(', ')}</span>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
-            {(variant || addons.length > 0 || item.special_instructions) && (
-              <div className="item-details-container">
-                {variant && <div className="item-variant">{variant}</div>}
-                
-                {addons.length > 0 && (
-                  <div className="item-addons">
-                    <span className="item-addons-title">ADD-ONS:</span>
-                    <ul className="addon-list">
-                      {addons.map((addon, idx) => (
-                        <li key={idx}>{addon}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                
-                {item.special_instructions && (
-                  <div className="expand-item-instructions">
-                    <AlertTriangle size={13} strokeWidth={2.5} />
-                    <span><strong>NOTE:</strong> {item.special_instructions}</span>
-                  </div>
-                )}
-              </div>
-            )}
+          );
+        })}
+        {orderInstructions && (
+          <div className="order-instructions-banner">
+            <AlertTriangle size={12} />
+            <div className="order-instructions-content">
+              <span className="order-instructions-label">Special Instructions</span>
+              <span className="order-instructions-text">{orderInstructions}</span>
+            </div>
           </div>
-        );
-      })
+        )}
+      </>
     );
+  };
 
   /* ── Preparing items — 3 states: PREPARE / ✓ toggle / done ── */
-  const renderPreparingItems = () =>
-    items.length === 0 ? (
-      <div className="expand-empty">No items in this order</div>
-    ) : (
-      items.map((item) => {
-        const variant = getVariantString(item);
-        const addons = getAddonStrings(item);
-        const itemStatus = item.status || 'placed';
-        const isReady = itemStatus === 'ready';
-        return (
-          <div key={item.id} className="expand-item">
-            <div className="expand-item-main">
-              <div>
-                <span className="expand-item-name">{item.name}</span>
-                <span className="expand-item-qty">×{item.quantity}</span>
+  const renderPreparingItems = () => {
+    if (items.length === 0) return <div className="expand-empty">No items in this order</div>;
+
+    // Collect the first non-empty special instructions (order-level)
+    const orderInstructions = items.map((i) => i.special_instructions).find(Boolean);
+
+    return (
+      <>
+        {items.map((item) => {
+          const variant = getVariantName(item);
+          const addons = getAddonNames(item);
+          const itemStatus = item.status || 'placed';
+          const isReady = itemStatus === 'ready';
+          return (
+            <div key={item.id} className="expand-item">
+              <div className="expand-item-main">
+                <div className="expand-item-header">
+                  <span className="expand-item-name">{item.name}</span>
+                  <span className="expand-item-qty">×{item.quantity}</span>
+                </div>
+
+                {itemStatus === 'placed' && (
+                  /* Still not started — show PREPARE to kick it off */
+                  <button
+                    className="item-action-btn item-action-btn--prepare"
+                    onClick={() => onUpdateItemStatus(item.id, 'preparing')}
+                  >
+                    PREPARE
+                  </button>
+                )}
+
+                {itemStatus === 'preparing' && (
+                  /* In progress — tap ✓ to mark done */
+                  <button
+                    className="item-ready-toggle"
+                    onClick={() => onUpdateItemStatus(item.id, 'ready')}
+                    title="Mark as ready"
+                  >
+                    <Check size={14} strokeWidth={3.5} />
+                  </button>
+                )}
+
+                {isReady && (
+                  /* Done */
+                  <button
+                    className="item-ready-toggle item-ready-toggle--done"
+                    disabled
+                    title="Item ready"
+                  >
+                    <Check size={14} strokeWidth={3.5} />
+                  </button>
+                )}
               </div>
-
-              {itemStatus === 'placed' && (
-                /* Still not started — show PREPARE to kick it off */
-                <button
-                  className="item-action-btn item-action-btn--prepare"
-                  onClick={() => onUpdateItemStatus(item.id, 'preparing')}
-                >
-                  PREPARE
-                </button>
-              )}
-
-              {itemStatus === 'preparing' && (
-                /* In progress — tap ✓ to mark done */
-                <button
-                  className="item-ready-toggle"
-                  onClick={() => onUpdateItemStatus(item.id, 'ready')}
-                  title="Mark as ready"
-                >
-                  <Check size={14} strokeWidth={3.5} />
-                </button>
-              )}
-
-              {isReady && (
-                /* Done */
-                <button
-                  className="item-ready-toggle item-ready-toggle--done"
-                  disabled
-                  title="Item ready"
-                >
-                  <Check size={14} strokeWidth={3.5} />
-                </button>
+              {(variant || addons.length > 0) && (
+                <div className="expand-item-details">
+                  {variant && (
+                    <div className="expand-item-detail-row">
+                      <span className="expand-detail-label">Variant</span>
+                      <span className="expand-detail-value">{variant}</span>
+                    </div>
+                  )}
+                  {addons.length > 0 && (
+                    <div className="expand-item-detail-row">
+                      <span className="expand-detail-label">Add-ons</span>
+                      <span className="expand-detail-value">{addons.join(', ')}</span>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
-            {(variant || addons.length > 0 || item.special_instructions) && (
-              <div className="item-details-container">
-                {variant && <div className="item-variant">{variant}</div>}
-                
-                {addons.length > 0 && (
-                  <div className="item-addons">
-                    <span className="item-addons-title">ADD-ONS:</span>
-                    <ul className="addon-list">
-                      {addons.map((addon, idx) => (
-                        <li key={idx}>{addon}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                
-                {item.special_instructions && (
-                  <div className="expand-item-instructions">
-                    <AlertTriangle size={13} strokeWidth={2.5} />
-                    <span><strong>NOTE:</strong> {item.special_instructions}</span>
-                  </div>
-                )}
-              </div>
-            )}
+          );
+        })}
+        {orderInstructions && (
+          <div className="order-instructions-banner">
+            <AlertTriangle size={12} />
+            <div className="order-instructions-content">
+              <span className="order-instructions-label">Special Instructions</span>
+              <span className="order-instructions-text">{orderInstructions}</span>
+            </div>
           </div>
-        );
-      })
+        )}
+      </>
     );
+  };
 
   /* ── render ───────────────────────────────────────── */
   return (
@@ -247,7 +271,7 @@ const OrderCard = ({
               {readyCount}/{items.length} ready
             </div>
           ) : (
-            <button className="order-items-trigger" onClick={() => setExpanded((v) => !v)}>
+            <button className="order-items-trigger" onClick={onToggleExpand}>
               <span>{items.length} ITEM{items.length !== 1 ? 'S' : ''}</span>
               <ChevronDown
                 size={18}
@@ -364,6 +388,16 @@ function OrdersView({ onSignOut }) {
   const { activeRestaurantId } = useAuth();
   const [restaurantName, setRestaurantName] = useState('TABLEKARD');
   const [denyTarget, setDenyTarget] = useState(null); // { id, orderNumber }
+  // Track which queue cards are expanded by order ID — stable across realtime refetches
+  const [expandedIds, setExpandedIds] = useState(() => new Set());
+
+  const toggleExpand = (orderId) =>
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(orderId)) next.delete(orderId);
+      else next.add(orderId);
+      return next;
+    });
 
   useEffect(() => {
     if (!activeRestaurantId) return;
@@ -479,6 +513,8 @@ function OrdersView({ onSignOut }) {
                     createdAt={order.created_at}
                     items={order.order_items ?? []}
                     status={order.status}
+                    expanded={expandedIds.has(order.id)}
+                    onToggleExpand={() => toggleExpand(order.id)}
                     onMarkReady={handleMarkReady}
                     onPromote={handlePromote}
                     onCancel={(id) => requestDeny(id, order.order_number)}
