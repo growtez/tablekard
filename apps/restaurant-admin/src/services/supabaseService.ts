@@ -28,7 +28,7 @@ interface RestaurantRow {
     contact_email: string | null; contact_phone: string | null; contact_address: string | null;
     logo_url: string | null; primary_color: string | null; secondary_color: string | null;
     profile_urls: string[] | null; settings: Record<string, unknown> | null;
-    subscription_status: boolean; subscription_type: string | null; subscription_end_at: string | null;
+    subscription_status: boolean; subscription_type: string | null; subscription_end_at: string | null; grace_period_ends_at: string | null;
     latitude: number | null; longitude: number | null; allowed_radius: number | null;
     opening_date: string | null; tagline: string | null; manifesto: string | null;
     operating_hours_weekdays: string | null; operating_hours_weekends: string | null;
@@ -153,6 +153,7 @@ const mapRestaurantRow = (row: RestaurantRow): Restaurant => ({
     subscriptionStatus: row.subscription_status,
     subscriptionType: row.subscription_type,
     subscriptionEndAt: row.subscription_end_at,
+    gracePeriodEndsAt: row.grace_period_ends_at,
     profileUrls: row.profile_urls ?? [],
     location: {
         latitude: row.latitude,
@@ -887,6 +888,72 @@ export const getPaymentTransactions = async (restaurantId: string): Promise<Paym
     });
 };
 
+export interface TransactionDetailData extends PaymentTransaction {
+    subtotal: number;
+    taxes: number;
+    discount: number;
+    customerEmail?: string;
+    customerPhone?: string;
+    transactionId?: string;
+    orderType: string;
+}
+
+export const getTransactionDetails = async (orderId: string): Promise<TransactionDetailData | null> => {
+    const { data, error } = await db
+        .from('orders')
+        .select(`
+            id,
+            order_number,
+            created_at,
+            payment_method,
+            payment_status,
+            subtotal,
+            taxes,
+            discount,
+            total,
+            transaction_id,
+            type,
+            profiles(name, email),
+            restaurant_tables(table_number),
+            order_items(name, quantity, price)
+        `)
+        .eq('id', orderId)
+        .maybeSingle();
+
+    if (error) throw error;
+    if (!data) return null;
+
+    const row = data;
+    const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
+    const table = Array.isArray(row.restaurant_tables) ? row.restaurant_tables[0] : row.restaurant_tables;
+
+    let pStatus = (row.payment_status || 'pending').toLowerCase();
+    const createdDate = new Date(row.created_at);
+    
+    return {
+        id: row.id,
+        orderNumber: row.order_number || 'UNKNOWN',
+        customerName: profile?.name || 'Guest',
+        customerEmail: profile?.email || '',
+        tableNo: table?.table_number ? `Table ${table.table_number}` : 'N/A',
+        dateTime: createdDate.toLocaleString('en-US', {
+            month: 'short', day: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        }),
+        paymentMethod: row.payment_method || 'Cash',
+        paymentStatus: pStatus.charAt(0).toUpperCase() + pStatus.slice(1),
+        statusColor: pStatus,
+        subtotal: Number(row.subtotal) || 0,
+        taxes: Number(row.taxes) || 0,
+        discount: Number(row.discount) || 0,
+        amount: Number(row.total) || 0,
+        transactionId: row.transaction_id,
+        orderType: row.type || 'dine_in',
+        orderItems: Array.isArray(row.order_items) ? row.order_items : [],
+        createdAt: row.created_at
+    };
+};
+
 export const updatePaymentStatus = async (orderId: string, paymentStatus: string): Promise<void> => {
     const { error } = await db
         .from('orders')
@@ -919,13 +986,18 @@ export interface RevenueRecord {
     updatedAt: string;
 }
 
+const toISTDateString = (d: Date): string => {
+    const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+    return new Date(d.getTime() + IST_OFFSET_MS).toISOString().split('T')[0];
+};
+
 export const getRevenueData = async (
     restaurantId: string,
     startDate?: Date,
     endDate?: Date
 ): Promise<RevenueRecord[]> => {
-    const startStr = startDate ? startDate.toISOString().split('T')[0] : '1970-01-01';
-    const endStr = endDate ? endDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+    const startStr = startDate ? toISTDateString(startDate) : '1970-01-01';
+    const endStr = endDate ? toISTDateString(endDate) : toISTDateString(new Date());
 
     const { data, error } = await db
         .from('revenue')
@@ -964,44 +1036,52 @@ export const getAnalyticsSummary = async (
     startDate: Date,
     endDate: Date
 ): Promise<AnalyticsSummary> => {
-    // 1. Fetch current period data from revenue table
-    const startStr = startDate.toISOString().split('T')[0];
-    const endStr = endDate.toISOString().split('T')[0];
+    // 1. Fetch current period data from orders table
+    const startStr = startDate.toISOString();
+    const endStr = endDate.toISOString();
 
-    const { data, error } = await db
-        .from('revenue')
-        .select('total_revenue, total_orders')
+    const { data: currentOrders, error } = await db
+        .from('orders')
+        .select('total, payment_status')
         .eq('restaurant_id', restaurantId)
-        .gte('revenue_date', startStr)
-        .lte('revenue_date', endStr);
+        .gte('created_at', startStr)
+        .lte('created_at', endStr);
 
     if (error) throw error;
 
-    const totalRevenue = (data || []).reduce((sum: number, row: any) => sum + Number(row.total_revenue), 0);
-    const totalOrders = (data || []).reduce((sum: number, row: any) => sum + Number(row.total_orders), 0);
+    const totalOrders = (currentOrders || []).filter((o: any) => o.payment_status?.toLowerCase() === 'paid').length;
+    const totalRevenue = (currentOrders || []).reduce((sum: number, o: any) => {
+        const ps = o.payment_status?.toLowerCase();
+        if (ps === 'failed' || ps === 'refunded') return sum;
+        return sum + Number(o.total || 0);
+    }, 0);
 
     // 2. Fetch previous period for comparison
     const diff = endDate.getTime() - startDate.getTime();
     const prevStartDate = new Date(startDate.getTime() - diff - 86400000);
     const prevEndDate = new Date(startDate.getTime() - 86400000);
 
-    const prevStartStr = prevStartDate.toISOString().split('T')[0];
-    const prevEndStr = prevEndDate.toISOString().split('T')[0];
+    const prevStartStr = prevStartDate.toISOString();
+    const prevEndStr = prevEndDate.toISOString();
 
-    const { data: prevData, error: prevError } = await db
-        .from('revenue')
-        .select('total_revenue, total_orders')
+    const { data: prevOrders, error: prevError } = await db
+        .from('orders')
+        .select('total, payment_status')
         .eq('restaurant_id', restaurantId)
-        .gte('revenue_date', prevStartStr)
-        .lte('revenue_date', prevEndStr);
+        .gte('created_at', prevStartStr)
+        .lte('created_at', prevEndStr);
 
     if (prevError) throw prevError;
 
-    const prevRevenue = (prevData || []).reduce((sum: number, row: any) => sum + Number(row.total_revenue), 0);
-    const prevOrders = (prevData || []).reduce((sum: number, row: any) => sum + Number(row.total_orders), 0);
+    const prevTotalOrders = (prevOrders || []).filter((o: any) => o.payment_status?.toLowerCase() === 'paid').length;
+    const prevRevenue = (prevOrders || []).reduce((sum: number, o: any) => {
+        const ps = o.payment_status?.toLowerCase();
+        if (ps === 'failed' || ps === 'refunded') return sum;
+        return sum + Number(o.total || 0);
+    }, 0);
 
     const revenueChange = prevRevenue === 0 ? (totalRevenue > 0 ? 100 : 0) : ((totalRevenue - prevRevenue) / prevRevenue) * 100;
-    const ordersChange = prevOrders === 0 ? (totalOrders > 0 ? 100 : 0) : ((totalOrders - prevOrders) / prevOrders) * 100;
+    const ordersChange = prevTotalOrders === 0 ? (totalOrders > 0 ? 100 : 0) : ((totalOrders - prevTotalOrders) / prevTotalOrders) * 100;
 
     return {
         totalRevenue,

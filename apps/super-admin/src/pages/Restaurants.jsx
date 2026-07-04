@@ -14,6 +14,7 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
     const [error, setError] = useState(null);
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(8);
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
 
     useEffect(() => {
         fetchRestaurants();
@@ -111,9 +112,9 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
     return (
         <div className="space-y-3">
             {/* List Control */}
-            <div className="flex items-center gap-3 w-full bg-white p-2 rounded-xl shadow-sm border border-border">
+            <div className="flex flex-col md:flex-row md:items-center gap-3 w-full bg-surface p-3 md:p-2 rounded-xl shadow-sm border border-border">
                 {/* Search Box */}
-                <div className="relative w-full max-w-[260px] shrink-0">
+                <div className="relative w-full md:max-w-[260px] shrink-0">
                     <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
                     <input
                         type="text"
@@ -125,7 +126,7 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                 </div>
 
                 {/* Inline Active Filters (Scrollable horizontally if needed) */}
-                <div className="flex-1 flex items-center gap-1.5 overflow-x-auto no-scrollbar min-w-0 px-2 border-x border-border/50">
+                <div className="flex-1 flex items-center gap-1.5 overflow-x-auto no-scrollbar min-w-0 px-2 md:border-x md:border-border/50 py-1 md:py-0">
                     {(searchQuery || filterStatus !== 'all' || sortBy !== 'newest') ? (
                         <>
                             <span className="text-[11px] text-text-muted font-medium uppercase tracking-wider shrink-0 mr-1">Active:</span>
@@ -160,7 +161,7 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                 </div>
 
                 {/* Pagination Controls */}
-                <div className="flex items-center gap-1 shrink-0 border-x border-border/50 px-3">
+                <div className="flex items-center justify-between md:justify-start gap-1 shrink-0 md:border-x md:border-border/50 px-3 py-1.5 md:py-0 w-full md:w-auto">
                     <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
                         <ChevronLeft size={14} />
                     </button>
@@ -177,61 +178,64 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                 </div>
 
                 {/* Per-page & Actions */}
-                <div className="flex gap-2 shrink-0">
-                    <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1); }} className="py-1.5 px-2 rounded-lg border border-border bg-surface text-text-main text-[12px] focus:outline-none focus:ring-1 focus:ring-accent-primary cursor-pointer">
+                <div className="flex flex-wrap items-center gap-2 shrink-0 w-full md:w-auto">
+                    <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1); }} className="py-1.5 px-2 rounded-lg border border-border bg-surface text-text-main text-[12px] focus:outline-none focus:ring-1 focus:ring-accent-primary cursor-pointer flex-1 md:flex-none">
                         {[8, 20, 50, 100].map(n => <option key={n} value={n}>{n} / page</option>)}
                     </select>
-                    <div className="relative group">
-                        <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface text-text-main hover:bg-surface-hover transition-colors text-[12px] font-medium">
+                    <div className="relative group flex-1 md:flex-none">
+                        <button 
+                            onClick={() => setIsFilterOpen(!isFilterOpen)}
+                            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface text-text-main hover:bg-surface-hover transition-colors text-[12px] font-medium"
+                        >
                             <Filter size={14} className="text-accent-primary" /> Filter
                         </button>
-                        <div className="absolute right-0 top-full mt-2 w-48 bg-surface border border-border rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 flex flex-col overflow-hidden py-1">
-                            {['all', 'active', 'pending', 'suspended', 'approved'].map(status => (
-                                <button key={status} onClick={() => setFilterStatus(status)} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${filterStatus === status ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>
+                        <div className={`absolute right-0 top-full mt-2 w-48 bg-surface border border-border rounded-xl shadow-lg transition-all z-50 flex flex-col overflow-hidden py-1 ${
+                            isFilterOpen ? 'opacity-100 visible' : 'opacity-0 invisible group-hover:opacity-100 group-hover:visible'
+                        }`}>
+                            {['all', 'pending', 'approved', 'active', 'suspended', 'rejected'].map(status => (
+                                <button key={status} onClick={() => { setFilterStatus(status); setIsFilterOpen(false); }} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${filterStatus === status ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>
                                     {status.charAt(0).toUpperCase() + status.slice(1)}
                                 </button>
                             ))}
                         </div>
                     </div>
-
-
                     
                     <button 
                         onClick={handleExport}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent-primary text-white hover:bg-accent-hover transition-colors text-[12px] font-medium shadow-sm ml-2 cursor-pointer border-none"
+                        className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-accent-primary text-white hover:bg-accent-hover transition-colors text-[12px] font-medium shadow-sm cursor-pointer border-none flex-1 md:flex-none"
                     >
                         <Download size={14} /> Export
                     </button>
                 </div>
             </div>
 
-            {/* Restaurants Table */}
-            <div className="w-full overflow-x-auto bg-white rounded-xl shadow-sm border border-border">
-                <table className="w-full text-left border-collapse whitespace-nowrap table-fixed">
+            {/* Restaurants List Container */}
+            <div className="w-full bg-surface rounded-xl shadow-sm border border-border overflow-hidden">
+                {/* Desktop View Table */}
+                <table className="hidden md:table w-full text-left border-collapse whitespace-nowrap table-fixed">
                     <thead>
                         <tr className="border-b border-border">
-                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[25%]" onClick={() => toggleSort('name')}>
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[30%]" onClick={() => toggleSort('name')}>
                                 <div className="flex items-center gap-2">
                                     Name {getSortIcon('name')}
                                 </div>
                             </th>
-                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[20%]">Slug</th>
-                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[10%]" onClick={() => toggleSort('status')}>
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[15%]" onClick={() => toggleSort('status')}>
                                 <div className="flex items-center gap-2 whitespace-nowrap">
                                     Status {getSortIcon('status')}
                                 </div>
                             </th>
-                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[10%]">Plan</th>
-                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[20%]">Email</th>
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[15%]">Plan</th>
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[25%]">Email</th>
                             <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[15%]">Phone</th>
                         </tr>
                     </thead>
                     <tbody>
                         {loading ? (
-                            <TableRowsSkeleton rows={perPage} columns={6} />
+                            <TableRowsSkeleton rows={perPage} columns={5} />
                         ) : filteredRestaurants.length === 0 ? (
                             <tr>
-                                <td colSpan="6" className="text-center py-10 text-text-muted text-[13px]">
+                                <td colSpan="5" className="text-center py-10 text-text-muted text-[13px]">
                                     No restaurants found matching your criteria.
                                 </td>
                             </tr>
@@ -245,7 +249,7 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                                             if (e.target.closest('a')) {
                                                 return;
                                             }
-                                            navigate(`/restaurants/${res.id}`);
+                                            navigate(`/restaurants/${res.id}`, { state: { name: res.name, logo_url: res.logo_url } });
                                         }}
                                     >
                                         <td className="py-2.5 px-4 align-middle">
@@ -255,11 +259,6 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                                                 </div>
                                                 <span className="font-semibold text-text-main text-[13px] group-hover:text-accent-primary transition-colors max-w-[220px] truncate block" title={res.name}>{res.name}</span>
                                             </div>
-                                        </td>
-                                        <td className="py-2.5 px-4 align-middle">
-                                            <a href={`https://${res.slug}.tablekard.com`} target="_blank" rel="noreferrer" className="text-[12px] text-blue-500 hover:text-blue-600 font-medium max-w-[220px] inline-block truncate hover:underline" title={`${res.slug}.tablekard.com`} onClick={(e) => e.stopPropagation()}>
-                                                {res.slug}.tablekard.com
-                                            </a>
                                         </td>
                                         <td className="py-2.5 px-4 align-middle">
                                             <span className={`text-[12px] font-bold ${res.status === 'active' ? 'text-green-600' : res.status === 'pending' ? 'text-amber-600' : 'text-red-600'}`}>
@@ -287,7 +286,7 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                                 ))}
                                 {perPage - pagedRestaurants.length > 0 && Array.from({ length: perPage - pagedRestaurants.length }).map((_, idx) => (
                                     <tr key={`empty-${idx}`} className="border-b border-border/40 last:border-b-0 opacity-0 pointer-events-none">
-                                        <td colSpan="6" className="py-2.5 px-4 align-middle">
+                                        <td colSpan="5" className="py-2.5 px-4 align-middle">
                                             <div className="h-8"></div>
                                         </td>
                                     </tr>
@@ -296,6 +295,82 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                         )}
                     </tbody>
                 </table>
+
+                {/* Mobile Card View */}
+                <div className="block md:hidden divide-y divide-border/40">
+                    {loading ? (
+                        <div className="p-4 space-y-4">
+                            {[1, 2, 3].map(n => (
+                                <div key={n} className="animate-pulse flex flex-col gap-3">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-border/40" />
+                                            <div className="h-4 bg-border/40 rounded w-28" />
+                                        </div>
+                                        <div className="h-4 bg-border/40 rounded w-16" />
+                                    </div>
+                                    <div className="space-y-2 pl-11">
+                                        <div className="h-3.5 bg-border/40 rounded w-48" />
+                                        <div className="h-3.5 bg-border/40 rounded w-36" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : filteredRestaurants.length === 0 ? (
+                        <div className="text-center py-10 text-text-muted text-[13px]">
+                            No restaurants found matching your criteria.
+                        </div>
+                    ) : (
+                        pagedRestaurants.map((res) => (
+                            <div
+                                key={res.id}
+                                className="p-4 hover:bg-surface-hover border-b border-border/40 last:border-b-0 cursor-pointer transition-colors flex flex-col gap-2.5 active:bg-surface-hover/80"
+                                onClick={(e) => {
+                                    if (e.target.closest('a')) {
+                                        return;
+                                    }
+                                    navigate(`/restaurants/${res.id}`, { state: { name: res.name, logo_url: res.logo_url } });
+                                }}
+                            >
+                                <div className="flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center font-bold text-blue-600 text-[12px] shrink-0">
+                                            {res.name[0].toUpperCase()}
+                                        </div>
+                                        <span className="font-semibold text-text-main text-[13px] group-hover:text-accent-primary transition-colors truncate" title={res.name}>{res.name}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                        <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded bg-surface-hover border border-border/40 ${res.status === 'active' ? 'text-green-600' : res.status === 'pending' ? 'text-amber-600' : 'text-red-600'}`}>
+                                            {(res.status || 'pending').toUpperCase()}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex flex-col gap-1.5 pl-11">
+
+                                    <div className="flex items-center gap-2 text-[12px] text-text-main">
+                                        <Mail size={12} className="text-blue-500 shrink-0" />
+                                        <span className="truncate">{res.contact_email || '—'}</span>
+                                    </div>
+
+                                    {res.contact_phone && (
+                                        <div className="flex items-center gap-2 text-[12px] text-text-main">
+                                            <Phone size={12} className="text-blue-500 shrink-0" />
+                                            <span>{res.contact_phone}</span>
+                                        </div>
+                                    )}
+
+                                    <div className="flex items-center justify-between text-[11px] text-text-muted mt-1 pt-1.5 border-t border-border/20">
+                                        <span>Plan</span>
+                                        <span className={`font-bold ${res.subscription_status ? 'text-blue-600' : 'text-text-muted'}`}>
+                                            {(res.subscription_type || (res.subscription_status ? 'PRO PLAN' : 'TRIAL PLAN')).toUpperCase()}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
             </div>
         </div>
     );

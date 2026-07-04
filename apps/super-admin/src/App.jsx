@@ -11,6 +11,7 @@ import UserDetail from './pages/UserDetail'
 import Subscriptions from './pages/Subscriptions'
 import SubscriptionDetail from './pages/SubscriptionDetail'
 import Transactions from './pages/billing/Transactions'
+import TransactionDetail from './pages/billing/TransactionDetail'
 import Plans from './pages/billing/Plans'
 import LandingLeads from './pages/LandingLeads'
 // import Complaints from './pages/support/Complaints'
@@ -28,6 +29,7 @@ import { Badge } from './components/ui/Badge'
 export default function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [isCheckingPermissions, setIsCheckingPermissions] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [userRole, setUserRole] = useState(null)
   const [authError, setAuthError] = useState(null)
@@ -126,6 +128,15 @@ export default function App() {
   // Close mobile sidebar on route change
   useEffect(() => { setMobileSidebarOpen(false); }, [location.pathname]);
 
+  // Initialize theme
+  useEffect(() => {
+    if (localStorage.getItem('theme') === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
   useEffect(() => {
     let active = true;
     const globalTimeout = setTimeout(() => { if (active && loading) { setLoading(false); } }, 6000);
@@ -153,24 +164,31 @@ export default function App() {
 
   const checkIsAdmin = async (session) => {
     if (!session?.user) return;
+    setIsCheckingPermissions(true);
     setAuthError(null);
     const metaRole = session.user.app_metadata?.role || session.user.user_metadata?.role;
-    if (metaRole && ['super_admin', 'restaurant_admin', 'admin'].includes(metaRole)) {
-      setUserRole(metaRole + ' (metadata)'); setIsAdmin(true); return;
-    }
     try {
+      if (metaRole && ['super_admin', 'restaurant_admin', 'admin'].includes(metaRole)) {
+        setUserRole(metaRole + ' (metadata)'); setIsAdmin(true); return;
+      }
       const { data, error } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
       if (error) { setAuthError(error.message); if (!metaRole) setIsAdmin(false); return; }
       setUserRole(data.role);
       // user_role enum: super_admin, restaurant_admin, restaurant_staff, customer
       setIsAdmin(['super_admin', 'restaurant_admin', 'admin', 'restaurant_owner'].includes(data.role));
-    } catch (err) { setAuthError(err.message); if (!metaRole) setIsAdmin(false); }
+    } catch (err) { 
+      setAuthError(err.message); if (!metaRole) setIsAdmin(false); 
+    } finally {
+      setIsCheckingPermissions(false);
+    }
   };
 
   const handleLogout = async () => {
     try {
       setSession(null); setIsAdmin(false); setUserRole(null); setAuthError(null);
+      const theme = localStorage.getItem('theme');
       localStorage.clear(); sessionStorage.clear();
+      if (theme) localStorage.setItem('theme', theme);
       supabase.auth.signOut().catch(() => { });
       window.location.replace(window.location.origin);
     } catch (e) { window.location.href = '/'; }
@@ -181,6 +199,10 @@ export default function App() {
   }
 
   if (!session) return <Login />
+
+  if (isCheckingPermissions && !isAdmin) {
+    return <AppLoadingSkeleton />
+  }
 
   if (!isAdmin) {
     return (
@@ -250,10 +272,14 @@ export default function App() {
     // if (path === '/settings/integrations') return { title: 'Integrations & API' };
     // if (path === '/settings/security') return { title: 'Security & Backups' };
     // if (path === '/settings/email') return { title: 'Email Templates' };
+    if (path.startsWith('/restaurants/')) return { title: '', isBreadcrumb: true, backTitle: 'Restaurants', backPath: '/restaurants' };
+    if (path.startsWith('/users/')) return { title: '', isBreadcrumb: true, backTitle: 'Users', backPath: '/users' };
+    if (path.startsWith('/subscriptions/')) return { title: '', isBreadcrumb: true, backTitle: 'Subscriptions', backPath: '/subscriptions' };
+    if (path.startsWith('/billing/transactions/')) return { title: '', isBreadcrumb: true, backTitle: 'Transactions', backPath: '/billing/transactions' };
     return { title: 'Command Center' };
   };
 
-  const { title, stats } = getPageTitle();
+  const { title, stats, isBreadcrumb, backTitle, backPath } = getPageTitle();
 
   return (
     <div className="min-h-screen bg-bg">
@@ -279,22 +305,17 @@ export default function App() {
               </button>
 
               {headerData ? (
-                <div className="flex items-center gap-2 md:gap-4 animate-fade-in">
+                <div className="flex items-center gap-1.5 md:gap-2 animate-fade-in text-[12px] md:text-[13px] font-medium text-text-muted">
                   {headerData.backPath && (
                     <>
-                      <Link to={headerData.backPath} className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-lg bg-surface-hover text-text-muted border border-border hover:bg-border hover:text-text-main transition-all" title={headerData.backTitle || 'Back'} onClick={() => setHeaderData(null)}>
-                        <ChevronLeft size={20} />
+                      <Link to={headerData.backPath} className="hover:text-accent-primary hover:underline transition-colors cursor-pointer" onClick={() => setHeaderData(null)}>
+                        {headerData.backTitle ? headerData.backTitle.replace('Back to ', '') : 'Back'}
                       </Link>
-                      <div className="h-6 w-[1px] bg-border mx-0 md:mx-1" />
+                      <span className="opacity-40 font-normal text-[10px] md:text-xs">/</span>
                     </>
                   )}
-                  <div className="flex items-center gap-2 md:gap-4">
-                    {headerData.showAvatar !== false && (
-                      <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-surface-hover border border-border flex items-center justify-center text-sm font-bold overflow-hidden">
-                        {headerData.logo_url ? <img src={headerData.logo_url} alt="" className="w-full h-full object-cover" /> : <span>{headerData.name?.[0] || '?'}</span>}
-                      </div>
-                    )}
-                    <h2 className="text-base md:text-lg font-bold m-0 line-clamp-1">{headerData.name}</h2>
+                  <div className="flex items-center gap-1.5 md:gap-2">
+                    <span className="text-text-main font-medium line-clamp-1">{headerData.name}</span>
                   </div>
                   <div className="flex items-center gap-2 ml-2 md:ml-4">
                     {headerData.isEditing ? (
@@ -313,9 +334,21 @@ export default function App() {
                     )}
                   </div>
                 </div>
+              ) : isBreadcrumb ? (
+                <div className="flex items-center gap-1.5 md:gap-2 animate-fade-in text-[12px] md:text-[13px] font-medium text-text-muted">
+                  <Link to={backPath} className="hover:text-accent-primary hover:underline transition-colors cursor-pointer">
+                    {backTitle}
+                  </Link>
+                  <span className="opacity-40 font-normal text-[10px] md:text-xs">/</span>
+                  <div className="flex items-center gap-1.5 md:gap-2">
+                    <span className={`text-text-main font-medium line-clamp-1 ${!location.state?.name && 'opacity-50'}`}>
+                      {location.state?.name || 'Loading...'}
+                    </span>
+                  </div>
+                </div>
               ) : (
                 <div className="flex items-center">
-                  <h2 className="text-base md:text-lg font-bold m-0">{title}</h2>
+                  <span className="text-[12px] md:text-[13px] font-medium text-text-main">{title}</span>
                 </div>
               )}
             </div>
@@ -328,11 +361,6 @@ export default function App() {
                       <span className="text-[10px] text-text-muted font-bold uppercase tracking-wider -mb-1">{stat.label}</span>
                       <div className="flex items-baseline gap-1.5">
                         <span className="text-base font-bold text-text-main">{stat.value}</span>
-                        {stat.change && (
-                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${stat.change.startsWith('+') ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
-                            {stat.change}
-                          </span>
-                        )}
                       </div>
                     </>
                   );
@@ -406,7 +434,8 @@ export default function App() {
               <Route path="/leads" element={<LandingLeads />} />
               {/* Billing */}
               <Route path="/subscriptions" element={<Subscriptions setSyncAction={setSyncAction} />} />
-          <Route path="/subscriptions/:id" element={<SubscriptionDetail setHeaderData={setHeaderData} />} />
+              <Route path="/subscriptions/:id" element={<SubscriptionDetail setHeaderData={setHeaderData} />} />
+              <Route path="/billing/transactions/:source/:id" element={<TransactionDetail setHeaderData={setHeaderData} />} />
               <Route path="/billing/transactions" element={<Transactions setSyncAction={setSyncAction} />} />
               <Route path="/billing/plans" element={<Plans setSyncAction={setSyncAction} setHeaderData={setHeaderData} />} />
               {/* Support */}

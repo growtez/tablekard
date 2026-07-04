@@ -75,7 +75,10 @@ const Reports: React.FC = () => {
     // Helper to get week start and end dates
     const getWeekDateRange = (offset: number) => {
         const now = new Date();
-        const startOfThisWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+        // Week starts on Monday (getDay(): 0=Sun,1=Mon,...6=Sat → subtract getDay()-1, clamp Sun to -6)
+        const dayOfWeek = now.getDay(); // 0=Sun
+        const daysFromMon = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        const startOfThisWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysFromMon);
         const startOfWeek = new Date(startOfThisWeek);
         startOfWeek.setDate(startOfWeek.getDate() - offset * 7);
         const endOfWeek = new Date(startOfWeek);
@@ -109,7 +112,10 @@ const Reports: React.FC = () => {
             if (timeframe === 'today') {
                 startDate.setHours(0, 0, 0, 0);
             } else if (timeframe === 'week') {
-                const startOfThisWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+                // Week starts on Monday
+                const dayOfWeek = now.getDay(); // 0=Sun
+                const daysFromMon = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+                const startOfThisWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysFromMon);
                 startDate = new Date(startOfThisWeek);
                 startDate.setDate(startDate.getDate() - weekOffset * 7);
                 startDate.setHours(0, 0, 0, 0);
@@ -178,8 +184,14 @@ const Reports: React.FC = () => {
             const maxDaysToLoop = 366 * 5;
             const loopEndDate = dayDifference > maxDaysToLoop ? new Date(startDay.getTime() + maxDaysToLoop * 24 * 60 * 60 * 1000) : endDay;
 
+            const toISTDateKey = (dateObj: Date) => {
+                const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+                const tzDate = new Date(dateObj.getTime() + IST_OFFSET_MS);
+                return tzDate.toISOString().split('T')[0];
+            };
+
             for (const d = new Date(startDay); d <= loopEndDate; d.setDate(d.getDate() + 1)) {
-                const dateStr = d.toISOString().split('T')[0];
+                const dateStr = toISTDateKey(d);
                 const existing = revenueData.find(r => r.revenueDate === dateStr);
                 filledRevenue.push(
                     existing ?? {
@@ -231,7 +243,12 @@ const Reports: React.FC = () => {
             revenueHistory.forEach((record, idx) => {
                 const d = new Date(record.revenueDate);
                 const dayOfMonth = d.getDate();
-                const bucketIndex = Math.floor((dayOfMonth - 1) / 7);
+                
+                // Group by calendar weeks starting on Monday
+                const firstOfMonth = new Date(d.getFullYear(), d.getMonth(), 1);
+                const firstDayOfWeek = firstOfMonth.getDay();
+                const firstDayMon = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
+                const bucketIndex = Math.floor((dayOfMonth - 1 + firstDayMon) / 7);
 
                 if (bucketDayStart === null) bucketDayStart = d;
                 bucketDayEnd = d;
@@ -241,7 +258,7 @@ const Reports: React.FC = () => {
 
                 const nextRecord       = revenueHistory[idx + 1];
                 const nextBucketIndex  = nextRecord
-                    ? Math.floor((new Date(nextRecord.revenueDate).getDate() - 1) / 7)
+                    ? Math.floor((new Date(nextRecord.revenueDate).getDate() - 1 + firstDayMon) / 7)
                     : -1;
 
                 if (nextBucketIndex !== bucketIndex || !nextRecord) {

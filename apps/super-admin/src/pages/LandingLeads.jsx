@@ -13,6 +13,7 @@ export default function LandingLeads() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortOrder, setSortOrder] = useState('newest');
   const [dateFilter, setDateFilter] = useState('');
+  const [isStatusFilterOpen, setIsStatusFilterOpen] = useState(false);
 
   // Pagination
   const [page, setPage] = useState(1);
@@ -166,10 +167,9 @@ export default function LandingLeads() {
 
   return (
     <div className="space-y-3">
-      {/* Control Bar */}
-      <div className="flex items-center gap-3 w-full bg-white p-2 rounded-xl shadow-sm border border-border">
-        {/* Search */}
-        <div className="relative w-full max-w-[260px] shrink-0">
+      <div className="flex flex-col md:flex-row md:items-center gap-3 w-full bg-surface p-3 md:p-2 rounded-xl shadow-sm border border-border">
+        {/* Search Box */}
+        <div className="relative w-full md:max-w-[260px] shrink-0">
           <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
           <input
             type="text"
@@ -181,7 +181,7 @@ export default function LandingLeads() {
         </div>
 
         {/* Active Filter Pills */}
-        <div className="flex-1 flex items-center gap-1.5 overflow-x-auto no-scrollbar min-w-0 px-2 border-x border-border/50">
+        <div className="flex-1 flex items-center gap-1.5 overflow-x-auto no-scrollbar min-w-0 px-2 md:border-x md:border-border/50 py-1 md:py-0">
           {hasActiveFilters ? (
             <>
               <span className="text-[11px] text-text-muted font-medium uppercase tracking-wider shrink-0 mr-1">Active:</span>
@@ -211,7 +211,7 @@ export default function LandingLeads() {
         </div>
 
         {/* Pagination */}
-        <div className="flex items-center gap-1 shrink-0 border-x border-border/50 px-3">
+        <div className="flex items-center justify-between md:justify-start gap-1 shrink-0 md:border-x md:border-border/50 px-3 py-1.5 md:py-0 w-full md:w-auto">
           <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
             <ChevronLeft size={14} />
           </button>
@@ -228,57 +228,63 @@ export default function LandingLeads() {
         </div>
 
         {/* Per-page & Dropdowns */}
-        <div className="flex gap-2 shrink-0">
-          <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1); }} className="py-1.5 px-2 rounded-lg border border-border bg-surface text-text-main text-[12px] focus:outline-none focus:ring-1 focus:ring-accent-primary cursor-pointer">
+        <div className="flex flex-wrap items-center gap-2 shrink-0 w-full md:w-auto">
+          <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1); }} className="py-1.5 px-2 rounded-lg border border-border bg-surface text-text-main text-[12px] focus:outline-none focus:ring-1 focus:ring-accent-primary cursor-pointer flex-1 md:flex-none">
             {[8, 20, 50, 100].map(n => <option key={n} value={n}>{n} / page</option>)}
           </select>
 
           {/* Date filter */}
-          <div className="relative">
+          <div className="relative flex-1 md:flex-none">
             <input
               type="date"
               value={dateFilter}
               onChange={e => { setDateFilter(e.target.value); setPage(1); }}
-              className="py-1.5 px-2 rounded-lg border border-border bg-surface text-[12px] focus:outline-none focus:ring-1 focus:ring-accent-primary cursor-pointer text-text-main"
+              className="w-full py-1.5 px-2 rounded-lg border border-border bg-surface text-[12px] focus:outline-none focus:ring-1 focus:ring-accent-primary cursor-pointer text-text-main"
               title="Filter by date"
             />
           </div>
 
-          <div className="relative group">
-            <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface text-text-main hover:bg-surface-hover transition-colors text-[12px] font-medium">
+          <div className="relative group flex-1 md:flex-none">
+            <button 
+              onClick={() => setIsStatusFilterOpen(!isStatusFilterOpen)}
+              className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface text-text-main hover:bg-surface-hover transition-colors text-[12px] font-medium"
+            >
               <Filter size={14} className="text-accent-primary" /> Status
             </button>
-            <div className="absolute right-0 top-full mt-2 w-44 bg-surface border border-border rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 flex flex-col overflow-hidden py-1">
+            <div className={`absolute right-0 top-full mt-2 w-44 bg-surface border border-border rounded-xl shadow-lg transition-all z-50 flex flex-col overflow-hidden py-1 ${
+              isStatusFilterOpen ? 'opacity-100 visible' : 'opacity-0 invisible group-hover:opacity-100 group-hover:visible'
+            }`}>
               {['all', 'new', 'contacted', 'converted', 'rejected'].map(s => (
-                <button key={s} onClick={() => { setStatusFilter(s); setPage(1); }} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${statusFilter === s ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>
+                <button key={s} onClick={() => { setStatusFilter(s); setPage(1); setIsStatusFilterOpen(false); }} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${statusFilter === s ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>
                   {s === 'all' ? 'All Statuses' : s.charAt(0).toUpperCase() + s.slice(1)}
                 </button>
               ))}
             </div>
           </div>
 
-          <button onClick={handleExport} className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent-primary text-white hover:bg-accent-hover transition-colors text-[12px] font-medium shadow-sm ml-2 cursor-pointer border-none">
+          <button onClick={handleExport} className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-accent-primary text-white hover:bg-accent-hover transition-colors text-[12px] font-medium shadow-sm cursor-pointer border-none flex-1 md:flex-none">
             <Download size={14} /> Export
           </button>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="w-full overflow-x-auto bg-white rounded-xl shadow-sm border border-border">
-        <table className="w-full text-left border-collapse whitespace-nowrap table-fixed">
+      {/* Leads List Container */}
+      <div className="w-full bg-surface rounded-xl shadow-sm border border-border overflow-hidden">
+        {/* Desktop View Table */}
+        <table className="hidden md:table w-full text-left border-collapse whitespace-nowrap table-fixed">
           <thead>
             <tr className="border-b border-border">
-              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[22%]" onClick={() => toggleSort('name')}>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[20%]" onClick={() => toggleSort('name')}>
                 <div className="flex items-center gap-2">
                   Restaurant {getSortIcon('name')}
                 </div>
               </th>
-              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[16%]">Owner</th>
-              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[14%]">Phone</th>
-              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[20%]">Email</th>
-              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[15%]">Location</th>
-              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[1%]">Status</th>
-              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[10%]" onClick={() => toggleSort('newest')}>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[14%]">Owner</th>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[13%]">Phone</th>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[18%]">Email</th>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[14%]">Location</th>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[10%]">Status</th>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[9%]" onClick={() => toggleSort('newest')}>
                 <div className="flex items-center gap-2">
                   Date {getSortIcon('newest')}
                 </div>
@@ -358,13 +364,98 @@ export default function LandingLeads() {
             )}
           </tbody>
         </table>
+
+        {/* Mobile Card View */}
+        <div className="block md:hidden divide-y divide-border/40">
+          {loading ? (
+            <div className="p-4 space-y-4">
+              {[1, 2, 3].map(n => (
+                <div key={n} className="animate-pulse flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-border/40" />
+                      <div className="h-4 bg-border/40 rounded w-28" />
+                    </div>
+                    <div className="h-4 bg-border/40 rounded w-16" />
+                  </div>
+                  <div className="space-y-2 pl-11">
+                    <div className="h-3.5 bg-border/40 rounded w-48" />
+                    <div className="h-3.5 bg-border/40 rounded w-36" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : error ? (
+            <div className="text-center py-10 text-red-500 text-[13px] font-medium">{error}</div>
+          ) : paged.length === 0 ? (
+            <div className="text-center py-10 text-text-muted text-[13px]">No leads found matching your criteria.</div>
+          ) : (
+            paged.map(lead => (
+              <div
+                key={lead.id}
+                onClick={() => setSelectedLead(lead)}
+                className="p-4 hover:bg-surface-hover border-b border-border/40 last:border-b-0 cursor-pointer transition-colors flex flex-col gap-2.5 active:bg-surface-hover/80"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center font-bold text-blue-600 text-[12px] shrink-0">
+                      {(lead.restaurant_name || '?')[0].toUpperCase()}
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <span className="font-semibold text-text-main text-[13px] truncate" title={lead.restaurant_name}>{lead.restaurant_name}</span>
+                      <span className="text-[11px] text-text-muted flex items-center gap-1 mt-0.5">
+                        <User size={10} className="shrink-0" />
+                        {lead.owner_name || '—'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-1.5 shrink-0">
+                    <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded bg-surface-hover border border-border/40 ${statusColor(lead.status)}`}>
+                      {(lead.status || 'new').toUpperCase()}
+                    </span>
+                    <span className="text-[10px] text-text-muted">{new Date(lead.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5 pl-11">
+                  <div className="flex items-center gap-2 text-[12px] text-text-main">
+                    <Phone size={12} className="text-text-muted shrink-0" />
+                    <span>{lead.phone_number || '—'}</span>
+                  </div>
+
+                  {lead.email && (
+                    <div className="flex items-center gap-2 text-[12px] text-text-main">
+                      <Mail size={12} className="text-blue-500 shrink-0" />
+                      <span className="truncate">{lead.email}</span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between mt-1 pt-1.5 border-t border-border/20">
+                    <div className="flex items-center gap-1.5 text-[11px] text-text-muted truncate mr-4">
+                      <MapPin size={11} className="shrink-0" />
+                      <span className="truncate">{[lead.district, lead.state, lead.country].filter(Boolean).join(', ') || '—'}</span>
+                    </div>
+                    <button
+                      onClick={e => { e.stopPropagation(); setDeleteConfirmId(lead.id); }}
+                      disabled={updatingId === lead.id}
+                      className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-red-500/10 hover:text-red-500 transition-colors bg-transparent border-none cursor-pointer shrink-0"
+                      title="Delete Lead"
+                    >
+                      {updatingId === lead.id ? <Loader2 className="animate-spin" size={12} /> : <Trash2 size={12} />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
       {/* Details Modal */}
       {selectedLead && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-[8px] flex items-center justify-center z-[1000] p-4" onClick={() => setSelectedLead(null)}>
-          <div className="bg-surface rounded-[24px] w-full max-w-[520px] shadow-[0_24px_50px_rgba(0,0,0,0.15)] overflow-hidden" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-start pt-8 px-8 pb-6 border-b border-border">
+          <div className="bg-surface rounded-[24px] w-full max-w-[520px] max-h-[90vh] shadow-[0_24px_50px_rgba(0,0,0,0.15)] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-start pt-8 px-8 pb-6 border-b border-border shrink-0">
               <div className="flex gap-4 items-center">
                 <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-600">
                   <Store size={28} />
@@ -382,7 +473,7 @@ export default function LandingLeads() {
               </button>
             </div>
 
-            <div className="px-8 py-6 flex flex-col gap-4 bg-surface-hover">
+            <div className="px-8 py-6 flex flex-col gap-4 bg-surface-hover overflow-y-auto min-h-0 flex-1">
               {[
                 { icon: <User size={20} />, color: 'bg-blue-500/10 text-blue-600', label: 'Owner Name', value: selectedLead.owner_name },
                 { icon: <Phone size={20} />, color: 'bg-emerald-500/10 text-emerald-600', label: 'Phone Number', value: <a href={`tel:${selectedLead.phone_number}`} className="text-[16px] font-semibold text-text-main no-underline hover:underline">{selectedLead.phone_number}</a> },
@@ -399,7 +490,7 @@ export default function LandingLeads() {
               ))}
             </div>
 
-            <div className="px-8 py-6 bg-surface border-t border-border flex justify-between items-center gap-6 flex-wrap">
+            <div className="px-8 py-6 bg-surface border-t border-border flex justify-between items-center gap-6 flex-wrap shrink-0">
               <div className="flex items-center gap-3">
                 <span className="text-[14px] font-bold text-text-muted uppercase tracking-wider">Status:</span>
                 <span className={`text-[14px] font-bold ${statusColor(selectedLead.status)}`}>{(selectedLead.status || 'new').toUpperCase()}</span>

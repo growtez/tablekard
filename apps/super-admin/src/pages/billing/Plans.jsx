@@ -295,7 +295,7 @@ export default function Plans({ setSyncAction, setHeaderData }) {
             {/* Active Plans Display (Read-Only) */}
             {!isEditing ? (
                 <>
-                    <div className="grid grid-cols-4 gap-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                         {plans.map(plan => {
                             const IconComponent = ICON_MAP[plan.iconName] || Clock;
                             const perMonth = Math.round(plan.price / plan.duration);
@@ -303,7 +303,7 @@ export default function Plans({ setSyncAction, setHeaderData }) {
                             return (
                                 <div
                                     key={plan.id}
-                                    className="relative bg-white rounded-2xl overflow-hidden flex flex-col transition-all hover:-translate-y-1 hover:shadow-xl"
+                                    className="relative bg-surface rounded-2xl overflow-hidden flex flex-col transition-all hover:-translate-y-1 hover:shadow-xl"
                                     style={{ border: plan.recommended ? `2px solid ${plan.color}` : '1px solid #e5e7eb', boxShadow: plan.recommended ? `0 8px 32px ${plan.color}22` : '0 2px 12px rgba(0,0,0,0.04)' }}
                                 >
                                     {/* Recommended ribbon */}
@@ -369,7 +369,7 @@ export default function Plans({ setSyncAction, setHeaderData }) {
             ) : (
                 /* Editable Form Grid */
                 <div className="flex flex-col gap-8">
-                    <div className="grid grid-cols-[repeat(auto-fit,minmax(360px,1fr))] gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {editedPlans.map((plan, idx) => {
                             return (
                                 <div

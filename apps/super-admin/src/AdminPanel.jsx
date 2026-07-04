@@ -16,6 +16,7 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
   const [sortBy, setSortBy] = useState('newest')
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(8)
+  const [isRoleFilterOpen, setIsRoleFilterOpen] = useState(false)
 
   useEffect(() => {
     if (setSyncAction) {
@@ -253,9 +254,9 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
   return (
     <div className="space-y-3 w-full">
       {/* List Control */}
-      <div className="flex items-center gap-3 w-full bg-white p-2 rounded-xl shadow-sm border border-border">
+      <div className="flex flex-col md:flex-row md:items-center gap-3 w-full bg-surface p-3 md:p-2 rounded-xl shadow-sm border border-border">
         {/* Search Box */}
-        <div className="relative w-full max-w-[260px] shrink-0">
+        <div className="relative w-full md:max-w-[260px] shrink-0">
           <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
           <input
             type="text"
@@ -267,7 +268,7 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
         </div>
 
         {/* Inline Active Filters (Scrollable horizontally if needed) */}
-        <div className="flex-1 flex items-center gap-1.5 overflow-x-auto no-scrollbar min-w-0 px-2 border-x border-border/50">
+        <div className="flex-1 flex items-center gap-1.5 overflow-x-auto no-scrollbar min-w-0 px-2 md:border-x md:border-border/50 py-1 md:py-0">
           {(searchQuery || filterRole !== 'all' || sortBy !== 'newest') ? (
             <>
               <span className="text-[11px] text-text-muted font-medium uppercase tracking-wider shrink-0 mr-1">Active:</span>
@@ -302,7 +303,7 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
         </div>
 
         {/* Pagination Controls */}
-        <div className="flex items-center gap-1 shrink-0 border-x border-border/50 px-3">
+        <div className="flex items-center justify-between md:justify-start gap-1 shrink-0 md:border-x md:border-border/50 px-3 py-1.5 md:py-0 w-full md:w-auto">
           <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
             <ChevronLeft size={14} />
           </button>
@@ -319,28 +320,31 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
         </div>
 
         {/* Per-page & Actions */}
-        <div className="flex gap-2 shrink-0">
-          <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1); }} className="py-1.5 px-2 rounded-lg border border-border bg-surface text-text-main text-[12px] focus:outline-none focus:ring-1 focus:ring-accent-primary cursor-pointer">
+        <div className="flex flex-wrap items-center gap-2 shrink-0 w-full md:w-auto">
+          <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1); }} className="py-1.5 px-2 rounded-lg border border-border bg-surface text-text-main text-[12px] focus:outline-none focus:ring-1 focus:ring-accent-primary cursor-pointer flex-1 md:flex-none">
             {[8, 20, 50, 100].map(n => <option key={n} value={n}>{n} / page</option>)}
           </select>
-          <div className="relative group">
-            <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface text-text-main hover:bg-surface-hover transition-colors text-[12px] font-medium">
+          <div className="relative group flex-1 md:flex-none">
+            <button 
+              onClick={() => setIsRoleFilterOpen(!isRoleFilterOpen)}
+              className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface text-text-main hover:bg-surface-hover transition-colors text-[12px] font-medium"
+            >
               <Filter size={14} className="text-accent-primary" /> Role
             </button>
-            <div className="absolute right-0 top-full mt-2 w-48 bg-surface border border-border rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 flex flex-col overflow-hidden py-1">
+            <div className={`absolute right-0 top-full mt-2 w-48 bg-surface border border-border rounded-xl shadow-lg transition-all z-50 flex flex-col overflow-hidden py-1 ${
+              isRoleFilterOpen ? 'opacity-100 visible' : 'opacity-0 invisible group-hover:opacity-100 group-hover:visible'
+            }`}>
               {roleOptions.map(option => (
-                <button key={option.value} onClick={() => setFilterRole(option.value)} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${filterRole === option.value ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>
+                <button key={option.value} onClick={() => { setFilterRole(option.value); setIsRoleFilterOpen(false); }} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${filterRole === option.value ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>
                   {option.label}
                 </button>
               ))}
             </div>
           </div>
-
-
           
           <button 
             onClick={handleExport}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent-primary text-white hover:bg-accent-hover transition-colors text-[12px] font-medium shadow-sm ml-2 cursor-pointer border-none"
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-accent-primary text-white hover:bg-accent-hover transition-colors text-[12px] font-medium shadow-sm cursor-pointer border-none flex-1 md:flex-none"
           >
             <Download size={14} /> Export
           </button>
@@ -348,8 +352,9 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
       </div>
 
       {/* Users Table */}
-      <div className="w-full overflow-x-auto bg-white rounded-xl shadow-sm border border-border">
-        <table className="w-full text-left border-collapse whitespace-nowrap table-fixed">
+      <div className="w-full bg-surface rounded-xl shadow-sm border border-border overflow-hidden">
+        {/* Desktop View Table */}
+        <table className="hidden md:table w-full text-left border-collapse whitespace-nowrap table-fixed">
           <thead>
             <tr className="border-b border-border">
               <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[30%]" onClick={() => toggleSort('name')}>
@@ -386,7 +391,7 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
                   <tr
                     key={user.id}
                     className="group even:bg-bg hover:bg-surface-hover border-b border-border/40 last:border-b-0 cursor-pointer transition-colors"
-                    onClick={(e) => navigate(`/users/${user.id}`)}
+                    onClick={(e) => navigate(`/users/${user.id}`, { state: { name: user.name || 'Anonymous User' } })}
                   >
                     <td className="py-2.5 px-4 align-middle">
                       <div className="flex items-center gap-3">
@@ -439,6 +444,78 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
             )}
           </tbody>
         </table>
+
+        {/* Mobile View Cards */}
+        <div className="block md:hidden divide-y divide-border/40">
+          {loading ? (
+            <div className="p-4 space-y-4">
+              {[1, 2, 3].map(n => (
+                <div key={n} className="animate-pulse flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-border/40" />
+                      <div className="h-4 bg-border/40 rounded w-28" />
+                    </div>
+                    <div className="h-4 bg-border/40 rounded w-16" />
+                  </div>
+                  <div className="space-y-2 pl-11">
+                    <div className="h-3.5 bg-border/40 rounded w-48" />
+                    <div className="h-3.5 bg-border/40 rounded w-36" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filteredUsers.length === 0 ? (
+            <div className="text-center py-10 text-text-muted text-[13px]">
+              No users found matching your criteria.
+            </div>
+          ) : (
+            pagedUsers.map((user) => (
+              <div
+                key={user.id}
+                onClick={() => navigate(`/users/${user.id}`, { state: { name: user.name || 'Anonymous User' } })}
+                className="p-4 hover:bg-surface-hover border-b border-border/40 last:border-b-0 cursor-pointer transition-colors flex flex-col gap-2.5 active:bg-surface-hover/80"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center font-bold text-blue-600 text-[12px] shrink-0">
+                      {(user.name || user.email)[0].toUpperCase()}
+                    </div>
+                    <span className="font-semibold text-text-main text-[13px] truncate" title={user.name || 'Anonymous User'}>
+                      {user.name || 'Anonymous User'}
+                    </span>
+                  </div>
+                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded bg-surface-hover border border-border/40 ${user.role === 'super_admin' ? 'text-green-600' : user.role === 'restaurant_admin' ? 'text-violet-600' : user.role === 'restaurant_staff' ? 'text-blue-600' : 'text-text-muted'}`}>
+                    {(roleOptions.find(r => r.value === user.role)?.label || user.role).toUpperCase()}
+                  </span>
+                </div>
+                
+                <div className="flex flex-col gap-1.5 pl-11">
+                  <div className="flex items-center gap-2 text-[12px] text-text-main">
+                    <Mail size={12} className="text-blue-500 shrink-0" />
+                    <span className="truncate">{user.email}</span>
+                  </div>
+
+                  {['restaurant_admin', 'restaurant_staff'].includes(user.role) && (
+                    <div className="flex items-center gap-2 text-[12px]">
+                      <Store size={12} className="opacity-60 shrink-0 text-accent-primary" />
+                      <span className="font-medium text-text-main truncate">
+                        {user.restaurant_users?.[0]?.restaurants?.name || 'Unassigned'}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between text-[11px] text-text-muted mt-1 pt-1.5 border-t border-border/20">
+                    <span>Joined</span>
+                    <span className="font-medium text-text-main">
+                      {new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   )

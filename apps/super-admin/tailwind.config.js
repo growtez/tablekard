@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -7,35 +8,35 @@ export default {
   theme: {
     extend: {
       colors: {
-        bg: '#f7f8fa',
+        bg: 'var(--color-bg)',
         surface: {
-          DEFAULT: '#FFFFFF',
-          hover: '#F7FAFC',
+          DEFAULT: 'var(--color-surface)',
+          hover: 'var(--color-surface-hover)',
         },
         accent: {
-          primary: '#059669',
-          'primary-glow': 'rgba(5, 150, 105, 0.15)',
-          secondary: '#10B981',
-          'secondary-glow': 'rgba(16, 185, 129, 0.15)',
+          primary: 'var(--color-accent-primary)',
+          'primary-glow': 'var(--color-accent-primary-glow)',
+          secondary: 'var(--color-accent-secondary)',
+          'secondary-glow': 'var(--color-accent-secondary-glow)',
         },
         text: {
-          main: '#1A202C',
-          muted: '#718096',
+          main: 'var(--color-text-main)',
+          muted: 'var(--color-text-muted)',
         },
         border: {
-          DEFAULT: '#E2E8F0',
+          DEFAULT: 'var(--color-border)',
         },
         sidebar: {
-          bg: '#343A40',
-          text: '#FFFFFF',
-          'text-muted': '#A0AEC0',
-          hover: 'rgba(255, 255, 255, 0.05)',
-          border: 'transparent',
-          accent: '#A0D9B4',
+          bg: 'var(--color-sidebar-bg)',
+          text: 'var(--color-sidebar-text)',
+          'text-muted': 'var(--color-sidebar-text-muted)',
+          hover: 'var(--color-sidebar-hover)',
+          border: 'var(--color-sidebar-border)',
+          accent: 'var(--color-sidebar-accent)',
         },
         glass: {
-          bg: 'rgba(255, 255, 255, 0.7)',
-          border: 'rgba(226, 232, 240, 0.8)',
+          bg: 'var(--color-glass-bg)',
+          border: 'var(--color-glass-border)',
         }
       },
       fontFamily: {

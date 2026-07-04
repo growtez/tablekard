@@ -31,7 +31,7 @@ export function CardListSkeleton({ count = 5 }) {
     return (
         <div className="flex flex-col gap-3">
             {[...Array(count)].map((_, i) => (
-                <div key={i} className="premium-card flex gap-4 items-start">
+                <div key={i} className="premium-card bg-surface border border-border rounded-xl p-4 flex gap-4 items-start">
                     <Skeleton className="w-11 h-11 rounded-xl shrink-0" />
                     <div className="flex-1 space-y-2.5">
                         <div className="flex justify-between gap-4">
@@ -56,7 +56,7 @@ export function DetailPageSkeleton() {
                 ))}
             </div>
             <div className="space-y-6">
-                <div className="bg-white rounded-xl border border-border p-6 space-y-5">
+                <div className="bg-surface rounded-xl border border-border p-6 space-y-5">
                     <Skeleton className="h-6 w-44" />
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         {[1, 2, 3, 4].map(i => (
@@ -67,7 +67,7 @@ export function DetailPageSkeleton() {
                         ))}
                     </div>
                 </div>
-                <div className="bg-white rounded-xl border border-border p-6 space-y-4">
+                <div className="bg-surface rounded-xl border border-border p-6 space-y-4">
                     <Skeleton className="h-6 w-36" />
                     <Skeleton className="h-40 w-full rounded-lg" />
                 </div>
@@ -81,7 +81,7 @@ export function PlansPageSkeleton() {
         <div className="animate-fade-in pb-12">
             <div className="grid grid-cols-4 gap-5">
                 {[1, 2, 3, 4].map(i => (
-                    <div key={i} className="bg-white rounded-2xl border border-border p-6 min-h-[380px] flex flex-col gap-5">
+                    <div key={i} className="bg-surface rounded-2xl border border-border p-6 min-h-[380px] flex flex-col gap-5">
                         <div className="flex items-center gap-4">
                             <Skeleton className="w-12 h-12 rounded-xl shrink-0" />
                             <div className="flex-1 space-y-2">
@@ -106,14 +106,14 @@ export function PlansPageSkeleton() {
 export function AppLoadingSkeleton() {
     return (
         <div className="min-h-screen flex bg-bg">
-            <div className="hidden md:flex w-64 shrink-0 border-r border-border flex-col p-4 gap-3">
+            <div className="hidden md:flex w-64 shrink-0 bg-sidebar-bg border-r border-sidebar-border flex-col p-4 gap-3">
                 <Skeleton className="h-8 w-32 mb-4" />
                 {[1, 2, 3, 4, 5, 6, 7].map(i => (
                     <Skeleton key={i} className="h-9 w-full rounded-lg" />
                 ))}
             </div>
             <div className="flex-1 flex flex-col">
-                <div className="h-16 border-b border-border px-6 flex items-center gap-4">
+                <div className="h-16 bg-surface border-b border-border px-6 flex items-center gap-4">
                     <Skeleton className="h-8 w-48" />
                     <div className="ml-auto flex gap-3">
                         <Skeleton className="h-9 w-9 rounded-lg" />

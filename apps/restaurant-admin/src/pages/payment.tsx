@@ -1,10 +1,11 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Download, Calendar, CreditCard, CheckCircle, X, Search, User, Hash, Clock, Utensils, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Download, Calendar, CreditCard, CheckCircle, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import './payment.css';
 import Sidebar from '../components/sidebar';
 import { useAuth } from '../context/AuthContext';
 import { updatePaymentStatus } from '../services/supabaseService';
-import type { PaymentTransaction } from '../services/supabaseService';
+
 import { usePaymentTransactions, useInvalidateQueries, queryKeys } from '../hooks/useSupabaseQuery';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -15,9 +16,8 @@ const Payment: React.FC = () => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('all');
   const [selectedPaymentStatus, setSelectedPaymentStatus] = useState<string>('all');
   const [customDate, setCustomDate] = useState<string>('');
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [selectedTransaction, setSelectedTransaction] = useState<PaymentTransaction | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const navigate = useNavigate();
   const [weekOffset, setWeekOffset] = useState<number>(0);
   const [monthOffset, setMonthOffset] = useState<number>(0);
 
@@ -112,11 +112,7 @@ const Payment: React.FC = () => {
   };
 
   const handleView = (id: string) => {
-    const transaction = transactions.find(t => t.id === id);
-    if (transaction) {
-      setSelectedTransaction(transaction);
-      setIsModalOpen(true);
-    }
+    navigate(`/payments/${id}`);
   };
 
   const handleStatusChange = async (id: string, newStatus: string) => {
@@ -177,10 +173,6 @@ const Payment: React.FC = () => {
     return targetMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   };
 
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setSelectedTransaction(null);
-  };
 
   return (
     <div className="dashboard-container">
@@ -407,107 +399,7 @@ const Payment: React.FC = () => {
           </div>
         </div>
 
-        {/* Transaction Details Modal */}
-        {isModalOpen && selectedTransaction && (
-          <div className="modal-overlay" onClick={closeModal}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
-                <h3 className="modal-title">Transaction Detail</h3>
-                <button className="modal-close-btn" onClick={closeModal}>
-                  <X size={20} />
-                </button>
-              </div>
 
-              <div className="modal-body">
-                <div className="transaction-info-grid">
-                  <div className="info-card">
-                    <div className="info-icon"><Hash size={18} /></div>
-                    <div className="info-content">
-                      <span className="info-label">Order ID</span>
-                      <span className="info-value">{selectedTransaction.orderNumber}</span>
-                    </div>
-                  </div>
-                  <div className="info-card">
-                    <div className="info-icon"><User size={18} /></div>
-                    <div className="info-content">
-                      <span className="info-label">Customer</span>
-                      <span className="info-value">{selectedTransaction.customerName}</span>
-                    </div>
-                  </div>
-                  <div className="info-card">
-                    <div className="info-icon"><Utensils size={18} /></div>
-                    <div className="info-content">
-                      <span className="info-label">Table No</span>
-                      <span className="info-value">{selectedTransaction.tableNo}</span>
-                    </div>
-                  </div>
-                  <div className="info-card">
-                    <div className="info-icon"><Clock size={18} /></div>
-                    <div className="info-content">
-                      <span className="info-label">Date & Time</span>
-                      <span className="info-value">{selectedTransaction.dateTime}</span>
-                    </div>
-                  </div>
-                  <div className="info-card">
-                    <div className="info-icon"><CreditCard size={18} /></div>
-                    <div className="info-content">
-                      <span className="info-label">Method</span>
-                      <span className={`method-badge method-${selectedTransaction.paymentMethod.toLowerCase()}`}>
-                        {selectedTransaction.paymentMethod}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="info-card">
-                    <div className="info-icon"><CheckCircle size={18} /></div>
-                    <div className="info-content">
-                      <span className="info-label">Status</span>
-                      <span className={`payment-status-pill status-${selectedTransaction.statusColor}`}>
-                        {selectedTransaction.paymentStatus}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="order-items-section">
-                  <h4 className="section-title">Order Summary</h4>
-                  <div className="items-container">
-                    <table className="items-table">
-                      <thead>
-                        <tr>
-                          <th>Item Name</th>
-                          <th>Qty</th>
-                          <th>Price</th>
-                          <th>Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedTransaction.orderItems.map((item, index) => (
-                          <tr key={index}>
-                            <td>{item.name}</td>
-                            <td>{item.quantity}</td>
-                            <td>₹{item.price}</td>
-                            <td>₹{item.price * item.quantity}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                <div className="payment-summary-box">
-                  <div className="summary-row">
-                    <span>Subtotal</span>
-                    <span>₹{selectedTransaction.amount.toLocaleString()}</span>
-                  </div>
-                  <div className="summary-row grand-total">
-                    <span>Total Amount</span>
-                    <span>₹{selectedTransaction.amount.toLocaleString()}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

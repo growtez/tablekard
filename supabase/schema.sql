@@ -266,6 +266,7 @@ CREATE TABLE IF NOT EXISTS public.subscription_payments (
     razorpay_order_id TEXT,
     razorpay_payment_id TEXT,
     razorpay_signature TEXT,
+    plan_name TEXT,
     status TEXT NOT NULL DEFAULT 'pending'
         CHECK (status IN ('pending', 'paid', 'failed')),
     paid_at TIMESTAMPTZ,
@@ -295,6 +296,14 @@ ALTER TABLE public.restaurants
 
 ALTER TABLE public.restaurants
     ADD COLUMN IF NOT EXISTS subscription_end_at TIMESTAMPTZ;
+
+-- Subscription system v2: grace period buffer before auto-suspension
+ALTER TABLE public.restaurants
+    ADD COLUMN IF NOT EXISTS grace_period_ends_at TIMESTAMPTZ;
+
+-- Subscription system v2: snapshot plan name at time of payment
+ALTER TABLE public.subscription_payments
+    ADD COLUMN IF NOT EXISTS plan_name TEXT;
 
 ALTER TABLE public.payments ALTER COLUMN order_id DROP NOT NULL;
 ALTER TABLE public.menu_items
@@ -614,9 +623,11 @@ CREATE POLICY "Restaurant members can read customer profiles" ON public.profiles
 );
 
 -- 2. restaurants
+-- Subscription v2: only 'active' (paid) restaurants are publicly visible.
+-- 'approved' restaurants are onboarded but not yet subscribed — not publicly accessible.
 DROP POLICY IF EXISTS "Anyone can read approved/active restaurants" ON public.restaurants;
-DROP POLICY IF EXISTS "Anyone can read approved/active restaurants" ON public.restaurants;
-CREATE POLICY "Anyone can read approved/active restaurants" ON public.restaurants FOR SELECT USING (status IN ('approved', 'active'));
+DROP POLICY IF EXISTS "Anyone can read active restaurants" ON public.restaurants;
+CREATE POLICY "Anyone can read active restaurants" ON public.restaurants FOR SELECT USING (status = 'active');
 DROP POLICY IF EXISTS "Restaurant admins can read full restaurant row" ON public.restaurants;
 DROP POLICY IF EXISTS "Restaurant admins can read full restaurant row" ON public.restaurants;
 CREATE POLICY "Restaurant admins can read full restaurant row" ON public.restaurants FOR SELECT USING (public.is_restaurant_member(id));
@@ -1061,3 +1072,46 @@ BEGIN
     WHERE rps.restaurant_id = p_restaurant_id;
 END;
 $$;
+
+-- ======================================================================================
+-- SUBSCRIPTION SYSTEM V2 — AUTO-SUSPENSION VIA pg_cron
+-- ======================================================================================
+
+-- Enable the pg_cron extension (run once; safe to re-run)
+CREATE EXTENSION IF NOT EXISTS pg_cron;
+
+-- Index to make the daily cron scan fast
+CREATE INDEX IF NOT EXISTS idx_restaurants_grace_period
+    ON public.restaurants (grace_period_ends_at)
+    WHERE status = 'active' AND grace_period_ends_at IS NOT NULL;
+
+-- Function: suspends all 'active' restaurants whose grace period has elapsed.
+-- Only ever writes 'active' → 'suspended'. Never touches 'pending', 'approved', or 'rejected'.
+CREATE OR REPLACE FUNCTION public.suspend_expired_subscriptions()
+RETURNS void AS $$
+BEGIN
+    UPDATE public.restaurants
+    SET
+        status              = 'suspended',
+        subscription_status = false
+    WHERE
+        status                  = 'active'
+        AND grace_period_ends_at IS NOT NULL
+        AND grace_period_ends_at  < NOW();
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Schedule: runs every day at 18:30 UTC (midnight IST).
+-- Wrapped in DO block so it's safe to run even if the job doesn't exist yet.
+DO $$
+BEGIN
+    PERFORM cron.unschedule('suspend-expired-subscriptions');
+EXCEPTION WHEN OTHERS THEN
+    NULL; -- Job didn't exist yet; safe to ignore
+END;
+$$;
+SELECT cron.schedule(
+    'suspend-expired-subscriptions',
+    '30 18 * * *',
+    $$SELECT public.suspend_expired_subscriptions();$$
+);
