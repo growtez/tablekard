@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Plus, Edit3, Trash2, Layers, Loader2 } from 'lucide-react';
+import { Search, Plus, Edit3, Trash2, Layers, Loader2, TrendingUp, Package, AlertCircle } from 'lucide-react';
 import MenuDialog from '../components/menu_dialog';
 import CategoryDialog from '../components/category_dialog';
 import OfferDialog from '../components/offer_dialog';
@@ -362,250 +362,280 @@ const Menu: React.FC = () => {
 
   return (
     <>
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8 max-md:flex-col max-md:items-start max-md:gap-4">
-          <h1 className="text-2xl font-semibold text-tk-text max-md:ml-16 max-md:mt-1">Menu Management</h1>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3 bg-tk-bg-card px-5 py-2.5 rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.04),inset_0_1px_2px_rgba(0,0,0,0.02)] border border-transparent dark:border-tk-border w-[280px] max-md:w-full">
-              <Search size={18} color="#718096" />
-              <input
-                type="text"
-                placeholder="Search menu items..."
-                className="border-none outline-none text-sm text-tk-text bg-transparent w-full placeholder:text-tk-text-muted"
-              />
+      {/* Header - Tightened spacing */}
+      <div className="flex justify-between items-center mb-4 max-md:flex-col max-md:items-start max-md:gap-3">
+        <h1 className="text-[20px] sm:text-[22px] font-semibold text-tk-text max-md:ml-16">Menu Management</h1>
+        <div className="flex items-center gap-4 w-full sm:w-auto">
+          <div className="flex items-center gap-2 bg-tk-bg-surface px-4 py-1.5 rounded-full shadow-sm border border-tk-border w-full sm:w-[280px]">
+            <Search size={16} className="text-tk-text-secondary" />
+            <input
+              type="text"
+              placeholder="Search menu items..."
+              className="border-none outline-none text-[14px] text-tk-text bg-transparent w-full placeholder:text-tk-text-muted h-[24px]"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Stats Cards - Matches Order page density */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-[850px] w-full pt-1 mb-5">
+        <div className="bg-tk-bg-card p-3 sm:p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+          <div className="flex justify-between items-start mb-2">
+            <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium">Active Menu Items</h3>
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
+              <Layers size={14} />
+            </div>
+          </div>
+          <div className="flex justify-between items-end">
+            <div className="text-[16px] sm:text-[20px] font-bold text-tk-text">{loading ? '...' : activeItems}</div>
+            <div className="flex items-center text-[10px] sm:text-[11px] font-medium text-tk-text-secondary">
+              <span>Currently available</span>
             </div>
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-3 gap-6 mb-8 max-xl:grid-cols-2 max-md:grid-cols-1">
-          <div className="bg-tk-bg-card p-6 rounded-[24px] shadow-[0_4px_16px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.02)] relative overflow-hidden transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] dark:border dark:border-tk-border">
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#8B3A1E] to-[#D4816B]"></div>
-            <h3 className="text-sm text-tk-text-secondary mb-3 font-medium mt-1">Active Menu Items</h3>
-            <div className="text-[36px] font-bold text-tk-text mb-2">{loading ? '...' : activeItems}</div>
-            <div className="text-[13px] text-tk-text-secondary font-medium">Currently available</div>
-          </div>
-
-          <div className="bg-tk-bg-card p-6 rounded-[24px] shadow-[0_4px_16px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.02)] relative overflow-hidden transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] dark:border dark:border-tk-border">
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#E53E3E] to-[#FC8181]"></div>
-            <h3 className="text-sm text-tk-text-secondary mb-3 font-medium mt-1">Out of Stock Items</h3>
-            <div className="text-[36px] font-bold text-tk-text mb-2">{loading ? '...' : outOfStockItems}</div>
-            <div className="text-[13px] text-tk-text-secondary font-medium">Need restocking</div>
-          </div>
-
-          <div className="bg-tk-bg-card p-6 rounded-[24px] shadow-[0_4px_16px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.02)] relative overflow-hidden transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] dark:border dark:border-tk-border">
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#5C7A7A] to-[#8AABAB]"></div>
-            <h3 className="text-sm text-tk-text-secondary mb-3 font-medium mt-1">Top Selling Items (This Week)</h3>
-            <div className="flex items-center gap-3 mb-2">
-              <span className="text-[18px] font-semibold text-tk-text">{loading ? '...' : topSellingItem}</span>
+        <div className="bg-tk-bg-card p-3 sm:p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+          <div className="flex justify-between items-start mb-2">
+            <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium">Out of Stock Items</h3>
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
+              <AlertCircle size={14} />
             </div>
-            <div className="text-[13px] text-tk-text-secondary font-medium">Calculated dynamically</div>
+          </div>
+          <div className="flex justify-between items-end">
+            <div className="text-[16px] sm:text-[20px] font-bold text-tk-text">{loading ? '...' : outOfStockItems}</div>
+            <div className="flex items-center text-[10px] sm:text-[11px] font-medium text-tk-text-secondary">
+              <span>Need restocking</span>
+            </div>
           </div>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="flex gap-1 mb-8 bg-[#F7FAFC] dark:bg-tk-bg-elevated p-1.5 rounded-[16px] w-fit max-md:w-full max-md:justify-center">
-          <button
-            className={`px-6 py-3 border-none bg-transparent rounded-xl text-base font-semibold text-tk-text-secondary cursor-pointer transition-all duration-200 hover:text-[#4A5568] hover:bg-white/60 dark:hover:text-tk-text font-['Outfit'] ${activeTab === 'menu-items' ? '!bg-tk-bg-card !text-tk-text shadow-[0_2px_8px_rgba(0,0,0,0.08)]' : ''}` }
-            onClick={() => setActiveTab('menu-items')}
-          >
-            Menu Items
-          </button>
-          <button
-            className={`px-6 py-3 border-none bg-transparent rounded-xl text-base font-semibold text-tk-text-secondary cursor-pointer transition-all duration-200 hover:text-[#4A5568] hover:bg-white/60 dark:hover:text-tk-text font-['Outfit'] ${activeTab === 'offers' ? '!bg-tk-bg-card !text-tk-text shadow-[0_2px_8px_rgba(0,0,0,0.08)]' : ''}` }
-            onClick={() => setActiveTab('offers')}
-          >
-            Offers
-          </button>
-        </div>
-
-        {/* Tab Content */}
-        {activeTab === 'menu-items' && (
-          <div className="animate-[fadeIn_0.3s_ease-in-out]">
-            <div className="flex justify-between items-center mb-6 max-md:flex-col max-md:items-start max-md:gap-4">
-              <h2 className="text-[18px] font-semibold text-tk-text">Menu Items & Categories</h2>
-              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                {isSaving && (
-                  <div style={{ display: 'flex', alignItems: 'center', animation: 'spin 1s linear infinite' }}>
-                    <Loader2 size={18} color="#718096" />
-                  </div>
-                )}
-                <button className="flex items-center gap-2 px-5 py-3 bg-[#E2E8F0] dark:bg-tk-bg-hover text-tk-text border-none rounded-xl text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-[#CBD5E0] dark:hover:bg-tk-border font-['Outfit']" onClick={handleAddCategory}>
-                  <Layers size={16} />
-                  New Category
-                </button>
-                <button className="flex items-center gap-2 px-5 py-3 bg-tk-burgundy text-white border-none rounded-xl text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-tk-burgundy hover:-translate-y-[2px] font-['Outfit']" onClick={handleAddMenuItem}>
-                  <Plus size={16} />
-                  Add New Item
-                </button>
-              </div>
+        <div className="bg-tk-bg-card p-3 sm:p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md sm:col-span-1 col-span-2">
+          <div className="flex justify-between items-start mb-2">
+            <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium">Top Selling Items</h3>
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
+              <TrendingUp size={14} />
             </div>
+          </div>
+          <div className="flex justify-between items-end">
+            <div className="text-[14px] sm:text-[16px] font-bold text-tk-text truncate pr-2">{loading ? '...' : topSellingItem}</div>
+            <div className="flex items-center text-[10px] sm:text-[11px] font-medium text-tk-text-secondary whitespace-nowrap">
+              <span>This Week</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-            {/* Category Filter */}
-            <div className="flex items-center gap-3 overflow-x-auto pb-2 mb-6 max-md:justify-center">
-              <button
-                className={`px-5 py-2.5 border-2 border-[#E2E8F0] dark:border-tk-border bg-tk-bg-card rounded-xl text-sm font-medium text-tk-text-secondary cursor-pointer transition-all duration-200 hover:border-[#CBD5E0] hover:bg-[#F7FAFC] dark:hover:bg-tk-bg-hover dark:hover:border-tk-border dark:hover:text-tk-text font-['Outfit'] ${selectedCategoryId === 'all' ? '!bg-tk-burgundy !text-white !border-tk-burgundy' : ''}` }
-                onClick={() => setSelectedCategoryId('all')}
-              >
-                All
+      <hr className="border-tk-border mb-4 transition-all duration-300" />
+
+      {/* Tab Navigation - Tighter padding and margins */}
+      <div className="flex gap-1 mb-4 bg-[#F7FAFC] dark:bg-tk-bg-elevated p-1 rounded-xl w-fit max-md:w-full max-md:justify-center">
+        <button
+          className={`px-4 py-2 border-none bg-transparent rounded-lg text-sm font-semibold text-tk-text-secondary cursor-pointer transition-all duration-200 hover:text-[#4A5568] hover:bg-white/60 dark:hover:text-tk-text font-['Outfit'] ${activeTab === 'menu-items' ? '!bg-tk-bg-card !text-tk-text shadow-sm' : ''}`}
+          onClick={() => setActiveTab('menu-items')}
+        >
+          Menu Items
+        </button>
+        <button
+          className={`px-4 py-2 border-none bg-transparent rounded-lg text-sm font-semibold text-tk-text-secondary cursor-pointer transition-all duration-200 hover:text-[#4A5568] hover:bg-white/60 dark:hover:text-tk-text font-['Outfit'] ${activeTab === 'offers' ? '!bg-tk-bg-card !text-tk-text shadow-sm' : ''}`}
+          onClick={() => setActiveTab('offers')}
+        >
+          Offers
+        </button>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'menu-items' && (
+        <div className="animate-[fadeIn_0.2s_ease-in-out]">
+          <div className="flex justify-between items-center mb-4 max-md:flex-col max-md:items-start max-md:gap-3">
+            <h2 className="text-[16px] sm:text-[18px] font-semibold text-tk-text">Menu Items & Categories</h2>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              {isSaving && (
+                <div style={{ display: 'flex', alignItems: 'center', animation: 'spin 1s linear infinite' }}>
+                  <Loader2 size={16} color="#718096" />
+                </div>
+              )}
+              <button className="flex items-center gap-1.5 px-4 py-2 bg-[#E2E8F0] dark:bg-tk-bg-hover text-tk-text border-none rounded-lg text-[13px] sm:text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-[#CBD5E0] dark:hover:bg-tk-border font-['Outfit']" onClick={handleAddCategory}>
+                <Layers size={14} />
+                New Category
               </button>
-              {categories.map((category) => (
-                <div key={category.id} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <button className="flex items-center gap-1.5 px-4 py-2 bg-tk-burgundy text-white border-none rounded-lg text-[13px] sm:text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-tk-burgundy/90 hover:-translate-y-[1px] font-['Outfit'] shadow-sm" onClick={handleAddMenuItem}>
+                <Plus size={14} />
+                Add New Item
+              </button>
+            </div>
+          </div>
+
+          {/* Category Filter - Slimmer buttons */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 mb-4 max-md:justify-center hide-scrollbar">
+            <button
+              className={`px-4 py-1.5 border border-[#E2E8F0] dark:border-tk-border bg-tk-bg-card rounded-lg text-[13px] font-medium text-tk-text-secondary cursor-pointer transition-all duration-200 hover:border-[#CBD5E0] hover:bg-[#F7FAFC] dark:hover:bg-tk-bg-hover dark:hover:border-tk-border dark:hover:text-tk-text font-['Outfit'] ${selectedCategoryId === 'all' ? '!bg-tk-burgundy !text-white !border-tk-burgundy' : ''}`}
+              onClick={() => setSelectedCategoryId('all')}
+            >
+              All
+            </button>
+            {categories.map((category) => (
+              <div key={category.id} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <button
+                  className={`px-4 py-1.5 border border-[#E2E8F0] dark:border-tk-border bg-tk-bg-card rounded-lg text-[13px] font-medium text-tk-text-secondary cursor-pointer transition-all duration-200 hover:border-[#CBD5E0] hover:bg-[#F7FAFC] dark:hover:bg-tk-bg-hover dark:hover:border-tk-border dark:hover:text-tk-text font-['Outfit'] whitespace-nowrap ${selectedCategoryId === category.id ? '!bg-tk-burgundy !text-white !border-tk-burgundy' : ''}`}
+                  onClick={() => setSelectedCategoryId(category.id)}
+                >
+                  {category.name}
+                </button>
+                {selectedCategoryId === category.id && (
                   <button
-                    className={`px-5 py-2.5 border-2 border-[#E2E8F0] dark:border-tk-border bg-tk-bg-card rounded-xl text-sm font-medium text-tk-text-secondary cursor-pointer transition-all duration-200 hover:border-[#CBD5E0] hover:bg-[#F7FAFC] dark:hover:bg-tk-bg-hover dark:hover:border-tk-border dark:hover:text-tk-text font-['Outfit'] ${selectedCategoryId === category.id ? '!bg-tk-burgundy !text-white !border-tk-burgundy' : ''}` }
-                    onClick={() => setSelectedCategoryId(category.id)}
+                    className="bg-transparent border-none cursor-pointer text-tk-text-secondary p-1 hover:text-tk-text"
+                    onClick={(e) => { e.stopPropagation(); handleEditCategory(category); }}
+                    title="Edit Category"
                   >
-                    {category.name}
+                    <Edit3 size={14} />
                   </button>
-                  {selectedCategoryId === category.id && (
-                    <button
-                      className="bg-transparent border-none cursor-pointer text-tk-text-secondary p-1 hover:text-tk-text"
-                      onClick={(e) => { e.stopPropagation(); handleEditCategory(category); }}
-                      title="Edit Category"
-                    >
-                      <Edit3 size={14} />
-                    </button>
-                  )}
+                )}
+              </div>
+            ))}
+          </div>
+
+          {loading ? (
+            <div className="py-8 text-center text-tk-text-secondary text-sm">Loading menu...</div>
+          ) : filteredMenuItems.length === 0 ? (
+            <div className="py-8 text-center text-tk-text-secondary text-sm">No menu items found. Add one to get started!</div>
+          ) : (
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4 max-sm:grid-cols-1">
+              {filteredMenuItems.slice(0, visibleItemCount).map((item) => (
+                <div key={item.id} className="bg-tk-bg-card p-4 sm:p-5 rounded-[16px] shadow-sm border border-tk-border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-tk-burgundy/30">
+                  <div className="w-16 h-16 rounded-xl bg-[#FFF5E6] flex items-center justify-center text-[28px] mb-3 shadow-sm overflow-hidden">
+                    {(item.images && item.images.length > 0) ? (
+                      <img src={item.images[0].url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : '🍽️'}
+                  </div>
+                  <div className="mb-4">
+                    <h3 className="text-[15px] sm:text-[16px] font-semibold text-tk-text mb-1 leading-tight">
+                      <span style={{ fontSize: '11px', marginRight: '6px' }}>
+                        {item.isVeg ? '🟩' : '🟥'}
+                      </span>
+                      {item.name}
+                    </h3>
+                    <p className="text-[12px] text-tk-text-secondary mb-2">{getCategoryName(item.categoryId)}</p>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div className="text-[18px] font-bold text-tk-burgundy">₹{item.price}</div>
+                      <div className="text-[11px] text-tk-text-secondary bg-tk-bg-hover px-2 py-0.5 rounded-full">👥 Serves {item.serves}</div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <label className="relative inline-block w-9 h-5">
+                        <input
+                          type="checkbox"
+                          checked={item.available}
+                          onChange={() => toggleStock(item)}
+                          className="peer sr-only"
+                        />
+                        <span className="absolute cursor-pointer inset-0 bg-[#CBD5E0] dark:bg-tk-bg-elevated border border-transparent dark:border-tk-border transition-all duration-300 rounded-full before:absolute before:content-[''] before:h-[14px] before:w-[14px] before:left-[3px] before:bottom-[2px] before:bg-white before:transition-all before:duration-300 before:rounded-full before:shadow-sm peer-checked:bg-tk-burgundy peer-checked:border-tk-burgundy peer-checked:before:translate-x-[16px]"></span>
+                      </label>
+                      <span className={`text-[11px] font-medium ${item.available ? 'text-[#22543D]' : 'text-[#E53E3E]'}`}>
+                        {item.available ? 'In Stock' : 'Out of Stock'}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                      <button className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 bg-tk-bg-hover text-tk-text-secondary border-none rounded-lg text-[12px] font-semibold cursor-pointer transition-all duration-200 hover:bg-tk-border hover:text-tk-text font-['Outfit']" onClick={() => handleEditMenuItem(item)}>
+                        <Edit3 size={14} />
+                        Edit
+                      </button>
+                      <button className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 border border-[#FC8181] rounded-lg bg-[#FEF2F2] text-[#E53E3E] text-[12px] font-semibold cursor-pointer transition-all duration-200 hover:bg-[#FED7D7]" onClick={() => handleDeleteMenuItem(item.id)}>
+                        <Trash2 size={14} />
+                        Delete
+                      </button>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
+          )}
+          {visibleItemCount < filteredMenuItems.length && (
+            <div ref={loadMoreItemsRef} style={{ textAlign: 'center', padding: '16px', color: '#718096', fontSize: '12px', fontFamily: "'Outfit', sans-serif" }}>
+              Loading more items...
+            </div>
+          )}
+        </div>
+      )}
 
-            {loading ? (
-              <div className="p-10 text-center text-tk-text-secondary">Loading menu...</div>
-            ) : filteredMenuItems.length === 0 ? (
-              <div className="p-10 text-center text-tk-text-secondary">No menu items found. Add one to get started!</div>
-            ) : (
-              <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-6 max-xl:grid-cols-[repeat(auto-fill,minmax(280px,1fr))] max-lg:grid-cols-2 max-sm:grid-cols-1">
-                {filteredMenuItems.slice(0, visibleItemCount).map((item) => (
-                  <div key={item.id} className="bg-tk-bg-card p-6 rounded-[20px] shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] dark:border dark:border-tk-border">
-                    <div className="w-20 h-20 rounded-xl bg-[#FFF5E6] flex items-center justify-center text-[40px] mb-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden">
-                      {(item.images && item.images.length > 0) ? (
-                        <img src={item.images[0].url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      ) : '🍽️'}
+      {activeTab === 'offers' && (
+        <div className="animate-[fadeIn_0.2s_ease-in-out]">
+          <div className="flex justify-between items-center mb-4 max-md:flex-col max-md:items-start max-md:gap-3">
+            <h2 className="text-[16px] sm:text-[18px] font-semibold text-tk-text">Offers & Promotions</h2>
+            <button className="flex items-center gap-1.5 px-4 py-2 bg-tk-burgundy text-white border-none rounded-lg text-[13px] sm:text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-tk-burgundy/90 hover:-translate-y-[1px] font-['Outfit'] shadow-sm" onClick={handleAddOffer}>
+              <Plus size={14} />
+              Add New Offer
+            </button>
+          </div>
+
+          {loadingOffers ? (
+            <div className="py-8 text-center text-tk-text-secondary text-sm">Loading offers...</div>
+          ) : offers.length === 0 ? (
+            <div className="py-8 text-center text-tk-text-secondary text-sm">No offers yet. Click "Add New Offer" to create one!</div>
+          ) : (
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4 max-sm:grid-cols-1">
+              {offers.slice(0, visibleOfferCount).map((offer) => {
+                const linkedItem = menuItems.find(m => m.id === offer.menu_item_id);
+                const originalPrice = linkedItem?.price;
+                return (
+                  <div key={offer.id} className="bg-tk-bg-card p-4 sm:p-5 rounded-[16px] shadow-sm border border-tk-border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-tk-burgundy/30">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="text-[15px] sm:text-[16px] font-semibold text-tk-text leading-tight">{offer.title}</h3>
+                      <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase ${offer.is_active ? 'bg-[#C6F6D5] text-[#22543D]' : 'bg-[#FED7D7] text-[#C53030]'}`}>
+                        {offer.is_active ? 'Active' : 'Inactive'}
+                      </span>
                     </div>
-                    <div className="mb-5">
-                      <h3 className="text-[18px] font-semibold text-tk-text mb-1">
-                        <span style={{ fontSize: '12px', marginRight: '6px' }}>
-                          {item.isVeg ? '🟩' : '🟥'}
-                        </span>
-                        {item.name}
-                      </h3>
-                      <p className="text-[13px] text-tk-text-secondary mb-2">{getCategoryName(item.categoryId)}</p>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div className="text-[20px] font-bold text-tk-burgundy">₹{item.price}</div>
-                        <div className="text-[12px] text-tk-text-secondary">👥 Serves {item.serves}</div>
+                    <div className="mb-3">
+                      <div className="text-[13px] font-medium text-tk-text mb-1.5 bg-tk-bg-hover inline-block px-2 py-0.5 rounded-md">
+                        {linkedItem ? `${linkedItem.isVeg ? '🟩' : '🟥'} ${linkedItem.name}` : '—'}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {originalPrice !== undefined && (
+                          <span className="text-[13px] text-tk-text-muted line-through">₹{originalPrice}</span>
+                        )}
+                        <span className="text-[16px] font-bold text-[#38A169]">₹{offer.discount_price}</span>
                       </div>
                     </div>
-                    <div className="flex flex-col gap-3">
-                      <div className="flex items-center gap-3">
-                        <label className="relative inline-block w-11 h-6">
+                    {offer.valid_until && (
+                      <div className="text-[11px] text-tk-text-secondary mb-4 flex items-center gap-1">
+                        🕒 Valid until: {new Date(offer.valid_until).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between gap-3 mt-auto pt-2 border-t border-tk-border">
+                      <div className="flex items-center">
+                        <label className="relative inline-block w-9 h-5">
                           <input
                             type="checkbox"
-                            checked={item.available}
-                            onChange={() => toggleStock(item)}
+                            checked={offer.is_active}
+                            onChange={() => toggleOffer(offer)}
+                            className="peer sr-only"
                           />
-                          <span className="absolute cursor-pointer inset-0 bg-[#CBD5E0] dark:bg-tk-bg-elevated dark:border dark:border-tk-border transition-all duration-300 rounded-[24px] before:absolute before:content-[''] before:h-[18px] before:w-[18px] before:left-[3px] before:bottom-[2px] before:bg-white before:transition-all before:duration-300 before:rounded-full before:shadow-[0_2px_4px_rgba(0,0,0,0.2)] peer-checked:bg-tk-burgundy peer-checked:border-tk-burgundy peer-checked:before:translate-x-[20px]"></span>
+                          <span className="absolute cursor-pointer inset-0 bg-[#CBD5E0] dark:bg-tk-bg-elevated border border-transparent dark:border-tk-border transition-all duration-300 rounded-full before:absolute before:content-[''] before:h-[14px] before:w-[14px] before:left-[3px] before:bottom-[2px] before:bg-white before:transition-all before:duration-300 before:rounded-full before:shadow-sm peer-checked:bg-tk-burgundy peer-checked:border-tk-burgundy peer-checked:before:translate-x-[16px]"></span>
                         </label>
-                        <span className={`text-[12px] font-medium ${item.available ? 'text-[#22543D]' : 'text-[#E53E3E]'}` }>
-                          {item.available ? 'In Stock' : 'Out of Stock'}
-                        </span>
                       </div>
-                      <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-                        <button className="flex-1 flex items-center gap-2 px-4 py-2 bg-tk-bg-hover text-tk-text-secondary border-none rounded-lg text-[13px] font-medium cursor-pointer transition-all duration-200 hover:bg-tk-border hover:text-tk-text font-['Outfit']" onClick={() => handleEditMenuItem(item)}>
-                          <Edit3 size={16} />
+                      <div className="flex gap-2 w-full justify-end">
+                        <button className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-tk-bg-hover text-tk-text-secondary border-none rounded-lg text-[12px] font-semibold cursor-pointer transition-all duration-200 hover:bg-tk-border hover:text-tk-text font-['Outfit']" onClick={() => handleEditOffer(offer)}>
+                          <Edit3 size={14} />
                           Edit
                         </button>
-                        <button className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 border border-[#FC8181] rounded-lg bg-transparent text-[#E53E3E] cursor-pointer hover:bg-[#FED7D7]" onClick={() => handleDeleteMenuItem(item.id)}>
-                          <Trash2 size={16} />
+                        <button className="flex items-center justify-center gap-1.5 px-3 py-1.5 border border-[#FC8181] rounded-lg bg-[#FEF2F2] text-[#E53E3E] text-[12px] font-semibold cursor-pointer transition-all duration-200 hover:bg-[#FED7D7] font-['Outfit']" onClick={() => handleDeleteOffer(offer.id)}>
+                          <Trash2 size={14} />
                           Delete
                         </button>
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-            {visibleItemCount < filteredMenuItems.length && (
-              <div ref={loadMoreItemsRef} style={{ textAlign: 'center', padding: '24px', color: '#718096', fontSize: '13px', fontFamily: "'Outfit', sans-serif" }}>
-                Loading more items...
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === 'offers' && (
-          <div className="animate-[fadeIn_0.3s_ease-in-out]">
-            <div className="flex justify-between items-center mb-6 max-md:flex-col max-md:items-start max-md:gap-4">
-              <h2 className="text-[18px] font-semibold text-tk-text">Offers & Promotions</h2>
-              <button className="flex items-center gap-2 px-5 py-3 bg-tk-burgundy text-white border-none rounded-xl text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-tk-burgundy hover:-translate-y-[2px] font-['Outfit']" onClick={handleAddOffer}>
-                <Plus size={16} />
-                Add New Offer
-              </button>
+                );
+              })}
             </div>
-
-            {loadingOffers ? (
-              <div className="p-10 text-center text-tk-text-secondary">Loading offers...</div>
-            ) : offers.length === 0 ? (
-              <div className="p-10 text-center text-tk-text-secondary">No offers yet. Click "Add New Offer" to create one!</div>
-            ) : (
-              <div className="grid grid-cols-[repeat(auto-fill,minmax(350px,1fr))] gap-6 max-xl:grid-cols-[repeat(auto-fill,minmax(300px,1fr))] max-lg:grid-cols-2 max-sm:grid-cols-1">
-                {offers.slice(0, visibleOfferCount).map((offer) => {
-                  const linkedItem = menuItems.find(m => m.id === offer.menu_item_id);
-                  const originalPrice = linkedItem?.price;
-                  return (
-                    <div key={offer.id} className="bg-tk-bg-card p-6 rounded-[20px] shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] dark:border dark:border-tk-border">
-                      <div className="flex justify-between items-start mb-3">
-                        <h3 className="text-[18px] font-semibold text-tk-text">{offer.title}</h3>
-                        <span className={`px-3 py-1 rounded-xl text-[11px] font-semibold uppercase ${offer.is_active ? 'bg-tk-burgundy text-white' : 'bg-[#FEB2B2] text-[#742A2A]'}` }>
-                          {offer.is_active ? 'Active' : 'Inactive'}
-                        </span>
-                      </div>
-                      <div className="mb-3">
-                        <div className="text-[14px] font-medium text-tk-text mb-2">
-                          {linkedItem ? `${linkedItem.isVeg ? '🟩' : '🟥'} ${linkedItem.name}` : '—'}
-                        </div>
-                        <div className="flex items-center gap-3">
-                          {originalPrice !== undefined && (
-                            <span className="text-[14px] text-tk-text-muted line-through">₹{originalPrice}</span>
-                          )}
-                          <span className="text-[16px] font-semibold text-[#68D391]">₹{offer.discount_price}</span>
-                        </div>
-                      </div>
-                      {offer.valid_until && (
-                        <div className="text-[12px] text-tk-text-secondary mb-5">Valid until: {new Date(offer.valid_until).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
-                      )}
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center">
-                          <label className="relative inline-block w-11 h-6">
-                            <input
-                              type="checkbox"
-                              checked={offer.is_active}
-                              onChange={() => toggleOffer(offer)}
-                            />
-                            <span className="absolute cursor-pointer inset-0 bg-[#CBD5E0] dark:bg-tk-bg-elevated dark:border dark:border-tk-border transition-all duration-300 rounded-[24px] before:absolute before:content-[''] before:h-[18px] before:w-[18px] before:left-[3px] before:bottom-[2px] before:bg-white before:transition-all before:duration-300 before:rounded-full before:shadow-[0_2px_4px_rgba(0,0,0,0.2)] peer-checked:bg-tk-burgundy peer-checked:border-tk-burgundy peer-checked:before:translate-x-[20px]"></span>
-                          </label>
-                        </div>
-                        <button className="flex items-center gap-2 px-4 py-2 bg-tk-bg-hover text-tk-text-secondary border-none rounded-lg text-[13px] font-medium cursor-pointer transition-all duration-200 hover:bg-tk-border hover:text-tk-text font-['Outfit']" onClick={() => handleEditOffer(offer)}>
-                          <Edit3 size={16} />
-                          Edit
-                        </button>
-                        <button className="flex items-center gap-2 px-4 py-2 bg-[#FED7D7] text-[#E53E3E] border-none rounded-lg text-[13px] font-medium cursor-pointer transition-all duration-200 hover:bg-[#FEB2B2] hover:text-[#742A2A] font-['Outfit']" onClick={() => handleDeleteOffer(offer.id)}>
-                          <Trash2 size={16} />
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-            {visibleOfferCount < offers.length && (
-              <div ref={loadMoreOffersRef} style={{ textAlign: 'center', padding: '24px', color: '#718096', fontSize: '13px', fontFamily: "'Outfit', sans-serif" }}>
-                Loading more offers...
-              </div>
-            )}
-          </div>
-        )}
+          )}
+          {visibleOfferCount < offers.length && (
+            <div ref={loadMoreOffersRef} style={{ textAlign: 'center', padding: '16px', color: '#718096', fontSize: '12px', fontFamily: "'Outfit', sans-serif" }}>
+              Loading more offers...
+            </div>
+          )}
+        </div>
+      )}
       {/* Toast Notification */}
       {toast && (
         <div style={{

@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import Layout from "./components/Layout";
+import DashboardSkeleton from "./components/DashboardSkeleton";
 
 // Lazy load page components
 const Dashboard = lazy(() => import("./pages/dashboard"));
@@ -33,7 +34,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
-    return <PageLoader />;
+    return (
+      <Layout>
+        <DashboardSkeleton />
+      </Layout>
+    );
   }
 
   if (!isAuthenticated) {

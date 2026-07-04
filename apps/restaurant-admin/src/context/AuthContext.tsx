@@ -171,14 +171,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
             
             // Optimization: Only sync memberships if user changed or it's an explicit SIGNED_IN event
             // This prevents redundant fetches on TOKEN_REFRESHED or focus events
+            // NOTE: Do NOT set loading=false here — only init() controls that flag.
+            // Otherwise a second event (TOKEN_REFRESHED) can set loading=false before
+            // syncMemberships finishes, briefly making isAuthenticated=false and flashing login.
             setUser(prev => {
                 if (prev?.id !== nextUser?.id || event === 'SIGNED_IN') {
                     syncMemberships(nextUser);
                 }
                 return nextUser;
             });
-            
-            setLoading(false);
         });
 
         return () => {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { TrendingUp, X, CheckCircle, Package, Check, ChevronUp, ChevronDown, Search, ArrowUpDown, List, LayoutGrid } from 'lucide-react';
-
+import { TrendingUp, X, CheckCircle, Package, Check, ChevronDown, Search, ArrowUpDown, List, LayoutGrid, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useDashboardOrders, useInvalidateQueries, useRevenueData, useMenuItems } from '../hooks/useSupabaseQuery';
 import { updateOrderStatus, updatePaymentStatus } from '../services/supabaseService';
@@ -35,7 +35,7 @@ const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({ order, onClose,
             </div>
             <div className="text-right">
               <div className="text-sm text-tk-text-secondary mb-1">Status</div>
-              <span className={`inline-block px-2 py-1 rounded-lg text-xs font-semibold ${order.statusColor === 'Ready' || order.statusColor === 'ready' ? 'bg-tk-burgundy text-white' : order.statusColor === 'Preparing' || order.statusColor === 'preparing' ? 'bg-[#FEEA9A] text-[#744210]' : 'bg-[#90CDF4] text-[#2C5282]'}` }>
+              <span className={`inline-block px-2 py-1 rounded-lg text-xs font-semibold ${order.statusColor === 'Ready' || order.statusColor === 'ready' ? 'bg-tk-burgundy text-white' : order.statusColor === 'Preparing' || order.statusColor === 'preparing' ? 'bg-[#FEEA9A] text-[#744210]' : 'bg-[#90CDF4] text-[#2C5282]'}`}>
                 {order.status}
               </span>
             </div>
@@ -104,20 +104,46 @@ const Dashboard: React.FC = () => {
   useRevenueData(activeRestaurantId);
   const { data: menuItems = [] } = useMenuItems(activeRestaurantId);
   const { invalidateOrders } = useInvalidateQueries();
-  
+  const navigate = useNavigate();
+
   const outOfStockItems = menuItems.filter(item => !item.available);
 
   const [selectedOrder, setSelectedOrder] = useState<DashboardOrder | null>(null);
   const [orderToCancel, setOrderToCancel] = useState<DashboardOrder | null>(null);
-  const [activeTab, setActiveTab] = useState<string>('Active Orders');
+  const activeTab = 'Active Orders';
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'amount_high' | 'amount_low'>('oldest');
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
   const sortDropdownRef = useRef<HTMLDivElement>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+
   const tableScrollRef = useRef<HTMLDivElement>(null);
+  const stickyContainerRef = useRef<HTMLDivElement>(null);
+  const [stickyHeight, setStickyHeight] = useState(0);
+
+  useEffect(() => {
+    const updateHeight = () => {
+      if (stickyContainerRef.current) {
+        setStickyHeight(stickyContainerRef.current.offsetHeight);
+      }
+    };
+
+    updateHeight();
+
+    const observer = new ResizeObserver(updateHeight);
+
+    if (stickyContainerRef.current) {
+      observer.observe(stickyContainerRef.current);
+    }
+
+    window.addEventListener("resize", updateHeight);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updateHeight);
+    };
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -134,23 +160,7 @@ const Dashboard: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleTableScroll = () => {
-    const el = tableScrollRef.current;
-    if (!el) return;
-    
-    setIsHeaderVisible(prev => {
-      const maxScroll = el.scrollHeight - el.clientHeight;
 
-      if (prev && maxScroll < 200) {
-        return true; 
-      }
-
-      if (prev && el.scrollTop > 24) return false;
-      if (!prev && el.scrollTop <= 8) return true;
-      
-      return prev;
-    });
-  };
 
   const handlePaymentComplete = async (paymentId: string) => {
     try {
@@ -184,10 +194,10 @@ const Dashboard: React.FC = () => {
   const cancelledOrders = orders.filter(order => order.status?.toUpperCase() === 'CANCELLED');
 
   const now = new Date();
-  
-  const isSameDay = (d1: Date, d2: Date) => 
-    d1.getFullYear() === d2.getFullYear() && 
-    d1.getMonth() === d2.getMonth() && 
+
+  const isSameDay = (d1: Date, d2: Date) =>
+    d1.getFullYear() === d2.getFullYear() &&
+    d1.getMonth() === d2.getMonth() &&
     d1.getDate() === d2.getDate();
 
   const yesterday = new Date(now);
@@ -206,17 +216,17 @@ const Dashboard: React.FC = () => {
     if (s !== 'READY' && s !== 'COMPLETED' && !order.isPaid) return;
 
     const orderDate = new Date(order.createdAt);
-    
+
     if (isSameDay(orderDate, now)) {
-        revenueToday += order.total;
+      revenueToday += order.total;
     } else if (isSameDay(orderDate, yesterday)) {
-        revenueYesterday += order.total;
+      revenueYesterday += order.total;
     }
 
     if (orderDate >= startOfThisWeek) {
-        revenueThisWeek += order.total;
+      revenueThisWeek += order.total;
     } else if (orderDate >= startOfLastWeek && orderDate < startOfThisWeek) {
-        revenueLastWeek += order.total;
+      revenueLastWeek += order.total;
     }
   });
 
@@ -249,7 +259,7 @@ const Dashboard: React.FC = () => {
         result = orders;
         break;
     }
-    
+
     if (searchTerm) {
       const lowerQuery = searchTerm.toLowerCase();
       result = result.filter(order => {
@@ -264,18 +274,18 @@ const Dashboard: React.FC = () => {
         );
       });
     }
-    
+
     result = result.sort((a, b) => {
       const dateA = new Date(a.createdAt).getTime();
       const dateB = new Date(b.createdAt).getTime();
-      
+
       if (sortBy === 'newest') return dateB - dateA;
       if (sortBy === 'oldest') return dateA - dateB;
       if (sortBy === 'amount_high') return b.total - a.total;
       if (sortBy === 'amount_low') return a.total - b.total;
       return 0;
     });
-    
+
     return result;
   };
 
@@ -306,219 +316,234 @@ const Dashboard: React.FC = () => {
           background: transparent;
         }
       `}</style>
-      
-        <div className="flex-shrink-0">
-          <div className="flex flex-row items-center justify-between gap-2 sm:gap-4 flex-wrap">
-            <div className="flex items-center gap-2 sm:gap-4">
-              <h1 className="text-[20px] sm:text-[22px] font-semibold text-tk-text whitespace-nowrap">Dashboard</h1>
-              <button 
-                onClick={() => setIsHeaderVisible(!isHeaderVisible)}
-                className="flex items-center justify-center w-7 h-7 rounded-full hover:bg-tk-bg-hover text-tk-text-secondary hover:text-tk-text transition-all duration-200"
-                title="Toggle Header"
-              >
-                <ChevronUp size={16} className={`transition-transform duration-300 ${!isHeaderVisible ? 'rotate-180' : ''}`} />
-              </button>
-            </div>
-            
-            <div className="flex items-center gap-2 mt-2 sm:mt-0">
-              <div className="text-[13px] sm:text-[14px] font-bold text-tk-burgundy tabular-nums tracking-tight">
-                {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-              </div>
-              <span className="text-tk-text-secondary opacity-50 text-[12px] hidden sm:block">•</span>
-              <p className="text-[12px] sm:text-[13px] text-tk-text-secondary font-medium whitespace-nowrap hidden sm:block">
-                {currentTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-              </p>
-            </div>
+
+      <div className="flex-shrink-0">
+        <div className="flex flex-row items-center justify-between gap-2 sm:gap-4 flex-wrap">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <h1 className="text-[20px] sm:text-[22px] font-semibold text-tk-text whitespace-nowrap">Dashboard</h1>
           </div>
 
-          <div className={`grid transition-all duration-1000 ease-in-out ${isHeaderVisible ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-            <div className="overflow-hidden">
-              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 max-w-[850px] w-full pt-1 mb-6 mt-4 sm:mt-0">
-                {/* Card 1: Revenue Today */}
-                <div className="bg-tk-bg-card p-3 sm:p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium">Revenue Today</h3>
-                    <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
-                      <TrendingUp size={14} />
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-end">
-                    <div className="text-[16px] sm:text-[20px] font-bold text-tk-text">₹{isLoading ? '...' : revenueToday.toLocaleString()}</div>
-                    <div className={`flex items-center text-[10px] sm:text-[11px] font-medium ${todayChange >= 0 ? 'text-tk-success' : 'text-tk-error'}`}>
-                      <TrendingUp size={10} className="mr-1 sm:w-[12px] sm:h-[12px]" style={todayChange < 0 ? { transform: 'rotate(180deg)' } : undefined} />
-                      <span>{Math.abs(todayChange)}%</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Card 2: Revenue This Week */}
-                <div className="bg-tk-bg-card p-3 sm:p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium">Revenue This Week</h3>
-                    <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
-                      <TrendingUp size={14} />
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-end">
-                    <div className="text-[16px] sm:text-[20px] font-bold text-tk-text">₹{isLoading ? '...' : revenueThisWeek.toLocaleString()}</div>
-                    <div className={`flex items-center text-[10px] sm:text-[11px] font-medium ${weekChange >= 0 ? 'text-tk-success' : 'text-tk-error'}`}>
-                      <TrendingUp size={10} className="mr-1 sm:w-[12px] sm:h-[12px]" style={weekChange < 0 ? { transform: 'rotate(180deg)' } : undefined} />
-                      <span>{Math.abs(weekChange)}%</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Card 3: Out of Stock */}
-                <div className="bg-tk-bg-card p-3 sm:p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium">Out of Stock Items</h3>
-                  </div>
-                  <div className="flex justify-between items-end">
-                    <div className="text-[16px] sm:text-[20px] font-bold text-tk-text">{isLoading ? '...' : outOfStockItems.length}</div>
-                    <div className="flex items-center text-[10px] sm:text-[11px] font-medium text-tk-error">
-                      <TrendingUp size={10} className="mr-1 sm:w-[12px] sm:h-[12px]" style={{ transform: 'rotate(180deg)' }} />
-                      <span>Need restock</span>
-                    </div>
-                  </div>
-                </div>
-
-
-                {/* Card 4: Total Orders */}
-                <div className="bg-tk-bg-card p-3 sm:p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium">Total Orders</h3>
-                    <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
-                      <Package size={14} />
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-end">
-                    <div className="text-[16px] sm:text-[20px] font-bold text-tk-text">{isLoading ? '...' : orders.length}</div>
-                    <div className="flex items-center text-[10px] sm:text-[11px] font-medium text-tk-text-secondary">
-                      <span>All time</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+          <div className="flex items-center gap-2 mt-2 sm:mt-0">
+            <div className="text-[13px] sm:text-[14px] font-bold text-tk-burgundy tabular-nums tracking-tight">
+              {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
             </div>
+            <span className="text-tk-text-secondary opacity-50 text-[12px] hidden sm:block">•</span>
+            <p className="text-[12px] sm:text-[13px] text-tk-text-secondary font-medium whitespace-nowrap hidden sm:block">
+              {currentTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            </p>
           </div>
+        </div>
 
-          <hr className="border-tk-border mb-4 transition-all duration-300" />
-
-          {/* Tabs & Controls */}
-          <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 mb-2">
-            <div className="flex gap-4 sm:gap-8 overflow-x-auto hide-scrollbar pt-1 w-full xl:w-auto flex-1 pb-1">
-              {tabs.map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`pb-2 text-sm font-semibold whitespace-nowrap transition-colors duration-200 ${
-                    activeTab === tab 
-                      ? 'text-tk-burgundy border-b-2 border-tk-burgundy' 
-                      : 'text-tk-text-secondary hover:text-tk-text'
-                  }`}
-                >
-                  {tab} <span className="ml-1 opacity-75">({tabCounts[tab]})</span>
-                </button>
-              ))}
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pb-2 w-full xl:w-auto xl:ml-4">
-              <div className="flex bg-tk-bg-surface border border-tk-border rounded-full p-0.5 shrink-0 self-start sm:self-auto">
-                <button
-                  onClick={() => setViewMode('table')}
-                  className={`p-1.5 sm:p-1.5 rounded-full transition-colors flex items-center justify-center ${viewMode === 'table' ? 'bg-tk-burgundy/10 text-tk-burgundy' : 'text-tk-text-secondary hover:text-tk-text'}`}
-                  title="Table View"
-                >
-                  <List size={16} />
-                </button>
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-1.5 sm:p-1.5 rounded-full transition-colors flex items-center justify-center ${viewMode === 'grid' ? 'bg-tk-burgundy/10 text-tk-burgundy' : 'text-tk-text-secondary hover:text-tk-text'}`}
-                  title="Grid View"
-                >
-                  <LayoutGrid size={16} />
-                </button>
+        <div className="grid grid-rows-[1fr] opacity-100">
+          <div className="overflow-hidden">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 max-w-[850px] w-full pt-1 mb-6 mt-4 sm:mt-0">
+              {/* Card 1: Revenue Today */}
+              <div className="bg-tk-bg-card p-3 sm:p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium">Revenue Today</h3>
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
+                    <TrendingUp size={14} />
+                  </div>
+                </div>
+                <div className="flex justify-between items-end">
+                  <div className="text-[16px] sm:text-[20px] font-bold text-tk-text">₹{isLoading ? '...' : revenueToday.toLocaleString()}</div>
+                  <div className={`flex items-center text-[10px] sm:text-[11px] font-medium ${todayChange >= 0 ? 'text-tk-success' : 'text-tk-error'}`}>
+                    <TrendingUp size={10} className="mr-1 sm:w-[12px] sm:h-[12px]" style={todayChange < 0 ? { transform: 'rotate(180deg)' } : undefined} />
+                    <span>{Math.abs(todayChange)}%</span>
+                  </div>
+                </div>
               </div>
 
-              <div className="relative w-full sm:w-auto" ref={sortDropdownRef}>
-                <button
-                  onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
-                  className="flex justify-between sm:justify-start items-center gap-1.5 px-4 py-2 sm:px-3 sm:py-1.5 rounded-full border border-tk-border bg-tk-bg-surface hover:bg-tk-bg-hover text-tk-text-secondary hover:text-tk-text text-[13px] sm:text-[12px] font-semibold transition-colors whitespace-nowrap h-[36px] sm:h-[32px] w-full shrink-0"
-                >
-                  <div className="flex items-center gap-1.5">
-                    <ArrowUpDown size={13} />
-                    <span className="opacity-70 font-medium">Sort by:</span>
-                    {sortBy === 'newest' && 'Newest First'}
-                    {sortBy === 'oldest' && 'Oldest First'}
-                    {sortBy === 'amount_high' && 'High to Low'}
-                    {sortBy === 'amount_low' && 'Low to High'}
+              {/* Card 2: Revenue This Week */}
+              <div className="bg-tk-bg-card p-3 sm:p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium">Revenue This Week</h3>
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
+                    <TrendingUp size={14} />
                   </div>
-                  <ChevronDown size={14} className="sm:hidden" />
-                </button>
-                
-                {isSortDropdownOpen && (
-                  <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-full sm:w-[180px] bg-tk-bg-surface border border-tk-border rounded-xl shadow-lg z-50 py-1 overflow-hidden animate-[fadeIn_0.15s_ease-out]">
-                    {[
-                      { value: 'newest', label: 'Newest First' },
-                      { value: 'oldest', label: 'Oldest First' },
-                      { value: 'amount_high', label: 'Amount: High to Low' },
-                      { value: 'amount_low', label: 'Amount: Low to High' }
-                    ].map(option => (
-                      <button
-                        key={option.value}
-                        onClick={() => {
-                          setSortBy(option.value as any);
-                          setIsSortDropdownOpen(false);
-                        }}
-                        className={`w-full text-left px-4 py-3 sm:py-2 text-[14px] sm:text-[13px] font-medium transition-colors ${
-                          sortBy === option.value 
-                            ? 'bg-tk-burgundy/10 text-tk-burgundy' 
-                            : 'text-tk-text hover:bg-tk-bg-hover'
-                        }`}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
+                </div>
+                <div className="flex justify-between items-end">
+                  <div className="text-[16px] sm:text-[20px] font-bold text-tk-text">₹{isLoading ? '...' : revenueThisWeek.toLocaleString()}</div>
+                  <div className={`flex items-center text-[10px] sm:text-[11px] font-medium ${weekChange >= 0 ? 'text-tk-success' : 'text-tk-error'}`}>
+                    <TrendingUp size={10} className="mr-1 sm:w-[12px] sm:h-[12px]" style={weekChange < 0 ? { transform: 'rotate(180deg)' } : undefined} />
+                    <span>{Math.abs(weekChange)}%</span>
                   </div>
-                )}
+                </div>
               </div>
-              
-              <div className="relative w-full sm:w-[240px] shrink-0">
-                <Search className="absolute left-3 top-[calc(50%)] -translate-y-1/2 text-tk-text-secondary" size={14} />
-                <input
-                  type="text"
-                  placeholder="Search orders..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full h-[36px] sm:h-[32px] pl-9 pr-8 bg-tk-bg-surface border border-tk-border rounded-full text-tk-text text-[14px] sm:text-[13px] focus:outline-none focus:border-tk-burgundy transition-colors"
-                />
-                {searchTerm && (
-                  <button 
-                    onClick={() => setSearchTerm('')} 
-                    className="absolute right-3 top-[calc(50%)] -translate-y-1/2 text-tk-text-secondary hover:text-tk-text focus:outline-none flex items-center justify-center p-0"
-                  >
-                    <X size={14} />
-                  </button>
-                )}
+
+              {/* Card 3: Out of Stock */}
+              <div className="bg-tk-bg-card p-3 sm:p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium">Out of Stock Items</h3>
+                </div>
+                <div className="flex justify-between items-end">
+                  <div className="text-[16px] sm:text-[20px] font-bold text-tk-text">{isLoading ? '...' : outOfStockItems.length}</div>
+                  <div className="flex items-center text-[10px] sm:text-[11px] font-medium text-tk-error">
+                    <TrendingUp size={10} className="mr-1 sm:w-[12px] sm:h-[12px]" style={{ transform: 'rotate(180deg)' }} />
+                    <span>Need restock</span>
+                  </div>
+                </div>
+              </div>
+
+
+              {/* Card 4: Total Orders */}
+              <div className="bg-tk-bg-card p-3 sm:p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium">Total Orders</h3>
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
+                    <Package size={14} />
+                  </div>
+                </div>
+                <div className="flex justify-between items-end">
+                  <div className="text-[16px] sm:text-[20px] font-bold text-tk-text">{isLoading ? '...' : orders.length}</div>
+                  <div className="flex items-center text-[10px] sm:text-[11px] font-medium text-tk-text-secondary">
+                    <span>All time</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div
-          ref={tableScrollRef}
-          onScroll={handleTableScroll}
-          className="tk-table-scroll flex-1 min-h-0 overflow-y-scroll overflow-x-auto w-full"
-        >
-          {viewMode === 'table' ? (
-            <table className="w-full text-left border-collapse table-fixed min-w-[950px]">
-              <thead>
-              <tr className="bg-tk-bg-hover">
-                <th className="sticky top-0 z-20 bg-tk-bg-hover py-3 px-4 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[6%] text-center">Sl No</th>
-                <th className="sticky top-0 z-20 bg-tk-bg-hover py-3 px-4 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[17%]">Order Details</th>
-                <th className="sticky top-0 z-20 bg-tk-bg-hover py-3 px-4 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[17%]">Customer Info</th>
-                <th className="sticky top-0 z-20 bg-tk-bg-hover py-3 px-4 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[25%]">Payment Info</th>
-                <th className="sticky top-0 z-20 bg-tk-bg-hover py-3 px-4 text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[35%]">Order Tracking</th>
+        <hr className="border-tk-border mb-4 transition-all duration-300" />
+      </div>
+
+      {/* Tabs & Controls */}
+      <div
+        ref={stickyContainerRef}
+        className="sticky top-0 z-30 py-2 bg-tk-bg-card shadow-sm border-b border-tk-border flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 mb-2"
+      >
+          <div className="flex items-center gap-4 pt-1 w-full xl:w-auto flex-1 pb-1">
+            <h2 className="text-lg font-bold text-tk-text m-0 flex items-center gap-2">
+              Active Orders <span className="text-sm font-semibold text-tk-text-secondary bg-tk-bg-hover px-2 py-0.5 rounded-full">{tabCounts['Active Orders']}</span>
+            </h2>
+            <button
+              onClick={() => navigate('/orders', { state: { activeTab: 'All' } })}
+              className="flex items-center gap-1.5 text-sm font-semibold text-tk-burgundy hover:text-tk-burgundy/80 transition-colors bg-tk-burgundy/10 px-3 py-1.5 rounded-lg ml-2"
+            >
+              All orders <ArrowRight size={14} />
+            </button>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pb-2 w-full xl:w-auto xl:ml-4">
+            <div className="flex bg-tk-bg-surface border border-tk-border rounded-full p-0.5 shrink-0 self-start sm:self-auto">
+              <button
+                onClick={() => setViewMode('table')}
+                className={`p-1.5 sm:p-1.5 rounded-full transition-colors flex items-center justify-center ${viewMode === 'table' ? 'bg-tk-burgundy/10 text-tk-burgundy' : 'text-tk-text-secondary hover:text-tk-text'}`}
+                title="Table View"
+              >
+                <List size={16} />
+              </button>
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-1.5 sm:p-1.5 rounded-full transition-colors flex items-center justify-center ${viewMode === 'grid' ? 'bg-tk-burgundy/10 text-tk-burgundy' : 'text-tk-text-secondary hover:text-tk-text'}`}
+                title="Grid View"
+              >
+                <LayoutGrid size={16} />
+              </button>
+            </div>
+
+            <div className="relative w-full sm:w-auto" ref={sortDropdownRef}>
+              <button
+                onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
+                className="flex justify-between sm:justify-start items-center gap-1.5 px-4 py-2 sm:px-3 sm:py-1.5 rounded-full border border-tk-border bg-tk-bg-surface hover:bg-tk-bg-hover text-tk-text-secondary hover:text-tk-text text-[13px] sm:text-[12px] font-semibold transition-colors whitespace-nowrap h-[36px] sm:h-[32px] w-full shrink-0"
+              >
+                <div className="flex items-center gap-1.5">
+                  <ArrowUpDown size={13} />
+                  <span className="opacity-70 font-medium">Sort by:</span>
+                  {sortBy === 'newest' && 'Newest First'}
+                  {sortBy === 'oldest' && 'Oldest First'}
+                  {sortBy === 'amount_high' && 'High to Low'}
+                  {sortBy === 'amount_low' && 'Low to High'}
+                </div>
+                <ChevronDown size={14} className="sm:hidden" />
+              </button>
+
+              {isSortDropdownOpen && (
+                <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-full sm:w-[180px] bg-tk-bg-surface border border-tk-border rounded-xl shadow-lg z-50 py-1 overflow-hidden animate-[fadeIn_0.15s_ease-out]">
+                  {[
+                    { value: 'newest', label: 'Newest First' },
+                    { value: 'oldest', label: 'Oldest First' },
+                    { value: 'amount_high', label: 'Amount: High to Low' },
+                    { value: 'amount_low', label: 'Amount: Low to High' }
+                  ].map(option => (
+                    <button
+                      key={option.value}
+                      onClick={() => {
+                        setSortBy(option.value as any);
+                        setIsSortDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-3 sm:py-2 text-[14px] sm:text-[13px] font-medium transition-colors ${sortBy === option.value
+                          ? 'bg-tk-burgundy/10 text-tk-burgundy'
+                          : 'text-tk-text hover:bg-tk-bg-hover'
+                        }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="relative w-full sm:w-[240px] shrink-0">
+              <Search className="absolute left-3 top-[calc(50%)] -translate-y-1/2 text-tk-text-secondary" size={14} />
+              <input
+                type="text"
+                placeholder="Search orders..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full h-[36px] sm:h-[32px] pl-9 pr-8 bg-tk-bg-surface border border-tk-border rounded-full text-tk-text text-[14px] sm:text-[13px] focus:outline-none focus:border-tk-burgundy transition-colors"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-3 top-[calc(50%)] -translate-y-1/2 text-tk-text-secondary hover:text-tk-text focus:outline-none flex items-center justify-center p-0"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+      <div
+        ref={tableScrollRef}
+        className="w-full pb-8"
+      >
+        {viewMode === 'table' ? (
+          <table className="w-full text-left border-collapse table-fixed min-w-[950px]">
+            <thead>
+              <tr>
+                <th
+                  className="sticky z-40 bg-tk-bg-card py-3 px-4 border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[6%] text-center shadow-sm"
+                  style={{ top: `${stickyHeight}px` }}
+                >
+                  Sl No
+                </th>
+                <th
+                  className="sticky z-40 bg-tk-bg-card py-3 px-4 border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[17%] shadow-sm"
+                  style={{ top: `${stickyHeight}px` }}
+                >
+                  Order Details
+                </th>
+                <th
+                  className="sticky z-40 bg-tk-bg-card py-3 px-4 border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[17%] shadow-sm"
+                  style={{ top: `${stickyHeight}px` }}
+                >
+                  Customer Info
+                </th>
+                <th
+                  className="sticky z-40 bg-tk-bg-card py-3 px-4 border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[25%] shadow-sm"
+                  style={{ top: `${stickyHeight}px` }}
+                >
+                  Payment Info
+                </th>
+                <th
+                  className="sticky z-40 bg-tk-bg-card py-3 px-4 border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[35%] shadow-sm"
+                  style={{ top: `${stickyHeight}px` }}
+                >
+                  Order Tracking
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -530,10 +555,10 @@ const Dashboard: React.FC = () => {
                 <tr>
                   <td colSpan={5} className="py-12 text-center text-tk-text-secondary">
                     <p className="text-sm font-medium">
-                      {activeTab === 'Active Orders' 
-                        ? 'No active orders right now.' 
-                        : activeTab === 'Completed' 
-                          ? 'No completed orders yet.' 
+                      {activeTab === 'Active Orders'
+                        ? 'No active orders right now.'
+                        : activeTab === 'Completed'
+                          ? 'No completed orders yet.'
                           : 'No orders found.'}
                     </p>
                   </td>
@@ -558,7 +583,7 @@ const Dashboard: React.FC = () => {
                       <div className="flex flex-col items-start gap-1.5">
                         <span className="text-tk-text font-semibold">₹ {order.total}</span>
                         <div className="flex items-center gap-1.5">
-                          <span 
+                          <span
                             className={`inline-flex px-2.5 py-0.5 rounded text-[11px] font-bold ${order.isPaid ? 'bg-[#C6F6D5] text-[#22543D]' : 'bg-[#FEF2F2] text-[#E53E3E]'}`}
                           >
                             {order.isPaid ? `Paid (${order.paymentMethod})` : 'Pending'}
@@ -598,60 +623,68 @@ const Dashboard: React.FC = () => {
                           </div>
                         ) : (
                           <div className="flex-1 flex items-center relative">
-                          {[
-                            { label: 'Accept', value: 'CONFIRMED' },
-                            { label: 'Preparing', value: 'PREPARING' },
-                            { label: 'Ready', value: 'READY' }
-                          ].map((step, idx, arr) => {
-                          const getStatusIdx = (status: string) => {
-                            switch(status?.toUpperCase()) {
-                              case 'PENDING': return -1;
-                              case 'CONFIRMED': return 0;
-                              case 'PREPARING': return 1;
-                              case 'READY': return 2;
-                              case 'COMPLETED':
-                              case 'SERVED': return 2;
-                              default: return -1;
-                            }
-                          };
-                          const currentIndex = getStatusIdx(order.status);
-                          const isCompleted = idx <= currentIndex;
-                          const isNext = idx === currentIndex + 1;
-                          const isLast = idx === arr.length - 1;
+                            {[
+                              { label: 'Accept', value: 'CONFIRMED' },
+                              { label: 'Preparing', value: 'PREPARING' },
+                              { label: 'Ready', value: 'READY' }
+                            ].map((step, idx, arr) => {
+                              const getStatusIdx = (status: string) => {
+                                switch (status?.toUpperCase()) {
+                                  case 'PENDING': return -1;
+                                  case 'CONFIRMED': return 0;
+                                  case 'PREPARING': return 1;
+                                  case 'READY': return 2;
+                                  case 'COMPLETED':
+                                  case 'SERVED': return 2;
+                                  default: return -1;
+                                }
+                              };
+                              const currentIndex = getStatusIdx(order.status);
+                              const isCompleted = idx <= currentIndex;
+                              const isNext = idx === currentIndex + 1;
+                              const isLast = idx === arr.length - 1;
 
-                          return (
-                            <React.Fragment key={step.value}>
-                              <div className="flex flex-col items-center relative group">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (isNext) handleUpdateStatus(order.id, step.value);
-                                  }}
-                                  disabled={!isNext}
-                                  className={`w-6 h-6 rounded-full flex items-center justify-center border-[2px] z-10 transition-colors
-                                    ${isCompleted ? 'bg-[#16a34a] border-[#16a34a] text-white' : 
-                                      isNext ? 'bg-white border-[#16a34a] cursor-pointer hover:bg-[#16a34a] hover:text-white' : 
-                                      'bg-white border-[#E2E8F0] cursor-default'}
+                              return (
+                                <React.Fragment key={step.value}>
+                                  <div className="flex flex-col items-center relative group">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (isNext) handleUpdateStatus(order.id, step.value);
+                                      }}
+                                      disabled={!isNext}
+                                      className={`w-6 h-6 rounded-full flex items-center justify-center border-[2px] z-10 transition-all duration-300 relative group/btn
+                                    ${isCompleted ? 'bg-[#16a34a] border-[#16a34a] text-white' :
+                                          isNext ? 'bg-white border-[#16a34a] cursor-pointer hover:bg-[#16a34a] hover:text-white hover:scale-110 active:scale-95' :
+                                            'bg-white border-[#E2E8F0] cursor-default'}
                                   `}
-                                  title={isNext ? `Mark as ${step.label}` : ''}
-                                >
-                                  {isCompleted && <Check size={14} className="text-white" strokeWidth={3} />}
-                                </button>
-                                <span className={`absolute top-7 text-[10px] font-medium whitespace-nowrap
+                                      title={isNext ? `Mark as ${step.label}` : ''}
+                                    >
+                                      {isNext && (
+                                        <span className="absolute inset-0 rounded-full border border-dashed border-[#16a34a]/60 animate-[spin_6s_linear_infinite]" style={{ margin: '-4px' }} />
+                                      )}
+                                      {isNext && (
+                                        <span className="absolute inset-0 rounded-full bg-[#16a34a]/10 animate-ping" style={{ margin: '-1px' }} />
+                                      )}
+                                      {(isCompleted || isNext) && (
+                                        <Check size={14} className={`text-white transition-all duration-300 ${isCompleted ? 'opacity-100 scale-100' : 'opacity-0 scale-50 group-hover/btn:opacity-100 group-hover/btn:scale-100'}`} strokeWidth={3} />
+                                      )}
+                                    </button>
+                                    <span className={`absolute top-7 text-[10px] font-medium whitespace-nowrap
                                   ${isCompleted || isNext ? 'text-tk-text' : 'text-[#A0AEC0]'}
                                 `}>
-                                  {step.label}
-                                </span>
-                              </div>
-                              {!isLast && (
-                                <div className={`flex-1 h-[2px] mx-1 transition-colors mt-[-4px]
+                                      {step.label}
+                                    </span>
+                                  </div>
+                                  {!isLast && (
+                                    <div className={`flex-1 h-[2px] mx-1 transition-colors mt-[-4px]
                                   ${idx < currentIndex ? 'bg-[#16a34a]' : 'bg-[#E2E8F0]'}
                                 `} />
-                              )}
-                            </React.Fragment>
-                          );
-                        })}
-                        </div>
+                                  )}
+                                </React.Fragment>
+                              );
+                            })}
+                          </div>
                         )}
                         {order.status?.toUpperCase() !== 'CANCELLED' && order.status?.toUpperCase() !== 'COMPLETED' && (
                           <button
@@ -676,149 +709,157 @@ const Dashboard: React.FC = () => {
               )}
             </tbody>
           </table>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4 min-w-full">
-              {isLoading ? (
-                <div className="col-span-full py-12 text-center text-tk-text-secondary text-sm">Loading orders...</div>
-              ) : filteredOrders().length === 0 ? (
-                <div className="col-span-full py-12 text-center text-tk-text-secondary font-medium">No orders found.</div>
-              ) : (
-                filteredOrders().map((order, idx) => {
-                  const getStatusIdx = (status: string) => {
-                    switch(status?.toUpperCase()) {
-                      case 'PENDING': return -1;
-                      case 'CONFIRMED': return 0;
-                      case 'PREPARING': return 1;
-                      case 'READY': return 2;
-                      case 'COMPLETED':
-                      case 'SERVED': return 2;
-                      default: return -1;
-                    }
-                  };
-                  const currentIndex = getStatusIdx(order.status);
-                  
-                  return (
-                    <div key={idx} className="bg-tk-bg-surface border border-tk-border rounded-xl p-4 flex flex-col gap-3 shadow-sm hover:shadow-md hover:border-tk-burgundy/50 transition-all cursor-pointer relative group" onClick={() => setSelectedOrder(order)}>
-                      <div className="flex justify-between items-start">
-                        <div className="flex flex-col">
-                          <span className="font-medium text-tk-text text-xs">{order.orderNumber}</span>
-                          <span className="text-[10px] text-tk-text-secondary font-medium mt-0.5">{order.time}</span>
-                        </div>
-                        <div className="flex flex-col items-end">
-                          <span className="font-bold text-tk-text text-lg">₹ {order.total}</span>
-                          <div className="flex items-center gap-1.5 mt-1">
-                            <span className={`inline-flex px-2.5 py-0.5 rounded text-[11px] font-bold ${order.isPaid ? 'bg-[#C6F6D5] text-[#22543D]' : 'bg-[#FEF2F2] text-[#E53E3E]'}`}>
-                              {order.isPaid ? `Paid (${order.paymentMethod})` : 'Pending'}
-                            </span>
-                            {!order.isPaid && (
-                               <button
-                                 onClick={(e) => { e.stopPropagation(); handlePaymentComplete(order.id); }}
-                                 className="p-0.5 bg-[#C6F6D5] text-[#22543D] rounded hover:bg-[#9AE6B4] transition-colors flex items-center justify-center"
-                                 title="Mark Paid"
-                               >
-                                 <CheckCircle size={12} strokeWidth={3} />
-                               </button>
-                            )}
-                          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4 min-w-full">
+            {isLoading ? (
+              <div className="col-span-full py-12 text-center text-tk-text-secondary text-sm">Loading orders...</div>
+            ) : filteredOrders().length === 0 ? (
+              <div className="col-span-full py-12 text-center text-tk-text-secondary font-medium">No orders found.</div>
+            ) : (
+              filteredOrders().map((order, idx) => {
+                const getStatusIdx = (status: string) => {
+                  switch (status?.toUpperCase()) {
+                    case 'PENDING': return -1;
+                    case 'CONFIRMED': return 0;
+                    case 'PREPARING': return 1;
+                    case 'READY': return 2;
+                    case 'COMPLETED':
+                    case 'SERVED': return 2;
+                    default: return -1;
+                  }
+                };
+                const currentIndex = getStatusIdx(order.status);
+
+                return (
+                  <div key={idx} className="bg-tk-bg-surface border border-tk-border rounded-xl p-4 flex flex-col gap-3 shadow-sm hover:shadow-md hover:border-tk-burgundy/50 transition-all cursor-pointer relative group" onClick={() => setSelectedOrder(order)}>
+                    <div className="flex justify-between items-start">
+                      <div className="flex flex-col">
+                        <span className="font-medium text-tk-text text-xs">{order.orderNumber}</span>
+                        <span className="text-[10px] text-tk-text-secondary font-medium mt-0.5">{order.time}</span>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className="font-bold text-tk-text text-lg">₹ {order.total}</span>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <span className={`inline-flex px-2.5 py-0.5 rounded text-[11px] font-bold ${order.isPaid ? 'bg-[#C6F6D5] text-[#22543D]' : 'bg-[#FEF2F2] text-[#E53E3E]'}`}>
+                            {order.isPaid ? `Paid (${order.paymentMethod})` : 'Pending'}
+                          </span>
+                          {!order.isPaid && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handlePaymentComplete(order.id); }}
+                              className="p-0.5 bg-[#C6F6D5] text-[#22543D] rounded hover:bg-[#9AE6B4] transition-colors flex items-center justify-center"
+                              title="Mark Paid"
+                            >
+                              <CheckCircle size={12} strokeWidth={3} />
+                            </button>
+                          )}
                         </div>
                       </div>
-                      
-                      <div className="flex justify-between text-sm items-center mt-1">
-                        <div className="flex flex-col">
-                          <span className="font-semibold text-tk-text">{order.customer}</span>
-                          <span className="text-xs text-tk-text-secondary">{order.table}</span>
-                        </div>
+                    </div>
+
+                    <div className="flex justify-between text-sm items-center mt-1">
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-tk-text">{order.customer}</span>
+                        <span className="text-xs text-tk-text-secondary">{order.table}</span>
                       </div>
-                      
-                      <div className="mt-3 pt-4 border-t border-tk-border w-full">
-                        <div className="flex items-center justify-between w-full px-2" onClick={(e) => e.stopPropagation()}>
-                          {order.status?.toUpperCase() === 'CANCELLED' ? (
-                            <div className="flex-1 flex items-center relative">
-                              <div className="flex flex-col items-center relative group">
-                                <div className="w-6 h-6 rounded-full flex items-center justify-center border-[2px] z-10 bg-[#E53E3E] border-[#E53E3E]">
-                                  <Check size={14} className="text-white" strokeWidth={3} />
-                                </div>
-                                <span className="absolute top-7 text-[10px] font-medium text-[#E53E3E] whitespace-nowrap">Placed</span>
+                    </div>
+
+                    <div className="mt-3 pt-4 border-t border-tk-border w-full">
+                      <div className="flex items-center justify-between w-full px-2" onClick={(e) => e.stopPropagation()}>
+                        {order.status?.toUpperCase() === 'CANCELLED' ? (
+                          <div className="flex-1 flex items-center relative">
+                            <div className="flex flex-col items-center relative group">
+                              <div className="w-6 h-6 rounded-full flex items-center justify-center border-[2px] z-10 bg-[#E53E3E] border-[#E53E3E]">
+                                <Check size={14} className="text-white" strokeWidth={3} />
                               </div>
-                              <div className="flex-1 h-[2px] mx-1 transition-colors bg-[#E53E3E]"></div>
-                              <div className="flex flex-col items-center relative group">
-                                <div className="w-6 h-6 rounded-full flex items-center justify-center border-[2px] z-10 bg-[#E53E3E] border-[#E53E3E]">
-                                  <X size={14} className="text-white" strokeWidth={3} />
-                                </div>
-                                <span className="absolute top-7 text-[10px] font-bold text-[#E53E3E] whitespace-nowrap">Cancelled</span>
-                              </div>
+                              <span className="absolute top-7 text-[10px] font-medium text-[#E53E3E] whitespace-nowrap">Placed</span>
                             </div>
-                          ) : (
-                            <>
+                            <div className="flex-1 h-[2px] mx-1 transition-colors bg-[#E53E3E]"></div>
+                            <div className="flex flex-col items-center relative group">
+                              <div className="w-6 h-6 rounded-full flex items-center justify-center border-[2px] z-10 bg-[#E53E3E] border-[#E53E3E]">
+                                <X size={14} className="text-white" strokeWidth={3} />
+                              </div>
+                              <span className="absolute top-7 text-[10px] font-bold text-[#E53E3E] whitespace-nowrap">Cancelled</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
                             {[
                               { label: 'Accept', value: 'CONFIRMED' },
                               { label: 'Preparing', value: 'PREPARING' },
                               { label: 'Ready', value: 'READY' }
                             ].map((step, stepIdx, arr) => {
-                            const isCompleted = stepIdx <= currentIndex;
-                            const isNext = stepIdx === currentIndex + 1;
-                            const isLast = stepIdx === arr.length - 1;
-                            
-                            return (
-                              <React.Fragment key={step.value}>
-                                <div className="flex flex-col items-center relative group">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if (isNext) handleUpdateStatus(order.id, step.value);
-                                    }}
-                                    disabled={!isNext}
-                                    className={`w-6 h-6 rounded-full flex items-center justify-center border-[2px] z-10 transition-colors
-                                      ${isCompleted ? 'bg-[#16a34a] border-[#16a34a] text-white' : 
-                                        isNext ? 'bg-white border-[#16a34a] cursor-pointer hover:bg-[#16a34a] hover:text-white' : 
-                                        'bg-white border-[#E2E8F0] cursor-default'}
+                              const isCompleted = stepIdx <= currentIndex;
+                              const isNext = stepIdx === currentIndex + 1;
+                              const isLast = stepIdx === arr.length - 1;
+
+                              return (
+                                <React.Fragment key={step.value}>
+                                  <div className="flex flex-col items-center relative group">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (isNext) handleUpdateStatus(order.id, step.value);
+                                      }}
+                                      disabled={!isNext}
+                                      className={`w-6 h-6 rounded-full flex items-center justify-center border-[2px] z-10 transition-all duration-300 relative group/btn
+                                      ${isCompleted ? 'bg-[#16a34a] border-[#16a34a] text-white' :
+                                          isNext ? 'bg-white border-[#16a34a] cursor-pointer hover:bg-[#16a34a] hover:text-white hover:scale-110 active:scale-95' :
+                                            'bg-white border-[#E2E8F0] cursor-default'}
                                     `}
-                                  >
-                                    {isCompleted && <Check size={14} className="text-white" strokeWidth={3} />}
-                                  </button>
-                                  <span className={`absolute top-7 text-[10px] font-medium whitespace-nowrap
+                                    >
+                                      {isNext && (
+                                        <span className="absolute inset-0 rounded-full border border-dashed border-[#16a34a]/60 animate-[spin_6s_linear_infinite]" style={{ margin: '-4px' }} />
+                                      )}
+                                      {isNext && (
+                                        <span className="absolute inset-0 rounded-full bg-[#16a34a]/10 animate-ping" style={{ margin: '-1px' }} />
+                                      )}
+                                      {(isCompleted || isNext) && (
+                                        <Check size={14} className={`text-white transition-all duration-300 ${isCompleted ? 'opacity-100 scale-100' : 'opacity-0 scale-50 group-hover/btn:opacity-100 group-hover/btn:scale-100'}`} strokeWidth={3} />
+                                      )}
+                                    </button>
+                                    <span className={`absolute top-7 text-[10px] font-medium whitespace-nowrap
                                     ${isCompleted || isNext ? 'text-tk-text' : 'text-[#A0AEC0]'}
                                   `}>
-                                    {step.label}
-                                  </span>
-                                </div>
-                                {!isLast && (
-                                  <div className={`flex-1 h-[2px] mx-1 transition-colors
+                                      {step.label}
+                                    </span>
+                                  </div>
+                                  {!isLast && (
+                                    <div className={`flex-1 h-[2px] mx-1 transition-colors
                                     ${stepIdx < currentIndex ? 'bg-[#16a34a]' : 'bg-[#E2E8F0]'}
                                   `} />
-                                )}
-                              </React.Fragment>
-                            );
-                          })}
+                                  )}
+                                </React.Fragment>
+                              );
+                            })}
                           </>
-                          )}
-                        </div>
-                        <div className="mt-8 flex justify-end">
-                          {order.status?.toUpperCase() !== 'CANCELLED' && order.status?.toUpperCase() !== 'COMPLETED' && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setOrderToCancel(order);
-                              }}
-                              className="px-3 py-1.5 bg-[#FEF2F2] text-[#E53E3E] border border-[#FC8181] rounded-lg text-xs font-semibold hover:bg-[#FED7D7] transition-colors"
-                            >
-                              Cancel
-                            </button>
-                          )}
-                          {order.status?.toUpperCase() === 'CANCELLED' && (
-                            <span className="px-3 py-1.5 bg-[#FEF2F2] text-[#E53E3E] rounded-lg text-xs font-bold">
-                              Cancelled
-                            </span>
-                          )}
-                        </div>
+                        )}
+                      </div>
+                      <div className="mt-8 flex justify-end">
+                        {order.status?.toUpperCase() !== 'CANCELLED' && order.status?.toUpperCase() !== 'COMPLETED' && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOrderToCancel(order);
+                            }}
+                            className="px-3 py-1.5 bg-[#FEF2F2] text-[#E53E3E] border border-[#FC8181] rounded-lg text-xs font-semibold hover:bg-[#FED7D7] transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        )}
+                        {order.status?.toUpperCase() === 'CANCELLED' && (
+                          <span className="px-3 py-1.5 bg-[#FEF2F2] text-[#E53E3E] rounded-lg text-xs font-bold">
+                            Cancelled
+                          </span>
+                        )}
                       </div>
                     </div>
-                  );
-                })
-              )}
-            </div>
-          )}
-        </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        )}
+      </div>
       {selectedOrder && (
         <OrderDetailsDialog
           order={selectedOrder}
@@ -834,13 +875,13 @@ const Dashboard: React.FC = () => {
               Are you sure you want to cancel order <strong>{orderToCancel.orderNumber}</strong>? This action cannot be undone.
             </p>
             <div className="flex justify-end gap-3">
-              <button 
+              <button
                 onClick={() => setOrderToCancel(null)}
                 className="px-4 py-2 bg-tk-bg-hover text-tk-text-secondary rounded-xl text-sm font-semibold hover:bg-tk-border transition-colors"
               >
                 No, Keep it
               </button>
-              <button 
+              <button
                 onClick={() => {
                   handleUpdateStatus(orderToCancel.id, 'CANCELLED');
                   setOrderToCancel(null);
