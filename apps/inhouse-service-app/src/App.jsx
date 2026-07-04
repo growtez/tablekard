@@ -46,7 +46,7 @@ function buildDetailString(item) {
   return parts.join(' · ');
 }
 
-/** Get table number from order's joined restaurant_tables */
+/** Get table number from order's restaurant_tables FK join */
 function getTableNumber(order) {
   if (order.restaurant_tables && order.restaurant_tables.table_number != null) {
     return String(order.restaurant_tables.table_number).padStart(2, '0');
