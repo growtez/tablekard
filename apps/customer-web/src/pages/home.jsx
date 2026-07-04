@@ -37,7 +37,7 @@ const HomePage = () => {
         fontSize: getDynamicFontSize(restaurantName),
         letterSpacing: getDynamicLetterSpacing(restaurantName)
     };
-    const { cartItems, addToCart: cartAdd, removeFromCart: cartRemove, getItemQuantity } = useCart();
+    const { cartItems, addToCart: cartAdd, removeFromCart: cartRemove, getItemQuantity, cartSubtotal } = useCart();
     const [searchTerm, setSearchTerm] = useState('');
     const [activeOfferIndex, setActiveOfferIndex] = useState(0);
     const [favorites, setFavorites] = useState([]);
@@ -482,40 +482,37 @@ const HomePage = () => {
                                     </div>
                                 </div>
                                 <div className="recent-price">₹{item.price}</div>
-                                {getItemQuantity(item.id) === 0 ? (
-                                    <button
-                                        className="reorder-btn"
-                                        onClick={(e) => addToCart(item, e)}
-                                    >
-                                        <Plus size={16} />
-                                    </button>
-                                ) : (
-                                    <div className="recent-qty-stepper" onClick={(e) => e.stopPropagation()}>
-                                        <button
-                                            className="recent-stepper-btn"
-                                            onClick={(e) => removeFromCart(item.id, e)}
-                                        >
-                                            <Minus size={12} />
-                                        </button>
-                                        <span className="recent-stepper-value">{getItemQuantity(item.id)}</span>
-                                        <button
-                                            className="recent-stepper-btn"
-                                            onClick={(e) => addToCart(item, e)}
-                                        >
-                                            <Plus size={12} />
-                                        </button>
-                                    </div>
-                                )}
+                                <button
+                                    className="reorder-btn"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (item.variants?.length > 0 || item.addons?.length > 0) {
+                                            handleItemClick(item);
+                                        } else {
+                                            addToCart(item, e);
+                                        }
+                                    }}
+                                >
+                                    <Plus size={16} />
+                                </button>
                             </div>
                         ))
                     ) : (
-                        <div className="no-orders-message">No recent orders yet</div>
+                        <div className="no-recent-orders">
+                            <div className="no-recent-icon">
+                                <ShoppingBag size={28} strokeWidth={1.5} />
+                            </div>
+                            <div className="no-recent-text">
+                                <h4>No recent orders</h4>
+                                <p>You haven't ordered anything in the last 7 days.</p>
+                            </div>
+                        </div>
                     )}
                 </div>
             </section>
 
             {/* Modern Frosted Glow Cart Indicator */}
-            {cartTotal > 0 && !showItemModal && (
+            {cartTotal > 0 && (
                 <NavLink to="/orders" className="cart-modern-glow">
                     <div className="glow-content">
                         <div className="glow-badge">
@@ -524,7 +521,7 @@ const HomePage = () => {
                         </div>
                         <div className="glow-details">
                             <span className="glow-label">Your Order</span>
-                            <span className="glow-total">₹{cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)}</span>
+                            <span className="glow-total">₹{cartSubtotal}</span>
                         </div>
                         <div className="glow-cta">
                             <span>View Cart</span>

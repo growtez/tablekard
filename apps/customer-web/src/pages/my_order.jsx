@@ -565,6 +565,9 @@ const MyOrderPage = () => {
               <div className="cart-items">
                 {cartItems.map(item => (
                   <div key={item.id} className="cart-item" style={{ opacity: item.outOfStock ? 0.6 : 1, filter: item.outOfStock ? 'grayscale(100%)' : 'none' }}>
+                    {item.variant && (
+                      <span className="cart-variant-badge">{item.variant.name}</span>
+                    )}
                     <div className="cart-image">
                       <img src={item.image} alt={item.name} />
                       {item.outOfStock && (
@@ -574,23 +577,24 @@ const MyOrderPage = () => {
                       )}
                     </div>
                     <div className="cart-info">
-                      {/* Row 1: name + [pencil] [trash] */}
+                      {/* Row 1: name + [badge] [trash] */}
                       <div className="cart-header">
                         <h3>{item.name}</h3>
-                        <div className="cart-header-actions">
+                        <div className="cart-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <button className="remove-btn" onClick={() => removeItem(item.id)}>
                             <Trash2 size={14} />
                           </button>
                         </div>
                       </div>
-                      {item.variant && (
-                        <div className="item-customization-info" style={{ textAlign: 'left', fontSize: '11px', color: '#8B3A1E', fontWeight: 600, marginTop: '2px', marginBottom: '2px' }}>
-                          Variant: {item.variant.name} (+₹{item.variant.price})
-                        </div>
-                      )}
+                      
+                      {/* Add-ons as Pills */}
                       {item.addons && item.addons.length > 0 && (
-                        <div className="item-customization-info" style={{ textAlign: 'left', fontSize: '11px', color: '#666', marginTop: '2px', marginBottom: '2px' }}>
-                          Add-ons: {item.addons.map(a => `${a.name} (+₹${a.price})`).join(', ')}
+                        <div className="cart-addons-list">
+                          {item.addons.map(a => (
+                            <span key={a.name} className="cart-addon-pill">
+                              {a.name} <span className="cart-addon-price">+₹{a.price}</span>
+                            </span>
+                          ))}
                         </div>
                       )}
                       {/* Row 2: meta */}

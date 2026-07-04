@@ -1,4 +1,4 @@
-﻿/* ===== MODAL - Elegant Minimalist Design ===== */
+/* ===== MODAL - Elegant Minimalist Design ===== */
 .item-modal-overlay {
   position: fixed;
   top: 0;
@@ -8,7 +8,7 @@
   background: rgba(0, 0, 0, 0);
   z-index: 9999;
   opacity: 0;
-  transition: opacity 0.4s ease, -webkit-backdrop-filter 0.4s ease, backdrop-filter 0.4s ease;
+  transition: opacity 0.5s ease, -webkit-backdrop-filter 0.5s ease, backdrop-filter 0.5s ease;
   -webkit-backdrop-filter: blur(0px);
   backdrop-filter: blur(0px);
   pointer-events: none;
@@ -31,7 +31,7 @@
   border-radius: 24px 24px 0 0;
   max-height: 85vh;
   transform: translateY(100%);
-  transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
   position: relative;
   display: flex;
   flex-direction: column;
@@ -94,7 +94,7 @@
   width: 100%;
 }
 
-/* â”€â”€ Full-width snap slideshow â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Full-width snap slideshow ──────────────────────────── */
 .dish-slideshow-track {
   display: flex;
   overflow-x: auto;
@@ -129,7 +129,7 @@
   display: block;
 }
 
-/* â”€â”€ Dot indicators â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Dot indicators ─────────────────────────────────────── */
 .dish-slide-dots {
   display: flex;
   align-items: center;
@@ -163,12 +163,12 @@
   transform: translate(50%, -50%);
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   background: #1A1A1A;
   color: #FFFFFF;
-  padding: 6px 12px;
-  border-radius: 14px;
-  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
   font-weight: 700;
   pointer-events: none;
   z-index: 10;
@@ -193,8 +193,8 @@
 
 .modal-fav-floating {
   position: absolute;
-  top: 43px;
-  right: calc(50% - 140px);
+  top: 58px;
+  right: calc(50% - 125px);
   transform: translate(50%, -50%);
   z-index: 10;
   width: 42px;
@@ -211,7 +211,17 @@
 }
 
 .modal-fav-floating:active {
-  transform: scale(0.9);
+  transform: translate(50%, -50%) scale(0.9);
+}
+
+@keyframes popAnimation {
+  0% { transform: translate(50%, -50%) scale(1); }
+  50% { transform: translate(50%, -50%) scale(1.3); }
+  100% { transform: translate(50%, -50%) scale(1); }
+}
+
+.modal-fav-floating.animate-pop {
+  animation: popAnimation 0.3s ease;
 }
 
 .dish-meta-chips {
@@ -281,12 +291,38 @@
 .price-display {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
+}
+
+.price-label-total {
+  font-size: 11px;
+  font-weight: 600;
+  color: #999999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: -2px;
 }
 
 .price-rupee {
   font-size: 28px;
-  font-weight: 900;
+  font-weight: 800;
   color: #1A1A1A;
+  letter-spacing: -0.5px;
+}
+
+.price-starts-from {
+  align-self: flex-start;
+  font-size: 9px;
+  font-weight: 700;
+  color: #8B3A1E;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: #FFF0ED;
+  padding: 3px 6px;
+  border-radius: 6px;
+  width: fit-content;
+  margin-top: 2px;
+  margin-left: 0px;
 }
 
 .add-to-order-btn {
@@ -304,6 +340,12 @@
 .add-to-order-btn:active {
   transform: scale(0.96);
   background: #6F2D17;
+}
+
+.detail-bottom-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .qty-stepper {
@@ -339,7 +381,201 @@
   text-align: center;
 }
 
-/* Customization Sections */
+
+/* ═══════════════════════════════════════════════════════════
+   STEP 2: VARIANT / ADDON SELECTOR — HALF-SHEET OVERLAY
+   ═══════════════════════════════════════════════════════════ */
+
+.variant-sheet-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0);
+  z-index: 3000;
+  display: flex;
+  align-items: flex-end;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.35s ease;
+}
+
+.variant-sheet-overlay.show {
+  background: rgba(0, 0, 0, 0.45);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.variant-sheet {
+  width: 100%;
+  height: 100%;
+  background: #FFFFFF;
+  max-height: 100vh;
+  border-radius: 0;
+  transform: translateY(100%);
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.variant-sheet-overlay.show .variant-sheet {
+  transform: translateY(0);
+}
+
+/* Sheet header */
+.variant-sheet-header {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid #F0F0F0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.variant-sheet-back-btn {
+  background: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1A1A1A;
+  cursor: pointer;
+  padding: 0;
+}
+
+.variant-sheet-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.variant-sheet-item-name {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1A1A1A;
+  margin: 0;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 40px;
+}
+
+.variant-sheet-customize-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #8B3A1E;
+  background: #FFF0ED;
+  padding: 4px 10px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+/* Scrollable content */
+.variant-sheet-scroll {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding: 4px 0 24px;
+}
+
+.variant-sheet-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.variant-section {
+  padding: 16px 20px;
+}
+
+.variant-section + .variant-section {
+  border-top: 1px solid #F0F0F0;
+}
+
+/* Bottom bar */
+.variant-sheet-bottom {
+  background: #FFFFFF;
+  padding: 14px 20px 24px;
+  border-top: 1px solid #F0F0F0;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.variant-sheet-bottom-layout {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.variant-sheet-total-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.variant-sheet-action-col {
+  flex-shrink: 0;
+  min-width: 130px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.variant-total-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #999999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: -2px;
+}
+
+.variant-total-price {
+  font-size: 24px;
+  font-weight: 800;
+  color: #1A1A1A;
+  letter-spacing: -0.5px;
+}
+
+.variant-add-btn {
+  width: 100%;
+  background: #8B3A1E;
+  color: #FFFFFF;
+  border: none;
+  padding: 15px 24px;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: 0.3px;
+}
+
+.variant-add-btn.compact {
+  padding: 12px 24px;
+  min-width: 140px;
+}
+
+.variant-add-btn:active {
+  transform: scale(0.97);
+  background: #6F2D17;
+}
+
+.variant-bottom-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.variant-bottom-row .variant-add-btn {
+  flex: 1;
+}
+
+.variant-stepper {
+  flex-shrink: 0;
+}
+
+
+/* ═══ Customization Sections (shared by both layouts) ═══ */
 .modal-customization-section {
   padding: 16px 24px;
   border-top: 1px solid #F0F0F0;

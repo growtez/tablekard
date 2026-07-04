@@ -23,8 +23,17 @@ const Hamburger = () => {
 
   // Lock body scroll when sidebar is open
   useEffect(() => {
-    document.body.style.overflow = isSidebarOpen ? 'hidden' : 'auto';
-    return () => { document.body.style.overflow = 'auto'; };
+    if (isSidebarOpen) {
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+      document.documentElement.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+      document.documentElement.style.overflow = 'unset';
+    };
   }, [isSidebarOpen]);
 
   // Dynamic font size based on name length
