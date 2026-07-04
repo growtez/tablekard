@@ -537,7 +537,15 @@ export interface Database {
           capacity?: number | null;
           updated_at?: IsoDateString;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'orders_table_id_fkey';
+            columns: ['id'];
+            isOneToOne: false;
+            referencedRelation: 'orders';
+            referencedColumns: ['table_id'];
+          }
+        ];
       };
       menu_categories: {
         Row: {
@@ -662,7 +670,7 @@ export interface Database {
           customer_id: string | null;
           order_number: string;
           type: OrderType;
-          table_number: number | null;
+          table_id: string | null;
           customer_name: string | null;
           customer_phone: string | null;
           status: OrderStatus;
@@ -683,7 +691,7 @@ export interface Database {
           customer_id?: string | null;
           order_number: string;
           type: OrderType;
-          table_number?: number | null;
+          table_id?: string | null;
           customer_name?: string | null;
           customer_phone?: string | null;
           status?: OrderStatus;
@@ -706,7 +714,15 @@ export interface Database {
           transaction_id?: string | null;
           updated_at?: IsoDateString;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'orders_table_id_fkey';
+            columns: ['table_id'];
+            isOneToOne: false;
+            referencedRelation: 'restaurant_tables';
+            referencedColumns: ['id'];
+          }
+        ];
       };
       platform_settings: {
         Row: {
@@ -768,6 +784,7 @@ export interface Database {
           variant: Record<string, unknown> | null;
           addons: Record<string, unknown>[] | null;
           special_instructions: string | null;
+          status: 'placed' | 'preparing' | 'ready';
           created_at: IsoDateString;
         };
         Insert: {
@@ -781,6 +798,7 @@ export interface Database {
           variant?: Record<string, unknown> | null;
           addons?: Record<string, unknown>[] | null;
           special_instructions?: string | null;
+          status?: 'placed' | 'preparing' | 'ready';
           created_at?: IsoDateString;
         };
         Update: {
@@ -791,6 +809,7 @@ export interface Database {
           variant?: Record<string, unknown> | null;
           addons?: Record<string, unknown>[] | null;
           special_instructions?: string | null;
+          status?: 'placed' | 'preparing' | 'ready';
         };
         Relationships: [];
       };

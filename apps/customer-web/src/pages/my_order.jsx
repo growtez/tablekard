@@ -17,7 +17,7 @@ const MyOrderPage = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user, loading: authLoading } = useAuth();
   const { cartItems, updateQuantity, deleteFromCart, cartSubtotal, clearCart, orderSpecialInstructions, setOrderSpecialInstructions } = useCart();
-  const { restaurantId, tableId, geofenceStatus, distance, allowedRadius, checkGeofence, restaurant } = useRestaurant();
+  const { restaurantId, tableId, table, geofenceStatus, distance, allowedRadius, checkGeofence, restaurant } = useRestaurant();
   const [activeTab, setActiveTab] = useState('cart');
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState('');
@@ -220,7 +220,7 @@ const MyOrderPage = () => {
     try {
       const result = await processOnlinePayment({
         restaurantId,
-        tableId,
+        tableId: table?.id ?? tableId,   // always use the UUID from fetched table
         orderType: orderType,
         items: cartItems,
         restaurantName: 'Tablekard',
@@ -299,7 +299,7 @@ const MyOrderPage = () => {
         customerId: user?.id,
         customerName: user?.user_metadata?.full_name || null,
         customerPhone: user?.phone || null,
-        tableNumber: tableId,
+        tableNumber: table?.id ?? tableId,   // always use the UUID from fetched table
         items: cartItems,
         paymentMethod: 'cash',
         type: orderType,
