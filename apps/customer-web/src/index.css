@@ -107,6 +107,18 @@ code {
   transition: background-color 0.3s ease;
 }
 
+.bottom-nav .nav-btn {
+  flex-direction: column !important;
+  gap: 4px;
+  padding: 8px 12px !important;
+}
+
+.bottom-nav-label {
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+}
+
 /* Text transitions */
 h1,
 h2,
@@ -208,4 +220,43 @@ button {
   height: 32px;
   width: 80px;
   border-radius: 20px;
+}
+
+/* ============================================================
+   RESPONSIVE LAYOUT (Mobile frame on Desktop)
+   ============================================================ */
+@media (min-width: 481px) {
+  body {
+    background-color: #E8E1DD;
+    display: flex;
+    justify-content: center;
+  }
+  
+  #root {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
+    min-height: 100vh;
+    background-color: var(--color-background);
+    position: relative;
+    overflow-x: hidden;
+  }
+  
+  /* Apply centering to all known fixed full-width overlays */
+  .bottom-nav,
+  .item-modal-overlay,
+  .variant-sheet-overlay,
+  .cart-modern-glow,
+  .geofence-blocked-screen,
+  .hamburger-menu-overlay,
+  .floating-queue-btn,
+  .scanner-overlay,
+  .modal-sheet,
+  .variant-sheet {
+    left: 0 !important;
+    right: 0 !important;
+    margin: 0 auto !important;
+    max-width: 480px !important;
+  }
 }

@@ -4,23 +4,34 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useRestaurant } from '../context/RestaurantContext';
 import { useCart } from '../context/CartContext';
-import { getMenuItems } from '../services/supabaseService';
+import { getMenuItems, getFavorites, addFavorite, removeFavoriteFromDB } from '../services/supabaseService';
 import ItemModal from '../components/ItemModal';
 import './search.css';
 
 
 const SearchPage = () => {
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user, isAuthenticated } = useAuth();
     const { restaurantId, recommendations, recommendationsLoading } = useRestaurant();
     const { addToCart, removeFromCart, getItemQuantity, cartTotal, cartSubtotal } = useCart();
 
     const [searchTerm, setSearchTerm] = useState('');
     const [results, setResults] = useState([]);
+    const [isSearching, setIsSearching] = useState(false);
     const [allItems, setAllItems] = useState([]);
     const [selectedItem, setSelectedItem] = useState(null);
     const [showItemModal, setShowItemModal] = useState(false);
     const [modalQuantity, setModalQuantity] = useState(0);
+    const [favorites, setFavorites] = useState([]);
+
+    useEffect(() => {
+        // Load favorites from DB if logged in
+        if (isAuthenticated && user) {
+            getFavorites(user.id)
+                .then(data => setFavorites(data.map(f => f.id)))
+                .catch(err => console.error('Failed to load favorites:', err));
+        }
+    }, [isAuthenticated, user]);
 
     useEffect(() => {
         if (!restaurantId) return;
@@ -83,11 +94,14 @@ const SearchPage = () => {
 
         if (searchTerm.trim() === '') {
             setResults([]);
+            setIsSearching(false);
             return;
         }
 
+        setIsSearching(true);
         debounceRef.current = setTimeout(() => {
             setResults(rankAndFilter(searchTerm, allItems));
+            setIsSearching(false);
         }, 150);
 
         return () => clearTimeout(debounceRef.current);
@@ -99,7 +113,33 @@ const SearchPage = () => {
         setShowItemModal(true);
     };
 
-    const closeItemModal = () => setShowItemModal(false);
+    const closeItemModal = () => {
+        setShowItemModal(false);
+        setSelectedItem(null);
+    };
+
+    const toggleFavorite = async (itemId) => {
+        if (!isAuthenticated || !user) {
+            setFavorites(prev =>
+                prev.includes(itemId)
+                    ? prev.filter(id => id !== itemId)
+                    : [...prev, itemId]
+            );
+            return;
+        }
+
+        try {
+            if (favorites.includes(itemId)) {
+                await removeFavoriteFromDB(user.id, itemId);
+                setFavorites(prev => prev.filter(id => id !== itemId));
+            } else {
+                await addFavorite(user.id, itemId);
+                setFavorites(prev => [...prev, itemId]);
+            }
+        } catch (err) {
+            console.error('Failed to toggle favorite:', err);
+        }
+    };
 
     return (
         <div className="search-page-container">
@@ -308,6 +348,22 @@ const SearchPage = () => {
                                             )}
                                         </div>
                                     </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                ) : isSearching ? (
+                    
+                    /* ── Search Loading State ── */
+                    <div className="sr-container">
+                        <div className="rec-list" style={{ marginTop: '20px' }}>
+                            {[1, 2, 3, 4].map(i => (
+                                <div key={`search-skel-${i}`} className="skeleton-card">
+                                    <div className="skeleton-img" />
+                                    <div className="skeleton-line short" />
+                                    <div className="skeleton-line long" />
+                                    <div className="skeleton-line mid" />
                                 </div>
                             ))}
                         </div>

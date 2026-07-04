@@ -34,14 +34,17 @@ const BottomNav = () => {
         <nav className="bottom-nav">
             <NavLink to="/" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
                 <Home size={22} />
+                <span className="bottom-nav-label">Home</span>
             </NavLink>
 
             <NavLink to="/menu" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
                 <CustomMenuIcon size={22} />
+                <span className="bottom-nav-label">Menu</span>
             </NavLink>
 
             <NavLink to="/orders" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
                 <ShoppingCart size={22} />
+                <span className="bottom-nav-label">Cart</span>
                 {cartItems?.length > 0 && (
                     <span className="cart-badge">
                         {cartItems.length > 9 ? '9+' : cartItems.length}
@@ -51,6 +54,7 @@ const BottomNav = () => {
 
             <NavLink to="/profile" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
                 <User size={22} />
+                <span className="bottom-nav-label">Profile</span>
             </NavLink>
         </nav>
     );
