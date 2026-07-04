@@ -450,19 +450,26 @@ body {
   gap: 8px;
 }
 
-/* ── Queue card read-only item list ──────────────────────── */
+/* ── Queue card read-only item list ──────────────────── */
 
 .queue-items {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   padding: 4px 0;
 }
 
 .queue-item {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 0;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 8px;
+}
+
+.queue-item:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
 }
 
 .queue-item-main {
@@ -470,13 +477,46 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  min-height: 30px;
 }
 
 .queue-item-info {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 6px;
   min-width: 0;
+  flex: 1;
+}
+
+.queue-item-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 5px;
+  padding-left: 2px;
+}
+
+.queue-item-detail-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.queue-detail-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 44px;
+}
+
+.queue-detail-value {
+  font-size: 11px;
+  color: #444;
+  font-weight: 500;
 }
 
 .queue-item-preparing {
@@ -503,13 +543,23 @@ body {
   border-radius: 10px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 0;
 }
 
 .expand-item-main {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  min-height: 32px;
+}
+
+/* Name + qty badge grouped together */
+.expand-item-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
 }
 
 .expand-item-name {
@@ -525,25 +575,84 @@ body {
   padding: 2px 8px;
   border-radius: 6px;
   font-size: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.expand-item-detail {
-  font-size: 11px;
-  color: #666;
-}
-
-.expand-item-instructions {
+/* Structured variant/addons rows inside expand-item */
+.expand-item-details {
   display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  color: #c97000;
-  font-style: italic;
-  font-weight: 500;
-  background: rgba(201, 112, 0, 0.06);
-  padding: 5px 7px;
-  border-radius: 6px;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed #e8e8e8;
 }
+
+.expand-item-detail-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.expand-detail-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 44px;
+}
+
+.expand-detail-value {
+  font-size: 11px;
+  color: #444;
+  font-weight: 500;
+}
+
+/* Order-level special instructions banner — shown once at the bottom */
+.order-instructions-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: rgba(201, 112, 0, 0.08);
+  border: 1px solid rgba(201, 112, 0, 0.18);
+  border-radius: 8px;
+  color: #9a5200;
+}
+
+.order-instructions-banner > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.order-instructions-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.order-instructions-label {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #b86200;
+}
+
+.order-instructions-text {
+  font-size: 11px;
+  font-weight: 500;
+  font-style: italic;
+  color: #7a4200;
+  line-height: 1.4;
+}
+
 
 /* ── Expand footer ───────────────────────────────────────── */
 
