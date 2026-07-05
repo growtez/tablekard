@@ -591,8 +591,11 @@ body {
 .cart-modern-glow {
   position: fixed;
   bottom: 110px;
-  left: 32px;
-  right: 32px;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  width: 90%;
+  max-width: 360px;
   z-index: 10000;
   text-decoration: none;
   font-family: 'Poppins', sans-serif;
@@ -655,8 +658,9 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
   flex: 1;
-  padding-left: 16px;
+  padding-left: 0;
 }
 
 .glow-label {

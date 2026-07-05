@@ -551,8 +551,12 @@
 }
 
 .variant-add-btn.compact {
-  padding: 12px 24px;
-  min-width: 140px;
+  width: 140px;
+  height: 52px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .variant-add-btn:active {
@@ -571,7 +575,11 @@
 }
 
 .variant-stepper {
+  width: 140px;
+  height: 52px;
   flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
 }
 
 
