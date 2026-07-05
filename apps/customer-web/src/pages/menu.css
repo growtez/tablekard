@@ -596,7 +596,7 @@ body {
   margin: 0 auto;
   width: 90%;
   max-width: 360px;
-  z-index: 10000;
+  z-index: 9990;
   text-decoration: none;
   font-family: 'Poppins', sans-serif;
   animation: glowSlideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
