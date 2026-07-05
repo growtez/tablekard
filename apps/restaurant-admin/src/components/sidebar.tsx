@@ -201,6 +201,12 @@ const Sidebar: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+      setIsCollapsed(true);
+    }
+  }, [location.pathname]);
+
   const navItems: NavItem[] = [
     { icon: (active) => <DashboardIcon active={active} />, label: 'Dashboard', id: 'dashboard', path: '/dashboard' },
     { icon: (active) => <OrderIcon active={active} />, label: 'Order Management', id: 'order', path: '/orders' },
