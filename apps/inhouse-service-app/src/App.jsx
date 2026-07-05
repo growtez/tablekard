@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Check, ArrowUp, X, Loader2, RefreshCw, ChevronDown, AlertTriangle, LogOut } from 'lucide-react';
+import { Check, ArrowUp, X, Loader2, RefreshCw, ChevronDown, PenLine, AlertTriangle, LogOut } from 'lucide-react';
 import { supabase } from '@restaurant-saas/supabase';
 import { useOrders } from './hooks/useOrders';
 import { useAuth } from './context/AuthContext';
@@ -48,8 +48,13 @@ function buildDetailString(item) {
 
 /** Get table number from order's restaurant_tables FK join */
 function getTableNumber(order) {
-  if (order.restaurant_tables && order.restaurant_tables.table_number != null) {
-    return String(order.restaurant_tables.table_number).padStart(2, '0');
+  if (!order.restaurant_tables) return '--';
+  const table = Array.isArray(order.restaurant_tables) 
+    ? order.restaurant_tables[0] 
+    : order.restaurant_tables;
+    
+  if (table && table.table_number != null) {
+    return String(table.table_number).padStart(2, '0');
   }
   return '--';
 }
@@ -106,9 +111,14 @@ const OrderCard = ({
         {items.map((item) => {
           const variant = getVariantName(item);
           const addons = getAddonNames(item);
+          const addonCounts = addons.reduce((acc, a) => {
+            acc[a] = (acc[a] || 0) + 1;
+            return acc;
+          }, {});
           const itemStatus = item.status || 'placed';
           return (
-            <div key={item.id} className="queue-item">
+            <div key={item.id} className={`queue-item ${variant ? 'has-variant' : ''}`}>
+              {variant && <div className="item-variant-ribbon">{variant}</div>}
               <div className="queue-item-main">
                 <div className="queue-item-info">
                   <span className="expand-item-name">{item.name}</span>
@@ -131,20 +141,16 @@ const OrderCard = ({
                   </span>
                 )}
               </div>
-              {(variant || addons.length > 0) && (
-                <div className="queue-item-details">
-                  {variant && (
-                    <div className="queue-item-detail-row">
-                      <span className="queue-detail-label">Variant</span>
-                      <span className="queue-detail-value">{variant}</span>
-                    </div>
-                  )}
-                  {addons.length > 0 && (
-                    <div className="queue-item-detail-row">
-                      <span className="queue-detail-label">Add-ons</span>
-                      <span className="queue-detail-value">{addons.join(', ')}</span>
-                    </div>
-                  )}
+              {addons.length > 0 && (
+                <div className="addons-burgundy-box">
+                  <strong>Add-ons:</strong>
+                  <div className="addons-chip-container">
+                    {Object.entries(addonCounts).map(([name, count], i) => (
+                      <span key={i} className="addon-burgundy-chip">
+                        {name} {count > 1 && `(x${count})`}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -152,7 +158,7 @@ const OrderCard = ({
         })}
         {orderInstructions && (
           <div className="order-instructions-banner">
-            <AlertTriangle size={12} />
+            <PenLine size={12} />
             <div className="order-instructions-content">
               <span className="order-instructions-label">Special Instructions</span>
               <span className="order-instructions-text">{orderInstructions}</span>
@@ -175,10 +181,15 @@ const OrderCard = ({
         {items.map((item) => {
           const variant = getVariantName(item);
           const addons = getAddonNames(item);
+          const addonCounts = addons.reduce((acc, a) => {
+            acc[a] = (acc[a] || 0) + 1;
+            return acc;
+          }, {});
           const itemStatus = item.status || 'placed';
           const isReady = itemStatus === 'ready';
           return (
-            <div key={item.id} className="expand-item">
+            <div key={item.id} className={`expand-item ${variant ? 'has-variant' : ''}`}>
+              {variant && <div className="item-variant-ribbon">{variant}</div>}
               <div className="expand-item-main">
                 <div className="expand-item-header">
                   <span className="expand-item-name">{item.name}</span>
@@ -217,20 +228,16 @@ const OrderCard = ({
                   </button>
                 )}
               </div>
-              {(variant || addons.length > 0) && (
-                <div className="expand-item-details">
-                  {variant && (
-                    <div className="expand-item-detail-row">
-                      <span className="expand-detail-label">Variant</span>
-                      <span className="expand-detail-value">{variant}</span>
-                    </div>
-                  )}
-                  {addons.length > 0 && (
-                    <div className="expand-item-detail-row">
-                      <span className="expand-detail-label">Add-ons</span>
-                      <span className="expand-detail-value">{addons.join(', ')}</span>
-                    </div>
-                  )}
+              {addons.length > 0 && (
+                <div className="addons-burgundy-box">
+                  <strong>Add-ons:</strong>
+                  <div className="addons-chip-container">
+                    {Object.entries(addonCounts).map(([name, count], i) => (
+                      <span key={i} className="addon-burgundy-chip">
+                        {name} {count > 1 && `(x${count})`}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -238,7 +245,7 @@ const OrderCard = ({
         })}
         {orderInstructions && (
           <div className="order-instructions-banner">
-            <AlertTriangle size={12} />
+            <PenLine size={12} />
             <div className="order-instructions-content">
               <span className="order-instructions-label">Special Instructions</span>
               <span className="order-instructions-text">{orderInstructions}</span>
@@ -385,7 +392,7 @@ function App() {
 
 /** The main orders UI, shown only after successful auth */
 function OrdersView({ onSignOut }) {
-  const { activeRestaurantId } = useAuth();
+  const { activeRestaurantId, user } = useAuth();
   const [restaurantName, setRestaurantName] = useState('TABLEKARD');
   const [denyTarget, setDenyTarget] = useState(null); // { id, orderNumber }
   // Track which queue cards are expanded by order ID — stable across realtime refetches
@@ -473,10 +480,21 @@ function OrdersView({ onSignOut }) {
           <div className="orders-panel">
             <div className="section-bar section-preparing">PREPARING</div>
             <div className="orders-container">
-              {preparingOrders.length === 0 ? (
+              {preparingOrders
+                .map(order => ({
+                  ...order,
+                  order_items: order.order_items?.filter(item => item.prepared_by === user?.id)
+                }))
+                .filter(o => o.order_items && o.order_items.length > 0).length === 0 ? (
                 <EmptyState message="No orders being prepared" />
               ) : (
-                preparingOrders.map((order) => (
+                preparingOrders
+                  .map(order => ({
+                    ...order,
+                    order_items: order.order_items?.filter(item => item.prepared_by === user?.id)
+                  }))
+                  .filter(o => o.order_items && o.order_items.length > 0)
+                  .map((order) => (
                   <OrderCard
                     key={order.id}
                     id={order.id}
@@ -500,10 +518,12 @@ function OrdersView({ onSignOut }) {
           <div className="orders-panel">
             <div className="section-bar section-queue">ORDER QUEUE</div>
             <div className="orders-container">
-              {queueOrders.length === 0 ? (
+              {queueOrders.filter(o => o.order_items && o.order_items.length > 0).length === 0 ? (
                 <EmptyState message="No orders in queue" />
               ) : (
-                queueOrders.map((order) => (
+                queueOrders
+                  .filter(o => o.order_items && o.order_items.length > 0)
+                  .map((order) => (
                   <OrderCard
                     key={order.id}
                     id={order.id}

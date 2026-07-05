@@ -33,6 +33,7 @@ export async function fetchOrdersByStatus(statuses = [], restaurantId) {
         addons,
         special_instructions,
         status,
+        prepared_by,
         created_at
       )
     `)
@@ -56,10 +57,15 @@ export async function fetchOrdersByStatus(statuses = [], restaurantId) {
 /**
  * Updates the status of a specific order item.
  */
-export async function updateOrderItemStatus(itemId, newStatus) {
+export async function updateOrderItemStatus(itemId, newStatus, userId = null) {
+  const updatePayload = { status: newStatus };
+  if (newStatus === 'preparing' && userId) {
+    updatePayload.prepared_by = userId;
+  }
+
   const { data, error } = await supabase
     .from('order_items')
-    .update({ status: newStatus })
+    .update(updatePayload)
     .eq('id', itemId)
     .select()
     .single();
