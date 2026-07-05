@@ -575,9 +575,9 @@
 }
 
 /* Heatmap */
-.heatmap-card {
+/* .heatmap-card { */
     /* overflow: hidden removed to prevent tooltip clipping */
-}
+/* } */
 
 .heatmap-wrapper {
     display: flex;

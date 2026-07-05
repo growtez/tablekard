@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Calendar, ArrowUpRight, ArrowDownRight, Loader2, Info, ChevronLeft, ChevronRight, X, Eye, TrendingUp, Package, Activity, Percent, Calculator, Users } from 'lucide-react';
+import { Download, Calendar, Loader2, Info, ChevronLeft, ChevronRight, X, Eye, TrendingUp, Package, Activity, Percent, Calculator, Users } from 'lucide-react';
 import RevenueOrdersModal from '../components/RevenueOrdersModal';
 import './reports.css';
 import { useAuth } from '../context/AuthContext';

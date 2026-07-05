@@ -5,7 +5,7 @@ import type { SubscriptionPaymentRecord } from '../../services/supabaseService';
 import { processSubscriptionPayment } from '../../services/subscriptionService';
 import type { Restaurant } from '@restaurant-saas/types';
 import { supabase } from '@restaurant-saas/supabase';
-import { CheckCircle2, Loader2, Calendar, TrendingUp, X } from 'lucide-react';
+import { CheckCircle2, Loader2, Calendar, X } from 'lucide-react';
 
 // ──────────────────────────────────────────────
 // Plan definitions (display only — pricing enforced server-side)
