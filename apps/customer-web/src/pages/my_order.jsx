@@ -5,18 +5,19 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useRestaurant } from '../context/RestaurantContext';
 import { processOnlinePayment } from '../services/paymentService';
-import { createOrder, getTodaysOrders, cancelOrder, updateOrderType } from '../services/supabaseService';
+import { createOrder, getTodaysOrders, cancelOrder, updateOrderType, getBeveragesForCart } from '../services/supabaseService';
 import './my_order.css';
 import Hamburger from '../components/hamburger';
 import BottomNav from '../components/BottomNav';
 import { jsPDF } from 'jspdf';
 import PageSkeleton from '../components/PageSkeleton';
+import ItemModal from '../components/ItemModal';
 import { supabase } from '@restaurant-saas/supabase';
 
 const MyOrderPage = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user, loading: authLoading } = useAuth();
-  const { cartItems, updateQuantity, deleteFromCart, cartSubtotal, clearCart, orderSpecialInstructions, setOrderSpecialInstructions } = useCart();
+  const { cartItems, updateQuantity, updateAddonQuantity, deleteFromCart, cartSubtotal, clearCart, orderSpecialInstructions, setOrderSpecialInstructions, addToCart, getItemQuantity } = useCart();
   const { restaurantId, tableId, table, geofenceStatus, distance, allowedRadius, checkGeofence, restaurant } = useRestaurant();
   const [activeTab, setActiveTab] = useState('cart');
   const [paymentLoading, setPaymentLoading] = useState(false);
@@ -36,6 +37,41 @@ const MyOrderPage = () => {
   const [isPulling, setIsPulling] = useState(false);
   const [pullY, setPullY] = useState(0);
   const touchStartY = useRef(0);
+
+  // Beverages Upsell
+  const [beverages, setBeverages] = useState([]);
+  const [showItemModal, setShowItemModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [modalStep, setModalStep] = useState(1);
+  const [isVariantSheetOpen, setIsVariantSheetOpen] = useState(false);
+
+  useEffect(() => {
+    if (restaurant?.id) {
+      getBeveragesForCart(restaurant.id, 5)
+        .then(data => setBeverages(data))
+        .catch(err => console.error("Error fetching beverages:", err));
+    }
+  }, [restaurant?.id]);
+
+  const handleBeverageAdd = (item, e) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    if (item.variants?.length > 0 || item.addons?.length > 0) {
+      setSelectedItem(item);
+      setModalStep(2);
+      setShowItemModal(true);
+    } else {
+      addToCart(item);
+    }
+  };
+
+  const closeItemModal = () => {
+    setShowItemModal(false);
+    setIsVariantSheetOpen(false);
+    setSelectedItem(null);
+  };
 
   const fetchOrders = async (isBackground = false) => {
     if (!isAuthenticated || !user) return;
@@ -342,86 +378,173 @@ const MyOrderPage = () => {
   const downloadInvoice = (order) => {
     const doc = new jsPDF();
 
-    // Header
-    doc.setFontSize(22);
-    doc.setTextColor(139, 58, 30); // #8B3A1E
-    doc.text('TABLEKARD', 105, 20, { align: 'center' });
+    // Set colors
+    const primaryColor = [139, 58, 30]; // #8B3A1E
+    const darkGray = [50, 50, 50];
+    const lightGray = [240, 240, 240];
 
-    doc.setDrawColor(200, 200, 200);
-    doc.line(20, 25, 190, 25);
+    // Header Background
+    doc.setFillColor(...primaryColor);
+    doc.rect(0, 0, 210, 40, 'F');
 
-    // Order Info
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Invoice: ${order.id}`, 20, 35);
-    doc.text(`Date: ${order.fullDate} ${order.orderDate}`, 20, 42);
-
-    doc.line(20, 48, 190, 48);
-
-    // Items Table Header
+    // Header Text
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(24);
     doc.setFont(undefined, 'bold');
-    doc.text('Items', 20, 55);
-    doc.text('Qty', 140, 55);
-    doc.text('Price', 170, 55);
+    doc.text('TABLEKARD', 20, 25);
+    
+    doc.setFontSize(14);
     doc.setFont(undefined, 'normal');
+    doc.text('INVOICE', 190, 25, { align: 'right' });
 
-    let y = 62;
+    // Invoice Details
+    doc.setTextColor(...darkGray);
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'bold');
+    doc.text('Invoice No:', 20, 55);
+    doc.setFont(undefined, 'normal');
+    doc.text(order.id || 'N/A', 45, 55);
+    
+    doc.setFont(undefined, 'bold');
+    doc.text('Date:', 20, 62);
+    doc.setFont(undefined, 'normal');
+    doc.text(`${order.fullDate || ''} ${order.orderDate || ''}`, 45, 62);
+    
+    doc.setFont(undefined, 'bold');
+    doc.text('Order Type:', 130, 55);
+    doc.setFont(undefined, 'normal');
+    const typeText = (order.rawOrder?.type || 'Dine In').replace('_', ' ').toUpperCase();
+    doc.text(typeText, 155, 55);
+
+    doc.setFont(undefined, 'bold');
+    doc.text('Payment:', 130, 62);
+    doc.setFont(undefined, 'normal');
+    doc.text(order.paymentStatus || 'Pending', 155, 62);
+
+    // Table Header Background
+    doc.setFillColor(...lightGray);
+    doc.rect(20, 75, 170, 10, 'F');
+
+    // Table Headers
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'bold');
+    doc.text('Item Description', 25, 82);
+    doc.text('Qty', 130, 82, { align: 'center' });
+    doc.text('Price', 150, 82, { align: 'right' });
+    doc.text('Total', 185, 82, { align: 'right' });
+
+    // Table Items
+    let y = 92;
+    doc.setFont(undefined, 'normal');
+    
     order.items.forEach(item => {
-      doc.setFont(undefined, 'bold');
-      doc.text(item.name, 20, y);
-      doc.setFont(undefined, 'normal');
-      doc.text(`x${item.quantity}`, 140, y);
-      doc.text(`₹${item.price * item.quantity}`, 170, y);
-      y += 6;
+      // Add page if needed
+      if (y > 270) {
+        doc.addPage();
+        y = 20;
+      }
 
-      if (item.variant) {
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(...darkGray);
+      doc.text(item.name, 25, y);
+      doc.setFont(undefined, 'normal');
+      doc.text(String(item.quantity), 130, y, { align: 'center' });
+      doc.text(`Rs. ${item.price}`, 150, y, { align: 'right' });
+      
+      const baseItemTotal = item.price * item.quantity;
+      doc.text(`Rs. ${baseItemTotal}`, 185, y, { align: 'right' });
+      y += 5;
+
+      // Variant and Addons
+      if (item.variant || (item.addons && item.addons.length > 0)) {
         doc.setFontSize(9);
-        doc.setTextColor(120, 120, 120);
-        doc.text(`Variant: ${item.variant.name} (+₹${item.variant.price})`, 25, y);
-        doc.setFontSize(12);
-        doc.setTextColor(0, 0, 0);
-        y += 5;
+        doc.setTextColor(100, 100, 100);
+        
+        if (item.variant) {
+          if (item.quantity > 1) {
+            doc.text(`- Variant: ${item.variant.name} (Rs. ${item.variant.price} x ${item.quantity})`, 28, y);
+          } else {
+            doc.text(`- Variant: ${item.variant.name}`, 28, y);
+          }
+          doc.text(`Rs. ${item.variant.price * item.quantity}`, 185, y, { align: 'right' });
+          y += 5;
+        }
+        
+        if (item.addons && item.addons.length > 0) {
+          const addonCounts = {};
+          item.addons.forEach(a => {
+              const key = a.name;
+              if (!addonCounts[key]) addonCounts[key] = { ...a, count: 0, totalPrice: 0 };
+              addonCounts[key].count += 1;
+              addonCounts[key].totalPrice += a.price;
+          });
+          
+          Object.values(addonCounts).forEach(a => {
+              let addonLabel = `- Add-on: ${a.name}`;
+              if (a.count > 1) addonLabel += ` x${a.count}`;
+              
+              if (item.quantity > 1) {
+                doc.text(`${addonLabel} (Rs. ${a.totalPrice} x ${item.quantity})`, 28, y);
+              } else {
+                doc.text(`${addonLabel}`, 28, y);
+              }
+              doc.text(`Rs. ${a.totalPrice * item.quantity}`, 185, y, { align: 'right' });
+              y += 5;
+          });
+        }
+        doc.setFontSize(10);
+        doc.setTextColor(...darkGray);
       }
-      if (item.addons && item.addons.length > 0) {
-        doc.setFontSize(9);
-        doc.setTextColor(120, 120, 120);
-        const addonsText = item.addons.map(a => `${a.name} (+₹${a.price})`).join(', ');
-        doc.text(`Add-ons: ${addonsText}`, 25, y);
-        doc.setFontSize(12);
-        doc.setTextColor(0, 0, 0);
-        y += 5;
-      }
+      
+      // Draw line under item
       y += 3;
+      doc.setDrawColor(230, 230, 230);
+      doc.line(20, y, 190, y);
+      y += 7;
     });
 
-    doc.line(20, y, 190, y);
-    y += 10;
-
-    // Summary
+    // Summary Box
     const subtotal = order.total - Math.round(order.total * 0.18);
     const tax = Math.round(order.total * 0.18);
+    
+    y += 5;
+    if (y > 230) { doc.addPage(); y = 30; }
+    
+    doc.setDrawColor(...primaryColor);
+    doc.setLineWidth(0.5);
+    doc.line(120, y, 190, y);
+    y += 8;
 
     doc.text('Subtotal:', 140, y);
-    doc.text(`₹${subtotal}`, 170, y);
-    y += 8;
+    doc.text(`Rs. ${subtotal}`, 185, y, { align: 'right' });
+    y += 7;
 
     doc.text('Tax (18%):', 140, y);
-    doc.text(`₹${tax}`, 170, y);
-    y += 8;
+    doc.text(`Rs. ${tax}`, 185, y, { align: 'right' });
+    y += 7;
 
+    // Total Background
+    doc.setFillColor(...lightGray);
+    doc.rect(125, y, 65, 10, 'F');
+    
+    y += 7;
+    doc.setFontSize(12);
     doc.setFont(undefined, 'bold');
-    doc.setFontSize(14);
+    doc.setTextColor(...primaryColor);
     doc.text('TOTAL:', 140, y);
-    doc.text(`₹${order.total}`, 170, y);
+    doc.text(`Rs. ${order.total}`, 185, y, { align: 'right' });
 
     // Footer
-    y += 20;
+    y += 30;
+    if (y > 270) { doc.addPage(); y = 30; }
+    
     doc.setFontSize(10);
     doc.setFont(undefined, 'italic');
-    doc.text('Payment Status: ' + order.paymentStatus, 20, y);
-    doc.text('Thank you for dining with us!', 105, y + 15, { align: 'center' });
+    doc.setTextColor(150, 150, 150);
+    doc.text('Thank you for dining with us!', 105, y, { align: 'center' });
+    doc.text('This is a computer generated invoice.', 105, y + 6, { align: 'center' });
 
-    doc.save(`Invoice_${order.id}.pdf`);
+    doc.save(`Invoice_${order.id || 'order'}.pdf`);
   };
 
   if (authLoading || isInitialLoad) {
@@ -563,70 +686,96 @@ const MyOrderPage = () => {
           ) : (
             <>
               <div className="cart-items">
-                {cartItems.map(item => (
-                  <div key={item.id} className="cart-item" style={{ opacity: item.outOfStock ? 0.6 : 1, filter: item.outOfStock ? 'grayscale(100%)' : 'none' }}>
+                {cartItems.map(item => {
+                  const aggregatedAddons = (() => {
+                    const counts = {};
+                    (item.configurations || []).forEach(config => {
+                      (config.addons || []).forEach(addon => {
+                        const addonKey = addon._key ?? addon.id ?? addon.name;
+                        if (!counts[addonKey]) {
+                          counts[addonKey] = { ...addon, count: 0 };
+                        }
+                        counts[addonKey].count += 1;
+                      });
+                    });
+                    return Object.values(counts);
+                  })();
+                  const itemTotal = (item.basePrice * item.quantity) + (item.configurations || []).reduce((sum, c) => sum + (c.addonsPrice || 0), 0);
+
+                  return (
+                  <div key={item.id} className="cart-item" style={{ opacity: item.outOfStock ? 0.6 : 1, filter: item.outOfStock ? 'grayscale(100%)' : 'none', flexDirection: 'column', gap: 0 }}>
                     {item.variant && (
                       <span className="cart-variant-badge">{item.variant.name}</span>
                     )}
-                    <div className="cart-image">
-                      <img src={item.image} alt={item.name} />
-                      {item.outOfStock && (
-                        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(0,0,0,0.7)', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
-                          OUT OF STOCK
+                    <div className="cart-item-main" style={{ display: 'flex' }}>
+                      <div className="cart-image">
+                        <img src={item.image} alt={item.name} />
+                        {item.outOfStock && (
+                          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(0,0,0,0.7)', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+                            OUT OF STOCK
+                          </div>
+                        )}
+                      </div>
+                      <div className="cart-info">
+                        {/* Row 1: name + [badge] [trash] */}
+                        <div className="cart-header">
+                          <h3>{item.name}</h3>
+                          <div className="cart-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <button className="remove-btn" onClick={() => removeItem(item.id)}>
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                    <div className="cart-info">
-                      {/* Row 1: name + [badge] [trash] */}
-                      <div className="cart-header">
-                        <h3>{item.name}</h3>
-                        <div className="cart-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <button className="remove-btn" onClick={() => removeItem(item.id)}>
-                            <Trash2 size={14} />
-                          </button>
+                        
+                        {/* Row 2: meta */}
+                        <div className="cart-meta">
+                          <div className="cart-rating">
+                            <Star size={12} fill="#8B3A1E" color="#8B3A1E" />
+                            <span>{item.rating}</span>
+                          </div>
+                          <div className="cart-serves">
+                            <Users size={12} />
+                            <span>{item.serves}</span>
+                          </div>
+                        </div>
+                        {/* Row 3: qty + price */}
+                        <div className="cart-bottom">
+                          <div className="quantity-controls">
+                            {item.outOfStock ? (
+                              <span style={{ fontSize: '12px', color: '#EF4444', fontWeight: 'bold' }}>Out of stock</span>
+                            ) : (
+                              <>
+                                <button className="quantity-btn" onClick={() => updateQuantity(item.id, -1)}><Minus size={14} /></button>
+                                <span className="quantity">{item.quantity}</span>
+                                <button className="quantity-btn" onClick={() => updateQuantity(item.id, 1)}><Plus size={14} /></button>
+                              </>
+                            )}
+                          </div>
+                          <div className="item-price">₹{itemTotal}</div>
                         </div>
                       </div>
-                      
-                      {/* Add-ons as Pills */}
-                      {item.addons && item.addons.length > 0 && (
-                        <div className="cart-addons-list">
-                          {item.addons.map(a => (
-                            <span key={a.name} className="cart-addon-pill">
-                              {a.name} <span className="cart-addon-price">+₹{a.price}</span>
-                            </span>
+                    </div>
+                    
+                    {/* Add-ons Section */}
+                    {aggregatedAddons.length > 0 && (
+                      <div className="cart-addons-section">
+                        <div className="cart-addons-header">Add-ons</div>
+                        <div className="cart-addons-list-new">
+                          {aggregatedAddons.map(a => (
+                            <div key={a.name} className="cart-addon-row-new">
+                              <span className="cart-addon-name-new">{a.name} <span className="cart-addon-price-new">(+₹{a.price})</span></span>
+                              <div className="addon-stepper">
+                                <button className="addon-stepper-btn" onClick={() => updateAddonQuantity(item.id, a, -1)}><Minus size={12} /></button>
+                                <span className="addon-stepper-count">{a.count}</span>
+                                <button className="addon-stepper-btn" onClick={() => updateAddonQuantity(item.id, a, 1)}><Plus size={12} /></button>
+                              </div>
+                            </div>
                           ))}
                         </div>
-                      )}
-                      {/* Row 2: meta */}
-                      <div className="cart-meta">
-                        <div className="cart-rating">
-                          <Star size={12} fill="#8B3A1E" color="#8B3A1E" />
-                          <span>{item.rating}</span>
-                        </div>
-                        <div className="cart-serves">
-                          <Users size={12} />
-                          <span>{item.serves}</span>
-                        </div>
                       </div>
-                      {/* Row 3: qty + price */}
-                      <div className="cart-bottom">
-                        <div className="quantity-controls">
-                          {item.outOfStock ? (
-                            <span style={{ fontSize: '12px', color: '#EF4444', fontWeight: 'bold' }}>Out of stock</span>
-                          ) : (
-                            <>
-                              <button className="quantity-btn" onClick={() => updateQuantity(item.id, -1)}><Minus size={14} /></button>
-                              <span className="quantity">{item.quantity}</span>
-                              <button className="quantity-btn" onClick={() => updateQuantity(item.id, 1)}><Plus size={14} /></button>
-                            </>
-                          )}
-                        </div>
-                        <div className="item-price">₹{(item.price * item.quantity)}</div>
-                      </div>
-
-                    </div>
+                    )}
                   </div>
-                ))}
+                )})}
               </div>
 
               {/* Order Type Selection - Premium Sliding Toggle */}
@@ -651,48 +800,114 @@ const MyOrderPage = () => {
               </div>
 
               {/* Order Special Instructions */}
-              <div className="order-special-instructions-container" style={{ margin: '20px 0' }}>
+              <div className="order-special-instructions-container">
                 {!showSpecialInstructions ? (
                   <button
                     className="add-special-instructions-btn"
                     onClick={() => setShowSpecialInstructions(true)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '8px',
-                      background: 'transparent', border: '1px dashed #8B3A1E', color: '#8B3A1E',
-                      padding: '12px', borderRadius: '12px', width: '100%',
-                      justifyContent: 'center', fontSize: '14px', fontWeight: '500',
-                      cursor: 'pointer'
-                    }}
                   >
-                    <Plus size={16} />
-                    Add cooking instructions or requests
+                    <div className="special-inst-icon-wrapper">
+                      <MessageCircle size={16} color="#8B3A1E" />
+                    </div>
+                    {orderSpecialInstructions ? (
+                      <div style={{ flex: 1, textAlign: 'left', overflow: 'hidden' }}>
+                        <span className="special-inst-text" style={{ display: 'block', fontSize: '12px', color: '#666' }}>Cooking Instructions</span>
+                        <span style={{ display: 'block', fontSize: '13px', color: '#1A1A1A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: '500' }}>
+                          "{orderSpecialInstructions}"
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="special-inst-text">Add cooking instructions or requests</span>
+                    )}
+                    {orderSpecialInstructions ? (
+                      <Pencil size={16} className="special-inst-plus" />
+                    ) : (
+                      <Plus size={18} className="special-inst-plus" />
+                    )}
                   </button>
                 ) : (
-                  <>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                      <h2 className="summary-title" style={{ margin: 0 }}>Special Instructions</h2>
+                  <div className="special-instructions-active">
+                    <div className="special-instructions-header">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <MessageCircle size={16} color="#8B3A1E" />
+                        <h3 className="special-inst-title">Cooking Instructions</h3>
+                      </div>
                       <button
+                        className="special-inst-remove"
                         onClick={() => {
                           setShowSpecialInstructions(false);
                           setOrderSpecialInstructions('');
                         }}
-                        style={{ background: 'none', border: 'none', color: '#EF4444', fontSize: '13px', cursor: 'pointer', padding: 0 }}
                       >
-                        Remove
+                        <Trash2 size={14} />
                       </button>
                     </div>
                     <textarea
-                      className="special-instructions-input"
+                      className="special-instructions-textarea"
                       placeholder="e.g. Please make it less spicy, extra napkins..."
                       value={orderSpecialInstructions}
                       onChange={e => setOrderSpecialInstructions(e.target.value)}
                       maxLength={500}
                       rows={3}
-                      style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #ddd', fontSize: '14px', resize: 'vertical' }}
+                      autoFocus
                     />
-                  </>
+                    <div className="special-inst-footer">
+                      <span>{orderSpecialInstructions.length}/500</span>
+                      <span>Instructions sent to kitchen for entire order.</span>
+                    </div>
+                    <button 
+                      className="special-inst-done-btn"
+                      onClick={() => setShowSpecialInstructions(false)}
+                    >
+                      <CheckCircle size={16} style={{ marginRight: '6px' }} /> Done
+                    </button>
+                  </div>
                 )}
               </div>
+
+              {/* Beverages Upsell Section */}
+              {beverages.length > 0 && cartItems.length > 0 && (
+                <div className="cart-upsell-section">
+                  <h3 className="upsell-title">Add a Beverage</h3>
+                  <div className="upsell-horizontal-scroll">
+                    {beverages.map(bev => {
+                      const qty = getItemQuantity(bev.id);
+                      return (
+                        <div key={bev.id} className="upsell-card">
+                          <div className="upsell-img-wrapper">
+                            <img src={bev.image} alt={bev.name} loading="lazy" />
+                            {qty > 0 ? (
+                                <div className="upsell-qty-controls">
+                                    <button className="upsell-qty-btn" onClick={(e) => {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        // For beverages, find the composite ID in cart and remove it.
+                                        // If it has variants, it might be complex. But since we use updateQuantity from useCart, it expects the exact cart item ID.
+                                        // For simplicity in upselling UI, if it's a simple item:
+                                        const cartItem = cartItems.find(i => i.menuItemId === bev.id || i.id === bev.id || i.id.startsWith(bev.id + '_'));
+                                        if (cartItem) {
+                                            updateQuantity(cartItem.id, -1);
+                                        }
+                                    }}><Minus size={12} /></button>
+                                    <span>{qty}</span>
+                                    <button className="upsell-qty-btn" onClick={() => handleBeverageAdd(bev)}><Plus size={12} /></button>
+                                </div>
+                            ) : (
+                                <button className="upsell-add-btn" onClick={(e) => handleBeverageAdd(bev, e)}>
+                                  <Plus size={14} /> Add
+                                </button>
+                            )}
+                          </div>
+                          <div className="upsell-info">
+                            <div className="upsell-name">{bev.name}</div>
+                            <div className="upsell-price">₹{bev.price}</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Order Summary */}
               <h2 className="summary-title">Summary</h2>
@@ -843,51 +1058,89 @@ const MyOrderPage = () => {
                       <div className="oi-items">
                         {order.items.map((item, index) => {
                           const itemStatus = item.status || 'placed';
-                          let badgeColor = '#FF9800'; // placed
+                          let badgeColor = '#FF9800';
                           if (itemStatus === 'preparing') badgeColor = '#3B82F6';
                           if (itemStatus === 'ready') badgeColor = '#22C55E';
 
+                          // Aggregate addons by name
+                          const addonCounts = {};
+                          if (item.addons && item.addons.length > 0) {
+                            item.addons.forEach(a => {
+                              const key = a.name;
+                              if (!addonCounts[key]) addonCounts[key] = { ...a, count: 0, totalPrice: 0 };
+                              addonCounts[key].count += 1;
+                              addonCounts[key].totalPrice += a.price;
+                            });
+                          }
+                          const aggregatedAddons = Object.values(addonCounts);
+
                           return (
-                            <div key={index} style={{ marginBottom: '8px' }}>
-                              <div className="oi-item-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                  <span className="oi-item-qty">{item.quantity}×</span>
+                            <div key={index} className="oi-item-block">
+                              {/* Item header row */}
+                              <div className="oi-item-top">
+                                <div className="oi-item-left">
+                                  <span className="oi-item-qty-badge">{item.quantity}×</span>
                                   <span className="oi-item-name">{item.name}</span>
-                                  <span style={{
-                                    fontSize: '10px',
-                                    padding: '2px 8px',
-                                    borderRadius: '12px',
-                                    fontWeight: 'bold',
-                                    color: badgeColor,
-                                    backgroundColor: badgeColor + '12',
-                                    border: `1px solid ${badgeColor}30`,
-                                    textTransform: 'capitalize'
+                                  <span className="oi-item-status-badge" style={{
+                                    color: badgeColor, backgroundColor: badgeColor + '12',
+                                    border: `1px solid ${badgeColor}30`
                                   }}>
                                     {itemStatus}
                                   </span>
                                 </div>
                                 <span className="oi-item-price">₹{item.price * item.quantity}</span>
                               </div>
-                              {item.variant && (
-                                <div style={{ fontSize: '11px', color: '#8B3A1E', fontStyle: 'italic', marginLeft: '24px', marginTop: '2px' }}>
-                                  Variant: {item.variant.name} (+₹{item.variant.price})
+
+                              {/* Extras: Variants & Addons */}
+                              {(item.variant || aggregatedAddons.length > 0) && (
+                                <div className="oi-extras-list">
+                                  {item.variant && (
+                                    <div className="oi-extra-item">
+                                      <div className="oi-extra-name">
+                                        <span className="oi-extra-badge">Variant</span>
+                                        <span>{item.variant.name}</span>
+                                      </div>
+                                      <div className="oi-extra-price-group">
+                                        {item.quantity > 1 && (
+                                          <span className="oi-price-breakdown">₹{item.variant.price} × {item.quantity} =</span>
+                                        )}
+                                        <span className="oi-extra-price">+₹{item.variant.price * item.quantity}</span>
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  {aggregatedAddons.map((a, idx) => (
+                                    <div key={idx} className="oi-extra-item">
+                                      <div className="oi-extra-name">
+                                        <span className="oi-extra-badge">Add-on</span>
+                                        <span>{a.name} {a.count > 1 ? <span className="oi-addon-count">×{a.count}</span> : ''}</span>
+                                      </div>
+                                      <div className="oi-extra-price-group">
+                                        {item.quantity > 1 && (
+                                          <span className="oi-price-breakdown">₹{a.totalPrice} × {item.quantity} =</span>
+                                        )}
+                                        <span className="oi-extra-price">+₹{a.totalPrice * item.quantity}</span>
+                                      </div>
+                                    </div>
+                                  ))}
                                 </div>
                               )}
-                              {item.addons && item.addons.length > 0 && (
-                                <div style={{ fontSize: '11px', color: '#666', fontStyle: 'italic', marginLeft: '24px', marginTop: '2px' }}>
-                                  Add-ons: {item.addons.map(a => `${a.name} (+₹${a.price})`).join(', ')}
-                                </div>
-                              )}
-                              {item.specialInstructions && (
-                                <div className="oi-item-note">
-                                  <span>📝</span>
-                                  <span>{item.specialInstructions}</span>
-                                </div>
+
+                              {index < order.items.length - 1 && (
+                                <div className="oi-item-divider"></div>
                               )}
                             </div>
                           );
                         })}
                       </div>
+
+                      {/* Order Level Special Instructions */}
+                      {order.items.find(i => i.specialInstructions)?.specialInstructions && (
+                        <div className="oi-order-instructions">
+                          <MessageCircle size={14} color="#8B3A1E" style={{ flexShrink: 0, marginTop: '1px' }} />
+                          <span>{order.items.find(i => i.specialInstructions).specialInstructions}</span>
+                        </div>
+                      )}
 
                       {/* ── Tier 3: Footer ── */}
                       <div className="oi-footer">
@@ -909,13 +1162,15 @@ const MyOrderPage = () => {
                       </div>
 
                       {/* ── Invoice action ── */}
-                      <button
-                        className="oi-invoice-btn"
-                        onClick={() => downloadInvoice(order)}
-                      >
-                        <Download size={13} />
-                        Download Invoice
-                      </button>
+                      {order.paymentStatus?.toLowerCase() === 'paid' && (
+                        <button
+                          className="oi-invoice-btn"
+                          onClick={() => downloadInvoice(order)}
+                        >
+                          <Download size={13} />
+                          Download Invoice
+                        </button>
+                      )}
                     </div>
                   );
                 })}

@@ -78,7 +78,11 @@ export const createOrder = async ({
     type = 'dine_in',
     specialInstructions = null
 }) => {
-    const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const total = items.reduce((sum, item) => {
+        const itemBaseTotal = (item.basePrice || item.price || 0) * item.quantity;
+        const itemAddonsTotal = (item.configurations || []).reduce((addonSum, config) => addonSum + (config.addonsPrice || 0), 0);
+        return sum + itemBaseTotal + itemAddonsTotal;
+    }, 0);
     const taxes = Math.round(total * 0.18) + Math.round(total * 0.05); // Just for reference/record
     const subtotal = total - taxes; // Subtotal is total minus taxes
     const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}`;
@@ -104,17 +108,32 @@ export const createOrder = async ({
 
     if (error) throw error;
 
-    const orderItems = items.map((item, index) => ({
-        order_id: order.id,
-        menu_item_id: item.menuItemId || (item.id ? item.id.split('_')[0] : null),
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-        total: item.price * item.quantity,
-        variant: item.variant ?? null,
-        addons: item.addons ?? null,
-        special_instructions: index === 0 ? specialInstructions : null
-    }));
+    const orderItems = items.map((item, index) => {
+        // Aggregate addons from configurations if they exist
+        let aggregatedAddons = item.addons || [];
+        if (item.configurations && item.configurations.length > 0) {
+            aggregatedAddons = [];
+            item.configurations.forEach(config => {
+                if (config.addons) aggregatedAddons.push(...config.addons);
+            });
+        }
+        
+        const itemBasePrice = item.basePrice || item.price || 0;
+        const itemAddonsTotal = (item.configurations || []).reduce((addonSum, config) => addonSum + (config.addonsPrice || 0), 0);
+        const itemTotal = (itemBasePrice * item.quantity) + itemAddonsTotal;
+
+        return {
+            order_id: order.id,
+            menu_item_id: item.menuItemId || (item.id ? item.id.split('_')[0] : null),
+            name: item.name,
+            price: itemBasePrice,
+            quantity: item.quantity,
+            total: itemTotal,
+            variant: item.variant ?? null,
+            addons: aggregatedAddons.length > 0 ? aggregatedAddons : null,
+            special_instructions: index === 0 ? specialInstructions : null
+        };
+    });
 
     const { error: itemsError } = await supabase
         .from('order_items')
@@ -230,7 +249,9 @@ export const getRecentOrderedItems = async (userId, limit = 3) => {
                 image: m.menu_item_images?.[0]?.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
                 images: m.menu_item_images?.map(img => img.image_url) || [],
                 description: m.long_description || m.short_description || '',
-                dietType: m.is_veg ? 'veg' : 'non-veg'
+                dietType: m.is_veg ? 'veg' : 'non-veg',
+                variants: m.variants || [],
+                addons: m.addons || []
             };
             items.push(item);
             seenIds.add(row.menu_item_id);
@@ -259,6 +280,66 @@ export const updateOrderType = async (orderId, type) => {
         .select();
     if (error) throw error;
     return data && data.length > 0 ? data[0] : null;
+};
+
+// Beverages for Cart
+export const getBeveragesForCart = async (restaurantId, limit = 5) => {
+    try {
+        // Find category IDs matching "beverage" or "drink"
+        const { data: categories } = await supabase
+            .from('menu_categories')
+            .select('id')
+            .eq('restaurant_id', restaurantId)
+            .ilike('name', '%beverage%');
+
+        let categoryIds = (categories || []).map(c => c.id);
+        
+        // Fallback: If no beverage category, try 'drink'
+        if (categoryIds.length === 0) {
+             const { data: altCategories } = await supabase
+                .from('menu_categories')
+                .select('id')
+                .eq('restaurant_id', restaurantId)
+                .ilike('name', '%drink%');
+             categoryIds = (altCategories || []).map(c => c.id);
+        }
+
+        // Fetch items from these categories
+        let query = supabase
+            .from('menu_items')
+            .select('*, menu_item_images (image_url, sort_order)')
+            .eq('restaurant_id', restaurantId)
+            .eq('is_available', true);
+
+        if (categoryIds.length > 0) {
+            query = query.in('category_id', categoryIds);
+        } else {
+            // Fallback: just get 5 random items if no beverage categories exist
+            query = query.limit(limit);
+        }
+
+        const { data: items, error } = await query.limit(limit);
+        
+        if (error) throw error;
+        
+        return (items || []).map(m => ({
+            id: m.id,
+            name: m.name,
+            price: m.price,
+            time: m.preparation_time ? `${m.preparation_time}min` : '15min',
+            rating: (4.5 + Math.random() * 0.4).toFixed(1),
+            serves: `Serves ${m.serves || 1}`,
+            image: m.menu_item_images?.[0]?.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
+            images: m.menu_item_images?.map(img => img.image_url) || [],
+            description: m.long_description || m.short_description || '',
+            dietType: m.is_veg ? 'veg' : 'non-veg',
+            variants: m.variants || [],
+            addons: m.addons || []
+        }));
+    } catch (err) {
+        console.error('Error fetching beverages:', err);
+        return [];
+    }
 };
 
 // Favorites
@@ -454,7 +535,9 @@ export const getRecommendedItems = async (userId, restaurantId) => {
                     dietType: m.is_veg ? 'veg' : 'non-veg',
                     modelUrl: m.model_url || null,
                     salesCount: itemOrderCounts[m.id] || 0,
-                    weeklySalesCount: itemWeeklyOrderCounts[m.id] || 0
+                    weeklySalesCount: itemWeeklyOrderCounts[m.id] || 0,
+                    variants: m.variants || [],
+                    addons: m.addons || []
                 };
             });
         };
@@ -558,10 +641,11 @@ const normalizeHomeItem = (m, discountLabel = null) => ({
     description: m.long_description || m.short_description || '',
     dietType: m.is_veg ? 'veg' : 'non-veg',
     modelUrl: m.model_url || null,
-    // discount label shown on the carousel badge
     discount: discountLabel
         || (m.discount_price ? `${Math.round(((m.price - m.discount_price) / m.price) * 100)}% OFF` : null),
     timer: null,
+    variants: m.variants || [],
+    addons: m.addons || []
 });
 
 /**
@@ -666,6 +750,7 @@ export const getOffersForCustomer = async (restaurantId, limit = 20) => {
                     id, name, price, is_veg, is_available,
                     short_description, long_description,
                     preparation_time, serves, model_url,
+                    variants, addons,
                     menu_item_images (image_url, sort_order)
                 )
             `)
@@ -721,6 +806,8 @@ export const getOffersForCustomer = async (restaurantId, limit = 20) => {
                     description: m.long_description || m.short_description || '',
                     dietType: m.is_veg ? 'veg' : 'non-veg',
                     modelUrl: m.model_url || null,
+                    variants: m.variants || [],
+                    addons: m.addons || [],
                 };
             });
         }
