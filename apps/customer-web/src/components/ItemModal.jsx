@@ -85,9 +85,8 @@ const ItemModal = ({ isOpen, onClose, item, favorites, onToggleFavorite, initial
     };
 
     const getSelectedCompositeId = () => {
-        const addonIds = (selectedAddons || []).map(a => a.id).sort().join(',');
         const variantId = selectedVariant ? selectedVariant.id : '';
-        return `${item.id}_${variantId}_${addonIds}`;
+        return `${item.id}_${variantId}`;
     };
 
     const selectedQuantity = hasVariantsOrAddons

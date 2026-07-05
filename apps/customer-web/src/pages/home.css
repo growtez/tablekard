@@ -842,12 +842,346 @@ body {
   align-items: center;
   justify-content: center;
   padding: 0 4px;
+  background: #FFF9F7;
+}
+
+.recent-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.recent-badge {
+  position: absolute;
+  bottom: 3px;
+  left: 3px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #FFFFFF;
+  font-size: 8px;
+  font-weight: 500;
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+
+.recent-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.recent-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1A1A1A;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recent-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #999999;
+}
+
+.recent-meta .rating {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  color: #1A1A1A;
+  font-weight: 500;
+}
+
+.recent-price {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1A1A1A;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.reorder-btn {
+  background: #8B3A1E;
+  border: none;
+  border-radius: 10px;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #FFFFFF;
+  flex-shrink: 0;
+  transition: background 0.2s ease;
+}
+
+.reorder-btn:active {
+  background: #6F2D17;
+}
+
+/* Home Recent Qty Stepper */
+.recent-qty-stepper {
+  display: flex;
+  align-items: center;
+  background: #8B3A1E;
+  border-radius: 10px;
+  padding: 3px;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.recent-stepper-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.recent-stepper-btn:active {
+  transform: scale(0.9);
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.recent-stepper-value {
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 700;
+  min-width: 16px;
+  text-align: center;
+}
+
+/* ===== BOTTOM NAVIGATION - Mobile ===== */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #FFFFFF;
+  padding: 12px 24px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #F0F0F0;
+  z-index: 100;
+}
+
+.nav-btn {
+  background: none;
+  border: none;
+  color: #D4A59A;
+  cursor: pointer;
+  padding: 12px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.2s ease;
+}
+
+/* Active state - Full burgundy background with white icon */
+.nav-btn.active {
+  background: #8B3A1E !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(139, 58, 30, 0.3);
+}
+
+.nav-btn:hover:not(.active) {
+  color: #8B3A1E;
+  background: #FFF7F3;
+}
+
+/* Remove special center button elevation - all buttons same level */
+.nav-center {
+  background: none;
+  color: #D4A59A;
+  width: auto;
+  height: auto;
+  border-radius: 14px;
+  margin-top: 0;
+  box-shadow: none;
+  border: none;
+  padding: 12px;
+}
+
+/* Center button active - same as others */
+.nav-center.active {
+  background: #8B3A1E !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(139, 58, 30, 0.3);
+}
+
+.cart-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #8B3A1E;
+  color: #FFFFFF;
+  font-size: 9px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
   border: 2px solid #FFFFFF;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   z-index: 2;
 }
 
+/* Modern Frosted Glow Cart Indicator */
+.cart-modern-glow {
+  position: fixed;
+  bottom: 110px;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  width: 90%;
+  max-width: 360px;
+  z-index: 10000;
+  text-decoration: none;
+  font-family: 'Poppins', sans-serif;
+  animation: glowSlideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
 
+.cart-modern-glow.hide-glow {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(50px) scale(0.9);
+}
+
+@keyframes glowSlideIn {
+  from {
+    transform: translateY(50px) scale(0.9);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.glow-content {
+  position: relative;
+  background: rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(25px);
+  backdrop-filter: blur(25px);
+  padding: 8px 8px 8px 14px;
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1.5px solid rgba(139, 58, 30, 0.15);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12),
+    0 5px 15px rgba(139, 58, 30, 0.08);
+  overflow: hidden;
+  z-index: 1;
+}
+
+.glow-badge {
+  background: #8B3A1E;
+  color: #FFFFFF;
+  padding: 8px 14px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 8px 20px rgba(139, 58, 30, 0.3);
+}
+
+.glow-count {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.glow-details {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  padding-left: 0;
+}
+
+.glow-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #8B3A1E;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.8;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  flex-shrink: 0;
+}
+
+.glow-total {
+  font-size: 18px;
+  font-weight: 800;
+  color: #1A1A1A;
+  letter-spacing: -0.5px;
+}
+
+.glow-cta {
+  background: #1A1A1A;
+  color: #FFFFFF;
+  padding: 5px 5px 5px 12px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.cta-icon {
+  background: rgba(255, 255, 255, 0.2);
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cart-modern-glow:active .glow-content {
+  transform: scale(0.97);
+}
+
+.cart-modern-glow:active .glow-cta {
+  transform: translateX(3px);
+  background: #000000;
+}
+
+.glow-bg-blur {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  height: 10px;
+  background: #8B3A1E;
+  filter: blur(30px);
+  opacity: 0.3;
+  z-index: 0;
+}
 
 /* ===== MODAL - Elegant Minimalist Design ===== */
 

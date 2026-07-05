@@ -13,6 +13,7 @@ const DiscountsPage = () => {
     const navigate = useNavigate();
     const [selectedItem, setSelectedItem] = useState(null);
     const [showItemModal, setShowItemModal] = useState(false);
+    const [modalStep, setModalStep] = useState(1);
     const [favorites, setFavorites] = useState([]);
     const [cart, setCart] = useState([]);
 
@@ -118,7 +119,19 @@ const DiscountsPage = () => {
 
     const handleItemClick = (item) => {
         setSelectedItem(item);
+        setModalStep(1);
         setShowItemModal(true);
+    };
+
+    const handleDirectAdd = (item, e) => {
+        if (e) e.stopPropagation();
+        if (item.variants?.length > 0 || item.addons?.length > 0) {
+            setSelectedItem(item);
+            setModalStep(2);
+            setShowItemModal(true);
+        } else {
+            addToCart(item);
+        }
     };
 
     const closeItemModal = () => {
@@ -128,12 +141,16 @@ const DiscountsPage = () => {
 
     return (
         <div className="discounts-page-container">
-            <header className="discounts-header">
-                <button className="global-back-btn" onClick={() => navigate(-1)}>
-                    <ArrowLeft size={22} />
+            <div className="discounts-hero">
+                <div className="hero-pattern-overlay"></div>
+                <button className="hero-back-btn" onClick={() => navigate(-1)}>
+                    <ArrowLeft size={22} color="#FFFFFF" />
                 </button>
-                <h1>Discounts</h1>
-            </header>
+                <div className="hero-content">
+                    <h1>Exclusive Offers</h1>
+                    <p>Unlock the best deals on your favorite meals</p>
+                </div>
+            </div>
 
             <div className="discounts-content">
                 {loadingItems ? (
@@ -198,10 +215,7 @@ const DiscountsPage = () => {
                                     {getItemQuantity(item.id) === 0 ? (
                                         <button
                                             className="add-btn-large"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                addToCart(item);
-                                            }}
+                                            onClick={(e) => handleDirectAdd(item, e)}
                                         >
                                             <Plus size={20} color="#FFFFFF" />
                                         </button>
@@ -237,6 +251,7 @@ const DiscountsPage = () => {
                 item={selectedItem}
                 favorites={favorites}
                 onToggleFavorite={toggleFavorite}
+                initialStep={modalStep}
             />
             {/* Bottom Navigation
             {!showItemModal && <BottomNav />} */}

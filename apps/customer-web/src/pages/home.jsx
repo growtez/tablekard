@@ -44,6 +44,8 @@ const HomePage = () => {
     const [activeFilter, setActiveFilter] = useState('popular');
     const [selectedItem, setSelectedItem] = useState(null);
     const [showItemModal, setShowItemModal] = useState(false);
+    const [modalStep, setModalStep] = useState(1);
+    const [isVariantSheetOpen, setIsVariantSheetOpen] = useState(false);
     const [modalQuantity, setModalQuantity] = useState(0);
     const [recentOrders, setRecentOrders] = useState([]);
     const [loadingRecent, setLoadingRecent] = useState(true);
@@ -230,11 +232,24 @@ const HomePage = () => {
 
     const handleItemClick = (item) => {
         setSelectedItem(item);
+        setModalStep(1);
         setShowItemModal(true);
+    };
+
+    const handleDirectAdd = (item, e) => {
+        if (e) e.stopPropagation();
+        if (item.variants?.length > 0 || item.addons?.length > 0) {
+            setSelectedItem(item);
+            setModalStep(2);
+            setShowItemModal(true);
+        } else {
+            addToCart(item);
+        }
     };
 
     const closeItemModal = () => {
         setShowItemModal(false);
+        setIsVariantSheetOpen(false);
         setSelectedItem(null);
     };
 
@@ -484,14 +499,7 @@ const HomePage = () => {
                                 <div className="recent-price">₹{item.price}</div>
                                 <button
                                     className="reorder-btn"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        if (item.variants?.length > 0 || item.addons?.length > 0) {
-                                            handleItemClick(item);
-                                        } else {
-                                            addToCart(item, e);
-                                        }
-                                    }}
+                                    onClick={(e) => handleDirectAdd(item, e)}
                                 >
                                     <Plus size={16} />
                                 </button>
@@ -513,7 +521,7 @@ const HomePage = () => {
 
             {/* Modern Frosted Glow Cart Indicator */}
             {cartTotal > 0 && (
-                <NavLink to="/orders" className="cart-modern-glow">
+                <NavLink to="/orders" className={`cart-modern-glow ${showItemModal && !isVariantSheetOpen ? 'hide-glow' : ''}`}>
                     <div className="glow-content">
                         <div className="glow-badge">
                             <ShoppingCart size={16} strokeWidth={3} />
@@ -541,6 +549,8 @@ const HomePage = () => {
                 item={selectedItem}
                 favorites={favorites}
                 onToggleFavorite={toggleFavorite}
+                initialStep={modalStep}
+                onVariantSheetChange={setIsVariantSheetOpen}
             />
 
             {/* Bottom Navigation */}
