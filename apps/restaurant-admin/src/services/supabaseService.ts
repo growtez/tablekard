@@ -358,7 +358,8 @@ const mapMenuItemRow = (row: MenuItemRow): MenuItem => ({
     tags: row.tags,
     variants: (row.variants as any) ?? undefined,
     addons: (row.addons as any) ?? undefined,
-    modelUrl: row.model_url
+    modelUrl: row.model_url,
+    createdAt: row.created_at
 });
 
 export const getMenuItems = async (restaurantId: string): Promise<MenuItem[]> => {

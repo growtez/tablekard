@@ -241,7 +241,7 @@ const Payment: React.FC = () => {
 
         {/* Tabs & Controls - Exactly matching Order Page */}
         <div className="sticky top-0 z-30 py-2 bg-tk-bg-card shadow-sm border-b border-tk-border flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 mb-4">
-          <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto flex-1 pb-1">
+          <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto flex-1 pb-1 pl-12 md:pl-0">
             {/* Date Filter */}
             <div className="flex items-center gap-2 bg-tk-bg-surface px-3 py-1.5 rounded-full border border-tk-border shadow-sm">
               <Calendar size={14} className="text-tk-text-secondary" />

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Plus, Edit3, Trash2, Layers, Loader2, TrendingUp, Package, AlertCircle, List, LayoutGrid, MoreVertical, ArrowUpDown, ChevronDown } from 'lucide-react';
+import { Search, Plus, Edit3, Trash2, Layers, Loader2, TrendingUp, AlertCircle, List, LayoutGrid, MoreVertical, ArrowUpDown, ChevronDown } from 'lucide-react';
 import MenuDialog from '../components/menu_dialog';
 import CategoryDialog from '../components/category_dialog';
 import OfferDialog from '../components/offer_dialog';
@@ -83,7 +83,7 @@ const Menu: React.FC = () => {
     const lower = searchTerm.toLowerCase();
     filteredMenuItems = filteredMenuItems.filter(item => 
       item.name.toLowerCase().includes(lower) || 
-      (item.short_description && item.short_description.toLowerCase().includes(lower))
+      (item.shortDescription && item.shortDescription.toLowerCase().includes(lower))
     );
   }
 
@@ -91,9 +91,9 @@ const Menu: React.FC = () => {
     if (sortBy === 'a_z') return a.name.localeCompare(b.name);
     if (sortBy === 'price_high') return b.price - a.price;
     if (sortBy === 'price_low') return a.price - b.price;
-    if (sortBy === 'oldest') return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
+    if (sortBy === 'oldest') return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
     // Default newest
-    return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+    return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
   });
 
   const [visibleItemCount, setVisibleItemCount] = useState(20);
@@ -527,7 +527,7 @@ const Menu: React.FC = () => {
 
           {/* Tabs & Controls */}
           <div className="sticky top-0 z-50 py-2 bg-tk-bg-card shadow-sm border-b border-tk-border flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 mb-4">
-            <div className="flex items-center gap-2 w-full xl:w-auto flex-1 pb-1">
+            <div className="flex items-center gap-2 w-full xl:w-auto flex-1 pb-1 pl-12 md:pl-0">
               <div className="relative" ref={categoryDropdownRef}>
                 <button
                   onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
@@ -714,14 +714,14 @@ const Menu: React.FC = () => {
                           {/* Price */}
                           <div className="flex flex-col items-end mt-1">
                             <div className="text-[18px] sm:text-[20px] font-extrabold text-[#111] dark:text-tk-text leading-none tracking-tighter">
-                              ₹{item.discount_price && item.discount_price < item.price ? item.discount_price : item.price}
+                              ₹{item.discountPrice && item.discountPrice < item.price ? item.discountPrice : item.price}
                             </div>
-                            {item.discount_price && item.discount_price < item.price && (
+                            {item.discountPrice && item.discountPrice < item.price && (
                               <div className="text-[12px] text-tk-text-secondary font-semibold line-through decoration-tk-text-secondary/60 mt-[2px]">
                                 ₹{item.price}
                               </div>
                             )}
-                            {(!item.discount_price || item.discount_price >= item.price) && (
+                            {(!item.discountPrice || item.discountPrice >= item.price) && (
                                <div className="text-[12px] text-tk-text-secondary font-semibold line-through decoration-tk-text-secondary/60 mt-[2px]">
                                  ₹{Math.floor(item.price * 1.25)}
                                </div>
@@ -732,7 +732,7 @@ const Menu: React.FC = () => {
                       
                       {/* Description */}
                       <p className="text-[11px] sm:text-[12px] font-medium text-[#666] dark:text-tk-text-secondary line-clamp-2 mt-2 leading-snug">
-                        {item.short_description || `${item.name} with chef's special touch`}
+                        {item.shortDescription || `${item.name} with chef's special touch`}
                       </p>
                     </div>
 
@@ -786,7 +786,7 @@ const Menu: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredMenuItems.slice(0, visibleItemCount).map((item, idx) => {
+                    {filteredMenuItems.slice(0, visibleItemCount).map((item) => {
                       const categoryName = getCategoryName(item.categoryId);
                       let catIcon = '🍽️';
                       const lower = categoryName.toLowerCase();
@@ -811,7 +811,7 @@ const Menu: React.FC = () => {
                                   {item.name}
                                 </div>
                                 <div className="text-[12px] text-tk-text-secondary mt-1 max-w-[200px] line-clamp-2">
-                                  {item.short_description || `${item.isVeg ? 'Veg' : 'Non-veg'} ${categoryName}`}
+                                  {item.shortDescription || `${item.isVeg ? 'Veg' : 'Non-veg'} ${categoryName}`}
                                 </div>
                               </div>
                             </div>

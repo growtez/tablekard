@@ -200,6 +200,7 @@ export interface MenuItem {
   variants?: MenuItemVariant[] | null;
   addons?: MenuItemAddon[] | null;
   modelUrl?: string | null; // AR 3D model URL (.glb)
+  createdAt?: string;
 }
 
 export interface MenuItemImage {
