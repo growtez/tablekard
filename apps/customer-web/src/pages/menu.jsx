@@ -20,19 +20,15 @@ const MenuPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [favorites, setFavorites] = useState([]);
   const { cartItems: cart, addToCart, removeFromCart, getItemQuantity, cartTotal, cartSubtotal } = useCart();
-  const cartIconRef = useRef(null);
   const [selectedItem, setSelectedItem] = useState(null);
-  const [selectedVariant, setSelectedVariant] = useState(null);
-  const [selectedAddons, setSelectedAddons] = useState([]);
   const [showItemModal, setShowItemModal] = useState(false);
+  const [modalStep, setModalStep] = useState(1);
+  const [isVariantSheetOpen, setIsVariantSheetOpen] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
-  const [modalQuantity, setModalQuantity] = useState(0);
   const [menuItems, setMenuItems] = useState({});
   const [categories, setCategories] = useState([]);
   const [menuLoading, setMenuLoading] = useState(true);
   const [vegOnly, setVegOnly] = useState(false);
-  const [activeImageIdx, setActiveImageIdx] = useState(0);
-  const imageSliderRef = useRef(null);
 
   const getBaseItemQuantity = (baseItemId) => {
     return cart
@@ -42,9 +38,8 @@ const MenuPage = () => {
 
   const closeItemModal = () => {
     setShowItemModal(false);
+    setIsVariantSheetOpen(false);
     setSelectedItem(null);
-    setSelectedVariant(null);
-    setSelectedAddons([]);
   };
 
   // Load real menu items from database
@@ -203,26 +198,33 @@ const MenuPage = () => {
   }, [restaurantId, isAuthenticated, user]);
 
   const toggleFavorite = async (itemId) => {
+    const isCurrentlyFav = favorites.includes(itemId);
+
+    // Optimistic UI update
+    setFavorites(prev =>
+      isCurrentlyFav
+        ? prev.filter(id => id !== itemId)
+        : [...prev, itemId]
+    );
+
     if (!isAuthenticated || !user) {
-      // Fallback to local state if not logged in (optional, or just prompt login)
-      setFavorites(prev =>
-        prev.includes(itemId)
-          ? prev.filter(id => id !== itemId)
-          : [...prev, itemId]
-      );
-      return;
+      return; // Fallback to local state if not logged in
     }
 
     try {
-      if (favorites.includes(itemId)) {
+      if (isCurrentlyFav) {
         await removeFavoriteFromDB(user.id, itemId);
-        setFavorites(prev => prev.filter(id => id !== itemId));
       } else {
         await addFavorite(user.id, itemId);
-        setFavorites(prev => [...prev, itemId]);
       }
     } catch (err) {
       console.error('Failed to toggle favorite:', err);
+      // Revert optimistic update on failure
+      setFavorites(prev =>
+        isCurrentlyFav
+          ? [...prev, itemId]
+          : prev.filter(id => id !== itemId)
+      );
     }
   };
 
@@ -230,17 +232,19 @@ const MenuPage = () => {
 
   const handleItemClick = (item) => {
     setSelectedItem(item);
-    setSelectedVariant(item.variants && item.variants.length > 0 ? item.variants[0] : null);
-    setSelectedAddons([]);
-    setActiveImageIdx(0);
+    setModalStep(1);
     setShowItemModal(true);
   };
 
-  const getModalTotalPrice = () => {
-    if (!selectedItem) return 0;
-    const basePrice = selectedVariant ? selectedVariant.price : (selectedItem.price);
-    const addonsPrice = (selectedAddons || []).reduce((sum, a) => sum + a.price, 0);
-    return basePrice + addonsPrice;
+  const handleDirectAdd = (item, e) => {
+    if (e) e.stopPropagation();
+    if (item.variants?.length > 0 || item.addons?.length > 0) {
+      setSelectedItem(item);
+      setModalStep(2);
+      setShowItemModal(true);
+    } else {
+      addToCart(item);
+    }
   };
 
   // Safely determine the active category
@@ -521,7 +525,7 @@ const MenuPage = () => {
 
                   <div className="details-footer">
                     <div className="price-vegan">
-                      <span className="price-text">₹{item.price}</span>
+                      <span className="price-text">₹{item.variants && item.variants.length > 0 ? Math.min(...item.variants.map(v => v.price)) : item.price}</span>
                     </div>
                     {isOutOfStock ? (
                       <span className="unavailable-tag">Unavailable</span>
@@ -529,10 +533,7 @@ const MenuPage = () => {
                       getItemQuantity(item.id) === 0 ? (
                         <button
                           className="add-btn-large"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleItemClick(item);
-                          }}
+                          onClick={(e) => handleDirectAdd(item, e)}
                         >
                           <Plus size={20} color="#FFFFFF" />
                         </button>
@@ -547,7 +548,7 @@ const MenuPage = () => {
                           <span className="menu-stepper-value">{getItemQuantity(item.id)}</span>
                           <button
                             className="menu-stepper-btn"
-                            onClick={(e) => { e.stopPropagation(); handleItemClick(item); }}
+                            onClick={(e) => handleDirectAdd(item, e)}
                           >
                             <Plus size={16} />
                           </button>
@@ -589,8 +590,8 @@ const MenuPage = () => {
       )}
 
       {/* Modern Frosted Glow Cart Indicator */}
-      {cartTotal > 0 && !showItemModal && (
-        <NavLink to="/orders" className="cart-modern-glow">
+      {cartTotal > 0 && (
+        <NavLink to="/orders" className={`cart-modern-glow ${showItemModal && !isVariantSheetOpen ? 'hide-glow' : ''}`}>
           <div className="glow-content">
             <div className="glow-badge">
               <ShoppingCart size={16} strokeWidth={3} />
@@ -618,12 +619,14 @@ const MenuPage = () => {
         item={selectedItem}
         favorites={favorites}
         onToggleFavorite={toggleFavorite}
+        initialStep={modalStep}
+        onVariantSheetChange={setIsVariantSheetOpen}
       />
 
     </>)}
 
       {/* Bottom Navigation */}
-      {!showItemModal && !showScanner && <BottomNav />}
+      {!showScanner && <BottomNav />}
     </div>
   );
 };

@@ -203,7 +203,8 @@ function MobileOnlyWrapper({ children }) {
   if (isDesktop) {
     return (
       <div style={{
-        minHeight: "100vh", display: "flex", flexDirection: "column",
+        minHeight: "100vh", width: "100vw", position: "fixed", top: 0, left: 0, zIndex: 9999,
+        display: "flex", flexDirection: "column",
         alignItems: "center", justifyContent: "center",
         background: "#212121", color: "#fff",
         padding: "2rem", textAlign: "center",

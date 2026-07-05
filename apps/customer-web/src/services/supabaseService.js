@@ -193,6 +193,9 @@ export const getTodaysOrders = async (userId) => {
 };
 
 export const getRecentOrderedItems = async (userId, limit = 3) => {
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
     const { data, error } = await supabase
         .from('order_items')
         .select(`
@@ -204,6 +207,7 @@ export const getRecentOrderedItems = async (userId, limit = 3) => {
             )
         `)
         .eq('orders.customer_id', userId)
+        .gte('orders.created_at', oneWeekAgo.toISOString())
         .order('created_at', { foreignTable: 'orders', ascending: false })
         .limit(20); // Fetch more to filter for unique items
 

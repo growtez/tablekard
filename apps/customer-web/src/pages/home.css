@@ -1,4 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700;800;900&family=Outfit:wght@300;400;500;600;700;800&family=Syncopate:wght@700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700;800;900&family=Outfit:wght@300;400;500;600;700;800&family=Syncopate:wght@700&display=swap');
 
 * {
   margin: 0;
@@ -847,129 +847,49 @@ body {
   z-index: 2;
 }
 
-/* Modern Frosted Glow Cart Indicator */
-.cart-modern-glow {
-  position: fixed;
-  bottom: 110px;
-  left: 32px;
-  right: 32px;
-  z-index: 1500;
-  text-decoration: none;
-  animation: glowSlideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-}
 
-@keyframes glowSlideIn {
-  from {
-    transform: translateY(50px) scale(0.9);
-    opacity: 0;
-  }
-
-  to {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-}
-
-.glow-content {
-  position: relative;
-  background: rgba(255, 255, 255, 0.9);
-  -webkit-backdrop-filter: blur(25px);
-  backdrop-filter: blur(25px);
-  padding: 8px 8px 8px 14px;
-  border-radius: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border: 1.5px solid rgba(139, 58, 30, 0.15);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12),
-    0 5px 15px rgba(139, 58, 30, 0.08);
-  overflow: hidden;
-  z-index: 1;
-}
-
-.glow-badge {
-  background: #8B3A1E;
-  color: #FFFFFF;
-  padding: 8px 14px;
-  border-radius: 18px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 8px 20px rgba(139, 58, 30, 0.3);
-}
-
-.glow-count {
-  font-size: 14px;
-  font-weight: 800;
-}
-
-.glow-details {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  padding-left: 16px;
-}
-
-.glow-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: #8B3A1E;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  opacity: 0.8;
-}
-
-.glow-total {
-  font-size: 18px;
-  font-weight: 800;
-  color: #1A1A1A;
-  letter-spacing: -0.5px;
-}
-
-.glow-cta {
-  background: #1A1A1A;
-  color: #FFFFFF;
-  padding: 6px 6px 6px 16px;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 700;
-  transition: all 0.3s ease;
-}
-
-.cta-icon {
-  background: rgba(255, 255, 255, 0.2);
-  width: 32px;
-  height: 32px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.cart-modern-glow:active .glow-content {
-  transform: scale(0.97);
-}
-
-.cart-modern-glow:active .glow-cta {
-  transform: translateX(3px);
-  background: #000000;
-}
-
-.glow-bg-blur {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 80%;
-  height: 10px;
-  background: #8B3A1E;
-  filter: blur(30px);
-  opacity: 0.3;
-  z-index: 0;
-}
 
 /* ===== MODAL - Elegant Minimalist Design ===== */
 
+
+/* ===== EMPTY STATE - RECENT ORDERS ===== */
+.no-recent-orders {
+  display: flex;
+  align-items: center;
+  background: #FFFFFF;
+  border: 1.5px dashed #D4A59A;
+  border-radius: 20px;
+  padding: 20px 16px;
+  gap: 16px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+}
+
+.no-recent-icon {
+  width: 50px;
+  height: 50px;
+  background: #FFF7F3;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8B3A1E;
+  flex-shrink: 0;
+}
+
+.no-recent-text {
+  flex: 1;
+}
+
+.no-recent-text h4 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1A1A1A;
+  margin-bottom: 4px;
+}
+
+.no-recent-text p {
+  font-size: 13px;
+  color: #888888;
+  line-height: 1.4;
+  margin: 0;
+}
