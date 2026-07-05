@@ -27,15 +27,9 @@ export const showHomeLoader = () => {
 export const hideHomeLoader = () => {
     const loader = document.getElementById('global-home-loader');
     if (loader) {
-        const count = Math.max(0, parseInt(loader.dataset.refCount || '0') - 1);
-        loader.dataset.refCount = count.toString();
-        
-        if (count === 0) {
-            window.__homeLoaderTimeout = setTimeout(() => {
-                if (parseInt(loader.dataset.refCount || '0') === 0) {
-                    loader.style.display = 'none';
-                }
-            }, 50);
-        }
+        loader.dataset.refCount = '0';
+        window.__homeLoaderTimeout = setTimeout(() => {
+            loader.style.display = 'none';
+        }, 50);
     }
 };

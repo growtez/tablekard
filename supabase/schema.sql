@@ -182,6 +182,7 @@ CREATE TABLE IF NOT EXISTS public.order_items (
     addons JSONB,
     special_instructions TEXT,
     status TEXT NOT NULL DEFAULT 'placed' CHECK (status IN ('placed', 'preparing', 'ready')),
+    prepared_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

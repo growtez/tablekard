@@ -125,12 +125,17 @@ export function AuthProvider({ children }) {
       fetchMemberships(data.user.id),
     ]);
 
-    // Only allow staff / admin / super_admin
+    // Check if user has a valid role in profiles or any valid membership role
     const role = String(prof?.role).toLowerCase();
+    const hasValidMembershipRole = membershipList.some(m => 
+      ['kitchen_staff', 'admin'].includes(String(m.role).toLowerCase())
+    );
+    
     const roleAllowed =
       role === 'restaurant_admin' ||
       role === 'restaurant_staff' ||
-      role === 'super_admin';
+      role === 'super_admin' ||
+      hasValidMembershipRole;
 
     if (!roleAllowed || membershipList.length === 0) {
       await supabase.auth.signOut();

@@ -123,7 +123,8 @@ export function useOrders() {
   const handleUpdateItemStatus = useCallback(
     async (itemId, newStatus) => {
       try {
-        await updateOrderItemStatus(itemId, newStatus);
+        const { user } = await supabase.auth.getSession().then(({ data }) => data.session || {});
+        await updateOrderItemStatus(itemId, newStatus, user?.id);
         await loadOrders();
       } catch (err) {
         console.error('Update item status failed:', err);
