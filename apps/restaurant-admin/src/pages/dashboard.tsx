@@ -246,7 +246,7 @@ const Dashboard: React.FC = () => {
   const [orderToCancel, setOrderToCancel] = useState<DashboardOrder | null>(null);
   const activeTab = 'Active Orders';
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'amount_high' | 'amount_low'>('oldest');
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'amount_high' | 'amount_low'>('newest');
   const [viewMode, setViewMode] = useState<'table' | 'grid'>(() => {
     return (typeof window !== 'undefined' && window.innerWidth <= 768) ? 'grid' : 'table';
   });
@@ -635,6 +635,142 @@ const Dashboard: React.FC = () => {
         className="w-full pb-8"
       >
         {viewMode === 'table' ? (
+          <>
+            {/* Mobile card view (hidden on sm+) */}
+            <div className="flex flex-col gap-3 sm:hidden">
+              {isLoading ? (
+                <div className="py-8 text-center text-tk-text-secondary text-sm">Loading orders...</div>
+              ) : filteredOrders().length === 0 ? (
+                <div className="py-12 text-center text-tk-text-secondary text-sm font-medium">No active orders right now.</div>
+              ) : (
+                filteredOrders().map((order, idx) => {
+                  const getStatusIdx = (status: string) => {
+                    switch (status?.toUpperCase()) {
+                      case 'PENDING': return -1;
+                      case 'CONFIRMED': return 0;
+                      case 'PREPARING': return 1;
+                      case 'READY': return 2;
+                      case 'COMPLETED':
+                      case 'SERVED': return 2;
+                      default: return -1;
+                    }
+                  };
+                  const currentIndex = getStatusIdx(order.status);
+
+                  return (
+                    <div
+                      key={idx}
+                      className="bg-tk-bg-surface border border-tk-border rounded-xl p-3.5 flex flex-col gap-3 shadow-sm hover:shadow-md hover:border-tk-burgundy/50 transition-all cursor-pointer"
+                      onClick={() => setSelectedOrder(order)}
+                    >
+                      {/* Top row: order number + amount */}
+                      <div className="flex justify-between items-start">
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-tk-text text-sm">{order.orderNumber}</span>
+                          <span className="text-[11px] text-tk-text-secondary mt-0.5">{order.time} · {order.table}</span>
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <span className="font-bold text-tk-text text-base">₹{order.total}</span>
+                          <span className={`mt-1 inline-flex px-2 py-0.5 rounded text-[10px] font-bold ${order.isPaid ? 'bg-[#C6F6D5] text-[#22543D]' : 'bg-[#FEF2F2] text-[#E53E3E]'}`}>
+                            {order.isPaid ? `Paid (${order.paymentMethod})` : 'Pending'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Customer */}
+                      <div className="text-[12px] text-tk-text-secondary">
+                        <span className="font-semibold text-tk-text">{order.customer}</span>
+                      </div>
+
+                      {/* Tracking stepper */}
+                      <div className="pt-2 border-t border-tk-border" onClick={(e) => e.stopPropagation()}>
+                        {order.status?.toUpperCase() === 'CANCELLED' ? (
+                          <div className="flex-1 flex items-center relative">
+                            <div className="flex flex-col items-center relative">
+                              <div className="w-5 h-5 rounded-full flex items-center justify-center border-[2px] bg-[#E53E3E] border-[#E53E3E]">
+                                <Check size={12} className="text-white" strokeWidth={3} />
+                              </div>
+                              <span className="absolute top-6 text-[9px] font-medium text-[#E53E3E] whitespace-nowrap">Placed</span>
+                            </div>
+                            <div className="flex-1 h-[2px] mx-1 bg-[#E53E3E]"></div>
+                            <div className="flex flex-col items-center relative">
+                              <div className="w-5 h-5 rounded-full flex items-center justify-center border-[2px] bg-[#E53E3E] border-[#E53E3E]">
+                                <X size={12} className="text-white" strokeWidth={3} />
+                              </div>
+                              <span className="absolute top-6 text-[9px] font-bold text-[#E53E3E] whitespace-nowrap">Cancelled</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center w-full pb-5">
+                            {[
+                              { label: 'Accept', value: 'CONFIRMED' },
+                              { label: 'Preparing', value: 'PREPARING' },
+                              { label: 'Ready', value: 'READY' }
+                            ].map((step, stepIdx, arr) => {
+                              const isCompleted = stepIdx <= currentIndex;
+                              const isNext = stepIdx === currentIndex + 1;
+                              const isLast = stepIdx === arr.length - 1;
+                              return (
+                                <React.Fragment key={step.value}>
+                                  <div className="flex flex-col items-center relative group">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (isNext) handleUpdateStatus(order.id, step.value);
+                                      }}
+                                      disabled={!isNext}
+                                      className={`w-5 h-5 rounded-full flex items-center justify-center border-[2px] z-10 transition-all duration-300 relative group/btn
+                                        ${isCompleted ? 'bg-[#16a34a] border-[#16a34a] text-white' :
+                                          isNext ? 'bg-white border-[#16a34a] cursor-pointer hover:bg-[#16a34a] hover:text-white hover:scale-110 active:scale-95' :
+                                            'bg-white border-[#E2E8F0] cursor-default'}`}
+                                    >
+                                      {isNext && <span className="absolute inset-0 rounded-full border border-dashed border-[#16a34a]/60 animate-[spin_6s_linear_infinite]" style={{ margin: '-4px' }} />}
+                                      {isNext && <span className="absolute inset-0 rounded-full bg-[#16a34a]/10 animate-ping" style={{ margin: '-1px' }} />}
+                                      {(isCompleted || isNext) && (
+                                        <Check size={12} className={`text-white transition-all duration-300 ${isCompleted ? 'opacity-100 scale-100' : 'opacity-0 scale-50 group-hover/btn:opacity-100 group-hover/btn:scale-100'}`} strokeWidth={3} />
+                                      )}
+                                    </button>
+                                    <span className={`absolute top-6 text-[9px] font-medium whitespace-nowrap ${isCompleted || isNext ? 'text-tk-text' : 'text-[#A0AEC0]'}`}>
+                                      {step.label}
+                                    </span>
+                                  </div>
+                                  {!isLast && (
+                                    <div className={`flex-1 h-[2px] mx-1 transition-colors ${stepIdx < currentIndex ? 'bg-[#16a34a]' : 'bg-[#E2E8F0]'}`} />
+                                  )}
+                                </React.Fragment>
+                              );
+                            })}
+                          </div>
+                        )}
+                        <div className="flex justify-between items-center mt-1">
+                          {order.status?.toUpperCase() !== 'CANCELLED' && order.status?.toUpperCase() !== 'COMPLETED' ? (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setOrderToCancel(order); }}
+                              className="px-2.5 py-1 bg-[#FEF2F2] text-[#E53E3E] border border-[#FC8181] rounded-lg text-[11px] font-semibold hover:bg-[#FED7D7] transition-colors"
+                            >
+                              Cancel
+                            </button>
+                          ) : order.status?.toUpperCase() === 'CANCELLED' ? (
+                            <span className="px-2.5 py-1 bg-[#FEF2F2] text-[#E53E3E] rounded-lg text-[11px] font-bold">Cancelled</span>
+                          ) : <div />}
+                          {!order.isPaid && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handlePaymentComplete(order.id); }}
+                              className="flex items-center gap-1 px-2.5 py-1 bg-[#C6F6D5] text-[#22543D] rounded-lg text-[11px] font-semibold hover:bg-[#9AE6B4] transition-colors"
+                            >
+                              <CheckCircle size={12} strokeWidth={3} /> Mark Paid
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Desktop table view (hidden on mobile) */}
+            <div className="hidden sm:block overflow-x-auto tk-table-scroll">
           <table className="w-full text-left border-collapse table-fixed min-w-[950px]">
             <thead>
               <tr>
@@ -833,6 +969,8 @@ const Dashboard: React.FC = () => {
               )}
             </tbody>
           </table>
+            </div>
+          </>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4 p-2 sm:p-4 min-w-full">
             {isLoading ? (
