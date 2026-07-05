@@ -94,7 +94,7 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
       setExistingModelUrl(item?.modelUrl || null);
       setArModelFile(null);
       setRemoveModel(false);
-    } else {
+    } else if (mode === 'add' && !item) {
       setFormData({
         name: '', short_description: '', long_description: '',
         price: '', discount_price: '',
@@ -109,7 +109,7 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
       setArModelFile(null);
       setRemoveModel(false);
     }
-  }, [mode, item, isOpen, categories]);
+  }, [mode, item]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -271,6 +271,24 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
       existingModelUrl: existingModelUrl,
       removeModel: removeModel,
     });
+    if (mode === 'add') {
+      setFormData({
+        name: '', short_description: '', long_description: '',
+        price: '', discount_price: '',
+        category_id: categories[0]?.id ?? '',
+        images: [],
+        is_available: true, is_veg: true,
+        preparation_time: '',
+        serves: '1',
+        tags: [], variants: [], addons: []
+      });
+      setExistingModelUrl(null);
+      setArModelFile(null);
+      setRemoveModel(false);
+      setNewTag('');
+      setNewVariant({ name: '', price: 0 });
+      setNewAddon({ name: '', price: 0 });
+    }
     onClose();
   };
 
@@ -278,8 +296,8 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000] animate-in fade-in duration-200" onClick={onClose}>
-        <div className="bg-tk-bg-card rounded-[24px] p-6 md:p-8 w-[95%] md:w-full max-w-[900px] max-h-[90vh] overflow-y-auto shadow-2xl animate-in slide-in-from-bottom-8 duration-300 text-tk-text" onClick={(e) => e.stopPropagation()}>
+      <div className="fixed inset-0 bg-black/50 flex justify-end z-[1000] animate-in fade-in duration-200" onClick={onClose}>
+        <div className="bg-tk-bg-card p-6 md:p-8 w-full sm:w-[500px] max-w-[100vw] h-full overflow-y-auto shadow-2xl animate-in slide-in-from-right duration-300 text-tk-text border-l border-tk-border" onClick={(e) => e.stopPropagation()}>
           <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold text-tk-text m-0">
             {mode === 'add' ? 'Add New Menu Item' : 'Edit Menu Item'}
@@ -538,7 +556,7 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
                 <button
                   key={tag}
                   type="button"
-                  className={`px-3.5 py-1.5 rounded-full border-[1.5px] border-tk-border bg-tk-bg-elevated text-[13px] text-tk-text-secondary cursor-pointer transition-all duration-200 font-sans hover:border-green-400 dark:hover:border-green-400 ${formData.tags.includes(tag) ? 'bg-green-50 border-green-400 text-green-900 font-semibold dark:bg-green-900/20 dark:text-green-400' : ''}`}
+                  className={`px-3.5 py-1.5 rounded-full border-[1.5px] border-tk-border bg-tk-bg-elevated text-[13px] text-tk-text-secondary cursor-pointer transition-all duration-200 font-sans hover:border-[#37724e]/50 dark:hover:border-green-400 ${formData.tags.includes(tag) ? 'bg-[#31274e] border-[#37724e] text-white font-semibold dark:bg-green-900/20 dark:text-green-400 dark:border-green-400' : ''}`}
                   onClick={() => toggleTag(tag)}
                 >{tag}</button>
               ))}
@@ -559,9 +577,9 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
             {formData.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {formData.tags.map(tag => (
-                  <span key={tag} className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold dark:bg-blue-900/20 dark:text-blue-400">
+                  <span key={tag} className="flex items-center gap-1.5 px-2.5 py-1 bg-[#37724e] text-white dark:bg-green-900/20 dark:text-green-400 rounded-full text-xs font-semibold border border-[#37724e] dark:border-green-800">
                     {tag}
-                    <button type="button" onClick={() => removeTag(tag)} className="bg-transparent border-none cursor-pointer p-0 text-blue-700 dark:text-blue-400 flex items-center"><X size={12} /></button>
+                    <button type="button" onClick={() => removeTag(tag)} className="bg-transparent border-none cursor-pointer p-0 text-white/70 hover:text-red-200 dark:text-green-400/70 dark:hover:text-red-400 flex items-center transition-colors"><X size={12} /></button>
                   </span>
                 ))}
               </div>
@@ -577,7 +595,7 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
                   <div key={idx} className="flex items-center gap-3 bg-tk-bg-elevated rounded-xl p-2.5 px-3.5 border border-tk-border">
                     <span className="flex-1 text-sm font-medium text-tk-text">{v.name}</span>
                     <span className="text-[13px] font-semibold text-[#37724e] dark:text-green-400">₹{v.price}</span>
-                    <button type="button" onClick={() => removeVariant(idx)} className="bg-transparent border-none cursor-pointer text-red-500 p-1 rounded-md flex items-center transition-colors duration-200 hover:bg-red-50 dark:hover:bg-red-900/20">
+                    <button type="button" onClick={() => removeVariant(idx)} className="bg-transparent border-none cursor-pointer text-red-500 p-1 rounded-md flex items-center transition-colors duration-200 hover:bg-red-500/10">
                       <Minus size={14} />
                     </button>
                   </div>
@@ -615,15 +633,15 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
               {PRESET_ADDONS.map((addon) => {
                 const selected = formData.addons.some(a => a.name === addon.name);
                 return (
-                  <label key={addon.name} className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border-[1.5px] border-tk-border bg-tk-bg-elevated text-[13px] text-tk-text-secondary cursor-pointer transition-all duration-200 select-none hover:border-green-400 ${selected ? 'bg-green-50 border-green-400 text-green-900 font-semibold dark:bg-green-900/20 dark:text-green-400' : ''}`}>
+                  <label key={addon.name} className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border-[1.5px] border-tk-border bg-tk-bg-elevated text-[13px] cursor-pointer transition-all duration-200 select-none hover:border-[#37724e]/50 dark:hover:border-green-400 ${selected ? 'bg-[#37724e] border-[#37724e] dark:bg-green-900/20 dark:border-green-400' : 'text-tk-text-secondary'}`}>
                     <input
                       type="checkbox"
                       checked={selected}
                       onChange={() => toggleAddon(addon)}
                       style={{ display: 'none' }}
                     />
-                    <span>{addon.name}</span>
-                    <span className="text-xs text-tk-text-secondary font-medium">+₹{addon.price}</span>
+                    <span className={selected ? 'text-white font-semibold dark:text-green-400' : 'text-tk-text'}>{addon.name}</span>
+                    <span className={`text-xs font-medium ${selected ? 'text-white/80 dark:text-green-400/80' : 'text-tk-text-secondary'}`}>+₹{addon.price}</span>
                   </label>
                 );
               })}
@@ -662,7 +680,7 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
                   <div key={idx} className="flex items-center gap-3 bg-tk-bg-elevated rounded-xl p-2.5 px-3.5 border border-tk-border">
                     <span className="flex-1 text-sm font-medium text-tk-text">{addon.name}</span>
                     <span className="text-[13px] font-semibold text-[#37724e] dark:text-green-400">+₹{addon.price}</span>
-                    <button type="button" onClick={() => removeAddon(addon.name)} className="bg-transparent border-none cursor-pointer text-red-500 p-1 rounded-md flex items-center transition-colors duration-200 hover:bg-red-50 dark:hover:bg-red-900/20">
+                    <button type="button" onClick={() => removeAddon(addon.name)} className="bg-transparent border-none cursor-pointer text-red-500 p-1 rounded-md flex items-center transition-colors duration-200 hover:bg-red-500/10">
                       <Minus size={14} />
                     </button>
                   </div>

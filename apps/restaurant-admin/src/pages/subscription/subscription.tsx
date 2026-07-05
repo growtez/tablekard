@@ -5,7 +5,7 @@ import type { SubscriptionPaymentRecord } from '../../services/supabaseService';
 import { processSubscriptionPayment } from '../../services/subscriptionService';
 import type { Restaurant } from '@restaurant-saas/types';
 import { supabase } from '@restaurant-saas/supabase';
-
+import { CheckCircle2, Loader2, Calendar, TrendingUp, X } from 'lucide-react';
 
 // ──────────────────────────────────────────────
 // Plan definitions (display only — pricing enforced server-side)
@@ -24,6 +24,14 @@ const DEFAULT_PLANS: Plan[] = [
     { duration: 3, label: '3 Months Package', price: 1399, perMonth: 466, savings: 7 },
     { duration: 6, label: '6 Months Package', price: 2699, perMonth: 450, savings: 10, popular: true },
     { duration: 12, label: '12 Months Package', price: 4999, perMonth: 417, savings: 16 },
+];
+
+const PLAN_FEATURES = [
+    'Unlimited Orders & Revenue',
+    'Advanced Reports & Analytics',
+    'Digital Menu Management',
+    'QR Code Table Ordering',
+    '24/7 Priority Support'
 ];
 
 // ──────────────────────────────────────────────
@@ -103,9 +111,8 @@ const SubscriptionPage: React.FC = () => {
     const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
     const [payments, setPayments] = useState<SubscriptionPaymentRecord[]>([]);
     const [dbPlans, setDbPlans] = useState<Plan[]>(DEFAULT_PLANS);
-    const [selectedPlan, setSelectedPlan] = useState<number>(6); // default to popular plan
     const [isLoading, setIsLoading] = useState(true);
-    const [isProcessing, setIsProcessing] = useState(false);
+    const [isProcessing, setIsProcessing] = useState<number | null>(null);
     const [feedback, setFeedback] = useState<{ tone: 'success' | 'error' | 'info'; message: string } | null>(null);
 
     // ── Load data ──
@@ -147,14 +154,6 @@ const SubscriptionPage: React.FC = () => {
                         popular: !!p.recommended
                     }));
                     setDbPlans(mapped);
-
-                    // Set default selected duration based on recommended flag
-                    const recommendedPlan = mapped.find((p: any) => p.popular);
-                    if (recommendedPlan) {
-                        setSelectedPlan(recommendedPlan.duration);
-                    } else if (mapped.length > 0) {
-                        setSelectedPlan(mapped[0].duration);
-                    }
                 } else {
                     setDbPlans(DEFAULT_PLANS);
                 }
@@ -175,16 +174,16 @@ const SubscriptionPage: React.FC = () => {
     }, [loadData]);
 
     // ── Handle payment ──
-    const handleRenew = async () => {
-        if (!activeRestaurantId || isProcessing) return;
+    const handleRenew = async (planDuration: number) => {
+        if (!activeRestaurantId || isProcessing !== null) return;
 
-        setIsProcessing(true);
+        setIsProcessing(planDuration);
         setFeedback(null);
 
         try {
             const result = await processSubscriptionPayment({
                 restaurantId: activeRestaurantId,
-                planDuration: selectedPlan,
+                planDuration,
                 restaurantName: activeRestaurantName,
                 userEmail: userProfile?.email || undefined,
                 userName: userProfile?.name || undefined,
@@ -204,167 +203,232 @@ const SubscriptionPage: React.FC = () => {
                 setFeedback({ tone: 'error', message: err.message || 'Payment failed. Please try again.' });
             }
         } finally {
-            setIsProcessing(false);
+            setIsProcessing(null);
         }
     };
 
     // ── Status info ──
     const statusInfo = getStatusInfo(restaurant);
     const days = restaurant?.subscriptionEndAt ? daysUntil(restaurant.subscriptionEndAt) : 0;
-    const activePlan = dbPlans.find(p => p.duration === selectedPlan) || dbPlans[0] || DEFAULT_PLANS[0];
+
+    // Find current active plan from the latest successful payment
+    const latestSuccessfulPayment = payments.find(p => p.status === 'succeeded');
+    const currentPlanDuration = (statusInfo.status === 'active' || statusInfo.status === 'grace') 
+        ? latestSuccessfulPayment?.planDuration 
+        : null;
 
     // ── Loading state ──
     if (isLoading) {
         return (
             <div className="w-full h-full flex flex-col items-center justify-center">
-                    <div className="flex flex-col items-center justify-center h-[60vh] gap-4 text-[#4A5568] dark:text-tk-text-secondary">
-                        <div className="w-9 h-9 border-3 border-[#E2E8F0] border-t-tk-burgundy rounded-full animate-spin" />
-                        <p className="text-[0.9rem] text-[#4A5568] dark:text-tk-text-secondary">Loading subscription information...</p>
-                    </div>
+                <div className="flex flex-col items-center justify-center h-[60vh] gap-4 text-[#4A5568] dark:text-tk-text-secondary">
+                    <div className="w-9 h-9 border-3 border-[#E2E8F0] border-t-tk-burgundy rounded-full animate-spin" />
+                    <p className="text-[0.9rem] text-[#4A5568] dark:text-tk-text-secondary">Loading subscription information...</p>
+                </div>
             </div>
         );
     }
 
     return (
-        <>
-                {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-[24px] font-bold text-[#1A202C] m-0 mb-1 dark:text-tk-text">Subscription</h1>
-                    <p className="text-[0.925rem] text-[#4A5568] m-0 dark:text-tk-text-secondary">Manage your restaurant's subscription plan and billing.</p>
+        <div className="max-w-[1200px] w-full mx-auto pb-12">
+            {/* Feedback Banner */}
+            {feedback && (
+                <div className={`flex items-center gap-3 px-5 py-4 rounded-xl mb-6 text-[0.9rem] font-medium animate-[sub-fadeIn_0.3s_ease] shadow-sm border-[1.5px] ${
+                    feedback.tone === 'success' ? 'bg-tk-success-bg text-tk-success border-tk-success/30' : 
+                    feedback.tone === 'error' ? 'bg-tk-error-bg text-tk-error border-tk-error/30' : 
+                    'bg-gray-100 text-gray-700 border-gray-300'
+                }`}>
+                    {feedback.tone === 'success' && <CheckCircle2 size={18} />}
+                    {feedback.tone === 'error' && <X size={18} />}
+                    <span>{feedback.message}</span>
                 </div>
+            )}
 
-                {/* Feedback */}
-                {feedback && (
-                    <div className={`flex items-center gap-3 px-5 py-3.5 rounded-3xl mb-6 text-[0.9rem] font-medium animate-[sub-fadeIn_0.3s_ease] subscription-banner-${feedback.tone}`}>
-                        <span className="w-2 h-2 rounded-full shrink-0" />
-                        <span>{feedback.message}</span>
+            {/* Modern Hero & Status Board */}
+            <div className="mb-12 relative overflow-hidden rounded-[24px] bg-tk-bg-card border-[1.5px] border-tk-border shadow-sm p-8 flex justify-between items-center max-md:flex-col max-md:items-start max-md:gap-6">
+                <div className="absolute top-0 right-0 w-80 h-80 bg-tk-burgundy/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none"></div>
+                
+                <div className="relative z-10">
+                    <h1 className="text-[32px] font-extrabold text-tk-text m-0 mb-3 tracking-tight">Subscription & Billing</h1>
+                    <p className="text-[15px] text-tk-text-secondary m-0 max-w-lg leading-relaxed">Manage your restaurant's access to TableKard. Upgrade or extend your plan to continue unlocking the full potential of your business operations.</p>
+                    
+                    <div className="mt-8 inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-tk-bg-surface border-[1.5px] border-tk-border shadow-sm">
+                        <span className="relative flex h-3 w-3">
+                            {statusInfo.status === 'active' && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-tk-success opacity-75"></span>}
+                            <span className={`relative inline-flex rounded-full h-3 w-3 ${statusInfo.status === 'active' ? 'bg-tk-success' : 'bg-tk-error'}`}></span>
+                        </span>
+                        <span className="text-[13px] font-bold text-tk-text uppercase tracking-widest">
+                            Status: <span className={statusInfo.status === 'active' ? 'text-tk-success' : 'text-tk-error'}>{statusInfo.label}</span>
+                        </span>
                     </div>
-                )}
-
-                {/* Status Card */}
-                <div className="bg-white border border-[#E2E8F0] rounded-3xl py-7 px-8 mb-8 flex items-center justify-between gap-8 flex-wrap shadow-[0_4px_16px_rgba(0,0,0,0.06)] dark:bg-tk-bg-card dark:border-tk-border max-md:flex-col max-md:items-start max-md:gap-5">
-                    <div className="flex items-center gap-5">
-                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shrink-0 ${statusInfo.status}`}>
-                            {statusInfo.icon}
-                        </div>
-                        <div className="flex flex-col">
-                            <h3 className="text-[1.1rem] font-semibold m-0 mb-1 text-[#1A202C] dark:text-tk-text">
-                                Subscription Status{' '}
-                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[0.8rem] font-semibold uppercase tracking-[0.03em] ${statusInfo.status}`}>
-                                    {statusInfo.label}
-                                </span>
-                            </h3>
-                            <p className="text-[0.875rem] text-[#4A5568] m-0 dark:text-tk-text-secondary">{statusInfo.message}</p>
-                        </div>
-                    </div>
-                    {statusInfo.status === 'active' && (
-                        <div className="flex flex-col items-end gap-2 max-md:items-start max-md:flex-row">
-                            <div className="text-2xl font-bold text-[#1A202C] leading-none dark:text-tk-text">{days}</div>
-                            <div className="text-[0.8rem] text-[#4A5568] uppercase tracking-[0.05em] dark:text-tk-text-secondary">Days Remaining</div>
-                        </div>
+                </div>
+                
+                {/* Dynamic Days Remaining Circular Badge */}
+                <div className="relative z-10 flex flex-col items-center justify-center bg-tk-bg-surface rounded-2xl p-7 border-[1.5px] border-tk-border shadow-sm min-w-[200px]">
+                    {statusInfo.status === 'active' ? (
+                        <>
+                            <div className="text-[48px] font-black text-tk-text leading-none mb-2 tracking-tighter">{days}</div>
+                            <div className="text-[12px] font-bold text-tk-text-secondary uppercase tracking-[0.2em]">Days Left</div>
+                        </>
+                    ) : (
+                        <>
+                            <div className="text-[48px] mb-3">{statusInfo.icon}</div>
+                            <div className="text-[14px] font-bold text-tk-error text-center uppercase tracking-widest">Action Required</div>
+                        </>
                     )}
                 </div>
+            </div>
 
-                {/* Plan Selection */}
-                <div className="mb-8">
-                    <h2 className="text-[18px] font-semibold text-[#1A202C] m-0 mb-4 dark:text-tk-text">{statusInfo.status === 'active' ? 'Extend Your Plan' : 'Choose a Plan'}</h2>
-                    <div className="grid grid-cols-4 gap-4 max-lg:grid-cols-2 max-md:grid-cols-2 max-sm:grid-cols-1 max-md:gap-3">
-                        {dbPlans.map((plan) => (
-                            <div
-                                key={plan.duration}
-                                className={`subscription-plan-card${selectedPlan === plan.duration ? ' border-tk-burgundy bg-[linear-gradient(135deg,#f0faf3_0%,#ffffff_100%)] shadow-[0_0_0_1px_rgba(139,58,30,0.3),0_8px_24px_rgba(139,58,30,0.12)] dark:bg-tk-bg-hover dark:border-tk-burgundy' : ''}${plan.popular ? ' relative' : ''}`}
-                                onClick={() => setSelectedPlan(plan.duration)}
-                            >
+            {/* SaaS Pricing Cards */}
+            <div className="mb-16">
+                <div className="text-center mb-10">
+                    <h2 className="text-[28px] font-extrabold text-tk-text m-0 mb-3 tracking-tight">Choose the Perfect Plan</h2>
+                    <p className="text-[15px] text-tk-text-secondary m-0">Simple, transparent pricing to power your restaurant's growth.</p>
+                </div>
+                
+                <div className="grid grid-cols-4 gap-6 max-lg:grid-cols-2 max-sm:grid-cols-1 items-stretch pt-4">
+                    {dbPlans.map((plan) => {
+                        const isCurrentPlan = currentPlanDuration === plan.duration;
+                        
+                        return (
+                        <div
+                            key={plan.duration}
+                            className={`relative flex flex-col bg-tk-bg-card rounded-[24px] transition-all duration-300 ${
+                                plan.popular 
+                                ? 'border-[2px] border-tk-burgundy shadow-[0_12px_40px_rgba(139,58,30,0.15)] -translate-y-4 max-lg:-translate-y-0 z-10' 
+                                : 'border-[1.5px] border-tk-border shadow-sm hover:shadow-xl hover:border-tk-burgundy/40 hover:-translate-y-2'
+                            }`}
+                        >
+                            {plan.popular && (
+                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[linear-gradient(135deg,var(--tk-burgundy),#6B2A15)] text-white text-[11px] font-bold px-4 py-1.5 rounded-full uppercase tracking-[0.2em] shadow-md whitespace-nowrap z-20">
+                                    Most Popular
+                                </div>
+                            )}
+                            
+                            {isCurrentPlan && (
+                                <div className="absolute top-0 right-0 bg-tk-success text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl rounded-tr-[22px] uppercase tracking-widest z-20 shadow-sm">
+                                    Current Plan
+                                </div>
+                            )}
+                            
+                            <div className="p-8 border-b border-tk-border/50 text-center relative overflow-hidden rounded-t-[24px] flex flex-col items-center justify-center">
                                 {plan.popular && (
-                                    <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-[linear-gradient(135deg,var(--tk-burgundy),#6B2A15)] text-white text-[0.7rem] font-bold px-3 py-1 rounded-full uppercase tracking-[0.05em] whitespace-nowrap">Best Value</div>
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-tk-burgundy/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
                                 )}
-                                {selectedPlan === plan.duration && (
-                                    <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-tk-burgundy flex items-center justify-center text-white text-[0.75rem]">✓</div>
-                                )}
-                                <div className="text-[0.85rem] font-semibold text-[#4A5568] mb-3 uppercase tracking-[0.04em] dark:text-tk-text-secondary">{plan.label}</div>
-                                <div className="text-3xl font-extrabold text-[#1A202C] mb-1 leading-[1.1] dark:text-tk-text max-md:text-[1.5rem]">
-                                    ₹{plan.price.toLocaleString('en-IN')}
+                                <div className="text-[14px] font-bold text-tk-text-secondary mb-5 uppercase tracking-[0.15em] relative z-10">{plan.label}</div>
+                                <div className="flex items-start justify-center gap-1 mb-2 relative z-10">
+                                    <span className="text-[20px] font-bold text-tk-text mt-1">₹</span>
+                                    <span className="text-[42px] font-black text-tk-text leading-none tracking-tighter">{plan.price.toLocaleString('en-IN')}</span>
                                 </div>
-                                <div className="text-[0.825rem] text-[#4A5568] mb-3 dark:text-tk-text-secondary">
-                                    ₹{plan.perMonth}/month
+                                <div className="text-[14px] text-tk-text-secondary font-semibold relative z-10">
+                                    Just ₹{plan.perMonth} / month
                                 </div>
-                                {plan.savings > 0 && (
-                                    <div className="inline-block bg-[rgba(72,187,120,0.12)] text-[#22543D] text-[0.75rem] font-semibold px-2.5 py-1 rounded-md">
+                                {plan.savings > 0 ? (
+                                    <div className="mt-4 inline-block bg-tk-success-bg text-tk-success text-[12px] font-bold px-3 py-1.5 rounded-full relative z-10 uppercase tracking-wider">
                                         Save {plan.savings}%
+                                    </div>
+                                ) : (
+                                    <div className="mt-4 inline-block px-3 py-1.5 opacity-0 pointer-events-none text-[12px]">
+                                        No savings
                                     </div>
                                 )}
                             </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Pay Button */}
-                <div className="flex justify-center mb-10">
-                    <button
-                        className="inline-flex items-center gap-2.5 px-10 py-3.5 bg-[linear-gradient(135deg,var(--tk-burgundy)_0%,#6B2A15_100%)] text-white text-base font-semibold border-none rounded-2xl cursor-pointer transition-all duration-250 shadow-[0_4px_16px_rgba(139,58,30,0.3)] hover:not(:disabled):-translate-y-px hover:not(:disabled):shadow-[0_6px_20px_rgba(139,58,30,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={isProcessing || !activeRestaurantId}
-                        onClick={handleRenew}
-                    >
-                        {isProcessing ? (
-                            <>
-                                <span className="inline-block w-4 h-4 border-2 border-[rgba(255,255,255,0.3)] border-t-white rounded-full animate-[sub-spin_0.6s_linear_infinite]" />
-                                Processing...
-                            </>
-                        ) : (
-                            <>
-                                 {statusInfo.status === 'active' ? 'Extend' : 'Subscribe'} — ₹{activePlan.price.toLocaleString('en-IN')} for {activePlan.label}
-                            </>
-                        )}
-                    </button>
-                </div>
-
-                {/* Payment History */}
-                <div className="mb-8">
-                    <h2 className="text-[18px] font-semibold text-[#1A202C] m-0 mb-4 dark:text-tk-text">Payment History</h2>
-                    <div className="bg-white border border-[#E2E8F0] rounded-3xl overflow-hidden shadow-[0_4px_16px_rgba(0,0,0,0.06)] dark:bg-tk-bg-card dark:border-tk-border">
-                        {payments.length === 0 ? (
-                            <div className="p-10 text-center text-[#4A5568] text-[0.9rem] dark:text-tk-text-secondary">
-                                No subscription payments yet.
+                            
+                            <div className="p-8 flex-1 flex flex-col bg-tk-bg-surface/30 rounded-b-[24px]">
+                                <div className="text-[12px] font-bold text-tk-text mb-5 uppercase tracking-widest text-center">What's included</div>
+                                <ul className="flex flex-col gap-4 mb-8">
+                                    {PLAN_FEATURES.map((feature, i) => (
+                                        <li key={i} className="flex items-center gap-3 text-[14px] text-tk-text-secondary font-medium">
+                                            <CheckCircle2 size={18} className="text-tk-burgundy shrink-0" />
+                                            <span>{feature}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                                
+                                <div className="mt-auto">
+                                    <button
+                                        className={`w-full py-4 rounded-xl font-bold text-[15px] transition-all flex items-center justify-center gap-2 uppercase tracking-wider ${
+                                            plan.popular
+                                            ? 'bg-tk-burgundy text-white hover:bg-[#6B2A15] shadow-lg hover:shadow-xl hover:-translate-y-0.5'
+                                            : 'bg-tk-burgundy-bg text-tk-burgundy hover:bg-tk-burgundy hover:text-white shadow-sm'
+                                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                        disabled={isProcessing !== null || !activeRestaurantId}
+                                        onClick={() => handleRenew(plan.duration)}
+                                    >
+                                        {isProcessing === plan.duration ? (
+                                            <>
+                                                <Loader2 size={18} className="animate-spin" />
+                                                Processing...
+                                            </>
+                                        ) : isCurrentPlan ? (
+                                            'Extend Plan'
+                                        ) : (
+                                            'Subscribe Now'
+                                        )}
+                                    </button>
+                                </div>
                             </div>
-                        ) : (
-                            <div className="w-full overflow-x-auto">
-                                <table className="w-full border-collapse">
-                                    <thead>
-                                        <tr>
-                                            <th className="text-left px-5 py-3.5 text-[0.8rem] font-semibold text-[#4A5568] uppercase tracking-[0.05em] border-b-2 border-[#E2E8F0] bg-[#F7FAFC] dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text-secondary">Date</th>
-                                            <th className="text-left px-5 py-3.5 text-[0.8rem] font-semibold text-[#4A5568] uppercase tracking-[0.05em] border-b-2 border-[#E2E8F0] bg-[#F7FAFC] dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text-secondary">Plan</th>
-                                            <th className="text-left px-5 py-3.5 text-[0.8rem] font-semibold text-[#4A5568] uppercase tracking-[0.05em] border-b-2 border-[#E2E8F0] bg-[#F7FAFC] dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text-secondary">Amount</th>
-                                            <th className="text-left px-5 py-3.5 text-[0.8rem] font-semibold text-[#4A5568] uppercase tracking-[0.05em] border-b-2 border-[#E2E8F0] bg-[#F7FAFC] dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text-secondary">Period</th>
-                                            <th className="text-left px-5 py-3.5 text-[0.8rem] font-semibold text-[#4A5568] uppercase tracking-[0.05em] border-b-2 border-[#E2E8F0] bg-[#F7FAFC] dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text-secondary">Status</th>
+                        </div>
+                    )})}
+                </div>
+            </div>
+
+            {/* Payment History */}
+            <div>
+                <h2 className="text-[20px] font-bold text-tk-text m-0 mb-5 tracking-tight">Payment History</h2>
+                <div className="bg-tk-bg-card rounded-[16px] border-[1.5px] border-tk-border shadow-sm flex flex-col h-full relative z-0 overflow-hidden">
+                    {payments.length === 0 ? (
+                        <div className="p-12 text-center text-tk-text-secondary text-[15px] font-medium flex flex-col items-center gap-3">
+                            <Calendar size={32} className="text-tk-border" />
+                            No subscription payments yet.
+                        </div>
+                    ) : (
+                        <div className="w-full overflow-x-auto overflow-y-auto max-h-[400px] relative rounded-[16px]">
+                            <table className="w-full text-left border-collapse table-fixed min-w-[700px]">
+                                <thead>
+                                    <tr>
+                                        <th className="sticky top-0 z-10 w-[20%] px-6 py-4 text-[12px] font-bold text-tk-text-secondary uppercase tracking-[0.1em] bg-tk-bg-surface border-b border-tk-border">Date</th>
+                                        <th className="sticky top-0 z-10 w-[20%] px-6 py-4 text-[12px] font-bold text-tk-text-secondary uppercase tracking-[0.1em] bg-tk-bg-surface border-b border-tk-border">Plan</th>
+                                        <th className="sticky top-0 z-10 w-[20%] px-6 py-4 text-[12px] font-bold text-tk-text-secondary uppercase tracking-[0.1em] bg-tk-bg-surface border-b border-tk-border">Amount</th>
+                                        <th className="sticky top-0 z-10 w-[25%] px-6 py-4 text-[12px] font-bold text-tk-text-secondary uppercase tracking-[0.1em] bg-tk-bg-surface border-b border-tk-border">Period</th>
+                                        <th className="sticky top-0 z-10 w-[15%] px-6 py-4 text-[12px] font-bold text-tk-text-secondary uppercase tracking-[0.1em] bg-tk-bg-surface border-b border-tk-border text-center">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {payments.map((payment, i) => (
+                                        <tr key={payment.id} className={`group hover:bg-tk-bg-hover transition-colors ${i !== payments.length - 1 ? 'border-b border-tk-border' : ''}`}>
+                                            <td className="px-6 py-4 text-[14px] text-tk-text whitespace-nowrap font-medium">
+                                                {formatDate(payment.createdAt)}
+                                            </td>
+                                            <td className="px-6 py-4 text-[14px] text-tk-text font-medium">
+                                                {planLabel(payment.planDuration)}
+                                            </td>
+                                            <td className="px-6 py-4 text-[14px] font-bold text-tk-text">
+                                                ₹{payment.amount.toLocaleString('en-IN')}
+                                            </td>
+                                            <td className="px-6 py-4 text-[13px] text-tk-text-secondary font-medium">
+                                                {payment.startsAt && payment.endsAt
+                                                    ? <div>{formatDate(payment.startsAt)} — {formatDate(payment.endsAt)}</div>
+                                                    : '—'}
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-[0.1em] ${
+                                                    payment.status === 'succeeded' ? 'bg-tk-success-bg text-tk-success' :
+                                                    payment.status === 'failed' ? 'bg-tk-error-bg text-tk-error' :
+                                                    'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'
+                                                }`}>
+                                                    {payment.status}
+                                                </span>
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        {payments.map((payment) => (
-                                            <tr key={payment.id} className="hover:bg-[#F7FAFC] dark:hover:bg-tk-bg-hover">
-                                                <td className="px-5 py-3.5 text-[0.9rem] text-[#1A202C] border-b border-[#E2E8F0] dark:border-tk-border dark:text-tk-text">{formatDate(payment.createdAt)}</td>
-                                                <td className="px-5 py-3.5 text-[0.9rem] text-[#1A202C] border-b border-[#E2E8F0] dark:border-tk-border dark:text-tk-text">{planLabel(payment.planDuration)}</td>
-                                                <td className="px-5 py-3.5 text-[0.9rem] text-[#1A202C] border-b border-[#E2E8F0] dark:border-tk-border dark:text-tk-text font-semibold">
-                                                    ₹{payment.amount.toLocaleString('en-IN')}
-                                                </td>
-                                                <td>
-                                                    {payment.startsAt && payment.endsAt
-                                                        ? `${formatDate(payment.startsAt)} — ${formatDate(payment.endsAt)}`
-                                                        : '—'}
-                                                </td>
-                                                <td>
-                                                    <span className={`sub-status-${payment.status}`}>
-                                                        {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </div>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </div>
-        </>
+            </div>
+        </div>
     );
 };
 

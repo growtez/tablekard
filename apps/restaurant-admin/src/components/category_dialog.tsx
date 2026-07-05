@@ -38,11 +38,11 @@ const CategoryDialog: React.FC<CategoryDialogProps> = ({
                 image_url: (category as any).image_url ?? null
             });
             setImagePreview((category as any).image_url ?? null);
-        } else {
+        } else if (mode === 'add' && !category) {
             setFormData({ name: '', description: '', sort_order: 0, active: true, image_url: null });
             setImagePreview(null);
         }
-    }, [mode, category, isOpen]);
+    }, [mode, category]);
 
     const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -66,6 +66,10 @@ const CategoryDialog: React.FC<CategoryDialogProps> = ({
             active: formData.active,
             image_url: formData.image_url || null
         });
+        if (mode === 'add') {
+            setFormData({ name: '', description: '', sort_order: 0, active: true, image_url: null });
+            setImagePreview(null);
+        }
         onClose();
     };
 
@@ -84,8 +88,8 @@ const CategoryDialog: React.FC<CategoryDialogProps> = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000] animate-in fade-in duration-200" onClick={onClose}>
-            <div className="bg-tk-bg-card rounded-[24px] p-6 md:p-8 w-[95%] md:w-full max-w-[800px] max-h-[90vh] overflow-y-auto shadow-2xl text-tk-text animate-in slide-in-from-bottom-8 duration-300" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/50 flex justify-end z-[1000] animate-in fade-in duration-200" onClick={onClose}>
+            <div className="bg-tk-bg-card p-6 md:p-8 w-full max-w-[500px] h-full overflow-y-auto shadow-2xl text-tk-text animate-in slide-in-from-right duration-300 border-l border-tk-border" onClick={(e) => e.stopPropagation()}>
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-semibold text-tk-text m-0">
                         {mode === 'add' ? 'Add New Category' : 'Edit Category'}

@@ -36,11 +36,17 @@ const Menu: React.FC = () => {
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'price_high' | 'price_low' | 'a_z'>('newest');
   const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
   const sortDropdownRef = useRef<HTMLDivElement>(null);
+  
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+  const categoryDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target as Node)) {
         setIsSortDropdownOpen(false);
+      }
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target as Node)) {
+        setIsCategoryDropdownOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -520,39 +526,56 @@ const Menu: React.FC = () => {
         <div className="animate-[fadeIn_0.2s_ease-in-out]">
 
           {/* Tabs & Controls */}
-          <div className="sticky top-0 z-30 py-2 bg-tk-bg-card shadow-sm border-b border-tk-border flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 mb-4">
-            <div className="flex gap-4 sm:gap-8 overflow-x-auto hide-scrollbar pt-1 w-full xl:w-auto flex-1 pb-1">
-              <button
-                onClick={() => setSelectedCategoryId('all')}
-                className={`pb-2 text-sm font-semibold whitespace-nowrap transition-colors duration-200 ${selectedCategoryId === 'all'
-                  ? 'text-tk-burgundy border-b-2 border-tk-burgundy'
-                  : 'text-tk-text-secondary hover:text-tk-text'
-                  }`}
-              >
-                All <span className="ml-1 opacity-75">({getCategoryCount('all')})</span>
-              </button>
-              {categories.map((category) => (
-                <div key={category.id} className="flex items-center gap-1 shrink-0">
-                  <button
-                    onClick={() => setSelectedCategoryId(category.id)}
-                    className={`pb-2 text-sm font-semibold whitespace-nowrap transition-colors duration-200 ${selectedCategoryId === category.id
-                      ? 'text-tk-burgundy border-b-2 border-tk-burgundy'
-                      : 'text-tk-text-secondary hover:text-tk-text'
-                      }`}
-                  >
-                    {category.name} <span className="ml-1 opacity-75">({getCategoryCount(category.id)})</span>
-                  </button>
-                  {selectedCategoryId === category.id && (
+          <div className="sticky top-0 z-50 py-2 bg-tk-bg-card shadow-sm border-b border-tk-border flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 mb-4">
+            <div className="flex items-center gap-2 w-full xl:w-auto flex-1 pb-1">
+              <div className="relative" ref={categoryDropdownRef}>
+                <button
+                  onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
+                  className="flex items-center justify-between gap-2 px-4 py-2 bg-tk-bg-surface border border-tk-border rounded-xl shadow-sm text-sm font-semibold text-tk-text hover:bg-tk-bg-hover transition-colors min-w-[200px]"
+                >
+                  <span>
+                    {selectedCategoryId === 'all' ? 'All Categories' : getCategoryName(selectedCategoryId)}
+                    <span className="ml-1.5 opacity-60 font-medium">({getCategoryCount(selectedCategoryId)})</span>
+                  </span>
+                  <ChevronDown size={16} className={`transition-transform duration-200 text-tk-text-secondary ${isCategoryDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {isCategoryDropdownOpen && (
+                  <div className="absolute left-0 top-full mt-2 w-full min-w-[240px] bg-tk-bg-surface border border-tk-border rounded-xl shadow-lg z-50 py-1 overflow-hidden animate-[fadeIn_0.15s_ease-out] max-h-[300px] overflow-y-auto tk-table-scroll">
                     <button
-                      className="bg-transparent border-none cursor-pointer text-tk-text-secondary p-1 hover:text-tk-text mb-2"
-                      onClick={(e) => { e.stopPropagation(); handleEditCategory(category); }}
-                      title="Edit Category"
+                      onClick={() => { setSelectedCategoryId('all'); setIsCategoryDropdownOpen(false); }}
+                      className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors flex justify-between items-center ${selectedCategoryId === 'all' ? 'bg-tk-burgundy/10 text-tk-burgundy' : 'text-tk-text hover:bg-tk-bg-hover'}`}
                     >
-                      <Edit3 size={14} />
+                      <span>All Categories</span>
+                      <span className="text-xs opacity-60">{getCategoryCount('all')}</span>
                     </button>
-                  )}
-                </div>
-              ))}
+                    {categories.map((category) => (
+                      <button
+                        key={category.id}
+                        onClick={() => { setSelectedCategoryId(category.id); setIsCategoryDropdownOpen(false); }}
+                        className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors flex justify-between items-center ${selectedCategoryId === category.id ? 'bg-tk-burgundy/10 text-tk-burgundy' : 'text-tk-text hover:bg-tk-bg-hover'}`}
+                      >
+                        <span className="truncate pr-2">{category.name}</span>
+                        <span className="text-xs opacity-60 shrink-0">{getCategoryCount(category.id)}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
+              {selectedCategoryId !== 'all' && (
+                <button
+                  className="flex items-center gap-1.5 px-3 py-2 bg-tk-bg-surface text-tk-text-secondary border border-tk-border rounded-xl text-[13px] font-medium cursor-pointer transition-all duration-200 hover:bg-tk-bg-hover hover:text-tk-text shadow-sm"
+                  onClick={() => {
+                    const cat = categories.find(c => c.id === selectedCategoryId);
+                    if (cat) handleEditCategory(cat);
+                  }}
+                  title="Edit Selected Category"
+                >
+                  <Edit3 size={14} />
+                  <span className="hidden sm:inline">Edit Category</span>
+                </button>
+              )}
             </div>
 
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pb-2 w-full xl:w-auto xl:ml-4">
