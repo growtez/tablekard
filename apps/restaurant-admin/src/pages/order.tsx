@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { TrendingUp, X, CheckCircle, Package, Check, ChevronDown, Search, ArrowUpDown, List, LayoutGrid, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { TrendingUp, X, CheckCircle, Package, Check, ChevronDown, Search, ArrowUpDown, List, LayoutGrid, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 
 import { useAuth } from '../context/AuthContext';
@@ -241,7 +241,37 @@ const Order: React.FC = () => {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState<string>(location.state?.activeTab || 'All');
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'amount_high' | 'amount_low'>('oldest');
+  const [selectedDateRange, setSelectedDateRange] = useState<string>('all');
+  const [customDate, setCustomDate] = useState<string>('');
+  const [weekOffset, setWeekOffset] = useState<number>(0);
+  const [monthOffset, setMonthOffset] = useState<number>(0);
+  const [isDateDropdownOpen, setIsDateDropdownOpen] = useState(false);
+  const dateDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setWeekOffset(0);
+    setMonthOffset(0);
+  }, [selectedDateRange]);
+
+  const getWeekDateRange = (offset: number) => {
+    const now = new Date();
+    const startOfThisWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+    const startOfWeek = new Date(startOfThisWeek);
+    startOfWeek.setDate(startOfWeek.getDate() - offset * 7);
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(endOfWeek.getDate() + 6);
+    const formatDate = (d: Date) => {
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    };
+    return `${formatDate(startOfWeek)} - ${formatDate(endOfWeek)}, ${endOfWeek.getFullYear()}`;
+  };
+
+  const getMonthLabel = (offset: number) => {
+    const now = new Date();
+    const targetMonth = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+    return targetMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  };
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'amount_high' | 'amount_low'>('newest');
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
   const sortDropdownRef = useRef<HTMLDivElement>(null);
@@ -276,6 +306,9 @@ const Order: React.FC = () => {
       if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target as Node)) {
         setIsSortDropdownOpen(false);
       }
+      if (dateDropdownRef.current && !dateDropdownRef.current.contains(event.target as Node)) {
+        setIsDateDropdownOpen(false);
+      }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -284,6 +317,16 @@ const Order: React.FC = () => {
   const handlePaymentComplete = async (paymentId: string) => {
     try {
       await updatePaymentStatus(paymentId, 'paid');
+      if (activeRestaurantId) invalidateOrders(activeRestaurantId);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to update payment status');
+    }
+  };
+
+  const handleUpdatePaymentStatus = async (orderId: string, status: string) => {
+    try {
+      await updatePaymentStatus(orderId, status);
       if (activeRestaurantId) invalidateOrders(activeRestaurantId);
     } catch (err) {
       console.error(err);
@@ -301,15 +344,47 @@ const Order: React.FC = () => {
     }
   };
 
-  const activeOrders = orders.filter(order => {
+  const dateFilteredOrders = useMemo(() => {
+    return orders.filter(order => {
+      const tDate = new Date(order.createdAt);
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+
+      if (selectedDateRange === 'today') {
+        return tDate >= startOfToday;
+      } else if (selectedDateRange === 'yesterday') {
+        return tDate >= startOfYesterday && tDate < startOfToday;
+      } else if (selectedDateRange === 'week') {
+        const startOfThisWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+        const startOfWeekN = new Date(startOfThisWeek);
+        startOfWeekN.setDate(startOfWeekN.getDate() - weekOffset * 7);
+        const endOfWeekN = new Date(startOfWeekN);
+        endOfWeekN.setDate(endOfWeekN.getDate() + 7);
+        return tDate >= startOfWeekN && tDate < endOfWeekN;
+      } else if (selectedDateRange === 'month') {
+        const startOfMonthN = new Date(now.getFullYear(), now.getMonth() - monthOffset, 1);
+        const endOfMonthN = new Date(now.getFullYear(), now.getMonth() - monthOffset + 1, 1);
+        return tDate >= startOfMonthN && tDate < endOfMonthN;
+      } else if (selectedDateRange === 'all') {
+        return true;
+      } else if (selectedDateRange === 'custom' && customDate) {
+        const selectedDay = new Date(customDate).toDateString();
+        return tDate.toDateString() === selectedDay;
+      }
+      return true;
+    });
+  }, [orders, selectedDateRange, weekOffset, monthOffset, customDate]);
+
+  const activeOrders = dateFilteredOrders.filter(order => {
     const s = order.status?.toUpperCase();
     return s !== 'COMPLETED' && s !== 'CANCELLED' && (s !== 'READY' || !order.isPaid);
   });
-  const completedOrders = orders.filter(order => {
+  const completedOrders = dateFilteredOrders.filter(order => {
     const s = order.status?.toUpperCase();
     return s === 'COMPLETED' || (s === 'READY' && order.isPaid);
   });
-  const cancelledOrders = orders.filter(order => order.status?.toUpperCase() === 'CANCELLED');
+  const cancelledOrders = dateFilteredOrders.filter(order => order.status?.toUpperCase() === 'CANCELLED');
 
   const now = new Date();
   const isSameDay = (d1: Date, d2: Date) =>
@@ -346,19 +421,19 @@ const Order: React.FC = () => {
   const tabs = ['All', 'Completed', 'Active', 'Cancelled'];
 
   const tabCounts: Record<string, number> = {
-    'All': orders.length,
+    'All': dateFilteredOrders.length,
     'Active': activeOrders.length,
     'Completed': completedOrders.length,
     'Cancelled': cancelledOrders.length,
   };
 
   const filteredOrders = () => {
-    let result = orders;
+    let result = dateFilteredOrders;
     switch (activeTab) {
       case 'Active': result = activeOrders; break;
       case 'Completed': result = completedOrders; break;
       case 'Cancelled': result = cancelledOrders; break;
-      case 'All': default: result = orders; break;
+      case 'All': default: result = dateFilteredOrders; break;
     }
 
     if (searchTerm) {
@@ -489,11 +564,12 @@ const Order: React.FC = () => {
       </div>
 
       {/* Tabs & Controls */}
+      {/* Tabs & Controls */}
       <div
         ref={stickyContainerRef}
-        className="sticky top-0 z-30 py-2 bg-tk-bg-card shadow-sm border-b border-tk-border flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 mb-2"
+        className="sticky top-0 z-50 py-2 bg-tk-bg-card shadow-sm border-b border-tk-border flex flex-col gap-2 mb-2 pl-12 md:pl-0 pr-4"
       >
-        <div className="flex gap-4 sm:gap-8 overflow-x-auto hide-scrollbar pt-1 w-full xl:w-auto flex-1 pb-1 pl-12 md:pl-0">
+        <div className="flex gap-4 sm:gap-8 overflow-x-auto hide-scrollbar pt-1 pb-1">
           {tabs.map(tab => (
             <button
               key={tab}
@@ -508,221 +584,300 @@ const Order: React.FC = () => {
           ))}
         </div>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pb-2 w-full xl:w-auto xl:ml-4">
-          <div className="flex bg-tk-bg-surface border border-tk-border rounded-full p-0.5 shrink-0 self-start sm:self-auto">
-            <button
-              onClick={() => setViewMode('table')}
-              className={`p-1.5 sm:p-1.5 rounded-full transition-colors flex items-center justify-center ${viewMode === 'table' ? 'bg-tk-burgundy/10 text-tk-burgundy' : 'text-tk-text-secondary hover:text-tk-text'}`}
-              title="Table View"
-            >
-              <List size={16} />
-            </button>
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`p-1.5 sm:p-1.5 rounded-full transition-colors flex items-center justify-center ${viewMode === 'grid' ? 'bg-tk-burgundy/10 text-tk-burgundy' : 'text-tk-text-secondary hover:text-tk-text'}`}
-              title="Grid View"
-            >
-              <LayoutGrid size={16} />
-            </button>
-          </div>
-
-          <div className="relative w-full sm:w-auto" ref={sortDropdownRef}>
-            <button
-              onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
-              className="flex justify-between sm:justify-start items-center gap-1.5 px-4 py-2 sm:px-3 sm:py-1.5 rounded-full border border-tk-border bg-tk-bg-surface hover:bg-tk-bg-hover text-tk-text-secondary hover:text-tk-text text-[13px] sm:text-[12px] font-semibold transition-colors whitespace-nowrap h-[36px] sm:h-[32px] w-full shrink-0"
-            >
-              <div className="flex items-center gap-1.5">
-                <ArrowUpDown size={13} />
-                <span className="opacity-70 font-medium">Sort by:</span>
-                {sortBy === 'newest' && 'Newest First'}
-                {sortBy === 'oldest' && 'Oldest First'}
-                {sortBy === 'amount_high' && 'High to Low'}
-                {sortBy === 'amount_low' && 'Low to High'}
-              </div>
-              <ChevronDown size={14} className="sm:hidden" />
-            </button>
-
-            {isSortDropdownOpen && (
-              <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-full sm:w-[180px] bg-tk-bg-surface border border-tk-border rounded-xl shadow-lg z-50 py-1 overflow-hidden animate-[fadeIn_0.15s_ease-out]">
-                {[
-                  { value: 'newest', label: 'Newest First' },
-                  { value: 'oldest', label: 'Oldest First' },
-                  { value: 'amount_high', label: 'Amount: High to Low' },
-                  { value: 'amount_low', label: 'Amount: Low to High' }
-                ].map(option => (
-                  <button
-                    key={option.value}
-                    onClick={() => {
-                      setSortBy(option.value as any);
-                      setIsSortDropdownOpen(false);
-                    }}
-                    className={`w-full text-left px-4 py-3 sm:py-2 text-[14px] sm:text-[13px] font-medium transition-colors ${sortBy === option.value
-                      ? 'bg-tk-burgundy/10 text-tk-burgundy'
-                      : 'text-tk-text hover:bg-tk-bg-hover'
-                      }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="relative w-full sm:w-[240px] shrink-0">
-            <Search className="absolute left-3 top-[calc(50%)] -translate-y-1/2 text-tk-text-secondary" size={14} />
-            <input
-              type="text"
-              placeholder="Search orders..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-[36px] sm:h-[32px] pl-9 pr-8 bg-tk-bg-surface border border-tk-border rounded-full text-tk-text text-[14px] sm:text-[13px] focus:outline-none focus:border-tk-burgundy transition-colors"
-            />
-            {searchTerm && (
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 w-full">
+          {/* Date Filter on the left */}
+          <div className="flex flex-wrap items-center gap-4 pb-1">
+            <div className="relative" ref={dateDropdownRef}>
               <button
-                onClick={() => setSearchTerm('')}
-                className="absolute right-3 top-[calc(50%)] -translate-y-1/2 text-tk-text-secondary hover:text-tk-text focus:outline-none flex items-center justify-center p-0"
+                onClick={() => setIsDateDropdownOpen(!isDateDropdownOpen)}
+                className={`pb-2 text-sm font-semibold whitespace-nowrap transition-colors duration-200 flex items-center gap-1.5 cursor-pointer ${
+                  selectedDateRange !== 'all' || isDateDropdownOpen
+                    ? 'text-tk-burgundy border-b-2 border-tk-burgundy'
+                    : 'text-tk-text-secondary hover:text-tk-text'
+                }`}
               >
-                <X size={14} />
+                <Calendar size={14} />
+                <span>Date: {
+                  selectedDateRange === 'all' ? 'All Time' :
+                  selectedDateRange === 'today' ? 'Today' :
+                  selectedDateRange === 'yesterday' ? 'Yesterday' :
+                  selectedDateRange === 'week' ? 'This Week' :
+                  selectedDateRange === 'month' ? 'This Month' :
+                  selectedDateRange === 'custom' ? 'Custom' : 'All Time'
+                }</span>
+                <ChevronDown size={14} className="opacity-70" />
               </button>
+
+              {isDateDropdownOpen && (
+                <div className="absolute left-0 top-full mt-1.5 w-[160px] bg-tk-bg-surface border border-tk-border rounded-xl shadow-lg z-50 py-1 overflow-hidden animate-[fadeIn_0.15s_ease-out]">
+                  {[
+                    { value: 'all', label: 'All Time' },
+                    { value: 'today', label: 'Today' },
+                    { value: 'yesterday', label: 'Yesterday' },
+                    { value: 'week', label: 'This Week' },
+                    { value: 'month', label: 'This Month' },
+                    { value: 'custom', label: 'Custom' }
+                  ].map(option => (
+                    <button
+                      key={option.value}
+                      onClick={() => {
+                        setSelectedDateRange(option.value);
+                        setIsDateDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-2 text-[13px] font-medium transition-colors ${
+                        selectedDateRange === option.value
+                          ? 'bg-tk-burgundy/10 text-tk-burgundy'
+                          : 'text-tk-text hover:bg-tk-bg-hover'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {selectedDateRange === 'custom' && (
+              <div className="flex items-center pb-2">
+                <input
+                  type="date"
+                  className="px-3 py-1 rounded-full border border-tk-border text-[12px] font-bold bg-tk-bg-surface outline-none text-tk-text focus:border-tk-burgundy"
+                  value={customDate}
+                  onChange={(e) => setCustomDate(e.target.value)}
+                />
+              </div>
             )}
+
+            {selectedDateRange === 'week' && (
+              <div className="flex items-center gap-2 bg-tk-bg-surface px-2 py-1 rounded-full border border-tk-border shadow-sm pb-2 mb-2">
+                <button
+                  type="button"
+                  className="flex items-center justify-center w-6 h-6 rounded-full hover:bg-tk-bg-hover text-tk-text-secondary transition-all disabled:opacity-40"
+                  onClick={() => setWeekOffset(prev => prev + 1)}
+                  title="Previous Week"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+                <span className="text-[12px] font-bold text-tk-text min-w-[120px] text-center select-none">{getWeekDateRange(weekOffset)}</span>
+                <button
+                  type="button"
+                  className="flex items-center justify-center w-6 h-6 rounded-full hover:bg-tk-bg-hover text-tk-text-secondary transition-all disabled:opacity-40"
+                  onClick={() => setWeekOffset(prev => Math.max(0, prev - 1))}
+                  disabled={weekOffset === 0}
+                  title="Next Week"
+                >
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+            )}
+
+            {selectedDateRange === 'month' && (
+              <div className="flex items-center gap-2 bg-tk-bg-surface px-2 py-1 rounded-full border border-tk-border shadow-sm pb-2 mb-2">
+                <button
+                  type="button"
+                  className="flex items-center justify-center w-6 h-6 rounded-full hover:bg-tk-bg-hover text-tk-text-secondary transition-all disabled:opacity-40"
+                  onClick={() => setMonthOffset(prev => prev + 1)}
+                  title="Previous Month"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+                <span className="text-[12px] font-bold text-tk-text min-w-[120px] text-center select-none">{getMonthLabel(monthOffset)}</span>
+                <button
+                  type="button"
+                  className="flex items-center justify-center w-6 h-6 rounded-full hover:bg-tk-bg-hover text-tk-text-secondary transition-all disabled:opacity-40"
+                  onClick={() => setMonthOffset(prev => Math.max(0, prev - 1))}
+                  disabled={monthOffset === 0}
+                  title="Next Month"
+                >
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Controls on the right, on the same line as the date filter */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pb-2 w-full md:w-auto">
+            <div className="relative w-full sm:w-auto" ref={sortDropdownRef}>
+              <button
+                onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
+                className="flex justify-between sm:justify-start items-center gap-1.5 px-4 py-2 sm:px-3 sm:py-1.5 rounded-full border border-tk-border bg-tk-bg-surface hover:bg-tk-bg-hover text-tk-text-secondary hover:text-tk-text text-[13px] sm:text-[12px] font-semibold transition-colors whitespace-nowrap h-[36px] sm:h-[32px] w-full shrink-0"
+              >
+                <div className="flex items-center gap-1.5">
+                  <ArrowUpDown size={13} />
+                  <span className="opacity-70 font-medium">Sort by:</span>
+                  {sortBy === 'newest' && 'Newest First'}
+                  {sortBy === 'oldest' && 'Oldest First'}
+                  {sortBy === 'amount_high' && 'High to Low'}
+                  {sortBy === 'amount_low' && 'Low to High'}
+                </div>
+                <ChevronDown size={14} className="sm:hidden" />
+              </button>
+
+              {isSortDropdownOpen && (
+                <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-full sm:w-[180px] bg-tk-bg-surface border border-tk-border rounded-xl shadow-lg z-50 py-1 overflow-hidden animate-[fadeIn_0.15s_ease-out]">
+                  {[
+                    { value: 'newest', label: 'Newest First' },
+                    { value: 'oldest', label: 'Oldest First' },
+                    { value: 'amount_high', label: 'Amount: High to Low' },
+                    { value: 'amount_low', label: 'Amount: Low to High' }
+                  ].map(option => (
+                    <button
+                      key={option.value}
+                      onClick={() => {
+                        setSortBy(option.value as any);
+                        setIsSortDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-3 sm:py-2 text-[14px] sm:text-[13px] font-medium transition-colors ${sortBy === option.value
+                        ? 'bg-tk-burgundy/10 text-tk-burgundy'
+                        : 'text-tk-text hover:bg-tk-bg-hover'
+                        }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="relative w-full sm:w-[240px] shrink-0">
+              <Search className="absolute left-3 top-[calc(50%)] -translate-y-1/2 text-tk-text-secondary" size={14} />
+              <input
+                type="text"
+                placeholder="Search orders..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full h-[36px] sm:h-[32px] pl-9 pr-8 bg-tk-bg-surface border border-tk-border rounded-full text-tk-text text-[14px] sm:text-[13px] focus:outline-none focus:border-tk-burgundy transition-colors"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-3 top-[calc(50%)] -translate-y-1/2 text-tk-text-secondary hover:text-tk-text focus:outline-none flex items-center justify-center p-0"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+
+            <div className="flex bg-tk-bg-surface border border-tk-border rounded-full p-0.5 shrink-0 self-start sm:self-auto">
+              <button
+                onClick={() => setViewMode('table')}
+                className={`p-1.5 sm:p-1.5 rounded-full transition-colors flex items-center justify-center ${viewMode === 'table' ? 'bg-tk-burgundy/10 text-tk-burgundy' : 'text-tk-text-secondary hover:text-tk-text'}`}
+                title="Table View"
+              >
+                <List size={16} />
+              </button>
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-1.5 sm:p-1.5 rounded-full transition-colors flex items-center justify-center ${viewMode === 'grid' ? 'bg-tk-burgundy/10 text-tk-burgundy' : 'text-tk-text-secondary hover:text-tk-text'}`}
+                title="Grid View"
+              >
+                <LayoutGrid size={16} />
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       <div ref={tableScrollRef} className="w-full pb-8">
         {viewMode === 'table' ? (
-          <table className="w-full text-left border-collapse table-fixed min-w-[950px]">
-            <thead>
-              <tr>
-                <th
-                  className="sticky z-40 bg-tk-bg-card py-3 px-4 border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[6%] text-center shadow-sm"
-                  style={{ top: `${stickyHeight}px` }}                >
-                  Sl No
-                </th>
-
-                <th
-                  className="sticky z-40 bg-tk-bg-card py-3 px-4 border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[17%] shadow-sm"
-                  style={{ top: `${stickyHeight}px` }}                >
-                  Order Details
-                </th>
-
-                <th
-                  className="sticky z-40 bg-tk-bg-card py-3 px-4 border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[17%] shadow-sm"
-                  style={{ top: `${stickyHeight}px` }}                >
-                  Customer Info
-                </th>
-
-                <th
-                  className="sticky z-40 bg-tk-bg-card py-3 px-4 border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[25%] shadow-sm"
-                  style={{ top: `${stickyHeight}px` }}                >
-                  Payment Info
-                </th>
-
-                <th
-                  className="sticky z-40 bg-tk-bg-card py-3 px-4 border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[35%] shadow-sm"
-                  style={{ top: `${stickyHeight}px` }}                >
-                  Order Tracking
-                </th>
-              </tr>
-            </thead>
-            <tbody>
+          <>
+            {/* Mobile card view (hidden on sm+) */}
+            <div className="flex flex-col gap-3 sm:hidden">
               {isLoading ? (
-                <tr>
-                  <td colSpan={5} className="py-8 text-center text-tk-text-secondary text-sm">Loading orders...</td>
-                </tr>
+                <div className="py-8 text-center text-tk-text-secondary text-sm">Loading orders...</div>
               ) : filteredOrders().length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="py-12 text-center text-tk-text-secondary">
-                    <p className="text-sm font-medium">
-                      {activeTab === 'Active Orders'
-                        ? 'No active orders right now.'
-                        : activeTab === 'Completed'
-                          ? 'No completed orders yet.'
-                          : 'No orders found.'}
-                    </p>
-                  </td>
-                </tr>
+                <div className="py-12 text-center text-tk-text-secondary text-sm font-medium">No orders found.</div>
               ) : (
-                filteredOrders().map((order, idx) => (
-                  <tr key={idx} className="border-b border-tk-border last:border-b-0 hover:bg-tk-burgundy/5 transition-colors group">
-                    <td className="py-3 px-4 text-sm text-tk-text-secondary font-medium text-center">{idx + 1}</td>
-                    <td className="py-3 px-4 text-sm text-tk-text cursor-pointer" onClick={() => setSelectedOrder(order)}>
-                      <div className="flex flex-col">
-                        <span className="font-semibold">{order.orderNumber}</span>
-                        <span className="text-xs text-tk-text-secondary font-medium mt-0.5">{order.time}</span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-sm text-tk-text cursor-pointer" onClick={() => setSelectedOrder(order)}>
-                      <div className="flex flex-col">
-                        <span className="font-semibold">{order.customer}</span>
-                        <span className="text-xs text-tk-text-secondary font-medium mt-0.5">{order.table}</span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-sm cursor-pointer" onClick={() => setSelectedOrder(order)}>
-                      <div className="flex flex-col items-start gap-1.5">
-                        <span className="text-tk-text font-semibold">₹ {order.total}</span>
-                        <div className="flex items-center gap-1.5">
+                filteredOrders().map((order, idx) => {
+                  const getStatusIdx = (status: string) => {
+                    switch (status?.toUpperCase()) {
+                      case 'PENDING': return -1;
+                      case 'CONFIRMED': return 0;
+                      case 'PREPARING': return 1;
+                      case 'READY': return 2;
+                      case 'COMPLETED':
+                      case 'SERVED': return 2;
+                      default: return -1;
+                    }
+                  };
+                  const currentIndex = getStatusIdx(order.status);
+
+                  return (
+                    <div
+                      key={idx}
+                      className="bg-tk-bg-surface border border-tk-border rounded-xl p-3.5 flex flex-col gap-3 shadow-sm hover:shadow-md hover:border-tk-burgundy/50 transition-all cursor-pointer"
+                      onClick={() => setSelectedOrder(order)}
+                    >
+                      {/* Top row: order number + amount */}
+                      <div className="flex justify-between items-start">
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-tk-text text-sm">{order.orderNumber}</span>
+                          <span className="text-[11px] text-tk-text-secondary mt-0.5">{order.time} · {order.table}</span>
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <span className="font-bold text-tk-text text-base">₹{order.total}</span>
                           <span
-                            className={`inline-flex px-2.5 py-0.5 rounded text-[11px] font-bold ${order.isPaid ? 'bg-[#C6F6D5] text-[#22543D]' : 'bg-[#FEF2F2] text-[#E53E3E]'}`}
+                            className={`mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${
+                              order.paymentStatus?.toLowerCase() === 'paid' ? 'bg-[#C6F6D5] text-[#22543D]' : 
+                              order.paymentStatus?.toLowerCase() === 'refunded' ? 'bg-[#EDF2F7] text-[#4A5568]' : 
+                              'bg-[#FEF2F2] text-[#E53E3E]'
+                            }`}
                           >
-                            {order.isPaid ? `Paid (${order.paymentMethod})` : 'Pending'}
-                          </span>
-                          {!order.isPaid && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handlePaymentComplete(order.id);
+                            <select
+                              value={order.paymentStatus?.toLowerCase() || 'pending'}
+                              onChange={(e) => {
+                                handleUpdatePaymentStatus(order.id, e.target.value);
                               }}
-                              className="p-1 bg-[#C6F6D5] text-[#22543D] rounded hover:bg-[#9AE6B4] transition-colors flex items-center justify-center"
-                              title="Mark Paid"
+                              onClick={(e) => e.stopPropagation()}
+                              className="bg-transparent border-none outline-none text-[10px] font-bold text-inherit cursor-pointer focus:outline-none py-0.5"
                             >
-                              <CheckCircle size={12} strokeWidth={3} />
-                            </button>
-                          )}
+                              <option value="pending" className="text-tk-text bg-tk-bg-surface font-semibold">Pending</option>
+                              <option value="paid" className="text-tk-text bg-tk-bg-surface font-semibold">Paid</option>
+                              <option value="refunded" className="text-tk-text bg-tk-bg-surface font-semibold">Refunded</option>
+                            </select>
+                            {order.paymentStatus?.toLowerCase() === 'paid' && order.paymentMethod && (
+                              <span className="opacity-80 font-semibold border-l border-current pl-1 ml-0.5">
+                                {order.paymentMethod}
+                              </span>
+                            )}
+                          </span>
                         </div>
                       </div>
-                    </td>
-                    <td className="py-2 px-4">
-                      <div className="flex items-center w-full min-w-[250px] max-w-[400px] gap-4 pb-4 pt-2 px-2" onClick={(e) => e.stopPropagation()}>
+
+                      {/* Customer & Date */}
+                      <div className="flex justify-between items-end text-[12px] text-tk-text-secondary">
+                        <span className="font-semibold text-tk-text">{order.customer}</span>
+                        <span className="text-[11px]">{new Date(order.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                      </div>
+
+                      {/* Tracking stepper */}
+                      <div className="pt-2 border-t border-tk-border" onClick={(e) => e.stopPropagation()}>
                         {order.status?.toUpperCase() === 'CANCELLED' ? (
                           <div className="flex-1 flex items-center relative">
-                            <div className="flex flex-col items-center relative group">
-                              <div className="w-6 h-6 rounded-full flex items-center justify-center border-[2px] z-10 bg-[#E53E3E] border-[#E53E3E]">
-                                <Check size={14} className="text-white" strokeWidth={3} />
+                            <div className="flex flex-col items-center relative">
+                              <div className="w-5 h-5 rounded-full flex items-center justify-center border-[2px] bg-[#E53E3E] border-[#E53E3E]">
+                                <Check size={12} className="text-white" strokeWidth={3} />
                               </div>
-                              <span className="absolute top-7 text-[10px] font-medium text-[#E53E3E] whitespace-nowrap">Placed</span>
+                              <span className="absolute top-6 text-[9px] font-medium text-[#E53E3E] whitespace-nowrap">Placed</span>
                             </div>
-                            <div className="flex-1 h-[2px] mx-1 transition-colors mt-[-4px] bg-[#E53E3E]"></div>
-                            <div className="flex flex-col items-center relative group">
-                              <div className="w-6 h-6 rounded-full flex items-center justify-center border-[2px] z-10 bg-[#E53E3E] border-[#E53E3E]">
-                                <X size={14} className="text-white" strokeWidth={3} />
+                            <div className="flex-1 h-[2px] mx-1 bg-[#E53E3E]"></div>
+                            <div className="flex flex-col items-center relative">
+                              <div className="w-5 h-5 rounded-full flex items-center justify-center border-[2px] bg-[#E53E3E] border-[#E53E3E]">
+                                <X size={12} className="text-white" strokeWidth={3} />
                               </div>
-                              <span className="absolute top-7 text-[10px] font-bold text-[#E53E3E] whitespace-nowrap">Cancelled</span>
+                              <span className="absolute top-6 text-[9px] font-bold text-[#E53E3E] whitespace-nowrap">Cancelled</span>
                             </div>
                           </div>
                         ) : (
-                          <div className="flex-1 flex items-center relative">
+                          <div className="flex items-center w-full pb-5">
                             {[
                               { label: 'Accept', value: 'CONFIRMED' },
                               { label: 'Preparing', value: 'PREPARING' },
                               { label: 'Ready', value: 'READY' }
-                            ].map((step, idx, arr) => {
-                              const getStatusIdx = (status: string) => {
-                                switch (status?.toUpperCase()) {
-                                  case 'PENDING': return -1;
-                                  case 'CONFIRMED': return 0;
-                                  case 'PREPARING': return 1;
-                                  case 'READY': return 2;
-                                  case 'COMPLETED':
-                                  case 'SERVED': return 2;
-                                  default: return -1;
-                                }
-                              };
-                              const currentIndex = getStatusIdx(order.status);
-                              const isCompleted = idx <= currentIndex;
-                              const isNext = idx === currentIndex + 1;
-                              const isLast = idx === arr.length - 1;
-
+                            ].map((step, stepIdx, arr) => {
+                              const isCompleted = stepIdx <= currentIndex;
+                              const isNext = stepIdx === currentIndex + 1;
+                              const isLast = stepIdx === arr.length - 1;
                               return (
                                 <React.Fragment key={step.value}>
                                   <div className="flex flex-col items-center relative group">
@@ -732,64 +887,270 @@ const Order: React.FC = () => {
                                         if (isNext) handleUpdateStatus(order.id, step.value);
                                       }}
                                       disabled={!isNext}
-                                      className={`w-6 h-6 rounded-full flex items-center justify-center border-[2px] z-10 transition-all duration-300 relative group/btn
-                                    ${isCompleted ? 'bg-[#16a34a] border-[#16a34a] text-white' :
+                                      className={`w-5 h-5 rounded-full flex items-center justify-center border-[2px] z-10 transition-all duration-300 relative group/btn
+                                        ${isCompleted ? 'bg-[#16a34a] border-[#16a34a] text-white' :
                                           isNext ? 'bg-white border-[#16a34a] cursor-pointer hover:bg-[#16a34a] hover:text-white hover:scale-110 active:scale-95' :
-                                            'bg-white border-[#E2E8F0] cursor-default'}
-                                  `}
-                                      title={isNext ? `Mark as ${step.label}` : ''}
+                                            'bg-white border-[#E2E8F0] cursor-default'}`}
                                     >
-                                      {isNext && (
-                                        <span className="absolute inset-0 rounded-full border border-dashed border-[#16a34a]/60 animate-[spin_6s_linear_infinite]" style={{ margin: '-4px' }} />
-                                      )}
-                                      {isNext && (
-                                        <span className="absolute inset-0 rounded-full bg-[#16a34a]/10 animate-ping" style={{ margin: '-1px' }} />
-                                      )}
+                                      {isNext && <span className="absolute inset-0 rounded-full border border-dashed border-[#16a34a]/60 animate-[spin_6s_linear_infinite]" style={{ margin: '-4px' }} />}
+                                      {isNext && <span className="absolute inset-0 rounded-full bg-[#16a34a]/10 animate-ping" style={{ margin: '-1px' }} />}
                                       {(isCompleted || isNext) && (
-                                        <Check size={14} className={`text-white transition-all duration-300 ${isCompleted ? 'opacity-100 scale-100' : 'opacity-0 scale-50 group-hover/btn:opacity-100 group-hover/btn:scale-100'}`} strokeWidth={3} />
+                                        <Check size={12} className={`text-white transition-all duration-300 ${isCompleted ? 'opacity-100 scale-100' : 'opacity-0 scale-50 group-hover/btn:opacity-100 group-hover/btn:scale-100'}`} strokeWidth={3} />
                                       )}
                                     </button>
-                                    <span className={`absolute top-7 text-[10px] font-medium whitespace-nowrap
-                                  ${isCompleted || isNext ? 'text-tk-text' : 'text-[#A0AEC0]'}
-                                `}>
+                                    <span className={`absolute top-6 text-[9px] font-medium whitespace-nowrap ${isCompleted || isNext ? 'text-tk-text' : 'text-[#A0AEC0]'}`}>
                                       {step.label}
                                     </span>
                                   </div>
                                   {!isLast && (
-                                    <div className={`flex-1 h-[2px] mx-1 transition-colors mt-[-4px]
-                                  ${idx < currentIndex ? 'bg-[#16a34a]' : 'bg-[#E2E8F0]'}
-                                `} />
+                                    <div className={`flex-1 h-[2px] mx-1 transition-colors ${stepIdx < currentIndex ? 'bg-[#16a34a]' : 'bg-[#E2E8F0]'}`} />
                                   )}
                                 </React.Fragment>
                               );
                             })}
                           </div>
                         )}
-                        {order.status?.toUpperCase() !== 'CANCELLED' && order.status?.toUpperCase() !== 'COMPLETED' && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setOrderToCancel(order);
-                            }}
-                            className="px-3 py-1.5 bg-[#FEF2F2] text-[#E53E3E] border border-[#FC8181] rounded-lg text-xs font-semibold hover:bg-[#FED7D7] transition-colors"
-                          >
-                            Cancel
-                          </button>
-                        )}
-                        {order.status?.toUpperCase() === 'CANCELLED' && (
-                          <span className="px-3 py-1.5 bg-[#FEF2F2] text-[#E53E3E] rounded-lg text-xs font-bold">
-                            Cancelled
-                          </span>
-                        )}
+                        <div className="flex justify-between items-center mt-1">
+                          {order.status?.toUpperCase() !== 'CANCELLED' && order.status?.toUpperCase() !== 'COMPLETED' ? (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setOrderToCancel(order); }}
+                              className="px-2.5 py-1 bg-[#FEF2F2] text-[#E53E3E] border border-[#FC8181] rounded-lg text-[11px] font-semibold hover:bg-[#FED7D7] transition-colors"
+                            >
+                              Cancel
+                            </button>
+                          ) : order.status?.toUpperCase() === 'CANCELLED' ? (
+                            <span className="px-2.5 py-1 bg-[#FEF2F2] text-[#E53E3E] rounded-lg text-[11px] font-bold">Cancelled</span>
+                          ) : <div />}
+                        </div>
                       </div>
-                    </td>
-                  </tr>
-                ))
+                    </div>
+                  );
+                })
               )}
-            </tbody>
-          </table>
+            </div>
+
+            {/* Desktop table view (hidden on mobile) */}
+            <div className="hidden sm:block overflow-x-auto tk-table-scroll">
+              <table className="w-full text-left border-collapse table-fixed min-w-[950px]">
+                <thead>
+                  <tr>
+                    <th
+                      className="sticky z-40 bg-tk-bg-card py-3 px-4 border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[6%] text-center shadow-sm"
+                      style={{ top: `${stickyHeight}px` }}                >
+                      Sl No
+                    </th>
+
+                    <th
+                      className="sticky z-40 bg-tk-bg-card py-3 px-4 border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[17%] shadow-sm"
+                      style={{ top: `${stickyHeight}px` }}                >
+                      Order Details
+                    </th>
+
+                    <th
+                      className="sticky z-40 bg-tk-bg-card py-3 px-4 border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[17%] shadow-sm"
+                      style={{ top: `${stickyHeight}px` }}                >
+                      Customer Info
+                    </th>
+
+                    <th
+                      className="sticky z-40 bg-tk-bg-card py-3 px-4 border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[12%] shadow-sm"
+                      style={{ top: `${stickyHeight}px` }}                >
+                      Date
+                    </th>
+
+                    <th
+                      className="sticky z-40 bg-tk-bg-card py-3 px-4 border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[20%] shadow-sm"
+                      style={{ top: `${stickyHeight}px` }}                >
+                      Payment Info
+                    </th>
+
+                    <th
+                      className="sticky z-40 bg-tk-bg-card py-3 px-4 border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[28%] shadow-sm"
+                      style={{ top: `${stickyHeight}px` }}                >
+                      Order Tracking
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {isLoading ? (
+                    <tr>
+                      <td colSpan={6} className="py-8 text-center text-tk-text-secondary text-sm">Loading orders...</td>
+                    </tr>
+                  ) : filteredOrders().length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-12 text-center text-tk-text-secondary">
+                        <p className="text-sm font-medium">
+                          {activeTab === 'Active Orders'
+                            ? 'No active orders right now.'
+                            : activeTab === 'Completed'
+                              ? 'No completed orders yet.'
+                              : 'No orders found.'}
+                        </p>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredOrders().map((order, idx) => (
+                      <tr key={idx} className="border-b border-tk-border last:border-b-0 hover:bg-tk-burgundy/5 transition-colors group">
+                        <td className="py-3 px-4 text-sm text-tk-text-secondary font-medium text-center">{idx + 1}</td>
+                        <td className="py-3 px-4 text-sm text-tk-text cursor-pointer" onClick={() => setSelectedOrder(order)}>
+                          <div className="flex flex-col">
+                            <span className="font-semibold">{order.orderNumber}</span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-sm text-tk-text cursor-pointer" onClick={() => setSelectedOrder(order)}>
+                          <div className="flex flex-col">
+                            <span className="font-semibold">{order.customer}</span>
+                            <span className="text-xs text-tk-text-secondary font-medium mt-0.5">{order.table}</span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-sm text-tk-text cursor-pointer" onClick={() => setSelectedOrder(order)}>
+                          <div className="flex flex-col">
+                            <span className="font-semibold">{new Date(order.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                            <span className="text-xs text-tk-text-secondary font-medium mt-0.5">{order.time}</span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-sm cursor-pointer" onClick={() => setSelectedOrder(order)}>
+                          <div className="flex flex-col items-start gap-1.5">
+                            <span className="text-tk-text font-semibold">₹ {order.total}</span>
+                            <div className="flex items-center gap-1.5">
+                              <span
+                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold ${
+                                  order.paymentStatus?.toLowerCase() === 'paid' ? 'bg-[#C6F6D5] text-[#22543D]' : 
+                                  order.paymentStatus?.toLowerCase() === 'refunded' ? 'bg-[#EDF2F7] text-[#4A5568]' : 
+                                  'bg-[#FEF2F2] text-[#E53E3E]'
+                                }`}
+                              >
+                                <select
+                                  value={order.paymentStatus?.toLowerCase() || 'pending'}
+                                  onChange={(e) => {
+                                    handleUpdatePaymentStatus(order.id, e.target.value);
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="bg-transparent border-none outline-none text-[11px] font-bold text-inherit cursor-pointer py-0.5 focus:outline-none"
+                                >
+                                  <option value="pending" className="text-tk-text bg-tk-bg-surface font-semibold">Pending</option>
+                                  <option value="paid" className="text-tk-text bg-tk-bg-surface font-semibold">Paid</option>
+                                  <option value="refunded" className="text-tk-text bg-tk-bg-surface font-semibold">Refunded</option>
+                                </select>
+                                {order.paymentStatus?.toLowerCase() === 'paid' && order.paymentMethod && (
+                                  <span className="opacity-80 font-semibold border-l border-current pl-1 ml-0.5">
+                                    {order.paymentMethod}
+                                  </span>
+                                )}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-2 px-4">
+                          <div className="flex items-center w-full min-w-[250px] max-w-[400px] gap-4 pb-4 pt-2 px-2" onClick={(e) => e.stopPropagation()}>
+                            {order.status?.toUpperCase() === 'CANCELLED' ? (
+                              <div className="flex-1 flex items-center relative">
+                                <div className="flex flex-col items-center relative group">
+                                  <div className="w-6 h-6 rounded-full flex items-center justify-center border-[2px] z-10 bg-[#E53E3E] border-[#E53E3E]">
+                                    <Check size={14} className="text-white" strokeWidth={3} />
+                                  </div>
+                                  <span className="absolute top-7 text-[10px] font-medium text-[#E53E3E] whitespace-nowrap">Placed</span>
+                                </div>
+                                <div className="flex-1 h-[2px] mx-1 transition-colors mt-[-4px] bg-[#E53E3E]"></div>
+                                <div className="flex flex-col items-center relative group">
+                                  <div className="w-6 h-6 rounded-full flex items-center justify-center border-[2px] z-10 bg-[#E53E3E] border-[#E53E3E]">
+                                    <X size={14} className="text-white" strokeWidth={3} />
+                                  </div>
+                                  <span className="absolute top-7 text-[10px] font-bold text-[#E53E3E] whitespace-nowrap">Cancelled</span>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex-1 flex items-center relative">
+                                {[
+                                  { label: 'Accept', value: 'CONFIRMED' },
+                                  { label: 'Preparing', value: 'PREPARING' },
+                                  { label: 'Ready', value: 'READY' }
+                                ].map((step, idx, arr) => {
+                                  const getStatusIdx = (status: string) => {
+                                    switch (status?.toUpperCase()) {
+                                      case 'PENDING': return -1;
+                                      case 'CONFIRMED': return 0;
+                                      case 'PREPARING': return 1;
+                                      case 'READY': return 2;
+                                      case 'COMPLETED':
+                                      case 'SERVED': return 2;
+                                      default: return -1;
+                                    }
+                                  };
+                                  const currentIndex = getStatusIdx(order.status);
+                                  const isCompleted = idx <= currentIndex;
+                                  const isNext = idx === currentIndex + 1;
+                                  const isLast = idx === arr.length - 1;
+
+                                  return (
+                                    <React.Fragment key={step.value}>
+                                      <div className="flex flex-col items-center relative group">
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (isNext) handleUpdateStatus(order.id, step.value);
+                                          }}
+                                          disabled={!isNext}
+                                          className={`w-6 h-6 rounded-full flex items-center justify-center border-[2px] z-10 transition-all duration-300 relative group/btn
+                                        ${isCompleted ? 'bg-[#16a34a] border-[#16a34a] text-white' :
+                                              isNext ? 'bg-white border-[#16a34a] cursor-pointer hover:bg-[#16a34a] hover:text-white hover:scale-110 active:scale-95' :
+                                                'bg-white border-[#E2E8F0] cursor-default'}
+                                      `}
+                                          title={isNext ? `Mark as ${step.label}` : ''}
+                                        >
+                                          {isNext && (
+                                            <span className="absolute inset-0 rounded-full border border-dashed border-[#16a34a]/60 animate-[spin_6s_linear_infinite]" style={{ margin: '-4px' }} />
+                                          )}
+                                          {isNext && (
+                                            <span className="absolute inset-0 rounded-full bg-[#16a34a]/10 animate-ping" style={{ margin: '-1px' }} />
+                                          )}
+                                          {(isCompleted || isNext) && (
+                                            <Check size={14} className={`text-white transition-all duration-300 ${isCompleted ? 'opacity-100 scale-100' : 'opacity-0 scale-50 group-hover/btn:opacity-100 group-hover/btn:scale-100'}`} strokeWidth={3} />
+                                          )}
+                                        </button>
+                                        <span className={`absolute top-7 text-[10px] font-medium whitespace-nowrap
+                                      ${isCompleted || isNext ? 'text-tk-text' : 'text-[#A0AEC0]'}
+                                    `}>
+                                          {step.label}
+                                        </span>
+                                      </div>
+                                      {!isLast && (
+                                        <div className={`flex-1 h-[2px] mx-1 transition-colors mt-[-4px]
+                                      ${idx < currentIndex ? 'bg-[#16a34a]' : 'bg-[#E2E8F0]'}
+                                    `} />
+                                      )}
+                                    </React.Fragment>
+                                  );
+                                })}
+                              </div>
+                            )}
+                            {order.status?.toUpperCase() !== 'CANCELLED' && order.status?.toUpperCase() !== 'COMPLETED' && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOrderToCancel(order);
+                                }}
+                                className="px-3 py-1.5 bg-[#FEF2F2] text-[#E53E3E] border border-[#FC8181] rounded-lg text-xs font-semibold hover:bg-[#FED7D7] transition-colors"
+                              >
+                                Cancel
+                              </button>
+                            )}
+                            {order.status?.toUpperCase() === 'CANCELLED' && (
+                              <span className="px-3 py-1.5 bg-[#FEF2F2] text-[#E53E3E] rounded-lg text-xs font-bold">
+                                Cancelled
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4 min-w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4 p-2 sm:p-4 min-w-full">
             {isLoading ? (
               <div className="col-span-full py-12 text-center text-tk-text-secondary text-sm">Loading orders...</div>
             ) : filteredOrders().length === 0 ? (
@@ -814,23 +1175,39 @@ const Order: React.FC = () => {
                     <div className="flex justify-between items-start">
                       <div className="flex flex-col">
                         <span className="font-medium text-tk-text text-xs">{order.orderNumber}</span>
+                        <span className="text-[10px] text-tk-text-secondary font-semibold mt-0.5">
+                          {new Date(order.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </span>
                         <span className="text-[10px] text-tk-text-secondary font-medium mt-0.5">{order.time}</span>
                       </div>
                       <div className="flex flex-col items-end">
                         <span className="font-bold text-tk-text text-lg">₹ {order.total}</span>
                         <div className="flex items-center gap-1.5 mt-1">
-                          <span className={`inline-flex px-2.5 py-0.5 rounded text-[11px] font-bold ${order.isPaid ? 'bg-[#C6F6D5] text-[#22543D]' : 'bg-[#FEF2F2] text-[#E53E3E]'}`}>
-                            {order.isPaid ? `Paid (${order.paymentMethod})` : 'Pending'}
-                          </span>
-                          {!order.isPaid && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handlePaymentComplete(order.id); }}
-                              className="p-0.5 bg-[#C6F6D5] text-[#22543D] rounded hover:bg-[#9AE6B4] transition-colors flex items-center justify-center"
-                              title="Mark Paid"
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold ${
+                              order.paymentStatus?.toLowerCase() === 'paid' ? 'bg-[#C6F6D5] text-[#22543D]' : 
+                              order.paymentStatus?.toLowerCase() === 'refunded' ? 'bg-[#EDF2F7] text-[#4A5568]' : 
+                              'bg-[#FEF2F2] text-[#E53E3E]'
+                            }`}
+                          >
+                            <select
+                              value={order.paymentStatus?.toLowerCase() || 'pending'}
+                              onChange={(e) => {
+                                handleUpdatePaymentStatus(order.id, e.target.value);
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              className="bg-transparent border-none outline-none text-[11px] font-bold text-inherit cursor-pointer py-0.5 focus:outline-none"
                             >
-                              <CheckCircle size={12} strokeWidth={3} />
-                            </button>
-                          )}
+                              <option value="pending" className="text-tk-text bg-tk-bg-surface font-semibold">Pending</option>
+                              <option value="paid" className="text-tk-text bg-tk-bg-surface font-semibold">Paid</option>
+                              <option value="refunded" className="text-tk-text bg-tk-bg-surface font-semibold">Refunded</option>
+                            </select>
+                            {order.paymentStatus?.toLowerCase() === 'paid' && order.paymentMethod && (
+                              <span className="opacity-80 font-semibold border-l border-current pl-1 ml-0.5">
+                                {order.paymentMethod}
+                              </span>
+                            )}
+                          </span>
                         </div>
                       </div>
                     </div>
