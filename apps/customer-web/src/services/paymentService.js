@@ -38,7 +38,7 @@ export const createRazorpayOrder = async ({ restaurantId, tableId, orderType, it
             table_id: tableId || null,
             order_type: orderType || 'dine_in',
             items: items.map((item, index) => ({
-                menu_item_id: item.id,
+                menu_item_id: item.menuItemId || (typeof item.id === 'string' ? item.id.split('_')[0] : item.id),
                 quantity: item.quantity,
                 variant: item.variant || null,
                 addons: item.addons || null,

@@ -211,7 +211,7 @@ export function RestaurantProvider({ children }) {
     const isUUID = (val) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
 
     useEffect(() => {
-        if (!tableId) {
+        if (!tableId || tableId === 'null' || tableId === 'undefined') {
             setTable(null);
             return;
         }

@@ -6,7 +6,7 @@ if (!window.__TablekardCartContext) {
 }
 const CartContext = window.__TablekardCartContext;
 
-const STORAGE_KEY = 'tablekard_cart';
+const STORAGE_KEY = 'tablekard_cart_v2';
 
 export function CartProvider({ children }) {
     const [cartItems, setCartItems] = useState(() => {
@@ -93,7 +93,7 @@ export function CartProvider({ children }) {
 
             return [...prev, {
                 id: compositeId,
-                menuItemId: item.id,
+                menuItemId: item.menuItemId || item.id,
                 name: item.name,
                 basePrice: basePrice,
                 image: item.image_url || item.image,
