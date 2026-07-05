@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Tag, IndianRupee, CalendarDays, ToggleLeft, ToggleRight } from 'lucide-react';
 import type { MenuItem } from '@restaurant-saas/types';
-import './offer_dialog.css';
-
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface OfferFormData {
@@ -132,33 +130,28 @@ const OfferDialog: React.FC<OfferDialogProps> = ({
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="offer-dialog-overlay" onClick={onClose}>
-      <div className="offer-dialog-container" onClick={e => e.stopPropagation()}>
-
-        {/* ── Header ── */}
-        <div className="offer-dialog-header">
-          <h2 className="offer-dialog-title">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000] animate-in fade-in duration-200" onClick={onClose}>
+      <div className="bg-tk-bg-card rounded-[24px] p-6 md:p-8 w-[96%] md:w-full max-w-[680px] max-h-[90vh] overflow-y-auto shadow-2xl animate-in slide-in-from-bottom-8 duration-300 text-tk-text" onClick={e => e.stopPropagation()}>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-[22px] font-bold text-tk-text m-0">
             {mode === 'add' ? 'Add New Offer' : 'Edit Offer'}
           </h2>
-          <button className="offer-dialog-close" onClick={onClose} type="button" aria-label="Close">
+          <button className="bg-transparent border-none cursor-pointer p-2 rounded-lg flex items-center justify-center text-tk-text-secondary transition-all duration-200 hover:bg-tk-bg-hover hover:text-tk-text" onClick={onClose} type="button" aria-label="Close">
             <X size={20} />
           </button>
         </div>
-
-        <form onSubmit={handleSubmit} className="offer-dialog-form">
-
-          {/* ── 1. Menu Item selector (first column) ── */}
-          <div className="offer-form-group">
-            <label className="offer-form-label" htmlFor="offer-menu-item">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          <div className="flex flex-col gap-2">
+            <label className="text-[13px] font-semibold text-tk-text-secondary uppercase tracking-[0.04em] flex items-center" htmlFor="offer-menu-item">
               Menu Item
             </label>
-            <div className="offer-select-wrapper">
+            <div className="relative">
               <select
                 id="offer-menu-item"
                 name="menu_item_id"
                 value={formData.menu_item_id}
                 onChange={handleMenuItemChange}
-                className="offer-form-select"
+                className="w-full p-3 px-4 border-2 border-tk-border rounded-xl text-sm text-tk-text font-sans bg-tk-bg-elevated appearance-none cursor-pointer transition-all duration-200 focus:outline-none focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.15)] focus:bg-tk-bg-card"
                 required
               >
                 <option value="">— Select a menu item —</option>
@@ -170,33 +163,31 @@ const OfferDialog: React.FC<OfferDialogProps> = ({
               </select>
             </div>
           </div>
-
-          {/* ── 2. Auto-filled read-only details ── */}
           {selectedItem && (
-            <div className="offer-item-preview">
+            <div className="flex flex-col md:flex-row gap-4 p-4 bg-gradient-to-br from-green-50 to-blue-50 border-[1.5px] border-green-200 rounded-2xl animate-in fade-in duration-250 dark:from-tk-bg-elevated dark:to-tk-bg-elevated dark:border-tk-border">
               {selectedItem.images && selectedItem.images.length > 0 && (
                 <img
                   src={selectedItem.images[0].url}
                   alt={selectedItem.name}
-                  className="offer-item-preview-img"
+                  className="w-full md:w-[72px] h-[140px] md:h-[72px] object-cover rounded-lg shrink-0 shadow-md"
                 />
               )}
-              <div className="offer-item-preview-details">
-                <p className="offer-item-preview-name">{selectedItem.name}</p>
+              <div className="flex flex-col gap-1 justify-center">
+                <p className="text-[15px] font-bold text-tk-text m-0">{selectedItem.name}</p>
                 {selectedItem.shortDescription && (
-                  <p className="offer-item-preview-desc">{selectedItem.shortDescription}</p>
+                  <p className="text-xs text-tk-text-secondary m-0 line-clamp-2">{selectedItem.shortDescription}</p>
                 )}
-                <div className="offer-item-preview-meta">
-                  <span className="offer-item-preview-price">
+                <div className="flex gap-2.5 items-center flex-wrap mt-1">
+                  <span className="text-[13px] font-semibold text-[#37724e] flex items-center gap-[2px] dark:text-green-400">
                     <IndianRupee size={13} /> Original: ₹{selectedItem.price}
                   </span>
                   {selectedItem.serves && (
-                    <span className="offer-item-preview-serves">
+                    <span className="text-xs text-tk-text-secondary">
                       👥 Serves {selectedItem.serves}
                     </span>
                   )}
                   {selectedItem.isVeg !== undefined && (
-                    <span className={`offer-item-preview-veg ${selectedItem.isVeg ? 'veg' : 'nonveg'}`}>
+                    <span className={`text-[11px] font-semibold py-0.5 px-2 rounded-full ${selectedItem.isVeg ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                       {selectedItem.isVeg ? 'Veg' : 'Non-Veg'}
                     </span>
                   )}
@@ -204,10 +195,8 @@ const OfferDialog: React.FC<OfferDialogProps> = ({
               </div>
             </div>
           )}
-
-          {/* ── 3. Offer Title ── */}
-          <div className="offer-form-group">
-            <label className="offer-form-label" htmlFor="offer-title">
+          <div className="flex flex-col gap-2">
+            <label className="text-[13px] font-semibold text-tk-text-secondary uppercase tracking-[0.04em] flex items-center" htmlFor="offer-title">
               <Tag size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
               Offer Title
             </label>
@@ -217,16 +206,14 @@ const OfferDialog: React.FC<OfferDialogProps> = ({
               name="title"
               value={formData.title}
               onChange={handleChange}
-              className="offer-form-input"
+              className="w-full p-3 px-4 border-2 border-tk-border rounded-xl text-sm text-tk-text font-sans bg-tk-bg-elevated transition-all duration-200 focus:outline-none focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.15)] focus:bg-tk-bg-card placeholder:text-tk-text-muted"
               placeholder="e.g., Flat 20% Off on Butter Chicken"
               required
             />
           </div>
-
-          {/* ── 4. Discounted Price + Valid Until (side-by-side) ── */}
-          <div className="offer-form-row">
-            <div className="offer-form-group">
-              <label className="offer-form-label" htmlFor="offer-discount-price">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-2">
+              <label className="text-[13px] font-semibold text-tk-text-secondary uppercase tracking-[0.04em] flex items-center" htmlFor="offer-discount-price">
                 <IndianRupee size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
                 Discounted Price (₹)
               </label>
@@ -236,7 +223,7 @@ const OfferDialog: React.FC<OfferDialogProps> = ({
                 name="discount_price"
                 value={formData.discount_price}
                 onChange={handleChange}
-                className="offer-form-input"
+                className="w-full p-3 px-4 border-2 border-tk-border rounded-xl text-sm text-tk-text font-sans bg-tk-bg-elevated transition-all duration-200 focus:outline-none focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.15)] focus:bg-tk-bg-card placeholder:text-tk-text-muted"
                 placeholder="0.00"
                 min="0"
                 step="any"
@@ -244,16 +231,15 @@ const OfferDialog: React.FC<OfferDialogProps> = ({
                 required
               />
               {selectedItem && formData.discount_price !== '' && (
-                <span className="offer-discount-hint">
+                <span className="text-xs text-[#37724e] font-semibold py-1 px-2.5 bg-[#f0faf4] rounded-full w-fit mt-1 dark:text-green-400 dark:bg-green-900/20">
                   Save ₹{Math.max(0, selectedItem.price - parseFloat(formData.discount_price || '0')).toFixed(2)}
                   {' '}
                   ({Math.max(0, Math.round((1 - parseFloat(formData.discount_price || '0') / selectedItem.price) * 100))}% off)
                 </span>
               )}
             </div>
-
-            <div className="offer-form-group">
-              <label className="offer-form-label" htmlFor="offer-valid-until">
+            <div className="flex flex-col gap-2">
+              <label className="text-[13px] font-semibold text-tk-text-secondary uppercase tracking-[0.04em] flex items-center" htmlFor="offer-valid-until">
                 <CalendarDays size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
                 Valid Until
               </label>
@@ -263,18 +249,16 @@ const OfferDialog: React.FC<OfferDialogProps> = ({
                 name="valid_until"
                 value={formData.valid_until}
                 onChange={handleChange}
-                className="offer-form-input"
+                className="w-full p-3 px-4 border-2 border-tk-border rounded-xl text-sm text-tk-text font-sans bg-tk-bg-elevated transition-all duration-200 focus:outline-none focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.15)] focus:bg-tk-bg-card placeholder:text-tk-text-muted"
                 min={new Date().toISOString().split('T')[0]}
               />
             </div>
           </div>
-
-          {/* ── 5. Active toggle ── */}
-          <div className="offer-form-group">
-            <label className="offer-form-label">Offer Status</label>
+          <div className="flex flex-col gap-2">
+            <label className="text-[13px] font-semibold text-tk-text-secondary uppercase tracking-[0.04em] flex items-center">Offer Status</label>
             <button
               type="button"
-              className={`offer-toggle-btn ${formData.is_active ? 'active' : 'inactive'}`}
+              className={`inline-flex items-center gap-2 py-2.5 px-5 rounded-full border-2 text-sm font-semibold cursor-pointer font-sans transition-all duration-250 w-fit ${formData.is_active ? 'bg-green-100 text-green-800 border-green-300 hover:bg-green-300' : 'bg-tk-bg-elevated text-tk-text-secondary border-tk-border hover:bg-tk-bg-hover'}`}
               onClick={toggleActive}
               aria-pressed={formData.is_active}
             >
@@ -284,17 +268,14 @@ const OfferDialog: React.FC<OfferDialogProps> = ({
               }
             </button>
           </div>
-
-          {/* ── Actions ── */}
-          <div className="offer-dialog-actions">
-            <button type="button" className="offer-btn-cancel" onClick={onClose} disabled={saving}>
+          <div className="flex gap-3 mt-2">
+            <button type="button" className="flex-1 py-[13px] px-5 border-none rounded-xl text-sm font-semibold cursor-pointer transition-all duration-200 font-sans bg-tk-bg-elevated text-tk-text-secondary hover:bg-tk-bg-hover hover:text-tk-text disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-tk-bg-elevated disabled:hover:text-tk-text-secondary" onClick={onClose} disabled={saving}>
               Cancel
             </button>
-            <button type="submit" className="offer-btn-save" disabled={saving || !formData.menu_item_id}>
+            <button type="submit" className="flex-1 py-[13px] px-5 border-none rounded-xl text-sm font-semibold cursor-pointer transition-all duration-200 font-sans bg-[#37724e] text-white hover:bg-[#2f6344] hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(55,114,78,0.3)] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none" disabled={saving || !formData.menu_item_id}>
               {saving ? 'Saving…' : mode === 'add' ? 'Add Offer' : 'Save Changes'}
             </button>
           </div>
-
         </form>
       </div>
     </div>

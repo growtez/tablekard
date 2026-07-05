@@ -2,8 +2,6 @@ import React, { useState, useCallback } from 'react';
 import Cropper from 'react-easy-crop';
 import type { Point, Area } from 'react-easy-crop';
 import { X, Check } from 'lucide-react';
-import './ImageCropper.css';
-
 interface ImageCropperProps {
   image: string;
   onCropComplete: (croppedImage: Blob) => void;
@@ -94,15 +92,15 @@ const ImageCropper: React.FC<ImageCropperProps> = ({
   };
 
   return (
-    <div className="cropper-modal-overlay">
-      <div className="cropper-modal-container">
-        <div className="cropper-modal-header">
-          <h3>Crop Image</h3>
-          <button className="cropper-close-btn" onClick={onCancel}>
+    <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-[9999] backdrop-blur-sm">
+      <div className="bg-tk-bg-card rounded-2xl w-[90%] max-w-[800px] max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+        <div className="p-4 px-6 flex justify-between items-center border-b border-tk-border">
+          <h3 className="m-0 text-xl text-tk-text font-bold">Crop Image</h3>
+          <button className="bg-transparent border-none text-tk-text-secondary cursor-pointer p-1 rounded-full flex items-center justify-center transition-all duration-200 hover:bg-tk-bg-hover hover:text-tk-text" onClick={onCancel}>
             <X size={20} />
           </button>
         </div>
-        <div className="cropper-wrapper">
+        <div className="relative w-full h-[60vh] bg-[#333]">
           <Cropper
             image={image}
             crop={crop}
@@ -115,9 +113,9 @@ const ImageCropper: React.FC<ImageCropperProps> = ({
             onZoomChange={onZoomChange}
           />
         </div>
-        <div className="cropper-controls">
-          <div className="zoom-control">
-            <span>Zoom</span>
+        <div className="p-6 flex flex-col gap-5 bg-tk-bg-card">
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-semibold text-tk-text-secondary min-w-[50px]">Zoom</span>
             <input
               type="range"
               value={zoom}
@@ -126,14 +124,14 @@ const ImageCropper: React.FC<ImageCropperProps> = ({
               step={0.1}
               aria-labelledby="Zoom"
               onChange={(e) => setZoom(Number(e.target.value))}
-              className="zoom-range"
+              className="flex-1 h-1.5 bg-tk-border rounded-full outline-none cursor-pointer"
             />
           </div>
-          <div className="cropper-actions">
-            <button className="cropper-btn-cancel" onClick={onCancel}>
+          <div className="flex justify-end gap-3">
+            <button className="py-2.5 px-5 rounded-lg border border-tk-border bg-tk-bg-elevated text-tk-text-secondary font-semibold text-sm cursor-pointer transition-all duration-200 hover:bg-tk-bg-hover" onClick={onCancel}>
               Cancel
             </button>
-            <button className="cropper-btn-done" onClick={handleDone}>
+            <button className="py-2.5 px-6 rounded-lg border-none bg-[#4f755c] text-white font-semibold text-sm cursor-pointer flex items-center gap-2 transition-all duration-200 shadow-sm hover:bg-[#3d5a47] hover:-translate-y-[1px] active:translate-y-0" onClick={handleDone}>
               <Check size={18} />
               Done
             </button>

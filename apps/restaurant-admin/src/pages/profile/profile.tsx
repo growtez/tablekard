@@ -14,7 +14,6 @@ import {
   X,
 } from "lucide-react";
 import type { Restaurant } from "@restaurant-saas/types";
-import Sidebar from "../../components/sidebar";
 import ImageCropper from "../../components/ImageCropper";
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -25,7 +24,7 @@ import {
   updateRestaurantPaymentSettings,
 } from "../../services/supabaseService";
 import { uploadProfileImage } from "../../services/storageService";
-import "./profile.css";
+
 
 interface RestaurantFormState {
   name: string;
@@ -860,12 +859,12 @@ const ProfilePage: React.FC = () => {
   };
 
   const renderRestaurantActions = (section: 'core' | 'contact' | 'branding' | 'story') => (
-    <div className="profile-card-actions">
+    <div className="flex items-center gap-2.5">
       {editingSections[section] ? (
         <>
           <button
             type="button"
-            className="profile-secondary-action"
+            className="inline-flex items-center justify-center gap-2 min-h-[40px] px-4 border-none rounded-xl font-['Outfit',sans-serif] text-[13px] font-semibold cursor-pointer transition-all duration-200 bg-[#EDF2F7] text-[#2D3748] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none dark:bg-tk-bg-elevated dark:text-tk-text dark:hover:bg-tk-bg-hover"
             onClick={() => cancelRestaurantEdit(section)}
             disabled={isRestaurantSaving}
           >
@@ -873,7 +872,7 @@ const ProfilePage: React.FC = () => {
           </button>
           <button
             type="button"
-            className="profile-primary-action"
+            className="inline-flex items-center justify-center gap-2 min-h-[40px] px-4 border-none rounded-xl font-['Outfit',sans-serif] text-[13px] font-semibold cursor-pointer transition-all duration-200 bg-[linear-gradient(135deg,var(--tk-burgundy),#6B2A15)] text-white shadow-[0_8px_18px_rgba(139,58,30,0.2)] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
             disabled={isRestaurantSaving || !restaurantForm}
             onClick={() => handleRestaurantSave(section)}
           >
@@ -883,7 +882,7 @@ const ProfilePage: React.FC = () => {
       ) : (
         <button
           type="button"
-          className="profile-secondary-action"
+          className="inline-flex items-center justify-center gap-2 min-h-[40px] px-4 border-none rounded-xl font-['Outfit',sans-serif] text-[13px] font-semibold cursor-pointer transition-all duration-200 bg-[#EDF2F7] text-[#2D3748] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none dark:bg-tk-bg-elevated dark:text-tk-text dark:hover:bg-tk-bg-hover"
           onClick={() => startRestaurantEdit(section)}
           disabled={!restaurant}
         >
@@ -894,12 +893,12 @@ const ProfilePage: React.FC = () => {
   );
 
   const renderAdminActions = () => (
-    <div className="profile-card-actions">
+    <div className="flex items-center gap-2.5">
       {isAdminEditing ? (
         <>
           <button
             type="button"
-            className="profile-secondary-action"
+            className="inline-flex items-center justify-center gap-2 min-h-[40px] px-4 border-none rounded-xl font-['Outfit',sans-serif] text-[13px] font-semibold cursor-pointer transition-all duration-200 bg-[#EDF2F7] text-[#2D3748] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none dark:bg-tk-bg-elevated dark:text-tk-text dark:hover:bg-tk-bg-hover"
             onClick={cancelAdminEdit}
             disabled={isAdminSaving}
           >
@@ -907,7 +906,7 @@ const ProfilePage: React.FC = () => {
           </button>
           <button
             type="submit"
-            className="profile-primary-action"
+            className="inline-flex items-center justify-center gap-2 min-h-[40px] px-4 border-none rounded-xl font-['Outfit',sans-serif] text-[13px] font-semibold cursor-pointer transition-all duration-200 bg-[linear-gradient(135deg,var(--tk-burgundy),#6B2A15)] text-white shadow-[0_8px_18px_rgba(139,58,30,0.2)] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
             disabled={isAdminSaving || !userProfile}
           >
             <Save size={16} /> {isAdminSaving ? "Saving..." : "Save"}
@@ -916,7 +915,7 @@ const ProfilePage: React.FC = () => {
       ) : (
         <button
           type="button"
-          className="profile-secondary-action"
+          className="inline-flex items-center justify-center gap-2 min-h-[40px] px-4 border-none rounded-xl font-['Outfit',sans-serif] text-[13px] font-semibold cursor-pointer transition-all duration-200 bg-[#EDF2F7] text-[#2D3748] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none dark:bg-tk-bg-elevated dark:text-tk-text dark:hover:bg-tk-bg-hover"
           onClick={startAdminEdit}
           disabled={!userProfile}
         >
@@ -929,7 +928,7 @@ const ProfilePage: React.FC = () => {
   function renderRestaurantProfileContent(): React.ReactNode {
     if (!restaurant) {
       return (
-        <div className="profile-empty-state">
+        <div className="border border-dashed border-[#CBD5E0] rounded-2xl p-[18px] text-[#4A5568] bg-[#F8FAFC] text-[14px] font-['Outfit',sans-serif] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text-secondary">
           No restaurant is assigned to this account.
         </div>
       );
@@ -940,7 +939,7 @@ const ProfilePage: React.FC = () => {
     }
 
     return (
-      <div className="profile-form-layout">
+      <div className="flex flex-col gap-6">
         <div
           style={{
             display: activeTab === "general" ? "grid" : "none",
@@ -948,8 +947,8 @@ const ProfilePage: React.FC = () => {
             gap: "24px",
           }}
         >
-          <div className="profile-section">
-            <div className="profile-section-header">
+          <div className="border border-[#E2E8F0] rounded-[18px] p-[18px] bg-white dark:bg-tk-bg-card dark:border-tk-border">
+            <div className="flex justify-between items-start gap-4 mb-4">
               <div>
                 <h3>Core Identity</h3>
                 <p>Essential details about the restaurant.</p>
@@ -957,11 +956,11 @@ const ProfilePage: React.FC = () => {
               {renderRestaurantActions("core")}
             </div>
              {editingSections.core ? (
-              <div className="profile-form-grid">
-                <label className="profile-field">
-                  <span className="profile-field-label">Restaurant Name</span>
+              <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+                <label className="flex flex-col gap-2">
+                  <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Restaurant Name</span>
                   <input
-                    className="profile-input"
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
                     type="text"
                     value={restaurantForm.name}
                     onChange={(event) =>
@@ -973,11 +972,11 @@ const ProfilePage: React.FC = () => {
                   />
                 </label>
 
-                <label className="profile-field">
-                  <span className="profile-field-label">Slug</span>
+                <label className="flex flex-col gap-2">
+                  <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Slug</span>
                   <div style={{ display: "flex", alignItems: "stretch" }}>
                     <input
-                      className="profile-input"
+                      className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
                       style={{
                         borderTopRightRadius: 0,
                         borderBottomRightRadius: 0,
@@ -1010,10 +1009,10 @@ const ProfilePage: React.FC = () => {
                   </div>
                 </label>
 
-                <label className="profile-field">
-                  <span className="profile-field-label">Tagline</span>
+                <label className="flex flex-col gap-2">
+                  <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Tagline</span>
                   <input
-                    className="profile-input"
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
                     type="text"
                     value={restaurantForm.tagline}
                     onChange={(event) =>
@@ -1023,18 +1022,18 @@ const ProfilePage: React.FC = () => {
                   />
                 </label>
 
-                <div className="profile-info-item">
-                  <span className="profile-info-label">Status</span>
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Status</span>
                   <span
-                    className={`status-badge ${String(restaurant?.status || "").toLowerCase()}`}
+                    className={`inline-flex items-center px-3.5 py-1.5 rounded-xl text-[12px] font-semibold capitalize w-fit font-['Outfit',sans-serif] ${String(restaurant?.status || "").toLowerCase()}`}
                   >
                     {formatLabel(String(restaurant?.status || "unknown"))}
                   </span>
                 </div>
 
-                <div className="profile-info-item">
-                  <span className="profile-info-label">Subscription Status</span>
-                  <span className="profile-info-value profile-value-inline">
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Subscription Status</span>
+                  <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text inline-flex items-center gap-2">
                     <CreditCardIcon
                       size={15}
                       style={{
@@ -1051,21 +1050,21 @@ const ProfilePage: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <div className="profile-form-grid">
-                <div className="profile-info-item">
-                  <span className="profile-info-label">Restaurant Name</span>
-                  <span className="profile-info-value">{restaurant?.name}</span>
+              <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Restaurant Name</span>
+                  <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">{restaurant?.name}</span>
                 </div>
 
-                <div className="profile-info-item">
-                  <span className="profile-info-label">Slug</span>
-                  <span className="profile-info-value">
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Slug</span>
+                  <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
                     {restaurant?.slug ? (
                       <a
                         href={`https://${restaurant.slug}.tablekard.com`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="profile-link"
+                        className="inline-flex items-center gap-2 w-fit text-[#2B6CB0] text-[14px] font-medium no-underline break-all font-['Outfit',sans-serif] hover:underline dark:text-[#90CDF4]"
                         style={{
                           display: "inline-flex",
                           alignItems: "center",
@@ -1081,27 +1080,27 @@ const ProfilePage: React.FC = () => {
                   </span>
                 </div>
 
-                <div className="profile-info-item">
-                  <span className="profile-info-label">Tagline</span>
-                  <span className="profile-info-value">
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Tagline</span>
+                  <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
                     {restaurant?.tagline || "Not set"}
                   </span>
                 </div>
 
 
 
-                <div className="profile-info-item">
-                  <span className="profile-info-label">Status</span>
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Status</span>
                   <span
-                    className={`status-badge ${String(restaurant?.status || "").toLowerCase()}`}
+                    className={`inline-flex items-center px-3.5 py-1.5 rounded-xl text-[12px] font-semibold capitalize w-fit font-['Outfit',sans-serif] ${String(restaurant?.status || "").toLowerCase()}`}
                   >
                     {formatLabel(String(restaurant?.status || "unknown"))}
                   </span>
                 </div>
 
-                <div className="profile-info-item">
-                  <span className="profile-info-label">Subscription Status</span>
-                  <span className="profile-info-value profile-value-inline">
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Subscription Status</span>
+                  <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text inline-flex items-center gap-2">
                     <CreditCardIcon
                       size={15}
                       style={{
@@ -1120,8 +1119,8 @@ const ProfilePage: React.FC = () => {
             )}
           </div>
 
-          <div className="profile-section">
-            <div className="profile-section-header">
+          <div className="border border-[#E2E8F0] rounded-[18px] p-[18px] bg-white dark:bg-tk-bg-card dark:border-tk-border">
+            <div className="flex justify-between items-start gap-4 mb-4">
               <div>
                 <h3>Contact & Operating Hours</h3>
                 <p>How customers can reach you and when you're open.</p>
@@ -1129,9 +1128,9 @@ const ProfilePage: React.FC = () => {
               {renderRestaurantActions("contact")}
             </div>
              {editingSections.contact ? (
-              <div className="profile-form-grid">
+              <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
                 <div
-                  className="profile-field-span-2"
+                  className="col-span-2"
                   style={{
                     fontSize: "13px",
                     fontWeight: 600,
@@ -1146,10 +1145,10 @@ const ProfilePage: React.FC = () => {
                   Contact Information
                 </div>
 
-                <label className="profile-field">
-                  <span className="profile-field-label">Contact Email</span>
+                <label className="flex flex-col gap-2">
+                  <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Contact Email</span>
                   <input
-                    className="profile-input"
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
                     type="email"
                     value={restaurantForm.contactEmail}
                     onChange={(event) =>
@@ -1163,10 +1162,10 @@ const ProfilePage: React.FC = () => {
                   />
                 </label>
 
-                <label className="profile-field">
-                  <span className="profile-field-label">Contact Phone</span>
+                <label className="flex flex-col gap-2">
+                  <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Contact Phone</span>
                   <input
-                    className="profile-input"
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
                     type="tel"
                     value={restaurantForm.contactPhone}
                     onChange={(event) =>
@@ -1179,10 +1178,10 @@ const ProfilePage: React.FC = () => {
                   />
                 </label>
 
-                <label className="profile-field profile-field-span-2">
-                  <span className="profile-field-label">Address</span>
+                <label className="flex flex-col gap-2 col-span-2">
+                  <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Address</span>
                   <textarea
-                    className="profile-input profile-textarea"
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text resize-y min-h-[96px]"
                     value={restaurantForm.contactAddress}
                     onChange={(event) =>
                       handleRestaurantFieldChange(
@@ -1196,7 +1195,7 @@ const ProfilePage: React.FC = () => {
                 </label>
 
                 <div
-                  className="profile-field-span-2"
+                  className="col-span-2"
                   style={{
                     fontSize: "13px",
                     fontWeight: 600,
@@ -1212,8 +1211,8 @@ const ProfilePage: React.FC = () => {
                   Operating Hours
                 </div>
 
-                <div className="profile-field">
-                  <span className="profile-field-label">
+                <div className="flex flex-col gap-2">
+                  <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
                     Operating Hours (Weekdays)
                   </span>
                   <div
@@ -1223,7 +1222,7 @@ const ProfilePage: React.FC = () => {
                       gap: "12px",
                     }}
                   >
-                    <div className="profile-field" style={{ gap: "4px" }}>
+                    <div className="flex flex-col gap-2" style={{ gap: "4px" }}>
                       <span
                         style={{
                           fontSize: "10px",
@@ -1235,7 +1234,7 @@ const ProfilePage: React.FC = () => {
                         Opening Time
                       </span>
                       <input
-                        className="profile-input"
+                        className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
                         type="time"
                         value={get24hTime(
                           restaurantForm.operatingHoursWeekdays,
@@ -1246,7 +1245,7 @@ const ProfilePage: React.FC = () => {
                         }
                       />
                     </div>
-                    <div className="profile-field" style={{ gap: "4px" }}>
+                    <div className="flex flex-col gap-2" style={{ gap: "4px" }}>
                       <span
                         style={{
                           fontSize: "10px",
@@ -1258,7 +1257,7 @@ const ProfilePage: React.FC = () => {
                         Closing Time
                       </span>
                       <input
-                        className="profile-input"
+                        className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
                         type="time"
                         value={get24hTime(
                           restaurantForm.operatingHoursWeekdays,
@@ -1275,8 +1274,8 @@ const ProfilePage: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <div className="profile-field">
-                  <span className="profile-field-label">
+                <div className="flex flex-col gap-2">
+                  <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
                     Operating Hours (Weekends)
                   </span>
                   <div
@@ -1286,7 +1285,7 @@ const ProfilePage: React.FC = () => {
                       gap: "12px",
                     }}
                   >
-                    <div className="profile-field" style={{ gap: "4px" }}>
+                    <div className="flex flex-col gap-2" style={{ gap: "4px" }}>
                       <span
                         style={{
                           fontSize: "10px",
@@ -1298,7 +1297,7 @@ const ProfilePage: React.FC = () => {
                         Opening Time
                       </span>
                       <input
-                        className="profile-input"
+                        className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
                         type="time"
                         value={get24hTime(
                           restaurantForm.operatingHoursWeekends,
@@ -1309,7 +1308,7 @@ const ProfilePage: React.FC = () => {
                         }
                       />
                     </div>
-                    <div className="profile-field" style={{ gap: "4px" }}>
+                    <div className="flex flex-col gap-2" style={{ gap: "4px" }}>
                       <span
                         style={{
                           fontSize: "10px",
@@ -1321,7 +1320,7 @@ const ProfilePage: React.FC = () => {
                         Closing Time
                       </span>
                       <input
-                        className="profile-input"
+                        className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
                         type="time"
                         value={get24hTime(
                           restaurantForm.operatingHoursWeekends,
@@ -1340,9 +1339,9 @@ const ProfilePage: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <div className="profile-form-grid">
+              <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
                 <div
-                  className="profile-field-span-2"
+                  className="col-span-2"
                   style={{
                     fontSize: "13px",
                     fontWeight: 600,
@@ -1357,29 +1356,29 @@ const ProfilePage: React.FC = () => {
                   Contact Information
                 </div>
 
-                <div className="profile-info-item">
-                  <span className="profile-info-value profile-value-inline">
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text inline-flex items-center gap-2">
                     <MailIcon size={15} />
                     {restaurant?.contact.email || "N/A"}
                   </span>
                 </div>
 
-                <div className="profile-info-item">
-                  <span className="profile-info-value profile-value-inline">
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text inline-flex items-center gap-2">
                     <PhoneIcon size={15} />
                     {restaurant?.contact.phone || "N/A"}
                   </span>
                 </div>
 
-                <div className="profile-info-item profile-field-span-2">
-                  <span className="profile-info-value profile-value-inline">
+                <div className="flex flex-col gap-1.5 col-span-2">
+                  <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text inline-flex items-center gap-2">
                     <MapPinIcon size={15} />
                     {restaurant?.contact.address || "N/A"}
                   </span>
                 </div>
 
                 <div
-                  className="profile-field-span-2"
+                  className="col-span-2"
                   style={{
                     fontSize: "13px",
                     fontWeight: 600,
@@ -1395,19 +1394,19 @@ const ProfilePage: React.FC = () => {
                   Operating Hours
                 </div>
 
-                <div className="profile-info-item">
-                  <span className="profile-info-label">
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
                     Operating Hours (Weekdays)
                   </span>
-                  <span className="profile-info-value">
+                  <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
                     {restaurant?.operatingHoursWeekdays || "Not set"}
                   </span>
                 </div>
-                <div className="profile-info-item">
-                  <span className="profile-info-label">
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
                     Operating Hours (Weekends)
                   </span>
-                  <span className="profile-info-value">
+                  <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
                     {restaurant?.operatingHoursWeekends || "Not set"}
                   </span>
                 </div>
@@ -1417,10 +1416,10 @@ const ProfilePage: React.FC = () => {
         </div>
 
         <div
-          className="profile-section"
+          className="border border-[#E2E8F0] rounded-[18px] p-[18px] bg-white dark:bg-tk-bg-card dark:border-tk-border"
           style={{ display: activeTab === "branding" ? "block" : "none" }}
         >
-          <div className="profile-section-header">
+          <div className="flex justify-between items-start gap-4 mb-4">
             <div>
               <h3>Location & Branding</h3>
               <p>Where to find you and your visual identity.</p>
@@ -1428,11 +1427,11 @@ const ProfilePage: React.FC = () => {
             {renderRestaurantActions("branding")}
           </div>
            {editingSections.branding ? (
-            <div className="profile-form-grid">
-              <div className="profile-field">
-                <span className="profile-field-label">Logo</span>
+            <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+              <div className="flex flex-col gap-2">
+                <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Logo</span>
                 <div
-                  className={`profile-dropzone ${isUploadingLogo ? "profile-dropzone-uploading" : ""}`}
+                  className={`border-2 border-dashed border-[#CBD5E0] rounded-2xl bg-[#F8FAFC] cursor-pointer transition-all duration-200 overflow-hidden hover:border-tk-burgundy hover:bg-[#F0FFF4] dark:bg-tk-bg-surface dark:border-tk-border dark:hover:bg-[rgba(72,187,120,0.1)] ${isUploadingLogo ? "opacity-70 cursor-wait pointer-events-none" : ""}`}
                   onDragOver={(e) => {
                     e.preventDefault();
                     e.currentTarget.classList.add("profile-dropzone-hover");
@@ -1452,20 +1451,20 @@ const ProfilePage: React.FC = () => {
                     ref={logoInputRef}
                     type="file"
                     accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif"
-                    className="profile-dropzone-input"
+                    className="hidden"
                     onChange={handleLogoFileSelect}
                   />
                   {restaurantForm.logoUrl ? (
-                    <div className="profile-dropzone-preview">
+                    <div className="flex items-center gap-3.5 px-4 py-3.5">
                       <img
                         src={restaurantForm.logoUrl}
                         alt="Logo preview"
-                        className="profile-dropzone-thumb"
+                        className="w-14 h-14 object-contain rounded-xl border border-[#E2E8F0] bg-white shrink-0 dark:bg-tk-bg-surface dark:border-tk-border"
                         onError={(e) => {
                           (e.target as HTMLImageElement).style.display = "none";
                         }}
                       />
-                      <span className="profile-dropzone-replace">
+                      <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-tk-burgundy font-['Outfit',sans-serif]">
                         <Upload size={14} />
                         {isUploadingLogo
                           ? "Uploading…"
@@ -1473,14 +1472,14 @@ const ProfilePage: React.FC = () => {
                       </span>
                     </div>
                   ) : (
-                    <div className="profile-dropzone-empty">
+                    <div className="flex flex-col items-center justify-center gap-2 px-4 py-6 text-[#4A5568] font-['Outfit',sans-serif] text-center dark:text-tk-text-secondary">
                       <ImageIcon size={28} strokeWidth={1.5} />
                       <span>
                         {isUploadingLogo
                           ? "Uploading…"
                           : "Drop image here or click to browse"}
                       </span>
-                      <span className="profile-dropzone-hint">
+                      <span className="!text-[11px] !text-[#718096] !font-normal dark:!text-tk-text-secondary">
                         PNG, JPG, WebP, SVG • Max 2 MB
                       </span>
                     </div>
@@ -1488,12 +1487,12 @@ const ProfilePage: React.FC = () => {
                 </div>
               </div>
 
-              <label className="profile-field">
-                <span className="profile-field-label">
+              <label className="flex flex-col gap-2">
+                <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
                   Access Area Radius (meters)
                 </span>
                 <input
-                  className="profile-input"
+                  className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
                   type="number"
                   min="1"
                   step="1"
@@ -1508,8 +1507,8 @@ const ProfilePage: React.FC = () => {
                 />
               </label>
 
-              <div className="profile-field profile-field-span-2">
-                <span className="profile-field-label">Location Coordinates</span>
+              <div className="flex flex-col gap-2 col-span-2">
+                <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Location Coordinates</span>
                 <div
                   style={{
                     display: "grid",
@@ -1517,15 +1516,15 @@ const ProfilePage: React.FC = () => {
                     gap: "16px",
                   }}
                 >
-                  <label className="profile-field" style={{ gap: "4px" }}>
+                  <label className="flex flex-col gap-2" style={{ gap: "4px" }}>
                     <span
-                      className="profile-field-label"
+                      className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary"
                       style={{ fontSize: "10px", color: "#718096" }}
                     >
                       Latitude
                     </span>
                     <input
-                      className="profile-input"
+                      className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
                       type="number"
                       min="-90"
                       max="90"
@@ -1540,15 +1539,15 @@ const ProfilePage: React.FC = () => {
                       placeholder="26.144516"
                     />
                   </label>
-                  <label className="profile-field" style={{ gap: "4px" }}>
+                  <label className="flex flex-col gap-2" style={{ gap: "4px" }}>
                     <span
-                      className="profile-field-label"
+                      className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary"
                       style={{ fontSize: "10px", color: "#718096" }}
                     >
                       Longitude
                     </span>
                     <input
-                      className="profile-input"
+                      className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
                       type="number"
                       min="-180"
                       max="180"
@@ -1588,7 +1587,7 @@ const ProfilePage: React.FC = () => {
                 >
                   <button
                     type="button"
-                    className="profile-locate-btn"
+                    className="inline-flex items-center gap-2 px-[18px] py-2.5 border-2 border-dashed border-tk-burgundy rounded-xl bg-[#F0FFF4] text-tk-burgundy text-[13px] font-semibold font-['Outfit',sans-serif] cursor-pointer transition-all duration-200 hover:not(:disabled):bg-[#C6F6D5] hover:not(:disabled):border-[#6B2A15] hover:not(:disabled):-translate-y-px disabled:opacity-70 disabled:cursor-wait dark:bg-[rgba(72,187,120,0.1)] dark:hover:not(:disabled):bg-[rgba(72,187,120,0.2)]"
                     onClick={handleUseMyLocation}
                     disabled={isLocating}
                   >
@@ -1598,17 +1597,17 @@ const ProfilePage: React.FC = () => {
                     />
                     {isLocating ? "Locating…" : "Use My Current Location"}
                   </button>
-                  <span className="profile-field-help">
+                  <span className="text-[#4A5568] text-[12px] leading-relaxed font-['Outfit',sans-serif] dark:text-tk-text-secondary">
                     Drag the pin or click on the map to set location accurately.
                   </span>
                 </div>
               </div>
 
-              <label className="profile-field">
-                <span className="profile-field-label">Primary Color</span>
-                <div className="profile-color-field">
+              <label className="flex flex-col gap-2">
+                <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Primary Color</span>
+                <div className="flex items-center gap-3">
                   <input
-                    className="profile-color-picker"
+                    className="w-12 h-12 p-0 border border-[#CBD5E0] rounded-xl bg-white cursor-pointer shrink-0 dark:bg-tk-bg-surface dark:border-tk-border [&::-webkit-color-swatch-wrapper]:p-1 [&::-webkit-color-swatch]:border-none [&::-webkit-color-swatch]:rounded-[10px]"
                     type="color"
                     value={
                       hexColorPattern.test(restaurantForm.primaryColor)
@@ -1623,7 +1622,7 @@ const ProfilePage: React.FC = () => {
                     }
                   />
                   <input
-                    className="profile-input"
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
                     type="text"
                     value={restaurantForm.primaryColor}
                     onChange={(event) =>
@@ -1637,11 +1636,11 @@ const ProfilePage: React.FC = () => {
                 </div>
               </label>
 
-              <label className="profile-field">
-                <span className="profile-field-label">Secondary Color</span>
-                <div className="profile-color-field">
+              <label className="flex flex-col gap-2">
+                <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Secondary Color</span>
+                <div className="flex items-center gap-3">
                   <input
-                    className="profile-color-picker"
+                    className="w-12 h-12 p-0 border border-[#CBD5E0] rounded-xl bg-white cursor-pointer shrink-0 dark:bg-tk-bg-surface dark:border-tk-border [&::-webkit-color-swatch-wrapper]:p-1 [&::-webkit-color-swatch]:border-none [&::-webkit-color-swatch]:rounded-[10px]"
                     type="color"
                     value={
                       hexColorPattern.test(restaurantForm.secondaryColor)
@@ -1656,7 +1655,7 @@ const ProfilePage: React.FC = () => {
                     }
                   />
                   <input
-                    className="profile-input"
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
                     type="text"
                     value={restaurantForm.secondaryColor}
                     onChange={(event) =>
@@ -1671,30 +1670,30 @@ const ProfilePage: React.FC = () => {
               </label>
             </div>
           ) : (
-            <div className="profile-form-grid">
-              <div className="profile-info-item">
-                <span className="profile-info-label">Location</span>
-                <span className="profile-info-value profile-value-inline">
+            <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Location</span>
+                <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text inline-flex items-center gap-2">
                   <MapPinIcon size={15} />
                   {restaurant ? `${formatCoordinate(restaurant.location?.latitude)}, ${formatCoordinate(restaurant.location?.longitude)}` : "N/A"}
                 </span>
               </div>
 
-              <div className="profile-info-item">
-                <span className="profile-info-label">Access Area Radius</span>
-                <span className="profile-info-value">
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Access Area Radius</span>
+                <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
                   {restaurant?.location?.allowedRadius != null
                     ? `${restaurant.location.allowedRadius} meters`
                     : "Not set"}
                 </span>
               </div>
 
-              <div className="profile-info-item">
-                <span className="profile-info-label">Brand Colors</span>
-                <div className="profile-swatch-list">
-                  <span className="profile-swatch-chip">
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Brand Colors</span>
+                <div className="flex flex-wrap gap-2.5">
+                  <span className="inline-flex items-center gap-2.5 px-3 py-2 rounded-full bg-[#EDF2F7] text-[#2D3748] text-[13px] font-medium font-['Outfit',sans-serif] dark:bg-tk-bg-elevated dark:text-tk-text">
                     <span
-                      className="profile-color-swatch"
+                      className="w-4 h-4 rounded-full border border-[rgba(26,32,44,0.12)]"
                       style={{
                         backgroundColor:
                           restaurant?.branding?.primaryColor || "#4f755c",
@@ -1702,9 +1701,9 @@ const ProfilePage: React.FC = () => {
                     />
                     {restaurant?.branding?.primaryColor || "Not set"}
                   </span>
-                  <span className="profile-swatch-chip">
+                  <span className="inline-flex items-center gap-2.5 px-3 py-2 rounded-full bg-[#EDF2F7] text-[#2D3748] text-[13px] font-medium font-['Outfit',sans-serif] dark:bg-tk-bg-elevated dark:text-tk-text">
                     <span
-                      className="profile-color-swatch"
+                      className="w-4 h-4 rounded-full border border-[rgba(26,32,44,0.12)]"
                       style={{
                         backgroundColor:
                           restaurant?.branding?.secondaryColor || "#68d391",
@@ -1715,21 +1714,21 @@ const ProfilePage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="profile-info-item">
-                <span className="profile-info-label">Logo</span>
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Logo</span>
                 {restaurant?.branding?.logoUrl ? (
-                  <div className="profile-logo-preview">
+                  <div className="flex flex-col gap-2">
                     <img
                       src={restaurant.branding.logoUrl}
                       alt={`${restaurant.name} logo`}
-                      className="profile-logo-img"
+                      className="w-16 h-16 object-contain rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] dark:bg-tk-bg-surface dark:border-tk-border"
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = "none";
                       }}
                     />
                   </div>
                 ) : (
-                  <span className="profile-info-value profile-muted">
+                  <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text text-[#4A5568] dark:text-tk-text-secondary">
                     Not set
                   </span>
                 )}
@@ -1740,10 +1739,10 @@ const ProfilePage: React.FC = () => {
 
         {/* Our Story & Additional Info */}
         <div
-          className="profile-section"
+          className="border border-[#E2E8F0] rounded-[18px] p-[18px] bg-white dark:bg-tk-bg-card dark:border-tk-border"
           style={{ display: activeTab === "story" ? "block" : "none" }}
         >
-          <div className="profile-section-header">
+          <div className="flex justify-between items-start gap-4 mb-4">
             <div>
               <h3>Our Story & Socials</h3>
               <p>Tell your customers about your restaurant.</p>
@@ -1751,11 +1750,11 @@ const ProfilePage: React.FC = () => {
             {renderRestaurantActions("story")}
           </div>
            {editingSections.story ? (
-            <div className="profile-form-grid">
-              <label className="profile-field">
-                <span className="profile-field-label">Opening Date</span>
+            <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+              <label className="flex flex-col gap-2">
+                <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Opening Date</span>
                 <input
-                  className="profile-input"
+                  className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
                   type="date"
                   value={restaurantForm.openingDate}
                   onChange={(event) =>
@@ -1764,10 +1763,10 @@ const ProfilePage: React.FC = () => {
                 />
               </label>
 
-              <label className="profile-field profile-field-span-2">
-                <span className="profile-field-label">Manifesto / Our Story</span>
+              <label className="flex flex-col gap-2 col-span-2">
+                <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Manifesto / Our Story</span>
                 <textarea
-                  className="profile-input profile-textarea"
+                  className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text resize-y min-h-[96px]"
                   value={restaurantForm.manifesto}
                   onChange={(event) =>
                     handleRestaurantFieldChange("manifesto", event.target.value)
@@ -1777,10 +1776,10 @@ const ProfilePage: React.FC = () => {
                 />
               </label>
 
-              <label className="profile-field">
-                <span className="profile-field-label">Instagram URL</span>
+              <label className="flex flex-col gap-2">
+                <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Instagram URL</span>
                 <input
-                  className="profile-input"
+                  className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
                   type="url"
                   value={restaurantForm.instagramUrl}
                   onChange={(event) =>
@@ -1793,10 +1792,10 @@ const ProfilePage: React.FC = () => {
                 />
               </label>
 
-              <label className="profile-field">
-                <span className="profile-field-label">Facebook URL</span>
+              <label className="flex flex-col gap-2">
+                <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Facebook URL</span>
                 <input
-                  className="profile-input"
+                  className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
                   type="url"
                   value={restaurantForm.facebookUrl}
                   onChange={(event) =>
@@ -1806,10 +1805,10 @@ const ProfilePage: React.FC = () => {
                 />
               </label>
 
-              <label className="profile-field profile-field-span-2">
-                <span className="profile-field-label">Website URL</span>
+              <label className="flex flex-col gap-2 col-span-2">
+                <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Website URL</span>
                 <input
-                  className="profile-input"
+                  className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
                   type="url"
                   value={restaurantForm.websiteUrl}
                   onChange={(event) =>
@@ -1820,30 +1819,30 @@ const ProfilePage: React.FC = () => {
               </label>
             </div>
           ) : (
-            <div className="profile-form-grid">
-              <div className="profile-info-item">
-                <span className="profile-info-label">Opening Date</span>
-                <span className="profile-info-value">
+            <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Opening Date</span>
+                <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
                   {restaurant?.openingDate || "Not set"}
                 </span>
               </div>
 
-              <div className="profile-info-item">
-                <span className="profile-info-label">Manifesto</span>
-                <span className="profile-info-value">
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Manifesto</span>
+                <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
                   {restaurant?.manifesto || "Not set"}
                 </span>
               </div>
 
-              <div className="profile-info-item">
-                <span className="profile-info-label">Instagram</span>
-                <span className="profile-info-value">
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Instagram</span>
+                <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
                   {restaurant?.instagramUrl ? (
                     <a
                       href={restaurant.instagramUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="profile-link"
+                      className="inline-flex items-center gap-2 w-fit text-[#2B6CB0] text-[14px] font-medium no-underline break-all font-['Outfit',sans-serif] hover:underline dark:text-[#90CDF4]"
                     >
                       {restaurant.instagramUrl} <ExternalLink size={14} />
                     </a>
@@ -1853,15 +1852,15 @@ const ProfilePage: React.FC = () => {
                 </span>
               </div>
 
-              <div className="profile-info-item">
-                <span className="profile-info-label">Facebook</span>
-                <span className="profile-info-value">
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Facebook</span>
+                <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
                   {restaurant?.facebookUrl ? (
                     <a
                       href={restaurant.facebookUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="profile-link"
+                      className="inline-flex items-center gap-2 w-fit text-[#2B6CB0] text-[14px] font-medium no-underline break-all font-['Outfit',sans-serif] hover:underline dark:text-[#90CDF4]"
                     >
                       {restaurant.facebookUrl} <ExternalLink size={14} />
                     </a>
@@ -1871,15 +1870,15 @@ const ProfilePage: React.FC = () => {
                 </span>
               </div>
 
-              <div className="profile-info-item profile-field-span-2">
-                <span className="profile-info-label">Website</span>
-                <span className="profile-info-value">
+              <div className="flex flex-col gap-1.5 col-span-2">
+                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Website</span>
+                <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
                   {restaurant?.websiteUrl ? (
                     <a
                       href={restaurant.websiteUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="profile-link"
+                      className="inline-flex items-center gap-2 w-fit text-[#2B6CB0] text-[14px] font-medium no-underline break-all font-['Outfit',sans-serif] hover:underline dark:text-[#90CDF4]"
                     >
                       {restaurant.websiteUrl} <ExternalLink size={14} />
                     </a>
@@ -1894,8 +1893,8 @@ const ProfilePage: React.FC = () => {
 
         {/* Payments Tab */}
         <div style={{ display: activeTab === "payments" ? "block" : "none" }}>
-          <div className="profile-section">
-            <div className="profile-section-header">
+          <div className="border border-[#E2E8F0] rounded-[18px] p-[18px] bg-white dark:bg-tk-bg-card dark:border-tk-border">
+            <div className="flex justify-between items-start gap-4 mb-4">
               <div>
                 <h3>Restaurant Razorpay</h3>
                 <p>Customer food payments settle directly into this restaurant's own Razorpay account.</p>
@@ -1976,21 +1975,21 @@ const ProfilePage: React.FC = () => {
             </div>
 
             {editingSections.payments ? (
-              <div className="profile-form-grid">
-                <label className="profile-field profile-field-span-2" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', border: '1px solid #CBD5E0', borderRadius: '8px', marginTop: '8px' }}>
+              <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+                <label className="flex flex-col gap-2 col-span-2" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', border: '1px solid #CBD5E0', borderRadius: '8px', marginTop: '8px' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <span className="profile-field-label">Enable Online Payments</span>
-                    <span className="profile-field-help" style={{ margin: 0 }}>Allow customers to pay online from their phones</span>
+                    <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Enable Online Payments</span>
+                    <span className="text-[#4A5568] text-[12px] leading-relaxed font-['Outfit',sans-serif] dark:text-tk-text-secondary" style={{ margin: 0 }}>Allow customers to pay online from their phones</span>
                   </div>
-                  <div className={`profile-toggle-switch ${restaurantForm?.payOnline ? 'active' : ''}`} onClick={() => handleRestaurantFieldChange("payOnline", (!restaurantForm?.payOnline) as any)}>
+                  <div className={`profile-toggle-switch ${restaurantForm?.payOnline ? 'bg-tk-burgundy text-white' : ''}`} onClick={() => handleRestaurantFieldChange("payOnline", (!restaurantForm?.payOnline) as any)}>
                      <div className="profile-toggle-thumb" />
                   </div>
                 </label>
 
-                <label className="profile-field">
-                  <span className="profile-field-label">Razorpay Key ID</span>
+                <label className="flex flex-col gap-2">
+                  <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Razorpay Key ID</span>
                   <input
-                    className="profile-input"
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
                     type="text"
                     value={paymentForm.razorpayKeyId}
                     onChange={e => setPaymentForm(f => ({ ...f, razorpayKeyId: e.target.value }))}
@@ -1998,10 +1997,10 @@ const ProfilePage: React.FC = () => {
                   />
                 </label>
 
-                <label className="profile-field">
-                  <span className="profile-field-label">Razorpay Key Secret {paymentSettings.hasRazorpayKeySecret && <span style={{ color: "green", fontSize: "0.75rem" }}>✓ Configured</span>}</span>
+                <label className="flex flex-col gap-2">
+                  <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Razorpay Key Secret {paymentSettings.hasRazorpayKeySecret && <span style={{ color: "green", fontSize: "0.75rem" }}>✓ Configured</span>}</span>
                   <input
-                    className="profile-input"
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
                     type="password"
                     value={paymentForm.razorpayKeySecret}
                     onChange={e => setPaymentForm(f => ({ ...f, razorpayKeySecret: e.target.value }))}
@@ -2010,42 +2009,42 @@ const ProfilePage: React.FC = () => {
                   />
                 </label>
 
-                <label className="profile-field profile-field-span-2">
-                  <span className="profile-field-label">Webhook Secret {paymentSettings.hasRazorpayWebhookSecret && <span style={{ color: "green", fontSize: "0.75rem" }}>✓ Configured</span>}</span>
+                <label className="flex flex-col gap-2 col-span-2">
+                  <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Webhook Secret {paymentSettings.hasRazorpayWebhookSecret && <span style={{ color: "green", fontSize: "0.75rem" }}>✓ Configured</span>}</span>
                   <input
-                    className="profile-input"
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
                     type="password"
                     value={paymentForm.razorpayWebhookSecret}
                     onChange={e => setPaymentForm(f => ({ ...f, razorpayWebhookSecret: e.target.value }))}
                     placeholder={paymentSettings.hasRazorpayWebhookSecret ? "Leave blank to keep existing" : "Enter webhook secret"}
                     autoComplete="new-password"
                   />
-                  <span className="profile-field-help">Set this in your Razorpay Dashboard → Webhooks → Secret.</span>
+                  <span className="text-[#4A5568] text-[12px] leading-relaxed font-['Outfit',sans-serif] dark:text-tk-text-secondary">Set this in your Razorpay Dashboard → Webhooks → Secret.</span>
                 </label>
               </div>
             ) : (
-              <div className="profile-form-grid">
-                <div className="profile-info-item">
-                  <span className="profile-info-label">Online Payments</span>
-                  <span className="profile-info-value">
+              <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Online Payments</span>
+                  <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
                     {(restaurant as any)?.pay_online === false ? "❌ Disabled" : "✅ Enabled"}
                   </span>
                 </div>
-                <div className="profile-info-item">
-                  <span className="profile-info-label">Razorpay Key ID</span>
-                  <span className="profile-info-value profile-info-mono">
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Razorpay Key ID</span>
+                  <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text text-[12px] text-[#4A5568] font-mono break-all dark:text-tk-text-secondary">
                     {paymentSettings.razorpayKeyId || "Not set"}
                   </span>
                 </div>
-                <div className="profile-info-item">
-                  <span className="profile-info-label">Key Secret</span>
-                  <span className="profile-info-value">
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Key Secret</span>
+                  <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
                     {paymentSettings.hasRazorpayKeySecret ? "🔒 Configured" : "Not set"}
                   </span>
                 </div>
-                <div className="profile-info-item">
-                  <span className="profile-info-label">Webhook Secret</span>
-                  <span className="profile-info-value">
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Webhook Secret</span>
+                  <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
                     {paymentSettings.hasRazorpayWebhookSecret ? "🔒 Configured" : "Not set"}
                   </span>
                 </div>
@@ -2059,27 +2058,27 @@ const ProfilePage: React.FC = () => {
   function renderAdminEditor(): React.ReactNode {
     if (!userProfile) {
       return (
-        <div className="profile-empty-state">
+        <div className="border border-dashed border-[#CBD5E0] rounded-2xl p-[18px] text-[#4A5568] bg-[#F8FAFC] text-[14px] font-['Outfit',sans-serif] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text-secondary">
           Administrator profile could not be loaded.
         </div>
       );
     }
 
     return (
-      <div className="profile-form-layout">
-        <div className="profile-section">
-          <div className="profile-section-header">
+      <div className="flex flex-col gap-6">
+        <div className="border border-[#E2E8F0] rounded-[18px] p-[18px] bg-white dark:bg-tk-bg-card dark:border-tk-border">
+          <div className="flex justify-between items-start gap-4 mb-4">
             <div>
               <h3>Personal Information</h3>
               <p>Your personal details and profile picture.</p>
             </div>
             {renderAdminActions()}
           </div>
-          <div className="profile-form-grid">
-            <label className="profile-field">
-              <span className="profile-field-label">Full Name</span>
+          <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+            <label className="flex flex-col gap-2">
+              <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Full Name</span>
               <input
-                className="profile-input"
+                className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
                 type="text"
                 value={adminForm.name}
                 onChange={(event) =>
@@ -2091,10 +2090,10 @@ const ProfilePage: React.FC = () => {
               />
             </label>
 
-            <label className="profile-field">
-              <span className="profile-field-label">Email Address</span>
+            <label className="flex flex-col gap-2">
+              <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Email Address</span>
               <input
-                className="profile-input"
+                className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
                 type="email"
                 value={adminForm.email}
                 onChange={(event) =>
@@ -2103,16 +2102,16 @@ const ProfilePage: React.FC = () => {
                 placeholder="admin@restaurant.com"
                 required
               />
-              <span className="profile-field-help">
+              <span className="text-[#4A5568] text-[12px] leading-relaxed font-['Outfit',sans-serif] dark:text-tk-text-secondary">
                 Changing email may require confirmation before it becomes
                 active.
               </span>
             </label>
 
-            <div className="profile-field profile-field-span-2">
-              <span className="profile-field-label">Avatar</span>
+            <div className="flex flex-col gap-2 col-span-2">
+              <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Avatar</span>
               <div
-                className={`profile-dropzone ${isUploadingAvatar ? "profile-dropzone-uploading" : ""}`}
+                className={`border-2 border-dashed border-[#CBD5E0] rounded-2xl bg-[#F8FAFC] cursor-pointer transition-all duration-200 overflow-hidden hover:border-tk-burgundy hover:bg-[#F0FFF4] dark:bg-tk-bg-surface dark:border-tk-border dark:hover:bg-[rgba(72,187,120,0.1)] ${isUploadingAvatar ? "opacity-70 cursor-wait pointer-events-none" : ""}`}
                 onDragOver={(e) => {
                   e.preventDefault();
                   e.currentTarget.classList.add("profile-dropzone-hover");
@@ -2132,20 +2131,20 @@ const ProfilePage: React.FC = () => {
                   ref={avatarInputRef}
                   type="file"
                   accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif"
-                  className="profile-dropzone-input"
+                  className="hidden"
                   onChange={handleAvatarFileSelect}
                 />
                 {adminForm.avatarUrl ? (
-                  <div className="profile-dropzone-preview">
+                  <div className="flex items-center gap-3.5 px-4 py-3.5">
                     <img
                       src={adminForm.avatarUrl}
                       alt="Avatar preview"
-                      className="profile-dropzone-thumb profile-dropzone-thumb-round"
+                      className="w-14 h-14 object-contain rounded-xl border border-[#E2E8F0] bg-white shrink-0 dark:bg-tk-bg-surface dark:border-tk-border rounded-full object-cover"
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = "none";
                       }}
                     />
-                    <span className="profile-dropzone-replace">
+                    <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-tk-burgundy font-['Outfit',sans-serif]">
                       <Upload size={14} />
                       {isUploadingAvatar
                         ? "Uploading…"
@@ -2153,14 +2152,14 @@ const ProfilePage: React.FC = () => {
                     </span>
                   </div>
                 ) : (
-                  <div className="profile-dropzone-empty">
+                  <div className="flex flex-col items-center justify-center gap-2 px-4 py-6 text-[#4A5568] font-['Outfit',sans-serif] text-center dark:text-tk-text-secondary">
                     <ImageIcon size={28} strokeWidth={1.5} />
                     <span>
                       {isUploadingAvatar
                         ? "Uploading…"
                         : "Drop image here or click to browse"}
                     </span>
-                    <span className="profile-dropzone-hint">
+                    <span className="!text-[11px] !text-[#718096] !font-normal dark:!text-tk-text-secondary">
                       PNG, JPG, WebP, SVG • Max 2 MB
                     </span>
                   </div>
@@ -2170,28 +2169,28 @@ const ProfilePage: React.FC = () => {
           </div>
         </div>
 
-        <div className="profile-summary-grid">
-          <div className="profile-summary-card">
-            <span className="profile-info-label">Global Role</span>
-            <span className="status-badge admin">
+        <div className="grid grid-cols-2 gap-3.5 max-sm:grid-cols-1">
+          <div className="border border-[#E2E8F0] rounded-2xl bg-white px-4 py-3.5 flex flex-col gap-2.5 dark:bg-tk-bg-card dark:border-tk-border">
+            <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Global Role</span>
+            <span className="inline-flex items-center px-3.5 py-1.5 rounded-xl text-[12px] font-semibold capitalize w-fit font-['Outfit',sans-serif] bg-[#D6BCFA] text-[#44337A] dark:bg-[rgba(214,188,250,0.15)] dark:text-[#D6BCFA]">
               {formatLabel(userProfile.role)}
             </span>
           </div>
-          <div className="profile-summary-card">
-            <span className="profile-info-label">Restaurant Access Role</span>
+          <div className="border border-[#E2E8F0] rounded-2xl bg-white px-4 py-3.5 flex flex-col gap-2.5 dark:bg-tk-bg-card dark:border-tk-border">
+            <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Restaurant Access Role</span>
             <span
-              className={`status-badge ${
-                String(activeMembership?.role || "").toLowerCase() === "admin"
-                  ? "admin"
-                  : "active"
+              className={`inline-flex items-center px-3.5 py-1.5 rounded-xl text-[12px] font-semibold capitalize w-fit font-['Outfit',sans-serif] ${
+                String(activeMembership?.role || "").toLowerCase() === "bg-[#D6BCFA] text-[#44337A] dark:bg-[rgba(214,188,250,0.15)] dark:text-[#D6BCFA]"
+                  ? "bg-[#D6BCFA] text-[#44337A] dark:bg-[rgba(214,188,250,0.15)] dark:text-[#D6BCFA]"
+                  : "bg-tk-burgundy text-white"
               }`}
             >
               {formatLabel(activeMembership?.role || "staff")}
             </span>
           </div>
-          <div className="profile-summary-card profile-summary-card-wide">
-            <span className="profile-info-label">Account ID</span>
-            <span className="profile-info-mono" title={userProfile.id}>
+          <div className="border border-[#E2E8F0] rounded-2xl bg-white px-4 py-3.5 flex flex-col gap-2.5 dark:bg-tk-bg-card dark:border-tk-border col-span-2">
+            <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Account ID</span>
+            <span className="text-[12px] text-[#4A5568] font-mono break-all dark:text-tk-text-secondary" title={userProfile.id}>
               {userProfile.id}
             </span>
           </div>
@@ -2203,52 +2202,52 @@ const ProfilePage: React.FC = () => {
   function renderAdminReadOnly(): React.ReactNode {
     if (!userProfile) {
       return (
-        <div className="profile-empty-state">
+        <div className="border border-dashed border-[#CBD5E0] rounded-2xl p-[18px] text-[#4A5568] bg-[#F8FAFC] text-[14px] font-['Outfit',sans-serif] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text-secondary">
           Administrator profile could not be loaded.
         </div>
       );
     }
 
     return (
-      <div className="profile-form-layout">
-        <div className="profile-section">
-          <div className="profile-section-header">
+      <div className="flex flex-col gap-6">
+        <div className="border border-[#E2E8F0] rounded-[18px] p-[18px] bg-white dark:bg-tk-bg-card dark:border-tk-border">
+          <div className="flex justify-between items-start gap-4 mb-4">
             <div>
               <h3>Personal Information</h3>
               <p>Your personal details and profile picture.</p>
             </div>
             {renderAdminActions()}
           </div>
-          <div className="profile-form-grid">
-            <div className="profile-info-item">
-              <span className="profile-info-label">Full Name</span>
-              <span className="profile-info-value">
+          <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Full Name</span>
+              <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
                 {userProfile.name || "Admin User"}
               </span>
             </div>
 
-            <div className="profile-info-item">
-              <span className="profile-info-label">Email Address</span>
-              <span className="profile-info-value">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Email Address</span>
+              <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
                 {userProfile.email || "N/A"}
               </span>
             </div>
 
-            <div className="profile-info-item profile-field-span-2">
-              <span className="profile-info-label">Avatar</span>
+            <div className="flex flex-col gap-1.5 col-span-2">
+              <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Avatar</span>
               {userProfile.avatarUrl ? (
-                <div className="profile-logo-preview">
+                <div className="flex flex-col gap-2">
                   <img
                     src={userProfile.avatarUrl}
                     alt={`${userProfile.name || "Admin"} avatar`}
-                    className="profile-avatar-img"
+                    className="w-[52px] h-[52px] object-cover rounded-full border-2 border-[#E2E8F0] dark:border-tk-border"
                     onError={(e) => {
                       (e.target as HTMLImageElement).style.display = "none";
                     }}
                   />
                 </div>
               ) : (
-                <span className="profile-info-value profile-muted">
+                <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text text-[#4A5568] dark:text-tk-text-secondary">
                   Not set
                 </span>
               )}
@@ -2256,22 +2255,22 @@ const ProfilePage: React.FC = () => {
           </div>
         </div>
 
-        <div className="profile-summary-grid">
-          <div className="profile-summary-card">
-            <span className="profile-info-label">Global Role</span>
-            <span className="status-badge admin">
+        <div className="grid grid-cols-2 gap-3.5 max-sm:grid-cols-1">
+          <div className="border border-[#E2E8F0] rounded-2xl bg-white px-4 py-3.5 flex flex-col gap-2.5 dark:bg-tk-bg-card dark:border-tk-border">
+            <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Global Role</span>
+            <span className="inline-flex items-center px-3.5 py-1.5 rounded-xl text-[12px] font-semibold capitalize w-fit font-['Outfit',sans-serif] bg-[#D6BCFA] text-[#44337A] dark:bg-[rgba(214,188,250,0.15)] dark:text-[#D6BCFA]">
               {formatLabel(userProfile.role)}
             </span>
           </div>
 
           {activeMembership && (
-            <div className="profile-summary-card">
-              <span className="profile-info-label">Restaurant Access Role</span>
+            <div className="border border-[#E2E8F0] rounded-2xl bg-white px-4 py-3.5 flex flex-col gap-2.5 dark:bg-tk-bg-card dark:border-tk-border">
+              <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Restaurant Access Role</span>
               <span
-                className={`status-badge ${
-                  String(activeMembership.role).toLowerCase() === "admin"
-                    ? "admin"
-                    : "active"
+                className={`inline-flex items-center px-3.5 py-1.5 rounded-xl text-[12px] font-semibold capitalize w-fit font-['Outfit',sans-serif] ${
+                  String(activeMembership.role).toLowerCase() === "bg-[#D6BCFA] text-[#44337A] dark:bg-[rgba(214,188,250,0.15)] dark:text-[#D6BCFA]"
+                    ? "bg-[#D6BCFA] text-[#44337A] dark:bg-[rgba(214,188,250,0.15)] dark:text-[#D6BCFA]"
+                    : "bg-tk-burgundy text-white"
                 }`}
               >
                 {formatLabel(activeMembership.role)}
@@ -2279,9 +2278,9 @@ const ProfilePage: React.FC = () => {
             </div>
           )}
 
-          <div className="profile-summary-card profile-summary-card-wide">
-            <span className="profile-info-label">Account ID</span>
-            <span className="profile-info-mono" title={userProfile.id}>
+          <div className="border border-[#E2E8F0] rounded-2xl bg-white px-4 py-3.5 flex flex-col gap-2.5 dark:bg-tk-bg-card dark:border-tk-border col-span-2">
+            <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Account ID</span>
+            <span className="text-[12px] text-[#4A5568] font-mono break-all dark:text-tk-text-secondary" title={userProfile.id}>
               {userProfile.id}
             </span>
           </div>
@@ -2292,25 +2291,19 @@ const ProfilePage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="profile-container">
-        <Sidebar />
-        <div className="profile-main-content">
-          <div className="profile-loading">
-            <div className="profile-loading-spinner"></div>
+      <div className="w-full h-full flex items-center justify-center min-h-[calc(100vh-80px)]">
+          <div className="flex flex-col items-center justify-center h-full text-[#4A5568] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
+            <div className="w-10 h-10 border-3 border-[#E2E8F0] border-t-tk-burgundy rounded-full animate-spin mb-4"></div>
             <p>Loading profile information...</p>
           </div>
-        </div>
       </div>
     );
   }
 
   return (
-    <div className="profile-container">
-      <Sidebar />
-
-      <div className="profile-main-content">
+    <>
         <div
-          className="profile-header"
+          className="flex justify-between items-center mb-8"
           style={{ marginBottom: "32px", alignItems: "center" }}
         >
           <div
@@ -2360,7 +2353,7 @@ const ProfilePage: React.FC = () => {
             ))}
           </div>
           <div
-            className="profile-header-right"
+            className="flex items-center gap-4"
             style={{
               alignSelf: "center",
               paddingBottom: "0",
@@ -2368,7 +2361,7 @@ const ProfilePage: React.FC = () => {
             }}
           >
             <button
-              className="profile-icon-button profile-logout-button"
+              className="w-11 h-11 rounded-full bg-white flex items-center justify-center cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-transform duration-200 hover:-translate-y-0.5 dark:bg-tk-bg-elevated dark:text-tk-text border-none outline-none transition-all duration-200 hover:bg-[#FFF5F5] hover:shadow-[0_4px_12px_rgba(229,62,62,0.15)] active:translate-y-0 dark:hover:bg-[rgba(229,62,62,0.1)]"
               title="Sign Out"
               onClick={() => setShowLogoutConfirm(true)}
             >
@@ -2378,7 +2371,7 @@ const ProfilePage: React.FC = () => {
               <img
                 src={userProfile.avatarUrl}
                 alt="Admin avatar"
-                className="order-user-avatar order-user-avatar-img"
+                className="w-11 h-11 rounded-full bg-[linear-gradient(135deg,var(--tk-burgundy),#6B2A15)] text-white flex items-center justify-center text-[12px] font-bold tracking-[0.12em] font-['Outfit',sans-serif] object-cover"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = "none";
                   (e.target as HTMLImageElement).parentElement
@@ -2388,7 +2381,7 @@ const ProfilePage: React.FC = () => {
               />
             ) : null}
             <div
-              className={`order-user-avatar order-user-avatar-fallback ${userProfile?.avatarUrl ? "hidden" : ""}`}
+              className={`w-11 h-11 rounded-full bg-[linear-gradient(135deg,var(--tk-burgundy),#6B2A15)] text-white flex items-center justify-center text-[12px] font-bold tracking-[0.12em] font-['Outfit',sans-serif]  ${userProfile?.avatarUrl ? "hidden" : ""}`}
             >
               {getInitials(userProfile?.name)}
             </div>
@@ -2397,15 +2390,15 @@ const ProfilePage: React.FC = () => {
 
         {feedback && (
           <div
-            className={`profile-banner profile-banner-${feedback.tone}`}
+            className={`mb-6 px-[18px] py-[14px] rounded-2xl flex items-center gap-2.5 font-['Outfit',sans-serif] text-[14px] font-medium shadow-[0_2px_8px_rgba(0,0,0,0.04)] profile-banner-${feedback.tone}`}
             style={{ marginBottom: "24px" }}
           >
-            <span className="profile-banner-dot" />
+            <span className="w-2.5 h-2.5 rounded-full shrink-0 bg-current" />
             <span>{feedback.message}</span>
           </div>
         )}
 
-        <div className="profile-content-grid" style={{ display: "block" }}>
+        <div className="flex flex-col gap-8 w-full" style={{ display: "block" }}>
           <form
             onSubmit={(e) => e.preventDefault()}
             style={{
@@ -2426,8 +2419,6 @@ const ProfilePage: React.FC = () => {
             {isAdminEditing ? renderAdminEditor() : renderAdminReadOnly()}
           </form>
         </div>
-      </div>
-
       {/* Image Cropper Modal */}
       {cropImage && (
         <ImageCropper
@@ -2443,24 +2434,24 @@ const ProfilePage: React.FC = () => {
       )}
       {/* Logout Confirmation Modal */}
       {showLogoutConfirm && (
-        <div className="profile-modal-overlay">
-          <div className="profile-modal-content">
-            <div className="profile-modal-header">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[100] p-5">
+          <div className="bg-white rounded-3xl p-8 max-w-[420px] w-full shadow-[0_24px_48px_rgba(0,0,0,0.12)] dark:bg-tk-bg-card dark:border dark:border-tk-border">
+            <div className="flex justify-between items-center mb-6">
               <div className="profile-modal-icon logout-icon">
                 <LogOut size={24} />
               </div>
               <h3>Sign Out</h3>
             </div>
             <p>Are you sure you want to sign out of your account?</p>
-            <div className="profile-modal-actions">
+            <div className="flex gap-3 justify-end">
               <button
-                className="profile-secondary-action"
+                className="inline-flex items-center justify-center gap-2 min-h-[40px] px-4 border-none rounded-xl font-['Outfit',sans-serif] text-[13px] font-semibold cursor-pointer transition-all duration-200 bg-[#EDF2F7] text-[#2D3748] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none dark:bg-tk-bg-elevated dark:text-tk-text dark:hover:bg-tk-bg-hover"
                 onClick={() => setShowLogoutConfirm(false)}
               >
                 Cancel
               </button>
               <button
-                className="profile-primary-action logout-confirm-btn"
+                className="inline-flex items-center justify-center gap-2 min-h-[40px] px-4 border-none rounded-xl font-['Outfit',sans-serif] text-[13px] font-semibold cursor-pointer transition-all duration-200 bg-[linear-gradient(135deg,var(--tk-burgundy),#6B2A15)] text-white shadow-[0_8px_18px_rgba(139,58,30,0.2)] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none logout-confirm-btn"
                 onClick={handleLogout}
               >
                 Sign Out
@@ -2469,7 +2460,7 @@ const ProfilePage: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 

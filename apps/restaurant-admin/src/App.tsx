@@ -2,6 +2,8 @@ import React, { Suspense, lazy } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
+import Layout from "./components/Layout";
+import DashboardSkeleton from "./components/DashboardSkeleton";
 
 // Lazy load page components
 const Dashboard = lazy(() => import("./pages/dashboard"));
@@ -15,34 +17,15 @@ const QRCodePage = lazy(() => import("./pages/qrcode"));
 const TableManagement = lazy(() => import("./pages/table_management"));
 const ProfilePage = lazy(() => import("./pages/profile/profile"));
 const SubscriptionPage = lazy(() => import("./pages/subscription/subscription"));
+const Team = lazy(() => import("./pages/team"));
 
 // Loading fallback for Suspense
 const PageLoader = () => (
-  <div style={{
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: '100vh',
-    background: '#F4F6F9',
-    color: '#1E293B',
-    fontFamily: "'Outfit', sans-serif",
-    fontSize: '16px',
-    fontWeight: 500
-  }}>
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
-      <div style={{ 
-        width: '40px', 
-        height: '40px', 
-        border: '3px solid #E2E8F0', 
-        borderTopColor: '#8B3A1E', 
-        borderRadius: '50%', 
-        animation: 'spin 1s linear infinite' 
-      }}></div>
+  <div className="flex justify-center items-center h-screen bg-[#F4F6F9] text-[#1E293B] font-sans text-base font-medium">
+    <div className="flex flex-col items-center gap-4">
+      <div className="w-10 h-10 rounded-full border-4 border-[#E2E8F0] border-t-tk-burgundy animate-spin"></div>
       <span>Loading...</span>
     </div>
-    <style>{`
-      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    `}</style>
   </div>
 );
 
@@ -51,14 +34,18 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
-    return <PageLoader />;
+    return (
+      <Layout>
+        <DashboardSkeleton />
+      </Layout>
+    );
   }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  return <>{children}</>;
+  return <Layout>{children}</Layout>;
 }
 
 function AppRoutes() {
@@ -72,6 +59,9 @@ function AppRoutes() {
         } />
         <Route path="/orders" element={
           <ProtectedRoute><Order /></ProtectedRoute>
+        } />
+        <Route path="/team" element={
+          <ProtectedRoute><Team /></ProtectedRoute>
         } />
         <Route path="/menu" element={
           <ProtectedRoute><Menu /></ProtectedRoute>
