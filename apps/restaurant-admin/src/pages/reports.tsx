@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Calendar, ArrowUpRight, ArrowDownRight, Loader2, Info, ChevronLeft, ChevronRight, X, Eye } from 'lucide-react';
-import Sidebar from '../components/sidebar';
+import { Download, Calendar, ArrowUpRight, ArrowDownRight, Loader2, Info, ChevronLeft, ChevronRight, X, Eye, TrendingUp, Package, Activity, Percent, Calculator, Users } from 'lucide-react';
 import RevenueOrdersModal from '../components/RevenueOrdersModal';
 import './reports.css';
 import { useAuth } from '../context/AuthContext';
@@ -391,13 +390,10 @@ const Reports: React.FC = () => {
     // ── Loading state ──
     if (loading && summary.totalRevenue === 0) {
         return (
-            <div className="reports-container">
-                <Sidebar />
-                <div className="reports-main-content">
-                    <div className="reports-loading-screen">
-                        <div className="reports-loading-spinner" />
-                        <p className="reports-loading-text">Generating your insights...</p>
-                    </div>
+            <div className="w-full h-full flex flex-col items-center justify-center">
+                <div className="reports-loading-screen">
+                    <div className="reports-loading-spinner" />
+                    <p className="reports-loading-text">Generating your insights...</p>
                 </div>
             </div>
         );
@@ -405,11 +401,7 @@ const Reports: React.FC = () => {
 
     return (
         <>
-        <div className="reports-container">
-            <Sidebar />
-
-            <div className="reports-main-content">
-                <div className="reports-header">
+            <div className="reports-header">
                     <h1 className="reports-page-title">Reports & Analytics</h1>
                     <div className="reports-header-right">
                         {loading && <Loader2 className="animate-spin" size={20} style={{ color: '#4C51BF' }} />}
@@ -488,87 +480,134 @@ const Reports: React.FC = () => {
                 </div>
 
                 {/* Key Metrics */}
-                <div className="metrics-grid">
-                    <div className="metric-card">
-                        <div className="metric-card-top-bar metric-card-blue"></div>
-                        <h3 className="metric-title">
-                            Total Revenue
-                            <span className="info-icon">
-                                <Info size={14} />
-                                <span className="tooltip">Total earnings from all paid orders in the selected timeframe.</span>
-                            </span>
-                        </h3>
-                        <div className="metric-value">{formatCurrency(summary.totalRevenue)}</div>
-                        <div className={`metric-change ${summary.revenueChange >= 0 ? 'change-positive' : 'change-negative'}`}>
-                            {summary.revenueChange >= 0 ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
-                            {Math.abs(summary.revenueChange).toFixed(1)}% vs last {timeframe}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 max-w-[1200px] w-full mb-6">
+                    <div className="bg-tk-bg-card p-3 sm:p-3 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+                        <div className="flex justify-between items-start mb-2 relative">
+                            <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium flex items-center gap-1">
+                                Total Revenue
+                                <span className="info-icon" style={{ position: 'relative', top: 'auto', right: 'auto' }}>
+                                    <Info size={12} />
+                                    <span className="tooltip">Total earnings from all paid orders in the selected timeframe.</span>
+                                </span>
+                            </h3>
+                            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
+                                <TrendingUp size={14} />
+                            </div>
+                        </div>
+                        <div className="flex justify-between items-end">
+                            <div className="text-[16px] sm:text-[20px] font-bold text-tk-text">{formatCurrency(summary.totalRevenue)}</div>
+                            <div className={`flex items-center text-[10px] sm:text-[11px] font-medium ${summary.revenueChange >= 0 ? 'text-tk-success' : 'text-tk-error'}`}>
+                                <TrendingUp size={10} className="mr-1 sm:w-[12px] sm:h-[12px]" style={summary.revenueChange < 0 ? { transform: 'rotate(180deg)' } : undefined} />
+                                <span>{Math.abs(summary.revenueChange).toFixed(1)}%</span>
+                            </div>
                         </div>
                     </div>
-                    <div className="metric-card">
-                        <div className="metric-card-top-bar metric-card-green"></div>
-                        <h3 className="metric-title">
-                            Total Orders
-                            <span className="info-icon">
-                                <Info size={14} />
-                                <span className="tooltip">Number of successfully completed and paid orders.</span>
-                            </span>
-                        </h3>
-                        <div className="metric-value">{summary.totalOrders}</div>
-                        <div className={`metric-change ${summary.ordersChange >= 0 ? 'change-positive' : 'change-negative'}`}>
-                            {summary.ordersChange >= 0 ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
-                            {Math.abs(summary.ordersChange).toFixed(1)}% vs last {timeframe}
+                    
+                    <div className="bg-tk-bg-card p-3 sm:p-3 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+                        <div className="flex justify-between items-start mb-2 relative">
+                            <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium flex items-center gap-1">
+                                Total Orders
+                                <span className="info-icon" style={{ position: 'relative', top: 'auto', right: 'auto' }}>
+                                    <Info size={12} />
+                                    <span className="tooltip">Number of successfully completed and paid orders.</span>
+                                </span>
+                            </h3>
+                            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
+                                <Package size={14} />
+                            </div>
+                        </div>
+                        <div className="flex justify-between items-end">
+                            <div className="text-[16px] sm:text-[20px] font-bold text-tk-text">{summary.totalOrders}</div>
+                            <div className={`flex items-center text-[10px] sm:text-[11px] font-medium ${summary.ordersChange >= 0 ? 'text-tk-success' : 'text-tk-error'}`}>
+                                <TrendingUp size={10} className="mr-1 sm:w-[12px] sm:h-[12px]" style={summary.ordersChange < 0 ? { transform: 'rotate(180deg)' } : undefined} />
+                                <span>{Math.abs(summary.ordersChange).toFixed(1)}%</span>
+                            </div>
                         </div>
                     </div>
-                    <div className="metric-card">
-                        <div className="metric-card-top-bar metric-card-purple"></div>
-                        <h3 className="metric-title">
-                            Average Order Value
-                            <span className="info-icon">
-                                <Info size={14} />
-                                <span className="tooltip">Average amount spent per order (Total Revenue / Total Orders).</span>
-                            </span>
-                        </h3>
-                        <div className="metric-value">{formatCurrency(advanced?.aov || 0)}</div>
-                        <div className={`metric-change ${(advanced?.aovChange || 0) >= 0 ? 'change-positive' : 'change-negative'}`}>
-                            {(advanced?.aovChange || 0) >= 0 ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
-                            {Math.abs(advanced?.aovChange || 0).toFixed(1)}% vs last {timeframe}
+                    
+                    <div className="bg-tk-bg-card p-3 sm:p-3 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+                        <div className="flex justify-between items-start mb-2 relative">
+                            <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium flex items-center gap-1">
+                                Avg Order Value
+                                <span className="info-icon" style={{ position: 'relative', top: 'auto', right: 'auto' }}>
+                                    <Info size={12} />
+                                    <span className="tooltip">Average amount spent per order (Total Revenue / Total Orders).</span>
+                                </span>
+                            </h3>
+                            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
+                                <Calculator size={14} />
+                            </div>
+                        </div>
+                        <div className="flex justify-between items-end">
+                            <div className="text-[16px] sm:text-[20px] font-bold text-tk-text">{formatCurrency(advanced?.aov || 0)}</div>
+                            <div className={`flex items-center text-[10px] sm:text-[11px] font-medium ${(advanced?.aovChange || 0) >= 0 ? 'text-tk-success' : 'text-tk-error'}`}>
+                                <TrendingUp size={10} className="mr-1 sm:w-[12px] sm:h-[12px]" style={(advanced?.aovChange || 0) < 0 ? { transform: 'rotate(180deg)' } : undefined} />
+                                <span>{Math.abs(advanced?.aovChange || 0).toFixed(1)}%</span>
+                            </div>
                         </div>
                     </div>
-                    <div className="metric-card">
-                        <div className="metric-card-top-bar metric-card-orange"></div>
-                        <h3 className="metric-title">
-                            Active Tables
-                            <span className="info-icon">
-                                <Info size={14} />
-                                <span className="tooltip">Total number of tables currently occupied by customers.</span>
-                            </span>
-                        </h3>
-                        <div className="metric-value">{activeTables}</div>
-                        <div className="metric-change" style={{ color: '#718096' }}>Currently Occupied</div>
+                    
+                    <div className="bg-tk-bg-card p-3 sm:p-3 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+                        <div className="flex justify-between items-start mb-2 relative">
+                            <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium flex items-center gap-1">
+                                Active Tables
+                                <span className="info-icon" style={{ position: 'relative', top: 'auto', right: 'auto' }}>
+                                    <Info size={12} />
+                                    <span className="tooltip">Total number of tables currently occupied by customers.</span>
+                                </span>
+                            </h3>
+                            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
+                                <Users size={14} />
+                            </div>
+                        </div>
+                        <div className="flex justify-between items-end">
+                            <div className="text-[16px] sm:text-[20px] font-bold text-tk-text">{activeTables}</div>
+                            <div className="flex items-center text-[10px] sm:text-[11px] font-medium text-tk-text-secondary">
+                                <span>Occupied</span>
+                            </div>
+                        </div>
                     </div>
-                    <div className="metric-card">
-                        <div className="metric-card-top-bar" style={{ background: 'linear-gradient(to right, #E53E3E, #C53030)' }}></div>
-                        <h3 className="metric-title">
-                            Discount Impact
-                            <span className="info-icon">
-                                <Info size={14} />
-                                <span className="tooltip">Total value of discounts given and their percentage of the subtotal.</span>
-                            </span>
-                        </h3>
-                        <div className="metric-value">{formatCurrency(advanced?.impactAnalysis?.totalDiscount || 0)}</div>
-                        <div className="metric-change" style={{ color: '#718096' }}>{(advanced?.impactAnalysis?.discountRate || 0).toFixed(1)}% of subtotal</div>
+                    
+                    <div className="bg-tk-bg-card p-3 sm:p-3 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+                        <div className="flex justify-between items-start mb-2 relative">
+                            <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium flex items-center gap-1">
+                                Discount Impact
+                                <span className="info-icon" style={{ position: 'relative', top: 'auto', right: 'auto' }}>
+                                    <Info size={12} />
+                                    <span className="tooltip">Total value of discounts given and their percentage of the subtotal.</span>
+                                </span>
+                            </h3>
+                            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-error">
+                                <Percent size={14} />
+                            </div>
+                        </div>
+                        <div className="flex justify-between items-end">
+                            <div className="text-[16px] sm:text-[20px] font-bold text-tk-text">{formatCurrency(advanced?.impactAnalysis?.totalDiscount || 0)}</div>
+                            <div className="flex items-center text-[10px] sm:text-[11px] font-medium text-tk-text-secondary">
+                                <span>{(advanced?.impactAnalysis?.discountRate || 0).toFixed(1)}% of subtotal</span>
+                            </div>
+                        </div>
                     </div>
-                    <div className="metric-card">
-                        <div className="metric-card-top-bar" style={{ background: 'linear-gradient(to right, #3182CE, #2B6CB0)' }}></div>
-                        <h3 className="metric-title">
-                            Tax Collected
-                            <span className="info-icon">
-                                <Info size={14} />
-                                <span className="tooltip">Total taxes collected and the calculated effective tax rate.</span>
-                            </span>
-                        </h3>
-                        <div className="metric-value">{formatCurrency(advanced?.impactAnalysis?.totalTax || 0)}</div>
-                        <div className="metric-change" style={{ color: '#718096' }}>{(advanced?.impactAnalysis?.taxRate || 0).toFixed(1)}% effective rate</div>
+                    
+                    <div className="bg-tk-bg-card p-3 sm:p-3 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+                        <div className="flex justify-between items-start mb-2 relative">
+                            <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium flex items-center gap-1">
+                                Tax Collected
+                                <span className="info-icon" style={{ position: 'relative', top: 'auto', right: 'auto' }}>
+                                    <Info size={12} />
+                                    <span className="tooltip">Total taxes collected and the calculated effective tax rate.</span>
+                                </span>
+                            </h3>
+                            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-success">
+                                <Activity size={14} />
+                            </div>
+                        </div>
+                        <div className="flex justify-between items-end">
+                            <div className="text-[16px] sm:text-[20px] font-bold text-tk-text">{formatCurrency(advanced?.impactAnalysis?.totalTax || 0)}</div>
+                            <div className="flex items-center text-[10px] sm:text-[11px] font-medium text-tk-text-secondary">
+                                <span>{(advanced?.impactAnalysis?.taxRate || 0).toFixed(1)}% eff. rate</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -677,6 +716,7 @@ const Reports: React.FC = () => {
                                 Top Selling Items
                                 <span className="info-icon">
                                     <Info size={14} />
+                                    <span className="tooltip">List of your most popular items ranked by units sold and revenue.</span>
                                 </span>
                             </h3>
                             <button
@@ -862,9 +902,6 @@ const Reports: React.FC = () => {
                         </div>
                     </div>
                 )}
-
-            </div>
-        </div>
 
         {/* Revenue Orders Modal */}
         {ordersModalOpen && activeRestaurantId && (

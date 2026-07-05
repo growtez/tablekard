@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Your Password</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: #f7f8fa;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+            color: #3a3a3a;
+        }
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+            border: 1px solid #e8e1dd;
+        }
+        .header {
+            background-color: #ffffff;
+            padding: 32px 40px 24px;
+            text-align: center;
+            border-bottom: 1px solid #f0ece9;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 4px;
+            color: #8B3A1E;
+            text-transform: uppercase;
+            margin: 0;
+        }
+        .content {
+            padding: 40px;
+            text-align: center;
+        }
+        h2 {
+            margin-top: 0;
+            font-size: 22px;
+            color: #1a1a1a;
+            font-weight: 600;
+        }
+        p {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #5c5c5c;
+            margin-bottom: 32px;
+        }
+        .button {
+            display: inline-block;
+            background-color: #8B3A1E;
+            color: #ffffff !important;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            padding: 14px 32px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+        .footer {
+            background-color: #faf9f8;
+            padding: 24px 40px;
+            text-align: center;
+            font-size: 13px;
+            color: #9c8f8a;
+            border-top: 1px solid #f0ece9;
+        }
+        .disclaimer {
+            font-size: 13px;
+            color: #9c8f8a;
+            margin-top: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="logo">TABLEKARD</h1>
+        </div>
+        <div class="content">
+            <h2>Reset Your Password</h2>
+            <p>We received a request to reset the password for your Tablekard admin account. If you made this request, please click the button below to choose a new password.</p>
+            
+            <!-- Supabase automatically replaces {{ .ConfirmationURL }} with the magic link -->
+            <a href="{{ .ConfirmationURL }}" class="button">Reset Password</a>
+            
+            <p class="disclaimer">If you didn't request a password reset, you can safely ignore this email. Your account is secure and your password will not be changed.</p>
+        </div>
+        <div class="footer">
+            &copy; 2026 Tablekard. All rights reserved.
+        </div>
+    </div>
+</body>
+</html>

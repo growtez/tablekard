@@ -38,7 +38,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 32px;
+    margin-bottom: 20px;
 }
 
 .reports-page-title {
@@ -94,22 +94,26 @@
 .metrics-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
-    margin-bottom: 32px;
+    gap: 16px;
+    margin-bottom: 24px;
 }
 
 .metric-card {
-    background-color: #FFFFFF;
-    padding: 24px;
-    border-radius: 24px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06), inset 0 1px 2px rgba(0, 0, 0, 0.02);
+    background-color: var(--tk-bg-card, #FFFFFF);
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1.5px solid var(--tk-border, #E2E8F0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     position: relative;
-    transition: transform 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .metric-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .metric-card-top-bar {
@@ -138,27 +142,28 @@
 }
 
 .metric-title {
-    font-size: 14px;
-    color: #718096;
-    margin-bottom: 12px;
+    font-size: 11px;
+    color: var(--tk-text-secondary, #718096);
+    margin-bottom: 8px;
     font-weight: 500;
-    margin-top: 4px;
+    margin-top: 2px;
     font-family: 'Outfit', sans-serif;
+    text-transform: uppercase;
 }
 
 .metric-value {
-    font-size: 28px;
+    font-size: 20px;
     font-weight: 700;
-    color: #1A202C;
-    margin-bottom: 12px;
+    color: var(--tk-text, #1A202C);
+    margin-bottom: 4px;
     font-family: 'Outfit', sans-serif;
 }
 
 .metric-change {
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 13px;
+    gap: 4px;
+    font-size: 11px;
     font-family: 'Outfit', sans-serif;
 }
 
@@ -177,20 +182,20 @@
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    margin-bottom: 24px;
-    gap: 12px;
+    margin-bottom: 20px;
+    gap: 8px;
     flex-wrap: wrap;
 }
 
 .report-filter-btn {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 12px 20px;
-    background-color: #FFFFFF;
-    border: none;
-    border-radius: 16px;
-    font-size: 14px;
+    gap: 6px;
+    padding: 8px 16px;
+    background-color: var(--tk-bg-surface, #FFFFFF);
+    border: 1px solid var(--tk-border, #E2E8F0);
+    border-radius: 9999px;
+    font-size: 13px;
     font-weight: 500;
     color: #1A202C;
     cursor: pointer;
@@ -218,11 +223,12 @@
 .custom-date-inputs {
     display: flex;
     align-items: center;
-    gap: 8px;
-    background-color: #FFFFFF;
-    padding: 6px 12px;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    gap: 6px;
+    background-color: var(--tk-bg-surface, #FFFFFF);
+    padding: 4px 8px;
+    border-radius: 8px;
+    border: 1px solid var(--tk-border, #E2E8F0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     animation: fadeIn 0.3s ease-out;
 }
 
@@ -255,16 +261,16 @@
 .report-export-btn {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 12px 20px;
+    gap: 6px;
+    padding: 8px 16px;
     background-color: var(--tk-burgundy, #8B3A1E);
     border: none;
-    border-radius: 16px;
-    font-size: 14px;
+    border-radius: 9999px;
+    font-size: 13px;
     font-weight: 600;
     color: white;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(79, 117, 92, 0.2);
+    box-shadow: 0 2px 8px rgba(79, 117, 92, 0.2);
     transition: all 0.2s;
     font-family: 'Outfit', sans-serif;
     margin-left: auto;
@@ -279,15 +285,16 @@
 .dashboard-grid {
     display: grid;
     grid-template-columns: 2fr 1fr;
-    gap: 24px;
-    margin-bottom: 32px;
+    gap: 16px;
+    margin-bottom: 24px;
 }
 
 .dashboard-card {
-    background-color: #FFFFFF;
-    padding: 24px;
-    border-radius: 24px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06), inset 0 1px 2px rgba(0, 0, 0, 0.02);
+    background-color: var(--tk-bg-card, #FFFFFF);
+    padding: 16px;
+    border-radius: 12px;
+    border: 1.5px solid var(--tk-border, #E2E8F0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     position: relative;
 }
 
@@ -296,22 +303,22 @@
 }
 
 .dashboard-card-title {
-    font-size: 18px;
+    font-size: 15px;
     font-weight: 600;
-    color: #1A202C;
+    color: var(--tk-text, #1A202C);
     margin: 0;
     font-family: 'Outfit', sans-serif;
 }
 
 /* Chart */
 .chart-container {
-    height: 250px;
+    height: 200px;
     display: flex;
     align-items: flex-end;
-    gap: 16px;
-    padding-bottom: 30px;
+    gap: 12px;
+    padding-bottom: 24px;
     position: relative;
-    border-bottom: 1px solid #E2E8F0;
+    border-bottom: 1px solid var(--tk-border, #E2E8F0);
 }
 
 .chart-bar-group {
@@ -467,19 +474,19 @@
 
 .top-items-table th {
     text-align: left;
-    padding: 12px 16px;
-    font-size: 13px;
+    padding: 10px 12px;
+    font-size: 12px;
     font-weight: 600;
-    color: #718096;
-    border-bottom: 2px solid #F7FAFC;
+    color: var(--tk-text-secondary, #718096);
+    border-bottom: 1.5px solid var(--tk-border, #E2E8F0);
     white-space: nowrap;
 }
 
 .top-items-table td {
-    padding: 16px;
-    font-size: 14px;
-    color: #1A202C;
-    background-color: #FFFFFF;
+    padding: 12px;
+    font-size: 13px;
+    color: var(--tk-text, #1A202C);
+    background-color: transparent;
 }
 
 .top-items-table tbody tr:hover td {
@@ -557,6 +564,8 @@
     display: flex;
     align-items: baseline;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
     margin-bottom: 20px;
 }
 
@@ -567,7 +576,7 @@
 
 /* Heatmap */
 .heatmap-card {
-    overflow: hidden;
+    /* overflow: hidden removed to prevent tooltip clipping */
 }
 
 .heatmap-wrapper {
@@ -705,12 +714,12 @@
 
 /* Info Tooltips */
 .info-icon {
-    position: absolute;
-    top: 20px;
-    right: 20px;
+    position: relative;
     color: #888d91;
     cursor: help;
     display: inline-flex;
+    align-items: center;
+    margin-left: 6px;
     transition: color 0.2s;
     z-index: 10;
 }
@@ -721,16 +730,17 @@
 
 .tooltip {
     visibility: hidden;
-    width: 180px;
+    width: 200px;
     background-color: #2D3748;
     color: #fff;
-    text-align: left;
+    text-align: center;
     border-radius: 8px;
     padding: 10px 12px;
     position: absolute;
     z-index: 1000;
     bottom: 140%;
-    right: 0;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
     opacity: 0;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     font-size: 11px;
@@ -739,21 +749,21 @@
     pointer-events: none;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     font-family: 'Inter', sans-serif;
-    transform: translateY(10px);
 }
 
 .info-icon:hover .tooltip {
     visibility: visible;
     opacity: 1;
     bottom: 160%;
-    transform: translateY(0);
+    transform: translateX(-50%) translateY(0);
 }
 
 .tooltip::after {
     content: "";
     position: absolute;
     top: 100%;
-    right: 5px;
+    left: 50%;
+    transform: translateX(-50%);
     border-width: 6px;
     border-style: solid;
     border-color: #2D3748 transparent transparent transparent;
@@ -784,10 +794,10 @@
 }
 
 .feedback-item {
-    padding: 16px;
-    border: 1px solid #E2E8F0;
-    border-radius: 12px;
-    background-color: #FFFFFF;
+    padding: 12px 16px;
+    border: 1.5px solid var(--tk-border, #E2E8F0);
+    border-radius: 10px;
+    background-color: var(--tk-bg-card, #FFFFFF);
 }
 
 .feedback-header {

@@ -1,7 +1,6 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTransactionDetails } from '../hooks/useSupabaseQuery';
-import Sidebar from '../components/sidebar';
 import { 
   CreditCard, 
   Banknote, 
@@ -22,30 +21,24 @@ const TransactionDetail: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="transaction-detail-container">
-        <Sidebar />
-        <main className="main-content">
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p>Loading transaction details...</p>
-          </div>
-        </main>
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Loading transaction details...</p>
+        </div>
       </div>
     );
   }
 
   if (isError || !transaction) {
     return (
-      <div className="transaction-detail-container">
-        <Sidebar />
-        <main className="main-content">
-          <div className="error-container">
-            <p>Error loading transaction details or transaction not found.</p>
-            <button className="back-button" onClick={() => navigate(-1)} style={{ marginTop: '16px', background: '#E2E8F0', padding: '8px 16px', borderRadius: '8px' }}>
-              Go Back
-            </button>
-          </div>
-        </main>
+      <div className="w-full h-full flex flex-col items-center justify-center">
+        <div className="error-container">
+          <p>Error loading transaction details or transaction not found.</p>
+          <button className="back-button" onClick={() => navigate(-1)} style={{ marginTop: '16px', background: '#E2E8F0', padding: '8px 16px', borderRadius: '8px' }}>
+            Go Back
+          </button>
+        </div>
       </div>
     );
   }
@@ -53,10 +46,8 @@ const TransactionDetail: React.FC = () => {
   const isOnline = transaction.paymentMethod.toLowerCase() !== 'cash';
 
   return (
-    <div className="transaction-detail-container">
-      <Sidebar />
-      <main className="main-content">
-        <div className="header">
+    <>
+      <div className="header">
           <button className="back-button" onClick={() => navigate(-1)}>
             <ArrowLeft size={24} />
           </button>
@@ -211,8 +202,7 @@ const TransactionDetail: React.FC = () => {
 
           </div>
         </div>
-      </main>
-    </div>
+    </>
   );
 };
 
