@@ -11,7 +11,6 @@ interface OrderDetailsDialogProps {
   order: DashboardOrder | null;
   onClose: () => void;
   onUpdateStatus?: (orderId: string, status: string) => void;
-  onMarkReady: (orderId: string) => void;
   onCancel?: (order: DashboardOrder) => void;
   onMarkPaid?: (orderId: string) => void;
   onPrev?: () => void;
@@ -25,7 +24,6 @@ const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
   order, 
   onClose, 
   onUpdateStatus, 
-  onMarkReady,
   onCancel,
   onMarkPaid,
   onPrev,
@@ -371,8 +369,6 @@ const Dashboard: React.FC = () => {
   const todayChange = revenueYesterday === 0 ? (revenueToday > 0 ? 100 : 0) : Math.round(((revenueToday - revenueYesterday) / revenueYesterday) * 100);
   const weekChange = revenueLastWeek === 0 ? (revenueThisWeek > 0 ? 100 : 0) : Math.round(((revenueThisWeek - revenueLastWeek) / revenueLastWeek) * 100);
 
-  const tabs = ['Active Orders', 'Completed', 'Cancelled', 'All Orders'];
-
   const tabCounts: Record<string, number> = {
     'All Orders': orders.length,
     'Active Orders': activeOrders.length,
@@ -381,22 +377,7 @@ const Dashboard: React.FC = () => {
   };
 
   const filteredOrders = () => {
-    let result = orders;
-    switch (activeTab) {
-      case 'Active Orders':
-        result = activeOrders;
-        break;
-      case 'Completed':
-        result = completedOrders;
-        break;
-      case 'Cancelled':
-        result = cancelledOrders;
-        break;
-      case 'All Orders':
-      default:
-        result = orders;
-        break;
-    }
+    let result = activeOrders;
 
     if (searchTerm) {
       const lowerQuery = searchTerm.toLowerCase();
@@ -1021,7 +1002,6 @@ const Dashboard: React.FC = () => {
             order={freshOrder}
             onClose={() => setSelectedOrder(null)}
             onUpdateStatus={handleUpdateStatus}
-            onMarkReady={(id) => handleUpdateStatus(id, 'READY')}
             onCancel={(o) => setOrderToCancel(o)}
             onMarkPaid={handlePaymentComplete}
             onPrev={handlePrevOrder}

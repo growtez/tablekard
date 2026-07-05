@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { TrendingUp, X, CheckCircle, Package, Check, ChevronUp, ChevronDown, Search, ArrowUpDown, List, LayoutGrid, ChevronLeft, ChevronRight } from 'lucide-react';
+import { TrendingUp, X, CheckCircle, Package, Check, ChevronDown, Search, ArrowUpDown, List, LayoutGrid, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 
 import { useAuth } from '../context/AuthContext';
-import { useDashboardOrders, useInvalidateQueries, useRevenueData, useMenuItems } from '../hooks/useSupabaseQuery';
+import { useDashboardOrders, useInvalidateQueries, useRevenueData } from '../hooks/useSupabaseQuery';
 import { updateOrderStatus, updatePaymentStatus } from '../services/supabaseService';
 import type { DashboardOrder } from '../services/supabaseService';
 
@@ -12,7 +12,6 @@ interface OrderDetailsDialogProps {
   order: DashboardOrder | null;
   onClose: () => void;
   onUpdateStatus?: (orderId: string, status: string) => void;
-  onMarkReady: (orderId: string) => void;
   onCancel?: (order: DashboardOrder) => void;
   onMarkPaid?: (orderId: string) => void;
   onPrev?: () => void;
@@ -25,7 +24,6 @@ const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
   order, 
   onClose, 
   onUpdateStatus, 
-  onMarkReady,
   onCancel,
   onMarkPaid,
   onPrev,
@@ -236,10 +234,7 @@ const Order: React.FC = () => {
 
   const { data: orders = [], isLoading } = useDashboardOrders(activeRestaurantId);
   useRevenueData(activeRestaurantId);
-  const { data: menuItems = [] } = useMenuItems(activeRestaurantId);
   const { invalidateOrders } = useInvalidateQueries();
-
-  const outOfStockItems = menuItems.filter(item => !item.available);
 
   const [selectedOrder, setSelectedOrder] = useState<DashboardOrder | null>(null);
   const [orderToCancel, setOrderToCancel] = useState<DashboardOrder | null>(null);
@@ -251,7 +246,6 @@ const Order: React.FC = () => {
   const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
   const sortDropdownRef = useRef<HTMLDivElement>(null);
   const tableScrollRef = useRef<HTMLDivElement>(null);
-  const [headerOffset, setHeaderOffset] = useState(0);
   const stickyContainerRef = useRef<HTMLDivElement>(null);
   const [stickyHeight, setStickyHeight] = useState(0);
   useEffect(() => {
@@ -963,7 +957,6 @@ const Order: React.FC = () => {
             order={freshOrder}
             onClose={() => setSelectedOrder(null)}
             onUpdateStatus={handleUpdateStatus}
-            onMarkReady={(id) => handleUpdateStatus(id, 'READY')}
             onCancel={(o) => setOrderToCancel(o)}
             onMarkPaid={handlePaymentComplete}
             onPrev={handlePrevOrder}
