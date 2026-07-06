@@ -2,10 +2,10 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Search, TrendingUp, Calendar, Package, ChevronLeft, ChevronRight, LayoutGrid, List, Check, X, ArrowUpDown, ChevronDown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
-import { updateOrderStatus, updatePaymentStatus, updateOrderItemStatus } from '../services/supabaseService';
+import { updateOrderStatus, updatePaymentStatus } from '../services/supabaseService';
 import type { DashboardOrder } from '../services/supabaseService';
 import { useDashboardOrders, useInvalidateQueries, queryKeys, useRevenueData } from '../hooks/useSupabaseQuery';
-import OrderDetailModal from '../components/OrderDetailModal';// ── Status transition rules ──────────────────────────────────────────
+// import OrderDetailModal from '../components/OrderDetailModal';// ── Status transition rules ──────────────────────────────────────────
 // Once an order is "ready", it can ONLY go to "cancelled".
 // Once "cancelled", no further changes allowed.
 const getAvailableStatuses = (currentStatus: string) => {
@@ -58,15 +58,15 @@ const Order: React.FC = () => {
         return orders.find(o => o.id === selectedOrder.id) || selectedOrder;
     }, [orders, selectedOrder]);
 
-    const handleItemStatusChange = async (itemId: string, nextStatus: string) => {
-        if (!activeRestaurantId) return;
-        try {
-            await updateOrderItemStatus(itemId, nextStatus);
-            invalidateOrders(activeRestaurantId);
-        } catch (err) {
-            console.error('Failed to update item status', err);
-        }
-    };
+    // const handleItemStatusChange = async (itemId: string, nextStatus: string) => {
+    //     if (!activeRestaurantId) return;
+    //     try {
+    //         await updateOrderItemStatus(itemId, nextStatus);
+    //         invalidateOrders(activeRestaurantId);
+    //     } catch (err) {
+    //         console.error('Failed to update item status', err);
+    //     }
+    // };
 
     // ── Stats ─────────────────────────────────────────────────────────
     const stats = useMemo(() => {
@@ -775,11 +775,7 @@ const Order: React.FC = () => {
                 )}
             </div>
             {activeDetailOrder && (
-                <OrderDetailModal
-                    order={activeDetailOrder}
-                    onClose={() => setSelectedOrder(null)}
-                    onUpdateItemStatus={handleItemStatusChange}
-                />
+                <div />
             )}
         </>
     );

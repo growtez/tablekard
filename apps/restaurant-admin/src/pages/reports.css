@@ -680,35 +680,162 @@
     }
 
     .reports-page-title {
-        font-size: 24px;
-        margin-left: 64px;
-        margin-top: 4px;
+        font-size: 18px;
+        margin-left: 0;
+        margin-top: 0;
+        white-space: nowrap;
     }
 
     .reports-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 16px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: -52px;
+        margin-left: 56px;
+        margin-bottom: 12px;
+        gap: 8px;
+        width: calc(100% - 56px);
     }
 
     .reports-filters {
-        flex-direction: column;
-        align-items: stretch;
+        display: flex;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        overflow-x: auto !important;
+        width: 100% !important;
+        padding-bottom: 8px;
+        gap: 8px !important;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    .reports-filters::-webkit-scrollbar {
+        display: none;
     }
 
     .report-filter-btn {
-        width: 100%;
+        width: auto !important;
+        padding: 6px 12px !important;
+        font-size: 12px !important;
+        flex-shrink: 0 !important;
         justify-content: center;
     }
 
     .report-export-btn {
-        width: 100%;
-        margin-left: 0;
+        width: auto !important;
+        margin-left: 8px !important;
+        padding: 6px 12px !important;
+        font-size: 12px !important;
+        flex-shrink: 0 !important;
         justify-content: center;
+    }
+
+    .custom-range-container {
+        flex-shrink: 0 !important;
+        gap: 6px !important;
+    }
+    .custom-date-inputs {
+        padding: 2px 4px !important;
+        gap: 4px !important;
+        flex-shrink: 0 !important;
+    }
+    .date-input {
+        padding: 4px 6px !important;
+        font-size: 11px !important;
+        width: 100px !important;
+    }
+    .pager-filter-group {
+        margin-left: 4px !important;
+        padding: 4px 8px !important;
+        gap: 6px !important;
+        flex-shrink: 0 !important;
+        height: 32px !important;
+    }
+    .pager-arrow-btn {
+        width: 24px !important;
+        height: 24px !important;
+    }
+    .pager-label {
+        font-size: 11px !important;
+        min-width: 110px !important;
     }
 
     .metrics-grid {
         grid-template-columns: 1fr;
+    }
+
+    .dashboard-card {
+        max-width: 100% !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+    }
+
+    .chart-container {
+        overflow-x: auto !important;
+        padding-bottom: 32px !important;
+    }
+
+    .breakdown-container {
+        flex-direction: row !important;
+        justify-content: space-around !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+        flex-wrap: nowrap !important;
+    }
+
+    .donut-section {
+        min-width: 0 !important;
+        flex: 1 !important;
+    }
+
+    .donut-title {
+        font-size: 13px !important;
+        margin-bottom: 12px !important;
+    }
+
+    .donut-content {
+        flex-direction: column !important;
+        gap: 8px !important;
+        align-items: center !important;
+    }
+
+    .donut-chart {
+        width: 80px !important;
+        height: 80px !important;
+    }
+
+    .donut-hole {
+        width: 58px !important;
+        height: 58px !important;
+    }
+
+    .donut-percentage {
+        font-size: 14px !important;
+    }
+
+    .donut-sublabel {
+        font-size: 9px !important;
+    }
+
+    .donut-legend {
+        gap: 6px !important;
+        align-items: center !important;
+    }
+
+    .legend-item {
+        font-size: 11px !important;
+        gap: 4px !important;
+    }
+
+    .breakdown-separator {
+        display: block !important;
+        height: 100px !important;
+        margin: 0 4px !important;
+    }
+
+    .feedback-list {
+        grid-template-columns: 1fr !important;
     }
 }
 

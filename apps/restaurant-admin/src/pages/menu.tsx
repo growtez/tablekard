@@ -421,8 +421,8 @@ const Menu: React.FC = () => {
         .tk-table-scroll::-webkit-scrollbar-corner { background: transparent; }
       `}</style>
       {/* Header - Tightened spacing */}
-      <div className="flex justify-between items-center mb-4 max-md:flex-col max-md:items-start max-md:gap-3">
-        <h1 className="text-[20px] sm:text-[22px] font-semibold text-tk-text max-md:ml-16">Menu Management</h1>
+      <div className="flex flex-row items-center justify-between gap-2 sm:gap-4 max-md:-mt-[52px] max-md:ml-[56px] max-md:mb-[8px]">
+        <h1 className="text-[20px] sm:text-[22px] font-semibold text-tk-text whitespace-nowrap">Menu Management</h1>
       </div>
 
       {/* Stats Cards - Matches Order page density */}
@@ -527,7 +527,7 @@ const Menu: React.FC = () => {
 
           {/* Tabs & Controls */}
           <div className="sticky top-0 z-50 py-2 bg-tk-bg-card shadow-sm border-b border-tk-border flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 mb-4">
-            <div className="flex items-center gap-2 w-full xl:w-auto flex-1 pb-1 pl-12 md:pl-0">
+            <div className="flex items-center gap-2 w-full xl:w-auto flex-1 pb-1">
               <div className="relative" ref={categoryDropdownRef}>
                 <button
                   onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
@@ -577,44 +577,47 @@ const Menu: React.FC = () => {
                 </button>
               )}
             </div>
-
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pb-2 w-full xl:w-auto xl:ml-4">
-              <div className="flex bg-tk-bg-surface border border-tk-border rounded-full p-0.5 shrink-0 self-start sm:self-auto">
+            <div className="flex flex-row items-center gap-2 sm:gap-3 pb-2 w-full xl:w-auto xl:ml-4">
+              {/* 1. Grid/Table Toggle */}
+              <div className="flex bg-tk-bg-surface border border-tk-border rounded-full p-0.5 shrink-0">
                 <button
                   onClick={() => setViewMode('table')}
-                  className={`p-1.5 sm:p-1.5 rounded-full transition-colors flex items-center justify-center ${viewMode === 'table' ? 'bg-tk-burgundy/10 text-tk-burgundy shadow-sm' : 'text-tk-text-secondary hover:text-tk-text'}`}
+                  className={`p-1.5 rounded-full transition-colors flex items-center justify-center ${viewMode === 'table' ? 'bg-tk-burgundy/10 text-tk-burgundy shadow-sm' : 'text-tk-text-secondary hover:text-tk-text'}`}
                   title="Table View"
                 >
                   <List size={16} />
                 </button>
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`p-1.5 sm:p-1.5 rounded-full transition-colors flex items-center justify-center ${viewMode === 'grid' ? 'bg-tk-burgundy/10 text-tk-burgundy shadow-sm' : 'text-tk-text-secondary hover:text-tk-text'}`}
+                  className={`p-1.5 rounded-full transition-colors flex items-center justify-center ${viewMode === 'grid' ? 'bg-tk-burgundy/10 text-tk-burgundy shadow-sm' : 'text-tk-text-secondary hover:text-tk-text'}`}
                   title="Grid View"
                 >
                   <LayoutGrid size={16} />
                 </button>
               </div>
 
-              <div className="relative w-full sm:w-auto" ref={sortDropdownRef}>
+              {/* 2. Sort Dropdown */}
+              <div className="relative shrink-0" ref={sortDropdownRef}>
                 <button
                   onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
-                  className="flex justify-between sm:justify-start items-center gap-1.5 px-4 py-2 sm:px-3 sm:py-1.5 rounded-full border border-tk-border bg-tk-bg-surface hover:bg-tk-bg-hover text-tk-text-secondary hover:text-tk-text text-[13px] sm:text-[12px] font-semibold transition-colors whitespace-nowrap h-[36px] sm:h-[32px] w-full shrink-0"
+                  className="flex justify-between items-center gap-1.5 px-3 py-1.5 rounded-full border border-tk-border bg-tk-bg-surface hover:bg-tk-bg-hover text-tk-text-secondary hover:text-tk-text text-[12px] font-semibold transition-colors whitespace-nowrap h-[32px] shrink-0"
                 >
                   <div className="flex items-center gap-1.5">
                     <ArrowUpDown size={13} />
-                    <span className="opacity-70 font-medium">Sort by:</span>
-                    {sortBy === 'newest' && 'Newest First'}
-                    {sortBy === 'oldest' && 'Oldest First'}
-                    {sortBy === 'price_high' && 'High to Low'}
-                    {sortBy === 'price_low' && 'Low to High'}
-                    {sortBy === 'a_z' && 'A to Z'}
+                    <span className="opacity-70 font-medium hidden sm:inline">Sort:</span>
+                    <span>
+                      {sortBy === 'newest' && 'Newest'}
+                      {sortBy === 'oldest' && 'Oldest'}
+                      {sortBy === 'price_high' && 'High-Low'}
+                      {sortBy === 'price_low' && 'Low-High'}
+                      {sortBy === 'a_z' && 'A-Z'}
+                    </span>
                   </div>
-                  <ChevronDown size={14} className="sm:hidden" />
+                  <ChevronDown size={14} className="sm:hidden ml-0.5" />
                 </button>
 
                 {isSortDropdownOpen && (
-                  <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-full sm:w-[180px] bg-tk-bg-surface border border-tk-border rounded-xl shadow-lg z-50 py-1 overflow-hidden animate-[fadeIn_0.15s_ease-out]">
+                  <div className="absolute left-0 top-full mt-2 w-[180px] bg-tk-bg-surface border border-tk-border rounded-xl shadow-lg z-50 py-1 overflow-hidden animate-[fadeIn_0.15s_ease-out]">
                     {[
                       { value: 'newest', label: 'Newest First' },
                       { value: 'oldest', label: 'Oldest First' },
@@ -628,7 +631,7 @@ const Menu: React.FC = () => {
                           setSortBy(option.value as any);
                           setIsSortDropdownOpen(false);
                         }}
-                        className={`w-full text-left px-4 py-3 sm:py-2 text-[14px] sm:text-[13px] font-medium transition-colors ${sortBy === option.value
+                        className={`w-full text-left px-4 py-2 text-[13px] font-medium transition-colors ${sortBy === option.value
                           ? 'bg-tk-burgundy/10 text-tk-burgundy'
                           : 'text-tk-text hover:bg-tk-bg-hover'
                           }`}
@@ -640,14 +643,15 @@ const Menu: React.FC = () => {
                 )}
               </div>
 
-              <div className="flex items-center gap-2 bg-tk-bg-surface px-4 py-1.5 rounded-full shadow-sm border border-tk-border w-full sm:w-[220px]">
-                <Search size={16} className="text-tk-text-secondary shrink-0" />
+              {/* 3. Search Bar */}
+              <div className="relative w-full min-w-[100px] sm:w-[220px] shrink">
+                <Search className="absolute left-2.5 top-[calc(50%)] -translate-y-1/2 text-tk-text-secondary" size={14} />
                 <input
                   type="text"
                   placeholder="Search items..."
-                  className="border-none outline-none text-[13px] text-tk-text bg-transparent w-full placeholder:text-tk-text-muted h-[24px]"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full h-[32px] pl-8 pr-7 bg-tk-bg-surface border border-tk-border rounded-full text-tk-text text-[13px] focus:outline-none focus:border-tk-burgundy transition-colors"
                 />
               </div>
             </div>
@@ -764,7 +768,63 @@ const Menu: React.FC = () => {
             </div>
           ) : (
             <div className="w-full pb-8">
-              <div className="overflow-x-auto tk-table-scroll [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              {/* Mobile cards view (hidden on sm+) */}
+              <div className="flex flex-col gap-3 sm:hidden pb-4">
+                {filteredMenuItems.slice(0, visibleItemCount).map((item) => {
+                  const categoryName = getCategoryName(item.categoryId);
+                  return (
+                    <div key={item.id} className="bg-tk-bg-card p-4 rounded-xl shadow-sm border border-tk-border flex flex-col gap-3">
+                      <div className="flex gap-3">
+                        {/* Image */}
+                        <div className="w-16 h-16 rounded-xl bg-[#FFF5E6] flex items-center justify-center text-[24px] shadow-sm overflow-hidden shrink-0">
+                          {(item.images && item.images.length > 0) ? (
+                            <img src={item.images[0].url} alt={item.name} className="w-full h-full object-cover" />
+                          ) : '🍽️'}
+                        </div>
+                        
+                        {/* Details */}
+                        <div className="flex-1 min-w-0 flex flex-col justify-center">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <span className={`w-2 h-2 rounded-full ${item.isVeg ? 'bg-[#38A169]' : 'bg-[#E55A28]'}`}></span>
+                            <span className="text-[10px] font-bold text-tk-text-secondary uppercase">{categoryName}</span>
+                          </div>
+                          <h4 className="font-semibold text-sm text-tk-text truncate">{item.name}</h4>
+                          <div className="flex items-baseline gap-1.5 mt-1">
+                            <span className="text-sm font-bold text-tk-text">₹{item.discountPrice && item.discountPrice < item.price ? item.discountPrice : item.price}</span>
+                            {item.discountPrice && item.discountPrice < item.price && (
+                              <span className="text-[11px] text-tk-text-secondary line-through">₹{item.price}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center justify-between pt-2.5 border-t border-tk-border border-dashed">
+                        <label className="relative flex items-center gap-2 cursor-pointer">
+                          <span className={`text-[10px] font-extrabold transition-colors ${item.available ? 'text-[#E55A28]' : 'text-tk-text-secondary'}`}>
+                            {item.available ? 'In Stock' : 'Out'}
+                          </span>
+                          <div className="relative flex items-center">
+                            <input type="checkbox" checked={item.available} onChange={() => toggleStock(item)} className="sr-only peer" />
+                            <div className="w-[24px] h-3.5 bg-[#CBD5E0] dark:bg-tk-bg-elevated rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-2.5 after:w-2.5 after:transition-all peer-checked:bg-[#E55A28] shadow-inner"></div>
+                          </div>
+                        </label>
+                        <div className="flex gap-1.5 shrink-0">
+                          <button className="flex items-center justify-center gap-1 px-2.5 py-1.5 bg-tk-bg-surface text-tk-text-secondary border border-tk-border rounded-lg text-[10px] font-bold cursor-pointer transition-all duration-200 hover:bg-tk-bg-hover hover:text-tk-text shadow-sm" onClick={() => handleEditMenuItem(item)}>
+                            <Edit3 size={12} /> Edit
+                          </button>
+                          <button className="flex items-center justify-center px-2 py-1.5 border border-[#FC8181] rounded-lg bg-[#FEF2F2] text-[#E53E3E] text-[10px] font-bold cursor-pointer transition-all duration-200 hover:bg-[#FED7D7] shadow-sm" onClick={() => handleDeleteMenuItem(item.id)}>
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Desktop table view (hidden on mobile) */}
+              <div className="hidden sm:block overflow-x-auto tk-table-scroll [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 <table className="w-full text-left border-collapse table-fixed min-w-[900px]">
                   <thead>
                     <tr>
@@ -788,14 +848,6 @@ const Menu: React.FC = () => {
                   <tbody>
                     {filteredMenuItems.slice(0, visibleItemCount).map((item) => {
                       const categoryName = getCategoryName(item.categoryId);
-                      let catIcon = '🍽️';
-                      const lower = categoryName.toLowerCase();
-                      if (lower.includes('pizza')) catIcon = '🍕';
-                      else if (lower.includes('burger')) catIcon = '🍔';
-                      else if (lower.includes('dessert') || lower.includes('cake') || lower.includes('sweet')) catIcon = '🍰';
-                      else if (lower.includes('beverage') || lower.includes('drink')) catIcon = '🥤';
-                      else if (lower.includes('main')) catIcon = '🍜';
-                      else if (lower.includes('starter') || lower.includes('appetizer')) catIcon = '🥟';
                       
                       return (
                         <tr key={item.id} className="border-b border-tk-border last:border-b-0 hover:bg-tk-burgundy/5 transition-colors group bg-tk-bg-card">
@@ -818,7 +870,6 @@ const Menu: React.FC = () => {
                           </td>
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-2 text-[14px] font-medium text-tk-burgundy">
-                              <span>{catIcon}</span>
                               <span>{categoryName}</span>
                             </div>
                           </td>
@@ -831,17 +882,15 @@ const Menu: React.FC = () => {
                             </span>
                           </td>
                           <td className="py-3 px-4">
-                            <div className="flex items-center justify-center gap-2">
-                              <button 
-                                className="w-9 h-9 rounded-xl border border-tk-border flex items-center justify-center text-tk-text-secondary hover:bg-tk-bg-surface hover:text-tk-text transition-all bg-tk-bg-card shadow-sm hover:shadow"
-                                onClick={() => handleEditMenuItem(item)}
-                                title="Edit"
-                              >
-                                <Edit3 size={16} />
+                            <div className="flex items-center justify-center gap-2 relative">
+                              <button className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-tk-bg-hover text-tk-text-secondary border-none rounded-lg text-[12px] font-semibold cursor-pointer transition-all duration-200 hover:bg-tk-border hover:text-tk-text font-['Outfit']" onClick={() => handleEditMenuItem(item)}>
+                                <Edit3 size={14} />
+                                <span className="hidden sm:inline">Edit</span>
                               </button>
                               <div className="relative group">
-                                <button 
-                                  className="w-9 h-9 rounded-xl border border-tk-border flex items-center justify-center text-tk-text-secondary hover:bg-tk-bg-surface hover:text-tk-text transition-all bg-tk-bg-card shadow-sm hover:shadow"
+                                <button
+                                  className="flex items-center justify-center p-1.5 bg-tk-bg-hover hover:bg-tk-border text-tk-text-secondary rounded-lg border-none cursor-pointer transition-all duration-200"
+                                  title="More options"
                                 >
                                   <MoreVertical size={16} />
                                 </button>

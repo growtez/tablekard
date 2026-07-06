@@ -244,24 +244,24 @@ const TableManagementPage: React.FC = () => {
     return (
         <>
                 {/* Header */}
-                <div className="flex justify-between items-start mb-7 flex-wrap gap-4 max-md:flex-col">
-                    <div>
-                        <h1 className="text-2xl font-bold text-[#1A202C] m-0 mb-1 max-md:ml-16 max-md:mt-1 dark:text-tk-text">Table Management</h1>
-                        <p className="text-sm text-[#4A5568] m-0 dark:text-tk-text-secondary">
+                <div className="flex flex-row items-center justify-between gap-2 sm:gap-4 max-md:-mt-[52px] max-md:mb-[8px] flex-wrap mb-7">
+                    <div className="w-full lg:w-auto max-md:ml-[56px]">
+                        <h1 className="text-[20px] sm:text-[22px] font-semibold text-[#1A202C] m-0 mb-1 dark:text-tk-text whitespace-nowrap">Table Management</h1>
+                        {/* <p className="text-sm text-[#4A5568] m-0 dark:text-tk-text-secondary">
                             Manage your restaurant tables and generate QR codes for customer access.
-                        </p>
+                        </p> */}
                     </div>
-                    <div className="flex gap-3 items-center shrink-0 flex-wrap max-md:w-full">
-                        <button className="flex items-center justify-center gap-2 px-5 py-2.5 bg-white border-[1.5px] border-[#E2E8F0] rounded-xl text-sm font-medium text-[#4A5568] cursor-pointer transition-all duration-200 hover:bg-[#F7FAFC] hover:border-[#CBD5E0] disabled:opacity-60 disabled:cursor-not-allowed dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text dark:hover:bg-tk-bg-hover max-md:flex-1" onClick={() => refetch()} disabled={loading}>
+                    <div className="flex gap-2 items-center shrink-0 flex-nowrap overflow-x-auto hide-scrollbar w-full lg:w-auto max-md:pb-1 max-md:justify-start">
+                        <button className="flex items-center justify-center gap-2 px-4 py-2 bg-white border-[1.5px] border-[#E2E8F0] rounded-xl text-sm font-medium text-[#4A5568] cursor-pointer transition-all duration-200 hover:bg-[#F7FAFC] hover:border-[#CBD5E0] disabled:opacity-60 disabled:cursor-not-allowed dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text dark:hover:bg-tk-bg-hover shrink-0 whitespace-nowrap" onClick={() => refetch()} disabled={loading}>
                             <RefreshCw size={16} className={loading ? 'spin' : ''} />
                             Refresh
                         </button>
-                        <button className="flex items-center justify-center gap-2 px-5 py-2.5 bg-tk-burgundy border-none rounded-xl text-sm font-semibold text-white cursor-pointer transition-all duration-200 shadow-[0_4px_12px_rgba(139,58,30,0.3)] hover:bg-[#6B2A15] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(139,58,30,0.4)] max-md:flex-1" onClick={handleAddTable}>
+                        <button className="flex items-center justify-center gap-2 px-4 py-2 bg-tk-burgundy border-none rounded-xl text-sm font-semibold text-white cursor-pointer transition-all duration-200 shadow-[0_4px_12px_rgba(139,58,30,0.3)] hover:bg-[#6B2A15] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(139,58,30,0.4)] shrink-0 whitespace-nowrap" onClick={handleAddTable}>
                             <Plus size={16} />
                             Add Table
                         </button>
                         {tables.length > 0 && (
-                            <button className="flex items-center justify-center gap-2 px-5 py-2.5 bg-[#2B6CB0] border-none rounded-xl text-sm font-semibold text-white cursor-pointer transition-all duration-200 shadow-[0_4px_12px_rgba(43,108,176,0.3)] hover:bg-[#2C5282] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(43,108,176,0.4)] max-md:flex-1" onClick={downloadAll}>
+                            <button className="flex items-center justify-center gap-2 px-4 py-2 bg-[#2B6CB0] border-none rounded-xl text-sm font-semibold text-white cursor-pointer transition-all duration-200 shadow-[0_4px_12px_rgba(43,108,176,0.3)] hover:bg-[#2C5282] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(43,108,176,0.4)] shrink-0 whitespace-nowrap" onClick={downloadAll}>
                                 <Download size={16} />
                                 Download All QR
                             </button>

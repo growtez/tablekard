@@ -276,30 +276,6 @@ const Order: React.FC = () => {
   const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
   const sortDropdownRef = useRef<HTMLDivElement>(null);
   const tableScrollRef = useRef<HTMLDivElement>(null);
-  const stickyContainerRef = useRef<HTMLDivElement>(null);
-  const [stickyHeight, setStickyHeight] = useState(0);
-  useEffect(() => {
-    const updateHeight = () => {
-      if (stickyContainerRef.current) {
-        setStickyHeight(stickyContainerRef.current.offsetHeight);
-      }
-    };
-
-    updateHeight();
-
-    const observer = new ResizeObserver(updateHeight);
-
-    if (stickyContainerRef.current) {
-      observer.observe(stickyContainerRef.current);
-    }
-
-    window.addEventListener("resize", updateHeight);
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", updateHeight);
-    };
-  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -464,6 +440,42 @@ const Order: React.FC = () => {
     return result;
   };
 
+  const getCardColorClass = (status?: string) => {
+    switch (status?.toUpperCase()) {
+      case 'PENDING':
+      case 'CONFIRMED':
+        return 'bg-[#F0F9FF] border-[#BAE6FD] dark:bg-[#38BDF8]/[0.22] dark:border-[#38BDF8]/65';
+      case 'PREPARING':
+        return 'bg-[#FFFBEB] border-[#FDE68A] dark:bg-[#FBBF24]/[0.22] dark:border-[#FBBF24]/65';
+      case 'READY':
+      case 'COMPLETED':
+      case 'SERVED':
+        return 'bg-[#F0FDF4] border-[#BBF7D0] dark:bg-[#4ADE80]/[0.22] dark:border-[#4ADE80]/65';
+      case 'CANCELLED':
+        return 'bg-[#FEF2F2] border-[#FECACA] dark:bg-[#F87171]/[0.22] dark:border-[#F87171]/65';
+      default:
+        return 'bg-tk-bg-surface border-tk-border';
+    }
+  };
+
+  const getRowColorClass = (status?: string) => {
+    switch (status?.toUpperCase()) {
+      case 'PENDING':
+      case 'CONFIRMED':
+        return 'bg-[#F0F9FF]/80 hover:bg-[#E0F2FE] dark:bg-[#38BDF8]/[0.22] dark:hover:bg-[#38BDF8]/[0.32]';
+      case 'PREPARING':
+        return 'bg-[#FFFBEB]/80 hover:bg-[#FEF3C7] dark:bg-[#FBBF24]/[0.22] dark:hover:bg-[#FBBF24]/[0.32]';
+      case 'READY':
+      case 'COMPLETED':
+      case 'SERVED':
+        return 'bg-[#F0FDF4]/80 hover:bg-[#DCFCE7] dark:bg-[#4ADE80]/[0.22] dark:hover:bg-[#4ADE80]/[0.32]';
+      case 'CANCELLED':
+        return 'bg-[#FEF2F2]/80 hover:bg-[#FEE2E2] dark:bg-[#F87171]/[0.22] dark:hover:bg-[#F87171]/[0.32]';
+      default:
+        return 'hover:bg-tk-burgundy/5';
+    }
+  };
+
   return (
     <>
       <style>{`
@@ -482,17 +494,17 @@ const Order: React.FC = () => {
       `}</style>
 
       <div className="flex-shrink-0">
-        <div className="flex flex-row items-center justify-between gap-2 sm:gap-4 flex-wrap">
-          <div className="flex items-center gap-2 sm:gap-4">
-            <h1 className="text-[20px] sm:text-[22px] font-semibold text-tk-text whitespace-nowrap">Orders</h1>
+        <div className="flex flex-row items-center justify-between gap-2 sm:gap-4 flex-wrap max-md:-mt-[52px] max-md:mb-[8px]">
+          <div className="flex items-center gap-2 sm:gap-4 max-md:ml-[56px]">
+            <h1 className="text-[20px] sm:text-[22px] font-semibold text-tk-text whitespace-nowrap">Orders Management</h1>
           </div>
         </div>
 
         <div className="grid grid-rows-[1fr] opacity-100">
           <div className="overflow-hidden">
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 max-w-[850px] w-full pt-1 mb-6 mt-4 sm:mt-0">
+            <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-3 max-w-[850px] w-full pt-1 mb-6 mt-4 sm:mt-0 overflow-x-auto no-scrollbar pb-1">
               {/* Card 1 */}
-              <div className="bg-tk-bg-card p-3 sm:p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+              <div className="bg-tk-bg-card p-3 sm:p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md min-w-[145px] sm:min-w-0 shrink-0">
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium">Orders Today</h3>
                   <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
@@ -509,7 +521,7 @@ const Order: React.FC = () => {
               </div>
 
               {/* Card 2 */}
-              <div className="bg-tk-bg-card p-3 sm:p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+              <div className="bg-tk-bg-card p-3 sm:p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md min-w-[145px] sm:min-w-0 shrink-0">
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium">Orders This Week</h3>
                   <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
@@ -526,7 +538,7 @@ const Order: React.FC = () => {
               </div>
 
               {/* Card 3 */}
-              <div className="bg-tk-bg-card p-3 sm:p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+              <div className="bg-tk-bg-card p-3 sm:p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md min-w-[145px] sm:min-w-0 shrink-0">
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium">Active Orders</h3>
                   <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
@@ -542,7 +554,7 @@ const Order: React.FC = () => {
               </div>
 
               {/* Card 4 */}
-              <div className="bg-tk-bg-card p-3 sm:p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+              <div className="bg-tk-bg-card p-3 sm:p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md min-w-[145px] sm:min-w-0 shrink-0">
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium">Total Orders</h3>
                   <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
@@ -564,10 +576,8 @@ const Order: React.FC = () => {
       </div>
 
       {/* Tabs & Controls */}
-      {/* Tabs & Controls */}
       <div
-        ref={stickyContainerRef}
-        className="sticky top-0 z-50 py-2 bg-tk-bg-card shadow-sm border-b border-tk-border flex flex-col gap-2 mb-2 pl-12 md:pl-0 pr-4"
+        className="sticky top-0 z-50 py-2 bg-tk-bg-card shadow-sm border-b border-tk-border flex flex-col gap-2 mb-2 pr-4"
       >
         <div className="flex gap-4 sm:gap-8 overflow-x-auto hide-scrollbar pt-1 pb-1">
           {tabs.map(tab => (
@@ -696,25 +706,28 @@ const Order: React.FC = () => {
           </div>
 
           {/* Controls on the right, on the same line as the date filter */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pb-2 w-full md:w-auto">
-            <div className="relative w-full sm:w-auto" ref={sortDropdownRef}>
+          <div className="flex flex-row items-center gap-2 sm:gap-3 pb-2 w-full md:w-auto">
+            {/* 1. Sort Dropdown */}
+            <div className="relative shrink-0" ref={sortDropdownRef}>
               <button
                 onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
-                className="flex justify-between sm:justify-start items-center gap-1.5 px-4 py-2 sm:px-3 sm:py-1.5 rounded-full border border-tk-border bg-tk-bg-surface hover:bg-tk-bg-hover text-tk-text-secondary hover:text-tk-text text-[13px] sm:text-[12px] font-semibold transition-colors whitespace-nowrap h-[36px] sm:h-[32px] w-full shrink-0"
+                className="flex justify-between items-center gap-1.5 px-3 py-1.5 rounded-full border border-tk-border bg-tk-bg-surface hover:bg-tk-bg-hover text-tk-text-secondary hover:text-tk-text text-[12px] font-semibold transition-colors whitespace-nowrap h-[32px] shrink-0"
               >
                 <div className="flex items-center gap-1.5">
                   <ArrowUpDown size={13} />
-                  <span className="opacity-70 font-medium">Sort by:</span>
-                  {sortBy === 'newest' && 'Newest First'}
-                  {sortBy === 'oldest' && 'Oldest First'}
-                  {sortBy === 'amount_high' && 'High to Low'}
-                  {sortBy === 'amount_low' && 'Low to High'}
+                  <span className="opacity-70 font-medium hidden sm:inline">Sort:</span>
+                  <span>
+                    {sortBy === 'newest' && 'Newest'}
+                    {sortBy === 'oldest' && 'Oldest'}
+                    {sortBy === 'amount_high' && 'High-Low'}
+                    {sortBy === 'amount_low' && 'Low-High'}
+                  </span>
                 </div>
-                <ChevronDown size={14} className="sm:hidden" />
+                <ChevronDown size={14} className="sm:hidden ml-0.5" />
               </button>
 
               {isSortDropdownOpen && (
-                <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-full sm:w-[180px] bg-tk-bg-surface border border-tk-border rounded-xl shadow-lg z-50 py-1 overflow-hidden animate-[fadeIn_0.15s_ease-out]">
+                <div className="absolute left-0 top-full mt-2 w-[180px] bg-tk-bg-surface border border-tk-border rounded-xl shadow-lg z-50 py-1 overflow-hidden animate-[fadeIn_0.15s_ease-out]">
                   {[
                     { value: 'newest', label: 'Newest First' },
                     { value: 'oldest', label: 'Oldest First' },
@@ -727,7 +740,7 @@ const Order: React.FC = () => {
                         setSortBy(option.value as any);
                         setIsSortDropdownOpen(false);
                       }}
-                      className={`w-full text-left px-4 py-3 sm:py-2 text-[14px] sm:text-[13px] font-medium transition-colors ${sortBy === option.value
+                      className={`w-full text-left px-4 py-2 text-[13px] font-medium transition-colors ${sortBy === option.value
                         ? 'bg-tk-burgundy/10 text-tk-burgundy'
                         : 'text-tk-text hover:bg-tk-bg-hover'
                         }`}
@@ -739,40 +752,42 @@ const Order: React.FC = () => {
               )}
             </div>
 
-            <div className="relative w-full sm:w-[240px] shrink-0">
-              <Search className="absolute left-3 top-[calc(50%)] -translate-y-1/2 text-tk-text-secondary" size={14} />
-              <input
-                type="text"
-                placeholder="Search orders..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-[36px] sm:h-[32px] pl-9 pr-8 bg-tk-bg-surface border border-tk-border rounded-full text-tk-text text-[14px] sm:text-[13px] focus:outline-none focus:border-tk-burgundy transition-colors"
-              />
-              {searchTerm && (
-                <button
-                  onClick={() => setSearchTerm('')}
-                  className="absolute right-3 top-[calc(50%)] -translate-y-1/2 text-tk-text-secondary hover:text-tk-text focus:outline-none flex items-center justify-center p-0"
-                >
-                  <X size={14} />
-                </button>
-              )}
-            </div>
-
-            <div className="flex bg-tk-bg-surface border border-tk-border rounded-full p-0.5 shrink-0 self-start sm:self-auto">
+            {/* 2. Grid/Table Toggle */}
+            <div className="flex bg-tk-bg-surface border border-tk-border rounded-full p-0.5 shrink-0">
               <button
                 onClick={() => setViewMode('table')}
-                className={`p-1.5 sm:p-1.5 rounded-full transition-colors flex items-center justify-center ${viewMode === 'table' ? 'bg-tk-burgundy/10 text-tk-burgundy' : 'text-tk-text-secondary hover:text-tk-text'}`}
+                className={`p-1.5 rounded-full transition-colors flex items-center justify-center ${viewMode === 'table' ? 'bg-tk-burgundy/10 text-tk-burgundy' : 'text-tk-text-secondary hover:text-tk-text'}`}
                 title="Table View"
               >
                 <List size={16} />
               </button>
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-1.5 sm:p-1.5 rounded-full transition-colors flex items-center justify-center ${viewMode === 'grid' ? 'bg-tk-burgundy/10 text-tk-burgundy' : 'text-tk-text-secondary hover:text-tk-text'}`}
+                className={`p-1.5 rounded-full transition-colors flex items-center justify-center ${viewMode === 'grid' ? 'bg-tk-burgundy/10 text-tk-burgundy' : 'text-tk-text-secondary hover:text-tk-text'}`}
                 title="Grid View"
               >
                 <LayoutGrid size={16} />
               </button>
+            </div>
+
+            {/* 3. Search Bar */}
+            <div className="relative w-full min-w-[100px] sm:w-[240px] shrink">
+              <Search className="absolute left-2.5 top-[calc(50%)] -translate-y-1/2 text-tk-text-secondary" size={14} />
+              <input
+                type="text"
+                placeholder="Search orders..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full h-[32px] pl-8 pr-7 bg-tk-bg-surface border border-tk-border rounded-full text-tk-text text-[13px] focus:outline-none focus:border-tk-burgundy transition-colors"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-2.5 top-[calc(50%)] -translate-y-1/2 text-tk-text-secondary hover:text-tk-text focus:outline-none flex items-center justify-center p-0"
+                >
+                  <X size={14} />
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -805,7 +820,7 @@ const Order: React.FC = () => {
                   return (
                     <div
                       key={idx}
-                      className="bg-tk-bg-surface border border-tk-border rounded-xl p-3.5 flex flex-col gap-3 shadow-sm hover:shadow-md hover:border-tk-burgundy/50 transition-all cursor-pointer"
+                      className={`border rounded-xl p-3.5 flex flex-col gap-3 shadow-sm hover:shadow-md hover:border-tk-burgundy/50 transition-all cursor-pointer ${getCardColorClass(order.status)}`}
                       onClick={() => setSelectedOrder(order)}
                     >
                       {/* Top row: order number + amount */}
@@ -936,37 +951,37 @@ const Order: React.FC = () => {
                   <tr>
                     <th
                       className="sticky z-40 bg-tk-bg-card py-3 px-4 border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[6%] text-center shadow-sm"
-                      style={{ top: `${stickyHeight}px` }}                >
+                      style={{ top: 0 }}                >
                       Sl No
                     </th>
 
                     <th
                       className="sticky z-40 bg-tk-bg-card py-3 px-4 border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[17%] shadow-sm"
-                      style={{ top: `${stickyHeight}px` }}                >
+                      style={{ top: 0 }}                >
                       Order Details
                     </th>
 
                     <th
                       className="sticky z-40 bg-tk-bg-card py-3 px-4 border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[17%] shadow-sm"
-                      style={{ top: `${stickyHeight}px` }}                >
+                      style={{ top: 0 }}                >
                       Customer Info
                     </th>
 
                     <th
                       className="sticky z-40 bg-tk-bg-card py-3 px-4 border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[12%] shadow-sm"
-                      style={{ top: `${stickyHeight}px` }}                >
+                      style={{ top: 0 }}                >
                       Date
                     </th>
 
                     <th
                       className="sticky z-40 bg-tk-bg-card py-3 px-4 border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[20%] shadow-sm"
-                      style={{ top: `${stickyHeight}px` }}                >
+                      style={{ top: 0 }}                >
                       Payment Info
                     </th>
 
                     <th
                       className="sticky z-40 bg-tk-bg-card py-3 px-4 border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[28%] shadow-sm"
-                      style={{ top: `${stickyHeight}px` }}                >
+                      style={{ top: 0 }}                >
                       Order Tracking
                     </th>
                   </tr>
@@ -990,7 +1005,7 @@ const Order: React.FC = () => {
                     </tr>
                   ) : (
                     filteredOrders().map((order, idx) => (
-                      <tr key={idx} className="border-b border-tk-border last:border-b-0 hover:bg-tk-burgundy/5 transition-colors group">
+                      <tr key={idx} className={`border-b border-tk-border last:border-b-0 transition-colors group ${getRowColorClass(order.status)}`}>
                         <td className="py-3 px-4 text-sm text-tk-text-secondary font-medium text-center">{idx + 1}</td>
                         <td className="py-3 px-4 text-sm text-tk-text cursor-pointer" onClick={() => setSelectedOrder(order)}>
                           <div className="flex flex-col">
@@ -1171,7 +1186,7 @@ const Order: React.FC = () => {
                 const currentIndex = getStatusIdx(order.status);
 
                 return (
-                  <div key={idx} className="bg-tk-bg-surface border border-tk-border rounded-xl p-4 flex flex-col gap-3 shadow-sm hover:shadow-md hover:border-tk-burgundy/50 transition-all cursor-pointer relative group" onClick={() => setSelectedOrder(order)}>
+                  <div key={idx} className={`border rounded-xl p-4 flex flex-col gap-3 shadow-sm hover:shadow-md hover:border-tk-burgundy/50 transition-all cursor-pointer relative group ${getCardColorClass(order.status)}`} onClick={() => setSelectedOrder(order)}>
                     <div className="flex justify-between items-start">
                       <div className="flex flex-col">
                         <span className="font-medium text-tk-text text-xs">{order.orderNumber}</span>

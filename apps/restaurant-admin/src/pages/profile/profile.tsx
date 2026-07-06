@@ -943,20 +943,20 @@ const ProfilePage: React.FC = () => {
         <div
           style={{
             display: activeTab === "general" ? "grid" : "none",
-            gridTemplateColumns: "1fr 1fr",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))",
             gap: "24px",
           }}
         >
-          <div className="border border-[#E2E8F0] rounded-[18px] p-[18px] bg-white dark:bg-tk-bg-card dark:border-tk-border">
-            <div className="flex justify-between items-start gap-4 mb-4">
-              <div>
-                <h3>Core Identity</h3>
+          <div className="border border-[#E2E8F0] rounded-[18px] p-4 sm:p-[18px] bg-white dark:bg-tk-bg-card dark:border-tk-border">
+            <div className="flex flex-wrap justify-between items-start gap-3 mb-4">
+              <div className="min-w-0">
+                <h3 className="font-bold">Core Identity</h3>
                 <p>Essential details about the restaurant.</p>
               </div>
-              {renderRestaurantActions("core")}
+              <div className="shrink-0">{renderRestaurantActions("core")}</div>
             </div>
-             {editingSections.core ? (
-              <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+            {editingSections.core ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <label className="flex flex-col gap-2">
                   <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Restaurant Name</span>
                   <input
@@ -1050,7 +1050,7 @@ const ProfilePage: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Restaurant Name</span>
                   <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">{restaurant?.name}</span>
@@ -1119,18 +1119,18 @@ const ProfilePage: React.FC = () => {
             )}
           </div>
 
-          <div className="border border-[#E2E8F0] rounded-[18px] p-[18px] bg-white dark:bg-tk-bg-card dark:border-tk-border">
-            <div className="flex justify-between items-start gap-4 mb-4">
-              <div>
-                <h3>Contact & Operating Hours</h3>
+          <div className="border border-[#E2E8F0] rounded-[18px] p-4 sm:p-[18px] bg-white dark:bg-tk-bg-card dark:border-tk-border">
+            <div className="flex flex-wrap justify-between items-start gap-3 mb-4">
+              <div className="min-w-0">
+                <h3 className="font-bold">Contact & Operating Hours</h3>
                 <p>How customers can reach you and when you're open.</p>
               </div>
-              {renderRestaurantActions("contact")}
+              <div className="shrink-0">{renderRestaurantActions("contact")}</div>
             </div>
              {editingSections.contact ? (
-              <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div
-                  className="col-span-2"
+                  className="col-span-1 sm:col-span-2"
                   style={{
                     fontSize: "13px",
                     fontWeight: 600,
@@ -1178,7 +1178,7 @@ const ProfilePage: React.FC = () => {
                   />
                 </label>
 
-                <label className="flex flex-col gap-2 col-span-2">
+                <label className="flex flex-col gap-2 sm:col-span-2">
                   <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Address</span>
                   <textarea
                     className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text resize-y min-h-[96px]"
@@ -1195,7 +1195,7 @@ const ProfilePage: React.FC = () => {
                 </label>
 
                 <div
-                  className="col-span-2"
+                  className="col-span-1 sm:col-span-2"
                   style={{
                     fontSize: "13px",
                     fontWeight: 600,
@@ -1215,13 +1215,7 @@ const ProfilePage: React.FC = () => {
                   <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
                     Operating Hours (Weekdays)
                   </span>
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                    }}
-                  >
+                  <div className="grid grid-cols-2 gap-3">
                     <div className="flex flex-col gap-2" style={{ gap: "4px" }}>
                       <span
                         style={{
@@ -1278,13 +1272,7 @@ const ProfilePage: React.FC = () => {
                   <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
                     Operating Hours (Weekends)
                   </span>
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                    }}
-                  >
+                  <div className="grid grid-cols-2 gap-3">
                     <div className="flex flex-col gap-2" style={{ gap: "4px" }}>
                       <span
                         style={{
@@ -1339,9 +1327,9 @@ const ProfilePage: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div
-                  className="col-span-2"
+                  className="col-span-1 sm:col-span-2"
                   style={{
                     fontSize: "13px",
                     fontWeight: 600,
@@ -1370,7 +1358,7 @@ const ProfilePage: React.FC = () => {
                   </span>
                 </div>
 
-                <div className="flex flex-col gap-1.5 col-span-2">
+                <div className="flex flex-col gap-1.5 sm:col-span-2">
                   <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text inline-flex items-center gap-2">
                     <MapPinIcon size={15} />
                     {restaurant?.contact.address || "N/A"}
@@ -1378,7 +1366,7 @@ const ProfilePage: React.FC = () => {
                 </div>
 
                 <div
-                  className="col-span-2"
+                  className="col-span-1 sm:col-span-2"
                   style={{
                     fontSize: "13px",
                     fontWeight: 600,
@@ -1416,18 +1404,18 @@ const ProfilePage: React.FC = () => {
         </div>
 
         <div
-          className="border border-[#E2E8F0] rounded-[18px] p-[18px] bg-white dark:bg-tk-bg-card dark:border-tk-border"
+          className="border border-[#E2E8F0] rounded-[18px] p-4 sm:p-[18px] bg-white dark:bg-tk-bg-card dark:border-tk-border"
           style={{ display: activeTab === "branding" ? "block" : "none" }}
         >
-          <div className="flex justify-between items-start gap-4 mb-4">
-            <div>
-              <h3>Location & Branding</h3>
+          <div className="flex flex-wrap justify-between items-start gap-3 mb-4">
+            <div className="min-w-0">
+              <h3 className="font-bold">Location & Branding</h3>
               <p>Where to find you and your visual identity.</p>
             </div>
-            {renderRestaurantActions("branding")}
+            <div className="shrink-0">{renderRestaurantActions("branding")}</div>
           </div>
            {editingSections.branding ? (
-            <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
                 <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Logo</span>
                 <div
@@ -1507,15 +1495,9 @@ const ProfilePage: React.FC = () => {
                 />
               </label>
 
-              <div className="flex flex-col gap-2 col-span-2">
+              <div className="flex flex-col gap-2 col-span-1 sm:col-span-2">
                 <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Location Coordinates</span>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: "16px",
-                  }}
-                >
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <label className="flex flex-col gap-2" style={{ gap: "4px" }}>
                     <span
                       className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary"
@@ -1577,17 +1559,10 @@ const ProfilePage: React.FC = () => {
                   }}
                 ></div>
 
-                <div
-                  style={{
-                    marginTop: "12px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "16px",
-                  }}
-                >
+                <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-3">
                   <button
                     type="button"
-                    className="inline-flex items-center gap-2 px-[18px] py-2.5 border-2 border-dashed border-tk-burgundy rounded-xl bg-[#F0FFF4] text-tk-burgundy text-[13px] font-semibold font-['Outfit',sans-serif] cursor-pointer transition-all duration-200 hover:not(:disabled):bg-[#C6F6D5] hover:not(:disabled):border-[#6B2A15] hover:not(:disabled):-translate-y-px disabled:opacity-70 disabled:cursor-wait dark:bg-[rgba(72,187,120,0.1)] dark:hover:not(:disabled):bg-[rgba(72,187,120,0.2)]"
+                    className="inline-flex items-center gap-2 px-[18px] py-2.5 border-2 border-dashed border-tk-burgundy rounded-xl bg-[#F0FFF4] text-tk-burgundy text-[13px] font-semibold font-['Outfit',sans-serif] cursor-pointer transition-all duration-200 disabled:opacity-70 disabled:cursor-wait dark:bg-[rgba(72,187,120,0.1)] shrink-0"
                     onClick={handleUseMyLocation}
                     disabled={isLocating}
                   >
@@ -1670,7 +1645,7 @@ const ProfilePage: React.FC = () => {
               </label>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
                 <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Location</span>
                 <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text inline-flex items-center gap-2">
@@ -1739,18 +1714,18 @@ const ProfilePage: React.FC = () => {
 
         {/* Our Story & Additional Info */}
         <div
-          className="border border-[#E2E8F0] rounded-[18px] p-[18px] bg-white dark:bg-tk-bg-card dark:border-tk-border"
+          className="border border-[#E2E8F0] rounded-[18px] p-4 sm:p-[18px] bg-white dark:bg-tk-bg-card dark:border-tk-border"
           style={{ display: activeTab === "story" ? "block" : "none" }}
         >
-          <div className="flex justify-between items-start gap-4 mb-4">
-            <div>
-              <h3>Our Story & Socials</h3>
+          <div className="flex flex-wrap justify-between items-start gap-3 mb-4">
+            <div className="min-w-0">
+              <h3 className="font-bold">Our Story & Socials</h3>
               <p>Tell your customers about your restaurant.</p>
             </div>
-            {renderRestaurantActions("story")}
+            <div className="shrink-0">{renderRestaurantActions("story")}</div>
           </div>
            {editingSections.story ? (
-            <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <label className="flex flex-col gap-2">
                 <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Opening Date</span>
                 <input
@@ -1763,7 +1738,7 @@ const ProfilePage: React.FC = () => {
                 />
               </label>
 
-              <label className="flex flex-col gap-2 col-span-2">
+              <label className="flex flex-col gap-2 sm:col-span-2">
                 <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Manifesto / Our Story</span>
                 <textarea
                   className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text resize-y min-h-[96px]"
@@ -1805,7 +1780,7 @@ const ProfilePage: React.FC = () => {
                 />
               </label>
 
-              <label className="flex flex-col gap-2 col-span-2">
+              <label className="flex flex-col gap-2 sm:col-span-2">
                 <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Website URL</span>
                 <input
                   className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
@@ -1819,7 +1794,7 @@ const ProfilePage: React.FC = () => {
               </label>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
                 <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Opening Date</span>
                 <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
@@ -1870,7 +1845,7 @@ const ProfilePage: React.FC = () => {
                 </span>
               </div>
 
-              <div className="flex flex-col gap-1.5 col-span-2">
+              <div className="flex flex-col gap-1.5 sm:col-span-2">
                 <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Website</span>
                 <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
                   {restaurant?.websiteUrl ? (
@@ -1893,17 +1868,18 @@ const ProfilePage: React.FC = () => {
 
         {/* Payments Tab */}
         <div style={{ display: activeTab === "payments" ? "block" : "none" }}>
-          <div className="border border-[#E2E8F0] rounded-[18px] p-[18px] bg-white dark:bg-tk-bg-card dark:border-tk-border">
-            <div className="flex justify-between items-start gap-4 mb-4">
-              <div>
-                <h3>Restaurant Razorpay</h3>
+          <div className="border border-[#E2E8F0] rounded-[18px] p-4 sm:p-[18px] bg-white dark:bg-tk-bg-card dark:border-tk-border">
+            <div className="flex flex-wrap justify-between items-start gap-3 mb-4">
+              <div className="min-w-0">
+                <h3 className="font-bold">Restaurant Razorpay</h3>
                 <p>Customer food payments settle directly into this restaurant's own Razorpay account.</p>
               </div>
+              <div className="shrink-0">
               {editingSections.payments ? (
-                <div style={{ display: "flex", gap: "8px" }}>
+                <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    className="profile-btn profile-btn-secondary"
+                    className="inline-flex items-center justify-center gap-2 min-h-[40px] px-4 border-none rounded-xl font-['Outfit',sans-serif] text-[13px] font-semibold cursor-pointer transition-all duration-200 bg-[#EDF2F7] text-[#2D3748] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed dark:bg-tk-bg-elevated dark:text-tk-text dark:hover:bg-tk-bg-hover"
                     onClick={() => {
                       cancelRestaurantEdit("payments");
                       setPaymentForm({
@@ -1918,7 +1894,7 @@ const ProfilePage: React.FC = () => {
                   </button>
                   <button
                     type="button"
-                    className="profile-btn profile-btn-primary"
+                    className="inline-flex items-center justify-center gap-2 min-h-[40px] px-4 border-none rounded-xl font-['Outfit',sans-serif] text-[13px] font-semibold cursor-pointer transition-all duration-200 bg-[linear-gradient(135deg,var(--tk-burgundy),#6B2A15)] text-white shadow-[0_8px_18px_rgba(139,58,30,0.2)] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed"
                     disabled={isPaymentSaving}
                     onClick={async () => {
                       if (!activeRestaurantId || !restaurantForm) return;
@@ -1966,25 +1942,71 @@ const ProfilePage: React.FC = () => {
               ) : (
                 <button
                   type="button"
-                  className="profile-btn profile-btn-secondary"
+                  className="inline-flex items-center justify-center gap-2 min-h-[40px] px-4 border-none rounded-xl font-['Outfit',sans-serif] text-[13px] font-semibold cursor-pointer transition-all duration-200 bg-[#EDF2F7] text-[#2D3748] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed dark:bg-tk-bg-elevated dark:text-tk-text dark:hover:bg-tk-bg-hover"
                   onClick={() => startRestaurantEdit("payments")}
                 >
                   <Edit3 size={14} /> Edit
                 </button>
               )}
             </div>
+          </div>
 
             {editingSections.payments ? (
-              <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
-                <label className="flex flex-col gap-2 col-span-2" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', border: '1px solid #CBD5E0', borderRadius: '8px', marginTop: '8px' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Enable Online Payments</span>
-                    <span className="text-[#4A5568] text-[12px] leading-relaxed font-['Outfit',sans-serif] dark:text-tk-text-secondary" style={{ margin: 0 }}>Allow customers to pay online from their phones</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Enable Online Payments Toggle */}
+                <div
+                  className="col-span-1 sm:col-span-2"
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '14px 16px',
+                    border: '1px solid #CBD5E0',
+                    borderRadius: '12px',
+                    marginTop: '4px',
+                    gap: '12px',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <span className="text-[13px] font-semibold text-[#1A202C] font-['Outfit',sans-serif] dark:text-tk-text">Enable Online Payments</span>
+                    <span className="text-[#718096] text-[12px] leading-relaxed font-['Outfit',sans-serif] dark:text-tk-text-secondary">Allow customers to pay online from their phones</span>
                   </div>
-                  <div className={`profile-toggle-switch ${restaurantForm?.payOnline ? 'bg-tk-burgundy text-white' : ''}`} onClick={() => handleRestaurantFieldChange("payOnline", (!restaurantForm?.payOnline) as any)}>
-                     <div className="profile-toggle-thumb" />
-                  </div>
-                </label>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={restaurantForm?.payOnline ?? false}
+                    onClick={() => handleRestaurantFieldChange("payOnline", (!restaurantForm?.payOnline) as any)}
+                    style={{
+                      position: 'relative',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      width: '48px',
+                      height: '26px',
+                      borderRadius: '9999px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                      transition: 'background-color 0.2s ease',
+                      backgroundColor: restaurantForm?.payOnline ? 'var(--tk-burgundy, #8B3A1E)' : '#CBD5E0',
+                      padding: 0,
+                    }}
+                  >
+                    <span
+                      style={{
+                        display: 'block',
+                        width: '20px',
+                        height: '20px',
+                        borderRadius: '50%',
+                        backgroundColor: '#fff',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                        transition: 'transform 0.2s ease',
+                        transform: restaurantForm?.payOnline ? 'translateX(25px)' : 'translateX(3px)',
+                      }}
+                    />
+                  </button>
+                </div>
 
                 <label className="flex flex-col gap-2">
                   <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Razorpay Key ID</span>
@@ -2009,7 +2031,7 @@ const ProfilePage: React.FC = () => {
                   />
                 </label>
 
-                <label className="flex flex-col gap-2 col-span-2">
+                <label className="flex flex-col gap-2 sm:col-span-2">
                   <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Webhook Secret {paymentSettings.hasRazorpayWebhookSecret && <span style={{ color: "green", fontSize: "0.75rem" }}>✓ Configured</span>}</span>
                   <input
                     className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
@@ -2023,7 +2045,7 @@ const ProfilePage: React.FC = () => {
                 </label>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Online Payments</span>
                   <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
@@ -2066,15 +2088,15 @@ const ProfilePage: React.FC = () => {
 
     return (
       <div className="flex flex-col gap-6">
-        <div className="border border-[#E2E8F0] rounded-[18px] p-[18px] bg-white dark:bg-tk-bg-card dark:border-tk-border">
-          <div className="flex justify-between items-start gap-4 mb-4">
-            <div>
-              <h3>Personal Information</h3>
+        <div className="border border-[#E2E8F0] rounded-[18px] p-4 sm:p-[18px] bg-white dark:bg-tk-bg-card dark:border-tk-border">
+          <div className="flex flex-wrap justify-between items-start gap-3 mb-4">
+            <div className="min-w-0">
+              <h3 className="font-bold">Personal Information</h3>
               <p>Your personal details and profile picture.</p>
             </div>
-            {renderAdminActions()}
+            <div className="shrink-0">{renderAdminActions()}</div>
           </div>
-          <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <label className="flex flex-col gap-2">
               <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Full Name</span>
               <input
@@ -2108,7 +2130,7 @@ const ProfilePage: React.FC = () => {
               </span>
             </label>
 
-            <div className="flex flex-col gap-2 col-span-2">
+            <div className="flex flex-col gap-2 sm:col-span-2">
               <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Avatar</span>
               <div
                 className={`border-2 border-dashed border-[#CBD5E0] rounded-2xl bg-[#F8FAFC] cursor-pointer transition-all duration-200 overflow-hidden hover:border-tk-burgundy hover:bg-[#F0FFF4] dark:bg-tk-bg-surface dark:border-tk-border dark:hover:bg-[rgba(72,187,120,0.1)] ${isUploadingAvatar ? "opacity-70 cursor-wait pointer-events-none" : ""}`}
@@ -2169,11 +2191,11 @@ const ProfilePage: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3.5 max-sm:grid-cols-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           <div className="border border-[#E2E8F0] rounded-2xl bg-white px-4 py-3.5 flex flex-col gap-2.5 dark:bg-tk-bg-card dark:border-tk-border">
             <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Global Role</span>
             <span className="inline-flex items-center px-3.5 py-1.5 rounded-xl text-[12px] font-semibold capitalize w-fit font-['Outfit',sans-serif] bg-[#D6BCFA] text-[#44337A] dark:bg-[rgba(214,188,250,0.15)] dark:text-[#D6BCFA]">
-              {formatLabel(userProfile.role)}
+              {formatLabel(userProfile?.role)}
             </span>
           </div>
           <div className="border border-[#E2E8F0] rounded-2xl bg-white px-4 py-3.5 flex flex-col gap-2.5 dark:bg-tk-bg-card dark:border-tk-border">
@@ -2188,10 +2210,10 @@ const ProfilePage: React.FC = () => {
               {formatLabel(activeMembership?.role || "staff")}
             </span>
           </div>
-          <div className="border border-[#E2E8F0] rounded-2xl bg-white px-4 py-3.5 flex flex-col gap-2.5 dark:bg-tk-bg-card dark:border-tk-border col-span-2">
+          <div className="border border-[#E2E8F0] rounded-2xl bg-white px-4 py-3.5 flex flex-col gap-2.5 dark:bg-tk-bg-card dark:border-tk-border sm:col-span-2">
             <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Account ID</span>
-            <span className="text-[12px] text-[#4A5568] font-mono break-all dark:text-tk-text-secondary" title={userProfile.id}>
-              {userProfile.id}
+            <span className="text-[12px] text-[#4A5568] font-mono break-all dark:text-tk-text-secondary" title={userProfile?.id}>
+              {userProfile?.id}
             </span>
           </div>
         </div>
@@ -2210,36 +2232,36 @@ const ProfilePage: React.FC = () => {
 
     return (
       <div className="flex flex-col gap-6">
-        <div className="border border-[#E2E8F0] rounded-[18px] p-[18px] bg-white dark:bg-tk-bg-card dark:border-tk-border">
-          <div className="flex justify-between items-start gap-4 mb-4">
-            <div>
-              <h3>Personal Information</h3>
+        <div className="border border-[#E2E8F0] rounded-[18px] p-4 sm:p-[18px] bg-white dark:bg-tk-bg-card dark:border-tk-border">
+          <div className="flex flex-wrap justify-between items-start gap-3 mb-4">
+            <div className="min-w-0">
+              <h3 className="font-bold">Personal Information</h3>
               <p>Your personal details and profile picture.</p>
             </div>
-            {renderAdminActions()}
+            <div className="shrink-0">{renderAdminActions()}</div>
           </div>
-          <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Full Name</span>
               <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
-                {userProfile.name || "Admin User"}
+                {userProfile?.name || "Admin User"}
               </span>
             </div>
 
             <div className="flex flex-col gap-1.5">
               <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Email Address</span>
               <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
-                {userProfile.email || "N/A"}
+                {userProfile?.email || "N/A"}
               </span>
             </div>
 
-            <div className="flex flex-col gap-1.5 col-span-2">
+            <div className="flex flex-col gap-1.5 sm:col-span-2">
               <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Avatar</span>
-              {userProfile.avatarUrl ? (
+              {userProfile?.avatarUrl ? (
                 <div className="flex flex-col gap-2">
                   <img
-                    src={userProfile.avatarUrl}
-                    alt={`${userProfile.name || "Admin"} avatar`}
+                    src={userProfile?.avatarUrl}
+                    alt={`${userProfile?.name || "Admin"} avatar`}
                     className="w-[52px] h-[52px] object-cover rounded-full border-2 border-[#E2E8F0] dark:border-tk-border"
                     onError={(e) => {
                       (e.target as HTMLImageElement).style.display = "none";
@@ -2255,11 +2277,11 @@ const ProfilePage: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3.5 max-sm:grid-cols-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           <div className="border border-[#E2E8F0] rounded-2xl bg-white px-4 py-3.5 flex flex-col gap-2.5 dark:bg-tk-bg-card dark:border-tk-border">
             <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Global Role</span>
             <span className="inline-flex items-center px-3.5 py-1.5 rounded-xl text-[12px] font-semibold capitalize w-fit font-['Outfit',sans-serif] bg-[#D6BCFA] text-[#44337A] dark:bg-[rgba(214,188,250,0.15)] dark:text-[#D6BCFA]">
-              {formatLabel(userProfile.role)}
+              {formatLabel(userProfile?.role)}
             </span>
           </div>
 
@@ -2278,10 +2300,10 @@ const ProfilePage: React.FC = () => {
             </div>
           )}
 
-          <div className="border border-[#E2E8F0] rounded-2xl bg-white px-4 py-3.5 flex flex-col gap-2.5 dark:bg-tk-bg-card dark:border-tk-border col-span-2">
+          <div className="border border-[#E2E8F0] rounded-2xl bg-white px-4 py-3.5 flex flex-col gap-2.5 dark:bg-tk-bg-card dark:border-tk-border sm:col-span-2">
             <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Account ID</span>
-            <span className="text-[12px] text-[#4A5568] font-mono break-all dark:text-tk-text-secondary" title={userProfile.id}>
-              {userProfile.id}
+            <span className="text-[12px] text-[#4A5568] font-mono break-all dark:text-tk-text-secondary" title={userProfile?.id}>
+              {userProfile?.id}
             </span>
           </div>
         </div>
@@ -2309,9 +2331,11 @@ const ProfilePage: React.FC = () => {
           <div
             style={{
               display: "flex",
-              gap: "2rem",
-              borderBottom: "1px solid var(--border-color)",
+              gap: "0",
+              borderBottom: "1px solid var(--border-color, #E2E8F0)",
               flex: 1,
+              overflowX: "auto",
+              scrollbarWidth: "none",
             }}
           >
             {[
@@ -2326,26 +2350,26 @@ const ProfilePage: React.FC = () => {
                 type="button"
                 onClick={() => setActiveTab(tab.id as any)}
                 style={{
-                  position: "relative", // Pulls the border above the parent's container border
+                  position: "relative",
                   zIndex: activeTab === tab.id ? 1 : "auto",
                   display: "flex",
                   alignItems: "center",
                   gap: "8px",
-                  padding: "1rem 0",
-                  fontSize: "0.95rem",
+                  padding: "1rem 1.25rem",
+                  fontSize: "1.05rem",
                   fontWeight: 600,
-                  // Added fallback hex colors just in case your CSS variables aren't resolving
                   color:
                     activeTab === tab.id
-                      ? "var(--accent-primary, #4F755C)"
-                      : "var(--text-muted, #718096)",
-                  border: "none", // Reset default button borders first
-                  borderBottom: `2px solid ${activeTab === tab.id ? "var(--accent-primary, #4F755C)" : "transparent"}`,
-                  marginBottom: "-1px", // Overlap exactly 1px to cover parent's border
+                      ? "var(--tk-burgundy, #8B3A1E)"
+                      : "var(--tk-text-secondary, #718096)",
+                  border: "none",
+                  borderBottom: `2px solid ${activeTab === tab.id ? "var(--tk-burgundy, #8B3A1E)" : "transparent"}`,
+                  marginBottom: "-1px",
                   background: "none",
                   cursor: "pointer",
                   whiteSpace: "nowrap",
                   transition: "all 0.2s",
+                  flexShrink: 0,
                 }}
               >
                 {tab.label}
@@ -2353,7 +2377,7 @@ const ProfilePage: React.FC = () => {
             ))}
           </div>
           <div
-            className="flex items-center gap-4"
+            className="flex items-center gap-4 max-md:fixed max-md:top-4 max-md:right-4 max-md:z-[90] max-md:ml-0"
             style={{
               alignSelf: "center",
               paddingBottom: "0",

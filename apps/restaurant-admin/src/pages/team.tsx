@@ -173,11 +173,10 @@ const Team: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-shrink-0 mb-6">
-        <div className="flex flex-row items-center justify-between gap-4 flex-wrap">
-          <div className="flex flex-col">
+        <div className="flex flex-row items-center justify-between gap-4 flex-wrap mb-6 max-md:-mt-[52px] max-md:mb-[8px]">
+          <div className="flex flex-col max-md:ml-[56px]">
             <h1 className="text-[22px] font-semibold text-tk-text">Team Management</h1>
-            <p className="text-sm text-tk-text-secondary mt-1">Manage restaurant admins and kitchen staff access.</p>
+            {/* <p className="text-sm text-tk-text-secondary mt-1">Manage restaurant admins and kitchen staff access.</p> */}
           </div>
           
           <div className="flex items-center gap-3">
@@ -200,7 +199,6 @@ const Team: React.FC = () => {
             </button>
           </div>
         </div>
-      </div>
 
       <div className="flex-1 overflow-auto bg-tk-bg-surface border border-tk-border rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.02)] mb-6">
         {loading ? (
@@ -227,55 +225,109 @@ const Team: React.FC = () => {
             )}
           </div>
         ) : (
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-tk-bg-hover/50">
-                <th className="py-4 px-6 text-xs font-semibold text-tk-text-secondary uppercase tracking-wider border-b border-tk-border">Member</th>
-                <th className="py-4 px-6 text-xs font-semibold text-tk-text-secondary uppercase tracking-wider border-b border-tk-border">Role</th>
-                <th className="py-4 px-6 text-xs font-semibold text-tk-text-secondary uppercase tracking-wider border-b border-tk-border">Status</th>
-                <th className="py-4 px-6 text-xs font-semibold text-tk-text-secondary uppercase tracking-wider border-b border-tk-border text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+          <>
+            {/* Desktop Table View - Hidden on Mobile */}
+            <div className="hidden sm:block">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-tk-bg-hover/50">
+                    <th className="py-4 px-6 text-xs font-semibold text-tk-text-secondary uppercase tracking-wider border-b border-tk-border">Member</th>
+                    <th className="py-4 px-6 text-xs font-semibold text-tk-text-secondary uppercase tracking-wider border-b border-tk-border">Role</th>
+                    <th className="py-4 px-6 text-xs font-semibold text-tk-text-secondary uppercase tracking-wider border-b border-tk-border">Status</th>
+                    <th className="py-4 px-6 text-xs font-semibold text-tk-text-secondary uppercase tracking-wider border-b border-tk-border text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredMembers.map((member) => (
+                    <tr key={member.id} className="border-b border-tk-border/50 hover:bg-tk-bg-hover/30 transition-colors last:border-0">
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-tk-burgundy/10 flex items-center justify-center text-tk-burgundy font-bold text-sm shrink-0">
+                            {member.profiles?.name?.charAt(0)?.toUpperCase() || 'U'}
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="font-semibold text-tk-text">{member.profiles?.name || 'Unknown'}</span>
+                            <div className="flex items-center gap-1.5 text-xs text-tk-text-secondary mt-0.5">
+                              <Mail size={12} />
+                              {member.profiles?.email}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold ${
+                          member.role === 'admin' 
+                            ? 'bg-purple-100 text-purple-700' 
+                            : 'bg-blue-100 text-blue-700'
+                        }`}>
+                          <Shield size={12} />
+                          {member.role === 'admin' ? 'Restaurant Admin' : 'Kitchen Staff'}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold ${
+                          member.active 
+                            ? 'bg-[#C6F6D5] text-[#22543D]' 
+                            : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {member.active ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 text-right">
+                        <button
+                          onClick={() => toggleMemberStatus(member)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                            member.active
+                              ? 'text-red-600 bg-red-50 hover:bg-red-100'
+                              : 'text-green-700 bg-green-50 hover:bg-green-100'
+                          }`}
+                        >
+                          {member.active ? 'Deactivate' : 'Activate'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Cards View - Hidden on Desktop */}
+            <div className="flex flex-col gap-3 sm:hidden p-4">
               {filteredMembers.map((member) => (
-                <tr key={member.id} className="border-b border-tk-border/50 hover:bg-tk-bg-hover/30 transition-colors last:border-0">
-                  <td className="py-4 px-6">
+                <div key={member.id} className="bg-tk-bg-card p-4 rounded-xl shadow-sm border border-tk-border flex flex-col gap-3">
+                  <div className="flex justify-between items-start">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-tk-burgundy/10 flex items-center justify-center text-tk-burgundy font-bold text-sm shrink-0">
                         {member.profiles?.name?.charAt(0)?.toUpperCase() || 'U'}
                       </div>
                       <div className="flex flex-col">
-                        <span className="font-semibold text-tk-text">{member.profiles?.name || 'Unknown'}</span>
-                        <div className="flex items-center gap-1.5 text-xs text-tk-text-secondary mt-0.5">
-                          <Mail size={12} />
-                          {member.profiles?.email}
-                        </div>
+                        <span className="font-semibold text-tk-text text-sm">{member.profiles?.name || 'Unknown'}</span>
+                        <span className="text-xs text-tk-text-secondary mt-0.5 break-all">{member.profiles?.email}</span>
                       </div>
                     </div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold ${
-                      member.role === 'admin' 
-                        ? 'bg-purple-100 text-purple-700' 
-                        : 'bg-blue-100 text-blue-700'
-                    }`}>
-                      <Shield size={12} />
-                      {member.role === 'admin' ? 'Restaurant Admin' : 'Kitchen Staff'}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold ${
-                      member.active 
-                        ? 'bg-[#C6F6D5] text-[#22543D]' 
-                        : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      {member.active ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6 text-right">
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2.5 border-t border-tk-border border-dashed">
+                    <div className="flex gap-2">
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-bold ${
+                        member.role === 'admin' 
+                          ? 'bg-purple-100 text-purple-700' 
+                          : 'bg-blue-100 text-blue-700'
+                      }`}>
+                        {member.role === 'admin' ? 'Admin' : 'Kitchen'}
+                      </span>
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-bold ${
+                        member.active 
+                          ? 'bg-[#C6F6D5] text-[#22543D]' 
+                          : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        {member.active ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+
                     <button
                       onClick={() => toggleMemberStatus(member)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors shrink-0 ${
                         member.active
                           ? 'text-red-600 bg-red-50 hover:bg-red-100'
                           : 'text-green-700 bg-green-50 hover:bg-green-100'
@@ -283,11 +335,11 @@ const Team: React.FC = () => {
                     >
                       {member.active ? 'Deactivate' : 'Activate'}
                     </button>
-                  </td>
-                </tr>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          </>
         )}
       </div>
 

@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { X, Trash2, Upload, Image } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Trash2 } from 'lucide-react';
 import type { MenuCategory } from '@restaurant-saas/types';
 interface CategoryDialogProps {
     isOpen: boolean;
@@ -25,8 +25,6 @@ const CategoryDialog: React.FC<CategoryDialogProps> = ({
         active: true,
         image_url: '' as string | null
     });
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (mode === 'edit' && category) {
@@ -37,24 +35,10 @@ const CategoryDialog: React.FC<CategoryDialogProps> = ({
                 active: category.active ?? true,
                 image_url: (category as any).image_url ?? null
             });
-            setImagePreview((category as any).image_url ?? null);
         } else if (mode === 'add' && !category) {
             setFormData({ name: '', description: '', sort_order: 0, active: true, image_url: null });
-            setImagePreview(null);
         }
     }, [mode, category]);
-
-    const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            const result = reader.result as string;
-            setImagePreview(result);
-            setFormData(prev => ({ ...prev, image_url: result }));
-        };
-        reader.readAsDataURL(file);
-    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -68,7 +52,6 @@ const CategoryDialog: React.FC<CategoryDialogProps> = ({
         });
         if (mode === 'add') {
             setFormData({ name: '', description: '', sort_order: 0, active: true, image_url: null });
-            setImagePreview(null);
         }
         onClose();
     };
@@ -114,50 +97,7 @@ const CategoryDialog: React.FC<CategoryDialogProps> = ({
                         />
                     </div>
 
-                    {/* Description */}
-                    <div className="flex flex-col gap-2">
-                        <label className="text-sm font-medium text-tk-text-secondary">Description (Optional)</label>
-                        <textarea
-                            name="description"
-                            value={formData.description}
-                            onChange={handleChange}
-                            className="p-3 px-4 border-2 border-tk-border rounded-xl bg-tk-bg-elevated text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.1)] placeholder:text-tk-text-muted resize-y min-h-[72px]"
-                            placeholder="Brief description of this category"
-                            rows={2}
-                        />
-                    </div>
 
-                    {/* Image Upload */}
-                    <div className="flex flex-col gap-2">
-                        <label className="text-sm font-medium text-tk-text-secondary">Category Image (Optional)</label>
-                        <div
-                            className="border-2 border-dashed border-tk-border rounded-xl cursor-pointer overflow-hidden transition-colors duration-200 min-h-[120px] flex items-center justify-center hover:border-green-400 hover:bg-green-50 dark:hover:bg-tk-bg-hover"
-                            onClick={() => fileInputRef.current?.click()}
-                        >
-                            {imagePreview ? (
-                                <div className="relative w-full h-[140px] group">
-                                    <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
-                                    <div className="absolute inset-0 bg-black/40 text-white flex flex-col items-center justify-center gap-2 opacity-0 transition-opacity duration-200 text-sm group-hover:opacity-100">
-                                        <Upload size={20} />
-                                        <span>Change Image</span>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="flex flex-col items-center gap-2 p-6 text-tk-text-muted text-sm">
-                                    <Image size={32} className="text-tk-text-muted" />
-                                    <span>Click to upload image</span>
-                                    <small className="text-[11px]">PNG, JPG up to 2MB</small>
-                                </div>
-                            )}
-                        </div>
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            style={{ display: 'none' }}
-                            onChange={handleImageFile}
-                        />
-                    </div>
 
                     {/* Sort Order */}
                     <div className="flex flex-col gap-2">

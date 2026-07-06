@@ -405,6 +405,9 @@ const Reports: React.FC = () => {
                     <h1 className="reports-page-title">Reports & Analytics</h1>
                     <div className="reports-header-right">
                         {loading && <Loader2 className="animate-spin" size={20} style={{ color: '#4C51BF' }} />}
+                        <button className="report-export-btn" onClick={handleExportCSV}>
+                            <Download size={16} /> Export CSV
+                        </button>
                     </div>
                 </div>
 
@@ -473,15 +476,11 @@ const Reports: React.FC = () => {
                         </button>
                       </div>
                     )}
-
-                    <button className="report-export-btn" onClick={handleExportCSV}>
-                        <Download size={16} /> Export CSV
-                    </button>
                 </div>
 
                 {/* Key Metrics */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 max-w-[1200px] w-full mb-6">
-                    <div className="bg-tk-bg-card p-3 sm:p-3 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+                <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 max-w-[1200px] w-full pt-1 mb-6 overflow-x-auto no-scrollbar pb-1">
+                    <div className="bg-tk-bg-card p-3 sm:p-3 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md min-w-[160px] sm:min-w-0 shrink-0">
                         <div className="flex justify-between items-start mb-2 relative">
                             <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium flex items-center gap-1">
                                 Total Revenue
@@ -503,7 +502,7 @@ const Reports: React.FC = () => {
                         </div>
                     </div>
                     
-                    <div className="bg-tk-bg-card p-3 sm:p-3 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+                    <div className="bg-tk-bg-card p-3 sm:p-3 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md min-w-[160px] sm:min-w-0 shrink-0">
                         <div className="flex justify-between items-start mb-2 relative">
                             <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium flex items-center gap-1">
                                 Total Orders
@@ -525,7 +524,7 @@ const Reports: React.FC = () => {
                         </div>
                     </div>
                     
-                    <div className="bg-tk-bg-card p-3 sm:p-3 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+                    <div className="bg-tk-bg-card p-3 sm:p-3 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md min-w-[160px] sm:min-w-0 shrink-0">
                         <div className="flex justify-between items-start mb-2 relative">
                             <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium flex items-center gap-1">
                                 Avg Order Value
@@ -547,7 +546,7 @@ const Reports: React.FC = () => {
                         </div>
                     </div>
                     
-                    <div className="bg-tk-bg-card p-3 sm:p-3 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+                    <div className="bg-tk-bg-card p-3 sm:p-3 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md min-w-[160px] sm:min-w-0 shrink-0">
                         <div className="flex justify-between items-start mb-2 relative">
                             <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium flex items-center gap-1">
                                 Active Tables
@@ -568,7 +567,7 @@ const Reports: React.FC = () => {
                         </div>
                     </div>
                     
-                    <div className="bg-tk-bg-card p-3 sm:p-3 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+                    <div className="bg-tk-bg-card p-3 sm:p-3 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md min-w-[160px] sm:min-w-0 shrink-0">
                         <div className="flex justify-between items-start mb-2 relative">
                             <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium flex items-center gap-1">
                                 Discount Impact
@@ -589,7 +588,7 @@ const Reports: React.FC = () => {
                         </div>
                     </div>
                     
-                    <div className="bg-tk-bg-card p-3 sm:p-3 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
+                    <div className="bg-tk-bg-card p-3 sm:p-3 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md min-w-[160px] sm:min-w-0 shrink-0">
                         <div className="flex justify-between items-start mb-2 relative">
                             <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium flex items-center gap-1">
                                 Tax Collected
