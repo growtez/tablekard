@@ -145,14 +145,26 @@ const SubscriptionPage: React.FC = () => {
 
                 const config = data?.config as any;
                 if (config?.plans) {
-                    const mapped = config.plans.map((p: any) => ({
-                        duration: p.duration,
-                        label: p.name,
-                        price: p.price,
-                        perMonth: Math.round(p.price / p.duration),
-                        savings: p.savings || 0,
-                        popular: !!p.recommended
-                    }));
+                    const mapped = config.plans.map((p: any) => {
+                        // Fix incorrect data from platform_settings
+                        let fixedDuration = p.duration;
+                        let fixedPrice = p.price;
+                        if (p.id === '6_months' || fixedDuration === 5) {
+                            fixedDuration = 6;
+                            fixedPrice = 2699;
+                        } else if (p.id === '12_months' || fixedDuration === 11) {
+                            fixedDuration = 12;
+                        }
+                        
+                        return {
+                            duration: fixedDuration,
+                            label: p.name,
+                            price: fixedPrice,
+                            perMonth: Math.round(fixedPrice / fixedDuration),
+                            savings: p.savings || 0,
+                            popular: !!p.recommended
+                        };
+                    });
                     setDbPlans(mapped);
                 } else {
                     setDbPlans(DEFAULT_PLANS);

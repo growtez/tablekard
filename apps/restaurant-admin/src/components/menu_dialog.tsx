@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Plus, Minus, Tag, ChevronDown, Upload, Trash2, Maximize2, Edit2, ChevronLeft, ChevronRight, Crop } from 'lucide-react';
+import { X, Plus, Minus, Tag, ChevronDown, Trash2, Maximize2, Edit2, ChevronLeft, ChevronRight, Crop } from 'lucide-react';
 import type { MenuCategory } from '@restaurant-saas/types';
 import ImageCropper from './ImageCropper';
 
@@ -53,7 +53,7 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
   const [newVariant, setNewVariant] = useState<Variant>({ name: '', price: 0 });
   const [newAddon, setNewAddon] = useState<Addon>({ name: '', price: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const arModelInputRef = useRef<HTMLInputElement>(null);
+  // const arModelInputRef = useRef<HTMLInputElement>(null);
   const [arModelFile, setArModelFile] = useState<File | null>(null);
   const [existingModelUrl, setExistingModelUrl] = useState<string | null>(null);
   const [removeModel, setRemoveModel] = useState(false);
@@ -371,35 +371,60 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
           </div>
 
           {/* Price Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-tk-text-secondary">Price (₹) *</label>
+          {/* Price */}
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium text-tk-text-secondary">Price (₹) *</label>
+            <input
+              type="number"
+              name="price"
+              value={formData.price}
+              onChange={handleChange}
+              className="p-3 px-4 border-2 border-tk-border bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.1)] placeholder:text-tk-text-muted"
+              placeholder="0.00"
+              min="0"
+              step="any"
+              onWheel={(e) => e.currentTarget.blur()}
+              required
+            />
+          </div>
+
+                    {/* Variants */}
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium text-tk-text-secondary">Variants (e.g. Small / Medium / Large)</label>
+            {formData.variants.length > 0 && (
+              <div className="flex flex-col gap-1.5 mb-2.5">
+                {formData.variants.map((v, idx) => (
+                  <div key={idx} className="flex items-center gap-3 bg-tk-bg-elevated rounded-xl p-2.5 px-3.5 border border-tk-border">
+                    <span className="flex-1 text-sm font-medium text-tk-text">{v.name}</span>
+                    <span className="text-[13px] font-semibold text-[#37724e] dark:text-green-400">₹{v.price}</span>
+                    <button type="button" onClick={() => removeVariant(idx)} className="bg-transparent border-none cursor-pointer text-red-500 p-1 rounded-md flex items-center transition-colors duration-200 hover:bg-red-500/10">
+                      <Minus size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-2 items-center">
+              <input
+                type="text"
+                value={newVariant.name}
+                onChange={(e) => setNewVariant(prev => ({ ...prev, name: e.target.value }))}
+                className="p-3 px-4 border-2 border-tk-border bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.1)] placeholder:text-tk-text-muted"
+                placeholder="Variant name (e.g. Large)"
+              />
               <input
                 type="number"
-                name="price"
-                value={formData.price}
-                onChange={handleChange}
-                className="p-3 px-4 border-2 border-tk-border bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.1)] placeholder:text-tk-text-muted"
-                placeholder="0.00"
+                value={newVariant.price || ''}
+                onChange={(e) => setNewVariant(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+                className="p-3 px-4 border-2 border-tk-border bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.1)] placeholder:text-tk-text-muted max-w-[110px]"
+                placeholder="Price (₹)"
                 min="0"
                 step="any"
                 onWheel={(e) => e.currentTarget.blur()}
-                required
               />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-tk-text-secondary">Discounted Price (₹)</label>
-              <input
-                type="number"
-                name="discount_price"
-                value={formData.discount_price}
-                onChange={handleChange}
-                className="p-3 px-4 border-2 border-tk-border bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.1)] placeholder:text-tk-text-muted"
-                placeholder="Leave blank if none"
-                min="0"
-                step="any"
-                onWheel={(e) => e.currentTarget.blur()}
-              />
+              <button type="button" className="flex items-center justify-center p-3 bg-[#37724e] text-white border-none rounded-xl cursor-pointer shrink-0 transition-colors duration-200 hover:bg-[#2f5e40]" onClick={addVariant}>
+                <Plus size={16} />
+              </button>
             </div>
           </div>
 
@@ -470,7 +495,7 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
             />
           </div>
 
-          {/* AR 3D Model Upload */}
+          {/* AR 3D Model Upload (Commented Out)
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-tk-text-secondary">AR 3D Model (.glb)</label>
             <div className="flex flex-col gap-2">
@@ -521,6 +546,7 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
               />
             </div>
           </div>
+          */}
 
           {/* Toggles: Is Available & Is Veg */}
           <div className="flex flex-col gap-3">
@@ -586,45 +612,6 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
             )}
           </div>
 
-          {/* Variants */}
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-tk-text-secondary">Variants (e.g. Small / Medium / Large)</label>
-            {formData.variants.length > 0 && (
-              <div className="flex flex-col gap-1.5 mb-2.5">
-                {formData.variants.map((v, idx) => (
-                  <div key={idx} className="flex items-center gap-3 bg-tk-bg-elevated rounded-xl p-2.5 px-3.5 border border-tk-border">
-                    <span className="flex-1 text-sm font-medium text-tk-text">{v.name}</span>
-                    <span className="text-[13px] font-semibold text-[#37724e] dark:text-green-400">₹{v.price}</span>
-                    <button type="button" onClick={() => removeVariant(idx)} className="bg-transparent border-none cursor-pointer text-red-500 p-1 rounded-md flex items-center transition-colors duration-200 hover:bg-red-500/10">
-                      <Minus size={14} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="flex gap-2 items-center">
-              <input
-                type="text"
-                value={newVariant.name}
-                onChange={(e) => setNewVariant(prev => ({ ...prev, name: e.target.value }))}
-                className="p-3 px-4 border-2 border-tk-border bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.1)] placeholder:text-tk-text-muted"
-                placeholder="Variant name (e.g. Large)"
-              />
-              <input
-                type="number"
-                value={newVariant.price || ''}
-                onChange={(e) => setNewVariant(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
-                className="p-3 px-4 border-2 border-tk-border bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.1)] placeholder:text-tk-text-muted max-w-[110px]"
-                placeholder="Price (₹)"
-                min="0"
-                step="any"
-                onWheel={(e) => e.currentTarget.blur()}
-              />
-              <button type="button" className="flex items-center justify-center p-3 bg-[#37724e] text-white border-none rounded-xl cursor-pointer shrink-0 transition-colors duration-200 hover:bg-[#2f5e40]" onClick={addVariant}>
-                <Plus size={16} />
-              </button>
-            </div>
-          </div>
 
           {/* Addons */}
           <div className="flex flex-col gap-2">
