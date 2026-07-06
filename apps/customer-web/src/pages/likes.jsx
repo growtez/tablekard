@@ -5,6 +5,7 @@ import BottomNav from '../components/BottomNav';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { getFavorites, removeFavoriteFromDB } from '../services/supabaseService';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import ItemModal from '../components/ItemModal';
 import './likes.css';
 
@@ -17,6 +18,8 @@ const LikesPage = () => {
     const [loading, setLoading] = useState(true);
     const [selectedItem, setSelectedItem] = useState(null);
     const [showItemModal, setShowItemModal] = useState(false);
+
+    const { visibleItems, loaderRef, hasMore } = useInfiniteScroll(favorites, 10);
 
     useEffect(() => {
         if (showItemModal) {
@@ -148,7 +151,7 @@ const LikesPage = () => {
                     </div>
                 ) : (
                     <div className="likes-page-grid">
-                        {favorites.map(item => (
+                        {visibleItems.map(item => (
                             <div key={item.id} className="likes-page-card" onClick={() => handleItemClick(item)}>
                                 {/* Remove Button */}
                                 <button
@@ -215,6 +218,10 @@ const LikesPage = () => {
                                 </div>
                             </div>
                         ))}
+                        {/* Progressive Rendering Loader */}
+                        <div ref={loaderRef} style={{ height: '20px', display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
+                            {hasMore && <Loader2 className="likes-spinner animate-spin" size={20} color="#888" />}
+                        </div>
                     </div>
                 )}
             </div>

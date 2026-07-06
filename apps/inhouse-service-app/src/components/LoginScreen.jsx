@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import Lottie from 'lottie-react';
+import chefAnimation from '../assets/chef.json';
 
 export default function LoginScreen() {
   const { signIn, authError } = useAuth();
@@ -30,6 +32,9 @@ export default function LoginScreen() {
   return (
     <div className="login-screen">
       <div className="login-card">
+        <div style={{ width: 140, height: 140, margin: '0 auto 12px auto' }}>
+          <Lottie animationData={chefAnimation} loop={false} />
+        </div>
         <div className="login-logo">TABLEKARD</div>
         <p className="login-subtitle">Kitchen &amp; Service Display</p>
 

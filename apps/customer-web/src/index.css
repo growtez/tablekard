@@ -59,7 +59,7 @@ html, body {
   padding: 0;
   width: 100%;
   max-width: 100vw;
-  overflow-x: hidden;
+  overflow-x: clip;
   position: relative;
   font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
@@ -240,7 +240,7 @@ button {
     min-height: 100vh;
     background-color: var(--color-background);
     position: relative;
-    overflow-x: hidden;
+    overflow-x: clip;
   }
   
   /* Apply centering to all known fixed full-width overlays */
@@ -259,4 +259,18 @@ button {
     margin: 0 auto !important;
     max-width: 480px !important;
   }
+}
+
+/* Global scroll offset when floating button is active */
+body.has-floating-btn .App {
+    padding-bottom: 100px !important; /* ensures the last card doesn't collide with the button */
+}
+
+/* Sticky top navigation bar for all pages */
+.menu-header-nav {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background-color: var(--color-background, #FFFFFF);
+    /* Optional: add a subtle shadow when scrolling if desired, but keeping it simple for now */
 }

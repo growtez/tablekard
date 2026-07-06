@@ -8,6 +8,7 @@ import {
   cancelOrder,
   updateOrderItemStatus,
 } from '../lib/supabaseService';
+import { enqueueMutation, safeProcessQueue } from '../lib/offlineQueue';
 
 // Orders in the queue have status 'pending' or 'confirmed';
 // orders being prepared have status 'preparing'.
@@ -31,12 +32,24 @@ export function useOrders() {
 
     try {
       setError(null);
+      
+      // If we're offline, don't attempt to fetch, just keep the current state
+      if (!navigator.onLine) {
+        setLoading(false);
+        return;
+      }
+
       const orders = await fetchOrdersByStatus(WATCHED_STATUSES, activeRestaurantId);
 
       setPreparingOrders(orders.filter((o) => o.status === 'preparing'));
       setQueueOrders(orders.filter((o) => o.status === 'pending' || o.status === 'confirmed'));
+      
+      // Attempt to process queue in case we just came back online
+      safeProcessQueue();
     } catch (err) {
-      setError(err.message ?? 'Failed to fetch orders');
+      if (navigator.onLine) {
+        setError(err.message ?? 'Failed to fetch orders');
+      }
     } finally {
       setLoading(false);
     }
@@ -83,12 +96,21 @@ export function useOrders() {
   /** Move a 'confirmed' order → 'preparing' */
   const handlePromote = useCallback(
     async (orderId) => {
+      // Optimistic Update
+      const { user } = await supabase.auth.getSession().then(({ data }) => data.session || {});
+      
+      setQueueOrders(prev => prev.filter(o => o.id !== orderId));
+      
       try {
-        const { user } = await supabase.auth.getSession().then(({ data }) => data.session || {});
         await promoteToProcessing(orderId, user?.id);
         await loadOrders();
       } catch (err) {
-        console.error('Promote failed:', err);
+        if (!navigator.onLine || err.message?.includes('fetch')) {
+          enqueueMutation('promoteToProcessing', { orderId, userId: user?.id });
+        } else {
+          console.error('Promote failed:', err);
+          await loadOrders(); // revert
+        }
       }
     },
     [loadOrders]
@@ -97,11 +119,19 @@ export function useOrders() {
   /** Mark a 'preparing' order as 'ready' */
   const handleMarkReady = useCallback(
     async (orderId) => {
+      // Optimistic Update
+      setPreparingOrders(prev => prev.filter(o => o.id !== orderId));
+      
       try {
         await markAsReady(orderId);
         await loadOrders();
       } catch (err) {
-        console.error('Mark ready failed:', err);
+        if (!navigator.onLine || err.message?.includes('fetch')) {
+          enqueueMutation('markAsReady', { orderId });
+        } else {
+          console.error('Mark ready failed:', err);
+          await loadOrders(); // revert
+        }
       }
     },
     [loadOrders]
@@ -110,11 +140,20 @@ export function useOrders() {
   /** Cancel an order */
   const handleCancel = useCallback(
     async (orderId) => {
+      // Optimistic Update
+      setQueueOrders(prev => prev.filter(o => o.id !== orderId));
+      setPreparingOrders(prev => prev.filter(o => o.id !== orderId));
+      
       try {
         await cancelOrder(orderId);
         await loadOrders();
       } catch (err) {
-        console.error('Cancel failed:', err);
+        if (!navigator.onLine || err.message?.includes('fetch')) {
+          enqueueMutation('cancelOrder', { orderId });
+        } else {
+          console.error('Cancel failed:', err);
+          await loadOrders(); // revert
+        }
       }
     },
     [loadOrders]
@@ -123,12 +162,34 @@ export function useOrders() {
   /** Update an item's status */
   const handleUpdateItemStatus = useCallback(
     async (itemId, newStatus) => {
+      const { user } = await supabase.auth.getSession().then(({ data }) => data.session || {});
+      
+      // Optimistic Update
+      const updateItems = (orders) => orders.map(order => {
+        if (!order.order_items) return order;
+        return {
+          ...order,
+          order_items: order.order_items.map(item => 
+            item.id === itemId 
+              ? { ...item, status: newStatus, prepared_by: newStatus === 'preparing' ? user?.id : item.prepared_by } 
+              : item
+          )
+        };
+      });
+      
+      setPreparingOrders(prev => updateItems(prev));
+      setQueueOrders(prev => updateItems(prev));
+
       try {
-        const { user } = await supabase.auth.getSession().then(({ data }) => data.session || {});
         await updateOrderItemStatus(itemId, newStatus, user?.id);
         await loadOrders();
       } catch (err) {
-        console.error('Update item status failed:', err);
+        if (!navigator.onLine || err.message?.includes('fetch')) {
+          enqueueMutation('updateOrderItemStatus', { itemId, newStatus, userId: user?.id });
+        } else {
+          console.error('Update item status failed:', err);
+          await loadOrders(); // revert
+        }
       }
     },
     [loadOrders]

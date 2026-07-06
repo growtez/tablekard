@@ -5,8 +5,10 @@ import BottomNav from '../components/BottomNav';
 import ItemModal from '../components/ItemModal';
 import { useRestaurant } from '../context/RestaurantContext';
 import { getOffersForCustomer } from '../services/supabaseService';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import PageSkeleton from '../components/PageSkeleton';
 import { supabase } from '@restaurant-saas/supabase';
+import { Loader2 } from 'lucide-react';
 import './discounts.css';
 
 const DiscountsPage = () => {
@@ -139,6 +141,8 @@ const DiscountsPage = () => {
         setSelectedItem(null);
     };
 
+    const { visibleItems, loaderRef, hasMore } = useInfiniteScroll(discountItems, 10);
+
     return (
         <div className="discounts-page-container">
             <div className="discounts-hero">
@@ -157,7 +161,7 @@ const DiscountsPage = () => {
                     <PageSkeleton />
                 ) : (
                     <div className="menu-items">
-                        {discountItems.map(item => (
+                        {visibleItems.map(item => (
                             <div key={item.id} className="menu-item" onClick={() => handleItemClick(item)}>
                             <div className="menu-image-container">
                                 <div className="image-scroll-wrapper">
@@ -240,6 +244,10 @@ const DiscountsPage = () => {
                             </div>
                         </div>
                     ))}
+                    {/* Progressive Rendering Loader */}
+                    <div ref={loaderRef} style={{ height: '20px', display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
+                        {hasMore && <Loader2 className="discounts-spinner animate-spin" size={20} color="#888" />}
+                    </div>
                 </div>
                 )}
             </div>

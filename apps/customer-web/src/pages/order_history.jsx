@@ -28,6 +28,7 @@ import BottomNav from '../components/BottomNav';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { getOrderHistory, getMenuItems } from '../services/supabaseService';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { jsPDF } from 'jspdf';
 import './order_history.css';
 
@@ -398,8 +399,10 @@ const OrderHistoryPage = () => {
         ? orders
         : orders.filter(o => o.status === activeFilter);
 
+    const { visibleItems, loaderRef, hasMore } = useInfiniteScroll(filtered, 10);
+
     /* ── Date groups ─────────────────────────────────────────────── */
-    const groupedOrders = filtered.reduce((acc, order) => {
+    const groupedOrders = visibleItems.reduce((acc, order) => {
         const lbl = groupLabel(order.rawDate);
         if (!acc[lbl]) acc[lbl] = [];
         acc[lbl].push(order);
@@ -640,6 +643,11 @@ const OrderHistoryPage = () => {
                                 ))}
                             </React.Fragment>
                         ))}
+                        
+                        {/* Progressive Rendering Loader */}
+                        <div ref={loaderRef} style={{ height: '20px', display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
+                            {hasMore && <Loader2 className="oh-spinner" size={20} color="#888" />}
+                        </div>
                     </div>
                 )}
             </div>

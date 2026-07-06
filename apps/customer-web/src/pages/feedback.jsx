@@ -3,6 +3,7 @@ import { ArrowLeft, Star, Send, ThumbsUp, Edit3, Calendar, ShoppingBag, ChevronR
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getOrderHistory, submitFeedback } from '../services/supabaseService';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { supabase } from '@restaurant-saas/supabase';
 import './feedback.css';
 
@@ -22,6 +23,8 @@ const FeedbackPage = () => {
     const [feedback, setFeedback] = useState('');
     const [submitted, setSubmitted] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const { visibleItems, loaderRef, hasMore } = useInfiniteScroll(orders, 10);
 
     // 1. Fetch Real Orders
     const fetchOrders = async () => {
@@ -163,6 +166,7 @@ const FeedbackPage = () => {
     }
 
     // View: List of all orders to review
+
     if (!selectedOrderId) {
         return (
             <div className="feedback-page-container">
@@ -181,7 +185,7 @@ const FeedbackPage = () => {
                         </div>
                     ) : (
                         <div className="feedback-order-list">
-                            {orders.map(order => (
+                            {visibleItems.map(order => (
                                 <div
                                     key={order.id}
                                     className={`feedback-order-card ${order.rating ? 'reviewed' : ''}`}
@@ -213,6 +217,10 @@ const FeedbackPage = () => {
                                     </div>
                                 </div>
                             ))}
+                            {/* Progressive Rendering Loader */}
+                            <div ref={loaderRef} style={{ height: '20px', display: 'flex', justifyContent: 'center', marginTop: '10px', marginBottom: '20px' }}>
+                                {hasMore && <Loader2 className="spin-animation" size={20} color="#888" />}
+                            </div>
                         </div>
                     )}
                 </div>

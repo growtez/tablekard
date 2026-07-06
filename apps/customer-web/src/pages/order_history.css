@@ -10,7 +10,7 @@
     background: #FDFBFA;
     font-family: 'Outfit', sans-serif;
     padding-bottom: 100px;
-    overflow-x: hidden;
+    overflow-x: clip;
 }
 
 /* ── HERO HEADER ─────────────────────────────────────────── */
