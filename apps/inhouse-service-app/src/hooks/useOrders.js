@@ -84,7 +84,8 @@ export function useOrders() {
   const handlePromote = useCallback(
     async (orderId) => {
       try {
-        await promoteToProcessing(orderId);
+        const { user } = await supabase.auth.getSession().then(({ data }) => data.session || {});
+        await promoteToProcessing(orderId, user?.id);
         await loadOrders();
       } catch (err) {
         console.error('Promote failed:', err);
