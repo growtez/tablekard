@@ -107,8 +107,18 @@ export async function cancelOrder(orderId) {
 /**
  * Promotes a queued order to 'preparing'.
  */
-export async function promoteToProcessing(orderId) {
-  return updateOrderStatus(orderId, 'preparing');
+export async function promoteToProcessing(orderId, userId = null) {
+  const data = await updateOrderStatus(orderId, 'preparing');
+  
+  if (userId) {
+    await supabase
+      .from('order_items')
+      .update({ status: 'preparing', prepared_by: userId })
+      .eq('order_id', orderId)
+      .neq('status', 'ready');
+  }
+  
+  return data;
 }
 
 /**
