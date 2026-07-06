@@ -4,6 +4,9 @@ import { supabase } from '@restaurant-saas/supabase';
 import { useOrders } from './hooks/useOrders';
 import { useAuth } from './context/AuthContext';
 import LoginScreen from './components/LoginScreen';
+import Lottie from 'lottie-react';
+import chefAnimation from './assets/chef.json';
+import { initOfflineSync } from './lib/offlineQueue';
 
 /* ──────────────────────── helpers ──────────────────────── */
 
@@ -335,7 +338,12 @@ const OrderCard = ({
 /* ──────────────── Empty-state component ───────────────── */
 
 const EmptyState = ({ message }) => (
-  <div className="empty-state">{message}</div>
+  <div className="empty-state">
+    <div style={{ width: 160, height: 160, margin: '0 auto 16px auto' }}>
+      <Lottie animationData={chefAnimation} loop={true} />
+    </div>
+    {message}
+  </div>
 );
 
 /* ──────────── Deny confirmation dialog ────────────────── */
@@ -395,6 +403,7 @@ function OrdersView({ onSignOut }) {
   const { activeRestaurantId, user } = useAuth();
   const [restaurantName, setRestaurantName] = useState('TABLEKARD');
   const [denyTarget, setDenyTarget] = useState(null); // { id, orderNumber }
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
   // Track which queue cards are expanded by order ID — stable across realtime refetches
   const [expandedIds, setExpandedIds] = useState(() => new Set());
 
@@ -405,6 +414,21 @@ function OrdersView({ onSignOut }) {
       else next.add(orderId);
       return next;
     });
+
+  useEffect(() => {
+    initOfflineSync();
+    
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     if (!activeRestaurantId) return;
@@ -462,6 +486,12 @@ function OrdersView({ onSignOut }) {
           </div>
         </div>
       </header>
+
+      {isOffline && (
+        <div style={{ backgroundColor: '#f59e0b', color: '#fff', textAlign: 'center', padding: '6px', fontSize: '13px', fontWeight: 'bold' }}>
+          You are currently offline. Changes are saved locally and will sync when reconnected.
+        </div>
+      )}
 
       {error && (
         <div className="error-banner">

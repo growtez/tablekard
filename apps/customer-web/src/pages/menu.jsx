@@ -6,6 +6,7 @@ import { useRestaurant } from '../context/RestaurantContext';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '@restaurant-saas/supabase';
 import { getFavorites, addFavorite, removeFavoriteFromDB } from '../services/supabaseService';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { Scanner } from '@yudiel/react-qr-scanner';
 import './menu.css';
 import Hamburger from '../components/hamburger';
@@ -63,10 +64,11 @@ const MenuPage = () => {
         ]);
 
         if (catsRes.data && itemsRes.data) {
-          const catNames = catsRes.data.map(c => c.name);
+          const filteredCats = catsRes.data.filter(c => !c.name.toLowerCase().includes('beverage'));
+          const catNames = filteredCats.map(c => c.name);
           const grouped = {};
 
-          catsRes.data.forEach(cat => {
+          filteredCats.forEach(cat => {
             grouped[cat.name] = itemsRes.data
               .filter(item => item.category_id === cat.id)
               .map(item => {
@@ -266,6 +268,8 @@ const MenuPage = () => {
     return (nameMatch || descMatch) && vegMatch;
   });
 
+  const { visibleItems, loaderRef, hasMore } = useInfiniteScroll(filteredItems, 10);
+
   return (
     <div className={`menu-container${cartTotal > 0 ? ' has-cart' : ''}`}>
       {/* No Restaurant Context – fallback for direct /menu access */}
@@ -456,7 +460,7 @@ const MenuPage = () => {
         </div>
       ) : (
         <div className="menu-items" style={cartTotal > 0 ? { paddingBottom: '100px' } : {}}>
-          {filteredItems.map(item => {
+          {visibleItems.map(item => {
             const isOutOfStock = item.isAvailable === false;
             return (
               <div
@@ -586,6 +590,10 @@ const MenuPage = () => {
               </div>
             );
           })}
+          {/* Progressive Rendering Loader */}
+          <div ref={loaderRef} style={{ height: '20px', display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
+            {hasMore && <Loader2 className="menu-spinner" size={20} color="#888" />}
+          </div>
         </div>
       )}
 

@@ -5,7 +5,9 @@ import { useAuth } from '../context/AuthContext';
 import { useRestaurant } from '../context/RestaurantContext';
 import { useCart } from '../context/CartContext';
 import { getMenuItems, getFavorites, addFavorite, removeFavoriteFromDB } from '../services/supabaseService';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import ItemModal from '../components/ItemModal';
+import { Loader2 } from 'lucide-react';
 import './search.css';
 
 
@@ -140,6 +142,8 @@ const SearchPage = () => {
             console.error('Failed to toggle favorite:', err);
         }
     };
+
+    const { visibleItems, loaderRef, hasMore } = useInfiniteScroll(results, 10);
 
     return (
         <div className="search-page-container">
@@ -300,7 +304,7 @@ const SearchPage = () => {
                             <span className="sr-count-num">{results.length}</span> result{results.length > 1 ? 's' : ''} for <span className="sr-count-q">"{searchTerm}"</span>
                         </p>
                         <div className="sr-list">
-                            {results.map((item, idx) => (
+                            {visibleItems.map((item, idx) => (
                                 <div
                                     key={item.id}
                                     className="sr-card"
@@ -350,6 +354,10 @@ const SearchPage = () => {
                                     </div>
                                 </div>
                             ))}
+                            {/* Progressive Rendering Loader */}
+                            <div ref={loaderRef} style={{ height: '20px', display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
+                                {hasMore && <Loader2 className="search-spinner" size={20} color="#888" />}
+                            </div>
                         </div>
                     </div>
 

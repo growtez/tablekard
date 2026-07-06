@@ -22,12 +22,19 @@ export const showHomeLoader = () => {
     
     loader.dataset.refCount = (parseInt(loader.dataset.refCount || '0') + 1).toString();
     loader.style.display = 'flex';
+    
+    // Failsafe: Force hide after 8 seconds in case of network hangs
+    if (window.__homeLoaderFailsafe) clearTimeout(window.__homeLoaderFailsafe);
+    window.__homeLoaderFailsafe = setTimeout(() => {
+        hideHomeLoader();
+    }, 8000);
 };
 
 export const hideHomeLoader = () => {
     const loader = document.getElementById('global-home-loader');
     if (loader) {
         loader.dataset.refCount = '0';
+        if (window.__homeLoaderFailsafe) clearTimeout(window.__homeLoaderFailsafe);
         window.__homeLoaderTimeout = setTimeout(() => {
             loader.style.display = 'none';
         }, 50);

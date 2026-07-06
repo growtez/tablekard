@@ -1,17 +1,17 @@
 .floating-queue-btn {
     position: fixed;
-    bottom: 90px; /* Above BottomNav */
+    bottom: 100px; /* higher up from the bottom bar */
     right: 20px;
     width: 60px;
     height: 60px;
-    background-color: var(--color-primary, #8B3A1E);
-    color: #fff;
+    background-color: var(--color-card-elevated, #FFEDE5); /* light burgundy shade */
+    color: var(--color-primary, #8B3A1E); /* burgundy icon */
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-    border: none;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    border: 2px solid var(--color-primary, #8B3A1E); /* burgundy border */
     cursor: pointer;
     z-index: 999;
     transition: transform 0.2s ease, background-color 0.2s ease;
@@ -22,7 +22,7 @@
 }
 
 .floating-queue-btn:hover {
-    background-color: var(--color-primary-dark, #6F2D17);
+    background-color: var(--color-secondary, #FFD6C9);
 }
 
 .pulse-indicator {

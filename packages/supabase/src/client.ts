@@ -26,8 +26,8 @@ function getOrCreateClient(): SupabaseClient<Database> {
                 persistSession: true,
                 autoRefreshToken: true,
                 detectSessionInUrl: true,
-                // Use a unique storage key per app to avoid cross-tab conflicts
-                storageKey: 'tablekard-admin-auth',
+                // Use a unique storage key per app/host to avoid cross-tab conflicts
+                storageKey: 'tablekard-auth-' + (typeof window !== 'undefined' ? window.location.host : 'default'),
                 // Avoid navigator.locks deadlock on tab focus / HMR
                 lock: async (_name: string, _acquireTimeout: number, fn: () => Promise<any>) => {
                     return await fn();

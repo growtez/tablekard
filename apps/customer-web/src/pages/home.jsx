@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Heart, Home, User, ShoppingBag, Grid, ShoppingCart, Clock, Star, MessageSquare, Plus, Minus, X, ArrowRight, Users, Timer, View } from 'lucide-react';
+import { Search, Heart, Home, User, ShoppingBag, Grid, ShoppingCart, Clock, Star, MessageSquare, Plus, Minus, X, ArrowRight, Users, Timer, View, ChevronRight } from 'lucide-react';
 import { NavLink, useNavigate } from "react-router-dom";
 import './home.css';
 import Hamburger from '../components/hamburger';
@@ -141,7 +141,7 @@ const HomePage = () => {
             } finally {
                 setLoadingRecent(false);
                 setLoadingItems(false);
-                if (isFirstLoad) hideHomeLoader();
+                hideHomeLoader();
             }
         };
 
@@ -411,7 +411,7 @@ const HomePage = () => {
                         </h2>
                         <NavLink to="/discounts" className="view-all-link">
                             View all
-                            <span className="arrow-square">→</span>
+                            <span className="arrow-square"><ChevronRight size={14} /></span>
                         </NavLink>
                     </div>
                     <div className="discounts-container">
@@ -476,7 +476,7 @@ const HomePage = () => {
                     <h2 className="section-title">Recent Orders</h2>
                     <NavLink to="/order-history" className="view-all-link">
                         View all
-                        <span className="arrow-square">→</span>
+                        <span className="arrow-square"><ChevronRight size={14} /></span>
                     </NavLink>
                 </div>
                 <div className="recent-list">

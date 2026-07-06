@@ -11,8 +11,47 @@ import { useRestaurant } from "./context/RestaurantContext";
 import PageSkeleton from "./components/PageSkeleton";
 import FloatingQueueButton from "./components/FloatingQueueButton";
 import { showHomeLoader, hideHomeLoader } from "./utils/loader";
+import HomePage from "./pages/home";
 
 import "./App.css";
+
+// ─── Offline Banner ────────────────────────────────────────────────────────────
+function OfflineBanner() {
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  if (!isOffline) return null;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: '#f59e0b',
+      color: '#fff',
+      textAlign: 'center',
+      padding: '8px',
+      fontSize: '13px',
+      fontWeight: 'bold',
+      zIndex: 99999
+    }}>
+      You are currently offline. Some features may not work.
+    </div>
+  );
+}
 
 // ─── Scroll-to-top on every route change ─────────────────────────────────────
 // React Router does not reset scroll position on navigation.
@@ -31,7 +70,6 @@ function ScrollToTop() {
 
 // ─── Lazy pages ───────────────────────────────────────────────────────────────
 
-const HomePage        = lazy(() => import("./pages/home"));
 const MenuPage        = lazy(() => import("./pages/menu"));
 const MyOrdersPage    = lazy(() => import("./pages/my_order"));
 const ProfilePage     = lazy(() => import("./pages/profile"));
@@ -230,6 +268,7 @@ function App() {
       <CartProvider>
         <ThemeProvider>
           <ScrollToTop />
+          <OfflineBanner />
           <MobileOnlyWrapper>
             <div className="App">
               <AppRoutes />

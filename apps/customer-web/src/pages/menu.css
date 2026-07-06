@@ -10,7 +10,7 @@ body {
   font-family: 'Poppins', sans-serif;
   background-color: #FFFFFF;
   color: #1A1A1A;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 @keyframes spin {

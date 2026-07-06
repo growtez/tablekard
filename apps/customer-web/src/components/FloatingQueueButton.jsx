@@ -20,26 +20,16 @@ const FloatingQueueButton = () => {
         }
 
         const checkActiveOrders = async () => {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
             const { data, error } = await supabase
                 .from('orders')
                 .select('id, status')
                 .eq('restaurant_id', restaurantId)
                 .eq('customer_id', user.id)
-                .gte('created_at', today.toISOString())
-                .neq('status', 'cancelled')
-                .neq('status', 'completed')
-                .neq('status', 'served')
-                .neq('status', 'SERVED');
+                .in('status', ['pending', 'confirmed', 'preparing'])
+                .limit(1);
 
             if (!error && data && data.length > 0) {
-                // Only show if there are truly active (not-yet-ready) orders
-                const hasNonReadyOrders = data.some(o =>
-                    o.status !== 'ready' && o.status !== 'READY'
-                );
-                setHasActiveOrder(hasNonReadyOrders);
+                setHasActiveOrder(true);
             } else {
                 setHasActiveOrder(false);
             }
@@ -64,6 +54,16 @@ const FloatingQueueButton = () => {
             supabase.removeChannel(subscription);
         };
     }, [user?.id, restaurantId]);
+
+    // Add extra padding to the body when the button is visible so we can scroll past it
+    useEffect(() => {
+        if (hasActiveOrder && location.pathname !== '/live-queue') {
+            document.body.classList.add('has-floating-btn');
+        } else {
+            document.body.classList.remove('has-floating-btn');
+        }
+        return () => document.body.classList.remove('has-floating-btn');
+    }, [hasActiveOrder, location.pathname]);
 
     // Don't show the button if we are already on the live-queue page
     if (!hasActiveOrder || location.pathname === '/live-queue') {
