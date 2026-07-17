@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Welcome to our restaurant. View our gourmet menu, contact details, and policies.">
+  <title>Home | Restaurant Partner Portal</title>
+  <!-- Google Fonts: Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <!-- Navigation Header -->
+  <header class="site-header">
+    <div class="nav-container">
+      <div class="logo">
+        <span class="logo-accent" id="nav-restaurant-logo">Restaurant</span>
+      </div>
+      <nav class="main-nav">
+        <a href="#hero">Home</a>
+        <a href="#about">About</a>
+        <a href="#menu">Menu</a>
+        <a href="#contact">Contact</a>
+        <a href="/terms.html" class="nav-btn">Terms & Policies</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section id="hero" class="hero-section">
+    <div class="hero-card">
+      <span class="badge">Gourmet Dining</span>
+      <h1 id="hero-restaurant-name">TableKard Partner</h1>
+      <p class="hero-subtitle">Experience fresh culinary delights prepared daily by our master chefs. Order directly via our smart digital menu.</p>
+      <div class="hero-actions">
+        <a href="#menu" class="btn btn-primary">View Today's Menu</a>
+        <a href="#contact" class="btn btn-secondary">Find Us</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- About Section -->
+  <section id="about" class="about-section">
+    <div class="section-container">
+      <div class="section-header">
+        <h2>Our Story</h2>
+        <div class="header-line"></div>
+      </div>
+      <p class="about-text">We believe in serving delicious, high-quality food crafted from locally sourced ingredients. Whether you are dropping in for a quick lunch, a family dinner, or takeaway, our kitchen promises an unforgettable dining experience characterized by exceptional taste, warm hospitality, and digital convenience.</p>
+    </div>
+  </section>
+
+  <!-- Menu Section (Crucial for Razorpay verification to prove items & prices) -->
+  <section id="menu" class="menu-section">
+    <div class="section-container">
+      <div class="section-header">
+        <h2>Popular Dishes</h2>
+        <div class="header-line"></div>
+      </div>
+      
+      <div class="menu-grid">
+        <div class="menu-item-card">
+          <div class="menu-item-details">
+            <h3>Classic Margherita Pizza</h3>
+            <p>Fresh mozzarella, basil leaves, extra virgin olive oil, and house marinara sauce.</p>
+          </div>
+          <span class="menu-item-price">₹349</span>
+        </div>
+
+        <div class="menu-item-card">
+          <div class="menu-item-details">
+            <h3>Gourmet Cheese Burger</h3>
+            <p>Flame-grilled patty, cheddar cheese, crisp lettuce, tomato, pickles, and signature sauce.</p>
+          </div>
+          <span class="menu-item-price">₹289</span>
+        </div>
+
+        <div class="menu-item-card">
+          <div class="menu-item-details">
+            <h3>Pesto Penne Pasta</h3>
+            <p>Creamy basil pesto sauce, cherry tomatoes, toasted pine nuts, and parmesan cheese.</p>
+          </div>
+          <span class="menu-item-price">₹319</span>
+        </div>
+
+        <div class="menu-item-card">
+          <div class="menu-item-details">
+            <h3>Crispy Chicken Wings</h3>
+            <p>Tossed in your choice of spicy buffalo sauce, tangy BBQ, or honey garlic sauce.</p>
+          </div>
+          <span class="menu-item-price">₹249</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact Section (Crucial for Razorpay KYC) -->
+  <section id="contact" class="contact-section">
+    <div class="section-container">
+      <div class="contact-card">
+        <div class="section-header">
+          <h2>Contact Us</h2>
+          <div class="header-line"></div>
+        </div>
+        
+        <div class="contact-details-grid">
+          <div class="contact-detail-item">
+            <span class="icon">📍</span>
+            <div>
+              <h4>Address</h4>
+              <p id="contact-address">123 Food Street, Culinary Zone, Bangalore, KA, 560001</p>
+            </div>
+          </div>
+
+          <div class="contact-detail-item">
+            <span class="icon">✉️</span>
+            <div>
+              <h4>Email</h4>
+              <p id="contact-email">contact@partner-restaurant.com</p>
+            </div>
+          </div>
+
+          <div class="contact-detail-item">
+            <span class="icon">📞</span>
+            <div>
+              <h4>Phone</h4>
+              <p id="contact-phone">+91 98765 43210</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-container">
+      <p>&copy; <span id="footer-year">2026</span> <span id="footer-restaurant-name">Restaurant</span>. All rights reserved.</p>
+      <div class="footer-links">
+        <a href="#hero">Home</a>
+        <a href="#menu">Menu</a>
+        <a href="/terms.html">Terms & Conditions</a>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

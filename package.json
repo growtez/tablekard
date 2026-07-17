@@ -8,7 +8,9 @@
         "apps/super-admin",
         "apps/restaurant-admin",
         "apps/customer-web",
-        "apps/inhouse-service-app"
+        "apps/inhouse-service-app",
+        "apps/restaurant-onboarding",
+        "apps/restaurant-website-template"
     ],
     "scripts": {
         "dev:super-admin": "npm run dev -w @restaurant-saas/super-admin",
@@ -16,6 +18,8 @@
         "dev:customer-web": "npm run dev -w @restaurant-saas/customer-web",
         "dev:customer-web-1": "npm run dev -w @restaurant-saas/customer-web-1",
         "dev:inhouse-service-app": "npm run dev -w @restaurant-saas/inhouse-service-app",
+        "dev:restaurant-onboarding": "npm run dev -w @restaurant-saas/restaurant-onboarding",
+        "dev:restaurant-website": "npm run dev -w @restaurant-saas/restaurant-website-template",
         "build:all": "npm run build --workspaces --if-present",
         "lint:all": "npm run lint --workspaces --if-present"
     },
