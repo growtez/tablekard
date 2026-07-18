@@ -14,6 +14,7 @@ import Transactions from './pages/billing/Transactions'
 import TransactionDetail from './pages/billing/TransactionDetail'
 import Plans from './pages/billing/Plans'
 import LandingLeads from './pages/LandingLeads'
+import Notifications from './pages/Notifications'
 // import Complaints from './pages/support/Complaints'
 // import Reviews from './pages/support/Reviews'
 // import Announcements from './pages/support/Announcements'
@@ -432,6 +433,7 @@ export default function App() {
               <Route path="/users" element={<AdminPanel activeForm={activeForm} setActiveForm={setActiveForm} openDrawer={openDrawer} setSyncAction={setSyncAction} />} />
               <Route path="/users/:id" element={<UserDetail setHeaderData={setHeaderData} setSyncAction={setSyncAction} />} />
               <Route path="/leads" element={<LandingLeads />} />
+              <Route path="/notifications" element={<Notifications />} />
               {/* Billing */}
               <Route path="/subscriptions" element={<Subscriptions setSyncAction={setSyncAction} />} />
               <Route path="/subscriptions/:id" element={<SubscriptionDetail setHeaderData={setHeaderData} />} />

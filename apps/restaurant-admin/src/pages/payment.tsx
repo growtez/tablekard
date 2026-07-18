@@ -16,7 +16,7 @@ const Payment: React.FC = () => {
   const [selectedPaymentStatus, setSelectedPaymentStatus] = useState<string>('all');
   const [customDate, setCustomDate] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('grid');
   const [weekOffset, setWeekOffset] = useState<number>(0);
   const [monthOffset, setMonthOffset] = useState<number>(0);
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'amount_high' | 'amount_low'>('newest');
@@ -274,7 +274,7 @@ const Payment: React.FC = () => {
         </div>
 
         {/* Tabs & Controls - Exactly matching Order Page */}
-        <div className="sticky top-0 z-50 py-2 bg-tk-bg-card shadow-sm border-b border-tk-border flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
+        <div className="sticky top-2 z-50 py-2.5 px-4 bg-[var(--tk-info-bar-bg)] backdrop-blur-md shadow-[var(--tk-info-bar-shadow)] border border-[var(--tk-info-bar-border)] rounded-2xl flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6 transition-all mx-1">
           <div className="flex flex-row items-center gap-3 w-full lg:w-auto flex-1 pb-1 overflow-x-auto hide-scrollbar flex-nowrap">
             {/* Date Filter */}
             <div className="flex items-center gap-2 bg-tk-bg-surface px-3 py-1.5 rounded-full border border-tk-border shadow-sm shrink-0">
@@ -380,17 +380,17 @@ const Payment: React.FC = () => {
 
           <div className="flex flex-row items-center gap-2 sm:gap-3 pb-2 w-full lg:w-auto lg:ml-4">
             {/* 1. Grid/Table Toggle */}
-            <div className="flex bg-tk-bg-surface border border-tk-border rounded-full p-0.5 shrink-0">
+            <div className="flex bg-tk-bg-surface border border-tk-border rounded-xl p-0.5 shrink-0">
               <button
                 onClick={() => setViewMode('table')}
-                className={`p-1.5 rounded-full transition-colors flex items-center justify-center ${viewMode === 'table' ? 'bg-tk-burgundy/10 text-tk-burgundy shadow-sm' : 'text-tk-text-secondary hover:text-tk-text'}`}
+                className={`p-1.5 rounded-xl transition-all duration-200 flex items-center justify-center ${viewMode === 'table' ? 'bg-tk-text text-tk-bg-surface shadow-sm' : 'text-tk-text-secondary hover:bg-tk-bg-hover hover:text-tk-text'}`}
                 title="Table View"
               >
                 <List size={16} />
               </button>
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-1.5 rounded-full transition-colors flex items-center justify-center ${viewMode === 'grid' ? 'bg-tk-burgundy/10 text-tk-burgundy shadow-sm' : 'text-tk-text-secondary hover:text-tk-text'}`}
+                className={`p-1.5 rounded-xl transition-all duration-200 flex items-center justify-center ${viewMode === 'grid' ? 'bg-tk-text text-tk-bg-surface shadow-sm' : 'text-tk-text-secondary hover:bg-tk-bg-hover hover:text-tk-text'}`}
                 title="Grid View"
               >
                 <LayoutGrid size={16} />

@@ -8,7 +8,7 @@ import './FloatingQueueButton.css';
 
 const FloatingQueueButton = () => {
     const { user } = useAuth();
-    const { restaurantId } = useRestaurant();
+    const { restaurantId, restaurant } = useRestaurant();
     const navigate = useNavigate();
     const location = useLocation();
     const [hasActiveOrder, setHasActiveOrder] = useState(false);
@@ -65,8 +65,8 @@ const FloatingQueueButton = () => {
         return () => document.body.classList.remove('has-floating-btn');
     }, [hasActiveOrder, location.pathname]);
 
-    // Don't show the button if we are already on the live-queue page
-    if (!hasActiveOrder || location.pathname === '/live-queue') {
+    // Don't show the button if we are already on the live-queue page or if kitchen app is disabled
+    if (!hasActiveOrder || location.pathname === '/live-queue' || restaurant?.kitchen_app_enabled === false) {
         return null;
     }
 

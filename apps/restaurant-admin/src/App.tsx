@@ -18,6 +18,7 @@ const TableManagement = lazy(() => import("./pages/table_management"));
 const ProfilePage = lazy(() => import("./pages/profile/profile"));
 const SubscriptionPage = lazy(() => import("./pages/subscription/subscription"));
 const Team = lazy(() => import("./pages/team"));
+const NotificationsPage = lazy(() => import("./pages/notifications"));
 
 // Loading fallback for Suspense
 const PageLoader = () => (
@@ -86,6 +87,9 @@ function AppRoutes() {
         } />
         <Route path="/subscription" element={
           <ProtectedRoute><SubscriptionPage /></ProtectedRoute>
+        } />
+        <Route path="/notifications" element={
+          <ProtectedRoute><NotificationsPage /></ProtectedRoute>
         } />
       </Routes>
     </Suspense>

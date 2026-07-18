@@ -47,6 +47,7 @@ interface RestaurantFormState {
   facebookUrl: string;
   websiteUrl: string;
   payOnline: boolean;
+  kitchenAppEnabled: boolean;
 }
 
 interface AdminFormState {
@@ -111,7 +112,7 @@ const isValidUrl = (value: string): boolean => {
 };
 
 const getInitials = (name?: string | null): string => {
-  if (!name) return "AD";
+  if (!name) return "";
   const parts = name.trim().split(/\s+/);
   if (parts.length >= 2) {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
@@ -164,6 +165,7 @@ const createRestaurantFormState = (
   facebookUrl: restaurant.facebookUrl ?? "",
   websiteUrl: restaurant.websiteUrl ?? "",
   payOnline: (restaurant as any).pay_online ?? true,
+  kitchenAppEnabled: (restaurant as any).kitchen_app_enabled ?? true,
 });
 
 const createAdminFormState = (
@@ -766,6 +768,7 @@ const ProfilePage: React.FC = () => {
           facebookUrl: emptyToNull(restaurantForm.facebookUrl),
           websiteUrl: emptyToNull(restaurantForm.websiteUrl),
           pay_online: restaurantForm.payOnline,
+          kitchen_app_enabled: restaurantForm.kitchenAppEnabled,
         },
       );
 
@@ -1325,9 +1328,57 @@ const ProfilePage: React.FC = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Enable Kitchen Web App Toggle */}
+                <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-xl">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <h4 className="font-semibold text-gray-900">Kitchen Web App / Live Queue</h4>
+                    <p className="text-sm text-gray-500">Enable or disable the kitchen display system and the live queue for customers.</p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={restaurantForm?.kitchenAppEnabled ?? false}
+                    onClick={() => handleRestaurantFieldChange("kitchenAppEnabled", (!restaurantForm?.kitchenAppEnabled) as any)}
+                    className="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--tk-burgundy,#8B3A1E)] focus:ring-offset-2"
+                    style={{
+                      backgroundColor: restaurantForm?.kitchenAppEnabled ? 'var(--tk-burgundy, #8B3A1E)' : '#CBD5E0',
+                    }}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                      style={{
+                        transform: restaurantForm?.kitchenAppEnabled ? 'translateX(20px)' : 'translateX(0)',
+                      }}
+                    />
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div
+                  className="col-span-1 sm:col-span-2"
+                  style={{
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    color: "#718096",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                    borderBottom: "1px solid #EDF2F7",
+                    paddingBottom: "8px",
+                    marginBottom: "8px",
+                  }}
+                >
+                  Features & Preferences
+                </div>
+                
+                <div className="flex flex-col gap-1.5 sm:col-span-2">
+                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Kitchen Web App / Live Queue</span>
+                  <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
+                    {(restaurant as any)?.kitchen_app_enabled === false ? "❌ Disabled" : "✅ Enabled"}
+                  </span>
+                </div>
                 <div
                   className="col-span-1 sm:col-span-2"
                   style={{
@@ -1913,7 +1964,8 @@ const ProfilePage: React.FC = () => {
                           activeRestaurantId,
                           {
                             pay_online: restaurantForm.payOnline,
-                          }
+                            kitchen_app_enabled: restaurantForm.kitchenAppEnabled,
+                          },
                         );
 
                         setRestaurant(updatedRestaurant);
@@ -2385,11 +2437,11 @@ const ProfilePage: React.FC = () => {
             }}
           >
             <button
-              className="w-11 h-11 rounded-full bg-white flex items-center justify-center cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-transform duration-200 hover:-translate-y-0.5 dark:bg-tk-bg-elevated dark:text-tk-text border-none outline-none transition-all duration-200 hover:bg-[#FFF5F5] hover:shadow-[0_4px_12px_rgba(229,62,62,0.15)] active:translate-y-0 dark:hover:bg-[rgba(229,62,62,0.1)]"
+              className="relative h-11 px-5 rounded-xl bg-white dark:bg-tk-bg-elevated text-[#E53E3E] border border-[#E53E3E]/20 flex items-center justify-center cursor-pointer shadow-sm overflow-hidden transition-all duration-300 z-10 before:absolute before:inset-0 before:w-full before:h-full before:bg-[#E53E3E] before:-z-10 before:-translate-x-full before:transition-transform before:duration-300 hover:before:translate-x-0 hover:text-white hover:shadow-[0_8px_16px_rgba(229,62,62,0.3)] hover:-translate-y-0.5 active:translate-y-0 font-bold font-['Outfit',sans-serif] text-[13px] tracking-wide"
               title="Sign Out"
               onClick={() => setShowLogoutConfirm(true)}
             >
-              <LogOut size={20} color="#E53E3E" />
+              Sign Out
             </button>
             {userProfile?.avatarUrl ? (
               <img
@@ -2404,11 +2456,7 @@ const ProfilePage: React.FC = () => {
                 }}
               />
             ) : null}
-            <div
-              className={`w-11 h-11 rounded-full bg-[linear-gradient(135deg,var(--tk-burgundy),#6B2A15)] text-white flex items-center justify-center text-[12px] font-bold tracking-[0.12em] font-['Outfit',sans-serif]  ${userProfile?.avatarUrl ? "hidden" : ""}`}
-            >
-              {getInitials(userProfile?.name)}
-            </div>
+
           </div>
         </div>
 
@@ -2475,7 +2523,7 @@ const ProfilePage: React.FC = () => {
                 Cancel
               </button>
               <button
-                className="inline-flex items-center justify-center gap-2 min-h-[40px] px-4 border-none rounded-xl font-['Outfit',sans-serif] text-[13px] font-semibold cursor-pointer transition-all duration-200 bg-[linear-gradient(135deg,var(--tk-burgundy),#6B2A15)] text-white shadow-[0_8px_18px_rgba(139,58,30,0.2)] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none logout-confirm-btn"
+                className="relative inline-flex items-center justify-center gap-2 min-h-[40px] px-6 border-none rounded-xl font-['Outfit',sans-serif] text-[13px] font-bold cursor-pointer overflow-hidden transition-all duration-300 z-10 bg-[#E53E3E] text-white shadow-[0_4px_12px_rgba(229,62,62,0.3)] hover:-translate-y-0.5 before:absolute before:inset-0 before:w-full before:h-full before:bg-[#C53030] before:-z-10 before:-translate-x-full before:transition-transform before:duration-300 hover:before:translate-x-0 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none logout-confirm-btn"
                 onClick={handleLogout}
               >
                 Sign Out

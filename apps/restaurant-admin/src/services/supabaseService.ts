@@ -100,6 +100,7 @@ export interface RestaurantProfileUpdateInput {
     websiteUrl?: string | null;
     slug?: string | null;
     pay_online?: boolean | null;
+    kitchen_app_enabled?: boolean | null;
 }
 
 export interface AdministratorProfileUpdateInput {
@@ -168,7 +169,8 @@ const mapRestaurantRow = (row: RestaurantRow): Restaurant => ({
     instagramUrl: row.instagram_url,
     facebookUrl: row.facebook_url,
     websiteUrl: row.website_url,
-    pay_online: (row as any).pay_online
+    pay_online: (row as any).pay_online,
+    kitchen_app_enabled: (row as any).kitchen_app_enabled
 } as unknown as Restaurant);
 
 const mapProfileRow = (row: ProfileRow): Profile => ({
@@ -230,6 +232,7 @@ export const updateRestaurantProfile = async (
     if (input.websiteUrl !== undefined) updatePayload.website_url = input.websiteUrl;
     if (input.slug !== undefined) updatePayload.slug = input.slug;
     if (input.pay_online !== undefined) updatePayload.pay_online = input.pay_online;
+    if (input.kitchen_app_enabled !== undefined) updatePayload.kitchen_app_enabled = input.kitchen_app_enabled;
 
     const { data, error } = await db
         .from('restaurants')
@@ -673,6 +676,25 @@ export const getOrders = async (restaurantId: string, limitCount: number = 50): 
     if (error) throw error;
     return ((data ?? []) as OrderRow[]).map(row => {
         const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
+        
+        let st = (row.status || '').toLowerCase();
+        const createdDate = new Date(row.created_at);
+        const hoursSinceCreation = (Date.now() - createdDate.getTime()) / (1000 * 60 * 60);
+        const isPaid = (row.payment_status || '').toLowerCase() === 'paid';
+        
+        if (hoursSinceCreation > 12 && st !== 'completed' && st !== 'served' && st !== 'cancelled') {
+            if (st === 'ready' && isPaid) {
+                // Treated as completed, do nothing
+            } else if (!isPaid) {
+                st = 'cancelled';
+                row.status = 'cancelled';
+                // Only auto-cancel unpaid abandoned orders
+                updateOrderStatus(row.id, 'cancelled' as OrderStatus).catch(err => 
+                    console.error('Failed to auto-cancel old order:', err)
+                );
+            }
+        }
+
         return {
             id: row.id,
             restaurantId: row.restaurant_id,
@@ -687,7 +709,7 @@ export const getOrders = async (restaurantId: string, limitCount: number = 50): 
             taxes: row.taxes,
             discount: row.discount,
             total: row.total,
-            status: row.status as OrderStatus,
+            status: st as OrderStatus,
             payment: {
                 method: row.payment_method as Order['payment']['method'],
                 status: row.payment_status as Order['payment']['status'],
@@ -754,7 +776,24 @@ export const getDashboardOrders = async (restaurantId: string): Promise<Dashboar
         const itemsStr = itemsList.map((item: any) => `${item.name} x${item.quantity}`).join(', ');
 
         let statusColor = 'yellow';
-        const st = (row.status || '').toLowerCase();
+        let st = (row.status || '').toLowerCase();
+        const isPaid = (row.payment_status || '').toLowerCase() === 'paid';
+        
+        const createdDate = new Date(row.created_at);
+        const hoursSinceCreation = (Date.now() - createdDate.getTime()) / (1000 * 60 * 60);
+        
+        if (hoursSinceCreation > 12 && st !== 'completed' && st !== 'served' && st !== 'cancelled') {
+            if (st === 'ready' && isPaid) {
+                // Treated as completed
+            } else if (!isPaid) {
+                st = 'cancelled';
+                row.status = 'cancelled';
+                updateOrderStatus(row.id, 'cancelled' as OrderStatus).catch(err => 
+                    console.error('Failed to auto-cancel old dashboard order:', err)
+                );
+            }
+        }
+
         if (st === 'preparing') statusColor = 'blue';
         else if (st === 'ready') statusColor = 'green';
         else if (st === 'served' || st === 'completed') statusColor = 'teal';
@@ -767,7 +806,7 @@ export const getDashboardOrders = async (restaurantId: string): Promise<Dashboar
             orderType: row.type || 'dine_in',
             table: table?.table_number ? `Table ${table.table_number}` : 'N/A',
             time: new Date(row.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-            status: (row.status || 'New').charAt(0).toUpperCase() + (row.status || 'New').slice(1),
+            status: st.charAt(0).toUpperCase() + st.slice(1),
             statusColor: statusColor,
             paymentMethod: row.payment_method || 'Cash',
             paymentStatus: (row.payment_status || 'pending').charAt(0).toUpperCase() + (row.payment_status || 'pending').slice(1),

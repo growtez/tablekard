@@ -5,7 +5,7 @@ import type { SubscriptionPaymentRecord } from '../../services/supabaseService';
 import { processSubscriptionPayment } from '../../services/subscriptionService';
 import type { Restaurant } from '@restaurant-saas/types';
 import { supabase } from '@restaurant-saas/supabase';
-import { CheckCircle2, Loader2, Calendar, X } from 'lucide-react';
+import { CheckCircle2, Loader2, Calendar, X, Store, PauseCircle, Timer, AlertTriangle, CheckCircle } from 'lucide-react';
 
 // ──────────────────────────────────────────────
 // Plan definitions (display only — pricing enforced server-side)
@@ -55,15 +55,15 @@ function daysUntil(dateStr: string | null | undefined): number {
 function getStatusInfo(restaurant: Restaurant | null): {
     label: string;
     status: 'active' | 'grace' | 'expired' | 'inactive';
-    icon: string;
+    icon: React.ReactNode;
     message: string;
 } {
     if (!restaurant) {
-        return { label: 'No Restaurant', status: 'inactive', icon: '🏪', message: 'No restaurant linked to this account.' };
+        return { label: 'No Restaurant', status: 'inactive', icon: <Store size={48} className="text-tk-text-secondary" />, message: 'No restaurant linked to this account.' };
     }
 
     if (!restaurant.subscriptionStatus) {
-        return { label: 'Inactive', status: 'inactive', icon: '⏸️', message: 'Your subscription is inactive. Choose a plan to get started.' };
+        return { label: 'Inactive', status: 'inactive', icon: <PauseCircle size={48} className="text-tk-text-secondary" />, message: 'Your subscription is inactive. Choose a plan to get started.' };
     }
 
     const now = new Date();
@@ -76,7 +76,7 @@ function getStatusInfo(restaurant: Restaurant | null): {
         return {
             label: 'Active',
             status: 'active',
-            icon: '✅',
+            icon: <CheckCircle size={48} className="text-tk-success" />,
             message: days <= 7
                 ? `Expires on ${formatDate(endAt)} — renew soon to avoid interruption.`
                 : `Active until ${formatDate(endAt)}.`,
@@ -89,12 +89,12 @@ function getStatusInfo(restaurant: Restaurant | null): {
         return {
             label: 'Grace Period',
             status: 'grace',
-            icon: '⏳',
+            icon: <Timer size={48} className="text-tk-error" />,
             message: `Your subscription has expired. You have ${graceDays} day${graceDays !== 1 ? 's' : ''} remaining before services are suspended. Renew now to avoid interruption!`,
         };
     }
 
-    return { label: 'Expired', status: 'expired', icon: '⚠️', message: 'Your subscription has expired. Renew to continue using all features.' };
+    return { label: 'Expired', status: 'expired', icon: <AlertTriangle size={48} className="text-tk-error" />, message: 'Your subscription has expired. Renew to continue using all features.' };
 }
 
 function planLabel(months: number): string {
@@ -203,7 +203,7 @@ const SubscriptionPage: React.FC = () => {
 
             setFeedback({
                 tone: 'success',
-                message: `🎉 Subscription activated! Active until ${formatDate(result.ends_at)}.`,
+                message: `Subscription activated! Active until ${formatDate(result.ends_at)}.`,
             });
 
             // Reload data to reflect changes
@@ -256,46 +256,41 @@ const SubscriptionPage: React.FC = () => {
                 </div>
             )}
 
-            {/* Modern Hero & Status Board */}
-            <div className="mb-12 relative overflow-hidden rounded-[24px] bg-tk-bg-card border-[1.5px] border-tk-border shadow-sm p-8 flex justify-between items-center max-md:flex-col max-md:items-start max-md:gap-6">
-                <div className="absolute top-0 right-0 w-80 h-80 bg-tk-burgundy/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none"></div>
-                
-                <div className="relative z-10">
-                    <h1 className="text-[32px] font-extrabold text-tk-text m-0 mb-3 tracking-tight">Subscription & Billing</h1>
-                    <p className="text-[15px] text-tk-text-secondary m-0 max-w-lg leading-relaxed">Manage your restaurant's access to TableKard. Upgrade or extend your plan to continue unlocking the full potential of your business operations.</p>
-                    
-                    <div className="mt-8 inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-tk-bg-surface border-[1.5px] border-tk-border shadow-sm">
-                        <span className="relative flex h-3 w-3">
+            {/* Compact Header & Status */}
+            <div className="mb-6 flex flex-wrap justify-between items-center gap-4 bg-tk-bg-card rounded-[20px] border-[1.5px] border-tk-border p-5 shadow-sm">
+                <div>
+                    <h1 className="text-[22px] font-extrabold text-tk-text m-0 mb-1 tracking-tight">Subscription & Billing</h1>
+                    <div className="flex items-center gap-2 mt-2">
+                        <span className="relative flex h-2.5 w-2.5">
                             {statusInfo.status === 'active' && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-tk-success opacity-75"></span>}
-                            <span className={`relative inline-flex rounded-full h-3 w-3 ${statusInfo.status === 'active' ? 'bg-tk-success' : 'bg-tk-error'}`}></span>
+                            <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${statusInfo.status === 'active' ? 'bg-tk-success' : 'bg-tk-error'}`}></span>
                         </span>
-                        <span className="text-[13px] font-bold text-tk-text uppercase tracking-widest">
-                            Status: <span className={statusInfo.status === 'active' ? 'text-tk-success' : 'text-tk-error'}>{statusInfo.label}</span>
+                        <span className="text-[13px] font-medium text-tk-text-secondary">
+                            Status: <span className={`font-bold ${statusInfo.status === 'active' ? 'text-tk-success' : 'text-tk-error'}`}>{statusInfo.label}</span>
                         </span>
                     </div>
                 </div>
                 
-                {/* Dynamic Days Remaining Circular Badge */}
-                <div className="relative z-10 flex flex-col items-center justify-center bg-tk-bg-surface rounded-2xl p-7 border-[1.5px] border-tk-border shadow-sm min-w-[200px]">
+                <div className="flex items-center gap-3 bg-tk-bg-surface px-4 py-2.5 rounded-xl border-[1.5px] border-tk-border shadow-sm">
                     {statusInfo.status === 'active' ? (
                         <>
-                            <div className="text-[48px] font-black text-tk-text leading-none mb-2 tracking-tighter">{days}</div>
-                            <div className="text-[12px] font-bold text-tk-text-secondary uppercase tracking-[0.2em]">Days Left</div>
+                            <div className="text-[24px] font-black text-tk-text leading-none">{days}</div>
+                            <div className="text-[11px] font-bold text-tk-text-secondary uppercase tracking-widest">Days<br/>Left</div>
                         </>
                     ) : (
                         <>
-                            <div className="text-[48px] mb-3">{statusInfo.icon}</div>
-                            <div className="text-[14px] font-bold text-tk-error text-center uppercase tracking-widest">Action Required</div>
+                            <div className="w-6 h-6 flex items-center justify-center">{statusInfo.icon}</div>
+                            <div className="text-[11px] font-bold text-tk-error uppercase tracking-widest">Action<br/>Required</div>
                         </>
                     )}
                 </div>
             </div>
 
             {/* SaaS Pricing Cards */}
-            <div className="mb-16">
-                <div className="text-center mb-10">
-                    <h2 className="text-[28px] font-extrabold text-tk-text m-0 mb-3 tracking-tight">Choose the Perfect Plan</h2>
-                    <p className="text-[15px] text-tk-text-secondary m-0">Simple, transparent pricing to power your restaurant's growth.</p>
+            <div className="mb-10">
+                <div className="text-center mb-6">
+                    <h2 className="text-[24px] font-extrabold text-tk-text m-0 mb-2 tracking-tight">Choose the Perfect Plan</h2>
+                    <p className="text-[14px] text-tk-text-secondary m-0">Simple, transparent pricing to power your restaurant's growth.</p>
                 </div>
                 
                 <div className="grid grid-cols-4 gap-6 max-lg:grid-cols-2 max-sm:grid-cols-1 items-stretch pt-4">
@@ -305,10 +300,10 @@ const SubscriptionPage: React.FC = () => {
                         return (
                         <div
                             key={plan.duration}
-                            className={`relative flex flex-col bg-tk-bg-card rounded-[24px] transition-all duration-300 ${
+                            className={`relative flex flex-col rounded-[24px] transition-all duration-300 ${
                                 plan.popular 
-                                ? 'border-[2px] border-tk-burgundy shadow-[0_12px_40px_rgba(139,58,30,0.15)] -translate-y-4 max-lg:-translate-y-0 z-10' 
-                                : 'border-[1.5px] border-tk-border shadow-sm hover:shadow-xl hover:border-tk-burgundy/40 hover:-translate-y-2'
+                                ? 'bg-[linear-gradient(135deg,#8B3A1E,#521c0b)] text-white border-[2px] border-tk-burgundy shadow-[0_16px_40px_rgba(139,58,30,0.3)] -translate-y-4 max-lg:-translate-y-0 z-10' 
+                                : 'bg-tk-bg-card border-[1.5px] border-tk-border shadow-sm hover:shadow-xl hover:border-tk-burgundy/40 hover:-translate-y-2'
                             }`}
                         >
                             {plan.popular && (
@@ -327,12 +322,12 @@ const SubscriptionPage: React.FC = () => {
                                 {plan.popular && (
                                     <div className="absolute top-0 right-0 w-32 h-32 bg-tk-burgundy/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
                                 )}
-                                <div className="text-[14px] font-bold text-tk-text-secondary mb-5 uppercase tracking-[0.15em] relative z-10">{plan.label}</div>
-                                <div className="flex items-start justify-center gap-1 mb-2 relative z-10">
-                                    <span className="text-[20px] font-bold text-tk-text mt-1">₹</span>
-                                    <span className="text-[42px] font-black text-tk-text leading-none tracking-tighter">{plan.price.toLocaleString('en-IN')}</span>
+                                <div className={`text-[14px] font-bold mb-5 uppercase tracking-[0.15em] relative z-10 ${plan.popular ? 'text-white/80' : 'text-tk-text-secondary'}`}>{plan.label}</div>
+                                <div className={`flex items-start justify-center gap-1 mb-2 relative z-10 ${plan.popular ? 'text-white' : 'text-tk-text'}`}>
+                                    <span className={`text-[20px] font-bold mt-1 ${plan.popular ? 'text-white' : 'text-tk-text'}`}>₹</span>
+                                    <span className={`text-[42px] font-black leading-none tracking-tighter ${plan.popular ? 'text-white' : 'text-tk-text'}`}>{plan.price.toLocaleString('en-IN')}</span>
                                 </div>
-                                <div className="text-[14px] text-tk-text-secondary font-semibold relative z-10">
+                                <div className={`text-[14px] font-semibold relative z-10 ${plan.popular ? 'text-white/80' : 'text-tk-text-secondary'}`}>
                                     Just ₹{plan.perMonth} / month
                                 </div>
                                 {plan.savings > 0 ? (
@@ -346,12 +341,12 @@ const SubscriptionPage: React.FC = () => {
                                 )}
                             </div>
                             
-                            <div className="p-8 flex-1 flex flex-col bg-tk-bg-surface/30 rounded-b-[24px]">
-                                <div className="text-[12px] font-bold text-tk-text mb-5 uppercase tracking-widest text-center">What's included</div>
+                            <div className={`p-8 flex-1 flex flex-col rounded-b-[24px] ${plan.popular ? 'bg-black/10' : 'bg-tk-bg-surface/30'}`}>
+                                <div className={`text-[12px] font-bold mb-5 uppercase tracking-widest text-center ${plan.popular ? 'text-white/90' : 'text-tk-text'}`}>What's included</div>
                                 <ul className="flex flex-col gap-4 mb-8">
                                     {PLAN_FEATURES.map((feature, i) => (
-                                        <li key={i} className="flex items-center gap-3 text-[14px] text-tk-text-secondary font-medium">
-                                            <CheckCircle2 size={18} className="text-tk-burgundy shrink-0" />
+                                        <li key={i} className={`flex items-center gap-3 text-[14px] font-medium ${plan.popular ? 'text-white/90' : 'text-tk-text-secondary'}`}>
+                                            <CheckCircle2 size={18} className={`shrink-0 ${plan.popular ? 'text-[#FBD38D]' : 'text-tk-burgundy'}`} />
                                             <span>{feature}</span>
                                         </li>
                                     ))}
@@ -361,7 +356,7 @@ const SubscriptionPage: React.FC = () => {
                                     <button
                                         className={`w-full py-4 rounded-xl font-bold text-[15px] transition-all flex items-center justify-center gap-2 uppercase tracking-wider ${
                                             plan.popular
-                                            ? 'bg-tk-burgundy text-white hover:bg-[#6B2A15] shadow-lg hover:shadow-xl hover:-translate-y-0.5'
+                                            ? 'bg-white text-[#8B3A1E] hover:bg-gray-100 shadow-lg hover:shadow-xl hover:-translate-y-0.5'
                                             : 'bg-tk-burgundy-bg text-tk-burgundy hover:bg-tk-burgundy hover:text-white shadow-sm'
                                         } disabled:opacity-50 disabled:cursor-not-allowed`}
                                         disabled={isProcessing !== null || !activeRestaurantId}

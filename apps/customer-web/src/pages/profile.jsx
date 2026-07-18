@@ -340,12 +340,14 @@ const ProfilePage = () => {
             </div>
             <span>Orders</span>
           </button>
-          <button className="action-card live-queue" onClick={() => navigate('/live-queue')}>
-            <div className="action-icon">
-              <ListOrdered size={22} />
-            </div>
-            <span>Live Queue</span>
-          </button>
+          {restaurant?.kitchen_app_enabled !== false && (
+            <button className="action-card live-queue" onClick={() => navigate('/live-queue')}>
+              <div className="action-icon">
+                <ListOrdered size={22} />
+              </div>
+              <span>Live Queue</span>
+            </button>
+          )}
         </div>
 
         {/* Menu Section */}

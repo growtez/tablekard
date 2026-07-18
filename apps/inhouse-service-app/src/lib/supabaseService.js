@@ -9,6 +9,8 @@ import { supabase } from '@restaurant-saas/supabase';
  *  - items[]: name, quantity, variant, addons, special_instructions, created_at
  */
 export async function fetchOrdersByStatus(statuses = [], restaurantId) {
+  const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
+
   let query = supabase
     .from('orders')
     .select(`
@@ -38,6 +40,7 @@ export async function fetchOrdersByStatus(statuses = [], restaurantId) {
       )
     `)
     .in('status', statuses)
+    .gte('created_at', twelveHoursAgo)
     .order('created_at', { ascending: true });
 
   if (restaurantId) {
