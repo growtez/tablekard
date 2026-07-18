@@ -7,9 +7,9 @@ import { supabase } from '@restaurant-saas/supabase';
 import './live_queue.css';
 
 const LiveQueuePage = () => {
-    const navigate = useNavigate();
-    const { restaurant } = useRestaurant();
     const { user } = useAuth();
+    const { restaurantId, restaurant } = useRestaurant();
+    const navigate = useNavigate();
     const [expandedOrders, setExpandedOrders] = useState({});
     const [currentTime, setCurrentTime] = useState(new Date());
     const [isLoading, setIsLoading] = useState(true);
@@ -41,8 +41,7 @@ const LiveQueuePage = () => {
     const fetchLiveQueue = async () => {
         if (!restaurant?.id) return;
         
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
 
         try {
             const { data, error } = await supabase
@@ -56,7 +55,7 @@ const LiveQueuePage = () => {
                     order_items (status, name)
                 `)
                 .eq('restaurant_id', restaurant.id)
-                .gte('created_at', today.toISOString())
+                .gte('created_at', twelveHoursAgo.toISOString())
                 .neq('status', 'cancelled')
                 .neq('status', 'completed')
                 .neq('status', 'served')
@@ -225,6 +224,31 @@ const LiveQueuePage = () => {
         const pos = getYourPosition(token.id);
         return { label: "Queue Pos", value: `#${pos}`, color: "#8B3A1E", fontSize: "28px" };
     };
+
+    if (!user?.id || !restaurantId) {
+        return (
+            <div className="live-queue-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <p>Loading queue data...</p>
+            </div>
+        );
+    }
+
+    if (restaurant?.kitchen_app_enabled === false) {
+        return (
+            <div className="live-queue-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column' }}>
+                <div style={{ padding: '20px', textAlign: 'center', background: '#fff', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                    <h2 style={{ marginBottom: '10px', color: '#1A202C' }}>Live Queue Disabled</h2>
+                    <p style={{ color: '#718096' }}>This restaurant does not currently use the live queue feature.</p>
+                    <button 
+                        onClick={() => navigate('/')}
+                        style={{ marginTop: '20px', padding: '10px 20px', background: '#8B3A1E', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}
+                    >
+                        Back to Menu
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     if (isLoading) {
         return (

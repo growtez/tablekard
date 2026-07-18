@@ -4,8 +4,6 @@ import { supabase } from '@restaurant-saas/supabase';
 import { useOrders } from './hooks/useOrders';
 import { useAuth } from './context/AuthContext';
 import LoginScreen from './components/LoginScreen';
-import Lottie from 'lottie-react';
-import chefAnimation from './assets/chef.json';
 import { initOfflineSync } from './lib/offlineQueue';
 
 /* ──────────────────────── helpers ──────────────────────── */
@@ -335,13 +333,8 @@ const OrderCard = ({
   );
 };
 
-/* ──────────────── Empty-state component ───────────────── */
-
 const EmptyState = ({ message }) => (
   <div className="empty-state">
-    <div style={{ width: 160, height: 160, margin: '0 auto 16px auto' }}>
-      <Lottie animationData={chefAnimation} loop={true} />
-    </div>
     {message}
   </div>
 );
@@ -404,6 +397,7 @@ function OrdersView({ onSignOut }) {
   const [restaurantName, setRestaurantName] = useState('TABLEKARD');
   const [denyTarget, setDenyTarget] = useState(null); // { id, orderNumber }
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [kitchenAppEnabled, setKitchenAppEnabled] = useState(true);
   // Track which queue cards are expanded by order ID — stable across realtime refetches
   const [expandedIds, setExpandedIds] = useState(() => new Set());
 
@@ -435,12 +429,17 @@ function OrdersView({ onSignOut }) {
     const fetchRestaurantName = async () => {
       const { data, error } = await supabase
         .from('restaurants')
-        .select('name')
+        .select('name, kitchen_app_enabled')
         .eq('id', activeRestaurantId)
         .single();
 
-      if (!error && data?.name) {
-        setRestaurantName(data.name);
+      if (!error && data) {
+        if (data.name) setRestaurantName(data.name);
+        if (data.kitchen_app_enabled === false) {
+          setKitchenAppEnabled(false);
+        } else {
+          setKitchenAppEnabled(true);
+        }
       }
     };
     fetchRestaurantName();
@@ -470,6 +469,33 @@ function OrdersView({ onSignOut }) {
       setDenyTarget(null);
     }
   };
+
+  if (kitchenAppEnabled === false) {
+    return (
+      <div className="kitchen-app" style={{ display: 'flex', flexDirection: 'column', height: '100vh', justifyContent: 'center', alignItems: 'center', backgroundColor: '#F7FAFC' }}>
+        <header className="header" style={{ position: 'absolute', top: 0, width: '100%' }}>
+          <div className="header-row">
+            <div className="logo">{restaurantName}</div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn-refresh" onClick={onSignOut} title="Sign out">
+                <LogOut size={18} />
+              </button>
+            </div>
+          </div>
+        </header>
+        <div style={{ padding: '40px', textAlign: 'center', background: '#fff', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', maxWidth: '400px', marginTop: '60px' }}>
+          <h2 style={{ marginBottom: '10px', color: '#1A202C' }}>Kitchen App Disabled</h2>
+          <p style={{ color: '#718096', marginBottom: '20px' }}>This restaurant's Kitchen Web App and Live Queue features have been disabled by the administrator.</p>
+          <button 
+            onClick={onSignOut}
+            style={{ padding: '10px 20px', background: '#8B3A1E', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}
+          >
+            Sign Out
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', width: '100%', flex: '1 1 auto', minHeight: 0 }}>

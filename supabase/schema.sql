@@ -294,6 +294,10 @@ ALTER TABLE public.restaurants
     ADD COLUMN IF NOT EXISTS profile_urls TEXT[] DEFAULT ARRAY[]::TEXT[];
 ALTER TABLE public.restaurants
     ADD COLUMN IF NOT EXISTS pay_online BOOLEAN DEFAULT true;
+    
+ALTER TABLE public.restaurants 
+    ADD COLUMN IF NOT EXISTS kitchen_app_enabled BOOLEAN DEFAULT true;
+
 
 ALTER TABLE public.restaurants
     ADD COLUMN IF NOT EXISTS subscription_end_at TIMESTAMPTZ;
@@ -1116,3 +1120,20 @@ SELECT cron.schedule(
     '30 18 * * *',
     $$SELECT public.suspend_expired_subscriptions();$$
 );
+
+-- ======================================================================================
+-- RESTAURANT NOTIFICATIONS
+-- ======================================================================================
+CREATE TABLE IF NOT EXISTS public.restaurant_notifications (
+  id uuid default gen_random_uuid() primary key,
+  restaurant_id uuid references public.restaurants(id) on delete cascade not null,
+  title text not null,
+  message text not null,
+  type text not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Allow read/write access
+ALTER TABLE public.restaurant_notifications ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all operations" ON public.restaurant_notifications;
+CREATE POLICY "Allow all operations" ON public.restaurant_notifications FOR ALL USING (true);

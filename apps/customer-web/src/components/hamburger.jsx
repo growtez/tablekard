@@ -110,9 +110,11 @@ const Hamburger = () => {
             <Star size={20} /><span>Favourites</span>
           </NavLink>
 
-          <NavLink to="/live-queue"  className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`} onClick={close}>
-            <ListOrdered size={20} /><span>Live Queue</span>
-          </NavLink>
+          {restaurant?.kitchen_app_enabled !== false && (
+            <NavLink to="/live-queue"  className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`} onClick={close}>
+              <ListOrdered size={20} /><span>Live Queue</span>
+            </NavLink>
+          )}
 
           <NavLink to="/profile"     className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`} onClick={close}>
             <User size={20} /><span>Profile</span>

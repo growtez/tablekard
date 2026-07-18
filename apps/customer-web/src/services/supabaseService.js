@@ -158,12 +158,31 @@ export const getOrderHistory = async (userId) => {
     if (error) throw error;
 
     // Flatten table_number and feedback onto the order object
-    return (data ?? []).map(order => ({
-        ...order,
-        table_number: order.restaurant_tables?.table_number ?? null,
-        rating: order.feedback?.[0]?.rating ?? null,
-        comment: order.feedback?.[0]?.comment ?? null
-    }));
+    return (data ?? []).map(order => {
+        let st = (order.status || '').toLowerCase();
+        const createdDate = new Date(order.created_at);
+        const hoursSinceCreation = (Date.now() - createdDate.getTime()) / (1000 * 60 * 60);
+        const isPaid = (order.payment_status || '').toLowerCase() === 'paid';
+
+        if (hoursSinceCreation > 12 && st !== 'completed' && st !== 'served' && st !== 'cancelled') {
+            if (st === 'ready' && isPaid) {
+                // Treated as completed
+            } else if (!isPaid) {
+                st = 'cancelled';
+                order.status = 'cancelled';
+                // Lazy auto-cancel in backend
+                supabase.from('orders').update({ status: 'cancelled' }).eq('id', order.id).then();
+            }
+        }
+
+        return {
+            ...order,
+            status: st,
+            table_number: order.restaurant_tables?.table_number ?? null,
+            rating: order.feedback?.[0]?.rating ?? null,
+            comment: order.feedback?.[0]?.comment ?? null
+        };
+    });
 };
 
 export const submitFeedback = async ({ orderId, userId, rating, comment }) => {

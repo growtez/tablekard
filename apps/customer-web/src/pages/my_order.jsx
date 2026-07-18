@@ -601,10 +601,12 @@ const MyOrderPage = () => {
           <Hamburger />
         </div>
         <div className="header-nav-right">
-          <NavLink to="/live-queue" className="header-nav-btn live-queue-btn">
-            <ListOrdered size={22} color="#8B3A1E" />
-            <span className="live-dot"></span>
-          </NavLink>
+          {restaurant?.kitchen_app_enabled !== false && (
+            <NavLink to="/live-queue" className="header-nav-btn live-queue-btn">
+              <ListOrdered size={22} color="#8B3A1E" />
+              <span className="live-dot"></span>
+            </NavLink>
+          )}
         </div>
       </header>
 

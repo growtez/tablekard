@@ -31,7 +31,7 @@ const Menu: React.FC = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
   const [isSaving, setIsSaving] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'price_high' | 'price_low' | 'a_z'>('newest');
   const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
@@ -526,7 +526,7 @@ const Menu: React.FC = () => {
         <div className="animate-[fadeIn_0.2s_ease-in-out]">
 
           {/* Tabs & Controls */}
-          <div className="sticky top-0 z-50 py-2 bg-tk-bg-card shadow-sm border-b border-tk-border flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 mb-4">
+          <div className="sticky top-2 z-50 py-2.5 px-4 bg-[var(--tk-info-bar-bg)] backdrop-blur-md shadow-[var(--tk-info-bar-shadow)] border border-[var(--tk-info-bar-border)] rounded-2xl flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 mb-6 transition-all mx-1">
             <div className="flex items-center gap-2 w-full xl:w-auto flex-1 pb-1">
               <div className="relative" ref={categoryDropdownRef}>
                 <button
@@ -579,17 +579,17 @@ const Menu: React.FC = () => {
             </div>
             <div className="flex flex-row items-center gap-2 sm:gap-3 pb-2 w-full xl:w-auto xl:ml-4">
               {/* 1. Grid/Table Toggle */}
-              <div className="flex bg-tk-bg-surface border border-tk-border rounded-full p-0.5 shrink-0">
+              <div className="flex bg-tk-bg-surface border border-tk-border rounded-xl p-0.5 shrink-0">
                 <button
                   onClick={() => setViewMode('table')}
-                  className={`p-1.5 rounded-full transition-colors flex items-center justify-center ${viewMode === 'table' ? 'bg-tk-burgundy/10 text-tk-burgundy shadow-sm' : 'text-tk-text-secondary hover:text-tk-text'}`}
+                  className={`p-1.5 rounded-xl transition-all duration-200 flex items-center justify-center ${viewMode === 'table' ? 'bg-tk-text text-tk-bg-surface shadow-sm' : 'text-tk-text-secondary hover:bg-tk-bg-hover hover:text-tk-text'}`}
                   title="Table View"
                 >
                   <List size={16} />
                 </button>
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`p-1.5 rounded-full transition-colors flex items-center justify-center ${viewMode === 'grid' ? 'bg-tk-burgundy/10 text-tk-burgundy shadow-sm' : 'text-tk-text-secondary hover:text-tk-text'}`}
+                  className={`p-1.5 rounded-xl transition-all duration-200 flex items-center justify-center ${viewMode === 'grid' ? 'bg-tk-text text-tk-bg-surface shadow-sm' : 'text-tk-text-secondary hover:bg-tk-bg-hover hover:text-tk-text'}`}
                   title="Grid View"
                 >
                   <LayoutGrid size={16} />
@@ -824,23 +824,23 @@ const Menu: React.FC = () => {
               </div>
 
               {/* Desktop table view (hidden on mobile) */}
-              <div className="hidden sm:block overflow-x-auto tk-table-scroll [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <div className="hidden sm:block overflow-x-auto tk-table-scroll bg-tk-bg-surface border border-tk-border rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 <table className="w-full text-left border-collapse table-fixed min-w-[900px]">
                   <thead>
                     <tr>
-                      <th className="sticky top-0 z-40 bg-tk-bg-card py-3 px-4 border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[35%] shadow-sm">
+                      <th className="sticky top-0 z-40 bg-tk-bg-hover py-3.5 px-4 text-[13px] font-bold text-tk-text-secondary whitespace-nowrap border-b border-tk-border w-[35%]">
                         Menu Item
                       </th>
-                      <th className="sticky top-0 z-40 bg-tk-bg-card py-3 px-4 border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[20%] shadow-sm">
+                      <th className="sticky top-0 z-40 bg-tk-bg-hover py-3.5 px-4 text-[13px] font-bold text-tk-text-secondary whitespace-nowrap border-b border-tk-border w-[20%]">
                         Category
                       </th>
-                      <th className="sticky top-0 z-40 bg-tk-bg-card py-3 px-4 border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[15%] shadow-sm">
+                      <th className="sticky top-0 z-40 bg-tk-bg-hover py-3.5 px-4 text-[13px] font-bold text-tk-text-secondary whitespace-nowrap border-b border-tk-border w-[15%]">
                         Price
                       </th>
-                      <th className="sticky top-0 z-40 bg-tk-bg-card py-3 px-4 border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[15%] shadow-sm">
+                      <th className="sticky top-0 z-40 bg-tk-bg-hover py-3.5 px-4 text-[13px] font-bold text-tk-text-secondary whitespace-nowrap border-b border-tk-border w-[15%]">
                         Status
                       </th>
-                      <th className="sticky top-0 z-40 bg-tk-bg-card py-3 px-4 border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border text-center w-[15%] shadow-sm">
+                      <th className="sticky top-0 z-40 bg-tk-bg-surface py-4 px-4 text-[12px] font-bold text-tk-text-secondary uppercase tracking-wider whitespace-nowrap border-b border-tk-border text-center w-[15%]">
                         Actions
                       </th>
                     </tr>
@@ -850,7 +850,7 @@ const Menu: React.FC = () => {
                       const categoryName = getCategoryName(item.categoryId);
                       
                       return (
-                        <tr key={item.id} className="border-b border-tk-border last:border-b-0 hover:bg-tk-burgundy/5 transition-colors group bg-tk-bg-card">
+                        <tr key={item.id} className="border-b border-tk-border last:border-b-0 hover:bg-tk-bg-hover transition-colors group">
                           <td className="py-3 px-4">
                             <div className="flex items-start gap-4">
                               <div className="w-14 h-14 rounded-xl bg-[#FFF5E6] flex items-center justify-center text-[24px] shadow-sm overflow-hidden shrink-0">

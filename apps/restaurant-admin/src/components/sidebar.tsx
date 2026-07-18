@@ -2,7 +2,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { ChevronLeft, ChevronRight, LogOut, Menu } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LogOut, Menu, Bell } from 'lucide-react';
+import { supabase as db } from '@restaurant-saas/supabase';
 
 const Tooltip = ({
   text,
@@ -74,11 +75,11 @@ const DashboardIcon = ({ active }: { active: boolean }) => (
 );
 
 const OrderIcon = ({ active }: { active: boolean }) => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M18 3H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2V5a2 2 0 00-2-2z" fill={active ? 'currentColor' : 'none'} />
-    <line x1="7" y1="8" x2="17" y2="8" stroke={active ? 'var(--icon-stripe, #FFF0EC)' : 'currentColor'} />
-    <line x1="7" y1="12" x2="17" y2="12" stroke={active ? 'var(--icon-stripe, #FFF0EC)' : 'currentColor'} />
-    <line x1="7" y1="16" x2="13" y2="16" stroke={active ? 'var(--icon-stripe, #FFF0EC)' : 'currentColor'} />
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? '2.8' : '2'} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 3H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2V5a2 2 0 00-2-2z" />
+    <line x1="7" y1="8" x2="17" y2="8" />
+    <line x1="7" y1="12" x2="17" y2="12" />
+    <line x1="7" y1="16" x2="13" y2="16" />
   </svg>
 );
 
@@ -90,9 +91,9 @@ const MenuIcon = ({ active }: { active: boolean }) => (
 );
 
 const PaymentIcon = ({ active }: { active: boolean }) => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? '2.8' : '2'} strokeLinecap="round" strokeLinejoin="round">
     <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
-    <line x1="1" y1="10" x2="23" y2="10" stroke={active ? 'var(--icon-stripe, #FFF0EC)' : 'currentColor'} />
+    <line x1="1" y1="10" x2="23" y2="10" />
   </svg>
 );
 
@@ -122,10 +123,9 @@ const ProfileIcon = ({ active }: { active: boolean }) => (
 );
 
 const SubscriptionIcon = ({ active }: { active: boolean }) => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 2v20M2 12h20" fill={active ? 'currentColor' : 'none'} stroke={active ? 'var(--icon-stripe, #FFF0EC)' : 'currentColor'} strokeWidth="1" />
-    <path d="M20.88 18.09A5 5 0 0018 9h-1.26A8 8 0 103 16.29" fill={active ? 'currentColor' : 'none'} />
-    <path d="M16 14l-4 4-4-4M12 18V9" stroke={active ? 'var(--icon-stripe, #FFF0EC)' : 'currentColor'} />
+  <svg width="18" height="18" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7z" />
+    <path d="M5 20h14" />
   </svg>
 );
 
@@ -151,6 +151,41 @@ const Sidebar: React.FC = () => {
     setLogoError(false);
   }, [activeRestaurantLogo]);
 
+  const [unreadCount, setUnreadCount] = useState(0);
+  const { activeRestaurantId } = useAuth();
+
+  useEffect(() => {
+    const fetchUnread = async () => {
+      try {
+        let count = 0;
+        const lastReadStr = localStorage.getItem('lastReadNotificationDate');
+        const lastRead = lastReadStr ? new Date(lastReadStr).getTime() : 0;
+
+        // Check specific notifications (which now includes Broadcasts)
+        if (activeRestaurantId) {
+            const { data: specificData, error: specificError } = await db
+                .from('restaurant_notifications')
+                .select('created_at')
+                .eq('restaurant_id', activeRestaurantId);
+
+            if (!specificError && specificData) {
+                for (const n of specificData) {
+                    if (new Date(n.created_at).getTime() > lastRead) count++;
+                }
+            }
+        }
+
+        setUnreadCount(count);
+      } catch (err) { }
+    };
+
+    fetchUnread();
+
+    const handleRead = () => setUnreadCount(0);
+    window.addEventListener('notificationsRead', handleRead);
+    return () => window.removeEventListener('notificationsRead', handleRead);
+  }, [activeRestaurantId]);
+
   const getActiveTab = () => {
     const path = location.pathname;
     if (path.includes('/profile')) return 'profile';
@@ -163,6 +198,7 @@ const Sidebar: React.FC = () => {
     if (path.includes('/table-management')) return 'table-management';
     if (path.includes('/subscription')) return 'subscription';
     if (path.includes('/team')) return 'team';
+    if (path.includes('/notifications')) return 'notifications';
     return 'dashboard';
   };
 
@@ -264,6 +300,25 @@ const Sidebar: React.FC = () => {
       
       <div className={`fixed left-0 top-0 h-screen bg-tk-bg py-4 flex flex-col z-[100] font-sans transition-[width,transform] duration-300 ease-in-out border-r-[1.5px] border-tk-border md:translate-x-0 ${isCollapsed ? '-translate-x-full w-[280px] md:w-[64px] px-1.5' : 'translate-x-0 w-[280px] md:w-[240px] px-2'} shadow-[4px_0_24px_rgba(0,0,0,0.08)] md:shadow-none`}>
 
+        {/* Notification Button (Top Left) */}
+        {!isCollapsed && (
+          <button
+            onClick={() => {
+              navigate('/notifications');
+              if (window.innerWidth <= 768) setIsCollapsed(true);
+            }}
+            className={`absolute top-3 left-3 p-2 rounded-lg transition-all duration-200 z-[120] ${activeTab === 'notifications' ? 'bg-tk-burgundy-bg text-tk-burgundy' : 'text-tk-text-secondary hover:text-tk-burgundy hover:bg-tk-burgundy-bg'}`}
+            title="Notifications"
+          >
+            <Bell size={18} />
+            {unreadCount > 0 && (
+              <span className="absolute top-1.5 right-1.5 flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-red-500 px-[3px] text-[9px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-tk-bg">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </button>
+        )}
+
         <button 
           className={`hidden md:flex absolute top-1 w-7 h-7 bg-tk-bg text-tk-text-secondary border-[1.5px] border-tk-border rounded-full items-center justify-center cursor-pointer z-[110] shadow-sm hover:scale-105 hover:text-tk-text hover:border-tk-text-secondary transition-all duration-200 -right-[14px]`} 
           onClick={() => setIsCollapsed(!isCollapsed)}
@@ -272,12 +327,12 @@ const Sidebar: React.FC = () => {
         </button>
 
         <div className="flex-1 w-full overflow-y-auto no-scrollbar flex flex-col">
-          <div className="flex flex-col items-center mb-5 shrink-0 mt-2">
-            <div className="w-14 h-14 flex items-center justify-center mb-2 shrink-0">
+          <div className={`flex flex-col items-center mb-5 shrink-0 ${isCollapsed ? 'mt-6' : 'mt-2'}`}>
+            <div className={`relative flex items-center justify-center mb-2 shrink-0 ${isCollapsed && !isMobile ? 'w-10 h-10' : 'w-14 h-14'}`}>
               <button
                 type="button"
                 onClick={() => navigate('/dashboard')}
-                className={`rounded-full bg-tk-burgundy-bg flex items-center justify-center overflow-hidden border-2 border-tk-burgundy transition-all duration-300 hover:scale-105 hover:shadow-[0_4px_12px_rgba(139,58,30,0.15)] ${isCollapsed && !isMobile ? 'w-10 h-10' : 'w-14 h-14'}`}
+                className={`w-full h-full rounded-full bg-tk-burgundy-bg flex items-center justify-center overflow-hidden border-2 border-tk-burgundy transition-all duration-300 hover:scale-105 hover:shadow-[0_4px_12px_rgba(139,58,30,0.15)]`}
                 aria-label="Go to dashboard"
               >
                 {showImage ? (
@@ -291,6 +346,11 @@ const Sidebar: React.FC = () => {
                   <span className="text-2xl font-bold text-tk-burgundy leading-none select-none">{initial}</span>
                 )}
               </button>
+              {isCollapsed && unreadCount > 0 && (
+                <div className="absolute -top-1 -right-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-red-500 px-[4px] text-[10px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-tk-bg z-[130] pointer-events-none">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </div>
+              )}
             </div>
             <div className="w-full h-9 flex items-start justify-center shrink-0">
               {showLabels && (
@@ -329,18 +389,7 @@ const Sidebar: React.FC = () => {
                   {(!isCollapsed || isMobile) && <span className="font-inherit whitespace-nowrap">Profile</span>}
                 </div>
 
-                {(!isCollapsed || isMobile) && (
-                  <Tooltip text="Sign Out" showTooltip={false}>
-                    <button
-                      type="button"
-                      className="flex items-center justify-center border-l border-tk-border/70 cursor-pointer bg-transparent text-current transition-all duration-200 hover:bg-tk-burgundy-bg hover:text-tk-burgundy hover:border-tk-burgundy/20 px-2 h-10 ml-auto"
-                      onClick={() => setShowLogoutConfirm(true)}
-                      aria-label="Sign out"
-                    >
-                      <LogOut size={16} />
-                    </button>
-                  </Tooltip>
-                )}
+
               </div>
             </Tooltip>
 

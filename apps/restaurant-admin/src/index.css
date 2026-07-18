@@ -55,6 +55,11 @@
   --tk-radius-xl: 24px;
   --tk-radius-pill: 9999px;
 
+  /* Info Bar */
+  --tk-info-bar-bg: rgba(255, 242, 238, 0.9);
+  --tk-info-bar-border: #EADAD6;
+  --tk-info-bar-shadow: 0 2px 10px rgba(139, 58, 30, 0.05);
+
   /* Typography */
   font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   line-height: 1.5;
@@ -111,6 +116,11 @@
   --tk-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
   --tk-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
   --tk-shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.5);
+
+  /* Info Bar */
+  --tk-info-bar-bg: rgba(26, 26, 26, 0.9);
+  --tk-info-bar-border: rgba(255, 255, 255, 0.1);
+  --tk-info-bar-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
 
   color: var(--tk-text);
   background-color: var(--tk-bg-surface);

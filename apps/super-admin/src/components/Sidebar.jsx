@@ -13,7 +13,8 @@ import {
     Layers,
     Inbox,
     Moon,
-    Sun
+    Sun,
+    Bell
 } from 'lucide-react';
 
 const navItems = [
@@ -24,6 +25,7 @@ const navItems = [
     { path: '/billing/transactions', icon: FileText, label: 'Transactions' },
     { path: '/billing/plans', icon: Layers, label: 'Pricing Plans' },
     { path: '/leads', icon: Inbox, label: 'Landing Leads' },
+    { path: '/notifications', icon: Bell, label: 'Notifications' },
     // {
     //     icon: Headphones,
     //     label: 'Support',

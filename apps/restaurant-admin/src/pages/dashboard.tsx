@@ -319,7 +319,7 @@ const Dashboard: React.FC = () => {
 
       {/* Tabs & Controls */}
       <div
-        className="sticky top-0 z-50 py-2 bg-tk-bg-card shadow-sm border-b border-tk-border flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 mb-2"
+        className="sticky top-2 z-50 py-2.5 px-4 bg-[var(--tk-info-bar-bg)] backdrop-blur-md shadow-[var(--tk-info-bar-shadow)] border border-[var(--tk-info-bar-border)] rounded-2xl flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 mb-6 transition-all mx-1"
       >
         <div className="flex items-center justify-between pt-1 w-full xl:w-auto flex-1 pb-1">
           <h2 className="text-base font-bold text-tk-text m-0 flex items-center gap-1.5">
@@ -380,17 +380,17 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* 2. Grid/Table Toggle */}
-          <div className="flex bg-tk-bg-surface border border-tk-border rounded-full p-0.5 shrink-0">
+          <div className="flex bg-tk-bg-surface border border-tk-border rounded-xl p-0.5 shrink-0">
             <button
               onClick={() => setViewMode('table')}
-              className={`p-1.5 rounded-full transition-colors flex items-center justify-center ${viewMode === 'table' ? 'bg-tk-burgundy/10 text-tk-burgundy' : 'text-tk-text-secondary hover:text-tk-text'}`}
+              className={`p-1.5 rounded-xl transition-all duration-200 flex items-center justify-center ${viewMode === 'table' ? 'bg-tk-text text-tk-bg-surface shadow-sm' : 'text-tk-text-secondary hover:bg-tk-bg-hover hover:text-tk-text'}`}
               title="Table View"
             >
               <List size={16} />
             </button>
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded-full transition-colors flex items-center justify-center ${viewMode === 'grid' ? 'bg-tk-burgundy/10 text-tk-burgundy' : 'text-tk-text-secondary hover:text-tk-text'}`}
+              className={`p-1.5 rounded-xl transition-all duration-200 flex items-center justify-center ${viewMode === 'grid' ? 'bg-tk-text text-tk-bg-surface shadow-sm' : 'text-tk-text-secondary hover:bg-tk-bg-hover hover:text-tk-text'}`}
               title="Grid View"
             >
               <LayoutGrid size={16} />
@@ -559,38 +559,23 @@ const Dashboard: React.FC = () => {
             </div>
 
             {/* Desktop table view (hidden on mobile) */}
-            <div className="hidden sm:block overflow-x-auto tk-table-scroll">
+            <div className="hidden sm:block overflow-x-auto tk-table-scroll bg-tk-bg-surface border border-tk-border rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
               <table className="w-full text-left border-collapse table-fixed min-w-[950px]">
                 <thead>
                   <tr>
-                    <th
-                      className="sticky z-40 bg-tk-bg-card py-3 px-4 border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[6%] text-center shadow-sm"
-                      style={{ top: 0 }}
-                    >
+                    <th className="sticky top-0 z-40 bg-tk-bg-hover py-3.5 px-4 text-[13px] font-bold text-tk-text-secondary whitespace-nowrap border-b border-tk-border w-[6%] text-center">
                       Sl No
                     </th>
-                    <th
-                      className="sticky z-40 bg-tk-bg-card py-3 px-4 border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[17%] shadow-sm"
-                      style={{ top: 0 }}
-                    >
+                    <th className="sticky top-0 z-40 bg-tk-bg-hover py-3.5 px-4 text-[13px] font-bold text-tk-text-secondary whitespace-nowrap border-b border-tk-border w-[17%]">
                       Order Details
                     </th>
-                    <th
-                      className="sticky z-40 bg-tk-bg-card py-3 px-4 border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[17%] shadow-sm"
-                      style={{ top: 0 }}
-                    >
+                    <th className="sticky top-0 z-40 bg-tk-bg-hover py-3.5 px-4 text-[13px] font-bold text-tk-text-secondary whitespace-nowrap border-b border-tk-border w-[17%]">
                       Customer Info
                     </th>
-                    <th
-                      className="sticky z-40 bg-tk-bg-card py-3 px-4 border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[25%] shadow-sm"
-                      style={{ top: 0 }}
-                    >
+                    <th className="sticky top-0 z-40 bg-tk-bg-hover py-3.5 px-4 text-[13px] font-bold text-tk-text-secondary whitespace-nowrap border-b border-tk-border w-[25%]">
                       Payment Info
                     </th>
-                    <th
-                      className="sticky z-40 bg-tk-bg-card py-3 px-4 border-b-0 shadow-[inset_0_-2px_0_0_var(--tk-border)] text-sm font-semibold text-tk-text-secondary whitespace-nowrap border-b-2 border-tk-border w-[35%] shadow-sm"
-                      style={{ top: 0 }}
-                    >
+                    <th className="sticky top-0 z-40 bg-tk-bg-hover py-3.5 px-4 text-[13px] font-bold text-tk-text-secondary whitespace-nowrap border-b border-tk-border w-[35%]">
                       Order Tracking
                     </th>
                   </tr>
@@ -614,8 +599,8 @@ const Dashboard: React.FC = () => {
                     </tr>
                   ) : (
                     filteredOrders().map((order, idx) => (
-                      <tr key={idx} className={`border-b border-tk-border last:border-b-0 transition-colors group ${getRowColorClass(order.status)}`}>
-                        <td className="py-3 px-4 text-sm text-tk-text-secondary font-medium text-center">{idx + 1}</td>
+                      <tr key={idx} className={`border-b border-tk-border last:border-b-0 transition-colors group hover:bg-tk-bg-hover ${getRowColorClass(order.status)}`}>
+                        <td className="py-4 px-4 text-[13px] text-tk-text-secondary font-semibold text-center">{idx + 1}</td>
                         <td className="py-3 px-4 text-sm text-tk-text cursor-pointer" onClick={() => setSelectedOrder(order)}>
                           <div className="flex flex-col">
                             <span className="font-semibold">{order.orderNumber}</span>
