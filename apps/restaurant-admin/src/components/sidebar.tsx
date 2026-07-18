@@ -169,7 +169,7 @@ const Sidebar: React.FC = () => {
                 .eq('restaurant_id', activeRestaurantId);
 
             if (!specificError && specificData) {
-                for (const n of specificData) {
+                for (const n of (specificData as any[])) {
                     if (new Date(n.created_at).getTime() > lastRead) count++;
                 }
             }
