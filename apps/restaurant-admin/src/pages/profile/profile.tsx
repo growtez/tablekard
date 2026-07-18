@@ -1,17 +1,25 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+  AlertTriangle,
+  ChefHat,
+  CheckCircle2,
   CreditCardIcon,
   Crosshair,
   Edit3,
   ExternalLink,
   ImageIcon,
+  Key,
+  Lock,
   LogOut,
   MailIcon,
   MapPinIcon,
   PhoneIcon,
   Save,
+  ShieldCheck,
   Upload,
+  Webhook,
   X,
+  XCircle,
 } from "lucide-react";
 import type { Restaurant } from "@restaurant-saas/types";
 import ImageCropper from "../../components/ImageCropper";
@@ -250,8 +258,28 @@ const ProfilePage: React.FC = () => {
   const [isAdminSaving, setIsAdminSaving] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    "general" | "branding" | "story" | "payments" | "admin"
+    "general" | "branding" | "story" | "payments" | "admin" | "features"
   >("general");
+
+  // Confirm modal state
+  const [confirmModal, setConfirmModal] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    warning: string;
+    confirmLabel: string;
+    confirmColor: string;
+    onConfirm: () => Promise<void>;
+  }>({
+    open: false, title: '', description: '', warning: '',
+    confirmLabel: 'Confirm', confirmColor: '#EF4444',
+    onConfirm: async () => {},
+  });
+  const [confirmLoading, setConfirmLoading] = useState(false);
+  const [showPaymentSetupModal, setShowPaymentSetupModal] = useState(false);
+  const [paymentSetupForm, setPaymentSetupForm] = useState({ razorpayKeyId: '', razorpayKeySecret: '', razorpayWebhookSecret: '' });
+  const [paymentSetupSaving, setPaymentSetupSaving] = useState(false);
+  const [paymentSetupError, setPaymentSetupError] = useState<string | null>(null);
 
   // Payment settings state
   const [paymentSettings, setPaymentSettings] = useState({
@@ -1321,57 +1349,9 @@ const ProfilePage: React.FC = () => {
                     </div>
                   </div>
                 </div>
-
-                {/* Enable Kitchen Web App Toggle */}
-                <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-xl">
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                    <h4 className="font-semibold text-gray-900">Kitchen Web App / Live Queue</h4>
-                    <p className="text-sm text-gray-500">Enable or disable the kitchen display system and the live queue for customers.</p>
-                  </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={restaurantForm?.kitchenAppEnabled ?? false}
-                    onClick={() => handleRestaurantFieldChange("kitchenAppEnabled", (!restaurantForm?.kitchenAppEnabled) as any)}
-                    className="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--tk-burgundy,#8B3A1E)] focus:ring-offset-2"
-                    style={{
-                      backgroundColor: restaurantForm?.kitchenAppEnabled ? 'var(--tk-burgundy, #8B3A1E)' : '#CBD5E0',
-                    }}
-                  >
-                    <span
-                      aria-hidden="true"
-                      className="inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                      style={{
-                        transform: restaurantForm?.kitchenAppEnabled ? 'translateX(20px)' : 'translateX(0)',
-                      }}
-                    />
-                  </button>
-                </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div
-                  className="col-span-1 sm:col-span-2"
-                  style={{
-                    fontSize: "13px",
-                    fontWeight: 600,
-                    color: "#718096",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em",
-                    borderBottom: "1px solid #EDF2F7",
-                    paddingBottom: "8px",
-                    marginBottom: "8px",
-                  }}
-                >
-                  Features & Preferences
-                </div>
-                
-                <div className="flex flex-col gap-1.5 sm:col-span-2">
-                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Kitchen Web App / Live Queue</span>
-                  <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
-                    {(restaurant as any)?.kitchen_app_enabled === false ? "❌ Disabled" : "✅ Enabled"}
-                  </span>
-                </div>
                 <div
                   className="col-span-1 sm:col-span-2"
                   style={{
@@ -1909,219 +1889,367 @@ const ProfilePage: React.FC = () => {
             </div>
           )}
         </div>
-
-        {/* Payments Tab */}
-        <div style={{ display: activeTab === "payments" ? "block" : "none" }}>
-          <div className="border border-[#E2E8F0] rounded-[18px] p-4 sm:p-[18px] bg-white dark:bg-tk-bg-card dark:border-tk-border">
-            <div className="flex flex-wrap justify-between items-start gap-3 mb-4">
-              <div className="min-w-0">
-                <h3 className="font-bold">Restaurant Razorpay</h3>
-                <p>Customer food payments settle directly into this restaurant's own Razorpay account.</p>
-              </div>
-              <div className="shrink-0">
-              {editingSections.payments ? (
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    className="inline-flex items-center justify-center gap-2 min-h-[40px] px-4 border-none rounded-xl font-['Outfit',sans-serif] text-[13px] font-semibold cursor-pointer transition-all duration-200 bg-[#EDF2F7] text-[#2D3748] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed dark:bg-tk-bg-elevated dark:text-tk-text dark:hover:bg-tk-bg-hover"
-                    onClick={() => {
-                      cancelRestaurantEdit("payments");
-                      setPaymentForm({
-                        razorpayKeyId: paymentSettings.razorpayKeyId,
-                        razorpayKeySecret: "",
-                        razorpayWebhookSecret: "",
-                        onlinePaymentsEnabled: paymentSettings.onlinePaymentsEnabled,
-                      });
-                    }}
-                  >
-                    <X size={14} /> Cancel
-                  </button>
-                  <button
-                    type="button"
-                    className="inline-flex items-center justify-center gap-2 min-h-[40px] px-4 border-none rounded-xl font-['Outfit',sans-serif] text-[13px] font-semibold cursor-pointer transition-all duration-200 bg-[linear-gradient(135deg,var(--tk-burgundy),#6B2A15)] text-white shadow-[0_8px_18px_rgba(139,58,30,0.2)] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed"
-                    disabled={isPaymentSaving}
-                    onClick={async () => {
-                      if (!activeRestaurantId || !restaurantForm) return;
-                      setIsPaymentSaving(true);
-                      try {
-                        // 1. Update payment settings
-                        const updated = await updateRestaurantPaymentSettings(activeRestaurantId, {
-                          razorpayKeyId: paymentForm.razorpayKeyId.trim() || null,
-                          razorpayKeySecret: paymentForm.razorpayKeySecret.trim() || null,
-                          razorpayWebhookSecret: paymentForm.razorpayWebhookSecret.trim() || null,
-                          onlinePaymentsEnabled: restaurantForm.payOnline,
-                        });
-
-                        // 2. Update restaurant table's pay_online column
-                        const updatedRestaurant = await updateRestaurantProfile(
-                          activeRestaurantId,
-                          {
-                            pay_online: restaurantForm.payOnline,
-                            kitchen_app_enabled: restaurantForm.kitchenAppEnabled,
-                          },
-                        );
-
-                        setRestaurant(updatedRestaurant);
-                        setRestaurantForm(createRestaurantFormState(updatedRestaurant));
-
-                        const ps = {
-                          razorpayKeyId: updated.razorpayKeyId ?? "",
-                          hasRazorpayKeySecret: updated.hasRazorpayKeySecret,
-                          hasRazorpayWebhookSecret: updated.hasRazorpayWebhookSecret,
-                          onlinePaymentsEnabled: updated.onlinePaymentsEnabled,
-                        };
-                        setPaymentSettings(ps);
-                        setPaymentForm({ ...paymentForm, razorpayKeySecret: "", razorpayWebhookSecret: "" });
-                        setEditingSections(prev => ({ ...prev, payments: false }));
-                        setFeedback({ tone: "success", message: "Payment settings saved." });
-                      } catch (err) {
-                        setFeedback({ tone: "error", message: getErrorMessage(err, "Failed to save payment settings.") });
-                      } finally {
-                        setIsPaymentSaving(false);
-                      }
-                    }}
-                  >
-                    <Save size={14} /> {isPaymentSaving ? "Saving…" : "Save"}
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  className="inline-flex items-center justify-center gap-2 min-h-[40px] px-4 border-none rounded-xl font-['Outfit',sans-serif] text-[13px] font-semibold cursor-pointer transition-all duration-200 bg-[#EDF2F7] text-[#2D3748] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed dark:bg-tk-bg-elevated dark:text-tk-text dark:hover:bg-tk-bg-hover"
-                  onClick={() => startRestaurantEdit("payments")}
-                >
-                  <Edit3 size={14} /> Edit
-                </button>
-              )}
-            </div>
-          </div>
-
-            {editingSections.payments ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Enable Online Payments Toggle */}
-                <div
-                  className="col-span-1 sm:col-span-2"
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '14px 16px',
-                    border: '1px solid #CBD5E0',
-                    borderRadius: '12px',
-                    marginTop: '4px',
-                    gap: '12px',
-                    flexWrap: 'wrap',
-                  }}
-                >
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                    <span className="text-[13px] font-semibold text-[#1A202C] font-['Outfit',sans-serif] dark:text-tk-text">Enable Online Payments</span>
-                    <span className="text-[#718096] text-[12px] leading-relaxed font-['Outfit',sans-serif] dark:text-tk-text-secondary">Allow customers to pay online from their phones</span>
-                  </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={restaurantForm?.payOnline ?? false}
-                    onClick={() => handleRestaurantFieldChange("payOnline", (!restaurantForm?.payOnline) as any)}
-                    style={{
-                      position: 'relative',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      width: '48px',
-                      height: '26px',
-                      borderRadius: '9999px',
-                      border: 'none',
-                      cursor: 'pointer',
-                      flexShrink: 0,
-                      transition: 'background-color 0.2s ease',
-                      backgroundColor: restaurantForm?.payOnline ? 'var(--tk-burgundy, #8B3A1E)' : '#CBD5E0',
-                      padding: 0,
-                    }}
-                  >
-                    <span
-                      style={{
-                        display: 'block',
-                        width: '20px',
-                        height: '20px',
-                        borderRadius: '50%',
-                        backgroundColor: '#fff',
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                        transition: 'transform 0.2s ease',
-                        transform: restaurantForm?.payOnline ? 'translateX(25px)' : 'translateX(3px)',
-                      }}
-                    />
-                  </button>
-                </div>
-
-                <label className="flex flex-col gap-2">
-                  <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Razorpay Key ID</span>
-                  <input
-                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                    type="text"
-                    value={paymentForm.razorpayKeyId}
-                    onChange={e => setPaymentForm(f => ({ ...f, razorpayKeyId: e.target.value }))}
-                    placeholder="rzp_live_xxxxxxxxxxxx"
-                  />
-                </label>
-
-                <label className="flex flex-col gap-2">
-                  <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Razorpay Key Secret {paymentSettings.hasRazorpayKeySecret && <span style={{ color: "green", fontSize: "0.75rem" }}>✓ Configured</span>}</span>
-                  <input
-                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                    type="password"
-                    value={paymentForm.razorpayKeySecret}
-                    onChange={e => setPaymentForm(f => ({ ...f, razorpayKeySecret: e.target.value }))}
-                    placeholder={paymentSettings.hasRazorpayKeySecret ? "Leave blank to keep existing" : "Enter key secret"}
-                    autoComplete="new-password"
-                  />
-                </label>
-
-                <label className="flex flex-col gap-2 sm:col-span-2">
-                  <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Webhook Secret {paymentSettings.hasRazorpayWebhookSecret && <span style={{ color: "green", fontSize: "0.75rem" }}>✓ Configured</span>}</span>
-                  <input
-                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                    type="password"
-                    value={paymentForm.razorpayWebhookSecret}
-                    onChange={e => setPaymentForm(f => ({ ...f, razorpayWebhookSecret: e.target.value }))}
-                    placeholder={paymentSettings.hasRazorpayWebhookSecret ? "Leave blank to keep existing" : "Enter webhook secret"}
-                    autoComplete="new-password"
-                  />
-                  <span className="text-[#4A5568] text-[12px] leading-relaxed font-['Outfit',sans-serif] dark:text-tk-text-secondary">Set this in your Razorpay Dashboard → Webhooks → Secret.</span>
-                </label>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Online Payments</span>
-                  <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
-                    {(restaurant as any)?.pay_online === false ? "❌ Disabled" : "✅ Enabled"}
-                  </span>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Razorpay Key ID</span>
-                  <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text text-[12px] text-[#4A5568] font-mono break-all dark:text-tk-text-secondary">
-                    {paymentSettings.razorpayKeyId || "Not set"}
-                  </span>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Key Secret</span>
-                  <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
-                    {paymentSettings.hasRazorpayKeySecret ? "🔒 Configured" : "Not set"}
-                  </span>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Webhook Secret</span>
-                  <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
-                    {paymentSettings.hasRazorpayWebhookSecret ? "🔒 Configured" : "Not set"}
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
       </div>
     );
   }
+
+  // ── helpers used inside Features tab ────────────────────────────────────
+
+  // ── helpers used inside Features tab ────────────────────────────────────
+  const featureBadge = (on: boolean) => (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 5,
+      padding: '3px 10px', borderRadius: 20,
+      fontSize: 12, fontWeight: 600, fontFamily: "'Outfit',sans-serif",
+      background: on ? 'rgba(22,163,74,0.10)' : 'rgba(239,68,68,0.10)',
+      color: on ? '#15803D' : '#B91C1C',
+      border: `1px solid ${on ? 'rgba(22,163,74,0.22)' : 'rgba(239,68,68,0.22)'}`,
+    }}>
+      <span style={{ width: 6, height: 6, borderRadius: '50%', background: on ? '#16A34A' : '#EF4444', display: 'inline-block' }} />
+      {on ? 'Active' : 'Inactive'}
+    </span>
+  );
+
+  const ToggleKnob = ({ on }: { on: boolean }) => (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      onClick={() => {}}
+      style={{
+        position: 'relative', display: 'inline-flex', alignItems: 'center',
+        width: 52, height: 28, borderRadius: 9999, border: 'none', cursor: 'pointer',
+        flexShrink: 0, transition: 'background-color 0.25s', padding: 0,
+        backgroundColor: on ? '#8B3A1E' : '#CBD5E0',
+      }}
+    >
+      <span style={{
+        display: 'block', width: 22, height: 22, borderRadius: '50%', backgroundColor: '#fff',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.25)', transition: 'transform 0.25s',
+        transform: `translateX(${on ? 27 : 3}px)`,
+      }} />
+    </button>
+  );
+
+  const triggerConfirm = (
+    title: string, description: string, warning: string,
+    confirmLabel: string, confirmColor: string,
+    action: () => Promise<void>
+  ) => {
+    setConfirmModal({ open: true, title, description, warning, confirmLabel, confirmColor, onConfirm: action });
+  };
+
+  const handlePayOnlineFeatureToggle = () => {
+    const on = (restaurant as any)?.pay_online === true || restaurantForm?.payOnline === true;
+    if (!on) {
+      // turning ON — need credentials
+      const hasAll = paymentSettings.razorpayKeyId && paymentSettings.hasRazorpayKeySecret && paymentSettings.hasRazorpayWebhookSecret;
+      if (!hasAll) {
+        setPaymentSetupForm({ razorpayKeyId: paymentSettings.razorpayKeyId, razorpayKeySecret: '', razorpayWebhookSecret: '' });
+        setPaymentSetupError(null);
+        setShowPaymentSetupModal(true);
+        return;
+      }
+      triggerConfirm(
+        'Enable Online Payments?',
+        'Customers will be able to pay online via Razorpay. Make sure your Razorpay account is active.',
+        'This allows real money transactions on your storefront.',
+        'Enable Payments', '#16A34A',
+        async () => {
+          if (!activeRestaurantId) return;
+          await updateRestaurantProfile(activeRestaurantId, { pay_online: true });
+          const updated = await getRestaurantById(activeRestaurantId);
+          if (updated) { setRestaurant(updated); setRestaurantForm(createRestaurantFormState(updated)); }
+          setFeedback({ tone: 'success', message: 'Online payments enabled.' });
+        }
+      );
+    } else {
+      triggerConfirm(
+        'Disable Online Payments?',
+        'The "Pay Online" button will be removed from your storefront. Customers can only pay at the counter.',
+        'Ensure there are no in-progress payments before disabling.',
+        'Disable Payments', '#EF4444',
+        async () => {
+          if (!activeRestaurantId) return;
+          await updateRestaurantProfile(activeRestaurantId, { pay_online: false });
+          const updated = await getRestaurantById(activeRestaurantId);
+          if (updated) { setRestaurant(updated); setRestaurantForm(createRestaurantFormState(updated)); }
+          setFeedback({ tone: 'success', message: 'Online payments disabled.' });
+        }
+      );
+    }
+  };
+
+  const handleKitchenFeatureToggle = () => {
+    const on = (restaurant as any)?.kitchen_app_enabled !== false;
+    if (!on) {
+      triggerConfirm(
+        'Enable Kitchen Web App?',
+        'Kitchen staff will be able to log in. Customers will see the Live Queue button.',
+        'Ensure kitchen staff accounts are set up before enabling.',
+        'Enable Kitchen App', '#16A34A',
+        async () => {
+          if (!activeRestaurantId) return;
+          await updateRestaurantProfile(activeRestaurantId, { kitchen_app_enabled: true });
+          const updated = await getRestaurantById(activeRestaurantId);
+          if (updated) { setRestaurant(updated); setRestaurantForm(createRestaurantFormState(updated)); }
+          setFeedback({ tone: 'success', message: 'Kitchen App enabled.' });
+        }
+      );
+    } else {
+      triggerConfirm(
+        'Disable Kitchen Web App?',
+        'Kitchen staff will be locked out. The Live Queue button will be hidden from all customers immediately.',
+        'Any kitchen staff currently logged in will see a "Disabled" screen.',
+        'Disable Kitchen App', '#EF4444',
+        async () => {
+          if (!activeRestaurantId) return;
+          await updateRestaurantProfile(activeRestaurantId, { kitchen_app_enabled: false });
+          const updated = await getRestaurantById(activeRestaurantId);
+          if (updated) { setRestaurant(updated); setRestaurantForm(createRestaurantFormState(updated)); }
+          setFeedback({ tone: 'success', message: 'Kitchen App disabled.' });
+        }
+      );
+    }
+  };
+
+  function renderFeaturesTab(): React.ReactNode {
+    const payOn = (restaurant as any)?.pay_online === true;
+    const kitchenOn = (restaurant as any)?.kitchen_app_enabled !== false;
+
+    const cardCls = "border border-[#E2E8F0] rounded-[24px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] overflow-hidden bg-white dark:bg-tk-bg-card dark:border-tk-border";
+    const sectionHeaderCls = "flex items-center gap-3 px-5 py-4 border-b border-[#E2E8F0] dark:border-tk-border bg-[#F8FAFC] dark:bg-tk-bg-elevated";
+    const rowCls = "flex items-start justify-between gap-4 px-5 py-5 flex-wrap";
+    const credRowCls = "flex items-center justify-between px-5 py-3 border-t border-[#E2E8F0] dark:border-tk-border text-[13px] font-['Outfit',sans-serif]";
+
+    return (
+      <div style={{ display: activeTab === 'features' ? 'flex' : 'none', flexDirection: 'column', gap: 20 }}>
+        {/* ── Card: Online Payments ─────────────────────────────────────────── */}
+        <div className={cardCls}>
+          <div className={sectionHeaderCls}>
+            <div style={{ width: 36, height: 36, borderRadius: 9, background: 'linear-gradient(135deg,#8B3A1E,#6B2A15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <CreditCardIcon size={16} color="#fff" />
+            </div>
+            <div>
+              <div className="text-[15px] font-bold text-[#1A202C] font-['Outfit',sans-serif] dark:text-tk-text">Online Payments · Razorpay</div>
+              <div className="text-[12px] text-[#64748B] font-['Outfit',sans-serif]">Let customers pay via UPI, Cards &amp; Net Banking</div>
+            </div>
+          </div>
+
+          {/* Toggle row */}
+          <div className={rowCls}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                <span className="text-[15px] font-semibold text-[#1A202C] font-['Outfit',sans-serif] dark:text-tk-text">Enable Pay Online</span>
+                {featureBadge(payOn)}
+              </div>
+              <p className="text-[13px] text-[#64748B] font-['Outfit',sans-serif]" style={{ margin: 0, lineHeight: 1.5 }}>
+                When enabled, the "Pay Online" button appears at checkout.
+                {!payOn && !paymentSettings.razorpayKeyId && (
+                  <span style={{ color: '#F59E0B', display: 'block', marginTop: 4 }}>⚠ Razorpay credentials not set up yet.</span>
+                )}
+              </p>
+            </div>
+            <div onClick={handlePayOnlineFeatureToggle} style={{ cursor: 'pointer' }}>
+              <ToggleKnob on={payOn} />
+            </div>
+          </div>
+
+          {/* Credential status rows */}
+          <div className={credRowCls}>
+            <span className="text-[#64748B] dark:text-tk-text-secondary flex items-center gap-1.5"><Key size={12} /> Key ID</span>
+            <span style={{ color: paymentSettings.razorpayKeyId ? '#15803D' : '#94A3B8', fontWeight: 500 }}>
+              {paymentSettings.razorpayKeyId ? `${paymentSettings.razorpayKeyId.slice(0, 14)}•••` : 'Not set'}
+            </span>
+          </div>
+          <div className={credRowCls}>
+            <span className="text-[#64748B] dark:text-tk-text-secondary flex items-center gap-1.5"><Lock size={12} /> Key Secret</span>
+            <span style={{ color: paymentSettings.hasRazorpayKeySecret ? '#15803D' : '#94A3B8', fontWeight: 500 }}>
+              {paymentSettings.hasRazorpayKeySecret ? '✓ Saved' : 'Not set'}
+            </span>
+          </div>
+          <div className={credRowCls}>
+            <span className="text-[#64748B] dark:text-tk-text-secondary flex items-center gap-1.5"><Webhook size={12} /> Webhook Secret</span>
+            <span style={{ color: paymentSettings.hasRazorpayWebhookSecret ? '#15803D' : '#94A3B8', fontWeight: 500 }}>
+              {paymentSettings.hasRazorpayWebhookSecret ? '✓ Saved' : 'Not set'}
+            </span>
+          </div>
+
+          {/* Update credentials button */}
+          <div style={{ padding: '14px 20px', borderTop: '1px solid var(--tk-border,#E2E8F0)' }}>
+            <button
+              type="button"
+              onClick={() => { setPaymentSetupForm({ razorpayKeyId: paymentSettings.razorpayKeyId, razorpayKeySecret: '', razorpayWebhookSecret: '' }); setPaymentSetupError(null); setShowPaymentSetupModal(true); }}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-tk-burgundy text-tk-burgundy text-[13px] font-semibold font-['Outfit',sans-serif] bg-transparent cursor-pointer transition-all hover:bg-[rgba(139,58,30,0.06)]"
+            >
+              <Key size={13} />{paymentSettings.razorpayKeyId ? 'Update Razorpay Credentials' : 'Setup Razorpay'}
+            </button>
+          </div>
+        </div>
+
+        {/* ── Card: Kitchen Web App ─────────────────────────────────────────── */}
+        <div className={cardCls}>
+          <div className={sectionHeaderCls}>
+            <div style={{ width: 36, height: 36, borderRadius: 9, background: 'linear-gradient(135deg,#1E40AF,#1E3A8A)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <ChefHat size={16} color="#fff" />
+            </div>
+            <div>
+              <div className="text-[15px] font-bold text-[#1A202C] font-['Outfit',sans-serif] dark:text-tk-text">Kitchen Web App &amp; Live Queue</div>
+              <div className="text-[12px] text-[#64748B] font-['Outfit',sans-serif]">Kitchen display system &amp; customer-facing live queue</div>
+            </div>
+          </div>
+
+          {/* Toggle row */}
+          <div className={rowCls}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                <span className="text-[15px] font-semibold text-[#1A202C] font-['Outfit',sans-serif] dark:text-tk-text">Enable Kitchen App</span>
+                {featureBadge(kitchenOn)}
+              </div>
+              <p className="text-[13px] text-[#64748B] font-['Outfit',sans-serif]" style={{ margin: 0, lineHeight: 1.5 }}>
+                When enabled, kitchen staff can log in and customers see the Live Queue button everywhere.
+              </p>
+            </div>
+            <div onClick={handleKitchenFeatureToggle} style={{ cursor: 'pointer' }}>
+              <ToggleKnob on={kitchenOn} />
+            </div>
+          </div>
+
+          {/* Impact list */}
+          <div style={{ padding: '14px 20px', borderTop: '1px solid var(--tk-border,#E2E8F0)' }}>
+            <div className="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-[0.5px] font-['Outfit',sans-serif]" style={{ marginBottom: 10 }}>
+              Disabling will affect:
+            </div>
+            {['Kitchen Web App login for staff', 'Live Queue button on storefront', 'Live Queue in hamburger menu', 'Direct access to /live-queue page'].map((item, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#475569', marginBottom: 6, fontFamily: "'Outfit',sans-serif" }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: kitchenOn ? '#EF4444' : '#16A34A', flexShrink: 0 }} />
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Confirmation Modal ────────────────────────────────────────────── */}
+        {confirmModal.open && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', padding: 20 }}>
+            <div style={{ background: 'var(--tk-bg-surface,#fff)', borderRadius: 20, padding: '32px 28px', maxWidth: 430, width: '100%', boxShadow: '0 24px 60px rgba(0,0,0,0.22)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+                <div style={{ width: 46, height: 46, borderRadius: 12, background: 'rgba(245,158,11,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <AlertTriangle size={22} color="#F59E0B" />
+                </div>
+                <button onClick={() => setConfirmModal(m => ({ ...m, open: false }))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}><X size={18} /></button>
+              </div>
+              <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--tk-text,#1A202C)', margin: '0 0 8px', fontFamily: "'Outfit',sans-serif" }}>{confirmModal.title}</h3>
+              <p style={{ fontSize: 14, color: '#64748B', lineHeight: 1.6, margin: '0 0 14px', fontFamily: "'Outfit',sans-serif" }}>{confirmModal.description}</p>
+              <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#92400E', display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 22, fontFamily: "'Outfit',sans-serif" }}>
+                <AlertTriangle size={13} style={{ flexShrink: 0, marginTop: 1 }} />{confirmModal.warning}
+              </div>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => setConfirmModal(m => ({ ...m, open: false }))}
+                  disabled={confirmLoading}
+                  style={{ flex: 1, padding: '11px 16px', borderRadius: 10, border: '1.5px solid #E2E8F0', background: 'transparent', color: 'var(--tk-text,#1A202C)', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}
+                >Cancel</button>
+                <button
+                  type="button"
+                  disabled={confirmLoading}
+                  onClick={async () => {
+                    setConfirmLoading(true);
+                    try { await confirmModal.onConfirm(); setConfirmModal(m => ({ ...m, open: false })); }
+                    catch (err: any) { setFeedback({ tone: 'error', message: err?.message ?? 'Failed.' }); }
+                    finally { setConfirmLoading(false); }
+                  }}
+                  style={{ flex: 1, padding: '11px 16px', borderRadius: 10, border: 'none', background: confirmModal.confirmColor, color: '#fff', fontSize: 14, fontWeight: 600, cursor: confirmLoading ? 'not-allowed' : 'pointer', opacity: confirmLoading ? 0.7 : 1, fontFamily: "'Outfit',sans-serif" }}
+                >{confirmLoading ? 'Saving…' : confirmModal.confirmLabel}</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Payment Setup Modal ───────────────────────────────────────────── */}
+        {showPaymentSetupModal && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', padding: 20 }}>
+            <div style={{ background: 'var(--tk-bg-surface,#fff)', borderRadius: 20, padding: '32px 28px', maxWidth: 490, width: '100%', boxShadow: '0 24px 60px rgba(0,0,0,0.22)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 42, height: 42, borderRadius: 10, background: 'linear-gradient(135deg,#8B3A1E,#6B2A15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <CreditCardIcon size={18} color="#fff" />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--tk-text,#1A202C)', margin: 0, fontFamily: "'Outfit',sans-serif" }}>Setup Razorpay</h3>
+                    <p style={{ fontSize: 12, color: '#64748B', margin: 0, fontFamily: "'Outfit',sans-serif" }}>All 3 fields required to enable payments</p>
+                  </div>
+                </div>
+                <button onClick={() => setShowPaymentSetupModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}><X size={18} /></button>
+              </div>
+              {/* Info Banner */}
+              <div style={{ background: 'rgba(59,130,246,0.07)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#1D4ED8', display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 18, fontFamily: "'Outfit',sans-serif" }}>
+                <ShieldCheck size={13} style={{ flexShrink: 0, marginTop: 1 }} />
+                Credentials are encrypted and stored securely. Secrets are never shown after saving.
+              </div>
+              {/* Fields */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {[
+                  { icon: <Key size={12} />, label: 'Razorpay Key ID', key: 'razorpayKeyId', placeholder: 'rzp_live_xxxxxxxxxxxx', type: 'text' },
+                  { icon: <Lock size={12} />, label: 'Key Secret', key: 'razorpayKeySecret', placeholder: '••••••••••••', type: 'password' },
+                  { icon: <Webhook size={12} />, label: 'Webhook Secret', key: 'razorpayWebhookSecret', placeholder: '••••••••••••', type: 'password' },
+                ].map(f => (
+                  <div key={f.key}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6, fontFamily: "'Outfit',sans-serif" }}>
+                      {f.icon}{f.label}
+                    </label>
+                    <input
+                      type={f.type as any}
+                      placeholder={f.placeholder}
+                      value={(paymentSetupForm as any)[f.key]}
+                      onChange={e => setPaymentSetupForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                      autoComplete="new-password"
+                      className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                    />
+                  </div>
+                ))}
+              </div>
+              {paymentSetupError && (
+                <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, fontSize: 13, color: '#B91C1C', display: 'flex', gap: 8, alignItems: 'center', fontFamily: "'Outfit',sans-serif" }}>
+                  <XCircle size={13} />{paymentSetupError}
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
+                <button type="button" onClick={() => setShowPaymentSetupModal(false)} style={{ flex: 1, padding: '11px 16px', borderRadius: 10, border: '1.5px solid #E2E8F0', background: 'transparent', color: 'var(--tk-text,#1A202C)', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}>Cancel</button>
+                <button
+                  type="button"
+                  disabled={paymentSetupSaving || !paymentSetupForm.razorpayKeyId.trim() || !paymentSetupForm.razorpayKeySecret.trim() || !paymentSetupForm.razorpayWebhookSecret.trim()}
+                  onClick={async () => {
+                    setPaymentSetupSaving(true); setPaymentSetupError(null);
+                    try {
+                      if (!activeRestaurantId) return;
+                      const updated = await updateRestaurantPaymentSettings(activeRestaurantId, {
+                        razorpayKeyId: paymentSetupForm.razorpayKeyId.trim(),
+                        razorpayKeySecret: paymentSetupForm.razorpayKeySecret.trim(),
+                        razorpayWebhookSecret: paymentSetupForm.razorpayWebhookSecret.trim(),
+                        onlinePaymentsEnabled: true,
+                      });
+                      await updateRestaurantProfile(activeRestaurantId, { pay_online: true });
+                      setPaymentSettings({ razorpayKeyId: updated.razorpayKeyId ?? '', hasRazorpayKeySecret: updated.hasRazorpayKeySecret, hasRazorpayWebhookSecret: updated.hasRazorpayWebhookSecret, onlinePaymentsEnabled: true });
+                      const rest = await getRestaurantById(activeRestaurantId);
+                      if (rest) { setRestaurant(rest); setRestaurantForm(createRestaurantFormState(rest)); }
+                      setShowPaymentSetupModal(false);
+                      setFeedback({ tone: 'success', message: 'Razorpay set up — payments enabled!' });
+                    } catch (err: any) {
+                      setPaymentSetupError(err?.message ?? 'Failed to save credentials.');
+                    } finally { setPaymentSetupSaving(false); }
+                  }}
+                  style={{ flex: 1, padding: '11px 16px', borderRadius: 10, border: 'none', background: (!paymentSetupForm.razorpayKeyId.trim() || !paymentSetupForm.razorpayKeySecret.trim() || !paymentSetupForm.razorpayWebhookSecret.trim()) ? '#CBD5E0' : 'linear-gradient(135deg,#8B3A1E,#6B2A15)', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}
+                >{paymentSetupSaving ? 'Saving…' : 'Save & Enable'}</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   function renderAdminEditor(): React.ReactNode {
     if (!userProfile) {
       return (
@@ -2369,68 +2497,21 @@ const ProfilePage: React.FC = () => {
 
   return (
     <>
-        <div
-          className="flex justify-between items-center mb-8"
-          style={{ marginBottom: "32px", alignItems: "center" }}
-        >
-          <div
-            style={{
-              display: "flex",
-              gap: "0",
-              borderBottom: "1px solid var(--border-color, #E2E8F0)",
-              flex: 1,
-              overflowX: "auto",
-              scrollbarWidth: "none",
-            }}
-          >
-            {[
-              { id: "general", label: "General Info" },
-              { id: "branding", label: "Location & Branding" },
-              { id: "story", label: "Story & Socials" },
-              { id: "payments", label: "Payments" },
-              { id: "admin", label: "Admin Profile" },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id as any)}
-                style={{
-                  position: "relative",
-                  zIndex: activeTab === tab.id ? 1 : "auto",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  padding: "1rem 1.25rem",
-                  fontSize: "1.05rem",
-                  fontWeight: 600,
-                  color:
-                    activeTab === tab.id
-                      ? "var(--tk-burgundy, #8B3A1E)"
-                      : "var(--tk-text-secondary, #718096)",
-                  border: "none",
-                  borderBottom: `2px solid ${activeTab === tab.id ? "var(--tk-burgundy, #8B3A1E)" : "transparent"}`,
-                  marginBottom: "-1px",
-                  background: "none",
-                  cursor: "pointer",
-                  whiteSpace: "nowrap",
-                  transition: "all 0.2s",
-                  flexShrink: 0,
-                }}
-              >
-                {tab.label}
-              </button>
-            ))}
+      <div className="flex flex-col gap-6 mb-8">
+        {/* Header Row: Title & Actions */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#E2E8F0] dark:border-tk-border">
+          <div>
+            <h1 className="text-3xl font-extrabold text-[#1A202C] font-['Outfit',sans-serif] dark:text-white mb-1.5 tracking-tight">
+              Restaurant Profile
+            </h1>
+            <p className="text-[14px] text-[#64748B] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
+              Manage your restaurant details, branding, features, and settings.
+            </p>
           </div>
-          <div
-            className="flex items-center gap-4 max-md:fixed max-md:top-4 max-md:right-4 max-md:z-[90] max-md:ml-0"
-            style={{
-              alignSelf: "center",
-              paddingBottom: "0",
-              marginLeft: "24px",
-            }}
-          >
+          
+          <div className="flex items-center gap-4 shrink-0">
             <button
-              className="relative h-11 px-5 rounded-xl bg-white dark:bg-tk-bg-elevated text-[#E53E3E] border border-[#E53E3E]/20 flex items-center justify-center cursor-pointer shadow-sm overflow-hidden transition-all duration-300 z-10 before:absolute before:inset-0 before:w-full before:h-full before:bg-[#E53E3E] before:-z-10 before:-translate-x-full before:transition-transform before:duration-300 hover:before:translate-x-0 hover:text-white hover:shadow-[0_8px_16px_rgba(229,62,62,0.3)] hover:-translate-y-0.5 active:translate-y-0 font-bold font-['Outfit',sans-serif] text-[13px] tracking-wide"
+              className="relative h-11 px-5 rounded-xl bg-white dark:bg-tk-bg-elevated text-[#E53E3E] border border-[#E53E3E]/20 flex items-center justify-center cursor-pointer shadow-[0_2px_8px_rgba(229,62,62,0.08)] overflow-hidden transition-all duration-300 z-10 before:absolute before:inset-0 before:w-full before:h-full before:bg-[#E53E3E] before:-z-10 before:-translate-x-full before:transition-transform before:duration-300 hover:before:translate-x-0 hover:text-white hover:shadow-[0_8px_16px_rgba(229,62,62,0.3)] hover:-translate-y-0.5 active:translate-y-0 font-bold font-['Outfit',sans-serif] text-[13px] tracking-wide"
               title="Sign Out"
               onClick={() => setShowLogoutConfirm(true)}
             >
@@ -2440,7 +2521,7 @@ const ProfilePage: React.FC = () => {
               <img
                 src={userProfile.avatarUrl}
                 alt="Admin avatar"
-                className="w-11 h-11 rounded-full bg-[linear-gradient(135deg,var(--tk-burgundy),#6B2A15)] text-white flex items-center justify-center text-[12px] font-bold tracking-[0.12em] font-['Outfit',sans-serif] object-cover"
+                className="w-12 h-12 rounded-full bg-[linear-gradient(135deg,var(--tk-burgundy),#6B2A15)] shadow-[0_4px_12px_rgba(139,58,30,0.15)] text-white flex items-center justify-center text-[12px] font-bold tracking-[0.12em] font-['Outfit',sans-serif] object-cover ring-2 ring-white dark:ring-tk-bg-surface"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = "none";
                   (e.target as HTMLImageElement).parentElement
@@ -2449,9 +2530,36 @@ const ProfilePage: React.FC = () => {
                 }}
               />
             ) : null}
-
           </div>
         </div>
+
+        {/* Tabs Row */}
+        <div className="inline-flex gap-1.5 p-1.5 bg-[#F1F5F9] dark:bg-[rgba(199,91,58,0.1)] border border-[#E2E8F0] dark:border-[rgba(199,91,58,0.2)] rounded-[16px] overflow-x-auto max-w-full self-start no-scrollbar shadow-inner mt-2">
+          {[
+            { id: "general", label: "General Info" },
+            { id: "branding", label: "Location & Branding" },
+            { id: "story", label: "Story & Socials" },
+            { id: "features", label: "Features" },
+            { id: "admin", label: "Admin Profile" },
+          ].map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`relative flex items-center gap-2 px-6 py-2.5 text-[14px] font-bold font-['Outfit',sans-serif] rounded-xl whitespace-nowrap transition-all duration-300 shrink-0 ${
+                  isActive
+                    ? "text-tk-burgundy bg-white shadow-sm dark:bg-tk-burgundy dark:text-white ring-1 ring-black/5 dark:ring-white/10 dark:shadow-[0_2px_10px_rgba(199,91,58,0.3)]"
+                    : "text-[#64748B] dark:text-[#F0EDE8]/70 bg-transparent hover:text-tk-burgundy dark:hover:text-white hover:bg-black/5 dark:hover:bg-[rgba(199,91,58,0.15)]"
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
         {feedback && (
           <div
@@ -2473,6 +2581,9 @@ const ProfilePage: React.FC = () => {
           >
             {renderRestaurantProfileContent()}
           </form>
+
+          {/* Features Tab */}
+          {renderFeaturesTab()}
 
           <form
             onSubmit={handleAdminSave}
