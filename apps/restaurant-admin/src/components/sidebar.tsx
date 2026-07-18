@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { ChevronLeft, ChevronRight, LogOut, Menu, Bell } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LogOut, Menu, Bell, Settings } from 'lucide-react';
 import { supabase as db } from '@restaurant-saas/supabase';
 
 const Tooltip = ({
@@ -199,6 +199,7 @@ const Sidebar: React.FC = () => {
     if (path.includes('/subscription')) return 'subscription';
     if (path.includes('/team')) return 'team';
     if (path.includes('/notifications')) return 'notifications';
+    if (path.includes('/feature-settings')) return 'feature-settings';
     return 'dashboard';
   };
 
@@ -251,7 +252,7 @@ const Sidebar: React.FC = () => {
     { icon: (active) => <ReportIcon active={active} />, label: 'Report and Analytics', id: 'report', path: '/reports' },
     { icon: (active) => <TableIcon active={active} />, label: "Table Management", id: "table-management", path: "/table-management" },
     { icon: (active) => <UsersIcon active={active} />, label: 'Team Management', id: 'team', path: '/team' },
-    { icon: (active) => <SubscriptionIcon active={active} />, label: 'Subscription', id: 'subscription', path: '/subscription' }
+    { icon: (active) => <SubscriptionIcon active={active} />, label: 'Subscription', id: 'subscription', path: '/subscription' },
   ];
 
   const handleNavClick = (item: NavItem) => {
