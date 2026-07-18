@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
   ChefHat,
-  CheckCircle2,
   CreditCardIcon,
   Crosshair,
   Edit3,
@@ -288,13 +287,6 @@ const ProfilePage: React.FC = () => {
     hasRazorpayWebhookSecret: false,
     onlinePaymentsEnabled: false,
   });
-  const [paymentForm, setPaymentForm] = useState({
-    razorpayKeyId: "",
-    razorpayKeySecret: "",
-    razorpayWebhookSecret: "",
-    onlinePaymentsEnabled: false,
-  });
-  const [isPaymentSaving, setIsPaymentSaving] = useState(false);
 
   // Cropping state
   const [cropImage, setCropImage] = useState<string | null>(null);
@@ -333,12 +325,7 @@ const ProfilePage: React.FC = () => {
           onlinePaymentsEnabled: pmtSettings.onlinePaymentsEnabled,
         };
         setPaymentSettings(ps);
-        setPaymentForm({
-          razorpayKeyId: ps.razorpayKeyId,
-          razorpayKeySecret: "",
-          razorpayWebhookSecret: "",
-          onlinePaymentsEnabled: ps.onlinePaymentsEnabled,
-        });
+
       } catch (error: unknown) {
         console.error("Error fetching restaurant context:", error);
         setFeedback({
