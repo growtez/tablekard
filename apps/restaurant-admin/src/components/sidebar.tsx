@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { ChevronLeft, ChevronRight, LogOut, Menu, Bell, Settings } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LogOut, Menu, Bell } from 'lucide-react';
 import { supabase as db } from '@restaurant-saas/supabase';
 
 const Tooltip = ({
