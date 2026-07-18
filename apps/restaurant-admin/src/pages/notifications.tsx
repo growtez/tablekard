@@ -32,7 +32,7 @@ const NotificationsPage: React.FC = () => {
 
         let allNotifications: Notification[] = [];
         if (specificData) {
-            allNotifications = specificData.map(n => ({
+            allNotifications = (specificData as any[]).map(n => ({
                 id: n.id,
                 title: n.title,
                 message: n.message,
