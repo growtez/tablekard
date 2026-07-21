@@ -264,7 +264,7 @@ img { display: block; max-width: 100%; }
 .feature-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
   padding: 0.4rem 1.8rem;
   color: white;
   font-weight: 600;
@@ -273,7 +273,12 @@ img { display: block; max-width: 100%; }
   letter-spacing: 0.04em;
 }
 
-.feature-icon { font-size: 1.2rem; }
+.feature-icon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  opacity: 0.92;
+}
 
 .feature-divider {
   width: 1px;
@@ -724,16 +729,22 @@ img { display: block; max-width: 100%; }
 .contact-detail-item:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--border-color); }
 
 .contact-detail-item .icon {
-  font-size: 1.6rem;
   background: var(--primary-bg);
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   border: var(--border-style);
-  border-radius: 8px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  padding: 10px;
+  color: var(--primary-color);
+}
+
+.contact-detail-item .icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .contact-detail-item h4 {
@@ -767,7 +778,19 @@ img { display: block; max-width: 100%; }
   font-size: 0.95rem;
 }
 
-.map-icon { font-size: 3rem; }
+.map-icon {
+  color: var(--primary-color);
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.map-icon svg {
+  width: 100%;
+  height: 100%;
+}
 
 /* ─── FOOTER ────────────────────────────────────────────── */
 .site-footer {
@@ -826,16 +849,19 @@ img { display: block; max-width: 100%; }
 .social-icon {
   background: rgba(255,255,255,0.08);
   border: 1px solid rgba(255,255,255,0.15);
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
   text-decoration: none;
   transition: var(--transition);
+  color: rgba(255,255,255,0.75);
+  padding: 9px;
 }
+
+.social-icon svg { width: 100%; height: 100%; }
 
 .social-icon:hover { background: var(--primary-color); border-color: var(--primary-color); }
 
