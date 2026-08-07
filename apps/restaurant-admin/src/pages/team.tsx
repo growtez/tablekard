@@ -175,7 +175,7 @@ const Team: React.FC = () => {
     <div className="flex flex-col h-full">
         <div className="flex flex-row items-center justify-between gap-4 flex-wrap mb-8 max-md:-mt-[52px] max-md:mb-[12px] animate-[fadeIn_0.3s_ease]">
           <div className="flex items-center gap-4 max-md:ml-[56px]">
-            <h1 className="text-[28px] font-extrabold text-tk-text tracking-tight m-0">Team</h1>
+            <h1 className="text-[28px] font-extrabold text-tk-text tracking-tight m-0">Staff</h1>
             <div className="px-3 py-1 bg-tk-burgundy/10 text-tk-burgundy text-[13px] font-bold rounded-full border border-tk-burgundy/20">
               {filteredMembers.length} Members
             </div>
@@ -186,7 +186,7 @@ const Team: React.FC = () => {
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-tk-text-secondary opacity-70" size={16} />
               <input
                 type="text"
-                placeholder="Search team..."
+                placeholder="Search staff..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 pr-4 py-2.5 bg-white dark:bg-tk-bg-card border border-[#E2E8F0] dark:border-tk-border rounded-full text-tk-text text-sm focus:outline-none focus:ring-4 focus:ring-tk-burgundy/10 focus:border-tk-burgundy transition-all w-full sm:w-[260px] shadow-sm"
@@ -206,16 +206,16 @@ const Team: React.FC = () => {
         {loading ? (
           <div className="flex flex-col items-center justify-center h-[50vh] gap-4 text-tk-text-secondary">
             <Loader2 className="animate-spin text-tk-burgundy" size={36} />
-            <p className="text-sm font-semibold tracking-wide uppercase">Loading team...</p>
+            <p className="text-sm font-semibold tracking-wide uppercase">Loading staff...</p>
           </div>
         ) : filteredMembers.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-[50vh] text-center px-4 animate-[fadeIn_0.4s_ease]">
             <div className="w-20 h-20 bg-tk-bg-surface border border-tk-border rounded-[24px] flex items-center justify-center mb-5 shadow-sm rotate-3">
               <Users className="text-tk-text-secondary opacity-60" size={36} />
             </div>
-            <h3 className="text-[20px] font-bold text-tk-text mb-2">No Team Members Found</h3>
+            <h3 className="text-[20px] font-bold text-tk-text mb-2">No Staff Members Found</h3>
             <p className="text-tk-text-secondary text-[15px] max-w-md leading-relaxed">
-              {searchTerm ? "No members match your search criteria." : "You haven't added any team members yet. Invite your staff to collaborate."}
+              {searchTerm ? "No members match your search criteria." : "You haven't added any staff members yet. Invite your staff to collaborate."}
             </p>
             {searchTerm && (
               <button 
@@ -233,7 +233,7 @@ const Team: React.FC = () => {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr>
-                    <th className="py-5 px-6 text-[12px] font-bold text-tk-text-secondary uppercase tracking-[0.1em] border-b border-[#E2E8F0] dark:border-tk-border bg-tk-bg-surface/50">Team Member</th>
+                    <th className="py-5 px-6 text-[12px] font-bold text-tk-text-secondary uppercase tracking-[0.1em] border-b border-[#E2E8F0] dark:border-tk-border bg-tk-bg-surface/50">Staff Member</th>
                     <th className="py-5 px-6 text-[12px] font-bold text-tk-text-secondary uppercase tracking-[0.1em] border-b border-[#E2E8F0] dark:border-tk-border bg-tk-bg-surface/50">Role</th>
                     <th className="py-5 px-6 text-[12px] font-bold text-tk-text-secondary uppercase tracking-[0.1em] border-b border-[#E2E8F0] dark:border-tk-border bg-tk-bg-surface/50">Status</th>
                     <th className="py-5 px-6 text-[12px] font-bold text-tk-text-secondary uppercase tracking-[0.1em] border-b border-[#E2E8F0] dark:border-tk-border bg-tk-bg-surface/50 text-right">Actions</th>

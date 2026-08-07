@@ -283,7 +283,7 @@ const Sidebar: React.FC = () => {
     { icon: (active) => <PaymentIcon active={active} />, label: 'Payment Management', id: 'payment', path: '/payments' },
     { icon: (active) => <ReportIcon active={active} />, label: 'Report and Analytics', id: 'report', path: '/reports' },
     { icon: (active) => <TableIcon active={active} />, label: "Table Management", id: "table-management", path: "/table-management" },
-    { icon: (active) => <UsersIcon active={active} />, label: 'Team Management', id: 'team', path: '/team' },
+    { icon: (active) => <UsersIcon active={active} />, label: 'Staff Management', id: 'team', path: '/team' },
     { icon: (active) => <SubscriptionIcon active={active} />, label: 'Subscription', id: 'subscription', path: '/subscription' },
   ];
 
