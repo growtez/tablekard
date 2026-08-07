@@ -248,11 +248,6 @@ const SearchPage = () => {
                                                 <div className="rec-bottom-row">
                                                     <div className="rec-left-info">
                                                         <span className="rec-price">₹{item.price}</span>
-                                                        {getItemQuantity(item.id) > 0 && (
-                                                            <Link to="/orders" className="rec-view-cart-link" onClick={(e) => e.stopPropagation()}>
-                                                                View Cart
-                                                            </Link>
-                                                        )}
                                                     </div>
 
                                                     {getItemQuantity(item.id) === 0 ? (
