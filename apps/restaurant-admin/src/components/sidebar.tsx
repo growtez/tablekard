@@ -140,6 +140,15 @@ const UsersIcon = ({ active }: { active: boolean }) => (
   </svg>
 );
 
+const BannersIcon = ({ active }: { active: boolean }) => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? '2.5' : '2'} strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="5" width="20" height="14" rx="2" />
+    <path d="M2 10h20" />
+    <circle cx="7" cy="15" r="1" fill={active ? 'currentColor' : 'none'} />
+    <path d="M10 15h7" />
+  </svg>
+);
+
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -196,20 +205,20 @@ const Sidebar: React.FC = () => {
         const readIds = readIdsStr ? JSON.parse(readIdsStr) : [];
 
         if (activeRestaurantId) {
-            const { data: specificData, error: specificError } = await db
-                .from('restaurant_notifications')
-                .select('id, created_at')
-                .eq('restaurant_id', activeRestaurantId);
+          const { data: specificData, error: specificError } = await db
+            .from('restaurant_notifications')
+            .select('id, created_at')
+            .eq('restaurant_id', activeRestaurantId);
 
-            if (!specificError && specificData) {
-                for (const n of (specificData as any[])) {
-                    const isOlderThanMarkAll = new Date(n.created_at).getTime() <= lastRead;
-                    const isIndividuallyRead = readIds.includes(n.id);
-                    if (!isOlderThanMarkAll && !isIndividuallyRead) {
-                        count++;
-                    }
-                }
+          if (!specificError && specificData) {
+            for (const n of (specificData as any[])) {
+              const isOlderThanMarkAll = new Date(n.created_at).getTime() <= lastRead;
+              const isIndividuallyRead = readIds.includes(n.id);
+              if (!isOlderThanMarkAll && !isIndividuallyRead) {
+                count++;
+              }
             }
+          }
         }
 
         setUnreadCount(count);
@@ -238,6 +247,7 @@ const Sidebar: React.FC = () => {
     if (path.includes('/team')) return 'team';
     if (path.includes('/notifications')) return 'notifications';
     if (path.includes('/feature-settings')) return 'feature-settings';
+    if (path.includes('/banners')) return 'banners';
     return 'dashboard';
   };
 
@@ -290,6 +300,8 @@ const Sidebar: React.FC = () => {
     { icon: (active) => <ReportIcon active={active} />, label: 'Report and Analytics', id: 'report', path: '/reports' },
     { icon: (active) => <TableIcon active={active} />, label: "Table Management", id: "table-management", path: "/table-management" },
     { icon: (active) => <UsersIcon active={active} />, label: 'Staff Management', id: 'team', path: '/team' },
+    { icon: (active) => <BannersIcon active={active} />, label: 'Home Banners', id: 'banners', path: '/banners' },
+
     { icon: (active) => <SubscriptionIcon active={active} />, label: 'Subscription', id: 'subscription', path: '/subscription' },
     {
       icon: (active) => (
@@ -335,7 +347,7 @@ const Sidebar: React.FC = () => {
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
-      
+
       {/* Mobile Hamburger Button */}
       <button
         className={`fixed top-4 left-4 z-[90] p-2 bg-tk-bg-surface border border-tk-border rounded-lg md:hidden shadow-sm transition-opacity duration-200 ${!isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
@@ -348,8 +360,8 @@ const Sidebar: React.FC = () => {
       <div
         className={`fixed inset-0 bg-black/50 z-[95] md:hidden transition-opacity duration-300 ${!isCollapsed ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setIsCollapsed(true)}
-      />      
-      
+      />
+
       <div className={`fixed left-0 top-0 h-screen bg-tk-bg py-4 flex flex-col z-[100] font-sans transition-[width,transform] duration-300 ease-in-out border-r-[1.5px] border-tk-border md:translate-x-0 ${isCollapsed ? '-translate-x-full w-[280px] md:w-[64px] px-1.5' : 'translate-x-0 w-[280px] md:w-[240px] px-2'} shadow-[4px_0_24px_rgba(0,0,0,0.08)] md:shadow-none`}>
 
         {/* Notification Button (Top Left) */}
@@ -369,8 +381,8 @@ const Sidebar: React.FC = () => {
           </button>
         )}
 
-        <button 
-          className={`hidden md:flex absolute top-1 w-7 h-7 bg-tk-bg text-tk-text-secondary border-[1.5px] border-tk-border rounded-full items-center justify-center cursor-pointer z-[110] shadow-sm hover:scale-105 hover:text-tk-text hover:border-tk-text-secondary transition-all duration-200 -right-[14px]`} 
+        <button
+          className={`hidden md:flex absolute top-1 w-7 h-7 bg-tk-bg text-tk-text-secondary border-[1.5px] border-tk-border rounded-full items-center justify-center cursor-pointer z-[110] shadow-sm hover:scale-105 hover:text-tk-text hover:border-tk-text-secondary transition-all duration-200 -right-[14px]`}
           onClick={() => setIsCollapsed(!isCollapsed)}
         >
           {isCollapsed ? <ChevronRight size={16} strokeWidth={2.5} /> : <ChevronLeft size={16} strokeWidth={2.5} />}
@@ -495,8 +507,8 @@ const Sidebar: React.FC = () => {
                 )}
               </button>
             </Tooltip>
+          </div>
         </div>
-      </div>
       </div>
 
       {showLogoutConfirm && (
