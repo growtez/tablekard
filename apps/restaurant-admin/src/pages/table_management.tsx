@@ -400,7 +400,7 @@ const TableManagementPage: React.FC = () => {
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[1000] backdrop-blur-sm p-5" onClick={() => setShowAddModal(false)}>
                     <div className="bg-white rounded-[20px] w-full max-w-[500px] shadow-[0_20px_60px_rgba(0,0,0,0.3)] animate-[modalSlideIn_0.3s_ease-out] dark:bg-tk-bg-card dark:border-tk-border dark:border max-md:max-w-full max-md:mx-5" onClick={(e) => e.stopPropagation()}>
                         <div className="flex justify-between items-center p-6 border-b border-[#E2E8F0] dark:border-tk-border">
-                            <h2>Add New Table</h2>
+                            <h2 className="text-xl font-bold text-tk-text m-0 tracking-tight font-sans">Add New Table</h2>
                             <button className="bg-transparent border-none text-[#4A5568] cursor-pointer p-1 flex items-center justify-center rounded-lg transition-all duration-200 hover:bg-[#F7FAFC] hover:text-[#1A202C] dark:text-tk-text-secondary dark:hover:bg-tk-bg-elevated" onClick={() => setShowAddModal(false)}>
                                 <X size={20} />
                             </button>
@@ -414,33 +414,39 @@ const TableManagementPage: React.FC = () => {
                                     </div>
                                 )}
                                 <div className="mb-5 last:mb-0">
-                                    <label>Table Number *</label>
+                                    <label className="block text-sm font-medium text-tk-text-secondary mb-1.5">Table Number *</label>
                                     <input
                                         type="number"
                                         min="1"
                                         value={formData.table_number}
                                         onChange={(e) => setFormData({ ...formData, table_number: parseInt(e.target.value) || 1 })}
+                                        className="p-3 px-4 border-2 border-tk-border bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none focus:border-tk-burgundy focus:shadow-[0_0_0_3px_rgba(139,58,30,0.1)] placeholder:text-tk-text-muted"
                                         required
                                     />
                                 </div>
                                 <div className="mb-5 last:mb-0">
-                                    <label>Capacity (Seats) *</label>
+                                    <label className="block text-sm font-medium text-tk-text-secondary mb-1.5">Capacity (Seats) *</label>
                                     <input
                                         type="number"
                                         min="1"
                                         value={formData.capacity}
                                         onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) || 1 })}
+                                        className="p-3 px-4 border-2 border-tk-border bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none focus:border-tk-burgundy focus:shadow-[0_0_0_3px_rgba(139,58,30,0.1)] placeholder:text-tk-text-muted"
                                         required
                                     />
                                 </div>
                                 <div className="mb-5 last:mb-0 flex items-center gap-2.5 cursor-pointer font-medium">
-                                    <label>
-                                        <input
-                                            type="checkbox"
-                                            checked={formData.active}
-                                            onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-                                        />
-                                        <span>Active (available for customers)</span>
+                                    <label className="flex items-center gap-3 cursor-pointer">
+                                        <div className="relative inline-block w-11 h-6 shrink-0">
+                                            <input
+                                                type="checkbox"
+                                                className="peer opacity-0 w-0 h-0"
+                                                checked={formData.active}
+                                                onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
+                                            />
+                                            <span className="absolute cursor-pointer inset-0 bg-slate-300 rounded-full transition-all duration-300 before:absolute before:content-[''] before:h-[18px] before:w-[18px] before:left-[3px] before:bottom-[3px] before:bg-white before:rounded-full before:transition-all before:duration-300 before:shadow-[0_1px_3px_rgba(0,0,0,0.2)] peer-checked:before:translate-x-[20px]" style={{ backgroundColor: formData.active ? '#38A169' : '#E53E3E' }}></span>
+                                        </div>
+                                        <span className="text-sm font-medium text-tk-text">Active (available for customers)</span>
                                     </label>
                                 </div>
                             </div>
@@ -471,7 +477,7 @@ const TableManagementPage: React.FC = () => {
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[1000] backdrop-blur-sm p-5" onClick={() => setShowEditModal(false)}>
                     <div className="bg-white rounded-[20px] w-full max-w-[500px] shadow-[0_20px_60px_rgba(0,0,0,0.3)] animate-[modalSlideIn_0.3s_ease-out] dark:bg-tk-bg-card dark:border-tk-border dark:border max-md:max-w-full max-md:mx-5" onClick={(e) => e.stopPropagation()}>
                         <div className="flex justify-between items-center p-6 border-b border-[#E2E8F0] dark:border-tk-border">
-                            <h2>Edit Table {currentTable.table_number}</h2>
+                            <h2 className="text-xl font-bold text-tk-text m-0 tracking-tight font-sans">Edit Table {currentTable.table_number}</h2>
                             <button className="bg-transparent border-none text-[#4A5568] cursor-pointer p-1 flex items-center justify-center rounded-lg transition-all duration-200 hover:bg-[#F7FAFC] hover:text-[#1A202C] dark:text-tk-text-secondary dark:hover:bg-tk-bg-elevated" onClick={() => setShowEditModal(false)}>
                                 <X size={20} />
                             </button>
@@ -485,33 +491,39 @@ const TableManagementPage: React.FC = () => {
                                     </div>
                                 )}
                                 <div className="mb-5 last:mb-0">
-                                    <label>Table Number *</label>
+                                    <label className="block text-sm font-medium text-tk-text-secondary mb-1.5">Table Number *</label>
                                     <input
                                         type="number"
                                         min="1"
                                         value={formData.table_number}
                                         onChange={(e) => setFormData({ ...formData, table_number: parseInt(e.target.value) || 1 })}
+                                        className="p-3 px-4 border-2 border-tk-border bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none focus:border-tk-burgundy focus:shadow-[0_0_0_3px_rgba(139,58,30,0.1)] placeholder:text-tk-text-muted"
                                         required
                                     />
                                 </div>
                                 <div className="mb-5 last:mb-0">
-                                    <label>Capacity (Seats) *</label>
+                                    <label className="block text-sm font-medium text-tk-text-secondary mb-1.5">Capacity (Seats) *</label>
                                     <input
                                         type="number"
                                         min="1"
                                         value={formData.capacity}
                                         onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) || 1 })}
+                                        className="p-3 px-4 border-2 border-tk-border bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none focus:border-tk-burgundy focus:shadow-[0_0_0_3px_rgba(139,58,30,0.1)] placeholder:text-tk-text-muted"
                                         required
                                     />
                                 </div>
                                 <div className="mb-5 last:mb-0 flex items-center gap-2.5 cursor-pointer font-medium">
-                                    <label>
-                                        <input
-                                            type="checkbox"
-                                            checked={formData.active}
-                                            onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-                                        />
-                                        <span>Active (available for customers)</span>
+                                    <label className="flex items-center gap-3 cursor-pointer">
+                                        <div className="relative inline-block w-11 h-6 shrink-0">
+                                            <input
+                                                type="checkbox"
+                                                className="peer opacity-0 w-0 h-0"
+                                                checked={formData.active}
+                                                onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
+                                            />
+                                            <span className="absolute cursor-pointer inset-0 bg-slate-300 rounded-full transition-all duration-300 before:absolute before:content-[''] before:h-[18px] before:w-[18px] before:left-[3px] before:bottom-[3px] before:bg-white before:rounded-full before:transition-all before:duration-300 before:shadow-[0_1px_3px_rgba(0,0,0,0.2)] peer-checked:before:translate-x-[20px]" style={{ backgroundColor: formData.active ? '#38A169' : '#E53E3E' }}></span>
+                                        </div>
+                                        <span className="text-sm font-medium text-tk-text">Active (available for customers)</span>
                                     </label>
                                 </div>
                             </div>
@@ -543,7 +555,7 @@ const TableManagementPage: React.FC = () => {
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[1000] backdrop-blur-sm p-5" onClick={() => setShowDeleteModal(false)}>
                     <div className="bg-white rounded-[20px] w-full max-w-[500px] shadow-[0_20px_60px_rgba(0,0,0,0.3)] animate-[modalSlideIn_0.3s_ease-out] dark:bg-tk-bg-card dark:border-tk-border dark:border max-md:max-w-full max-md:mx-5 max-w-[400px]" onClick={(e) => e.stopPropagation()}>
                         <div className="flex justify-between items-center p-6 border-b border-[#E2E8F0] dark:border-tk-border">
-                            <h2>Delete Table</h2>
+                            <h2 className="text-xl font-bold text-tk-text m-0 tracking-tight font-sans">Delete Table</h2>
                             <button className="bg-transparent border-none text-[#4A5568] cursor-pointer p-1 flex items-center justify-center rounded-lg transition-all duration-200 hover:bg-[#F7FAFC] hover:text-[#1A202C] dark:text-tk-text-secondary dark:hover:bg-tk-bg-elevated" onClick={() => setShowDeleteModal(false)}>
                                 <X size={20} />
                             </button>

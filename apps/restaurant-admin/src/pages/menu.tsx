@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, Plus, Edit3, Trash2, Layers, Loader2, TrendingUp, AlertCircle, List, LayoutGrid, MoreVertical, ArrowUpDown, ChevronDown } from 'lucide-react';
 import MenuDialog from '../components/menu_dialog';
 import CategoryDialog from '../components/category_dialog';
+import ManageCategoriesDialog from '../components/manage_categories_dialog';
 import OfferDialog from '../components/offer_dialog';
 // import type { OfferRecord } from '../components/offer_dialog';
 import type { OfferFormData } from '../components/offer_dialog';
@@ -68,6 +69,7 @@ const Menu: React.FC = () => {
 
   const [menuDialogOpen, setMenuDialogOpen] = useState(false);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
+  const [manageCategoriesDialogOpen, setManageCategoriesDialogOpen] = useState(false);
   const [offerDialogOpen, setOfferDialogOpen] = useState(false);
 
   const [selectedMenuItem, setSelectedMenuItem] = useState<MenuItem | null>(null);
@@ -334,6 +336,32 @@ const Menu: React.FC = () => {
     }
   };
 
+  const handleSaveCategoriesBulk = async (updatedCategories: MenuCategory[]) => {
+    if (!activeRestaurantId) return;
+    setIsSaving(true);
+    try {
+      await Promise.all(
+        updatedCategories.map(cat => 
+          updateMenuCategory(cat.id, { name: cat.name, sort_order: cat.order })
+        )
+      );
+      invalidateMenu(activeRestaurantId);
+      showToast('Categories updated successfully', 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to update categories', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleAddCategoryInline = async (name: string) => {
+    if (!activeRestaurantId) throw new Error("No active restaurant");
+    const newCat = await addMenuCategory(activeRestaurantId, { name, active: true, sort_order: categories.length });
+    invalidateMenu(activeRestaurantId);
+    return newCat;
+  };
+
   const handleDeleteCategory = async (id: string) => {
     setIsSaving(true);
     try {
@@ -502,9 +530,9 @@ const Menu: React.FC = () => {
            )}
            {activeTab === 'menu-items' && (
              <>
-               <button className="flex items-center justify-center gap-1.5 px-4 py-2 bg-[#E2E8F0] dark:bg-tk-bg-hover text-tk-text border-none rounded-lg text-[13px] sm:text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-[#CBD5E0] dark:hover:bg-tk-border font-['Outfit'] max-md:flex-1" onClick={handleAddCategory}>
+               <button className="flex items-center justify-center gap-1.5 px-4 py-2 bg-[#E2E8F0] dark:bg-tk-bg-hover text-tk-text border-none rounded-lg text-[13px] sm:text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-[#CBD5E0] dark:hover:bg-tk-border font-['Outfit'] max-md:flex-1" onClick={() => setManageCategoriesDialogOpen(true)}>
                  <Layers size={14} />
-                 New Category
+                 Manage Categories
                </button>
                <button className="flex items-center justify-center gap-1.5 px-4 py-2 bg-tk-burgundy text-white border-none rounded-lg text-[13px] sm:text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-tk-burgundy/90 hover:-translate-y-[1px] font-['Outfit'] shadow-sm max-md:flex-1" onClick={handleAddMenuItem}>
                  <Plus size={14} />
@@ -1031,9 +1059,19 @@ const Menu: React.FC = () => {
         isOpen={menuDialogOpen}
         onClose={() => setMenuDialogOpen(false)}
         onSave={handleSaveMenuItem}
+        onAddCategory={handleAddCategoryInline}
         item={selectedMenuItem}
         categories={categories}
         mode={dialogMode}
+      />
+
+      <ManageCategoriesDialog
+        isOpen={manageCategoriesDialogOpen}
+        onClose={() => setManageCategoriesDialogOpen(false)}
+        categories={categories}
+        onSave={handleSaveCategoriesBulk}
+        onAddCategory={handleAddCategoryInline}
+        onDeleteCategory={handleDeleteCategory}
       />
 
       <CategoryDialog

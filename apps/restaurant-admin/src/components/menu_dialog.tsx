@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Plus, Minus, Tag, ChevronDown, Trash2, Maximize2, Edit2, ChevronLeft, ChevronRight, Crop } from 'lucide-react';
+import { X, Plus, Minus, Tag, ChevronDown, Trash2, Maximize2, Edit2, ChevronLeft, ChevronRight, Crop, Loader2, FolderPlus, Check, Search } from 'lucide-react';
 import type { MenuCategory } from '@restaurant-saas/types';
 import ImageCropper from './ImageCropper';
 
@@ -17,6 +17,7 @@ interface MenuDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (item: any) => void;
+  onAddCategory?: (name: string) => Promise<MenuCategory>;
   item?: any | null;
   categories: MenuCategory[];
   mode: 'add' | 'edit';
@@ -31,7 +32,7 @@ const PRESET_ADDONS: Addon[] = [
   { name: 'Salad', price: 30 },
 ];
 
-const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, categories, mode }) => {
+const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, onAddCategory, item, categories, mode }) => {
   const [formData, setFormData] = useState({
     name: '',
     short_description: '',
@@ -52,6 +53,10 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
   const [newTag, setNewTag] = useState('');
   const [newVariant, setNewVariant] = useState<Variant>({ name: '', price: 0 });
   const [newAddon, setNewAddon] = useState<Addon>({ name: '', price: 0 });
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+  const newCatInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // const arModelInputRef = useRef<HTMLInputElement>(null);
   const [arModelFile, setArModelFile] = useState<File | null>(null);
@@ -59,6 +64,11 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
   const [removeModel, setRemoveModel] = useState(false);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [currentGalleryIndex, setCurrentGalleryIndex] = useState(0);
+
+  const [isCatDropdownOpen, setIsCatDropdownOpen] = useState(false);
+  const [catSearchQuery, setCatSearchQuery] = useState('');
+  const catDropdownRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const [cropQueue, setCropQueue] = useState<{ url: string, file?: File, index?: number }[]>([]);
   const [currentCrop, setCurrentCrop] = useState<{ url: string, file?: File, index?: number } | null>(null);
@@ -68,6 +78,28 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
       setCurrentCrop(cropQueue[0]);
     }
   }, [cropQueue, currentCrop]);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (catDropdownRef.current && !catDropdownRef.current.contains(event.target as Node)) {
+        setIsCatDropdownOpen(false);
+        setCatSearchQuery('');
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (mode === 'edit' && item) {
@@ -111,12 +143,48 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
     }
   }, [mode, item]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = async (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
+    if (name === 'category_id' && value === 'ADD_NEW_CATEGORY') {
+      setIsAddingCategory(true);
+      setNewCategoryName('');
+      // Reset the select back to current value so it doesn't stick on ADD_NEW
+      e.target.value = formData.category_id;
+      setTimeout(() => newCatInputRef.current?.focus(), 50);
+      return;
+    }
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
     }));
+  };
+
+  const handleCreateCategory = async () => {
+    if (!newCategoryName.trim() || !onAddCategory) return;
+
+    // Check for duplicates
+    const nameToCheck = newCategoryName.trim().toLowerCase();
+    const existingCat = categories.find(c => c.name.toLowerCase() === nameToCheck);
+    
+    if (existingCat) {
+      // Just select the existing one instead of creating a duplicate
+      setFormData(prev => ({ ...prev, category_id: existingCat.id }));
+      setIsAddingCategory(false);
+      setNewCategoryName('');
+      return;
+    }
+
+    setIsCreatingCategory(true);
+    try {
+      const newCat = await onAddCategory(newCategoryName.trim());
+      setFormData(prev => ({ ...prev, category_id: newCat.id }));
+      setIsAddingCategory(false);
+      setNewCategoryName('');
+    } catch (err) {
+      // stay open so user can retry
+    } finally {
+      setIsCreatingCategory(false);
+    }
   };
 
   const handleImageFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -312,21 +380,114 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
           {/* Category */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-tk-text-secondary">Category *</label>
-            <div className="relative">
-              <select
-                name="category_id"
-                value={formData.category_id}
-                onChange={handleChange}
-                className="w-full p-3 px-4 border-2 border-tk-border bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans appearance-none transition-all duration-200 focus:outline-none focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.1)]"
-                required
+            <div className="relative" ref={catDropdownRef}>
+              <div
+                onClick={() => setIsCatDropdownOpen(!isCatDropdownOpen)}
+                className={`w-full p-3 px-4 border-2 rounded-xl text-sm font-sans cursor-pointer transition-all duration-200 flex items-center justify-between ${
+                  isCatDropdownOpen ? 'border-tk-burgundy shadow-[0_0_0_3px_rgba(139,58,30,0.1)] bg-tk-bg-elevated' : 'border-tk-border bg-tk-bg-elevated hover:border-tk-burgundy/40'
+                }`}
               >
-                <option value="" disabled>Select a category</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
-                ))}
-              </select>
-              <ChevronDown size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-tk-text-secondary" />
+                <span className={formData.category_id ? "text-tk-text font-medium" : "text-tk-text-muted"}>
+                  {formData.category_id 
+                    ? categories.find(c => c.id === formData.category_id)?.name || 'Select a category'
+                    : 'Select a category'}
+                </span>
+                <ChevronDown size={16} className={`text-tk-text-secondary transition-transform ${isCatDropdownOpen ? 'rotate-180' : ''}`} />
+              </div>
+
+              {isCatDropdownOpen && (
+                <div className="absolute z-10 w-full mt-2 bg-tk-bg-card border-2 border-tk-border rounded-xl shadow-lg overflow-hidden flex flex-col">
+                  {/* Search Bar */}
+                  <div className="p-2 border-b border-tk-border bg-tk-bg-elevated sticky top-0 z-10">
+                    <div className="relative">
+                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-tk-text-muted" />
+                      <input
+                        ref={searchInputRef}
+                        type="text"
+                        placeholder="Search categories..."
+                        value={catSearchQuery}
+                        onChange={(e) => setCatSearchQuery(e.target.value)}
+                        className="w-full pl-8 pr-3 py-2 bg-tk-bg-card border border-tk-border rounded-lg text-sm text-tk-text focus:outline-none focus:border-tk-burgundy focus:shadow-[0_0_0_2px_rgba(139,58,30,0.1)] transition-all"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Scrollable categories list */}
+                  <div className="max-h-[220px] overflow-y-auto tk-table-scroll">
+                    {categories.filter(cat => cat.name.toLowerCase().includes(catSearchQuery.toLowerCase())).map((cat) => (
+                      <div
+                        key={cat.id}
+                        onClick={() => {
+                          setFormData(prev => ({ ...prev, category_id: cat.id }));
+                          setIsCatDropdownOpen(false);
+                        }}
+                        className={`p-3 px-4 cursor-pointer text-sm font-medium transition-colors ${formData.category_id === cat.id ? 'bg-tk-burgundy/10 text-tk-burgundy' : 'text-tk-text hover:bg-tk-bg-hover'}`}
+                      >
+                        {cat.name}
+                      </div>
+                    ))}
+                    {categories.filter(cat => cat.name.toLowerCase().includes(catSearchQuery.toLowerCase())).length === 0 && (
+                      <div className="p-4 text-center text-sm text-tk-text-muted">No categories found</div>
+                    )}
+                  </div>
+                  
+                  {/* Fixed Add New Category Option */}
+                  {onAddCategory && (
+                    <div 
+                      onClick={() => {
+                        setIsCatDropdownOpen(false);
+                        setCatSearchQuery('');
+                        setIsAddingCategory(true);
+                        setNewCategoryName('');
+                        setTimeout(() => newCatInputRef.current?.focus(), 50);
+                      }}
+                      className="p-3 px-4 border-t-2 border-tk-border bg-tk-bg-elevated cursor-pointer text-sm font-bold text-tk-burgundy hover:bg-tk-burgundy/5 transition-colors flex items-center gap-2"
+                    >
+                      <Plus size={16} /> Add New Category
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
+
+            {/* Inline Add Category Box */}
+            {isAddingCategory && (
+              <div className="mt-1 p-3.5 bg-tk-burgundy/[0.04] dark:bg-tk-burgundy/10 border-2 border-tk-burgundy/30 rounded-xl animate-in slide-in-from-top-2 duration-200">
+                <div className="flex items-center gap-2 mb-2.5">
+                  <FolderPlus size={15} className="text-tk-burgundy shrink-0" />
+                  <span className="text-[13px] font-semibold text-tk-burgundy">Create New Category</span>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    ref={newCatInputRef}
+                    type="text"
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleCreateCategory(); } if (e.key === 'Escape') { setIsAddingCategory(false); } }}
+                    placeholder="e.g. Starters, Desserts..."
+                    className="flex-1 p-2.5 px-3 bg-tk-bg-card border-2 border-tk-border rounded-lg text-sm text-tk-text font-sans focus:outline-none focus:border-tk-burgundy focus:shadow-[0_0_0_2px_rgba(139,58,30,0.1)] transition-all placeholder:text-tk-text-muted"
+                    disabled={isCreatingCategory}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCreateCategory}
+                    disabled={!newCategoryName.trim() || isCreatingCategory}
+                    className="px-3 py-2.5 bg-tk-burgundy text-white border-none rounded-lg text-[13px] font-semibold cursor-pointer hover:bg-[#6B2A15] disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1.5 shrink-0"
+                  >
+                    {isCreatingCategory ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />}
+                    {isCreatingCategory ? 'Creating...' : 'Create'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsAddingCategory(false)}
+                    className="p-2.5 bg-transparent border border-tk-border rounded-lg cursor-pointer text-tk-text-muted hover:bg-tk-bg-hover hover:text-tk-text transition-all flex items-center justify-center shrink-0"
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Item Name */}
@@ -578,34 +739,37 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-tk-text-secondary"><Tag size={14} style={{ display: 'inline', marginRight: 4 }} />Tags</label>
             <div className="flex flex-wrap gap-2 mb-2">
-              {PRESET_TAGS.map(tag => (
-                <button
-                  key={tag}
-                  type="button"
-                  className={`px-3.5 py-1.5 rounded-full border-[1.5px] border-tk-border bg-tk-bg-elevated text-[13px] text-tk-text-secondary cursor-pointer transition-all duration-200 font-sans hover:border-[#37724e]/50 dark:hover:border-green-400 ${formData.tags.includes(tag) ? 'bg-[#31274e] border-[#37724e] text-white font-semibold dark:bg-green-900/20 dark:text-green-400 dark:border-green-400' : ''}`}
-                  onClick={() => toggleTag(tag)}
-                >{tag}</button>
-              ))}
+              {PRESET_TAGS.map(tag => {
+                const isSelected = formData.tags.includes(tag);
+                return (
+                  <button
+                    key={tag}
+                    type="button"
+                    className={`px-3.5 py-1.5 rounded-full border-[1.5px] text-[13px] cursor-pointer transition-all duration-200 font-sans ${isSelected ? 'bg-tk-burgundy-light border-tk-burgundy text-tk-burgundy-dark font-semibold dark:bg-tk-burgundy-dark/30 dark:text-tk-burgundy-light dark:border-tk-burgundy' : 'bg-tk-bg-elevated border-tk-border text-tk-text-secondary hover:border-tk-burgundy/50 dark:hover:border-tk-burgundy'}`}
+                    onClick={() => toggleTag(tag)}
+                  >{tag}</button>
+                );
+              })}
             </div>
             <div className="flex gap-2 items-center">
               <input
                 type="text"
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
-                className="p-3 px-4 border-2 border-tk-border bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.1)] placeholder:text-tk-text-muted"
+                className="p-3 px-4 border-2 border-tk-border bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none focus:border-tk-burgundy focus:shadow-[0_0_0_3px_rgba(139,58,30,0.1)] placeholder:text-tk-text-muted"
                 placeholder="Add custom tag..."
                 onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomTag(); } }}
               />
-              <button type="button" className="flex items-center justify-center p-3 bg-[#37724e] text-white border-none rounded-xl cursor-pointer shrink-0 transition-colors duration-200 hover:bg-[#2f5e40]" onClick={addCustomTag}>
+              <button type="button" className="flex items-center justify-center p-3 bg-tk-burgundy text-white border-none rounded-xl cursor-pointer shrink-0 transition-colors duration-200 hover:bg-tk-burgundy-dark" onClick={addCustomTag}>
                 <Plus size={16} />
               </button>
             </div>
             {formData.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {formData.tags.map(tag => (
-                  <span key={tag} className="flex items-center gap-1.5 px-2.5 py-1 bg-[#37724e] text-white dark:bg-green-900/20 dark:text-green-400 rounded-full text-xs font-semibold border border-[#37724e] dark:border-green-800">
+                  <span key={tag} className="flex items-center gap-1.5 px-2.5 py-1 bg-tk-burgundy-light text-tk-burgundy-dark dark:bg-tk-burgundy-dark/30 dark:text-tk-burgundy-light rounded-full text-xs font-semibold border border-tk-burgundy dark:border-tk-burgundy-dark">
                     {tag}
-                    <button type="button" onClick={() => removeTag(tag)} className="bg-transparent border-none cursor-pointer p-0 text-white/70 hover:text-red-200 dark:text-green-400/70 dark:hover:text-red-400 flex items-center transition-colors"><X size={12} /></button>
+                    <button type="button" onClick={() => removeTag(tag)} className="bg-transparent border-none cursor-pointer p-0 text-tk-burgundy-dark/70 hover:text-tk-burgundy-dark dark:text-tk-burgundy-light/70 dark:hover:text-tk-burgundy-light flex items-center transition-colors"><X size={12} /></button>
                   </span>
                 ))}
               </div>
@@ -620,15 +784,15 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
               {PRESET_ADDONS.map((addon) => {
                 const selected = formData.addons.some(a => a.name === addon.name);
                 return (
-                  <label key={addon.name} className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border-[1.5px] border-tk-border bg-tk-bg-elevated text-[13px] cursor-pointer transition-all duration-200 select-none hover:border-[#37724e]/50 dark:hover:border-green-400 ${selected ? 'bg-[#37724e] border-[#37724e] dark:bg-green-900/20 dark:border-green-400' : 'text-tk-text-secondary'}`}>
+                  <label key={addon.name} className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border-[1.5px] text-[13px] cursor-pointer transition-all duration-200 select-none ${selected ? 'bg-tk-burgundy-light border-tk-burgundy dark:bg-tk-burgundy-dark/30 dark:border-tk-burgundy' : 'bg-tk-bg-elevated border-tk-border text-tk-text-secondary hover:border-tk-burgundy/50 dark:hover:border-tk-burgundy'}`}>
                     <input
                       type="checkbox"
                       checked={selected}
                       onChange={() => toggleAddon(addon)}
                       style={{ display: 'none' }}
                     />
-                    <span className={selected ? 'text-white font-semibold dark:text-green-400' : 'text-tk-text'}>{addon.name}</span>
-                    <span className={`text-xs font-medium ${selected ? 'text-white/80 dark:text-green-400/80' : 'text-tk-text-secondary'}`}>+₹{addon.price}</span>
+                    <span className={selected ? 'text-tk-burgundy-dark font-semibold dark:text-tk-burgundy-light' : 'text-tk-text'}>{addon.name}</span>
+                    <span className={`text-xs font-medium ${selected ? 'text-tk-burgundy-dark/80 dark:text-tk-burgundy-light/80' : 'text-tk-text-secondary'}`}>+₹{addon.price}</span>
                   </label>
                 );
               })}
@@ -640,7 +804,7 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
                 type="text"
                 value={newAddon.name}
                 onChange={(e) => setNewAddon(prev => ({ ...prev, name: e.target.value }))}
-                className="p-3 px-4 border-2 border-tk-border bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.1)] placeholder:text-tk-text-muted"
+                className="p-3 px-4 border-2 border-tk-border bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none focus:border-tk-burgundy focus:shadow-[0_0_0_3px_rgba(139,58,30,0.1)] placeholder:text-tk-text-muted"
                 placeholder="Custom addon name"
                 onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomAddon(); } }}
               />
@@ -648,14 +812,14 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
                 type="number"
                 value={newAddon.price || ''}
                 onChange={(e) => setNewAddon(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
-                className="p-3 px-4 border-2 border-tk-border bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.1)] placeholder:text-tk-text-muted max-w-[110px]"
+                className="p-3 px-4 border-2 border-tk-border bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none focus:border-tk-burgundy focus:shadow-[0_0_0_3px_rgba(139,58,30,0.1)] placeholder:text-tk-text-muted max-w-[110px]"
                 placeholder="Price (₹)"
                 min="0"
                 step="any"
                 onWheel={(e) => e.currentTarget.blur()}
                 onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomAddon(); } }}
               />
-              <button type="button" className="flex items-center justify-center p-3 bg-[#37724e] text-white border-none rounded-xl cursor-pointer shrink-0 transition-colors duration-200 hover:bg-[#2f5e40]" onClick={addCustomAddon}>
+              <button type="button" className="flex items-center justify-center p-3 bg-tk-burgundy text-white border-none rounded-xl cursor-pointer shrink-0 transition-colors duration-200 hover:bg-tk-burgundy-dark" onClick={addCustomAddon}>
                 <Plus size={16} />
               </button>
             </div>
@@ -666,7 +830,7 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, item, 
                 {formData.addons.map((addon, idx) => (
                   <div key={idx} className="flex items-center gap-3 bg-tk-bg-elevated rounded-xl p-2.5 px-3.5 border border-tk-border">
                     <span className="flex-1 text-sm font-medium text-tk-text">{addon.name}</span>
-                    <span className="text-[13px] font-semibold text-[#37724e] dark:text-green-400">+₹{addon.price}</span>
+                    <span className="text-[13px] font-semibold text-tk-burgundy dark:text-tk-burgundy-light">+₹{addon.price}</span>
                     <button type="button" onClick={() => removeAddon(addon.name)} className="bg-transparent border-none cursor-pointer text-red-500 p-1 rounded-md flex items-center transition-colors duration-200 hover:bg-red-500/10">
                       <Minus size={14} />
                     </button>
