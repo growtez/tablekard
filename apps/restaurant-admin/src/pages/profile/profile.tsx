@@ -7,14 +7,12 @@ import {
   Edit3,
   ExternalLink,
   Key,
-  Lock,
   LogOut,
   MailIcon,
   MapPinIcon,
   PhoneIcon,
   Save,
   ShieldCheck,
-  Webhook,
   X,
   XCircle,
 } from "lucide-react";
@@ -25,8 +23,8 @@ import {
   getRestaurantPaymentSettings,
   updateAdministratorProfile,
   updateRestaurantProfile,
-  updateRestaurantPaymentSettings,
 } from "../../services/supabaseService";
+import { supabase } from '@restaurant-saas/supabase';
 
 
 interface RestaurantFormState {
@@ -64,7 +62,6 @@ interface FeedbackState {
 }
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const hexColorPattern = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
 const getErrorMessage = (error: unknown, fallback: string): string => {
   if (error instanceof Error && error.message) {
@@ -258,15 +255,13 @@ const ProfilePage: React.FC = () => {
   });
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [showPaymentSetupModal, setShowPaymentSetupModal] = useState(false);
-  const [paymentSetupForm, setPaymentSetupForm] = useState({ razorpayKeyId: '', razorpayKeySecret: '', razorpayWebhookSecret: '' });
+  const [paymentSetupForm, setPaymentSetupForm] = useState({ accountNumber: '', ifsc: '', beneficiaryName: '' });
   const [paymentSetupSaving, setPaymentSetupSaving] = useState(false);
   const [paymentSetupError, setPaymentSetupError] = useState<string | null>(null);
 
   // Payment settings state
   const [paymentSettings, setPaymentSettings] = useState({
-    razorpayKeyId: "",
-    hasRazorpayKeySecret: false,
-    hasRazorpayWebhookSecret: false,
+    razorpayLinkedAccountId: "",
     onlinePaymentsEnabled: false,
   });
 
@@ -298,9 +293,7 @@ const ProfilePage: React.FC = () => {
         setRestaurant(data);
         setRestaurantForm(data ? createRestaurantFormState(data) : null);
         const ps = {
-          razorpayKeyId: pmtSettings.razorpayKeyId ?? "",
-          hasRazorpayKeySecret: pmtSettings.hasRazorpayKeySecret,
-          hasRazorpayWebhookSecret: pmtSettings.hasRazorpayWebhookSecret,
+          razorpayLinkedAccountId: pmtSettings.razorpayLinkedAccountId ?? "",
           onlinePaymentsEnabled: pmtSettings.onlinePaymentsEnabled,
         };
         setPaymentSettings(ps);
@@ -1609,9 +1602,9 @@ const ProfilePage: React.FC = () => {
     const on = (restaurant as any)?.pay_online === true || restaurantForm?.payOnline === true;
     if (!on) {
       // turning ON — need credentials
-      const hasAll = paymentSettings.razorpayKeyId && paymentSettings.hasRazorpayKeySecret && paymentSettings.hasRazorpayWebhookSecret;
+      const hasAll = !!paymentSettings.razorpayLinkedAccountId;
       if (!hasAll) {
-        setPaymentSetupForm({ razorpayKeyId: paymentSettings.razorpayKeyId, razorpayKeySecret: '', razorpayWebhookSecret: '' });
+        setPaymentSetupForm({ accountNumber: '', ifsc: '', beneficiaryName: '' });
         setPaymentSetupError(null);
         setShowPaymentSetupModal(true);
         return;
@@ -1744,8 +1737,8 @@ const ProfilePage: React.FC = () => {
               </div>
               <p className="text-[13px] text-[#64748B] font-['Outfit',sans-serif]" style={{ margin: 0, lineHeight: 1.5 }}>
                 When enabled, the "Pay Online" button appears at checkout.
-                {!payOn && !paymentSettings.razorpayKeyId && (
-                  <span style={{ color: '#F59E0B', display: 'block', marginTop: 4 }}>⚠ Razorpay credentials not set up yet.</span>
+                {!payOn && !paymentSettings.razorpayLinkedAccountId && (
+                  <span style={{ color: '#F59E0B', display: 'block', marginTop: 4 }}>⚠ Bank Account not linked yet.</span>
                 )}
               </p>
             </div>
@@ -1756,21 +1749,9 @@ const ProfilePage: React.FC = () => {
 
           {/* Credential status rows */}
           <div className={credRowCls}>
-            <span className="text-[#64748B] dark:text-tk-text-secondary flex items-center gap-1.5"><Key size={12} /> Key ID</span>
-            <span style={{ color: paymentSettings.razorpayKeyId ? '#15803D' : '#94A3B8', fontWeight: 500 }}>
-              {paymentSettings.razorpayKeyId ? `${paymentSettings.razorpayKeyId.slice(0, 14)}•••` : 'Not set'}
-            </span>
-          </div>
-          <div className={credRowCls}>
-            <span className="text-[#64748B] dark:text-tk-text-secondary flex items-center gap-1.5"><Lock size={12} /> Key Secret</span>
-            <span style={{ color: paymentSettings.hasRazorpayKeySecret ? '#15803D' : '#94A3B8', fontWeight: 500 }}>
-              {paymentSettings.hasRazorpayKeySecret ? '✓ Saved' : 'Not set'}
-            </span>
-          </div>
-          <div className={credRowCls}>
-            <span className="text-[#64748B] dark:text-tk-text-secondary flex items-center gap-1.5"><Webhook size={12} /> Webhook Secret</span>
-            <span style={{ color: paymentSettings.hasRazorpayWebhookSecret ? '#15803D' : '#94A3B8', fontWeight: 500 }}>
-              {paymentSettings.hasRazorpayWebhookSecret ? '✓ Saved' : 'Not set'}
+            <span className="text-[#64748B] dark:text-tk-text-secondary flex items-center gap-1.5"><Key size={12} /> Linked Account ID</span>
+            <span style={{ color: paymentSettings.razorpayLinkedAccountId ? '#15803D' : '#94A3B8', fontWeight: 500 }}>
+              {paymentSettings.razorpayLinkedAccountId ? paymentSettings.razorpayLinkedAccountId : 'Not linked'}
             </span>
           </div>
 
@@ -1778,10 +1759,10 @@ const ProfilePage: React.FC = () => {
           <div style={{ padding: '14px 20px', borderTop: '1px solid var(--tk-border,#E2E8F0)' }}>
             <button
               type="button"
-              onClick={() => { setPaymentSetupForm({ razorpayKeyId: paymentSettings.razorpayKeyId, razorpayKeySecret: '', razorpayWebhookSecret: '' }); setPaymentSetupError(null); setShowPaymentSetupModal(true); }}
+              onClick={() => { setPaymentSetupForm({ accountNumber: '', ifsc: '', beneficiaryName: '' }); setPaymentSetupError(null); setShowPaymentSetupModal(true); }}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-tk-burgundy text-tk-burgundy text-[13px] font-semibold font-['Outfit',sans-serif] bg-transparent cursor-pointer transition-all hover:bg-[rgba(139,58,30,0.06)]"
             >
-              <Key size={13} />{paymentSettings.razorpayKeyId ? 'Update Razorpay Credentials' : 'Setup Razorpay'}
+              <CreditCardIcon size={13} />{paymentSettings.razorpayLinkedAccountId ? 'Update Bank Details' : 'Connect Bank Account'}
             </button>
           </div>
         </div>
@@ -1972,22 +1953,18 @@ const ProfilePage: React.FC = () => {
                   </div>
                   <div>
                     <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--tk-text,#1A202C)', margin: 0, fontFamily: "'Outfit',sans-serif" }}>Setup Razorpay</h3>
-                    <p style={{ fontSize: 12, color: '#64748B', margin: 0, fontFamily: "'Outfit',sans-serif" }}>All 3 fields required to enable payments</p>
+                    <p style={{ fontSize: 12, color: '#64748B', margin: 0, fontFamily: "'Outfit',sans-serif" }}>Connect your Razorpay account to receive payouts</p>
                   </div>
                 </div>
                 <button onClick={() => setShowPaymentSetupModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}><X size={18} /></button>
               </div>
-              {/* Info Banner */}
-              <div style={{ background: 'rgba(59,130,246,0.07)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#1D4ED8', display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 18, fontFamily: "'Outfit',sans-serif" }}>
-                <ShieldCheck size={13} style={{ flexShrink: 0, marginTop: 1 }} />
-                Credentials are encrypted and stored securely. Secrets are never shown after saving.
-              </div>
-              {/* Fields */}
+
+              {/* Bank Details Fields */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {[
-                  { icon: <Key size={12} />, label: 'Razorpay Key ID', key: 'razorpayKeyId', placeholder: 'rzp_live_xxxxxxxxxxxx', type: 'text' },
-                  { icon: <Lock size={12} />, label: 'Key Secret', key: 'razorpayKeySecret', placeholder: '••••••••••••', type: 'password' },
-                  { icon: <Webhook size={12} />, label: 'Webhook Secret', key: 'razorpayWebhookSecret', placeholder: '••••••••••••', type: 'password' },
+                  { icon: <CreditCardIcon size={12} />, label: 'Account Number', key: 'accountNumber', placeholder: 'e.g. 11214311215411', type: 'text' },
+                  { icon: <ShieldCheck size={12} />, label: 'IFSC Code', key: 'ifsc', placeholder: 'e.g. HDFC0000001', type: 'text' },
+                  { icon: <Crosshair size={12} />, label: 'Beneficiary Name', key: 'beneficiaryName', placeholder: 'e.g. John Doe', type: 'text' },
                 ].map(f => (
                   <div key={f.key}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6, fontFamily: "'Outfit',sans-serif" }}>
@@ -1998,12 +1975,13 @@ const ProfilePage: React.FC = () => {
                       placeholder={f.placeholder}
                       value={(paymentSetupForm as any)[f.key]}
                       onChange={e => setPaymentSetupForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                      autoComplete="new-password"
+                      autoComplete="off"
                       className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
                     />
                   </div>
                 ))}
               </div>
+
               {paymentSetupError && (
                 <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, fontSize: 13, color: '#B91C1C', display: 'flex', gap: 8, alignItems: 'center', fontFamily: "'Outfit',sans-serif" }}>
                   <XCircle size={13} />{paymentSetupError}
@@ -2013,28 +1991,33 @@ const ProfilePage: React.FC = () => {
                 <button type="button" onClick={() => setShowPaymentSetupModal(false)} style={{ flex: 1, padding: '11px 16px', borderRadius: 10, border: '1.5px solid #E2E8F0', background: 'transparent', color: 'var(--tk-text,#1A202C)', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}>Cancel</button>
                 <button
                   type="button"
-                  disabled={paymentSetupSaving || !paymentSetupForm.razorpayKeyId.trim() || !paymentSetupForm.razorpayKeySecret.trim() || !paymentSetupForm.razorpayWebhookSecret.trim()}
+                  disabled={paymentSetupSaving || !paymentSetupForm.accountNumber.trim() || !paymentSetupForm.ifsc.trim() || !paymentSetupForm.beneficiaryName.trim()}
                   onClick={async () => {
                     setPaymentSetupSaving(true); setPaymentSetupError(null);
                     try {
                       if (!activeRestaurantId) return;
-                      const updated = await updateRestaurantPaymentSettings(activeRestaurantId, {
-                        razorpayKeyId: paymentSetupForm.razorpayKeyId.trim(),
-                        razorpayKeySecret: paymentSetupForm.razorpayKeySecret.trim(),
-                        razorpayWebhookSecret: paymentSetupForm.razorpayWebhookSecret.trim(),
-                        onlinePaymentsEnabled: true,
+                      const { data, error } = await supabase.functions.invoke('razorpay-create-linked-account', {
+                        body: {
+                          restaurantId: activeRestaurantId,
+                          accountNumber: paymentSetupForm.accountNumber.trim(),
+                          ifsc: paymentSetupForm.ifsc.trim(),
+                          beneficiaryName: paymentSetupForm.beneficiaryName.trim(),
+                          businessName: restaurantForm?.name || 'Restaurant'
+                        }
                       });
+                      if (error) throw error;
+                      if (data?.error) throw new Error(data.error);
+
+                      // Update local state since edge function updated DB
+                      setPaymentSettings({ ...paymentSettings, razorpayLinkedAccountId: data.linkedAccountId, onlinePaymentsEnabled: true });
                       await updateRestaurantProfile(activeRestaurantId, { pay_online: true });
-                      setPaymentSettings({ razorpayKeyId: updated.razorpayKeyId ?? '', hasRazorpayKeySecret: updated.hasRazorpayKeySecret, hasRazorpayWebhookSecret: updated.hasRazorpayWebhookSecret, onlinePaymentsEnabled: true });
-                      const rest = await getRestaurantById(activeRestaurantId);
-                      if (rest) { setRestaurant(rest); setRestaurantForm(createRestaurantFormState(rest)); }
                       setShowPaymentSetupModal(false);
-                      setFeedback({ tone: 'success', message: 'Razorpay set up — payments enabled!' });
+                      setFeedback({ tone: 'success', message: 'Bank account connected and payments enabled!' });
                     } catch (err: any) {
-                      setPaymentSetupError(err?.message ?? 'Failed to save credentials.');
+                      setPaymentSetupError(err?.message ?? 'Failed to connect bank account.');
                     } finally { setPaymentSetupSaving(false); }
                   }}
-                  style={{ flex: 1, padding: '11px 16px', borderRadius: 10, border: 'none', background: (!paymentSetupForm.razorpayKeyId.trim() || !paymentSetupForm.razorpayKeySecret.trim() || !paymentSetupForm.razorpayWebhookSecret.trim()) ? '#CBD5E0' : 'linear-gradient(135deg,#8B3A1E,#6B2A15)', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}
+                  style={{ flex: 1, padding: '11px 16px', borderRadius: 10, border: 'none', background: (!paymentSetupForm.accountNumber.trim() || !paymentSetupForm.ifsc.trim() || !paymentSetupForm.beneficiaryName.trim()) ? '#CBD5E0' : 'linear-gradient(135deg,#8B3A1E,#6B2A15)', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}
                 >{paymentSetupSaving ? 'Saving…' : 'Save & Enable'}</button>
               </div>
             </div>

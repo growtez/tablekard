@@ -55,7 +55,7 @@ export const uploadProfileImage = async (folder: string, file: File): Promise<st
  * @param file The File object from an input
  * @returns The public URL of the uploaded image
  */
-export const uploadMenuItemImage = async (restaurantId: string, restaurantName: string, file: File): Promise<string> => {
+export const uploadMenuItemImage = async (restaurantId: string, _restaurantName: string, file: File): Promise<string> => {
     // Validate file size (max 5MB)
     const MAX_SIZE = 5 * 1024 * 1024;
     if (file.size > MAX_SIZE) {

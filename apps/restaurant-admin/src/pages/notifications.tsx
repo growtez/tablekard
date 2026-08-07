@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, CheckCircle2, Megaphone, Zap, RefreshCw, AlertCircle, Loader2, Search, X, Filter } from 'lucide-react';
+import { Bell, Megaphone, Zap, RefreshCw, AlertCircle, Loader2, Search, X, Filter } from 'lucide-react';
 import { supabase as db } from '@restaurant-saas/supabase';
 import { useAuth } from '../context/AuthContext';
 

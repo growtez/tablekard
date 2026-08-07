@@ -43,6 +43,7 @@ interface RestaurantPaymentSettingsRpcRow {
     has_razorpay_key_secret: boolean;
     has_razorpay_webhook_secret: boolean;
     online_payments_enabled: boolean;
+    razorpay_linked_account_id?: string | null;
     updated_at: string;
 }
 
@@ -123,12 +124,14 @@ export interface RestaurantPaymentSettings {
     hasRazorpayKeySecret: boolean;
     hasRazorpayWebhookSecret: boolean;
     onlinePaymentsEnabled: boolean;
+    razorpayLinkedAccountId?: string | null;
 }
 
 export interface RestaurantPaymentSettingsInput {
     razorpayKeyId?: string | null;
     razorpayKeySecret?: string | null;
     razorpayWebhookSecret?: string | null;
+    razorpayLinkedAccountId?: string | null;
     onlinePaymentsEnabled: boolean;
 }
 
@@ -193,7 +196,8 @@ const mapRestaurantPaymentSettingsRpcRow = (row: RestaurantPaymentSettingsRpcRow
     razorpayKeyId: row.razorpay_key_id ?? '',
     hasRazorpayKeySecret: row.has_razorpay_key_secret,
     hasRazorpayWebhookSecret: row.has_razorpay_webhook_secret,
-    onlinePaymentsEnabled: row.online_payments_enabled
+    onlinePaymentsEnabled: row.online_payments_enabled,
+    razorpayLinkedAccountId: row.razorpay_linked_account_id
 });
 
 // ==========================================
@@ -272,7 +276,8 @@ export const getRestaurantPaymentSettings = async (
             razorpayKeyId: '',
             hasRazorpayKeySecret: false,
             hasRazorpayWebhookSecret: false,
-            onlinePaymentsEnabled: false
+            onlinePaymentsEnabled: false,
+            razorpayLinkedAccountId: null
         };
     }
 
@@ -289,7 +294,8 @@ export const updateRestaurantPaymentSettings = async (
             p_razorpay_key_id: input.razorpayKeyId?.trim() || null,
             p_razorpay_key_secret: input.razorpayKeySecret?.trim() || null,
             p_razorpay_webhook_secret: input.razorpayWebhookSecret?.trim() || null,
-            p_online_payments_enabled: input.onlinePaymentsEnabled
+            p_online_payments_enabled: input.onlinePaymentsEnabled,
+            p_razorpay_linked_account_id: input.razorpayLinkedAccountId?.trim() || null
         });
 
     if (error) throw error;

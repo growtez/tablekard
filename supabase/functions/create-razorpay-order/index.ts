@@ -33,6 +33,8 @@ serve(async (req: Request) => {
         // ──────────────────────────────────────────────
         const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
         const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+        const MASTER_RAZORPAY_KEY_ID = Deno.env.get("RAZORPAY_KEY_ID");
+        const MASTER_RAZORPAY_KEY_SECRET = Deno.env.get("RAZORPAY_KEY_SECRET");
 
         // ──────────────────────────────────────────────
         // 1. Parse request body
@@ -157,7 +159,7 @@ serve(async (req: Request) => {
 
         const { data: paymentSettings, error: paymentSettingsError } = await supabaseAdmin
             .from("restaurant_payment_settings")
-            .select("razorpay_key_id, razorpay_key_secret_id, online_payments_enabled")
+            .select("razorpay_linked_account_id, online_payments_enabled")
             .eq("restaurant_id", restaurant_id)
             .maybeSingle();
 
@@ -165,20 +167,9 @@ serve(async (req: Request) => {
             throw new Error(`Failed to load restaurant payment settings: ${paymentSettingsError.message}`);
         }
 
-        const razorpayKeyId = paymentSettings?.razorpay_key_id?.trim();
-        const { data: razorpayKeySecret, error: keySecretError } = await supabaseAdmin
-            .rpc("get_restaurant_razorpay_secret", {
-                p_restaurant_id: restaurant_id,
-                p_secret_type: "key_secret",
-            });
-
-        if (keySecretError) {
-            throw new Error(`Failed to load restaurant Razorpay secret: ${keySecretError.message}`);
-        }
-
-        if (!paymentSettings?.online_payments_enabled || !razorpayKeyId || !paymentSettings.razorpay_key_secret_id || !razorpayKeySecret) {
+        if (!paymentSettings?.online_payments_enabled || !paymentSettings.razorpay_linked_account_id) {
             return new Response(
-                JSON.stringify({ error: "Restaurant Razorpay account is not configured" }),
+                JSON.stringify({ error: "Restaurant has not connected a Razorpay account" }),
                 { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }
@@ -211,7 +202,7 @@ serve(async (req: Request) => {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                Authorization: `Basic ${btoa(`${razorpayKeyId}:${razorpayKeySecret}`)}`,
+                Authorization: `Basic ${btoa(`${MASTER_RAZORPAY_KEY_ID}:${MASTER_RAZORPAY_KEY_SECRET}`)}`,
             },
             body: JSON.stringify({
                 amount: amountInPaise,
@@ -222,6 +213,18 @@ serve(async (req: Request) => {
                     customer_id: user.id,
                     items_count: items.length,
                 },
+                transfers: [
+                    {
+                        account: paymentSettings.razorpay_linked_account_id,
+                        amount: amountInPaise,
+                        currency: "INR",
+                        notes: {
+                            restaurant_id: restaurant_id
+                        },
+                        linked_account_notes: ["restaurant_id"],
+                        on_hold: 0
+                    }
+                ]
             }),
         });
 
@@ -289,7 +292,7 @@ serve(async (req: Request) => {
             JSON.stringify({
                 success: true,
                 razorpay_order_id: razorpayOrder.id,
-                razorpay_key_id: razorpayKeyId,
+                razorpay_key_id: MASTER_RAZORPAY_KEY_ID, // Use Master Key for checkout
                 amount: amountInPaise,
                 currency: "INR",
                 payment_id: payment.id, // Our internal payment ID

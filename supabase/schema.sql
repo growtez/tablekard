@@ -929,6 +929,7 @@ CREATE EXTENSION IF NOT EXISTS "supabase_vault" WITH SCHEMA "vault";
 CREATE TABLE IF NOT EXISTS public.restaurant_payment_settings (
     restaurant_id UUID PRIMARY KEY REFERENCES public.restaurants(id) ON DELETE CASCADE,
     provider TEXT NOT NULL DEFAULT 'razorpay',
+    razorpay_linked_account_id TEXT,
     razorpay_key_id TEXT,
     has_razorpay_key_secret BOOLEAN NOT NULL DEFAULT false,
     has_razorpay_webhook_secret BOOLEAN NOT NULL DEFAULT false,
@@ -971,7 +972,8 @@ CREATE OR REPLACE FUNCTION upsert_restaurant_payment_settings(
     p_razorpay_key_id TEXT,
     p_razorpay_key_secret TEXT,
     p_razorpay_webhook_secret TEXT,
-    p_online_payments_enabled BOOLEAN
+    p_online_payments_enabled BOOLEAN,
+    p_razorpay_linked_account_id TEXT DEFAULT NULL
 )
 RETURNS public.restaurant_payment_settings
 LANGUAGE plpgsql
@@ -1015,7 +1017,8 @@ BEGIN
         razorpay_key_secret_id, 
         razorpay_webhook_secret_id,
         has_razorpay_key_secret,
-        has_razorpay_webhook_secret
+        has_razorpay_webhook_secret,
+        razorpay_linked_account_id
     )
     VALUES (
         p_restaurant_id, 
@@ -1025,7 +1028,8 @@ BEGIN
         v_key_secret_id, 
         v_webhook_secret_id,
         v_key_secret_id IS NOT NULL,
-        v_webhook_secret_id IS NOT NULL
+        v_webhook_secret_id IS NOT NULL,
+        p_razorpay_linked_account_id
     )
     ON CONFLICT (restaurant_id) DO UPDATE SET
         razorpay_key_id = EXCLUDED.razorpay_key_id,
@@ -1034,6 +1038,7 @@ BEGIN
         razorpay_webhook_secret_id = COALESCE(EXCLUDED.razorpay_webhook_secret_id, public.restaurant_payment_settings.razorpay_webhook_secret_id),
         has_razorpay_key_secret = COALESCE(EXCLUDED.razorpay_key_secret_id, public.restaurant_payment_settings.razorpay_key_secret_id) IS NOT NULL,
         has_razorpay_webhook_secret = COALESCE(EXCLUDED.razorpay_webhook_secret_id, public.restaurant_payment_settings.razorpay_webhook_secret_id) IS NOT NULL,
+        razorpay_linked_account_id = COALESCE(EXCLUDED.razorpay_linked_account_id, public.restaurant_payment_settings.razorpay_linked_account_id),
         updated_at = NOW()
     RETURNING * INTO v_result;
 

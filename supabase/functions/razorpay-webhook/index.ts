@@ -20,6 +20,15 @@ const corsHeaders = {
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-razorpay-signature",
 };
 
+/**
+ * Add N months to a date. Handles month overflow correctly.
+ */
+function addMonths(date: Date, months: number): Date {
+    const result = new Date(date);
+    result.setMonth(result.getMonth() + months);
+    return result;
+}
+
 serve(async (req: Request) => {
     // Handle CORS preflight requests
     if (req.method === "OPTIONS") {
@@ -52,58 +61,11 @@ serve(async (req: Request) => {
             return new Response("Missing signature", { status: 400, headers: corsHeaders });
         }
 
-        let lookupQuery;
-        if (event === "payment.captured" || event === "payment.failed") {
-            const razorpayOrderId = webhookData.payload?.payment?.entity?.order_id;
-            if (!razorpayOrderId) {
-                return new Response("Missing Razorpay order id", { status: 400, headers: corsHeaders });
-            }
-            lookupQuery = supabaseAdmin
-                .from("payments")
-                .select("id, restaurant_id")
-                .eq("razorpay_order_id", razorpayOrderId)
-                .maybeSingle();
-        } else if (event === "refund.created" || event === "refund.processed") {
-            const razorpayPaymentId = webhookData.payload?.refund?.entity?.payment_id;
-            if (!razorpayPaymentId) {
-                return new Response("Missing Razorpay payment id", { status: 400, headers: corsHeaders });
-            }
-            lookupQuery = supabaseAdmin
-                .from("payments")
-                .select("id, restaurant_id")
-                .eq("razorpay_payment_id", razorpayPaymentId)
-                .maybeSingle();
-        }
-
-        if (!lookupQuery) {
-            console.log(`Unhandled webhook event before verification: ${event}`);
-            return new Response(JSON.stringify({ received: true }), {
-                status: 200,
-                headers: { ...corsHeaders, "Content-Type": "application/json" },
-            });
-        }
-
-        const { data: webhookPayment, error: webhookPaymentError } = await lookupQuery;
-        if (webhookPaymentError || !webhookPayment) {
-            console.error("Payment not found for webhook verification", webhookPaymentError);
-            return new Response("Payment record not found", { status: 200, headers: corsHeaders });
-        }
-
-        const { data: paymentSettings, error: settingsError } = await supabaseAdmin
-            .from("restaurant_payment_settings")
-            .select("razorpay_webhook_secret_id")
-            .eq("restaurant_id", webhookPayment.restaurant_id)
-            .maybeSingle();
-
-        const { data: webhookSecret, error: webhookSecretError } = await supabaseAdmin
-            .rpc("get_restaurant_razorpay_secret", {
-                p_restaurant_id: webhookPayment.restaurant_id,
-                p_secret_type: "webhook_secret",
-            });
-
-        if (settingsError || webhookSecretError || !paymentSettings?.razorpay_webhook_secret_id || !webhookSecret) {
-            console.error("Webhook secret not configured for restaurant", webhookPayment.restaurant_id);
-            return new Response("Webhook secret not configured", { status: 400, headers: corsHeaders });
+        const webhookSecret = Deno.env.get("RAZORPAY_WEBHOOK_SECRET");
+        
+        if (!webhookSecret) {
+            console.error("Master Webhook secret not configured");
+            return new Response("Webhook secret not configured", { status: 500, headers: corsHeaders });
         }
 
         const expectedSignature = createHmac("sha256", webhookSecret)
@@ -121,6 +83,69 @@ serve(async (req: Request) => {
 
         console.log(`Webhook received: ${event}`);
 
+        let webhookPayment;
+        let isSubscription = false;
+
+        if (event === "payment.captured" || event === "payment.failed") {
+            const razorpayOrderId = webhookData.payload?.payment?.entity?.order_id;
+            if (!razorpayOrderId) {
+                return new Response("Missing Razorpay order id", { status: 400, headers: corsHeaders });
+            }
+            
+            const { data: customerPayment } = await supabaseAdmin
+                .from("payments")
+                .select("id, restaurant_id, order_id, status")
+                .eq("razorpay_order_id", razorpayOrderId)
+                .maybeSingle();
+
+            if (customerPayment) {
+                webhookPayment = customerPayment;
+            } else {
+                const { data: subPayment } = await supabaseAdmin
+                    .from("subscription_payments")
+                    .select("*")
+                    .eq("razorpay_order_id", razorpayOrderId)
+                    .maybeSingle();
+                if (subPayment) {
+                    webhookPayment = subPayment;
+                    isSubscription = true;
+                }
+            }
+        } else if (event === "refund.created" || event === "refund.processed") {
+            const razorpayPaymentId = webhookData.payload?.refund?.entity?.payment_id;
+            if (!razorpayPaymentId) {
+                return new Response("Missing Razorpay payment id", { status: 400, headers: corsHeaders });
+            }
+
+            const { data: customerPayment } = await supabaseAdmin
+                .from("payments")
+                .select("id, restaurant_id, order_id, status")
+                .eq("razorpay_payment_id", razorpayPaymentId)
+                .maybeSingle();
+
+            if (customerPayment) {
+                webhookPayment = customerPayment;
+            } else {
+                const { data: subPayment } = await supabaseAdmin
+                    .from("subscription_payments")
+                    .select("*")
+                    .eq("razorpay_payment_id", razorpayPaymentId)
+                    .maybeSingle();
+                if (subPayment) {
+                    webhookPayment = subPayment;
+                    isSubscription = true;
+                }
+            }
+        } else {
+            console.log(`Unhandled webhook event: ${event}`);
+            return new Response(JSON.stringify({ received: true }), { status: 200, headers: corsHeaders });
+        }
+
+        if (!webhookPayment) {
+            console.error(`Payment record not found for webhook verification: ${event}`);
+            return new Response("Payment record not found", { status: 200, headers: corsHeaders });
+        }
+
         // ──────────────────────────────────────────────
         // 3. Handle different webhook events
         // ──────────────────────────────────────────────
@@ -132,123 +157,172 @@ serve(async (req: Request) => {
             const razorpayPaymentId = paymentEntity.id;
             const method = paymentEntity.method;     // 'upi', 'card', 'netbanking', etc.
 
-            // Find our payment record by razorpay_order_id
-            const { data: payment, error: findError } = await supabaseAdmin
-                .from("payments")
-                .select("id, order_id, status")
-                .eq("razorpay_order_id", razorpayOrderId)
-                .single();
+            if (isSubscription) {
+                // --- SUBSCRIPTION LOGIC ---
+                if (webhookPayment.status !== "paid") {
+                    console.log("Frontend verify did not run — activating subscription from webhook");
+                    
+                    const now = new Date();
+                    const restaurantId = webhookPayment.restaurant_id;
+                    const planDuration = webhookPayment.plan_duration || 1;
+                    const planName = webhookPayment.plan_name;
 
-            if (findError || !payment) {
-                console.error(`Payment not found for razorpay_order_id: ${razorpayOrderId}`);
-                // Still return 200 to prevent Razorpay from retrying
-                return new Response("Payment record not found", { status: 200, headers: corsHeaders });
-            }
-
-            // Update payment: mark webhook as verified, fill in method
-            await supabaseAdmin
-                .from("payments")
-                .update({
-                    webhook_verified: true,
-                    webhook_event_id: webhookData.event_id || null,
-                    razorpay_payment_id: razorpayPaymentId,
-                    method: method,
-                    status: "paid",                                // Confirm payment
-                    paid_at: new Date().toISOString(),
-                })
-                .eq("id", payment.id);
-
-            // If the verify-razorpay-payment function already created the order,
-            // update the order's payment_status too (safety net)
-            if (payment.order_id) {
-                await supabaseAdmin
-                    .from("orders")
-                    .update({ payment_status: "paid" })
-                    .eq("id", payment.order_id);
-            }
-
-            // If verify function DIDN'T run (browser crashed), we need to
-            // create the order now using the stored cart data
-            if (!payment.order_id && payment.status !== "paid") {
-                console.log("Frontend verify did not run — creating order from webhook");
-
-                // Fetch cart data from payment_logs
-                const { data: logEntry } = await supabaseAdmin
-                    .from("payment_logs")
-                    .select("event_data")
-                    .eq("payment_id", payment.id)
-                    .eq("event_type", "ORDER_CREATED")
-                    .single();
-
-                if (logEntry?.event_data?.items) {
-                    const cartData = logEntry.event_data;
-
-                    // Generate order number
-                    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-                    let orderNumber = "ORD-";
-                    for (let i = 0; i < 6; i++) {
-                        orderNumber += chars.charAt(Math.floor(Math.random() * chars.length));
-                    }
-
-                    // Create the order
-                    const { data: order } = await supabaseAdmin
-                        .from("orders")
-                        .insert({
-                            customer_id: cartData.customer_id,
-                            restaurant_id: cartData.restaurant_id,
-                            order_number: orderNumber,
-                            type: cartData.order_type?.toLowerCase() || "dine_in",
-                            status: "confirmed",
-                            table_id: (typeof cartData.table_id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cartData.table_id)) ? cartData.table_id : null,
-                            payment_method: "online",
-                            payment_status: "paid",
-                            subtotal: cartData.subtotal,
-                            taxes: cartData.taxes,
-                            discount: 0,
-                            total: cartData.amount,
-                        })
-                        .select("id")
+                    const { data: restaurant } = await supabaseAdmin
+                        .from("restaurants")
+                        .select("status, subscription_end_at")
+                        .eq("id", restaurantId)
                         .single();
 
-                    if (order) {
-                        // Create order items
-                        const orderItems = cartData.items.map((item: any) => ({
-                            order_id: order.id,
-                            menu_item_id: item.menu_item_id,
-                            name: item.name,
-                            price: item.price,
-                            quantity: item.quantity,
-                            total: item.total,
-                            variant: item.variant,
-                            addons: item.addons,
-                            special_instructions: item.special_instructions,
-                        }));
+                    if (restaurant && ["approved", "active"].includes(restaurant.status)) {
+                        let startsAt;
+                        if (
+                            restaurant.status === "active" &&
+                            restaurant.subscription_end_at &&
+                            new Date(restaurant.subscription_end_at) > now
+                        ) {
+                            startsAt = new Date(restaurant.subscription_end_at);
+                        } else {
+                            startsAt = now;
+                        }
 
-                        await supabaseAdmin.from("order_items").insert(orderItems);
+                        const endsAt = addMonths(startsAt, planDuration);
+                        const gracePeriodEndsAt = new Date(endsAt);
+                        gracePeriodEndsAt.setDate(gracePeriodEndsAt.getDate() + 3);
 
-                        // Link payment to the new order
                         await supabaseAdmin
-                            .from("payments")
-                            .update({ order_id: order.id })
-                            .eq("id", payment.id);
+                            .from("subscription_payments")
+                            .update({
+                                razorpay_payment_id: razorpayPaymentId,
+                                status: "paid",
+                                paid_at: now.toISOString(),
+                                starts_at: startsAt.toISOString(),
+                                ends_at: endsAt.toISOString(),
+                            })
+                            .eq("id", webhookPayment.id);
+
+                        await supabaseAdmin
+                            .from("restaurants")
+                            .update({
+                                status: "active",
+                                subscription_status: true,
+                                subscription_type: planName ?? "QR",
+                                subscription_end_at: endsAt.toISOString(),
+                                grace_period_ends_at: gracePeriodEndsAt.toISOString(),
+                            })
+                            .eq("id", restaurantId);
                     }
                 }
-            }
+            } else {
+                // --- CUSTOMER FOOD ORDER LOGIC ---
+                const payment = webhookPayment;
 
-            // Log the webhook event
-            await supabaseAdmin.from("payment_logs").insert({
-                payment_id: payment.id,
-                order_id: payment.order_id,
-                event_type: "WEBHOOK_PAYMENT_CAPTURED",
-                event_data: {
-                    razorpay_order_id: razorpayOrderId,
-                    razorpay_payment_id: razorpayPaymentId,
-                    method,
-                    amount: paymentEntity.amount,
-                    webhook_event_id: webhookData.event_id,
-                    received_at: new Date().toISOString(),
-                },
-            });
+                // Update payment: mark webhook as verified, fill in method
+                await supabaseAdmin
+                    .from("payments")
+                    .update({
+                        webhook_verified: true,
+                        webhook_event_id: webhookData.event_id || null,
+                        razorpay_payment_id: razorpayPaymentId,
+                        method: method,
+                        status: "paid",                                // Confirm payment
+                        paid_at: new Date().toISOString(),
+                    })
+                    .eq("id", payment.id);
+
+                // If the verify-razorpay-payment function already created the order,
+                // update the order's payment_status too (safety net)
+                if (payment.order_id) {
+                    await supabaseAdmin
+                        .from("orders")
+                        .update({ payment_status: "paid" })
+                        .eq("id", payment.order_id);
+                }
+
+                // If verify function DIDN'T run (browser crashed), we need to
+                // create the order now using the stored cart data
+                if (!payment.order_id && payment.status !== "paid") {
+                    console.log("Frontend verify did not run — creating order from webhook");
+
+                    // Fetch cart data from payment_logs
+                    const { data: logEntry } = await supabaseAdmin
+                        .from("payment_logs")
+                        .select("event_data")
+                        .eq("payment_id", payment.id)
+                        .eq("event_type", "ORDER_CREATED")
+                        .single();
+
+                    if (logEntry?.event_data?.items) {
+                        const cartData = logEntry.event_data;
+
+                        // Generate order number
+                        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+                        let orderNumber = "ORD-";
+                        for (let i = 0; i < 6; i++) {
+                            orderNumber += chars.charAt(Math.floor(Math.random() * chars.length));
+                        }
+
+                        // Create the order
+                        const { data: order } = await supabaseAdmin
+                            .from("orders")
+                            .insert({
+                                customer_id: cartData.customer_id,
+                                restaurant_id: cartData.restaurant_id,
+                                order_number: orderNumber,
+                                type: cartData.order_type?.toLowerCase() || "dine_in",
+                                status: "confirmed",
+                                table_id: (typeof cartData.table_id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cartData.table_id)) ? cartData.table_id : null,
+                                payment_method: "online",
+                                payment_status: "paid",
+                                subtotal: cartData.subtotal,
+                                taxes: cartData.taxes,
+                                discount: 0,
+                                total: cartData.amount,
+                            })
+                            .select("id")
+                            .single();
+
+                        if (order) {
+                            // Create order items
+                            const orderItems = cartData.items.map((item: any) => ({
+                                order_id: order.id,
+                                menu_item_id: item.menu_item_id,
+                                name: item.name,
+                                price: item.price,
+                                quantity: item.quantity,
+                                total: item.total,
+                                variant: item.variant,
+                                addons: item.addons,
+                                special_instructions: item.special_instructions,
+                            }));
+
+                            await supabaseAdmin.from("order_items").insert(orderItems);
+
+                            // Link payment to the new order
+                            await supabaseAdmin
+                                .from("payments")
+                                .update({ order_id: order.id })
+                                .eq("id", payment.id);
+                            
+                            payment.order_id = order.id;
+                        }
+                    }
+                }
+
+                // Log the webhook event
+                await supabaseAdmin.from("payment_logs").insert({
+                    payment_id: payment.id,
+                    order_id: payment.order_id,
+                    event_type: "WEBHOOK_PAYMENT_CAPTURED",
+                    event_data: {
+                        razorpay_order_id: razorpayOrderId,
+                        razorpay_payment_id: razorpayPaymentId,
+                        method,
+                        amount: paymentEntity.amount,
+                        webhook_event_id: webhookData.event_id,
+                        received_at: new Date().toISOString(),
+                    },
+                });
+            }
 
         } else if (event === "payment.failed") {
             // ───── PAYMENT FAILED ─────
@@ -257,13 +331,15 @@ serve(async (req: Request) => {
             const errorCode = paymentEntity.error_code;
             const errorDescription = paymentEntity.error_description;
 
-            const { data: payment } = await supabaseAdmin
-                .from("payments")
-                .select("id, order_id")
-                .eq("razorpay_order_id", razorpayOrderId)
-                .single();
-
-            if (payment) {
+            if (isSubscription) {
+                await supabaseAdmin
+                    .from("subscription_payments")
+                    .update({
+                        status: "failed"
+                    })
+                    .eq("id", webhookPayment.id);
+            } else {
+                const payment = webhookPayment;
                 await supabaseAdmin
                     .from("payments")
                     .update({
@@ -294,13 +370,18 @@ serve(async (req: Request) => {
             const refundEntity = webhookData.payload.refund.entity;
             const razorpayPaymentId = refundEntity.payment_id;
 
-            const { data: payment } = await supabaseAdmin
-                .from("payments")
-                .select("id, order_id")
-                .eq("razorpay_payment_id", razorpayPaymentId)
-                .single();
-
-            if (payment) {
+            if (isSubscription) {
+                // Typically you'd handle subscription refunds here if needed
+                if (event === "refund.processed") {
+                     await supabaseAdmin
+                        .from("subscription_payments")
+                        .update({
+                            status: "refunded"
+                        })
+                        .eq("id", webhookPayment.id);
+                }
+            } else {
+                const payment = webhookPayment;
                 const eventType = event === "refund.created"
                     ? "WEBHOOK_REFUND_CREATED"
                     : "WEBHOOK_REFUND_PROCESSED";
@@ -338,16 +419,10 @@ serve(async (req: Request) => {
                     },
                 });
             }
-
-        } else {
-            // ───── UNHANDLED EVENT ─────
-            console.log(`Unhandled webhook event: ${event}`);
         }
 
         // ──────────────────────────────────────────────
         // ALWAYS return 200 OK to Razorpay.
-        // If you return an error, Razorpay will retry the webhook
-        // up to 24 hours, which could cause duplicate processing.
         // ──────────────────────────────────────────────
         return new Response(JSON.stringify({ received: true }), {
             status: 200,

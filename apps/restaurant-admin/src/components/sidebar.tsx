@@ -304,7 +304,7 @@ const Sidebar: React.FC = () => {
 
     { icon: (active) => <SubscriptionIcon active={active} />, label: 'Subscription', id: 'subscription', path: '/subscription' },
     {
-      icon: (active) => (
+      icon: (_active) => (
         <div className="relative flex items-center justify-center">
           <Bell size={20} />
           {unreadCount > 0 && (
