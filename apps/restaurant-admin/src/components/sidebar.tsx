@@ -212,10 +212,16 @@ const Sidebar: React.FC = () => {
     };
 
     fetchUnread();
+    const interval = setInterval(fetchUnread, 10000);
+    window.addEventListener('focus', fetchUnread);
 
     const handleRead = () => setUnreadCount(0);
     window.addEventListener('notificationsRead', handleRead);
-    return () => window.removeEventListener('notificationsRead', handleRead);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', fetchUnread);
+      window.removeEventListener('notificationsRead', handleRead);
+    };
   }, [activeRestaurantId]);
 
   const getActiveTab = () => {
@@ -285,6 +291,19 @@ const Sidebar: React.FC = () => {
     { icon: (active) => <TableIcon active={active} />, label: "Table Management", id: "table-management", path: "/table-management" },
     { icon: (active) => <UsersIcon active={active} />, label: 'Staff Management', id: 'team', path: '/team' },
     { icon: (active) => <SubscriptionIcon active={active} />, label: 'Subscription', id: 'subscription', path: '/subscription' },
+    {
+      icon: (active) => (
+        <div className="relative flex items-center justify-center">
+          <Bell size={20} />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-tk-bg z-10"></span>
+          )}
+        </div>
+      ),
+      label: 'Notifications',
+      id: 'notifications',
+      path: '/notifications'
+    },
   ];
 
   const handleNavClick = (item: NavItem) => {
@@ -345,9 +364,7 @@ const Sidebar: React.FC = () => {
           >
             <Bell size={18} />
             {unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-red-500 px-[3px] text-[9px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-tk-bg">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
+              <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm ring-2 ring-white dark:ring-tk-bg z-[130]"></span>
             )}
           </button>
         )}
@@ -397,9 +414,7 @@ const Sidebar: React.FC = () => {
                 onChange={handleLogoFileSelect}
               />
               {isCollapsed && unreadCount > 0 && (
-                <div className="absolute -top-1 -right-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-red-500 px-[4px] text-[10px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-tk-bg z-[130] pointer-events-none">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </div>
+                <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm ring-2 ring-white dark:ring-tk-bg z-[130] pointer-events-none"></div>
               )}
             </div>
             <div className="w-full h-9 flex items-start justify-center shrink-0">
