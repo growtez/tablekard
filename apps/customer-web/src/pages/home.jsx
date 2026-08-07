@@ -42,6 +42,7 @@ const HomePage = () => {
     const [activeOfferIndex, setActiveOfferIndex] = useState(0);
     const [favorites, setFavorites] = useState([]);
     const [activeFilter, setActiveFilter] = useState('popular');
+    const [vegOnly, setVegOnly] = useState(false);
     const [selectedItem, setSelectedItem] = useState(null);
     const [showItemModal, setShowItemModal] = useState(false);
     const [modalStep, setModalStep] = useState(1);
@@ -265,15 +266,16 @@ const HomePage = () => {
     // Function to get filtered items based on active filter
     const getFilteredItems = () => {
         if (loadingItems) return [];
+        const base = vegOnly ? menuItems.filter(item => item.dietType === 'veg') : menuItems;
         switch (activeFilter) {
             case 'popular':
-                return [...menuItems].sort((a, b) => (b.weeklySalesCount || 0) - (a.weeklySalesCount || 0)).slice(0, 4);
+                return [...base].sort((a, b) => (b.weeklySalesCount || 0) - (a.weeklySalesCount || 0)).slice(0, 4);
             case 'all':
-                return [...menuItems].sort((a, b) => (b.salesCount || 0) - (a.salesCount || 0)).slice(0, 4);
+                return [...base].sort((a, b) => (b.salesCount || 0) - (a.salesCount || 0)).slice(0, 4);
             case 'rated':
-                return [...menuItems].sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating)).slice(0, 4);
+                return [...base].sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating)).slice(0, 4);
             case 'budget':
-                return menuItems
+                return base
                     .filter(item => item.price < 200)
                     .sort((a, b) => {
                         if (a.price === b.price) {
@@ -283,7 +285,7 @@ const HomePage = () => {
                     })
                     .slice(0, 4);
             default:
-                return menuItems.slice(0, 4);
+                return base.slice(0, 4);
         }
     };
 
@@ -348,6 +350,17 @@ const HomePage = () => {
             <section className="section categories-section">
                 <div className="section-header">
                     <h2 className="section-title">Categories</h2>
+                    <div className="veg-filter-row right-aligned">
+                        <button
+                            className={`modern-toggle text-inside ${vegOnly ? 'active' : ''}`}
+                            onClick={() => setVegOnly(!vegOnly)}
+                            aria-label="Toggle Vegetarian Only"
+                        >
+                            <div className="toggle-thumb">
+                                <span className="thumb-text">Veg</span>
+                            </div>
+                        </button>
+                    </div>
                 </div>
                 <div className="category-pills">
                     {filters.map(filter => (
@@ -370,7 +383,7 @@ const HomePage = () => {
                     </h2>
                 </div>
                 <div className="food-grid">
-                    {filteredItems.map(item => (
+                    {filteredItems.length > 0 ? filteredItems.map(item => (
                         <div key={item.id} className="food-card" onClick={() => handleItemClick(item)}>
                             <div className="food-card-image">
                                 <img src={item.image} alt={item.name} />
@@ -398,7 +411,13 @@ const HomePage = () => {
                             </div>
                             <div className="food-card-price">₹{item.price}</div>
                         </div>
-                    ))}
+                    )) : (
+                        <div className="no-items-placeholder">
+                            <span className="no-items-icon">🥦</span>
+                            <p className="no-items-title">No veg items here</p>
+                            <p className="no-items-sub">Try a different category or turn off the Veg filter</p>
+                        </div>
+                    )}
                 </div>
             </section>
 
