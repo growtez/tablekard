@@ -295,11 +295,6 @@ const Menu: React.FC = () => {
   };
 
   // --- CATEGORY HANDLERS ---
-  const handleAddCategory = () => {
-    setDialogMode('add');
-    setSelectedCategory(null);
-    setCategoryDialogOpen(true);
-  };
 
   const handleEditCategory = (category: MenuCategory) => {
     setDialogMode('edit');
