@@ -19,6 +19,7 @@ const ProfilePage = lazy(() => import("./pages/profile/profile"));
 const SubscriptionPage = lazy(() => import("./pages/subscription/subscription"));
 const Team = lazy(() => import("./pages/team"));
 const NotificationsPage = lazy(() => import("./pages/notifications"));
+const BannersPage = lazy(() => import("./pages/banners"));
 // Loading fallback for Suspense
 const PageLoader = () => (
   <div className="flex justify-center items-center h-screen bg-[#F4F6F9] text-[#1E293B] font-sans text-base font-medium">
@@ -89,6 +90,9 @@ function AppRoutes() {
         } />
         <Route path="/notifications" element={
           <ProtectedRoute><NotificationsPage /></ProtectedRoute>
+        } />
+        <Route path="/banners" element={
+          <ProtectedRoute><BannersPage /></ProtectedRoute>
         } />
       </Routes>
     </Suspense>

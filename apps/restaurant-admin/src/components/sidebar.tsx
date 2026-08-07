@@ -138,6 +138,15 @@ const UsersIcon = ({ active }: { active: boolean }) => (
   </svg>
 );
 
+const BannersIcon = ({ active }: { active: boolean }) => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? '2.5' : '2'} strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="5" width="20" height="14" rx="2" />
+    <path d="M2 10h20" />
+    <circle cx="7" cy="15" r="1" fill={active ? 'currentColor' : 'none'} />
+    <path d="M10 15h7" />
+  </svg>
+);
+
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -200,6 +209,7 @@ const Sidebar: React.FC = () => {
     if (path.includes('/team')) return 'team';
     if (path.includes('/notifications')) return 'notifications';
     if (path.includes('/feature-settings')) return 'feature-settings';
+    if (path.includes('/banners')) return 'banners';
     return 'dashboard';
   };
 
@@ -252,6 +262,7 @@ const Sidebar: React.FC = () => {
     { icon: (active) => <ReportIcon active={active} />, label: 'Report and Analytics', id: 'report', path: '/reports' },
     { icon: (active) => <TableIcon active={active} />, label: "Table Management", id: "table-management", path: "/table-management" },
     { icon: (active) => <UsersIcon active={active} />, label: 'Team Management', id: 'team', path: '/team' },
+    { icon: (active) => <BannersIcon active={active} />, label: 'Home Banners', id: 'banners', path: '/banners' },
     { icon: (active) => <SubscriptionIcon active={active} />, label: 'Subscription', id: 'subscription', path: '/subscription' },
   ];
 
