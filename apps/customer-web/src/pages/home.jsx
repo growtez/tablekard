@@ -6,7 +6,8 @@ import Hamburger from '../components/hamburger';
 import { useRestaurant } from '../context/RestaurantContext';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import { getRecentOrderedItems, getRecommendedItems, getOffersForCustomer, getFavorites, addFavorite, removeFavoriteFromDB } from '../services/supabaseService';
+import { getRecentOrderedItems, getRecommendedItems, getOffersForCustomer, getFavorites, addFavorite, removeFavoriteFromDB, getHomeBanners } from '../services/supabaseService';
+import HeroBannerSlider from '../components/HeroBannerSlider';
 import PageSkeleton from '../components/PageSkeleton';
 import { showHomeLoader, hideHomeLoader } from '../utils/loader';
 import BottomNav from '../components/BottomNav';
@@ -53,6 +54,7 @@ const HomePage = () => {
     const [menuItems, setMenuItems] = useState([]);
     const [discountItems, setDiscountItems] = useState([]);
     const [loadingItems, setLoadingItems] = useState(true);
+    const [banners, setBanners] = useState([]);
 
     const handleScroll = () => {
         if (scrollRef.current) {
@@ -117,6 +119,7 @@ const HomePage = () => {
                 const fetchPromises = [
                     getRecommendedItems(user?.id, restaurant.id),
                     getOffersForCustomer(restaurant.id, 5),
+                    getHomeBanners(restaurant.id),
                     minDelay
                 ];
                 
@@ -128,6 +131,7 @@ const HomePage = () => {
                 
                 setMenuItems(results[0] || []);
                 setDiscountItems(results[1] || []);
+                setBanners(results[2] || []);
                 
                 if (user?.id) {
                     const [recent, favs] = await Promise.all([
@@ -172,8 +176,24 @@ const HomePage = () => {
             )
             .subscribe();
 
+        // Real-time subscription for banners
+        const bannersSubscription = supabase
+            .channel('home-banners')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'home_banners', filter: `restaurant_id=eq.${restaurant?.id}` },
+                async () => {
+                    if (restaurant?.id) {
+                        const updatedBanners = await getHomeBanners(restaurant.id);
+                        setBanners(updatedBanners || []);
+                    }
+                }
+            )
+            .subscribe();
+
         return () => {
             supabase.removeChannel(offersSubscription);
+            supabase.removeChannel(bannersSubscription);
         };
     }, [restaurant?.id, user?.id]);
 
@@ -319,19 +339,24 @@ const HomePage = () => {
                 </div>
             </header>
 
-            {/* Hero Section with AI Generated Illustration */}
-            <section className="hero-section">
-                <div className="hero-text">
-                    <h1>Find Your <span className="highlight">Best</span></h1>
-                    <h1>Food Around You</h1>
-                </div>
-                <div className="hero-illustration">
-                    <img
-                        src="/assets/hero-illustration.png"
-                        alt="Restaurant Illustration"
-                    />
-                </div>
-            </section>
+            {/* Dynamic Hero Banner Slider */}
+            <HeroBannerSlider
+                banners={banners}
+                fallback={
+                    <section className="hero-section">
+                        <div className="hero-text">
+                            <h1>Find Your <span className="highlight">Best</span></h1>
+                            <h1>Food Around You</h1>
+                        </div>
+                        <div className="hero-illustration">
+                            <img
+                                src="/assets/hero-illustration.png"
+                                alt="Restaurant Illustration"
+                            />
+                        </div>
+                    </section>
+                }
+            />
 
             {/* Search Bar */}
             <div className="search-section">

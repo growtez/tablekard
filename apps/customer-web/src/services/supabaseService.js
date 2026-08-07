@@ -838,3 +838,18 @@ export const getOffersForCustomer = async (restaurantId, limit = 20) => {
     return [];
 };
 
+export const getHomeBanners = async (restaurantId) => {
+    if (!restaurantId) return [];
+    const { data, error } = await supabase
+        .from('home_banners')
+        .select('*')
+        .eq('restaurant_id', restaurantId)
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true });
+    if (error) {
+        console.error('getHomeBanners error:', error);
+        return [];
+    }
+    return data ?? [];
+};
+
