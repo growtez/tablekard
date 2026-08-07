@@ -255,6 +255,92 @@ body {
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
 }
 
+/* ===== VEG TOGGLE (menu style) ===== */
+.veg-filter-row.right-aligned {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0;
+}
+
+.modern-toggle.text-inside {
+  width: 72px;
+  height: 32px;
+  background-color: #F0F0F0;
+  border-radius: 20px;
+  padding: 3px;
+  border: 1px solid #E0E0E0;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.modern-toggle.text-inside.active {
+  background-color: #2E7D32;
+  border-color: #256629;
+}
+
+.modern-toggle.text-inside .toggle-thumb {
+  width: 36px;
+  height: 24px;
+  background-color: #FFFFFF;
+  border-radius: 14px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modern-toggle.text-inside.active .toggle-thumb {
+  transform: translateX(29px);
+}
+
+.thumb-text {
+  font-size: 11px;
+  font-weight: 800;
+  color: #BDBDBD;
+  text-transform: uppercase;
+  transition: color 0.3s ease;
+}
+
+.modern-toggle.text-inside.active .thumb-text {
+  color: #2E7D32;
+}
+
+
+/* ===== NO ITEMS PLACEHOLDER ===== */
+.no-items-placeholder {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 36px 20px;
+  text-align: center;
+}
+
+.no-items-icon {
+  font-size: 44px;
+  margin-bottom: 12px;
+  opacity: 0.85;
+}
+
+.no-items-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1A1A1A;
+  margin: 0 0 6px;
+  font-family: 'Outfit', sans-serif;
+}
+
+.no-items-sub {
+  font-size: 13px;
+  color: #888;
+  margin: 0;
+  font-family: 'Outfit', sans-serif;
+}
+
 /* ===== SECTION STYLES ===== */
 .section {
   padding: 0 20px 28px;
