@@ -165,20 +165,24 @@ const NotificationsPage: React.FC = () => {
   const groupedNotifications = groupNotifications();
 
   return (
-    <div className="flex flex-col md:flex-row h-full animate-[fadeIn_0.3s_ease] bg-[#F8FAFC] dark:bg-tk-bg -m-6 p-6 md:-m-8 md:p-8 overflow-auto gap-8 md:items-start">
-      
-      {/* Left Column (Sticky Sidebar) */}
-      <div className="w-full md:w-[280px] shrink-0 flex flex-col gap-8 md:sticky md:top-0 h-fit">
+    <div className="animate-[fadeIn_0.3s_ease]">
+      {/* Page Header */}
+      <div className="flex flex-row items-center justify-between gap-2 sm:gap-4 max-md:-mt-[52px] max-md:ml-[56px] max-md:mb-[16px] mb-6">
         <div>
-          <h1 className="text-[28px] font-extrabold text-gray-900 dark:text-tk-text tracking-tight m-0">Notifications</h1>
-          <p className="text-[15px] text-gray-600 dark:text-tk-text-secondary mt-1">
+          <h1 className="text-[20px] sm:text-[28px] font-extrabold text-gray-900 dark:text-tk-text tracking-tight m-0">Notifications</h1>
+          <p className="text-[13px] sm:text-[15px] text-gray-600 dark:text-tk-text-secondary mt-0.5">
             You have <span className="text-tk-burgundy font-bold">{notifications.length}</span> notifications to go through
           </p>
         </div>
+      </div>
 
-        <div className="flex flex-col gap-3">
+      {/* Main Content Layout */}
+      <div className="flex flex-col md:flex-row gap-8 md:items-start">
+        
+        {/* Left Column (Desktop Filter Chips) */}
+        <div className="hidden md:flex w-[260px] shrink-0 flex-col gap-3 sticky top-4 h-fit">
           <h3 className="text-[13px] font-bold text-gray-500 dark:text-tk-text-tertiary uppercase tracking-wider pl-1">Filter by Type</h3>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-col gap-2">
             {[
               { id: 'all', label: 'All Types' },
               { id: 'update', label: 'System Update' },
@@ -189,7 +193,7 @@ const NotificationsPage: React.FC = () => {
               <button
                 key={type.id}
                 onClick={() => setFilterType(type.id)}
-                className={`px-4 py-2.5 rounded-full text-[13px] font-bold transition-all border ${
+                className={`px-4 py-2.5 rounded-lg text-[13px] font-bold transition-all border text-left ${
                   filterType === type.id 
                     ? 'bg-tk-burgundy text-white border-tk-burgundy shadow-sm' 
                     : 'bg-white dark:bg-tk-bg-card border-gray-200 dark:border-tk-border text-gray-700 dark:text-tk-text hover:border-tk-burgundy/30 hover:bg-gray-50 dark:hover:bg-tk-bg-surface'
@@ -200,27 +204,48 @@ const NotificationsPage: React.FC = () => {
             ))}
           </div>
         </div>
-      </div>
 
-      {/* Right Column (List) */}
-      <div className="flex-1 flex flex-col min-w-0 max-w-5xl">
-        <div className="flex flex-col sm:flex-row items-center gap-3 w-full justify-between mb-6">
-          <div className="relative w-full sm:max-w-md">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search size={16} className="text-gray-400" />
+        {/* Right Column (Search & List) */}
+        <div className="flex-1 flex flex-col min-w-0">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full justify-between mb-4">
+            <div className="flex items-center gap-2 w-full sm:max-w-md">
+              {/* Search Bar */}
+              <div className="relative flex-1">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search size={16} className="text-gray-400" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search notifications..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 bg-white dark:bg-tk-bg-card border border-gray-200 dark:border-tk-border rounded-lg text-sm text-gray-900 dark:text-tk-text focus:outline-none focus:ring-2 focus:ring-tk-burgundy/50 focus:border-tk-burgundy transition-all shadow-sm"
+                />
+              </div>
+
+              {/* Mobile Filter Button Dropdown (Inline with Search) */}
+              <div className="md:hidden relative shrink-0">
+                <select
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value)}
+                  className="pl-3 pr-8 py-2 bg-white dark:bg-tk-bg-card border border-gray-200 dark:border-tk-border rounded-lg text-sm font-bold text-gray-900 dark:text-tk-text focus:outline-none focus:ring-2 focus:ring-tk-burgundy/50 focus:border-tk-burgundy transition-all shadow-sm appearance-none cursor-pointer"
+                >
+                  <option value="all">All</option>
+                  <option value="update">Update</option>
+                  <option value="feature">Feature</option>
+                  <option value="alert">Alert</option>
+                  <option value="info">Announcement</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-gray-500">
+                  <Filter size={14} />
+                </div>
+              </div>
             </div>
-            <input
-              type="text"
-              placeholder="Search notifications..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-white dark:bg-tk-bg-card border border-gray-200 dark:border-tk-border rounded-lg text-sm text-gray-900 dark:text-tk-text focus:outline-none focus:ring-2 focus:ring-tk-burgundy/50 focus:border-tk-burgundy transition-all shadow-sm"
-            />
+
+            <button onClick={handleMarkAllRead} className="text-[14px] font-bold text-tk-burgundy hover:text-tk-burgundy/80 hover:underline transition-colors whitespace-nowrap text-right sm:text-left pr-2 sm:pr-0">
+              Mark all as Read
+            </button>
           </div>
-          <button onClick={handleMarkAllRead} className="w-full sm:w-auto px-4 py-2 border border-gray-200 dark:border-tk-border rounded-lg text-[14px] font-medium hover:bg-gray-50 dark:hover:bg-tk-bg-surface bg-white dark:bg-tk-bg-card text-gray-700 dark:text-tk-text shadow-sm transition-colors whitespace-nowrap">
-            Mark all as Read
-          </button>
-        </div>
 
         <div className="w-full">
         {loading ? (
@@ -276,7 +301,7 @@ const NotificationsPage: React.FC = () => {
                                       </p>
                                   </div>
                                 </div>
-                                <div className="pl-15 sm:pl-4 shrink-0 sm:self-center">
+                                <div className="hidden sm:block pl-4 shrink-0 self-center">
                                   <span className="text-[13px] font-bold text-[#10B981] dark:text-[#10B981] uppercase tracking-wide">View</span>
                                 </div>
                             </div>
@@ -301,6 +326,7 @@ const NotificationsPage: React.FC = () => {
         )}
       </div>
     </div>
+  </div>
       
       {/* Notification Detail Modal */}
       {selectedNotification && (
