@@ -100,6 +100,7 @@ export interface RestaurantProfileUpdateInput {
     websiteUrl?: string | null;
     pay_online?: boolean | null;
     kitchen_app_enabled?: boolean | null;
+    settings?: Record<string, any>;
 }
 
 export interface AdministratorProfileUpdateInput {
@@ -148,7 +149,12 @@ const mapRestaurantRow = (row: RestaurantRow): Restaurant => ({
         primaryColor: row.primary_color,
         secondaryColor: row.secondary_color
     },
-    settings: row.settings ?? undefined,
+    settings: {
+        ...(row.settings || {}),
+        serviceFeeEnabled: row.settings?.serviceFeeEnabled as boolean | undefined,
+        serviceFeeType: row.settings?.serviceFeeType as 'percentage' | 'flat' | undefined,
+        serviceFeeAmount: row.settings?.serviceFeeAmount as number | undefined,
+    },
     subscriptionStatus: row.subscription_status,
     subscriptionType: row.subscription_type,
     subscriptionEndAt: row.subscription_end_at,
@@ -230,6 +236,13 @@ export const updateRestaurantProfile = async (
     if (input.websiteUrl !== undefined) updatePayload.website_url = input.websiteUrl;
     if (input.pay_online !== undefined) updatePayload.pay_online = input.pay_online;
     if (input.kitchen_app_enabled !== undefined) updatePayload.kitchen_app_enabled = input.kitchen_app_enabled;
+
+    if (input.settings !== undefined) {
+        // Fetch current settings to merge
+        const { data: currentData } = await db.from('restaurants').select('settings').eq('id', restaurantId).single();
+        const currentSettings = currentData?.settings || {};
+        updatePayload.settings = { ...currentSettings, ...input.settings };
+    }
 
     const { data, error } = await db
         .from('restaurants')

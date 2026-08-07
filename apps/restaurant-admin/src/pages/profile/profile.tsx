@@ -48,6 +48,9 @@ interface RestaurantFormState {
   websiteUrl: string;
   payOnline: boolean;
   kitchenAppEnabled: boolean;
+  serviceFeeEnabled: boolean;
+  serviceFeeType: 'percentage' | 'flat';
+  serviceFeeAmount: string;
 }
 
 interface AdminFormState {
@@ -155,6 +158,9 @@ const createRestaurantFormState = (
   websiteUrl: restaurant.websiteUrl ?? "",
   payOnline: (restaurant as any).pay_online ?? true,
   kitchenAppEnabled: (restaurant as any).kitchen_app_enabled ?? true,
+  serviceFeeEnabled: restaurant.settings?.serviceFeeEnabled ?? false,
+  serviceFeeType: restaurant.settings?.serviceFeeType ?? 'percentage',
+  serviceFeeAmount: restaurant.settings?.serviceFeeAmount != null ? String(restaurant.settings.serviceFeeAmount) : '',
 });
 
 const createAdminFormState = (
@@ -1673,6 +1679,39 @@ const ProfilePage: React.FC = () => {
     }
   };
 
+  const handleServiceFeeFeatureToggle = () => {
+    const on = restaurant?.settings?.serviceFeeEnabled === true;
+    if (!on) {
+      triggerConfirm(
+        'Enable Service Fee?',
+        'A service fee will be applied to all customer orders. You can configure the amount or percentage below.',
+        'This will increase the total amount paid by customers.',
+        'Enable Service Fee', '#16A34A',
+        async () => {
+          if (!activeRestaurantId) return;
+          await updateRestaurantProfile(activeRestaurantId, { settings: { serviceFeeEnabled: true } });
+          const updated = await getRestaurantById(activeRestaurantId);
+          if (updated) { setRestaurant(updated); setRestaurantForm(createRestaurantFormState(updated)); }
+          setFeedback({ tone: 'success', message: 'Service Fee enabled.' });
+        }
+      );
+    } else {
+      triggerConfirm(
+        'Disable Service Fee?',
+        'The service fee will no longer be applied to new customer orders.',
+        'Existing orders will not be affected.',
+        'Disable Service Fee', '#EF4444',
+        async () => {
+          if (!activeRestaurantId) return;
+          await updateRestaurantProfile(activeRestaurantId, { settings: { serviceFeeEnabled: false } });
+          const updated = await getRestaurantById(activeRestaurantId);
+          if (updated) { setRestaurant(updated); setRestaurantForm(createRestaurantFormState(updated)); }
+          setFeedback({ tone: 'success', message: 'Service Fee disabled.' });
+        }
+      );
+    }
+  };
+
   function renderFeaturesTab(): React.ReactNode {
     const payOn = (restaurant as any)?.pay_online === true;
     const kitchenOn = (restaurant as any)?.kitchen_app_enabled !== false;
@@ -1787,6 +1826,101 @@ const ProfilePage: React.FC = () => {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* ── Card: Service Fee ─────────────────────────────────────────── */}
+        <div className={cardCls}>
+          <div className={sectionHeaderCls}>
+            <div style={{ width: 36, height: 36, borderRadius: 9, background: 'linear-gradient(135deg,#059669,#047857)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <CreditCardIcon size={16} color="#fff" />
+            </div>
+            <div>
+              <div className="text-[15px] font-bold text-[#1A202C] font-['Outfit',sans-serif] dark:text-tk-text">Service Fee Settings</div>
+              <div className="text-[12px] text-[#64748B] font-['Outfit',sans-serif]">Add a percentage or flat fee to customer orders</div>
+            </div>
+          </div>
+
+          {/* Toggle row */}
+          <div className={rowCls}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                <span className="text-[15px] font-semibold text-[#1A202C] font-['Outfit',sans-serif] dark:text-tk-text">Enable Service Fee</span>
+                {featureBadge(restaurant?.settings?.serviceFeeEnabled === true)}
+              </div>
+              <p className="text-[13px] text-[#64748B] font-['Outfit',sans-serif]" style={{ margin: 0, lineHeight: 1.5 }}>
+                When enabled, the service fee will be applied to the order subtotal at checkout.
+              </p>
+            </div>
+            <div onClick={handleServiceFeeFeatureToggle} style={{ cursor: 'pointer' }}>
+              <ToggleKnob on={restaurant?.settings?.serviceFeeEnabled === true} />
+            </div>
+          </div>
+
+          {/* Settings Section (only if enabled) */}
+          {restaurant?.settings?.serviceFeeEnabled === true && (
+            <div style={{ padding: '14px 20px', borderTop: '1px solid var(--tk-border,#E2E8F0)' }}>
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-2">
+                  <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Fee Type</span>
+                  <select
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                    value={restaurantForm?.serviceFeeType || 'percentage'}
+                    onChange={(e) => handleRestaurantFieldChange('serviceFeeType', e.target.value)}
+                  >
+                    <option value="percentage">Percentage (%)</option>
+                    <option value="flat">Flat Amount (₹)</option>
+                  </select>
+                </div>
+                
+                <div className="flex flex-col gap-2">
+                  <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Fee Amount</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step={restaurantForm?.serviceFeeType === 'percentage' ? '0.1' : '1'}
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                    value={restaurantForm?.serviceFeeAmount || ''}
+                    placeholder={restaurantForm?.serviceFeeType === 'percentage' ? 'e.g. 5' : 'e.g. 50'}
+                    onChange={(e) => handleRestaurantFieldChange('serviceFeeAmount', e.target.value)}
+                  />
+                </div>
+
+                <div className="flex justify-end mt-2">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!activeRestaurantId || !restaurantForm) return;
+                      const amount = parseFloat(restaurantForm.serviceFeeAmount);
+                      if (isNaN(amount) || amount < 0) {
+                        setFeedback({ tone: 'error', message: 'Please enter a valid service fee amount.' });
+                        return;
+                      }
+                      try {
+                        await updateRestaurantProfile(activeRestaurantId, {
+                          settings: {
+                            serviceFeeType: restaurantForm.serviceFeeType,
+                            serviceFeeAmount: amount
+                          }
+                        });
+                        const updated = await getRestaurantById(activeRestaurantId);
+                        if (updated) {
+                          setRestaurant(updated);
+                          setRestaurantForm(createRestaurantFormState(updated));
+                        }
+                        setFeedback({ tone: 'success', message: 'Service fee settings saved successfully.' });
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      } catch (err: any) {
+                        setFeedback({ tone: 'error', message: err.message || 'Failed to save service fee settings.' });
+                      }
+                    }}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border-none bg-tk-burgundy text-white text-[13px] font-semibold font-['Outfit',sans-serif] cursor-pointer transition-all hover:bg-[#6B2A15]"
+                  >
+                    Save Fee Settings
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ── Confirmation Modal ────────────────────────────────────────────── */}

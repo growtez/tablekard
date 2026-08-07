@@ -66,7 +66,8 @@ export const createOrder = async ({
     paymentMethod = 'cash',
     taxRate = 0.05,
     type = 'dine_in',
-    specialInstructions = null
+    specialInstructions = null,
+    serviceFee = 0
 }) => {
     const total = items.reduce((sum, item) => {
         const itemBaseTotal = (item.basePrice || item.price || 0) * item.quantity;
@@ -91,7 +92,7 @@ export const createOrder = async ({
             subtotal,
             taxes,
             discount: 0,
-            total
+            total: total + (serviceFee || 0)
         })
         .select('*')
         .single();

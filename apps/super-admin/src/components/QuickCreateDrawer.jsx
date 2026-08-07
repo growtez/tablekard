@@ -287,7 +287,6 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                                     <label className="absolute left-3 px-1.5 transition-all duration-200 z-10 pointer-events-none -top-2.5 text-[10px] bg-bg font-bold uppercase tracking-wider text-text-muted peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-placeholder-shown:bg-transparent peer-placeholder-shown:font-normal peer-placeholder-shown:normal-case peer-placeholder-shown:tracking-normal peer-focus:-top-2.5 peer-focus:text-[10px] peer-focus:bg-bg peer-focus:font-bold peer-focus:uppercase peer-focus:tracking-wider peer-focus:text-accent-primary">Restaurant Name</label>
                                 </div>
                                 <div className="relative">
-                                <div className="relative">
                                     <input
                                         type="email"
                                         placeholder="manager@bombayspice.in"

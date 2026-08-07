@@ -183,8 +183,21 @@ serve(async (req: Request) => {
             );
         }
 
+        const serviceFeeEnabled = restaurant.settings?.serviceFeeEnabled === true;
+        const serviceFeeType = restaurant.settings?.serviceFeeType || 'percentage';
+        const serviceFeeAmountSetting = parseFloat(restaurant.settings?.serviceFeeAmount) || 0;
+
+        let serviceFee = 0;
+        if (serviceFeeEnabled && serviceFeeAmountSetting > 0) {
+            if (serviceFeeType === 'percentage') {
+                serviceFee = Math.round((subtotal * serviceFeeAmountSetting) / 100);
+            } else {
+                serviceFee = serviceFeeAmountSetting;
+            }
+        }
+
         const taxPercentage = restaurant.settings?.tax_percentage || 0;
-        const total = subtotal; // The initial subtotal is actually the total (inclusive)
+        const total = subtotal + serviceFee; // The initial subtotal + serviceFee is the total (inclusive)
         const taxes = Math.round((total * taxPercentage) / 100 * 100) / 100;
         const finalSubtotal = total - taxes;
 
