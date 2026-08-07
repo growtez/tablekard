@@ -24,7 +24,7 @@ const db = supabase as any;
 // ==========================================
 
 interface RestaurantRow {
-    id: string; name: string; slug: string; status: string; status_reason: string | null;
+    id: string; name: string; status: string; status_reason: string | null;
     contact_email: string | null; contact_phone: string | null; contact_address: string | null;
     logo_url: string | null; primary_color: string | null; secondary_color: string | null;
     profile_urls: string[] | null; settings: Record<string, unknown> | null;
@@ -98,7 +98,6 @@ export interface RestaurantProfileUpdateInput {
     instagramUrl?: string | null;
     facebookUrl?: string | null;
     websiteUrl?: string | null;
-    slug?: string | null;
     pay_online?: boolean | null;
     kitchen_app_enabled?: boolean | null;
 }
@@ -135,7 +134,6 @@ export interface RestaurantPaymentSettingsInput {
 const mapRestaurantRow = (row: RestaurantRow): Restaurant => ({
     id: row.id,
     name: row.name,
-    slug: row.slug,
     status: row.status as Restaurant['status'],
     statusReason: row.status_reason,
     createdAt: row.created_at,
@@ -230,7 +228,6 @@ export const updateRestaurantProfile = async (
     if (input.instagramUrl !== undefined) updatePayload.instagram_url = input.instagramUrl;
     if (input.facebookUrl !== undefined) updatePayload.facebook_url = input.facebookUrl;
     if (input.websiteUrl !== undefined) updatePayload.website_url = input.websiteUrl;
-    if (input.slug !== undefined) updatePayload.slug = input.slug;
     if (input.pay_online !== undefined) updatePayload.pay_online = input.pay_online;
     if (input.kitchen_app_enabled !== undefined) updatePayload.kitchen_app_enabled = input.kitchen_app_enabled;
 

@@ -17,11 +17,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   let phone = '+91 98765 43210';
   let address = '123 Food Street, Culinary Zone, Bangalore, KA, 560001';
 
-  // Read ID or Slug from URL
+  // Read ID from URL params or Name from path
   const restaurantId = urlParams.get('restaurant_id') || urlParams.get('id');
-  const restaurantSlug = urlParams.get('slug');
+  
+  // Extract path name (e.g. tablekard.com/burger-king -> burger-king)
+  const pathName = window.location.pathname.substring(1).split('/')[0];
+  const urlName = pathName ? pathName.replace(/-/g, ' ') : null;
 
-  if (restaurantId || restaurantSlug) {
+  if (restaurantId || urlName) {
     try {
       // Build query
       let query = supabase
@@ -30,11 +33,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       if (restaurantId) {
         query = query.eq('id', restaurantId);
-      } else if (restaurantSlug) {
-        query = query.eq('slug', restaurantSlug);
+      } else if (urlName) {
+        query = query.ilike('name', urlName);
       }
 
-      const { data: restaurant, error } = await query.maybeSingle();
+      const { data: restaurantData, error } = await query.limit(1);
+      const restaurant = restaurantData && restaurantData.length > 0 ? restaurantData[0] : null;
 
       if (error) {
         console.error('Supabase fetch error:', error);

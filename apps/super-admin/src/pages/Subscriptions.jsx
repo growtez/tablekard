@@ -34,7 +34,7 @@ export default function Subscriptions({ setSyncAction }) {
                     razorpay_order_id, razorpay_payment_id,
                     paid_at, starts_at, ends_at, created_at,
                     restaurant_id,
-                    restaurants(id, name, slug, subscription_type),
+                    restaurants(id, name, subscription_type),
                     profiles:user_id(email, name)
                 `)
                 .order('created_at', { ascending: false });
@@ -87,7 +87,6 @@ export default function Subscriptions({ setSyncAction }) {
         .filter(row => {
             const matchSearch = !search ||
                 row.restaurants?.name?.toLowerCase().includes(search.toLowerCase()) ||
-                row.restaurants?.slug?.toLowerCase().includes(search.toLowerCase()) ||
                 row.razorpay_payment_id?.toLowerCase().includes(search.toLowerCase());
             const matchStatus = filterStatus === 'all' || row.status === filterStatus;
             let matchMonth = true;
@@ -318,7 +317,7 @@ export default function Subscriptions({ setSyncAction }) {
                                                 </div>
                                                 <div className="flex flex-col min-w-0">
                                                     <span className="font-semibold text-text-main text-[13px] truncate group-hover:text-accent-primary transition-colors max-w-[180px]" title={row.restaurants?.name}>{row.restaurants?.name || 'Unknown'}</span>
-                                                    <span className="text-[11px] text-text-muted">/{row.restaurants?.slug}</span>
+                                                    <span className="text-[11px] text-text-muted">/{row.restaurants?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || ''}</span>
                                                 </div>
                                             </div>
                                         </td>
@@ -400,7 +399,7 @@ export default function Subscriptions({ setSyncAction }) {
                                         </div>
                                         <div className="flex flex-col min-w-0">
                                             <span className="font-semibold text-text-main text-[13px] group-hover:text-accent-primary transition-colors truncate" title={row.restaurants?.name}>{row.restaurants?.name || 'Unknown'}</span>
-                                            <span className="text-[11px] text-text-muted">/{row.restaurants?.slug}</span>
+                                            <span className="text-[11px] text-text-muted">/{row.restaurants?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || ''}</span>
                                         </div>
                                     </div>
                                     <div className="text-right shrink-0">

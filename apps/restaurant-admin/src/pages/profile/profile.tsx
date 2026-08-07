@@ -39,7 +39,6 @@ interface RestaurantFormState {
   longitude: string;
   allowedRadius: string;
   openingDate: string;
-  slug: string;
   tagline: string;
   manifesto: string;
   operatingHoursWeekdays: string;
@@ -145,7 +144,6 @@ const createRestaurantFormState = (
       ? String(restaurant.location.allowedRadius)
       : "150",
   openingDate: restaurant.openingDate ?? "",
-  slug: restaurant.slug ?? "",
   tagline: restaurant.tagline ?? "",
   manifesto: restaurant.manifesto ?? "",
   operatingHoursWeekdays:
@@ -612,7 +610,6 @@ const ProfilePage: React.FC = () => {
           longitude: parseOptionalNumber(restaurantForm.longitude),
           allowedRadius: parseOptionalInteger(restaurantForm.allowedRadius),
           openingDate: emptyToNull(restaurantForm.openingDate),
-          slug: emptyToNull(restaurantForm.slug),
           tagline: emptyToNull(restaurantForm.tagline),
           manifesto: emptyToNull(restaurantForm.manifesto),
           operatingHoursWeekdays: emptyToNull(
@@ -832,22 +829,8 @@ const ProfilePage: React.FC = () => {
                 </label>
 
                 <label className="flex flex-col gap-2">
-                  <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Slug</span>
+                  <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Restaurant Page URL</span>
                   <div style={{ display: "flex", alignItems: "stretch" }}>
-                    <input
-                      className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                      style={{
-                        borderTopRightRadius: 0,
-                        borderBottomRightRadius: 0,
-                        flex: 1,
-                      }}
-                      type="text"
-                      value={restaurantForm.slug}
-                      onChange={(event) =>
-                        handleRestaurantFieldChange("slug", event.target.value)
-                      }
-                      placeholder="restaurant-slug"
-                    />
                     <span
                       style={{
                         display: "flex",
@@ -855,16 +838,27 @@ const ProfilePage: React.FC = () => {
                         padding: "0 12px",
                         background: "#EDF2F7",
                         border: "1px solid #E2E8F0",
-                        borderLeft: "none",
-                        borderTopRightRadius: "8px",
-                        borderBottomRightRadius: "8px",
+                        borderRight: "none",
+                        borderTopLeftRadius: "8px",
+                        borderBottomLeftRadius: "8px",
                         fontSize: "14px",
                         color: "#4A5568",
                         whiteSpace: "nowrap",
                       }}
                     >
-                      .tablekard.com
+                      tablekard.com/
                     </span>
+                    <input
+                      className="w-full border border-[#CBD5E0] rounded-xl bg-gray-100 text-[#4A5568] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border opacity-70 cursor-not-allowed dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text-secondary"
+                      style={{
+                        borderTopLeftRadius: 0,
+                        borderBottomLeftRadius: 0,
+                        flex: 1,
+                      }}
+                      type="text"
+                      value={restaurantForm.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}
+                      disabled
+                    />
                   </div>
                 </label>
 
@@ -916,26 +910,22 @@ const ProfilePage: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Slug</span>
+                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Restaurant Page URL</span>
                   <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
-                    {restaurant?.slug ? (
-                      <a
-                        href={`https://${restaurant.slug}.tablekard.com`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 w-fit text-[#2B6CB0] text-[14px] font-medium no-underline break-all font-['Outfit',sans-serif] hover:underline dark:text-[#90CDF4]"
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "4px",
-                        }}
-                      >
-                        {restaurant.slug}.tablekard.com{" "}
-                        <ExternalLink size={14} />
-                      </a>
-                    ) : (
-                      "Not set"
-                    )}
+                    <a
+                      href={`https://tablekard.com/${restaurant?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || ''}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 w-fit text-[#2B6CB0] text-[14px] font-medium no-underline break-all font-['Outfit',sans-serif] hover:underline dark:text-[#90CDF4]"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                      }}
+                    >
+                      tablekard.com/{restaurant?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || ''}{" "}
+                      <ExternalLink size={14} />
+                    </a>
                   </span>
                 </div>
 

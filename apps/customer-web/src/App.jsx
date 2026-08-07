@@ -206,7 +206,7 @@ function AppRoutes() {
           <Route path="/login"      element={<LoginPage />} />
           <Route path="/about"      element={<AboutPage />} />
           <Route path="/about-tablekard" element={<AboutTablekardPage />} />
-          <Route path="/ar/:slug"   element={<ARViewerPage />} />
+          <Route path="/ar/:restaurantId"   element={<ARViewerPage />} />
 
             {/* Protected */}
             <Route path="/profile"       element={<RequireAuth><ProfilePage /></RequireAuth>} />

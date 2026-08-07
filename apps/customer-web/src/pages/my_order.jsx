@@ -915,16 +915,8 @@ const MyOrderPage = () => {
               <h2 className="summary-title">Summary</h2>
               <div className="order-summary">
                 <div className="summary-row">
-                  <span>Subtotal</span>
-                  <span>₹{getTotalPrice() - Math.round(getTotalPrice() * 0.05) - Math.round(getTotalPrice() * 0.18)}</span>
-                </div>
-                <div className="summary-row" style={{ color: '#888' }}>
-                  <span>Service Charge (5%)</span>
-                  <span>₹{Math.round(getTotalPrice() * 0.05)}</span>
-                </div>
-                <div className="summary-row" style={{ color: '#888' }}>
-                  <span>Tax (18%)</span>
-                  <span>₹{Math.round(getTotalPrice() * 0.18)}</span>
+                  <span>Item Subtotal</span>
+                  <span>₹{getTotalPrice()}</span>
                 </div>
                 <div className="summary-row discount">
                   <span>Discount</span>
@@ -933,7 +925,7 @@ const MyOrderPage = () => {
                 <div className="summary-row total" style={{ alignItems: 'flex-start' }}>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <span>Total Amount</span>
-                    <span style={{ fontSize: '11px', fontWeight: '500', color: '#8B3A1E', marginTop: '2px' }}>(Inclusive of all taxes)</span>
+                    <span style={{ fontSize: '11px', fontWeight: '500', color: '#8B3A1E', marginTop: '2px' }}>(Inclusive of all taxes & fees)</span>
                   </div>
                   <span>₹{getTotalPrice()}</span>
                 </div>

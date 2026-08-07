@@ -140,7 +140,7 @@ serve(async (req: Request) => {
         // ──────────────────────────────────────────────
         const { data: restaurant, error: restError } = await supabaseAdmin
             .from("restaurants")
-            .select("id, name, settings, slug, pay_online")
+            .select("id, name, settings, pay_online")
             .eq("id", restaurant_id)
             .single();
 

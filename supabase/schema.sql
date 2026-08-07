@@ -51,7 +51,6 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 CREATE TABLE IF NOT EXISTS public.restaurants (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
-    slug TEXT UNIQUE NOT NULL,
     status restaurant_status DEFAULT 'pending'::restaurant_status,
     contact_email TEXT NOT NULL,
     contact_phone TEXT,

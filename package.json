@@ -15,7 +15,7 @@
     "scripts": {
         "dev:super-admin": "npm run dev -w @restaurant-saas/super-admin",
         "dev:restaurant-admin": "npm run dev -w @restaurant-saas/restaurant-admin",
-        "dev:customer-web": "npm run dev -w @restaurant-saas/customer-web",
+        "dev:customer-web": "npm run dev -w @restaurant-saas/customer-web-1",
         "dev:customer-web-1": "npm run dev -w @restaurant-saas/customer-web-1",
         "dev:inhouse-service-app": "npm run dev -w @restaurant-saas/inhouse-service-app",
         "dev:restaurant-onboarding": "npm run dev -w @restaurant-saas/restaurant-onboarding",

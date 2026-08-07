@@ -17,7 +17,6 @@ const normalisePayment = (row) => ({
     order_number: row.orders?.order_number || null,
     order_type: row.orders?.type || null,
     restaurant_name: row.restaurants?.name || 'Unknown',
-    restaurant_slug: row.restaurants?.slug || '',
     amount: Number(row.amount || 0),
     currency: row.currency || 'INR',
     status: row.status,
@@ -34,7 +33,6 @@ const normaliseOrder = (row) => ({
     order_number: row.order_number,
     order_type: row.type,
     restaurant_name: row.restaurants?.name || 'Unknown',
-    restaurant_slug: row.restaurants?.slug || '',
     amount: Number(row.total || 0),
     currency: 'INR',
     status: row.payment_status,
@@ -65,13 +63,13 @@ export default function Transactions({ setSyncAction }) {
         try {
             const { data: payments, error: pErr } = await supabase
                 .from('payments')
-                .select(`id, amount, currency, method, gateway, status, razorpay_payment_id, failure_reason, paid_at, created_at, order_id, restaurants(name, slug), orders(order_number, type)`)
+                .select(`id, amount, currency, method, gateway, status, razorpay_payment_id, failure_reason, paid_at, created_at, order_id, restaurants(name), orders(order_number, type)`)
                 .order('created_at', { ascending: false });
             if (pErr) throw pErr;
 
             const { data: cashOrders, error: oErr } = await supabase
                 .from('orders')
-                .select(`id, order_number, type, payment_method, payment_status, total, created_at, updated_at, restaurants(name, slug)`)
+                .select(`id, order_number, type, payment_method, payment_status, total, created_at, updated_at, restaurants(name)`)
                 .in('payment_method', ['cash', 'card'])
                 .order('created_at', { ascending: false });
             if (oErr) throw oErr;
@@ -315,7 +313,7 @@ export default function Transactions({ setSyncAction }) {
                                                 </div>
                                                 <div className="flex flex-col min-w-0">
                                                     <span className="font-semibold text-text-main text-[13px] truncate group-hover:text-accent-primary transition-colors max-w-[180px]" title={row.restaurant_name}>{row.restaurant_name}</span>
-                                                    <span className="text-[11px] text-text-muted">/{row.restaurant_slug}</span>
+                                                    <span className="text-[11px] text-text-muted">/{row.restaurant_name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || ''}</span>
                                                 </div>
                                             </div>
                                         </td>
@@ -398,7 +396,7 @@ export default function Transactions({ setSyncAction }) {
                                         </div>
                                         <div className="flex flex-col min-w-0">
                                             <span className="font-semibold text-text-main text-[13px] group-hover:text-accent-primary transition-colors truncate" title={row.restaurant_name}>{row.restaurant_name}</span>
-                                            <span className="text-[11px] text-text-muted">/{row.restaurant_slug}</span>
+                                            <span className="text-[11px] text-text-muted">/{row.restaurant_name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || ''}</span>
                                         </div>
                                     </div>
                                     <div className="text-right shrink-0 flex flex-col items-end gap-1">

@@ -7,7 +7,7 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
     const [error, setError] = useState(null)
     const [restaurants, setRestaurants] = useState([])
     const [formData, setFormData] = useState({ email: '', password: '', role: 'customer', restaurantId: '' })
-    const [resFormData, setResFormData] = useState({ name: '', slug: '', contact_email: '', contact_address: '', contact_phone: '', admin_password: 'Tablekard@123' })
+    const [resFormData, setResFormData] = useState({ name: '', contact_email: '', contact_address: '', contact_phone: '', admin_password: 'Tablekard@123' })
     const [wasEditing, setWasEditing] = useState(false)
     const [showPassword, setShowPassword] = useState(true)
 
@@ -33,7 +33,6 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                 } else {
                     setResFormData({
                         name: editingData.name || '',
-                        slug: editingData.slug || '',
                         contact_email: editingData.contact_email || '',
                         contact_address: editingData.contact_address || '',
                         contact_phone: editingData.contact_phone || '',
@@ -43,7 +42,7 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
             } else {
                 if (wasEditing) {
                     setFormData({ email: '', password: '', role: 'customer', restaurantId: '' })
-                    setResFormData({ name: '', slug: '', contact_email: '', contact_address: '', contact_phone: '', admin_password: 'Tablekard@123' })
+                    setResFormData({ name: '', contact_email: '', contact_address: '', contact_phone: '', admin_password: 'Tablekard@123' })
                     setWasEditing(false)
                 }
             }
@@ -119,16 +118,13 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
         setError(null)
         setLoading(true)
 
-        const slug = resFormData.slug.trim().toLowerCase().replace(/[^a-z0-9-]/g, '')
-
         try {
             if (editingData) {
                 const { error } = await supabase
                     .from('restaurants')
                     .update({
                         name: resFormData.name.trim(),
-                        slug: slug,
-                        contact_email: resFormData.contact_email.trim(),
+                        contact_email: resFormData.contact_email.trim().toLowerCase(),
                         contact_address: resFormData.contact_address.trim(),
                         contact_phone: resFormData.contact_phone.trim(),
                     })
@@ -140,8 +136,7 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                     .insert([
                         {
                             name: resFormData.name.trim(),
-                            slug: slug,
-                            contact_email: resFormData.contact_email.trim(),
+                            contact_email: resFormData.contact_email.trim().toLowerCase(),
                             contact_address: resFormData.contact_address.trim(),
                             contact_phone: resFormData.contact_phone.trim(),
                             status: 'active'
@@ -182,7 +177,7 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
 
             onRefresh && onRefresh()
             if (!editingData) {
-                setResFormData({ name: '', slug: '', contact_email: '', contact_address: '', contact_phone: '', admin_password: 'Tablekard@123' })
+                setResFormData({ name: '', contact_email: '', contact_address: '', contact_phone: '', admin_password: 'Tablekard@123' })
             }
             onClose()
         } catch (err) {
@@ -292,19 +287,6 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                                     <label className="absolute left-3 px-1.5 transition-all duration-200 z-10 pointer-events-none -top-2.5 text-[10px] bg-bg font-bold uppercase tracking-wider text-text-muted peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-placeholder-shown:bg-transparent peer-placeholder-shown:font-normal peer-placeholder-shown:normal-case peer-placeholder-shown:tracking-normal peer-focus:-top-2.5 peer-focus:text-[10px] peer-focus:bg-bg peer-focus:font-bold peer-focus:uppercase peer-focus:tracking-wider peer-focus:text-accent-primary">Restaurant Name</label>
                                 </div>
                                 <div className="relative">
-                                    <div className="flex">
-                                        <input
-                                            type="text"
-                                            placeholder="the-bombay-spice"
-                                            value={resFormData.slug}
-                                            onChange={(e) => setResFormData({ ...resFormData, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
-                                            required
-                                            className="peer flex-1 bg-surface-hover border border-border border-r-0 rounded-l-xl px-4 h-12 text-sm text-text-main focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all placeholder:text-transparent focus:placeholder:text-text-muted/50"
-                                        />
-                                        <label className="absolute left-3 px-1.5 transition-all duration-200 z-10 pointer-events-none -top-2.5 text-[10px] bg-bg font-bold uppercase tracking-wider text-text-muted peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-placeholder-shown:bg-transparent peer-placeholder-shown:font-normal peer-placeholder-shown:normal-case peer-placeholder-shown:tracking-normal peer-focus:-top-2.5 peer-focus:text-[10px] peer-focus:bg-bg peer-focus:font-bold peer-focus:uppercase peer-focus:tracking-wider peer-focus:text-accent-primary">Restaurant Slug (URL)</label>
-                                        <span className="px-3 bg-surface border border-border border-l-0 rounded-r-xl text-text-muted text-sm flex items-center whitespace-nowrap z-20">.tablekard.com</span>
-                                    </div>
-                                </div>
                                 <div className="relative">
                                     <input
                                         type="email"

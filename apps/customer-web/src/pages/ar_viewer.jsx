@@ -4,7 +4,7 @@ import { ArrowLeft, View } from 'lucide-react';
 import './ar_viewer.css';
 
 const ARViewerPage = () => {
-    const { slug } = useParams();
+    const { restaurantId } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
     const viewerRef = useRef(null);

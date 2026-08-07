@@ -62,17 +62,10 @@ export const uploadMenuItemImage = async (restaurantId: string, restaurantName: 
         throw new Error('Image must be under 5 MB.');
     }
 
-    // Slugify restaurant name for clean storage paths
-    const slugName = restaurantName
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
-
-    // Generate a secure random file name: menu_items/slug-restaurantId/timestamp-random.ext
+    // Generate a secure random file name: menu_items/restaurantId/timestamp-random.ext
     const ext = file.name.split('.').pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${ext}`;
-    const filePath = `menu_items/${slugName}-${restaurantId}/${fileName}`;
+    const filePath = `menu_items/${restaurantId}/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
         .from(BUCKET_NAME)

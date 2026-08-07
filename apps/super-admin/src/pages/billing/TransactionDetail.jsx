@@ -51,7 +51,7 @@ export default function TransactionDetail({ setHeaderData }) {
                     .from('payments')
                     .select(`
                         *,
-                        restaurants(id, name, slug, contact_email, contact_phone),
+                        restaurants(id, name, contact_email, contact_phone),
                         orders(*),
                         profiles:user_id(id, email, name)
                     `)
@@ -83,7 +83,7 @@ export default function TransactionDetail({ setHeaderData }) {
                     .from('orders')
                     .select(`
                         *,
-                        restaurants(id, name, slug, contact_email, contact_phone),
+                        restaurants(id, name, contact_email, contact_phone),
                         profiles:customer_id(id, email, name)
                     `)
                     .eq('id', id)
@@ -333,7 +333,7 @@ export default function TransactionDetail({ setHeaderData }) {
                             </div>
                             <div>
                                 <div className="text-[11px] text-text-muted font-bold uppercase tracking-wider mb-0.5">Slug</div>
-                                <div className="text-[13px] font-mono text-text-main">/{txData.restaurant?.slug || '—'}</div>
+                                <div className="text-[13px] font-mono text-text-main">/{txData.restaurant?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || '—'}</div>
                             </div>
                             {txData.restaurant?.contact_email && (
                                 <div>
