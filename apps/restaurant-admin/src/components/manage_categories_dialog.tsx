@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, ArrowUp, ArrowDown, Plus, Trash2, AlertCircle, Save, GripVertical, Layers, Info, FolderPlus, Loader2, Check, Search } from 'lucide-react';
+import { X, Plus, Trash2, AlertCircle, Save, GripVertical, Layers, Info, FolderPlus, Loader2, Check, Search } from 'lucide-react';
 import type { MenuCategory } from '@restaurant-saas/types';
 
 interface ManageCategoriesDialogProps {
