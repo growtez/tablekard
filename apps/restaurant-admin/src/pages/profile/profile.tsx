@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
   ChefHat,
@@ -6,7 +6,6 @@ import {
   Crosshair,
   Edit3,
   ExternalLink,
-  ImageIcon,
   Key,
   Lock,
   LogOut,
@@ -15,13 +14,11 @@ import {
   PhoneIcon,
   Save,
   ShieldCheck,
-  Upload,
   Webhook,
   X,
   XCircle,
 } from "lucide-react";
 import type { Restaurant } from "@restaurant-saas/types";
-import ImageCropper from "../../components/ImageCropper";
 import { useAuth } from "../../context/AuthContext";
 import {
   getRestaurantById,
@@ -30,7 +27,6 @@ import {
   updateRestaurantProfile,
   updateRestaurantPaymentSettings,
 } from "../../services/supabaseService";
-import { uploadProfileImage } from "../../services/storageService";
 
 
 interface RestaurantFormState {
@@ -39,8 +35,6 @@ interface RestaurantFormState {
   contactPhone: string;
   contactAddress: string;
   logoUrl: string;
-  primaryColor: string;
-  secondaryColor: string;
   latitude: string;
   longitude: string;
   allowedRadius: string;
@@ -60,7 +54,6 @@ interface RestaurantFormState {
 interface AdminFormState {
   name: string;
   email: string;
-  avatarUrl: string;
 }
 
 interface FeedbackState {
@@ -139,8 +132,6 @@ const createRestaurantFormState = (
   contactPhone: restaurant.contact.phone ?? "",
   contactAddress: restaurant.contact.address ?? "",
   logoUrl: restaurant.branding?.logoUrl ?? "",
-  primaryColor: restaurant.branding?.primaryColor ?? "",
-  secondaryColor: restaurant.branding?.secondaryColor ?? "",
   latitude:
     restaurant.location?.latitude != null
       ? String(restaurant.location.latitude)
@@ -177,7 +168,6 @@ const createAdminFormState = (
 ): AdminFormState => ({
   name: profile?.name ?? "",
   email: profile?.email ?? "",
-  avatarUrl: profile?.avatarUrl ?? "",
 });
 
 const formatCoordinate = (value?: number | null): string => {
@@ -194,16 +184,6 @@ const validateRestaurantForm = (form: RestaurantFormState): string | null => {
     return "A valid contact email is required.";
   if (form.logoUrl.trim() && !isValidUrl(form.logoUrl.trim()))
     return "Logo URL must be a valid http or https URL.";
-  if (
-    form.primaryColor.trim() &&
-    !hexColorPattern.test(form.primaryColor.trim())
-  )
-    return "Primary color must be a valid hex value like #1F2937.";
-  if (
-    form.secondaryColor.trim() &&
-    !hexColorPattern.test(form.secondaryColor.trim())
-  )
-    return "Secondary color must be a valid hex value like #F59E0B.";
 
   const latitude = parseOptionalNumber(form.latitude);
   const longitude = parseOptionalNumber(form.longitude);
@@ -229,8 +209,6 @@ const validateAdminForm = (form: AdminFormState): string | null => {
   if (!form.name.trim()) return "Administrator name is required.";
   if (!form.email.trim() || !emailPattern.test(form.email.trim()))
     return "Administrator email must be valid.";
-  if (form.avatarUrl.trim() && !isValidUrl(form.avatarUrl.trim()))
-    return "Avatar URL must be a valid http or https URL.";
   return null;
 };
 
@@ -288,9 +266,6 @@ const ProfilePage: React.FC = () => {
     onlinePaymentsEnabled: false,
   });
 
-  // Cropping state
-  const [cropImage, setCropImage] = useState<string | null>(null);
-  const [cropType, setCropType] = useState<"logo" | "avatar" | null>(null);
 
   const activeMembership = memberships.find(
     (membership) => membership.restaurantId === activeRestaurantId,
@@ -577,130 +552,6 @@ const ProfilePage: React.FC = () => {
     );
   };
 
-  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
-  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-  const logoInputRef = useRef<HTMLInputElement>(null);
-  const avatarInputRef = useRef<HTMLInputElement>(null);
-
-  const handleImageUpload = useCallback(
-    async (
-      file: File,
-      folder: string,
-      onSuccess: (url: string) => void,
-      setUploading: (v: boolean) => void,
-    ) => {
-      setUploading(true);
-      setFeedback(null);
-      try {
-        const url = await uploadProfileImage(folder, file);
-        onSuccess(url);
-        setFeedback({
-          tone: "success",
-          message: "Image uploaded successfully.",
-        });
-      } catch (error: unknown) {
-        const msg = error instanceof Error ? error.message : "Upload failed.";
-        setFeedback({ tone: "error", message: msg });
-      } finally {
-        setUploading(false);
-      }
-    },
-    [],
-  );
-
-  const handleLogoDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      const file = e.dataTransfer.files[0];
-      if (file && activeRestaurantId) {
-        handleImageUpload(
-          file,
-          `logos/${activeRestaurantId}`,
-          (url) => handleRestaurantFieldChange("logoUrl", url),
-          setIsUploadingLogo,
-        );
-      }
-    },
-    [activeRestaurantId, handleImageUpload],
-  );
-
-  const handleAvatarDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setCropImage(reader.result as string);
-        setCropType("avatar");
-      };
-      reader.readAsDataURL(file);
-    }
-  }, []);
-
-  const handleLogoFileSelect = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          setCropImage(reader.result as string);
-          setCropType("logo");
-        };
-        reader.readAsDataURL(file);
-      }
-      e.target.value = "";
-    },
-    [],
-  );
-
-  const handleAvatarFileSelect = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          setCropImage(reader.result as string);
-          setCropType("avatar");
-        };
-        reader.readAsDataURL(file);
-      }
-      e.target.value = "";
-    },
-    [],
-  );
-
-  const handleCropComplete = async (croppedBlob: Blob) => {
-    if (!cropType || !activeRestaurantId || !userProfile) {
-      setCropImage(null);
-      setCropType(null);
-      return;
-    }
-
-    const file = new File(
-      [croppedBlob],
-      cropType === "logo" ? "logo.jpg" : "avatar.jpg",
-      { type: "image/jpeg" },
-    );
-
-    if (cropType === "logo") {
-      await handleImageUpload(
-        file,
-        `logos/${activeRestaurantId}`,
-        (url) => handleRestaurantFieldChange("logoUrl", url),
-        setIsUploadingLogo,
-      );
-    } else {
-      await handleImageUpload(
-        file,
-        `avatars/${userProfile.id}`,
-        (url) => handleAdminFieldChange("avatarUrl", url),
-        setIsUploadingAvatar,
-      );
-    }
-
-    setCropImage(null);
-    setCropType(null);
-  };
 
   const startRestaurantEdit = (section: 'core' | 'contact' | 'branding' | 'story' | 'payments') => {
     const alreadyEditing = Object.values(editingSections).some(Boolean);
@@ -757,8 +608,6 @@ const ProfilePage: React.FC = () => {
           contactPhone: emptyToNull(restaurantForm.contactPhone),
           contactAddress: emptyToNull(restaurantForm.contactAddress),
           logoUrl: emptyToNull(restaurantForm.logoUrl),
-          primaryColor: emptyToNull(restaurantForm.primaryColor),
-          secondaryColor: emptyToNull(restaurantForm.secondaryColor),
           latitude: parseOptionalNumber(restaurantForm.latitude),
           longitude: parseOptionalNumber(restaurantForm.longitude),
           allowedRadius: parseOptionalInteger(restaurantForm.allowedRadius),
@@ -828,7 +677,6 @@ const ProfilePage: React.FC = () => {
         currentEmail: userProfile.email,
         email: adminForm.email,
         name: adminForm.name.trim(),
-        avatarUrl: emptyToNull(adminForm.avatarUrl),
       });
 
       await refreshSessionData();
@@ -1427,64 +1275,6 @@ const ProfilePage: React.FC = () => {
           </div>
            {editingSections.branding ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2">
-                <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Logo</span>
-                <div
-                  className={`border-2 border-dashed border-[#CBD5E0] rounded-2xl bg-[#F8FAFC] cursor-pointer transition-all duration-200 overflow-hidden hover:border-tk-burgundy hover:bg-[#F0FFF4] dark:bg-tk-bg-surface dark:border-tk-border dark:hover:bg-[rgba(72,187,120,0.1)] ${isUploadingLogo ? "opacity-70 cursor-wait pointer-events-none" : ""}`}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    e.currentTarget.classList.add("profile-dropzone-hover");
-                  }}
-                  onDragLeave={(e) => {
-                    e.currentTarget.classList.remove("profile-dropzone-hover");
-                  }}
-                  onDrop={(e) => {
-                    e.currentTarget.classList.remove("profile-dropzone-hover");
-                    handleLogoDrop(e);
-                  }}
-                  onClick={() =>
-                    !isUploadingLogo && logoInputRef.current?.click()
-                  }
-                >
-                  <input
-                    ref={logoInputRef}
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif"
-                    className="hidden"
-                    onChange={handleLogoFileSelect}
-                  />
-                  {restaurantForm.logoUrl ? (
-                    <div className="flex items-center gap-3.5 px-4 py-3.5">
-                      <img
-                        src={restaurantForm.logoUrl}
-                        alt="Logo preview"
-                        className="w-14 h-14 object-contain rounded-xl border border-[#E2E8F0] bg-white shrink-0 dark:bg-tk-bg-surface dark:border-tk-border"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = "none";
-                        }}
-                      />
-                      <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-tk-burgundy font-['Outfit',sans-serif]">
-                        <Upload size={14} />
-                        {isUploadingLogo
-                          ? "Uploading…"
-                          : "Drop or click to replace"}
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center gap-2 px-4 py-6 text-[#4A5568] font-['Outfit',sans-serif] text-center dark:text-tk-text-secondary">
-                      <ImageIcon size={28} strokeWidth={1.5} />
-                      <span>
-                        {isUploadingLogo
-                          ? "Uploading…"
-                          : "Drop image here or click to browse"}
-                      </span>
-                      <span className="!text-[11px] !text-[#718096] !font-normal dark:!text-tk-text-secondary">
-                        PNG, JPG, WebP, SVG • Max 2 MB
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
 
               <label className="flex flex-col gap-2">
                 <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
@@ -1589,71 +1379,6 @@ const ProfilePage: React.FC = () => {
                 </div>
               </div>
 
-              <label className="flex flex-col gap-2">
-                <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Primary Color</span>
-                <div className="flex items-center gap-3">
-                  <input
-                    className="w-12 h-12 p-0 border border-[#CBD5E0] rounded-xl bg-white cursor-pointer shrink-0 dark:bg-tk-bg-surface dark:border-tk-border [&::-webkit-color-swatch-wrapper]:p-1 [&::-webkit-color-swatch]:border-none [&::-webkit-color-swatch]:rounded-[10px]"
-                    type="color"
-                    value={
-                      hexColorPattern.test(restaurantForm.primaryColor)
-                        ? restaurantForm.primaryColor
-                        : "#4f755c"
-                    }
-                    onChange={(event) =>
-                      handleRestaurantFieldChange(
-                        "primaryColor",
-                        event.target.value,
-                      )
-                    }
-                  />
-                  <input
-                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                    type="text"
-                    value={restaurantForm.primaryColor}
-                    onChange={(event) =>
-                      handleRestaurantFieldChange(
-                        "primaryColor",
-                        event.target.value,
-                      )
-                    }
-                    placeholder="#4F755C"
-                  />
-                </div>
-              </label>
-
-              <label className="flex flex-col gap-2">
-                <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Secondary Color</span>
-                <div className="flex items-center gap-3">
-                  <input
-                    className="w-12 h-12 p-0 border border-[#CBD5E0] rounded-xl bg-white cursor-pointer shrink-0 dark:bg-tk-bg-surface dark:border-tk-border [&::-webkit-color-swatch-wrapper]:p-1 [&::-webkit-color-swatch]:border-none [&::-webkit-color-swatch]:rounded-[10px]"
-                    type="color"
-                    value={
-                      hexColorPattern.test(restaurantForm.secondaryColor)
-                        ? restaurantForm.secondaryColor
-                        : "#68d391"
-                    }
-                    onChange={(event) =>
-                      handleRestaurantFieldChange(
-                        "secondaryColor",
-                        event.target.value,
-                      )
-                    }
-                  />
-                  <input
-                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                    type="text"
-                    value={restaurantForm.secondaryColor}
-                    onChange={(event) =>
-                      handleRestaurantFieldChange(
-                        "secondaryColor",
-                        event.target.value,
-                      )
-                    }
-                    placeholder="#68D391"
-                  />
-                </div>
-              </label>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1674,51 +1399,9 @@ const ProfilePage: React.FC = () => {
                 </span>
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Brand Colors</span>
-                <div className="flex flex-wrap gap-2.5">
-                  <span className="inline-flex items-center gap-2.5 px-3 py-2 rounded-full bg-[#EDF2F7] text-[#2D3748] text-[13px] font-medium font-['Outfit',sans-serif] dark:bg-tk-bg-elevated dark:text-tk-text">
-                    <span
-                      className="w-4 h-4 rounded-full border border-[rgba(26,32,44,0.12)]"
-                      style={{
-                        backgroundColor:
-                          restaurant?.branding?.primaryColor || "#4f755c",
-                      }}
-                    />
-                    {restaurant?.branding?.primaryColor || "Not set"}
-                  </span>
-                  <span className="inline-flex items-center gap-2.5 px-3 py-2 rounded-full bg-[#EDF2F7] text-[#2D3748] text-[13px] font-medium font-['Outfit',sans-serif] dark:bg-tk-bg-elevated dark:text-tk-text">
-                    <span
-                      className="w-4 h-4 rounded-full border border-[rgba(26,32,44,0.12)]"
-                      style={{
-                        backgroundColor:
-                          restaurant?.branding?.secondaryColor || "#68d391",
-                      }}
-                    />
-                    {restaurant?.branding?.secondaryColor || "Not set"}
-                  </span>
-                </div>
-              </div>
 
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Logo</span>
-                {restaurant?.branding?.logoUrl ? (
-                  <div className="flex flex-col gap-2">
-                    <img
-                      src={restaurant.branding.logoUrl}
-                      alt={`${restaurant.name} logo`}
-                      className="w-16 h-16 object-contain rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] dark:bg-tk-bg-surface dark:border-tk-border"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
-                      }}
-                    />
-                  </div>
-                ) : (
-                  <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text text-[#4A5568] dark:text-tk-text-secondary">
-                    Not set
-                  </span>
-                )}
-              </div>
+
+
             </div>
           )}
         </div>
@@ -2290,64 +1973,6 @@ const ProfilePage: React.FC = () => {
               </span>
             </label>
 
-            <div className="flex flex-col gap-2 sm:col-span-2">
-              <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Avatar</span>
-              <div
-                className={`border-2 border-dashed border-[#CBD5E0] rounded-2xl bg-[#F8FAFC] cursor-pointer transition-all duration-200 overflow-hidden hover:border-tk-burgundy hover:bg-[#F0FFF4] dark:bg-tk-bg-surface dark:border-tk-border dark:hover:bg-[rgba(72,187,120,0.1)] ${isUploadingAvatar ? "opacity-70 cursor-wait pointer-events-none" : ""}`}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  e.currentTarget.classList.add("profile-dropzone-hover");
-                }}
-                onDragLeave={(e) => {
-                  e.currentTarget.classList.remove("profile-dropzone-hover");
-                }}
-                onDrop={(e) => {
-                  e.currentTarget.classList.remove("profile-dropzone-hover");
-                  handleAvatarDrop(e);
-                }}
-                onClick={() =>
-                  !isUploadingAvatar && avatarInputRef.current?.click()
-                }
-              >
-                <input
-                  ref={avatarInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif"
-                  className="hidden"
-                  onChange={handleAvatarFileSelect}
-                />
-                {adminForm.avatarUrl ? (
-                  <div className="flex items-center gap-3.5 px-4 py-3.5">
-                    <img
-                      src={adminForm.avatarUrl}
-                      alt="Avatar preview"
-                      className="w-14 h-14 object-contain rounded-xl border border-[#E2E8F0] bg-white shrink-0 dark:bg-tk-bg-surface dark:border-tk-border rounded-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
-                      }}
-                    />
-                    <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-tk-burgundy font-['Outfit',sans-serif]">
-                      <Upload size={14} />
-                      {isUploadingAvatar
-                        ? "Uploading…"
-                        : "Drop or click to replace"}
-                    </span>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center gap-2 px-4 py-6 text-[#4A5568] font-['Outfit',sans-serif] text-center dark:text-tk-text-secondary">
-                    <ImageIcon size={28} strokeWidth={1.5} />
-                    <span>
-                      {isUploadingAvatar
-                        ? "Uploading…"
-                        : "Drop image here or click to browse"}
-                    </span>
-                    <span className="!text-[11px] !text-[#718096] !font-normal dark:!text-tk-text-secondary">
-                      PNG, JPG, WebP, SVG • Max 2 MB
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
         </div>
 
@@ -2415,25 +2040,6 @@ const ProfilePage: React.FC = () => {
               </span>
             </div>
 
-            <div className="flex flex-col gap-1.5 sm:col-span-2">
-              <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Avatar</span>
-              {userProfile?.avatarUrl ? (
-                <div className="flex flex-col gap-2">
-                  <img
-                    src={userProfile?.avatarUrl}
-                    alt={`${userProfile?.name || "Admin"} avatar`}
-                    className="w-[52px] h-[52px] object-cover rounded-full border-2 border-[#E2E8F0] dark:border-tk-border"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
-                  />
-                </div>
-              ) : (
-                <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text text-[#4A5568] dark:text-tk-text-secondary">
-                  Not set
-                </span>
-              )}
-            </div>
           </div>
         </div>
 
@@ -2504,19 +2110,7 @@ const ProfilePage: React.FC = () => {
             >
               Sign Out
             </button>
-            {userProfile?.avatarUrl ? (
-              <img
-                src={userProfile.avatarUrl}
-                alt="Admin avatar"
-                className="w-12 h-12 rounded-full bg-[linear-gradient(135deg,var(--tk-burgundy),#6B2A15)] shadow-[0_4px_12px_rgba(139,58,30,0.15)] text-white flex items-center justify-center text-[12px] font-bold tracking-[0.12em] font-['Outfit',sans-serif] object-cover ring-2 ring-white dark:ring-tk-bg-surface"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = "none";
-                  (e.target as HTMLImageElement).parentElement
-                    ?.querySelector(".order-user-avatar-fallback")
-                    ?.classList.remove("hidden");
-                }}
-              />
-            ) : null}
+
           </div>
         </div>
 
@@ -2582,19 +2176,7 @@ const ProfilePage: React.FC = () => {
             {isAdminEditing ? renderAdminEditor() : renderAdminReadOnly()}
           </form>
         </div>
-      {/* Image Cropper Modal */}
-      {cropImage && (
-        <ImageCropper
-          image={cropImage}
-          onCropComplete={handleCropComplete}
-          onCancel={() => {
-            setCropImage(null);
-            setCropType(null);
-          }}
-          circular={cropType === "avatar"}
-          aspect={cropType === "logo" ? 1 : 1}
-        />
-      )}
+
       {/* Logout Confirmation Modal */}
       {showLogoutConfirm && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[100] p-5">
