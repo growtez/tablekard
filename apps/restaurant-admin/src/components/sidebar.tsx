@@ -212,14 +212,10 @@ const Sidebar: React.FC = () => {
     };
 
     fetchUnread();
-    const interval = setInterval(fetchUnread, 10000);
-    window.addEventListener('focus', fetchUnread);
 
     const handleRead = () => setUnreadCount(0);
     window.addEventListener('notificationsRead', handleRead);
     return () => {
-      clearInterval(interval);
-      window.removeEventListener('focus', fetchUnread);
       window.removeEventListener('notificationsRead', handleRead);
     };
   }, [activeRestaurantId]);
