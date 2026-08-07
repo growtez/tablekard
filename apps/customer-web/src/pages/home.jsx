@@ -98,7 +98,12 @@ const HomePage = () => {
 
     useEffect(() => {
         const fetchAllData = async () => {
-            if (!restaurant?.id) return; // Wait until restaurant is ready
+            if (!restaurant?.id) {
+                // Restaurant not ready yet — clear loading so we don't hang
+                setLoadingRecent(false);
+                setLoadingItems(false);
+                return;
+            }
             
             const isFirstLoad = !sessionStorage.getItem('homeAnimationShown');
             
