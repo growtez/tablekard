@@ -192,17 +192,22 @@ const Sidebar: React.FC = () => {
         let count = 0;
         const lastReadStr = localStorage.getItem('lastReadNotificationDate');
         const lastRead = lastReadStr ? new Date(lastReadStr).getTime() : 0;
+        const readIdsStr = localStorage.getItem('readNotificationIds');
+        const readIds = readIdsStr ? JSON.parse(readIdsStr) : [];
 
-        // Check specific notifications (which now includes Broadcasts)
         if (activeRestaurantId) {
             const { data: specificData, error: specificError } = await db
                 .from('restaurant_notifications')
-                .select('created_at')
+                .select('id, created_at')
                 .eq('restaurant_id', activeRestaurantId);
 
             if (!specificError && specificData) {
                 for (const n of (specificData as any[])) {
-                    if (new Date(n.created_at).getTime() > lastRead) count++;
+                    const isOlderThanMarkAll = new Date(n.created_at).getTime() <= lastRead;
+                    const isIndividuallyRead = readIds.includes(n.id);
+                    if (!isOlderThanMarkAll && !isIndividuallyRead) {
+                        count++;
+                    }
                 }
             }
         }
@@ -213,10 +218,9 @@ const Sidebar: React.FC = () => {
 
     fetchUnread();
 
-    const handleRead = () => setUnreadCount(0);
-    window.addEventListener('notificationsRead', handleRead);
+    window.addEventListener('notificationsRead', fetchUnread);
     return () => {
-      window.removeEventListener('notificationsRead', handleRead);
+      window.removeEventListener('notificationsRead', fetchUnread);
     };
   }, [activeRestaurantId]);
 
@@ -409,9 +413,7 @@ const Sidebar: React.FC = () => {
                 className="hidden"
                 onChange={handleLogoFileSelect}
               />
-              {isCollapsed && unreadCount > 0 && (
-                <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm ring-2 ring-white dark:ring-tk-bg z-[130] pointer-events-none"></div>
-              )}
+
             </div>
             <div className="w-full h-9 flex items-start justify-center shrink-0">
               {showLabels && (
