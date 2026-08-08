@@ -61,11 +61,33 @@ serve(async (req: Request) => {
             return new Response("Missing signature", { status: 400, headers: corsHeaders });
         }
 
-        const webhookSecret = Deno.env.get("RAZORPAY_WEBHOOK_SECRET");
+        let webhookSecret = "";
+        let entityNotes = webhookData.payload?.payment?.entity?.notes;
         
-        if (!webhookSecret) {
-            console.error("Master Webhook secret not configured");
-            return new Response("Webhook secret not configured", { status: 500, headers: corsHeaders });
+        if (!entityNotes && webhookData.payload?.refund?.entity?.notes) {
+            entityNotes = webhookData.payload?.refund?.entity?.notes;
+        }
+
+        if (entityNotes?.type === "subscription") {
+            webhookSecret = Deno.env.get("RAZORPAY_WEBHOOK_SECRET") || "";
+            if (!webhookSecret) {
+                console.error("Master Webhook secret not configured");
+                return new Response("Webhook secret not configured", { status: 500, headers: corsHeaders });
+            }
+        } else if (entityNotes?.restaurant_id) {
+            const { data: secretData, error: secretError } = await supabaseAdmin
+                .rpc("get_restaurant_razorpay_secret", { p_restaurant_id: entityNotes.restaurant_id })
+                .maybeSingle();
+            
+            if (!secretError && secretData?.razorpay_webhook_secret) {
+                webhookSecret = secretData.razorpay_webhook_secret;
+            } else {
+                console.error(`Restaurant Webhook secret not configured for ${entityNotes.restaurant_id}`);
+                return new Response("Webhook secret not configured for this restaurant", { status: 500, headers: corsHeaders });
+            }
+        } else {
+            console.error("Missing notes.restaurant_id or notes.type in webhook payload");
+            return new Response("Missing context in notes", { status: 400, headers: corsHeaders });
         }
 
         const expectedSignature = createHmac("sha256", webhookSecret)

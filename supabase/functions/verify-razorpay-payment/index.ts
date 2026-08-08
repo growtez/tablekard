@@ -117,16 +117,20 @@ serve(async (req: Request) => {
             );
         }
 
-        const MASTER_RAZORPAY_KEY_SECRET = Deno.env.get("RAZORPAY_KEY_SECRET");
+        const { data: secretData, error: secretError } = await supabaseAdmin
+            .rpc("get_restaurant_razorpay_secret", { p_restaurant_id: paymentRecord.restaurant_id })
+            .maybeSingle();
         
-        if (!MASTER_RAZORPAY_KEY_SECRET) {
+        if (secretError || !secretData?.razorpay_key_secret) {
             return new Response(
-                JSON.stringify({ error: "Master Razorpay key secret is not configured" }),
+                JSON.stringify({ error: "Restaurant Razorpay key secret is not configured" }),
                 { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }
 
-        const expectedSignature = createHmac("sha256", MASTER_RAZORPAY_KEY_SECRET)
+        const RAZORPAY_KEY_SECRET = secretData.razorpay_key_secret;
+
+        const expectedSignature = createHmac("sha256", RAZORPAY_KEY_SECRET)
             .update(`${razorpay_order_id}|${razorpay_payment_id}`)
             .digest("hex");
 
