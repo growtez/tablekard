@@ -51,7 +51,7 @@ const LoginPage = () => {
       setMagicLinkSent(true);
     } catch (err) {
       console.error('Magic link error:', err);
-      setError('Failed to send magic link. Please try again.');
+      setError(err?.message || 'Failed to send magic link. Please try again.');
     } finally {
       setIsLoading(false);
     }
