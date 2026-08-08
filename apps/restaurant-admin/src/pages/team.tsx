@@ -175,7 +175,7 @@ const Team: React.FC = () => {
     <div className="flex flex-col h-full">
         <div className="flex flex-row items-center justify-between gap-4 flex-wrap mb-8 max-md:-mt-[52px] max-md:mb-[12px] animate-[fadeIn_0.3s_ease]">
           <div className="flex items-center gap-4 max-md:ml-[56px]">
-            <h1 className="text-[28px] font-extrabold text-tk-text tracking-tight m-0">Staff</h1>
+            <h1 className="text-[18px] sm:text-[28px] font-extrabold text-tk-text tracking-tight m-0 whitespace-nowrap">Staff</h1>
             <div className="px-3 py-1 bg-tk-burgundy/10 text-tk-burgundy text-[13px] font-bold rounded-full border border-tk-burgundy/20">
               {filteredMembers.length} Members
             </div>

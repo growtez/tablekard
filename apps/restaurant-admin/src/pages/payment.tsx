@@ -239,7 +239,7 @@ const Payment: React.FC = () => {
     <div className="animate-[fadeIn_0.3s_ease-in-out]">
         {/* Page Header */}
         <div className="flex flex-row items-center justify-between gap-2 sm:gap-4 max-md:-mt-[52px] max-md:ml-[56px] max-md:mb-[8px] flex-wrap">
-          <h1 className="text-[20px] sm:text-[22px] font-semibold text-tk-text whitespace-nowrap">Payments & Billing</h1>
+          <h1 className="text-[18px] sm:text-[22px] font-semibold text-tk-text whitespace-nowrap">Payments<span className="hidden sm:inline"> & Billing</span></h1>
           <button className="flex items-center justify-center gap-2 px-3 py-1.5 sm:px-6 sm:py-2.5 bg-[#111] dark:bg-white text-white dark:text-[#111] rounded-xl text-[12px] sm:text-[14px] font-bold cursor-pointer transition-all duration-300 hover:bg-[#333] dark:hover:bg-[#f5f5f5] shadow-sm hover:shadow shrink-0" onClick={handleExportReport}>
             <Download size={14} className="sm:size-[16px]" />
             <span>Export Report</span>
@@ -251,9 +251,6 @@ const Payment: React.FC = () => {
           <div className="bg-tk-bg-card p-3 sm:p-3 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md w-[170px] sm:w-auto shrink-0">
             <div className="flex justify-between items-start mb-2">
               <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium">Total Revenue</h3>
-              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
-                <CreditCard size={14} />
-              </div>
             </div>
             <div className="flex justify-between items-end">
               <div className="text-[16px] sm:text-[20px] font-bold text-tk-text">₹{loading ? '...' : filteredRevenue.totalRevenue.toLocaleString()}</div>
@@ -263,9 +260,6 @@ const Payment: React.FC = () => {
           <div className="bg-tk-bg-card p-3 sm:p-3 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md w-[170px] sm:w-auto shrink-0">
             <div className="flex justify-between items-start mb-2">
               <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium">Total Orders</h3>
-              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
-                <CheckCircle size={14} />
-              </div>
             </div>
             <div className="flex justify-between items-end">
               <div className="text-[16px] sm:text-[20px] font-bold text-tk-text">{loading ? '...' : filteredRevenue.totalOrders.toLocaleString()}</div>

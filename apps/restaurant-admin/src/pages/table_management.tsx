@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { jsPDF } from 'jspdf';
 import {
@@ -14,7 +14,8 @@ import {
     X,
     Save,
     Users,
-    ExternalLink
+    ExternalLink,
+    MoreVertical
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -61,6 +62,18 @@ const TableManagementPage: React.FC = () => {
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [currentTable, setCurrentTable] = useState<RestaurantTable | null>(null);
+    const [showActionsMenu, setShowActionsMenu] = useState(false);
+    const actionsMenuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (actionsMenuRef.current && !actionsMenuRef.current.contains(event.target as Node)) {
+                setShowActionsMenu(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     // Form states
     const [formData, setFormData] = useState<TableFormData>({
@@ -244,20 +257,22 @@ const TableManagementPage: React.FC = () => {
 
     const handlePreviewStore = () => {
         const tableId = tables.length > 0 ? tables[0].table_number : 1;
-        window.open(`${CUSTOMER_APP_URL}/order/${activeRestaurantId}/${tableId}?preview=true`, '_blank');
+        const url = `${CUSTOMER_APP_URL}/order/${activeRestaurantId}/${tableId}?preview=true`;
+        window.open(url, 'PreviewStore', 'width=390,height=844,resizable=yes,scrollbars=yes,status=no,location=no');
     };
 
     return (
         <>
                 {/* Header */}
-                <div className="flex flex-row items-center justify-between gap-2 sm:gap-4 max-md:-mt-[52px] max-md:mb-[8px] flex-wrap mb-7">
-                    <div className="w-full lg:w-auto max-md:ml-[56px]">
-                        <h1 className="text-[20px] sm:text-[22px] font-semibold text-[#1A202C] m-0 mb-1 dark:text-tk-text whitespace-nowrap">Table Management</h1>
+                <div className="flex flex-row items-center justify-between gap-2 sm:gap-4 max-md:-mt-[52px] max-md:mb-[8px] flex-nowrap mb-7">
+                    <div className="max-md:ml-[56px]">
+                        <h1 className="text-[18px] sm:text-[22px] font-semibold text-[#1A202C] m-0 mb-1 dark:text-tk-text whitespace-nowrap">Table<span className="hidden sm:inline"> Management</span></h1>
                         {/* <p className="text-sm text-[#4A5568] m-0 dark:text-tk-text-secondary">
                             Manage your restaurant tables and generate QR codes for customer access.
                         </p> */}
                     </div>
-                    <div className="flex gap-2 items-center shrink-0 flex-nowrap overflow-x-auto hide-scrollbar w-full lg:w-auto max-md:pb-1 max-md:justify-start">
+                    {/* Desktop Actions */}
+                    <div className="hidden md:flex gap-2 items-center shrink-0 flex-nowrap overflow-x-auto hide-scrollbar w-full lg:w-auto max-md:pb-1 max-md:justify-start">
                         <button className="flex items-center justify-center gap-2 px-4 py-2 bg-white border-[1.5px] border-[#E2E8F0] rounded-xl text-sm font-medium text-[#4A5568] cursor-pointer transition-all duration-200 hover:bg-[#F7FAFC] hover:border-[#CBD5E0] disabled:opacity-60 disabled:cursor-not-allowed dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text dark:hover:bg-tk-bg-hover shrink-0 whitespace-nowrap" onClick={() => refetch()} disabled={loading}>
                             <RefreshCw size={16} className={loading ? 'spin' : ''} />
                             Refresh
@@ -275,6 +290,41 @@ const TableManagementPage: React.FC = () => {
                                 <Download size={16} />
                                 Download All QR
                             </button>
+                        )}
+                    </div>
+
+                    {/* Mobile Actions (3-dot menu) */}
+                    <div className="md:hidden relative shrink-0 z-[60]" ref={actionsMenuRef}>
+                        <button 
+                            className="flex items-center justify-center w-10 h-10 bg-white border-[1.5px] border-[#E2E8F0] rounded-xl text-[#4A5568] cursor-pointer transition-all duration-200 hover:bg-[#F7FAFC] hover:border-[#CBD5E0] dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text dark:hover:bg-tk-bg-hover" 
+                            onClick={() => setShowActionsMenu(!showActionsMenu)}
+                            title="More Actions"
+                        >
+                            <MoreVertical size={20} />
+                        </button>
+                        
+                        {showActionsMenu && (
+                            <div className="absolute right-0 top-[calc(100%+8px)] w-[200px] bg-white rounded-xl border border-[#E2E8F0] shadow-[0_4px_20px_rgba(0,0,0,0.08)] py-2 z-50 dark:bg-tk-bg-elevated dark:border-tk-border dark:shadow-[0_4px_20px_rgba(0,0,0,0.2)]">
+                                <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[#1A202C] hover:bg-[#F7FAFC] dark:text-tk-text dark:hover:bg-tk-bg-hover transition-colors" onClick={() => { setShowActionsMenu(false); handleAddTable(); }}>
+                                    <Plus size={16} className="text-tk-burgundy" />
+                                    Add Table
+                                </button>
+                                <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[#1A202C] hover:bg-[#F7FAFC] dark:text-tk-text dark:hover:bg-tk-bg-hover transition-colors" onClick={() => { setShowActionsMenu(false); handlePreviewStore(); }}>
+                                    <ExternalLink size={16} className="text-[#805AD5]" />
+                                    Preview Store
+                                </button>
+                                {tables.length > 0 && (
+                                    <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[#1A202C] hover:bg-[#F7FAFC] dark:text-tk-text dark:hover:bg-tk-bg-hover transition-colors" onClick={() => { setShowActionsMenu(false); downloadAll(); }}>
+                                        <Download size={16} className="text-[#2B6CB0]" />
+                                        Download All QR
+                                    </button>
+                                )}
+                                <div className="h-[1px] bg-[#E2E8F0] dark:bg-tk-border my-1"></div>
+                                <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[#4A5568] hover:bg-[#F7FAFC] disabled:opacity-50 dark:text-tk-text-secondary dark:hover:bg-tk-bg-hover transition-colors" onClick={() => { setShowActionsMenu(false); refetch(); }} disabled={loading}>
+                                    <RefreshCw size={16} className={loading ? 'spin' : ''} />
+                                    Refresh
+                                </button>
+                            </div>
                         )}
                     </div>
                 </div>

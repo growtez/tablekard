@@ -138,7 +138,7 @@ export default function BannersPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-[22px] font-bold text-tk-text">Home Banners</h1>
+          <h1 className="text-[18px] sm:text-[22px] font-bold text-tk-text whitespace-nowrap">Home<span className="hidden sm:inline"> Banners</span></h1>
           <p className="text-[13px] text-tk-text-secondary mt-0.5">Manage the banner slider on your customer home page.</p>
         </div>
         <button
