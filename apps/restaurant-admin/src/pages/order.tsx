@@ -496,7 +496,7 @@ const Order: React.FC = () => {
       <div className="flex-shrink-0">
         <div className="flex flex-row items-center justify-between gap-2 sm:gap-4 flex-wrap max-md:-mt-[52px] max-md:mb-[8px]">
           <div className="flex items-center gap-2 sm:gap-4 max-md:ml-[56px]">
-            <h1 className="text-[20px] sm:text-[22px] font-semibold text-tk-text whitespace-nowrap">Orders Management</h1>
+            <h1 className="text-[18px] sm:text-[22px] font-semibold text-tk-text whitespace-nowrap">Orders<span className="hidden sm:inline"> Management</span></h1>
           </div>
         </div>
 

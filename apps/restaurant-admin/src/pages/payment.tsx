@@ -239,7 +239,7 @@ const Payment: React.FC = () => {
     <div className="animate-[fadeIn_0.3s_ease-in-out]">
         {/* Page Header */}
         <div className="flex flex-row items-center justify-between gap-2 sm:gap-4 max-md:-mt-[52px] max-md:ml-[56px] max-md:mb-[8px] flex-wrap">
-          <h1 className="text-[20px] sm:text-[22px] font-semibold text-tk-text whitespace-nowrap">Payments & Billing</h1>
+          <h1 className="text-[18px] sm:text-[22px] font-semibold text-tk-text whitespace-nowrap">Payments<span className="hidden sm:inline"> & Billing</span></h1>
           <button className="flex items-center justify-center gap-2 px-3 py-1.5 sm:px-6 sm:py-2.5 bg-[#111] dark:bg-white text-white dark:text-[#111] rounded-xl text-[12px] sm:text-[14px] font-bold cursor-pointer transition-all duration-300 hover:bg-[#333] dark:hover:bg-[#f5f5f5] shadow-sm hover:shadow shrink-0" onClick={handleExportReport}>
             <Download size={14} className="sm:size-[16px]" />
             <span>Export Report</span>

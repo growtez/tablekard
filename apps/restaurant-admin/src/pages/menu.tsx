@@ -429,7 +429,8 @@ const Menu: React.FC = () => {
   const topSellingItem = menuItems.length > 0 ? menuItems[0].name : '-';
 
   const handlePreviewStore = () => {
-    window.open(`${CUSTOMER_APP_URL}/order/${activeRestaurantId}/0?preview=true`, '_blank');
+    const url = `${CUSTOMER_APP_URL}/order/${activeRestaurantId}/0?preview=true`;
+    window.open(url, 'PreviewStore', 'width=390,height=844,resizable=yes,scrollbars=yes,status=no,location=no');
   };
 
   return (
@@ -450,7 +451,7 @@ const Menu: React.FC = () => {
       `}</style>
       {/* Header - Tightened spacing */}
       <div className="flex flex-row items-center justify-between gap-2 sm:gap-4 max-md:-mt-[52px] max-md:ml-[56px] max-md:mb-[8px]">
-        <h1 className="text-[20px] sm:text-[22px] font-semibold text-tk-text whitespace-nowrap">Menu Management</h1>
+        <h1 className="text-[18px] sm:text-[22px] font-semibold text-tk-text whitespace-nowrap">Menu<span className="hidden sm:inline"> Management</span></h1>
       </div>
 
       {/* Stats Cards - Matches Order page density */}

@@ -259,7 +259,7 @@ const SubscriptionPage: React.FC = () => {
             {/* Compact Header & Status */}
             <div className="mb-6 flex flex-wrap justify-between items-center gap-4 bg-tk-bg-card rounded-[20px] border-[1.5px] border-tk-border p-5 shadow-sm">
                 <div>
-                    <h1 className="text-[22px] font-extrabold text-tk-text m-0 mb-1 tracking-tight">Subscription & Billing</h1>
+                    <h1 className="text-[18px] sm:text-[22px] font-extrabold text-tk-text m-0 mb-1 tracking-tight whitespace-nowrap">Subscription<span className="hidden sm:inline"> & Billing</span></h1>
                     <div className="flex items-center gap-2 mt-2">
                         <span className="relative flex h-2.5 w-2.5">
                             {statusInfo.status === 'active' && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-tk-success opacity-75"></span>}

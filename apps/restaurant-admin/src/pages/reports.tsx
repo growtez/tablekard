@@ -422,7 +422,7 @@ const Reports: React.FC = () => {
     return (
         <>
             <div className="reports-header">
-                    <h1 className="reports-page-title">Reports & Analytics</h1>
+                    <h1 className="reports-page-title">Reports<span className="hidden sm:inline"> & Analytics</span></h1>
                     <div className="reports-header-right flex flex-col sm:flex-row items-start sm:items-center gap-3 flex-wrap w-full md:w-auto mt-2 md:mt-0">
                         {loading && <Loader2 className="animate-spin" size={20} style={{ color: '#4C51BF' }} />}
                         
