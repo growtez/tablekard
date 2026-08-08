@@ -464,9 +464,6 @@ const Menu: React.FC = () => {
         <div className="bg-tk-bg-card p-3 sm:p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
           <div className="flex justify-between items-start mb-2">
             <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium">Active Menu Items</h3>
-            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
-              <Layers size={14} />
-            </div>
           </div>
           <div className="flex justify-between items-end">
             <div className="text-[16px] sm:text-[20px] font-bold text-tk-text">{loading ? '...' : activeItems}</div>
@@ -479,9 +476,6 @@ const Menu: React.FC = () => {
         <div className="bg-tk-bg-card p-3 sm:p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md">
           <div className="flex justify-between items-start mb-2">
             <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium">Out of Stock Items</h3>
-            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
-              <AlertCircle size={14} />
-            </div>
           </div>
           <div className="flex justify-between items-end">
             <div className="text-[16px] sm:text-[20px] font-bold text-tk-text">{loading ? '...' : outOfStockItems}</div>
@@ -494,9 +488,6 @@ const Menu: React.FC = () => {
         <div className="bg-tk-bg-card p-3 sm:p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md sm:col-span-1 col-span-2">
           <div className="flex justify-between items-start mb-2">
             <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium">Top Selling Items</h3>
-            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
-              <TrendingUp size={14} />
-            </div>
           </div>
           <div className="flex justify-between items-end">
             <div className="text-[14px] sm:text-[16px] font-bold text-tk-text truncate pr-2">{loading ? '...' : topSellingItem}</div>

@@ -507,9 +507,6 @@ const Order: React.FC = () => {
               <div className="bg-tk-bg-card p-3 sm:p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md min-w-[145px] sm:min-w-0 shrink-0">
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium">Orders Today</h3>
-                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
-                    <TrendingUp size={14} />
-                  </div>
                 </div>
                 <div className="flex justify-between items-end">
                   <div className="text-[16px] sm:text-[20px] font-bold text-tk-text">{isLoading ? '...' : ordersToday}</div>
@@ -524,9 +521,6 @@ const Order: React.FC = () => {
               <div className="bg-tk-bg-card p-3 sm:p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md min-w-[145px] sm:min-w-0 shrink-0">
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium">Orders This Week</h3>
-                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
-                    <TrendingUp size={14} />
-                  </div>
                 </div>
                 <div className="flex justify-between items-end">
                   <div className="text-[16px] sm:text-[20px] font-bold text-tk-text">{isLoading ? '...' : ordersThisWeek}</div>
@@ -541,9 +535,6 @@ const Order: React.FC = () => {
               <div className="bg-tk-bg-card p-3 sm:p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md min-w-[145px] sm:min-w-0 shrink-0">
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium">Active Orders</h3>
-                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
-                    <Package size={14} />
-                  </div>
                 </div>
                 <div className="flex justify-between items-end">
                   <div className="text-[16px] sm:text-[20px] font-bold text-tk-text">{isLoading ? '...' : activeOrders.length}</div>
@@ -557,9 +548,6 @@ const Order: React.FC = () => {
               <div className="bg-tk-bg-card p-3 sm:p-2.5 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md min-w-[145px] sm:min-w-0 shrink-0">
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium">Total Orders</h3>
-                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
-                    <Package size={14} />
-                  </div>
                 </div>
                 <div className="flex justify-between items-end">
                   <div className="text-[16px] sm:text-[20px] font-bold text-tk-text">{isLoading ? '...' : orders.length}</div>

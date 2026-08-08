@@ -251,9 +251,6 @@ const Payment: React.FC = () => {
           <div className="bg-tk-bg-card p-3 sm:p-3 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md w-[170px] sm:w-auto shrink-0">
             <div className="flex justify-between items-start mb-2">
               <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium">Total Revenue</h3>
-              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
-                <CreditCard size={14} />
-              </div>
             </div>
             <div className="flex justify-between items-end">
               <div className="text-[16px] sm:text-[20px] font-bold text-tk-text">₹{loading ? '...' : filteredRevenue.totalRevenue.toLocaleString()}</div>
@@ -263,9 +260,6 @@ const Payment: React.FC = () => {
           <div className="bg-tk-bg-card p-3 sm:p-3 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md w-[170px] sm:w-auto shrink-0">
             <div className="flex justify-between items-start mb-2">
               <h3 className="text-[11px] sm:text-xs text-tk-text-secondary font-medium">Total Orders</h3>
-              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-tk-burgundy-bg flex items-center justify-center text-tk-burgundy">
-                <CheckCircle size={14} />
-              </div>
             </div>
             <div className="flex justify-between items-end">
               <div className="text-[16px] sm:text-[20px] font-bold text-tk-text">{loading ? '...' : filteredRevenue.totalOrders.toLocaleString()}</div>
