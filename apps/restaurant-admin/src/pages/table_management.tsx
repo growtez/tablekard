@@ -294,7 +294,7 @@ const TableManagementPage: React.FC = () => {
                     </div>
 
                     {/* Mobile Actions (3-dot menu) */}
-                    <div className="md:hidden relative shrink-0" ref={actionsMenuRef}>
+                    <div className="md:hidden relative shrink-0 z-[60]" ref={actionsMenuRef}>
                         <button 
                             className="flex items-center justify-center w-10 h-10 bg-white border-[1.5px] border-[#E2E8F0] rounded-xl text-[#4A5568] cursor-pointer transition-all duration-200 hover:bg-[#F7FAFC] hover:border-[#CBD5E0] dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text dark:hover:bg-tk-bg-hover" 
                             onClick={() => setShowActionsMenu(!showActionsMenu)}

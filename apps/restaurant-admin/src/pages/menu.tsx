@@ -41,6 +41,8 @@ const Menu: React.FC = () => {
   
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
+  const [showActionsMenu, setShowActionsMenu] = useState(false);
+  const actionsMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -49,6 +51,9 @@ const Menu: React.FC = () => {
       }
       if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target as Node)) {
         setIsCategoryDropdownOpen(false);
+      }
+      if (actionsMenuRef.current && !actionsMenuRef.current.contains(event.target as Node)) {
+        setShowActionsMenu(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -505,9 +510,9 @@ const Menu: React.FC = () => {
       <hr className="border-tk-border mb-4 transition-all duration-300" />
 
       {/* Header and Tabs */}
-      <div className="flex justify-between items-center mb-4 max-md:flex-col max-md:items-stretch max-md:gap-3">
+      <div className="flex justify-between items-center mb-4 gap-3">
         {/* Tab Navigation */}
-        <div className="flex gap-1 bg-[#F7FAFC] dark:bg-tk-bg-elevated p-1 rounded-xl w-fit max-md:w-full max-md:justify-center">
+        <div className="flex gap-1 bg-[#F7FAFC] dark:bg-tk-bg-elevated p-1 rounded-xl w-fit shrink-0">
           <button
             className={`px-4 py-2 border-none bg-transparent rounded-lg text-sm font-semibold text-tk-text-secondary cursor-pointer transition-all duration-200 hover:text-[#4A5568] hover:bg-white/60 dark:hover:text-tk-text font-['Outfit'] ${activeTab === 'menu-items' ? '!bg-tk-bg-card !text-tk-text shadow-sm' : ''}`}
             onClick={() => setActiveTab('menu-items')}
@@ -523,40 +528,83 @@ const Menu: React.FC = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-end gap-2 max-md:w-full">
+        <div className="flex items-center justify-end gap-2 shrink-0">
            {isSaving && (
              <div className="flex items-center animate-spin mr-2">
                <Loader2 size={16} className="text-tk-text-secondary" />
              </div>
            )}
-           {activeTab === 'menu-items' && (
-             <>
-               <button className="flex items-center justify-center gap-1.5 px-4 py-2 bg-[#E2E8F0] dark:bg-tk-bg-hover text-tk-text border-none rounded-lg text-[13px] sm:text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-[#CBD5E0] dark:hover:bg-tk-border font-['Outfit'] max-md:flex-1" onClick={() => setManageCategoriesDialogOpen(true)}>
-                 <Layers size={14} />
-                 Manage Categories
+
+           {/* Desktop Actions */}
+           <div className="hidden md:flex items-center gap-2">
+             {activeTab === 'menu-items' && (
+               <>
+                 <button className="flex items-center justify-center gap-1.5 px-4 py-2 bg-[#E2E8F0] dark:bg-tk-bg-hover text-tk-text border-none rounded-lg text-[13px] sm:text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-[#CBD5E0] dark:hover:bg-tk-border font-['Outfit']" onClick={() => setManageCategoriesDialogOpen(true)}>
+                   <Layers size={14} />
+                   Manage Categories
+                 </button>
+                 <button className="flex items-center justify-center gap-1.5 px-4 py-2 bg-tk-burgundy text-white border-none rounded-lg text-[13px] sm:text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-tk-burgundy/90 hover:-translate-y-[1px] font-['Outfit'] shadow-sm" onClick={handleAddMenuItem}>
+                   <Plus size={14} />
+                   Add New Item
+                 </button>
+                 <button className="flex items-center justify-center gap-1.5 px-4 py-2 bg-[#805AD5] text-white border-none rounded-lg text-[13px] sm:text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-[#6B46C1] hover:-translate-y-[1px] font-['Outfit'] shadow-sm" onClick={handlePreviewStore}>
+                   <ExternalLink size={14} />
+                   Preview Store
+                 </button>
+               </>
+             )}
+             {activeTab === 'offers' && (
+               <>
+                 <button className="flex items-center justify-center gap-1.5 px-4 py-2 bg-tk-burgundy text-white border-none rounded-lg text-[13px] sm:text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-tk-burgundy/90 hover:-translate-y-[1px] font-['Outfit'] shadow-sm" onClick={handleAddOffer}>
+                   <Plus size={14} />
+                   Add New Offer
+                 </button>
+                 <button className="flex items-center justify-center gap-1.5 px-4 py-2 bg-[#805AD5] text-white border-none rounded-lg text-[13px] sm:text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-[#6B46C1] hover:-translate-y-[1px] font-['Outfit'] shadow-sm" onClick={handlePreviewStore}>
+                   <ExternalLink size={14} />
+                   Preview Store
+                 </button>
+               </>
+             )}
+           </div>
+
+           {/* Mobile Actions (3-dot menu) */}
+           <div className="md:hidden relative ml-auto z-[60]" ref={actionsMenuRef}>
+               <button 
+                   className="flex items-center justify-center w-10 h-10 bg-white border-[1.5px] border-[#E2E8F0] rounded-xl text-[#4A5568] cursor-pointer transition-all duration-200 hover:bg-[#F7FAFC] hover:border-[#CBD5E0] dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text dark:hover:bg-tk-bg-hover" 
+                   onClick={() => setShowActionsMenu(!showActionsMenu)}
+                   title="More Actions"
+               >
+                   <MoreVertical size={20} />
                </button>
-               <button className="flex items-center justify-center gap-1.5 px-4 py-2 bg-tk-burgundy text-white border-none rounded-lg text-[13px] sm:text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-tk-burgundy/90 hover:-translate-y-[1px] font-['Outfit'] shadow-sm max-md:flex-1" onClick={handleAddMenuItem}>
-                 <Plus size={14} />
-                 Add New Item
-               </button>
-               <button className="flex items-center justify-center gap-1.5 px-4 py-2 bg-[#805AD5] text-white border-none rounded-lg text-[13px] sm:text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-[#6B46C1] hover:-translate-y-[1px] font-['Outfit'] shadow-sm max-md:flex-1" onClick={handlePreviewStore}>
-                 <ExternalLink size={14} />
-                 Preview Store
-               </button>
-             </>
-           )}
-           {activeTab === 'offers' && (
-             <>
-               <button className="flex items-center justify-center gap-1.5 px-4 py-2 bg-tk-burgundy text-white border-none rounded-lg text-[13px] sm:text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-tk-burgundy/90 hover:-translate-y-[1px] font-['Outfit'] shadow-sm max-md:flex-1 w-full sm:w-auto" onClick={handleAddOffer}>
-                 <Plus size={14} />
-                 Add New Offer
-               </button>
-               <button className="flex items-center justify-center gap-1.5 px-4 py-2 bg-[#805AD5] text-white border-none rounded-lg text-[13px] sm:text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-[#6B46C1] hover:-translate-y-[1px] font-['Outfit'] shadow-sm max-md:flex-1 w-full sm:w-auto" onClick={handlePreviewStore}>
-                 <ExternalLink size={14} />
-                 Preview Store
-               </button>
-             </>
-           )}
+               
+               {showActionsMenu && (
+                   <div className="absolute right-0 top-[calc(100%+8px)] w-[200px] bg-white rounded-xl border border-[#E2E8F0] shadow-[0_4px_20px_rgba(0,0,0,0.08)] py-2 z-50 dark:bg-tk-bg-elevated dark:border-tk-border dark:shadow-[0_4px_20px_rgba(0,0,0,0.2)]">
+                       {activeTab === 'menu-items' && (
+                         <>
+                           <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[#1A202C] hover:bg-[#F7FAFC] dark:text-tk-text dark:hover:bg-tk-bg-hover transition-colors" onClick={() => { setShowActionsMenu(false); setManageCategoriesDialogOpen(true); }}>
+                               <Layers size={16} className="text-[#4A5568]" />
+                               Manage Categories
+                           </button>
+                           <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[#1A202C] hover:bg-[#F7FAFC] dark:text-tk-text dark:hover:bg-tk-bg-hover transition-colors" onClick={() => { setShowActionsMenu(false); handleAddMenuItem(); }}>
+                               <Plus size={16} className="text-tk-burgundy" />
+                               Add New Item
+                           </button>
+                         </>
+                       )}
+                       {activeTab === 'offers' && (
+                           <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[#1A202C] hover:bg-[#F7FAFC] dark:text-tk-text dark:hover:bg-tk-bg-hover transition-colors" onClick={() => { setShowActionsMenu(false); handleAddOffer(); }}>
+                               <Plus size={16} className="text-tk-burgundy" />
+                               Add New Offer
+                           </button>
+                       )}
+                       <div className="h-[1px] bg-[#E2E8F0] dark:bg-tk-border my-1"></div>
+                       <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[#1A202C] hover:bg-[#F7FAFC] dark:text-tk-text dark:hover:bg-tk-bg-hover transition-colors" onClick={() => { setShowActionsMenu(false); handlePreviewStore(); }}>
+                           <ExternalLink size={16} className="text-[#805AD5]" />
+                           Preview Store
+                       </button>
+                   </div>
+               )}
+           </div>
         </div>
       </div>
 
