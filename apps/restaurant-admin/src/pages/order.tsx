@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { TrendingUp, X, CheckCircle, Package, Check, ChevronDown, Search, ArrowUpDown, List, LayoutGrid, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { TrendingUp, X, CheckCircle, Check, ChevronDown, Search, ArrowUpDown, List, LayoutGrid, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 
 import { useAuth } from '../context/AuthContext';

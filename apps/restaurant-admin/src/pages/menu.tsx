@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Plus, Edit3, Trash2, Layers, Loader2, TrendingUp, AlertCircle, List, LayoutGrid, MoreVertical, ArrowUpDown, ChevronDown, ExternalLink } from 'lucide-react';
+import { Search, Plus, Edit3, Trash2, Layers, Loader2, List, LayoutGrid, MoreVertical, ArrowUpDown, ChevronDown, ExternalLink } from 'lucide-react';
 import MenuDialog from '../components/menu_dialog';
 import CategoryDialog from '../components/category_dialog';
 import ManageCategoriesDialog from '../components/manage_categories_dialog';
