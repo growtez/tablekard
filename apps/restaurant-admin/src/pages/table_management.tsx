@@ -13,7 +13,8 @@ import {
     Trash2,
     X,
     Save,
-    Users
+    Users,
+    ExternalLink
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -38,6 +39,7 @@ interface TableFormData {
 
 const TableManagementPage: React.FC = () => {
     const { activeRestaurantId } = useAuth();
+    const CUSTOMER_APP_URL = (import.meta.env.VITE_CUSTOMER_APP_URL || 'https://app.tablekard.com').replace(/\/$/, '');
     const [restaurantName, setRestaurantName] = useState<string>('Restaurant');
 
     // React Query: cached, auto-retries, refetches on tab focus
@@ -229,7 +231,6 @@ const TableManagementPage: React.FC = () => {
         }
     };
 
-    // Quick toggle active status
     const handleToggleActive = async (table: RestaurantTable) => {
         if (!activeRestaurantId) return;
         try {
@@ -239,6 +240,11 @@ const TableManagementPage: React.FC = () => {
             console.error('Failed to toggle table status:', err);
             setError('Failed to update table status.');
         }
+    };
+
+    const handlePreviewStore = () => {
+        const tableId = tables.length > 0 ? tables[0].table_number : 1;
+        window.open(`${CUSTOMER_APP_URL}/order/${activeRestaurantId}/${tableId}?preview=true`, '_blank');
     };
 
     return (
@@ -259,6 +265,10 @@ const TableManagementPage: React.FC = () => {
                         <button className="flex items-center justify-center gap-2 px-4 py-2 bg-tk-burgundy border-none rounded-xl text-sm font-semibold text-white cursor-pointer transition-all duration-200 shadow-[0_4px_12px_rgba(139,58,30,0.3)] hover:bg-[#6B2A15] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(139,58,30,0.4)] shrink-0 whitespace-nowrap" onClick={handleAddTable}>
                             <Plus size={16} />
                             Add Table
+                        </button>
+                        <button className="flex items-center justify-center gap-2 px-4 py-2 bg-[#805AD5] border-none rounded-xl text-sm font-semibold text-white cursor-pointer transition-all duration-200 shadow-[0_4px_12px_rgba(128,90,213,0.3)] hover:bg-[#6B46C1] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(128,90,213,0.4)] shrink-0 whitespace-nowrap" onClick={handlePreviewStore}>
+                            <ExternalLink size={16} />
+                            Preview Store
                         </button>
                         {tables.length > 0 && (
                             <button className="flex items-center justify-center gap-2 px-4 py-2 bg-[#2B6CB0] border-none rounded-xl text-sm font-semibold text-white cursor-pointer transition-all duration-200 shadow-[0_4px_12px_rgba(43,108,176,0.3)] hover:bg-[#2C5282] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(43,108,176,0.4)] shrink-0 whitespace-nowrap" onClick={downloadAll}>

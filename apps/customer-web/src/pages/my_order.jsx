@@ -241,6 +241,11 @@ const MyOrderPage = () => {
       return;
     }
 
+    if (sessionStorage.getItem('previewMode') === 'true') {
+      setError('Checkout is disabled in Preview Mode.');
+      return;
+    }
+
     if (geofenceStatus === 'outside') {
       setError(`Cannot place order. You are outside the allowed radius of ${allowedRadius}m (current distance: ${Math.round(distance)}m).`);
       return;
@@ -322,6 +327,11 @@ const MyOrderPage = () => {
     if (!isAuthenticated) {
       const currentPath = encodeURIComponent(window.location.pathname);
       navigate(`/login?redirect=${currentPath}`);
+      return;
+    }
+
+    if (sessionStorage.getItem('previewMode') === 'true') {
+      setError('Checkout is disabled in Preview Mode.');
       return;
     }
 

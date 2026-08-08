@@ -139,7 +139,7 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                             contact_email: resFormData.contact_email.trim().toLowerCase(),
                             contact_address: resFormData.contact_address.trim(),
                             contact_phone: resFormData.contact_phone.trim(),
-                            status: 'active'
+                            status: 'pending'
                         }
                     ])
                     .select()

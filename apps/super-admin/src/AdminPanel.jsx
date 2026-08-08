@@ -172,7 +172,7 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
             contact_email: resFormData.contact_email.trim(),
             contact_address: resFormData.contact_address.trim(),
             contact_phone: resFormData.contact_phone.trim(),
-            status: 'active'
+            status: 'pending'
           }
         ])
         .select()

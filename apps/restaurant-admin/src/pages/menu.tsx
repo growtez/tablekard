@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Plus, Edit3, Trash2, Layers, Loader2, TrendingUp, AlertCircle, List, LayoutGrid, MoreVertical, ArrowUpDown, ChevronDown } from 'lucide-react';
+import { Search, Plus, Edit3, Trash2, Layers, Loader2, TrendingUp, AlertCircle, List, LayoutGrid, MoreVertical, ArrowUpDown, ChevronDown, ExternalLink } from 'lucide-react';
 import MenuDialog from '../components/menu_dialog';
 import CategoryDialog from '../components/category_dialog';
 import ManageCategoriesDialog from '../components/manage_categories_dialog';
@@ -27,6 +27,7 @@ import type { MenuItem, MenuCategory } from '@restaurant-saas/types';
 
 const Menu: React.FC = () => {
   const { activeRestaurantId, activeRestaurantName } = useAuth();
+  const CUSTOMER_APP_URL = (import.meta.env.VITE_CUSTOMER_APP_URL || 'https://app.tablekard.com').replace(/\/$/, '');
 
   const [activeTab, setActiveTab] = useState('menu-items');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
@@ -427,6 +428,10 @@ const Menu: React.FC = () => {
   const outOfStockItems = menuItems.filter(item => !item.available).length;
   const topSellingItem = menuItems.length > 0 ? menuItems[0].name : '-';
 
+  const handlePreviewStore = () => {
+    window.open(`${CUSTOMER_APP_URL}/order/${activeRestaurantId}/0?preview=true`, '_blank');
+  };
+
   return (
     <>
       <style>{`
@@ -533,13 +538,23 @@ const Menu: React.FC = () => {
                  <Plus size={14} />
                  Add New Item
                </button>
+               <button className="flex items-center justify-center gap-1.5 px-4 py-2 bg-[#805AD5] text-white border-none rounded-lg text-[13px] sm:text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-[#6B46C1] hover:-translate-y-[1px] font-['Outfit'] shadow-sm max-md:flex-1" onClick={handlePreviewStore}>
+                 <ExternalLink size={14} />
+                 Preview Store
+               </button>
              </>
            )}
            {activeTab === 'offers' && (
-             <button className="flex items-center justify-center gap-1.5 px-4 py-2 bg-tk-burgundy text-white border-none rounded-lg text-[13px] sm:text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-tk-burgundy/90 hover:-translate-y-[1px] font-['Outfit'] shadow-sm max-md:flex-1 w-full sm:w-auto" onClick={handleAddOffer}>
-               <Plus size={14} />
-               Add New Offer
-             </button>
+             <>
+               <button className="flex items-center justify-center gap-1.5 px-4 py-2 bg-tk-burgundy text-white border-none rounded-lg text-[13px] sm:text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-tk-burgundy/90 hover:-translate-y-[1px] font-['Outfit'] shadow-sm max-md:flex-1 w-full sm:w-auto" onClick={handleAddOffer}>
+                 <Plus size={14} />
+                 Add New Offer
+               </button>
+               <button className="flex items-center justify-center gap-1.5 px-4 py-2 bg-[#805AD5] text-white border-none rounded-lg text-[13px] sm:text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-[#6B46C1] hover:-translate-y-[1px] font-['Outfit'] shadow-sm max-md:flex-1 w-full sm:w-auto" onClick={handlePreviewStore}>
+                 <ExternalLink size={14} />
+                 Preview Store
+               </button>
+             </>
            )}
         </div>
       </div>
