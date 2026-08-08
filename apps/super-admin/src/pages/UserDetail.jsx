@@ -84,7 +84,7 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
                     status, 
                     payment_status, 
                     created_at,
-                    restaurants(name, slug)
+                    restaurants(name)
                 `)
                 .eq('customer_id', id)
                 .order('created_at', { ascending: false });

@@ -126,8 +126,14 @@ function RequireAuth({ children }) {
 
 // ─── Restaurant guard ─────────────────────────────────────────────────────────
 function RequireRestaurant({ children }) {
-  const { restaurantId, restaurantLoading, geofenceStatus, distance, allowedRadius, checkGeofence } = useRestaurant();
+  const { restaurantId, restaurantLoading, restaurant, geofenceStatus, distance, allowedRadius, checkGeofence } = useRestaurant();
   const location = useLocation();
+
+  const searchParams = new URLSearchParams(location.search);
+  if (searchParams.get('preview') === 'true') {
+    sessionStorage.setItem('previewMode', 'true');
+  }
+  const isPreviewMode = sessionStorage.getItem('previewMode') === 'true';
   
   if (restaurantLoading) return location.pathname === '/' ? <HomeLoading /> : <PageSkeleton />;
   
@@ -135,11 +141,28 @@ function RequireRestaurant({ children }) {
     return <ScanQRPage />;
   }
 
-  if (geofenceStatus === 'checking') {
+  if (!isPreviewMode && restaurantId && !restaurantLoading && (!restaurant || restaurant.status !== 'active')) {
+    return (
+      <div className="geofence-blocked-screen">
+        <div className="geofence-blocked-card">
+          <div className="blocked-icon-wrapper">
+            <AlertCircle size={48} color="#8B3A1E" />
+          </div>
+          <h2>Ordering Paused</h2>
+          <p>
+            Online ordering is temporarily paused by the restaurant. Please place your order directly with the staff.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Bypass geofence if in preview mode
+  if (geofenceStatus === 'checking' && !isPreviewMode) {
     return location.pathname === '/' ? <HomeLoading /> : <PageSkeleton />;
   }
 
-  if (geofenceStatus === 'outside') {
+  if (geofenceStatus === 'outside' && !isPreviewMode) {
     return (
       <div className="geofence-blocked-screen">
         <div className="geofence-blocked-card">
@@ -159,7 +182,7 @@ function RequireRestaurant({ children }) {
     );
   }
 
-  if (geofenceStatus === 'error') {
+  if (geofenceStatus === 'error' && !isPreviewMode) {
     return (
       <div className="geofence-blocked-screen">
         <div className="geofence-blocked-card">
@@ -178,7 +201,18 @@ function RequireRestaurant({ children }) {
     );
   }
   
-  return children;
+  return (
+    <>
+      {isPreviewMode && (
+        <div style={{ background: '#3b82f6', color: '#fff', textAlign: 'center', padding: '6px', fontSize: '13px', fontWeight: 'bold', zIndex: 99999, position: 'fixed', top: 0, left: 0, right: 0 }}>
+          Preview Mode - Ordering Disabled
+        </div>
+      )}
+      <div style={isPreviewMode ? { paddingTop: '30px', height: '100%', overflowY: 'auto' } : { height: '100%' }}>
+        {children}
+      </div>
+    </>
+  );
 }
 
 // ─── Routes (Suspense keyed to pathname) ──────────────────────────────────────
@@ -206,7 +240,7 @@ function AppRoutes() {
           <Route path="/login"      element={<LoginPage />} />
           <Route path="/about"      element={<AboutPage />} />
           <Route path="/about-tablekard" element={<AboutTablekardPage />} />
-          <Route path="/ar/:slug"   element={<ARViewerPage />} />
+          <Route path="/ar/:restaurantId"   element={<ARViewerPage />} />
 
             {/* Protected */}
             <Route path="/profile"       element={<RequireAuth><ProfilePage /></RequireAuth>} />

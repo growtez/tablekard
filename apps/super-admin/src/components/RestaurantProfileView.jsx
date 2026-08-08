@@ -125,18 +125,18 @@ export default function RestaurantProfileView({
               </label>
 
               <label className="profile-field">
-                <span className="profile-field-label">Slug</span>
+                <span className="profile-field-label">Restaurant Page URL</span>
                 <div style={{ display: 'flex', alignItems: 'stretch' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', padding: '0 12px', background: 'var(--color-surface-hover, #EDF2F7)', border: '1px solid var(--color-border, #E2E8F0)', borderRight: 'none', borderTopLeftRadius: '8px', borderBottomLeftRadius: '8px', fontSize: '14px', color: 'var(--color-text-muted, #4A5568)' }}>
+                    tablekard.com/
+                  </span>
                   <input
                     className="profile-input"
-                    style={{ borderTopRightRadius: 0, borderBottomRightRadius: 0, flex: 1 }}
+                    style={{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0, flex: 1, backgroundColor: '#f3f4f6', opacity: 0.7, cursor: 'not-allowed' }}
                     type="text"
-                    value={formData.slug || ''}
-                    onChange={(e) => updateField('slug', e.target.value)}
+                    value={formData.name ? formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : ''}
+                    disabled
                   />
-                  <span style={{ display: 'flex', alignItems: 'center', padding: '0 12px', background: 'var(--color-surface-hover, #EDF2F7)', border: '1px solid var(--color-border, #E2E8F0)', borderLeft: 'none', borderTopRightRadius: '8px', borderBottomRightRadius: '8px', fontSize: '14px', color: 'var(--color-text-muted, #4A5568)' }}>
-                    .tablekard.com
-                  </span>
                 </div>
               </label>
 
@@ -176,13 +176,11 @@ export default function RestaurantProfileView({
                 <span className="profile-info-value">{restaurant.name}</span>
               </div>
               <div className="profile-info-item">
-                <span className="profile-info-label">Slug</span>
+                <span className="profile-info-label">Restaurant Page URL</span>
                 <span className="profile-info-value">
-                  {restaurant.slug ? (
-                    <a href={`https://${restaurant.slug}.tablekard.com`} target="_blank" rel="noopener noreferrer" className="profile-link" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                      {restaurant.slug}.tablekard.com <ExternalLink size={14} />
+                    <a href={`https://tablekard.com/${restaurant.name ? restaurant.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : ''}`} target="_blank" rel="noopener noreferrer" className="profile-link" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      tablekard.com/{restaurant.name ? restaurant.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : ''} <ExternalLink size={14} />
                     </a>
-                  ) : "Not set"}
                 </span>
               </div>
               <div className="profile-info-item">

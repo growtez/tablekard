@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
   ChefHat,
@@ -6,31 +6,25 @@ import {
   Crosshair,
   Edit3,
   ExternalLink,
-  ImageIcon,
   Key,
-  Lock,
   LogOut,
   MailIcon,
   MapPinIcon,
   PhoneIcon,
   Save,
   ShieldCheck,
-  Upload,
-  Webhook,
   X,
   XCircle,
 } from "lucide-react";
 import type { Restaurant } from "@restaurant-saas/types";
-import ImageCropper from "../../components/ImageCropper";
 import { useAuth } from "../../context/AuthContext";
 import {
   getRestaurantById,
   getRestaurantPaymentSettings,
   updateAdministratorProfile,
   updateRestaurantProfile,
-  updateRestaurantPaymentSettings,
 } from "../../services/supabaseService";
-import { uploadProfileImage } from "../../services/storageService";
+import { supabase } from '@restaurant-saas/supabase';
 
 
 interface RestaurantFormState {
@@ -39,13 +33,10 @@ interface RestaurantFormState {
   contactPhone: string;
   contactAddress: string;
   logoUrl: string;
-  primaryColor: string;
-  secondaryColor: string;
   latitude: string;
   longitude: string;
   allowedRadius: string;
   openingDate: string;
-  slug: string;
   tagline: string;
   manifesto: string;
   operatingHoursWeekdays: string;
@@ -55,12 +46,14 @@ interface RestaurantFormState {
   websiteUrl: string;
   payOnline: boolean;
   kitchenAppEnabled: boolean;
+  serviceFeeEnabled: boolean;
+  serviceFeeType: 'percentage' | 'flat';
+  serviceFeeAmount: string;
 }
 
 interface AdminFormState {
   name: string;
   email: string;
-  avatarUrl: string;
 }
 
 interface FeedbackState {
@@ -69,7 +62,6 @@ interface FeedbackState {
 }
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const hexColorPattern = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
 const getErrorMessage = (error: unknown, fallback: string): string => {
   if (error instanceof Error && error.message) {
@@ -139,8 +131,6 @@ const createRestaurantFormState = (
   contactPhone: restaurant.contact.phone ?? "",
   contactAddress: restaurant.contact.address ?? "",
   logoUrl: restaurant.branding?.logoUrl ?? "",
-  primaryColor: restaurant.branding?.primaryColor ?? "",
-  secondaryColor: restaurant.branding?.secondaryColor ?? "",
   latitude:
     restaurant.location?.latitude != null
       ? String(restaurant.location.latitude)
@@ -154,7 +144,6 @@ const createRestaurantFormState = (
       ? String(restaurant.location.allowedRadius)
       : "150",
   openingDate: restaurant.openingDate ?? "",
-  slug: restaurant.slug ?? "",
   tagline: restaurant.tagline ?? "",
   manifesto: restaurant.manifesto ?? "",
   operatingHoursWeekdays:
@@ -166,6 +155,9 @@ const createRestaurantFormState = (
   websiteUrl: restaurant.websiteUrl ?? "",
   payOnline: (restaurant as any).pay_online ?? true,
   kitchenAppEnabled: (restaurant as any).kitchen_app_enabled ?? true,
+  serviceFeeEnabled: restaurant.settings?.serviceFeeEnabled ?? false,
+  serviceFeeType: restaurant.settings?.serviceFeeType ?? 'percentage',
+  serviceFeeAmount: restaurant.settings?.serviceFeeAmount != null ? String(restaurant.settings.serviceFeeAmount) : '',
 });
 
 const createAdminFormState = (
@@ -177,7 +169,6 @@ const createAdminFormState = (
 ): AdminFormState => ({
   name: profile?.name ?? "",
   email: profile?.email ?? "",
-  avatarUrl: profile?.avatarUrl ?? "",
 });
 
 const formatCoordinate = (value?: number | null): string => {
@@ -194,16 +185,6 @@ const validateRestaurantForm = (form: RestaurantFormState): string | null => {
     return "A valid contact email is required.";
   if (form.logoUrl.trim() && !isValidUrl(form.logoUrl.trim()))
     return "Logo URL must be a valid http or https URL.";
-  if (
-    form.primaryColor.trim() &&
-    !hexColorPattern.test(form.primaryColor.trim())
-  )
-    return "Primary color must be a valid hex value like #1F2937.";
-  if (
-    form.secondaryColor.trim() &&
-    !hexColorPattern.test(form.secondaryColor.trim())
-  )
-    return "Secondary color must be a valid hex value like #F59E0B.";
 
   const latitude = parseOptionalNumber(form.latitude);
   const longitude = parseOptionalNumber(form.longitude);
@@ -229,8 +210,6 @@ const validateAdminForm = (form: AdminFormState): string | null => {
   if (!form.name.trim()) return "Administrator name is required.";
   if (!form.email.trim() || !emailPattern.test(form.email.trim()))
     return "Administrator email must be valid.";
-  if (form.avatarUrl.trim() && !isValidUrl(form.avatarUrl.trim()))
-    return "Avatar URL must be a valid http or https URL.";
   return null;
 };
 
@@ -288,9 +267,6 @@ const ProfilePage: React.FC = () => {
     onlinePaymentsEnabled: false,
   });
 
-  // Cropping state
-  const [cropImage, setCropImage] = useState<string | null>(null);
-  const [cropType, setCropType] = useState<"logo" | "avatar" | null>(null);
 
   const activeMembership = memberships.find(
     (membership) => membership.restaurantId === activeRestaurantId,
@@ -320,8 +296,8 @@ const ProfilePage: React.FC = () => {
         setRestaurantForm(data ? createRestaurantFormState(data) : null);
         const ps = {
           razorpayKeyId: pmtSettings.razorpayKeyId ?? "",
-          hasRazorpayKeySecret: pmtSettings.hasRazorpayKeySecret,
-          hasRazorpayWebhookSecret: pmtSettings.hasRazorpayWebhookSecret,
+          hasRazorpayKeySecret: pmtSettings.hasRazorpayKeySecret ?? false,
+          hasRazorpayWebhookSecret: pmtSettings.hasRazorpayWebhookSecret ?? false,
           onlinePaymentsEnabled: pmtSettings.onlinePaymentsEnabled,
         };
         setPaymentSettings(ps);
@@ -577,130 +553,6 @@ const ProfilePage: React.FC = () => {
     );
   };
 
-  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
-  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-  const logoInputRef = useRef<HTMLInputElement>(null);
-  const avatarInputRef = useRef<HTMLInputElement>(null);
-
-  const handleImageUpload = useCallback(
-    async (
-      file: File,
-      folder: string,
-      onSuccess: (url: string) => void,
-      setUploading: (v: boolean) => void,
-    ) => {
-      setUploading(true);
-      setFeedback(null);
-      try {
-        const url = await uploadProfileImage(folder, file);
-        onSuccess(url);
-        setFeedback({
-          tone: "success",
-          message: "Image uploaded successfully.",
-        });
-      } catch (error: unknown) {
-        const msg = error instanceof Error ? error.message : "Upload failed.";
-        setFeedback({ tone: "error", message: msg });
-      } finally {
-        setUploading(false);
-      }
-    },
-    [],
-  );
-
-  const handleLogoDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      const file = e.dataTransfer.files[0];
-      if (file && activeRestaurantId) {
-        handleImageUpload(
-          file,
-          `logos/${activeRestaurantId}`,
-          (url) => handleRestaurantFieldChange("logoUrl", url),
-          setIsUploadingLogo,
-        );
-      }
-    },
-    [activeRestaurantId, handleImageUpload],
-  );
-
-  const handleAvatarDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setCropImage(reader.result as string);
-        setCropType("avatar");
-      };
-      reader.readAsDataURL(file);
-    }
-  }, []);
-
-  const handleLogoFileSelect = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          setCropImage(reader.result as string);
-          setCropType("logo");
-        };
-        reader.readAsDataURL(file);
-      }
-      e.target.value = "";
-    },
-    [],
-  );
-
-  const handleAvatarFileSelect = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          setCropImage(reader.result as string);
-          setCropType("avatar");
-        };
-        reader.readAsDataURL(file);
-      }
-      e.target.value = "";
-    },
-    [],
-  );
-
-  const handleCropComplete = async (croppedBlob: Blob) => {
-    if (!cropType || !activeRestaurantId || !userProfile) {
-      setCropImage(null);
-      setCropType(null);
-      return;
-    }
-
-    const file = new File(
-      [croppedBlob],
-      cropType === "logo" ? "logo.jpg" : "avatar.jpg",
-      { type: "image/jpeg" },
-    );
-
-    if (cropType === "logo") {
-      await handleImageUpload(
-        file,
-        `logos/${activeRestaurantId}`,
-        (url) => handleRestaurantFieldChange("logoUrl", url),
-        setIsUploadingLogo,
-      );
-    } else {
-      await handleImageUpload(
-        file,
-        `avatars/${userProfile.id}`,
-        (url) => handleAdminFieldChange("avatarUrl", url),
-        setIsUploadingAvatar,
-      );
-    }
-
-    setCropImage(null);
-    setCropType(null);
-  };
 
   const startRestaurantEdit = (section: 'core' | 'contact' | 'branding' | 'story' | 'payments') => {
     const alreadyEditing = Object.values(editingSections).some(Boolean);
@@ -757,13 +609,10 @@ const ProfilePage: React.FC = () => {
           contactPhone: emptyToNull(restaurantForm.contactPhone),
           contactAddress: emptyToNull(restaurantForm.contactAddress),
           logoUrl: emptyToNull(restaurantForm.logoUrl),
-          primaryColor: emptyToNull(restaurantForm.primaryColor),
-          secondaryColor: emptyToNull(restaurantForm.secondaryColor),
           latitude: parseOptionalNumber(restaurantForm.latitude),
           longitude: parseOptionalNumber(restaurantForm.longitude),
           allowedRadius: parseOptionalInteger(restaurantForm.allowedRadius),
           openingDate: emptyToNull(restaurantForm.openingDate),
-          slug: emptyToNull(restaurantForm.slug),
           tagline: emptyToNull(restaurantForm.tagline),
           manifesto: emptyToNull(restaurantForm.manifesto),
           operatingHoursWeekdays: emptyToNull(
@@ -828,7 +677,6 @@ const ProfilePage: React.FC = () => {
         currentEmail: userProfile.email,
         email: adminForm.email,
         name: adminForm.name.trim(),
-        avatarUrl: emptyToNull(adminForm.avatarUrl),
       });
 
       await refreshSessionData();
@@ -984,22 +832,8 @@ const ProfilePage: React.FC = () => {
                 </label>
 
                 <label className="flex flex-col gap-2">
-                  <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Slug</span>
+                  <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Restaurant Page URL</span>
                   <div style={{ display: "flex", alignItems: "stretch" }}>
-                    <input
-                      className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                      style={{
-                        borderTopRightRadius: 0,
-                        borderBottomRightRadius: 0,
-                        flex: 1,
-                      }}
-                      type="text"
-                      value={restaurantForm.slug}
-                      onChange={(event) =>
-                        handleRestaurantFieldChange("slug", event.target.value)
-                      }
-                      placeholder="restaurant-slug"
-                    />
                     <span
                       style={{
                         display: "flex",
@@ -1007,16 +841,27 @@ const ProfilePage: React.FC = () => {
                         padding: "0 12px",
                         background: "#EDF2F7",
                         border: "1px solid #E2E8F0",
-                        borderLeft: "none",
-                        borderTopRightRadius: "8px",
-                        borderBottomRightRadius: "8px",
+                        borderRight: "none",
+                        borderTopLeftRadius: "8px",
+                        borderBottomLeftRadius: "8px",
                         fontSize: "14px",
                         color: "#4A5568",
                         whiteSpace: "nowrap",
                       }}
                     >
-                      .tablekard.com
+                      tablekard.com/
                     </span>
+                    <input
+                      className="w-full border border-[#CBD5E0] rounded-xl bg-gray-100 text-[#4A5568] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border opacity-70 cursor-not-allowed dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text-secondary"
+                      style={{
+                        borderTopLeftRadius: 0,
+                        borderBottomLeftRadius: 0,
+                        flex: 1,
+                      }}
+                      type="text"
+                      value={restaurantForm.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}
+                      disabled
+                    />
                   </div>
                 </label>
 
@@ -1068,26 +913,22 @@ const ProfilePage: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Slug</span>
+                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Restaurant Page URL</span>
                   <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
-                    {restaurant?.slug ? (
-                      <a
-                        href={`https://${restaurant.slug}.tablekard.com`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 w-fit text-[#2B6CB0] text-[14px] font-medium no-underline break-all font-['Outfit',sans-serif] hover:underline dark:text-[#90CDF4]"
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "4px",
-                        }}
-                      >
-                        {restaurant.slug}.tablekard.com{" "}
-                        <ExternalLink size={14} />
-                      </a>
-                    ) : (
-                      "Not set"
-                    )}
+                    <a
+                      href={`https://tablekard.com/${restaurant?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || ''}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 w-fit text-[#2B6CB0] text-[14px] font-medium no-underline break-all font-['Outfit',sans-serif] hover:underline dark:text-[#90CDF4]"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                      }}
+                    >
+                      tablekard.com/{restaurant?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || ''}{" "}
+                      <ExternalLink size={14} />
+                    </a>
                   </span>
                 </div>
 
@@ -1427,64 +1268,6 @@ const ProfilePage: React.FC = () => {
           </div>
            {editingSections.branding ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2">
-                <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Logo</span>
-                <div
-                  className={`border-2 border-dashed border-[#CBD5E0] rounded-2xl bg-[#F8FAFC] cursor-pointer transition-all duration-200 overflow-hidden hover:border-tk-burgundy hover:bg-[#F0FFF4] dark:bg-tk-bg-surface dark:border-tk-border dark:hover:bg-[rgba(72,187,120,0.1)] ${isUploadingLogo ? "opacity-70 cursor-wait pointer-events-none" : ""}`}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    e.currentTarget.classList.add("profile-dropzone-hover");
-                  }}
-                  onDragLeave={(e) => {
-                    e.currentTarget.classList.remove("profile-dropzone-hover");
-                  }}
-                  onDrop={(e) => {
-                    e.currentTarget.classList.remove("profile-dropzone-hover");
-                    handleLogoDrop(e);
-                  }}
-                  onClick={() =>
-                    !isUploadingLogo && logoInputRef.current?.click()
-                  }
-                >
-                  <input
-                    ref={logoInputRef}
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif"
-                    className="hidden"
-                    onChange={handleLogoFileSelect}
-                  />
-                  {restaurantForm.logoUrl ? (
-                    <div className="flex items-center gap-3.5 px-4 py-3.5">
-                      <img
-                        src={restaurantForm.logoUrl}
-                        alt="Logo preview"
-                        className="w-14 h-14 object-contain rounded-xl border border-[#E2E8F0] bg-white shrink-0 dark:bg-tk-bg-surface dark:border-tk-border"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = "none";
-                        }}
-                      />
-                      <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-tk-burgundy font-['Outfit',sans-serif]">
-                        <Upload size={14} />
-                        {isUploadingLogo
-                          ? "Uploading…"
-                          : "Drop or click to replace"}
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center gap-2 px-4 py-6 text-[#4A5568] font-['Outfit',sans-serif] text-center dark:text-tk-text-secondary">
-                      <ImageIcon size={28} strokeWidth={1.5} />
-                      <span>
-                        {isUploadingLogo
-                          ? "Uploading…"
-                          : "Drop image here or click to browse"}
-                      </span>
-                      <span className="!text-[11px] !text-[#718096] !font-normal dark:!text-tk-text-secondary">
-                        PNG, JPG, WebP, SVG • Max 2 MB
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
 
               <label className="flex flex-col gap-2">
                 <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
@@ -1589,71 +1372,6 @@ const ProfilePage: React.FC = () => {
                 </div>
               </div>
 
-              <label className="flex flex-col gap-2">
-                <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Primary Color</span>
-                <div className="flex items-center gap-3">
-                  <input
-                    className="w-12 h-12 p-0 border border-[#CBD5E0] rounded-xl bg-white cursor-pointer shrink-0 dark:bg-tk-bg-surface dark:border-tk-border [&::-webkit-color-swatch-wrapper]:p-1 [&::-webkit-color-swatch]:border-none [&::-webkit-color-swatch]:rounded-[10px]"
-                    type="color"
-                    value={
-                      hexColorPattern.test(restaurantForm.primaryColor)
-                        ? restaurantForm.primaryColor
-                        : "#4f755c"
-                    }
-                    onChange={(event) =>
-                      handleRestaurantFieldChange(
-                        "primaryColor",
-                        event.target.value,
-                      )
-                    }
-                  />
-                  <input
-                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                    type="text"
-                    value={restaurantForm.primaryColor}
-                    onChange={(event) =>
-                      handleRestaurantFieldChange(
-                        "primaryColor",
-                        event.target.value,
-                      )
-                    }
-                    placeholder="#4F755C"
-                  />
-                </div>
-              </label>
-
-              <label className="flex flex-col gap-2">
-                <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Secondary Color</span>
-                <div className="flex items-center gap-3">
-                  <input
-                    className="w-12 h-12 p-0 border border-[#CBD5E0] rounded-xl bg-white cursor-pointer shrink-0 dark:bg-tk-bg-surface dark:border-tk-border [&::-webkit-color-swatch-wrapper]:p-1 [&::-webkit-color-swatch]:border-none [&::-webkit-color-swatch]:rounded-[10px]"
-                    type="color"
-                    value={
-                      hexColorPattern.test(restaurantForm.secondaryColor)
-                        ? restaurantForm.secondaryColor
-                        : "#68d391"
-                    }
-                    onChange={(event) =>
-                      handleRestaurantFieldChange(
-                        "secondaryColor",
-                        event.target.value,
-                      )
-                    }
-                  />
-                  <input
-                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                    type="text"
-                    value={restaurantForm.secondaryColor}
-                    onChange={(event) =>
-                      handleRestaurantFieldChange(
-                        "secondaryColor",
-                        event.target.value,
-                      )
-                    }
-                    placeholder="#68D391"
-                  />
-                </div>
-              </label>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1674,51 +1392,9 @@ const ProfilePage: React.FC = () => {
                 </span>
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Brand Colors</span>
-                <div className="flex flex-wrap gap-2.5">
-                  <span className="inline-flex items-center gap-2.5 px-3 py-2 rounded-full bg-[#EDF2F7] text-[#2D3748] text-[13px] font-medium font-['Outfit',sans-serif] dark:bg-tk-bg-elevated dark:text-tk-text">
-                    <span
-                      className="w-4 h-4 rounded-full border border-[rgba(26,32,44,0.12)]"
-                      style={{
-                        backgroundColor:
-                          restaurant?.branding?.primaryColor || "#4f755c",
-                      }}
-                    />
-                    {restaurant?.branding?.primaryColor || "Not set"}
-                  </span>
-                  <span className="inline-flex items-center gap-2.5 px-3 py-2 rounded-full bg-[#EDF2F7] text-[#2D3748] text-[13px] font-medium font-['Outfit',sans-serif] dark:bg-tk-bg-elevated dark:text-tk-text">
-                    <span
-                      className="w-4 h-4 rounded-full border border-[rgba(26,32,44,0.12)]"
-                      style={{
-                        backgroundColor:
-                          restaurant?.branding?.secondaryColor || "#68d391",
-                      }}
-                    />
-                    {restaurant?.branding?.secondaryColor || "Not set"}
-                  </span>
-                </div>
-              </div>
 
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Logo</span>
-                {restaurant?.branding?.logoUrl ? (
-                  <div className="flex flex-col gap-2">
-                    <img
-                      src={restaurant.branding.logoUrl}
-                      alt={`${restaurant.name} logo`}
-                      className="w-16 h-16 object-contain rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] dark:bg-tk-bg-surface dark:border-tk-border"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
-                      }}
-                    />
-                  </div>
-                ) : (
-                  <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text text-[#4A5568] dark:text-tk-text-secondary">
-                    Not set
-                  </span>
-                )}
-              </div>
+
+
             </div>
           )}
         </div>
@@ -1930,9 +1606,9 @@ const ProfilePage: React.FC = () => {
     const on = (restaurant as any)?.pay_online === true || restaurantForm?.payOnline === true;
     if (!on) {
       // turning ON — need credentials
-      const hasAll = paymentSettings.razorpayKeyId && paymentSettings.hasRazorpayKeySecret && paymentSettings.hasRazorpayWebhookSecret;
+      const hasAll = !!paymentSettings.razorpayKeyId && paymentSettings.hasRazorpayKeySecret;
       if (!hasAll) {
-        setPaymentSetupForm({ razorpayKeyId: paymentSettings.razorpayKeyId, razorpayKeySecret: '', razorpayWebhookSecret: '' });
+        setPaymentSetupForm({ razorpayKeyId: '', razorpayKeySecret: '', razorpayWebhookSecret: '' });
         setPaymentSetupError(null);
         setShowPaymentSetupModal(true);
         return;
@@ -2000,6 +1676,39 @@ const ProfilePage: React.FC = () => {
     }
   };
 
+  const handleServiceFeeFeatureToggle = () => {
+    const on = restaurant?.settings?.serviceFeeEnabled === true;
+    if (!on) {
+      triggerConfirm(
+        'Enable Service Fee?',
+        'A service fee will be applied to all customer orders. You can configure the amount or percentage below.',
+        'This will increase the total amount paid by customers.',
+        'Enable Service Fee', '#16A34A',
+        async () => {
+          if (!activeRestaurantId) return;
+          await updateRestaurantProfile(activeRestaurantId, { settings: { serviceFeeEnabled: true } });
+          const updated = await getRestaurantById(activeRestaurantId);
+          if (updated) { setRestaurant(updated); setRestaurantForm(createRestaurantFormState(updated)); }
+          setFeedback({ tone: 'success', message: 'Service Fee enabled.' });
+        }
+      );
+    } else {
+      triggerConfirm(
+        'Disable Service Fee?',
+        'The service fee will no longer be applied to new customer orders.',
+        'Existing orders will not be affected.',
+        'Disable Service Fee', '#EF4444',
+        async () => {
+          if (!activeRestaurantId) return;
+          await updateRestaurantProfile(activeRestaurantId, { settings: { serviceFeeEnabled: false } });
+          const updated = await getRestaurantById(activeRestaurantId);
+          if (updated) { setRestaurant(updated); setRestaurantForm(createRestaurantFormState(updated)); }
+          setFeedback({ tone: 'success', message: 'Service Fee disabled.' });
+        }
+      );
+    }
+  };
+
   function renderFeaturesTab(): React.ReactNode {
     const payOn = (restaurant as any)?.pay_online === true;
     const kitchenOn = (restaurant as any)?.kitchen_app_enabled !== false;
@@ -2032,8 +1741,8 @@ const ProfilePage: React.FC = () => {
               </div>
               <p className="text-[13px] text-[#64748B] font-['Outfit',sans-serif]" style={{ margin: 0, lineHeight: 1.5 }}>
                 When enabled, the "Pay Online" button appears at checkout.
-                {!payOn && !paymentSettings.razorpayKeyId && (
-                  <span style={{ color: '#F59E0B', display: 'block', marginTop: 4 }}>⚠ Razorpay credentials not set up yet.</span>
+                {!payOn && (!paymentSettings.razorpayKeyId || !paymentSettings.hasRazorpayKeySecret) && (
+                  <span style={{ color: '#F59E0B', display: 'block', marginTop: 4 }}>⚠ Razorpay API Keys not configured yet.</span>
                 )}
               </p>
             </div>
@@ -2046,19 +1755,19 @@ const ProfilePage: React.FC = () => {
           <div className={credRowCls}>
             <span className="text-[#64748B] dark:text-tk-text-secondary flex items-center gap-1.5"><Key size={12} /> Key ID</span>
             <span style={{ color: paymentSettings.razorpayKeyId ? '#15803D' : '#94A3B8', fontWeight: 500 }}>
-              {paymentSettings.razorpayKeyId ? `${paymentSettings.razorpayKeyId.slice(0, 14)}•••` : 'Not set'}
+              {paymentSettings.razorpayKeyId ? paymentSettings.razorpayKeyId : 'Not set'}
             </span>
           </div>
           <div className={credRowCls}>
-            <span className="text-[#64748B] dark:text-tk-text-secondary flex items-center gap-1.5"><Lock size={12} /> Key Secret</span>
+            <span className="text-[#64748B] dark:text-tk-text-secondary flex items-center gap-1.5"><Key size={12} /> Key Secret</span>
             <span style={{ color: paymentSettings.hasRazorpayKeySecret ? '#15803D' : '#94A3B8', fontWeight: 500 }}>
-              {paymentSettings.hasRazorpayKeySecret ? '✓ Saved' : 'Not set'}
+              {paymentSettings.hasRazorpayKeySecret ? '••••••••' : 'Not set'}
             </span>
           </div>
           <div className={credRowCls}>
-            <span className="text-[#64748B] dark:text-tk-text-secondary flex items-center gap-1.5"><Webhook size={12} /> Webhook Secret</span>
+            <span className="text-[#64748B] dark:text-tk-text-secondary flex items-center gap-1.5"><Key size={12} /> Webhook Secret</span>
             <span style={{ color: paymentSettings.hasRazorpayWebhookSecret ? '#15803D' : '#94A3B8', fontWeight: 500 }}>
-              {paymentSettings.hasRazorpayWebhookSecret ? '✓ Saved' : 'Not set'}
+              {paymentSettings.hasRazorpayWebhookSecret ? '••••••••' : 'Not set'}
             </span>
           </div>
 
@@ -2066,10 +1775,10 @@ const ProfilePage: React.FC = () => {
           <div style={{ padding: '14px 20px', borderTop: '1px solid var(--tk-border,#E2E8F0)' }}>
             <button
               type="button"
-              onClick={() => { setPaymentSetupForm({ razorpayKeyId: paymentSettings.razorpayKeyId, razorpayKeySecret: '', razorpayWebhookSecret: '' }); setPaymentSetupError(null); setShowPaymentSetupModal(true); }}
+              onClick={() => { setPaymentSetupForm({ razorpayKeyId: paymentSettings.razorpayKeyId || '', razorpayKeySecret: '', razorpayWebhookSecret: '' }); setPaymentSetupError(null); setShowPaymentSetupModal(true); }}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-tk-burgundy text-tk-burgundy text-[13px] font-semibold font-['Outfit',sans-serif] bg-transparent cursor-pointer transition-all hover:bg-[rgba(139,58,30,0.06)]"
             >
-              <Key size={13} />{paymentSettings.razorpayKeyId ? 'Update Razorpay Credentials' : 'Setup Razorpay'}
+              <CreditCardIcon size={13} />{paymentSettings.razorpayKeyId ? 'Update API Keys' : 'Configure Razorpay API'}
             </button>
           </div>
         </div>
@@ -2114,6 +1823,101 @@ const ProfilePage: React.FC = () => {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* ── Card: Service Fee ─────────────────────────────────────────── */}
+        <div className={cardCls}>
+          <div className={sectionHeaderCls}>
+            <div style={{ width: 36, height: 36, borderRadius: 9, background: 'linear-gradient(135deg,#059669,#047857)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <CreditCardIcon size={16} color="#fff" />
+            </div>
+            <div>
+              <div className="text-[15px] font-bold text-[#1A202C] font-['Outfit',sans-serif] dark:text-tk-text">Service Fee Settings</div>
+              <div className="text-[12px] text-[#64748B] font-['Outfit',sans-serif]">Add a percentage or flat fee to customer orders</div>
+            </div>
+          </div>
+
+          {/* Toggle row */}
+          <div className={rowCls}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                <span className="text-[15px] font-semibold text-[#1A202C] font-['Outfit',sans-serif] dark:text-tk-text">Enable Service Fee</span>
+                {featureBadge(restaurant?.settings?.serviceFeeEnabled === true)}
+              </div>
+              <p className="text-[13px] text-[#64748B] font-['Outfit',sans-serif]" style={{ margin: 0, lineHeight: 1.5 }}>
+                When enabled, the service fee will be applied to the order subtotal at checkout.
+              </p>
+            </div>
+            <div onClick={handleServiceFeeFeatureToggle} style={{ cursor: 'pointer' }}>
+              <ToggleKnob on={restaurant?.settings?.serviceFeeEnabled === true} />
+            </div>
+          </div>
+
+          {/* Settings Section (only if enabled) */}
+          {restaurant?.settings?.serviceFeeEnabled === true && (
+            <div style={{ padding: '14px 20px', borderTop: '1px solid var(--tk-border,#E2E8F0)' }}>
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-2">
+                  <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Fee Type</span>
+                  <select
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                    value={restaurantForm?.serviceFeeType || 'percentage'}
+                    onChange={(e) => handleRestaurantFieldChange('serviceFeeType', e.target.value)}
+                  >
+                    <option value="percentage">Percentage (%)</option>
+                    <option value="flat">Flat Amount (₹)</option>
+                  </select>
+                </div>
+                
+                <div className="flex flex-col gap-2">
+                  <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Fee Amount</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step={restaurantForm?.serviceFeeType === 'percentage' ? '0.1' : '1'}
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                    value={restaurantForm?.serviceFeeAmount || ''}
+                    placeholder={restaurantForm?.serviceFeeType === 'percentage' ? 'e.g. 5' : 'e.g. 50'}
+                    onChange={(e) => handleRestaurantFieldChange('serviceFeeAmount', e.target.value)}
+                  />
+                </div>
+
+                <div className="flex justify-end mt-2">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!activeRestaurantId || !restaurantForm) return;
+                      const amount = parseFloat(restaurantForm.serviceFeeAmount);
+                      if (isNaN(amount) || amount < 0) {
+                        setFeedback({ tone: 'error', message: 'Please enter a valid service fee amount.' });
+                        return;
+                      }
+                      try {
+                        await updateRestaurantProfile(activeRestaurantId, {
+                          settings: {
+                            serviceFeeType: restaurantForm.serviceFeeType,
+                            serviceFeeAmount: amount
+                          }
+                        });
+                        const updated = await getRestaurantById(activeRestaurantId);
+                        if (updated) {
+                          setRestaurant(updated);
+                          setRestaurantForm(createRestaurantFormState(updated));
+                        }
+                        setFeedback({ tone: 'success', message: 'Service fee settings saved successfully.' });
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      } catch (err: any) {
+                        setFeedback({ tone: 'error', message: err.message || 'Failed to save service fee settings.' });
+                      }
+                    }}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border-none bg-tk-burgundy text-white text-[13px] font-semibold font-['Outfit',sans-serif] cursor-pointer transition-all hover:bg-[#6B2A15]"
+                  >
+                    Save Fee Settings
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ── Confirmation Modal ────────────────────────────────────────────── */}
@@ -2165,22 +1969,18 @@ const ProfilePage: React.FC = () => {
                   </div>
                   <div>
                     <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--tk-text,#1A202C)', margin: 0, fontFamily: "'Outfit',sans-serif" }}>Setup Razorpay</h3>
-                    <p style={{ fontSize: 12, color: '#64748B', margin: 0, fontFamily: "'Outfit',sans-serif" }}>All 3 fields required to enable payments</p>
+                    <p style={{ fontSize: 12, color: '#64748B', margin: 0, fontFamily: "'Outfit',sans-serif" }}>Connect your Razorpay account to receive payouts</p>
                   </div>
                 </div>
                 <button onClick={() => setShowPaymentSetupModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}><X size={18} /></button>
               </div>
-              {/* Info Banner */}
-              <div style={{ background: 'rgba(59,130,246,0.07)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#1D4ED8', display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 18, fontFamily: "'Outfit',sans-serif" }}>
-                <ShieldCheck size={13} style={{ flexShrink: 0, marginTop: 1 }} />
-                Credentials are encrypted and stored securely. Secrets are never shown after saving.
-              </div>
-              {/* Fields */}
+
+              {/* Bank Details Fields */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {[
-                  { icon: <Key size={12} />, label: 'Razorpay Key ID', key: 'razorpayKeyId', placeholder: 'rzp_live_xxxxxxxxxxxx', type: 'text' },
-                  { icon: <Lock size={12} />, label: 'Key Secret', key: 'razorpayKeySecret', placeholder: '••••••••••••', type: 'password' },
-                  { icon: <Webhook size={12} />, label: 'Webhook Secret', key: 'razorpayWebhookSecret', placeholder: '••••••••••••', type: 'password' },
+                  { icon: <Key size={12} />, label: 'Razorpay Key ID', key: 'razorpayKeyId', placeholder: 'e.g. rzp_live_xxxxxxxx', type: 'text' },
+                  { icon: <ShieldCheck size={12} />, label: 'Razorpay Key Secret', key: 'razorpayKeySecret', placeholder: 'e.g. xxxxxxxx', type: 'password' },
+                  { icon: <ShieldCheck size={12} />, label: 'Razorpay Webhook Secret', key: 'razorpayWebhookSecret', placeholder: 'e.g. your_webhook_secret', type: 'password' },
                 ].map(f => (
                   <div key={f.key}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6, fontFamily: "'Outfit',sans-serif" }}>
@@ -2191,12 +1991,13 @@ const ProfilePage: React.FC = () => {
                       placeholder={f.placeholder}
                       value={(paymentSetupForm as any)[f.key]}
                       onChange={e => setPaymentSetupForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                      autoComplete="new-password"
+                      autoComplete="off"
                       className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
                     />
                   </div>
                 ))}
               </div>
+
               {paymentSetupError && (
                 <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, fontSize: 13, color: '#B91C1C', display: 'flex', gap: 8, alignItems: 'center', fontFamily: "'Outfit',sans-serif" }}>
                   <XCircle size={13} />{paymentSetupError}
@@ -2206,28 +2007,36 @@ const ProfilePage: React.FC = () => {
                 <button type="button" onClick={() => setShowPaymentSetupModal(false)} style={{ flex: 1, padding: '11px 16px', borderRadius: 10, border: '1.5px solid #E2E8F0', background: 'transparent', color: 'var(--tk-text,#1A202C)', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}>Cancel</button>
                 <button
                   type="button"
-                  disabled={paymentSetupSaving || !paymentSetupForm.razorpayKeyId.trim() || !paymentSetupForm.razorpayKeySecret.trim() || !paymentSetupForm.razorpayWebhookSecret.trim()}
+                  disabled={paymentSetupSaving || !paymentSetupForm.razorpayKeyId.trim() || (!paymentSettings.hasRazorpayKeySecret && !paymentSetupForm.razorpayKeySecret.trim()) || (!paymentSettings.hasRazorpayWebhookSecret && !paymentSetupForm.razorpayWebhookSecret.trim())}
                   onClick={async () => {
                     setPaymentSetupSaving(true); setPaymentSetupError(null);
                     try {
                       if (!activeRestaurantId) return;
-                      const updated = await updateRestaurantPaymentSettings(activeRestaurantId, {
-                        razorpayKeyId: paymentSetupForm.razorpayKeyId.trim(),
-                        razorpayKeySecret: paymentSetupForm.razorpayKeySecret.trim(),
-                        razorpayWebhookSecret: paymentSetupForm.razorpayWebhookSecret.trim(),
-                        onlinePaymentsEnabled: true,
+                      const { data, error } = await (supabase.rpc as any)('upsert_restaurant_payment_settings', {
+                        p_restaurant_id: activeRestaurantId,
+                        p_razorpay_key_id: paymentSetupForm.razorpayKeyId.trim(),
+                        p_razorpay_key_secret: paymentSetupForm.razorpayKeySecret.trim() || null,
+                        p_razorpay_webhook_secret: paymentSetupForm.razorpayWebhookSecret.trim() || null,
+                        p_online_payments_enabled: true
+                      });
+                      if (error) throw error;
+
+                      // Update local state since edge function updated DB
+                      setPaymentSettings({
+                        ...paymentSettings,
+                        razorpayKeyId: data?.razorpay_key_id,
+                        hasRazorpayKeySecret: data?.has_razorpay_key_secret,
+                        hasRazorpayWebhookSecret: data?.has_razorpay_webhook_secret,
+                        onlinePaymentsEnabled: true
                       });
                       await updateRestaurantProfile(activeRestaurantId, { pay_online: true });
-                      setPaymentSettings({ razorpayKeyId: updated.razorpayKeyId ?? '', hasRazorpayKeySecret: updated.hasRazorpayKeySecret, hasRazorpayWebhookSecret: updated.hasRazorpayWebhookSecret, onlinePaymentsEnabled: true });
-                      const rest = await getRestaurantById(activeRestaurantId);
-                      if (rest) { setRestaurant(rest); setRestaurantForm(createRestaurantFormState(rest)); }
                       setShowPaymentSetupModal(false);
-                      setFeedback({ tone: 'success', message: 'Razorpay set up — payments enabled!' });
+                      setFeedback({ tone: 'success', message: 'Razorpay API credentials saved and payments enabled!' });
                     } catch (err: any) {
-                      setPaymentSetupError(err?.message ?? 'Failed to save credentials.');
+                      setPaymentSetupError(err?.message ?? 'Failed to save Razorpay API credentials.');
                     } finally { setPaymentSetupSaving(false); }
                   }}
-                  style={{ flex: 1, padding: '11px 16px', borderRadius: 10, border: 'none', background: (!paymentSetupForm.razorpayKeyId.trim() || !paymentSetupForm.razorpayKeySecret.trim() || !paymentSetupForm.razorpayWebhookSecret.trim()) ? '#CBD5E0' : 'linear-gradient(135deg,#8B3A1E,#6B2A15)', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}
+                  style={{ flex: 1, padding: '11px 16px', borderRadius: 10, border: 'none', background: (!paymentSetupForm.razorpayKeyId.trim() || (!paymentSettings.hasRazorpayKeySecret && !paymentSetupForm.razorpayKeySecret.trim()) || (!paymentSettings.hasRazorpayWebhookSecret && !paymentSetupForm.razorpayWebhookSecret.trim())) ? '#CBD5E0' : 'linear-gradient(135deg,#8B3A1E,#6B2A15)', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}
                 >{paymentSetupSaving ? 'Saving…' : 'Save & Enable'}</button>
               </div>
             </div>
@@ -2290,64 +2099,6 @@ const ProfilePage: React.FC = () => {
               </span>
             </label>
 
-            <div className="flex flex-col gap-2 sm:col-span-2">
-              <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Avatar</span>
-              <div
-                className={`border-2 border-dashed border-[#CBD5E0] rounded-2xl bg-[#F8FAFC] cursor-pointer transition-all duration-200 overflow-hidden hover:border-tk-burgundy hover:bg-[#F0FFF4] dark:bg-tk-bg-surface dark:border-tk-border dark:hover:bg-[rgba(72,187,120,0.1)] ${isUploadingAvatar ? "opacity-70 cursor-wait pointer-events-none" : ""}`}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  e.currentTarget.classList.add("profile-dropzone-hover");
-                }}
-                onDragLeave={(e) => {
-                  e.currentTarget.classList.remove("profile-dropzone-hover");
-                }}
-                onDrop={(e) => {
-                  e.currentTarget.classList.remove("profile-dropzone-hover");
-                  handleAvatarDrop(e);
-                }}
-                onClick={() =>
-                  !isUploadingAvatar && avatarInputRef.current?.click()
-                }
-              >
-                <input
-                  ref={avatarInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif"
-                  className="hidden"
-                  onChange={handleAvatarFileSelect}
-                />
-                {adminForm.avatarUrl ? (
-                  <div className="flex items-center gap-3.5 px-4 py-3.5">
-                    <img
-                      src={adminForm.avatarUrl}
-                      alt="Avatar preview"
-                      className="w-14 h-14 object-contain rounded-xl border border-[#E2E8F0] bg-white shrink-0 dark:bg-tk-bg-surface dark:border-tk-border rounded-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
-                      }}
-                    />
-                    <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-tk-burgundy font-['Outfit',sans-serif]">
-                      <Upload size={14} />
-                      {isUploadingAvatar
-                        ? "Uploading…"
-                        : "Drop or click to replace"}
-                    </span>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center gap-2 px-4 py-6 text-[#4A5568] font-['Outfit',sans-serif] text-center dark:text-tk-text-secondary">
-                    <ImageIcon size={28} strokeWidth={1.5} />
-                    <span>
-                      {isUploadingAvatar
-                        ? "Uploading…"
-                        : "Drop image here or click to browse"}
-                    </span>
-                    <span className="!text-[11px] !text-[#718096] !font-normal dark:!text-tk-text-secondary">
-                      PNG, JPG, WebP, SVG • Max 2 MB
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
         </div>
 
@@ -2415,25 +2166,6 @@ const ProfilePage: React.FC = () => {
               </span>
             </div>
 
-            <div className="flex flex-col gap-1.5 sm:col-span-2">
-              <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Avatar</span>
-              {userProfile?.avatarUrl ? (
-                <div className="flex flex-col gap-2">
-                  <img
-                    src={userProfile?.avatarUrl}
-                    alt={`${userProfile?.name || "Admin"} avatar`}
-                    className="w-[52px] h-[52px] object-cover rounded-full border-2 border-[#E2E8F0] dark:border-tk-border"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
-                  />
-                </div>
-              ) : (
-                <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text text-[#4A5568] dark:text-tk-text-secondary">
-                  Not set
-                </span>
-              )}
-            </div>
           </div>
         </div>
 
@@ -2504,19 +2236,7 @@ const ProfilePage: React.FC = () => {
             >
               Sign Out
             </button>
-            {userProfile?.avatarUrl ? (
-              <img
-                src={userProfile.avatarUrl}
-                alt="Admin avatar"
-                className="w-12 h-12 rounded-full bg-[linear-gradient(135deg,var(--tk-burgundy),#6B2A15)] shadow-[0_4px_12px_rgba(139,58,30,0.15)] text-white flex items-center justify-center text-[12px] font-bold tracking-[0.12em] font-['Outfit',sans-serif] object-cover ring-2 ring-white dark:ring-tk-bg-surface"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = "none";
-                  (e.target as HTMLImageElement).parentElement
-                    ?.querySelector(".order-user-avatar-fallback")
-                    ?.classList.remove("hidden");
-                }}
-              />
-            ) : null}
+
           </div>
         </div>
 
@@ -2582,19 +2302,7 @@ const ProfilePage: React.FC = () => {
             {isAdminEditing ? renderAdminEditor() : renderAdminReadOnly()}
           </form>
         </div>
-      {/* Image Cropper Modal */}
-      {cropImage && (
-        <ImageCropper
-          image={cropImage}
-          onCropComplete={handleCropComplete}
-          onCancel={() => {
-            setCropImage(null);
-            setCropType(null);
-          }}
-          circular={cropType === "avatar"}
-          aspect={cropType === "logo" ? 1 : 1}
-        />
-      )}
+
       {/* Logout Confirmation Modal */}
       {showLogoutConfirm && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[100] p-5">

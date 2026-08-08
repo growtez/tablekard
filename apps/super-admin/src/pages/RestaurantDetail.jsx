@@ -162,7 +162,6 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                     status: formData.status,
                     operating_hours_weekdays: formData.operating_hours_weekdays || '09:00 AM - 10:00 PM',
                     operating_hours_weekends: formData.operating_hours_weekends || '09:00 AM - 10:00 PM',
-                    slug: formData.slug,
                     cover_image_url: formData.cover_image_url,
                     website_url: formData.website_url,
                     instagram_url: formData.instagram_url,

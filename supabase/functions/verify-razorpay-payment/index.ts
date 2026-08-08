@@ -117,26 +117,20 @@ serve(async (req: Request) => {
             );
         }
 
-        const { data: paymentSettings, error: settingsError } = await supabaseAdmin
-            .from("restaurant_payment_settings")
-            .select("razorpay_key_secret_id, online_payments_enabled")
-            .eq("restaurant_id", paymentRecord.restaurant_id)
+        const { data: secretData, error: secretError } = await supabaseAdmin
+            .rpc("get_restaurant_razorpay_secret", { p_restaurant_id: paymentRecord.restaurant_id })
             .maybeSingle();
-
-        const { data: razorpayKeySecret, error: keySecretError } = await supabaseAdmin
-            .rpc("get_restaurant_razorpay_secret", {
-                p_restaurant_id: paymentRecord.restaurant_id,
-                p_secret_type: "key_secret",
-            });
-
-        if (settingsError || keySecretError || !paymentSettings?.online_payments_enabled || !paymentSettings.razorpay_key_secret_id || !razorpayKeySecret) {
+        
+        if (secretError || !secretData?.razorpay_key_secret) {
             return new Response(
-                JSON.stringify({ error: "Restaurant Razorpay account is not configured" }),
-                { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+                JSON.stringify({ error: "Restaurant Razorpay key secret is not configured" }),
+                { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }
 
-        const expectedSignature = createHmac("sha256", razorpayKeySecret)
+        const RAZORPAY_KEY_SECRET = secretData.razorpay_key_secret;
+
+        const expectedSignature = createHmac("sha256", RAZORPAY_KEY_SECRET)
             .update(`${razorpay_order_id}|${razorpay_payment_id}`)
             .digest("hex");
 

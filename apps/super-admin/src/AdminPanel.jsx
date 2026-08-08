@@ -163,19 +163,16 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
       return
     }
 
-    const slug = resFormData.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-
     try {
       const { data, error } = await supabase
         .from('restaurants')
         .insert([
           {
             name: resFormData.name.trim(),
-            slug: slug,
             contact_email: resFormData.contact_email.trim(),
             contact_address: resFormData.contact_address.trim(),
             contact_phone: resFormData.contact_phone.trim(),
-            status: 'active'
+            status: 'pending'
           }
         ])
         .select()

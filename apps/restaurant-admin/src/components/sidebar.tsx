@@ -1,9 +1,11 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { ChevronLeft, ChevronRight, LogOut, Menu, Bell } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LogOut, Menu, Bell, Pencil } from 'lucide-react';
 import { supabase as db } from '@restaurant-saas/supabase';
+import { uploadProfileImage } from '../services/storageService';
+import ImageCropper from './ImageCropper';
 
 const Tooltip = ({
   text,
@@ -150,18 +152,48 @@ const BannersIcon = ({ active }: { active: boolean }) => (
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { activeRestaurantName, activeRestaurantLogo, signOut } = useAuth();
+  const { activeRestaurantName, activeRestaurantLogo, activeRestaurantId, refreshSessionData, signOut } = useAuth();
   const { isDark, toggleTheme } = useTheme();
 
   const [logoError, setLogoError] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
+  // Logo edit state
+  const [cropImage, setCropImage] = useState<string | null>(null);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const logoFileRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     setLogoError(false);
   }, [activeRestaurantLogo]);
 
+  const handleLogoFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => setCropImage(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+    e.target.value = '';
+  }, []);
+
+  const handleCropComplete = useCallback(async (croppedBlob: Blob) => {
+    if (!activeRestaurantId) return;
+    setIsUploadingLogo(true);
+    try {
+      const file = new File([croppedBlob], 'logo.jpg', { type: 'image/jpeg' });
+      const url = await uploadProfileImage(`logos/${activeRestaurantId}`, file);
+      await db.from('restaurants').update({ logo_url: url }).eq('id', activeRestaurantId);
+      await refreshSessionData();
+    } catch (err) {
+      console.error('Logo upload failed:', err);
+    } finally {
+      setIsUploadingLogo(false);
+      setCropImage(null);
+    }
+  }, [activeRestaurantId, refreshSessionData]);
+
   const [unreadCount, setUnreadCount] = useState(0);
-  const { activeRestaurantId } = useAuth();
 
   useEffect(() => {
     const fetchUnread = async () => {
@@ -169,19 +201,24 @@ const Sidebar: React.FC = () => {
         let count = 0;
         const lastReadStr = localStorage.getItem('lastReadNotificationDate');
         const lastRead = lastReadStr ? new Date(lastReadStr).getTime() : 0;
+        const readIdsStr = localStorage.getItem('readNotificationIds');
+        const readIds = readIdsStr ? JSON.parse(readIdsStr) : [];
 
-        // Check specific notifications (which now includes Broadcasts)
         if (activeRestaurantId) {
-            const { data: specificData, error: specificError } = await db
-                .from('restaurant_notifications')
-                .select('created_at')
-                .eq('restaurant_id', activeRestaurantId);
+          const { data: specificData, error: specificError } = await db
+            .from('restaurant_notifications')
+            .select('id, created_at')
+            .eq('restaurant_id', activeRestaurantId);
 
-            if (!specificError && specificData) {
-                for (const n of (specificData as any[])) {
-                    if (new Date(n.created_at).getTime() > lastRead) count++;
-                }
+          if (!specificError && specificData) {
+            for (const n of (specificData as any[])) {
+              const isOlderThanMarkAll = new Date(n.created_at).getTime() <= lastRead;
+              const isIndividuallyRead = readIds.includes(n.id);
+              if (!isOlderThanMarkAll && !isIndividuallyRead) {
+                count++;
+              }
             }
+          }
         }
 
         setUnreadCount(count);
@@ -190,9 +227,10 @@ const Sidebar: React.FC = () => {
 
     fetchUnread();
 
-    const handleRead = () => setUnreadCount(0);
-    window.addEventListener('notificationsRead', handleRead);
-    return () => window.removeEventListener('notificationsRead', handleRead);
+    window.addEventListener('notificationsRead', fetchUnread);
+    return () => {
+      window.removeEventListener('notificationsRead', fetchUnread);
+    };
   }, [activeRestaurantId]);
 
   const getActiveTab = () => {
@@ -261,9 +299,23 @@ const Sidebar: React.FC = () => {
     { icon: (active) => <PaymentIcon active={active} />, label: 'Payment Management', id: 'payment', path: '/payments' },
     { icon: (active) => <ReportIcon active={active} />, label: 'Report and Analytics', id: 'report', path: '/reports' },
     { icon: (active) => <TableIcon active={active} />, label: "Table Management", id: "table-management", path: "/table-management" },
-    { icon: (active) => <UsersIcon active={active} />, label: 'Team Management', id: 'team', path: '/team' },
+    { icon: (active) => <UsersIcon active={active} />, label: 'Staff Management', id: 'team', path: '/team' },
     { icon: (active) => <BannersIcon active={active} />, label: 'Home Banners', id: 'banners', path: '/banners' },
+
     { icon: (active) => <SubscriptionIcon active={active} />, label: 'Subscription', id: 'subscription', path: '/subscription' },
+    {
+      icon: (_active) => (
+        <div className="relative flex items-center justify-center">
+          <Bell size={20} />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-tk-bg z-10"></span>
+          )}
+        </div>
+      ),
+      label: 'Notifications',
+      id: 'notifications',
+      path: '/notifications'
+    },
   ];
 
   const handleNavClick = (item: NavItem) => {
@@ -295,7 +347,7 @@ const Sidebar: React.FC = () => {
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
-      
+
       {/* Mobile Hamburger Button */}
       <button
         className={`fixed top-4 left-4 z-[90] p-2 bg-tk-bg-surface border border-tk-border rounded-lg md:hidden shadow-sm transition-opacity duration-200 ${!isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
@@ -308,8 +360,8 @@ const Sidebar: React.FC = () => {
       <div
         className={`fixed inset-0 bg-black/50 z-[95] md:hidden transition-opacity duration-300 ${!isCollapsed ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setIsCollapsed(true)}
-      />      
-      
+      />
+
       <div className={`fixed left-0 top-0 h-screen bg-tk-bg py-4 flex flex-col z-[100] font-sans transition-[width,transform] duration-300 ease-in-out border-r-[1.5px] border-tk-border md:translate-x-0 ${isCollapsed ? '-translate-x-full w-[280px] md:w-[64px] px-1.5' : 'translate-x-0 w-[280px] md:w-[240px] px-2'} shadow-[4px_0_24px_rgba(0,0,0,0.08)] md:shadow-none`}>
 
         {/* Notification Button (Top Left) */}
@@ -324,15 +376,13 @@ const Sidebar: React.FC = () => {
           >
             <Bell size={18} />
             {unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-red-500 px-[3px] text-[9px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-tk-bg">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
+              <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm ring-2 ring-white dark:ring-tk-bg z-[130]"></span>
             )}
           </button>
         )}
 
-        <button 
-          className={`hidden md:flex absolute top-1 w-7 h-7 bg-tk-bg text-tk-text-secondary border-[1.5px] border-tk-border rounded-full items-center justify-center cursor-pointer z-[110] shadow-sm hover:scale-105 hover:text-tk-text hover:border-tk-text-secondary transition-all duration-200 -right-[14px]`} 
+        <button
+          className={`hidden md:flex absolute top-1 w-7 h-7 bg-tk-bg text-tk-text-secondary border-[1.5px] border-tk-border rounded-full items-center justify-center cursor-pointer z-[110] shadow-sm hover:scale-105 hover:text-tk-text hover:border-tk-text-secondary transition-all duration-200 -right-[14px]`}
           onClick={() => setIsCollapsed(!isCollapsed)}
         >
           {isCollapsed ? <ChevronRight size={16} strokeWidth={2.5} /> : <ChevronLeft size={16} strokeWidth={2.5} />}
@@ -344,7 +394,7 @@ const Sidebar: React.FC = () => {
               <button
                 type="button"
                 onClick={() => navigate('/dashboard')}
-                className={`w-full h-full rounded-full bg-tk-burgundy-bg flex items-center justify-center overflow-hidden border-2 border-tk-burgundy transition-all duration-300 hover:scale-105 hover:shadow-[0_4px_12px_rgba(139,58,30,0.15)]`}
+                className={`w-full h-full rounded-full bg-tk-burgundy-bg flex items-center justify-center overflow-hidden border-2 border-tk-burgundy transition-all duration-300 hover:scale-105 hover:shadow-[0_4px_12px_rgba(139,58,30,0.15)] ${isUploadingLogo ? 'opacity-60 pointer-events-none' : ''}`}
                 aria-label="Go to dashboard"
               >
                 {showImage ? (
@@ -358,11 +408,24 @@ const Sidebar: React.FC = () => {
                   <span className="text-2xl font-bold text-tk-burgundy leading-none select-none">{initial}</span>
                 )}
               </button>
-              {isCollapsed && unreadCount > 0 && (
-                <div className="absolute -top-1 -right-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-red-500 px-[4px] text-[10px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-tk-bg z-[130] pointer-events-none">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </div>
-              )}
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); logoFileRef.current?.click(); }}
+                disabled={isUploadingLogo || !activeRestaurantId}
+                className="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full bg-tk-burgundy text-white flex items-center justify-center shadow-md border-2 border-white dark:border-tk-bg cursor-pointer hover:scale-110 transition-transform duration-150 disabled:opacity-50 disabled:cursor-not-allowed z-10"
+                aria-label="Edit logo"
+                title="Change logo"
+              >
+                <Pencil size={11} strokeWidth={2.5} />
+              </button>
+              <input
+                ref={logoFileRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif"
+                className="hidden"
+                onChange={handleLogoFileSelect}
+              />
+
             </div>
             <div className="w-full h-9 flex items-start justify-center shrink-0">
               {showLabels && (
@@ -444,8 +507,8 @@ const Sidebar: React.FC = () => {
                 )}
               </button>
             </Tooltip>
+          </div>
         </div>
-      </div>
       </div>
 
       {showLogoutConfirm && (
@@ -474,6 +537,17 @@ const Sidebar: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Logo Cropper Modal */}
+      {cropImage && (
+        <ImageCropper
+          image={cropImage}
+          onCropComplete={handleCropComplete}
+          onCancel={() => setCropImage(null)}
+          circular={true}
+          aspect={1}
+        />
       )}
     </>
   );

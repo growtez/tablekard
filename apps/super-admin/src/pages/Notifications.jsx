@@ -92,14 +92,16 @@ export default function Notifications() {
                     restaurant_id: r.id,
                     title: title.trim(),
                     message: message.trim(),
-                    type: type
+                    type: type,
+                    created_at: new Date().toISOString()
                 }));
             } else {
                 inserts = [{
                     restaurant_id: selectedRestaurantId,
                     title: title.trim(),
                     message: message.trim(),
-                    type: type
+                    type: type,
+                    created_at: new Date().toISOString()
                 }];
             }
             

@@ -24,7 +24,7 @@ const db = supabase as any;
 // ==========================================
 
 interface RestaurantRow {
-    id: string; name: string; slug: string; status: string; status_reason: string | null;
+    id: string; name: string; status: string; status_reason: string | null;
     contact_email: string | null; contact_phone: string | null; contact_address: string | null;
     logo_url: string | null; primary_color: string | null; secondary_color: string | null;
     profile_urls: string[] | null; settings: Record<string, unknown> | null;
@@ -43,6 +43,7 @@ interface RestaurantPaymentSettingsRpcRow {
     has_razorpay_key_secret: boolean;
     has_razorpay_webhook_secret: boolean;
     online_payments_enabled: boolean;
+    razorpay_linked_account_id?: string | null;
     updated_at: string;
 }
 
@@ -98,9 +99,9 @@ export interface RestaurantProfileUpdateInput {
     instagramUrl?: string | null;
     facebookUrl?: string | null;
     websiteUrl?: string | null;
-    slug?: string | null;
     pay_online?: boolean | null;
     kitchen_app_enabled?: boolean | null;
+    settings?: Record<string, any>;
 }
 
 export interface AdministratorProfileUpdateInput {
@@ -123,19 +124,20 @@ export interface RestaurantPaymentSettings {
     hasRazorpayKeySecret: boolean;
     hasRazorpayWebhookSecret: boolean;
     onlinePaymentsEnabled: boolean;
+    razorpayLinkedAccountId?: string | null;
 }
 
 export interface RestaurantPaymentSettingsInput {
     razorpayKeyId?: string | null;
     razorpayKeySecret?: string | null;
     razorpayWebhookSecret?: string | null;
+    razorpayLinkedAccountId?: string | null;
     onlinePaymentsEnabled: boolean;
 }
 
 const mapRestaurantRow = (row: RestaurantRow): Restaurant => ({
     id: row.id,
     name: row.name,
-    slug: row.slug,
     status: row.status as Restaurant['status'],
     statusReason: row.status_reason,
     createdAt: row.created_at,
@@ -150,7 +152,12 @@ const mapRestaurantRow = (row: RestaurantRow): Restaurant => ({
         primaryColor: row.primary_color,
         secondaryColor: row.secondary_color
     },
-    settings: row.settings ?? undefined,
+    settings: {
+        ...(row.settings || {}),
+        serviceFeeEnabled: row.settings?.serviceFeeEnabled as boolean | undefined,
+        serviceFeeType: row.settings?.serviceFeeType as 'percentage' | 'flat' | undefined,
+        serviceFeeAmount: row.settings?.serviceFeeAmount as number | undefined,
+    },
     subscriptionStatus: row.subscription_status,
     subscriptionType: row.subscription_type,
     subscriptionEndAt: row.subscription_end_at,
@@ -189,7 +196,8 @@ const mapRestaurantPaymentSettingsRpcRow = (row: RestaurantPaymentSettingsRpcRow
     razorpayKeyId: row.razorpay_key_id ?? '',
     hasRazorpayKeySecret: row.has_razorpay_key_secret,
     hasRazorpayWebhookSecret: row.has_razorpay_webhook_secret,
-    onlinePaymentsEnabled: row.online_payments_enabled
+    onlinePaymentsEnabled: row.online_payments_enabled,
+    razorpayLinkedAccountId: row.razorpay_linked_account_id
 });
 
 // ==========================================
@@ -230,9 +238,15 @@ export const updateRestaurantProfile = async (
     if (input.instagramUrl !== undefined) updatePayload.instagram_url = input.instagramUrl;
     if (input.facebookUrl !== undefined) updatePayload.facebook_url = input.facebookUrl;
     if (input.websiteUrl !== undefined) updatePayload.website_url = input.websiteUrl;
-    if (input.slug !== undefined) updatePayload.slug = input.slug;
     if (input.pay_online !== undefined) updatePayload.pay_online = input.pay_online;
     if (input.kitchen_app_enabled !== undefined) updatePayload.kitchen_app_enabled = input.kitchen_app_enabled;
+
+    if (input.settings !== undefined) {
+        // Fetch current settings to merge
+        const { data: currentData } = await db.from('restaurants').select('settings').eq('id', restaurantId).single();
+        const currentSettings = currentData?.settings || {};
+        updatePayload.settings = { ...currentSettings, ...input.settings };
+    }
 
     const { data, error } = await db
         .from('restaurants')
@@ -262,7 +276,8 @@ export const getRestaurantPaymentSettings = async (
             razorpayKeyId: '',
             hasRazorpayKeySecret: false,
             hasRazorpayWebhookSecret: false,
-            onlinePaymentsEnabled: false
+            onlinePaymentsEnabled: false,
+            razorpayLinkedAccountId: null
         };
     }
 
@@ -279,7 +294,8 @@ export const updateRestaurantPaymentSettings = async (
             p_razorpay_key_id: input.razorpayKeyId?.trim() || null,
             p_razorpay_key_secret: input.razorpayKeySecret?.trim() || null,
             p_razorpay_webhook_secret: input.razorpayWebhookSecret?.trim() || null,
-            p_online_payments_enabled: input.onlinePaymentsEnabled
+            p_online_payments_enabled: input.onlinePaymentsEnabled,
+            p_razorpay_linked_account_id: input.razorpayLinkedAccountId?.trim() || null
         });
 
     if (error) throw error;

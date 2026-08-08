@@ -20,7 +20,7 @@ export default function Reviews({ setSyncAction }) {
             const { data: rows, error: err } = await supabase
                 .from('feedback')
                 .select(`id, rating, comment, created_at,
-                    orders(order_number, restaurants(name, slug)),
+                    orders(order_number, restaurants(name)),
                     profiles:user_id(id, name, email)`)
                 .order('created_at', { ascending: false });
             if (err) throw err;

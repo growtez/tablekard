@@ -42,7 +42,7 @@ export default function SubscriptionDetail({ setHeaderData }) {
                 .from('subscription_payments')
                 .select(`
                     *,
-                    restaurants(id, name, slug, subscription_type, contact_email, contact_phone, logo_url),
+                    restaurants(id, name, subscription_type, contact_email, contact_phone, logo_url),
                     profiles:user_id(email, name)
                 `)
                 .eq('id', id)
@@ -275,7 +275,7 @@ export default function SubscriptionDetail({ setHeaderData }) {
                                     </div>
                                     <div>
                                         <div className="font-extrabold text-xl">{data.restaurants?.name}</div>
-                                        <div className="text-sm text-accent-primary">/{data.restaurants?.slug}</div>
+                                        <div className="text-sm text-accent-primary">/{data.restaurants?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || ''}</div>
                                     </div>
                                 </div>
                                 <div className="space-y-4">

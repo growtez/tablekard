@@ -51,7 +51,6 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
     const filteredRestaurants = restaurants
         .filter(res => {
             const matchesSearch = res.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                res.slug.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 (res.contact_email && res.contact_email.toLowerCase().includes(searchQuery.toLowerCase()));
 
             const matchesFilter = filterStatus === 'all' || res.status === filterStatus;
@@ -98,8 +97,8 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
 
     const handleExport = () => {
         const csvContent = "data:text/csv;charset=utf-8," 
-            + "Name,Slug,Status,Plan,Email,Phone,Created At\n"
-            + filteredRestaurants.map(r => `${r.name},${r.slug},${r.status},${r.subscription_type || (r.subscription_status ? 'PRO PLAN' : 'TRIAL PLAN')},${r.contact_email || ''},${r.contact_phone || ''},${new Date(r.created_at).toLocaleDateString()}`).join("\n");
+            + "Name,Status,Plan,Email,Phone,Created\n"
+            + filteredRestaurants.map(r => `${r.name},${r.status},${r.subscription_type || (r.subscription_status ? 'PRO PLAN' : 'TRIAL PLAN')},${r.contact_email || ''},${r.contact_phone || ''},${new Date(r.created_at).toLocaleDateString()}`).join("\n");
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
