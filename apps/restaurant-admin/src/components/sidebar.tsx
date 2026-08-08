@@ -364,21 +364,53 @@ const Sidebar: React.FC = () => {
 
       <div className={`fixed left-0 top-0 h-screen bg-tk-bg py-4 flex flex-col z-[100] font-sans transition-[width,transform] duration-300 ease-in-out border-r-[1.5px] border-tk-border md:translate-x-0 ${isCollapsed ? '-translate-x-full w-[280px] md:w-[64px] px-1.5' : 'translate-x-0 w-[280px] md:w-[240px] px-2'} shadow-[4px_0_24px_rgba(0,0,0,0.08)] md:shadow-none`}>
 
-        {/* Notification Button (Top Left) */}
+        {/* Notification Button + Dark Mode Toggle (Top Left) */}
         {!isCollapsed && (
-          <button
-            onClick={() => {
-              navigate('/notifications');
-              if (window.innerWidth <= 768) setIsCollapsed(true);
-            }}
-            className={`absolute top-3 left-3 p-2 rounded-lg transition-all duration-200 z-[120] ${activeTab === 'notifications' ? 'bg-tk-burgundy-bg text-tk-burgundy' : 'text-tk-text-secondary hover:text-tk-burgundy hover:bg-tk-burgundy-bg'}`}
-            title="Notifications"
-          >
-            <Bell size={18} />
-            {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm ring-2 ring-white dark:ring-tk-bg z-[130]"></span>
-            )}
-          </button>
+          <div className="absolute top-3 left-3 flex flex-col gap-1 z-[120]">
+            <button
+              onClick={() => {
+                navigate('/notifications');
+                if (window.innerWidth <= 768) setIsCollapsed(true);
+              }}
+              className={`p-2 rounded-lg transition-all duration-200 ${activeTab === 'notifications' ? 'bg-tk-burgundy-bg text-tk-burgundy' : 'text-tk-text-secondary hover:text-tk-burgundy hover:bg-tk-burgundy-bg'}`}
+              title="Notifications"
+            >
+              <Bell size={18} />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm ring-2 ring-white dark:ring-tk-bg z-[130]"></span>
+              )}
+            </button>
+            <button
+              className="p-2 rounded-lg transition-all duration-200 text-tk-text-secondary hover:text-tk-burgundy hover:bg-tk-burgundy-bg"
+              onClick={(event) => {
+                const rect = event.currentTarget.getBoundingClientRect();
+                toggleTheme({
+                  x: rect.left + rect.width / 2,
+                  y: rect.top + rect.height / 2,
+                });
+              }}
+              aria-label={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              title={isDark ? 'Light Mode' : 'Dark Mode'}
+            >
+              {isDark ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="5" />
+                  <line x1="12" y1="1" x2="12" y2="3" />
+                  <line x1="12" y1="21" x2="12" y2="23" />
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                  <line x1="1" y1="12" x2="3" y2="12" />
+                  <line x1="21" y1="12" x2="23" y2="12" />
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                </svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+                </svg>
+              )}
+            </button>
+          </div>
         )}
 
         <button
@@ -468,45 +500,7 @@ const Sidebar: React.FC = () => {
               </div>
             </Tooltip>
 
-            {/* Dark Mode Toggle */}
-            <Tooltip text={isDark ? 'Light Mode' : 'Dark Mode'} showTooltip={isCollapsed && !isMobile}>
-              <button
-                className="w-full flex items-center border border-tk-border rounded-tk-md cursor-pointer bg-transparent text-tk-text-secondary transition-all duration-200 hover:bg-tk-bg-hover hover:text-tk-burgundy text-[13px] gap-2 p-2"
-                onClick={(event) => {
-                  const rect = event.currentTarget.getBoundingClientRect();
-                  toggleTheme({
-                    x: rect.left + rect.width / 2,
-                    y: rect.top + rect.height / 2,
-                  });
-                }}
-                aria-label={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              >
-                <span className="w-6 h-6 flex items-center justify-center shrink-0">
-                  {isDark ? (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="5" />
-                      <line x1="12" y1="1" x2="12" y2="3" />
-                      <line x1="12" y1="21" x2="12" y2="23" />
-                      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                      <line x1="1" y1="12" x2="3" y2="12" />
-                      <line x1="21" y1="12" x2="23" y2="12" />
-                      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                    </svg>
-                  ) : (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
-                    </svg>
-                  )}
-                </span>
-                {showLabels && (
-                  <span className="font-inherit font-medium whitespace-nowrap">
-                    {isDark ? 'Light Mode' : 'Dark Mode'}
-                  </span>
-                )}
-              </button>
-            </Tooltip>
+
           </div>
         </div>
       </div>
