@@ -407,25 +407,13 @@ const Reports: React.FC = () => {
         1
     );
 
-    // ── Loading state ──
-    if (loading && summary.totalRevenue === 0) {
-        return (
-            <div className="w-full h-full flex flex-col items-center justify-center">
-                <div className="reports-loading-screen">
-                    <div className="reports-loading-spinner" />
-                    <p className="reports-loading-text">Generating your insights...</p>
-                </div>
-            </div>
-        );
-    }
+    // ── Render ──
 
     return (
         <>
             <div className="reports-header">
                     <h1 className="reports-page-title">Reports<span className="hidden sm:inline"> & Analytics</span></h1>
                     <div className="reports-header-right flex flex-col sm:flex-row items-start sm:items-center gap-3 flex-wrap w-full md:w-auto mt-2 md:mt-0">
-                        {loading && <Loader2 className="animate-spin" size={20} style={{ color: '#4C51BF' }} />}
-                        
                         {/* Filters */}
                         <div className="reports-filters flex flex-wrap sm:flex-nowrap items-center gap-2 m-0 w-full sm:w-auto">
                             <div className="reports-custom-select-container" ref={dropdownRef}>
@@ -523,7 +511,26 @@ const Reports: React.FC = () => {
                 </div>
 
 
+            {loading ? (
+                <div className="animate-pulse w-full max-w-[1200px] h-full flex flex-col pt-4 sm:pt-0">
+                    {/* Metrics Cards Skeleton */}
+                    <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 pt-1 overflow-x-auto no-scrollbar mb-8">
+                        {[...Array(5)].map((_, i) => (
+                            <div key={i} className="bg-tk-bg-card p-3 sm:p-3 rounded-[10px] border-[1.5px] border-[#E2E8F0] dark:border-tk-border h-[88px] min-w-[160px] sm:min-w-0 shrink-0">
+                                <div className="h-4 bg-[#E2E8F0] dark:bg-tk-border rounded w-1/2 mb-4"></div>
+                                <div className="h-6 bg-[#E2E8F0] dark:bg-tk-border rounded w-3/4"></div>
+                            </div>
+                        ))}
+                    </div>
 
+                    {/* Charts Skeleton */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                        <div className="lg:col-span-2 bg-tk-bg-card border-[1.5px] border-[#E2E8F0] dark:border-tk-border rounded-2xl h-[350px]"></div>
+                        <div className="bg-tk-bg-card border-[1.5px] border-[#E2E8F0] dark:border-tk-border rounded-2xl h-[350px]"></div>
+                    </div>
+                </div>
+            ) : (
+                <>
                 {/* Key Metrics */}
                 <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 max-w-[1200px] w-full pt-1 overflow-x-auto no-scrollbar pb-16 -mb-8 relative z-20">
                     <div className="bg-tk-bg-card p-3 sm:p-3 rounded-[10px] border-[1.5px] border-tk-border shadow-sm flex flex-col justify-between transition-all hover:shadow-md min-w-[160px] sm:min-w-0 shrink-0">
@@ -906,6 +913,8 @@ const Reports: React.FC = () => {
                 onClose={() => setOrdersModalOpen(false)}
             />
         )}
+                </>
+            )}
     </>
     );
 };
