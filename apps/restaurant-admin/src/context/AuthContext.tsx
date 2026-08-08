@@ -32,6 +32,7 @@ interface AuthContextType {
     signIn: (email: string, password: string) => Promise<User>;
     signOut: () => Promise<void>;
     resetPassword: (email: string) => Promise<void>;
+    updatePassword: (password: string) => Promise<void>;
     isAuthenticated: boolean;
     isRestaurantAdmin: boolean;
 }
@@ -234,8 +235,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
 
     const resetPassword = async (email: string): Promise<void> => {
-        const redirectTo = import.meta.env.VITE_SUPABASE_REDIRECT_URL || window.location.origin;
-        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+        const redirectTo = `${window.location.origin}/update-password`;
+        const { data, error } = await supabase.functions.invoke('reset-password', {
+            body: { email, redirectTo }
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+    };
+
+    const updatePassword = async (password: string): Promise<void> => {
+        const { error } = await supabase.auth.updateUser({ password });
         if (error) throw error;
     };
 
@@ -252,6 +261,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         signIn,
         signOut,
         resetPassword,
+        updatePassword,
         isAuthenticated: !!user && memberships.length > 0,
         isRestaurantAdmin: memberships.some(m => String(m.role).toLowerCase() === 'admin') || String(userProfile?.role).toLowerCase() === 'super_admin'
     }), [user, userProfile, memberships, activeRestaurantId, activeRestaurantName, activeRestaurantLogo, loading]);
