@@ -20,6 +20,7 @@ const SubscriptionPage = lazy(() => import("./pages/subscription/subscription"))
 const Team = lazy(() => import("./pages/team"));
 const NotificationsPage = lazy(() => import("./pages/notifications"));
 const BannersPage = lazy(() => import("./pages/banners"));
+const UpdatePasswordPage = lazy(() => import("./pages/UpdatePassword"));
 // Loading fallback for Suspense
 const PageLoader = () => (
   <div className="flex justify-center items-center h-screen bg-[#F4F6F9] text-[#1E293B] font-sans text-base font-medium">
@@ -54,6 +55,7 @@ function AppRoutes() {
     <Suspense fallback={<PageLoader />}>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/update-password" element={<UpdatePasswordPage />} />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={
           <ProtectedRoute><Dashboard /></ProtectedRoute>

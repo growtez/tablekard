@@ -203,7 +203,7 @@ const LoginPage: React.FC = () => {
                         />
 
                         {resetMessage && (
-                            <p className={resetMessage.includes('sent') ? 'bg-[rgba(76,175,80,0.08)] border border-[rgba(76,175,80,0.3)] text-[#4CAF50] px-4 py-3 rounded-xl text-[13px] text-center font-medium m-0' : 'bg-[rgba(225,75,75,0.08)] border border-[rgba(225,75,75,0.3)] text-[#E14B4B] px-4 py-3 rounded-xl text-[13px] text-center font-medium m-0'}>
+                            <p className={resetMessage.includes('sent') ? 'bg-[rgba(76,175,80,0.08)] border border-[rgba(76,175,80,0.3)] text-green-800 dark:text-green-400 px-4 py-3 rounded-xl text-[13px] text-center font-medium m-0' : 'bg-[rgba(225,75,75,0.08)] border border-[rgba(225,75,75,0.3)] text-[#E14B4B] px-4 py-3 rounded-xl text-[13px] text-center font-medium m-0'}>
                                 {resetMessage}
                             </p>
                         )}

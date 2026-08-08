@@ -173,11 +173,11 @@ export function AuthProvider({ children }) {
     const sendMagicLink = async (email, redirectToOverride) => {
         try {
             const redirectTo = redirectToOverride || import.meta.env.VITE_SUPABASE_REDIRECT_URL || window.location.origin;
-            const { error } = await supabase.auth.signInWithOtp({
-                email,
-                options: { emailRedirectTo: redirectTo }
+            const { data, error } = await supabase.functions.invoke('send-magic-link', {
+                body: { email, redirectTo }
             });
             if (error) throw error;
+            if (data?.error) throw new Error(data.error);
         } catch (err) {
             if (!isAbortError(err)) throw err;
         }
