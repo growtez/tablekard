@@ -306,10 +306,16 @@ const ProfilePage: React.FC = () => {
     const checkSlug = async () => {
       setCheckingSlug(true);
       try {
-        const { data, error } = await supabase
+        let query = supabase
           .from("restaurants")
           .select("id")
           .eq("slug", restaurantForm.slug);
+          
+        if (restaurant?.id) {
+          query = query.neq("id", restaurant.id);
+        }
+
+        const { data, error } = await query;
         
         if (!error) {
           setSlugAvailable(data.length === 0);
