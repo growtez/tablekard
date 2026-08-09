@@ -82,6 +82,7 @@ interface OrderRow {
 
 export interface RestaurantProfileUpdateInput {
     name?: string;
+    slug?: string;
     contactEmail?: string;
     contactPhone?: string | null;
     contactAddress?: string | null;
@@ -221,6 +222,7 @@ export const updateRestaurantProfile = async (
 ): Promise<Restaurant> => {
     const updatePayload: any = {};
     if (input.name !== undefined) updatePayload.name = input.name;
+    if (input.slug !== undefined) updatePayload.slug = input.slug;
     if (input.contactEmail !== undefined) updatePayload.contact_email = input.contactEmail;
     if (input.contactPhone !== undefined) updatePayload.contact_phone = input.contactPhone;
     if (input.contactAddress !== undefined) updatePayload.contact_address = input.contactAddress;

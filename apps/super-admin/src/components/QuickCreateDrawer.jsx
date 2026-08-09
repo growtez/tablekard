@@ -4,12 +4,15 @@ import { X, UserPlus, FilePlus, Eye, EyeOff } from 'lucide-react'
 
 export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActiveForm, editingData, onRefresh }) {
     const [loading, setLoading] = useState(false)
-    const [error, setError] = useState(null)
+    const [userError, setUserError] = useState(null)
+    const [restaurantError, setRestaurantError] = useState(null)
     const [restaurants, setRestaurants] = useState([])
     const [formData, setFormData] = useState({ email: '', password: '', role: 'customer', restaurantId: '' })
-    const [resFormData, setResFormData] = useState({ name: '', contact_email: '', contact_address: '', contact_phone: '', admin_password: 'Tablekard@123' })
+    const [resFormData, setResFormData] = useState({ name: '', slug: '', contact_email: '', contact_address: '', contact_phone: '', admin_password: 'Tablekard@123' })
     const [wasEditing, setWasEditing] = useState(false)
     const [showPassword, setShowPassword] = useState(true)
+    const [slugAvailable, setSlugAvailable] = useState(null)
+    const [checkingSlug, setCheckingSlug] = useState(false)
 
     const roleOptions = [
         { value: 'super_admin', label: 'Super Admin' },
@@ -17,6 +20,14 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
         { value: 'restaurant_staff', label: 'Restaurant Staff' },
         { value: 'customer', label: 'Customer' }
     ]
+
+    useEffect(() => {
+        if (!isOpen) {
+            setUserError(null)
+            setRestaurantError(null)
+            setSlugAvailable(null)
+        }
+    }, [isOpen])
 
     useEffect(() => {
         if (isOpen) {
@@ -33,6 +44,7 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                 } else {
                     setResFormData({
                         name: editingData.name || '',
+                        slug: editingData.slug || '',
                         contact_email: editingData.contact_email || '',
                         contact_address: editingData.contact_address || '',
                         contact_phone: editingData.contact_phone || '',
@@ -42,12 +54,45 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
             } else {
                 if (wasEditing) {
                     setFormData({ email: '', password: '', role: 'customer', restaurantId: '' })
-                    setResFormData({ name: '', contact_email: '', contact_address: '', contact_phone: '', admin_password: 'Tablekard@123' })
+                    setResFormData({ name: '', slug: '', contact_email: '', contact_address: '', contact_phone: '', admin_password: 'Tablekard@123' })
                     setWasEditing(false)
                 }
             }
         }
     }, [isOpen, editingData, activeForm])
+
+    useEffect(() => {
+        if (activeForm !== 'restaurant' || !isOpen || !resFormData.slug) {
+            setSlugAvailable(null)
+            return
+        }
+
+        if (editingData && resFormData.slug === editingData.slug) {
+            setSlugAvailable(true)
+            return
+        }
+
+        const checkSlug = async () => {
+            setCheckingSlug(true)
+            try {
+                const { data, error } = await supabase
+                    .from('restaurants')
+                    .select('id')
+                    .eq('slug', resFormData.slug)
+                
+                if (!error) {
+                    setSlugAvailable(data.length === 0)
+                }
+            } catch (err) {
+                console.error(err)
+            } finally {
+                setCheckingSlug(false)
+            }
+        }
+
+        const timer = setTimeout(checkSlug, 500)
+        return () => clearTimeout(timer)
+    }, [resFormData.slug, activeForm, isOpen, editingData])
 
     const fetchRestaurants = async () => {
         try {
@@ -64,7 +109,7 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
 
     const handleCreateUser = async (e) => {
         e.preventDefault()
-        setError(null)
+        setUserError(null)
         setLoading(true)
 
         try {
@@ -107,7 +152,7 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
             }
             onClose()
         } catch (err) {
-            setError(`Failed to ${editingData ? 'update' : 'create'} user: ` + err.message)
+            setUserError(`Failed to ${editingData ? 'update' : 'create'} user: ` + err.message)
         } finally {
             setLoading(false)
         }
@@ -115,7 +160,7 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
 
     const handleCreateRestaurant = async (e) => {
         e.preventDefault()
-        setError(null)
+        setRestaurantError(null)
         setLoading(true)
 
         try {
@@ -124,6 +169,7 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                     .from('restaurants')
                     .update({
                         name: resFormData.name.trim(),
+                        slug: resFormData.slug.trim(),
                         contact_email: resFormData.contact_email.trim().toLowerCase(),
                         contact_address: resFormData.contact_address.trim(),
                         contact_phone: resFormData.contact_phone.trim(),
@@ -131,11 +177,29 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                     .eq('id', editingData.id)
                 if (error) throw error
             } else {
+                let authData = null
+                
+                // Create Admin Account FIRST to check for existing email
+                if (resFormData.admin_password) {
+                    const { data, error: authError } = await supabase.auth.admin.createUser({
+                        email: resFormData.contact_email.trim().toLowerCase(),
+                        password: resFormData.admin_password,
+                        email_confirm: true
+                    })
+                    
+                    if (authError) {
+                        throw new Error(`Admin account failed: ${authError.message}. Restaurant not created.`)
+                    }
+                    authData = data
+                }
+
+                // If auth creation succeeded (or wasn't requested), create the restaurant
                 const { data: newRes, error: resError } = await supabase
                     .from('restaurants')
                     .insert([
                         {
                             name: resFormData.name.trim(),
+                            slug: resFormData.slug.trim() || resFormData.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-'),
                             contact_email: resFormData.contact_email.trim().toLowerCase(),
                             contact_address: resFormData.contact_address.trim(),
                             contact_phone: resFormData.contact_phone.trim(),
@@ -145,18 +209,15 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                     .select()
                     .single()
                 
-                if (resError) throw resError
+                if (resError) {
+                    // Rollback auth user if restaurant creation fails
+                    if (authData) {
+                        await supabase.auth.admin.deleteUser(authData.user.id)
+                    }
+                    throw resError
+                }
 
-                // Create Admin Account automatically
-                if (resFormData.admin_password) {
-                    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-                        email: resFormData.contact_email.trim().toLowerCase(),
-                        password: resFormData.admin_password,
-                        email_confirm: true
-                    })
-                    
-                    if (authError) throw new Error(`Restaurant created, but admin account failed: ${authError.message}`)
-
+                if (authData) {
                     // Update Profile Role
                     await supabase
                         .from('profiles')
@@ -177,11 +238,11 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
 
             onRefresh && onRefresh()
             if (!editingData) {
-                setResFormData({ name: '', contact_email: '', contact_address: '', contact_phone: '', admin_password: 'Tablekard@123' })
+                setResFormData({ name: '', slug: '', contact_email: '', contact_address: '', contact_phone: '', admin_password: 'Tablekard@123' })
             }
             onClose()
         } catch (err) {
-            setError(`Failed to ${editingData ? 'update' : 'create'} restaurant: ` + err.message)
+            setRestaurantError(`Failed to ${editingData ? 'update' : 'create'} restaurant: ` + err.message)
         } finally {
             setLoading(false)
         }
@@ -233,14 +294,21 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                                 </div>
                                 <div className="relative">
                                     <input
-                                        type="password"
+                                        type={showPassword ? "text" : "password"}
                                         placeholder={editingData ? "Leave empty to keep current" : "Min 6 characters"}
                                         value={formData.password}
                                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                         required={!editingData}
-                                        className="peer w-full bg-surface-hover border border-border rounded-xl px-4 h-12 text-sm text-text-main focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all placeholder:text-transparent focus:placeholder:text-text-muted/50"
+                                        className="peer w-full bg-surface-hover border border-border rounded-xl px-4 pr-10 h-12 text-sm text-text-main focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all placeholder:text-transparent focus:placeholder:text-text-muted/50"
                                     />
                                     <label className="absolute left-3 px-1.5 transition-all duration-200 z-10 pointer-events-none -top-2.5 text-[10px] bg-bg font-bold uppercase tracking-wider text-text-muted peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-placeholder-shown:bg-transparent peer-placeholder-shown:font-normal peer-placeholder-shown:normal-case peer-placeholder-shown:tracking-normal peer-focus:-top-2.5 peer-focus:text-[10px] peer-focus:bg-bg peer-focus:font-bold peer-focus:uppercase peer-focus:tracking-wider peer-focus:text-accent-primary">Password</label>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-transparent border-none text-text-muted cursor-pointer p-1.5 flex hover:text-text-main transition-colors z-20"
+                                    >
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
                                 </div>
                                 <div className="relative">
                                     <select
@@ -280,11 +348,41 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                                         type="text"
                                         placeholder="The Bombay Spice"
                                         value={resFormData.name}
-                                        onChange={(e) => setResFormData({ ...resFormData, name: e.target.value })}
+                                        onChange={(e) => {
+                                            const newName = e.target.value;
+                                            setResFormData(prev => {
+                                                const currentSlug = prev.slug;
+                                                const expectedSlug = prev.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                                                const newSlug = currentSlug === expectedSlug || currentSlug === '' ? newName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : currentSlug;
+                                                return { ...prev, name: newName, slug: newSlug };
+                                            });
+                                        }}
                                         required
                                         className="peer w-full bg-surface-hover border border-border rounded-xl px-4 h-12 text-sm text-text-main focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all placeholder:text-transparent focus:placeholder:text-text-muted/50"
                                     />
                                     <label className="absolute left-3 px-1.5 transition-all duration-200 z-10 pointer-events-none -top-2.5 text-[10px] bg-bg font-bold uppercase tracking-wider text-text-muted peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-placeholder-shown:bg-transparent peer-placeholder-shown:font-normal peer-placeholder-shown:normal-case peer-placeholder-shown:tracking-normal peer-focus:-top-2.5 peer-focus:text-[10px] peer-focus:bg-bg peer-focus:font-bold peer-focus:uppercase peer-focus:tracking-wider peer-focus:text-accent-primary">Restaurant Name</label>
+                                </div>
+                                <div className="relative flex flex-col gap-1.5">
+                                    <div className="relative">
+                                        <div className={`absolute left-0 top-[1px] bottom-[1px] flex items-center pl-4 pr-3 bg-black/5 dark:bg-white/5 border-r rounded-l-xl text-sm font-medium select-none pointer-events-none z-10 ${slugAvailable === false ? 'border-red-500/50 text-red-500' : 'border-border text-text-muted'}`}>tablekard.com/</div>
+                                        <input
+                                            type="text"
+                                            placeholder="my-restaurant"
+                                            value={resFormData.slug}
+                                            onChange={(e) => setResFormData({ ...resFormData, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
+                                            required
+                                            className={`peer w-full bg-surface-hover border rounded-xl pl-[150px] pr-10 h-12 text-sm text-text-main focus:outline-none transition-all placeholder:text-transparent focus:placeholder:text-text-muted/50 ${slugAvailable === false ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500' : 'border-border focus:border-accent-primary focus:ring-1 focus:ring-accent-primary'}`}
+                                        />
+                                        <div className="absolute left-3 -top-[2px] h-[4px] w-[92px] bg-bg z-10 opacity-100 peer-placeholder-shown:opacity-0 peer-focus:opacity-100 transition-opacity duration-200 pointer-events-none"></div>
+                                        <label className={`absolute px-1.5 transition-all duration-200 z-20 pointer-events-none left-3 -top-2.5 text-[10px] bg-transparent font-bold uppercase tracking-wider peer-placeholder-shown:top-3.5 peer-placeholder-shown:left-[144px] peer-placeholder-shown:text-sm peer-placeholder-shown:font-normal peer-placeholder-shown:normal-case peer-placeholder-shown:tracking-normal peer-focus:-top-2.5 peer-focus:left-3 peer-focus:text-[10px] peer-focus:font-bold peer-focus:uppercase peer-focus:tracking-wider ${slugAvailable === false ? 'text-red-500 peer-focus:text-red-500' : 'text-text-muted peer-focus:text-accent-primary'}`}>Custom Slug</label>
+                                        
+                                        {checkingSlug && (
+                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-text-muted/30 border-t-accent-primary rounded-full animate-spin"></div>
+                                        )}
+                                    </div>
+                                    {slugAvailable === false && (
+                                        <span className="text-[11px] text-red-500 font-medium ml-2">Not available, please choose another</span>
+                                    )}
                                 </div>
                                 <div className="relative">
                                     <input
@@ -341,13 +439,13 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                                 </div>
                             </>
                         )}
-                        {error && (
+                        {(activeForm === 'user' ? userError : restaurantError) && (
                             <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm mt-4 mb-2">
-                                {error}
+                                {activeForm === 'user' ? userError : restaurantError}
                             </div>
                         )}
 
-                        <button type="submit" className="mt-auto w-full h-12 flex items-center justify-center gap-2 bg-accent-primary text-white font-bold rounded-xl shadow-[0_4px_20px_rgba(5,150,105,0.15)] hover:shadow-[0_6px_25px_rgba(5,150,105,0.25)] transition-all border-none cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed" disabled={loading}>
+                        <button type="submit" className="mt-auto w-full h-12 flex items-center justify-center gap-2 bg-accent-primary text-white font-bold rounded-xl shadow-[0_4px_20px_rgba(5,150,105,0.15)] hover:shadow-[0_6px_25px_rgba(5,150,105,0.25)] transition-all border-none cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed" disabled={loading || slugAvailable === false}>
                             {loading ? (
                                 <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
                             ) : (

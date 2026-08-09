@@ -104,6 +104,7 @@ export interface Address {
 export interface Restaurant {
   id: string;
   name: string;
+  slug: string;
   status: RestaurantStatus;
   statusReason?: string | null;
   createdAt: IsoDateString;
@@ -387,6 +388,7 @@ export interface Database {
         Row: {
           id: string;
           name: string;
+          slug: string;
           status: RestaurantStatus;
           status_reason: string | null;
           contact_email: string | null;
@@ -417,6 +419,7 @@ export interface Database {
         Insert: {
           id?: string;
           name: string;
+          slug: string;
           status?: RestaurantStatus;
           status_reason?: string | null;
           contact_email?: string | null;
@@ -446,6 +449,7 @@ export interface Database {
         };
         Update: {
           name?: string;
+          slug?: string;
           status?: RestaurantStatus;
           status_reason?: string | null;
           contact_email?: string | null;

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Plus, X, Users, Mail, Shield, CheckCircle2, AlertTriangle, Loader2, Search } from 'lucide-react';
+import { Plus, X, Users,  Shield, CheckCircle2, AlertTriangle, Loader2, Search, MoreVertical, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '@restaurant-saas/supabase';
 import { createClient } from '@supabase/supabase-js';
 
@@ -29,6 +29,18 @@ const Team: React.FC = () => {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showActionsMenu, setShowActionsMenu] = useState(false);
+  const actionsMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (actionsMenuRef.current && !actionsMenuRef.current.contains(event.target as Node)) {
+        setShowActionsMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -172,171 +184,156 @@ const Team: React.FC = () => {
   );
 
   return (
-    <div className="flex flex-col h-full">
-        <div className="flex flex-row items-center justify-between gap-4 flex-wrap mb-8 max-md:-mt-[52px] max-md:mb-[12px] animate-[fadeIn_0.3s_ease]">
-          <div className="flex items-center gap-4 max-md:ml-[56px]">
-            <h1 className="text-[18px] sm:text-[28px] font-extrabold text-tk-text tracking-tight m-0 whitespace-nowrap">Staff</h1>
-            <div className="px-3 py-1 bg-tk-burgundy/10 text-tk-burgundy text-[13px] font-bold rounded-full border border-tk-burgundy/20">
-              {filteredMembers.length} Members
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-4 w-full sm:w-auto">
-            <div className="relative flex-1 sm:flex-initial">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-tk-text-secondary opacity-70" size={16} />
-              <input
-                type="text"
-                placeholder="Search staff..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2.5 bg-white dark:bg-tk-bg-card border border-[#E2E8F0] dark:border-tk-border rounded-full text-tk-text text-sm focus:outline-none focus:ring-4 focus:ring-tk-burgundy/10 focus:border-tk-burgundy transition-all w-full sm:w-[260px] shadow-sm"
-              />
-            </div>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="flex items-center gap-2 px-5 py-2.5 bg-[linear-gradient(135deg,var(--tk-burgundy),#6B2A15)] text-white rounded-full text-sm font-bold transition-all duration-300 shadow-[0_8px_16px_rgba(139,58,30,0.2)] hover:shadow-[0_12px_20px_rgba(139,58,30,0.3)] hover:-translate-y-0.5 whitespace-nowrap"
-            >
-              <Plus size={18} strokeWidth={2.5} />
-              <span className="max-sm:hidden">Add Member</span>
-            </button>
-          </div>
+    <>
+      {/* Header */}
+      <div className="flex flex-row items-center justify-between gap-2 sm:gap-4 max-md:-mt-[52px] max-md:mb-[8px] flex-nowrap mb-7">
+        <div className="max-md:ml-[56px]">
+          <h1 className="text-[18px] sm:text-[22px] font-semibold text-[#1A202C] m-0 mb-1 dark:text-tk-text whitespace-nowrap">Staff<span className="hidden sm:inline"> Management</span></h1>
+        </div>
+        {/* Desktop Actions */}
+        <div className="hidden md:flex gap-2 items-center shrink-0 flex-nowrap overflow-x-auto hide-scrollbar w-full lg:w-auto max-md:pb-1 max-md:justify-start">
+          <button className="flex items-center justify-center gap-2 px-4 py-2 bg-white border-[1.5px] border-[#E2E8F0] rounded-xl text-sm font-medium text-[#4A5568] cursor-pointer transition-all duration-200 hover:bg-[#F7FAFC] hover:border-[#CBD5E0] disabled:opacity-60 disabled:cursor-not-allowed dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text dark:hover:bg-tk-bg-hover shrink-0 whitespace-nowrap" onClick={fetchMembers} disabled={loading}>
+            <RefreshCw size={16} className={loading ? 'spin' : ''} />
+            Refresh
+          </button>
+          <button className="flex items-center justify-center gap-2 px-4 py-2 bg-tk-burgundy border-none rounded-xl text-sm font-semibold text-white cursor-pointer transition-all duration-200 shadow-[0_4px_12px_rgba(139,58,30,0.3)] hover:bg-[#6B2A15] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(139,58,30,0.4)] shrink-0 whitespace-nowrap" onClick={() => setIsModalOpen(true)}>
+            <Plus size={16} />
+            Add Member
+          </button>
         </div>
 
-      <div className="flex-1 overflow-auto bg-white dark:bg-tk-bg-card border border-[#E2E8F0] dark:border-tk-border rounded-[24px] shadow-sm mb-6 relative">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center h-[50vh] gap-4 text-tk-text-secondary">
-            <Loader2 className="animate-spin text-tk-burgundy" size={36} />
-            <p className="text-sm font-semibold tracking-wide uppercase">Loading staff...</p>
-          </div>
-        ) : filteredMembers.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-[50vh] text-center px-4 animate-[fadeIn_0.4s_ease]">
-            <div className="w-20 h-20 bg-tk-bg-surface border border-tk-border rounded-[24px] flex items-center justify-center mb-5 shadow-sm rotate-3">
-              <Users className="text-tk-text-secondary opacity-60" size={36} />
-            </div>
-            <h3 className="text-[20px] font-bold text-tk-text mb-2">No Staff Members Found</h3>
-            <p className="text-tk-text-secondary text-[15px] max-w-md leading-relaxed">
-              {searchTerm ? "No members match your search criteria." : "You haven't added any staff members yet. Invite your staff to collaborate."}
-            </p>
-            {searchTerm && (
-              <button 
-                onClick={() => setSearchTerm('')}
-                className="mt-6 px-5 py-2 bg-tk-bg-surface border border-tk-border text-tk-text text-sm font-semibold rounded-full hover:bg-tk-bg-hover transition-colors shadow-sm"
-              >
-                Clear Search
+        {/* Mobile Actions (3-dot menu) */}
+        <div className="md:hidden relative shrink-0 z-[60]" ref={actionsMenuRef}>
+          <button 
+            className="flex items-center justify-center w-10 h-10 bg-white border-[1.5px] border-[#E2E8F0] rounded-xl text-[#4A5568] cursor-pointer transition-all duration-200 hover:bg-[#F7FAFC] hover:border-[#CBD5E0] dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text dark:hover:bg-tk-bg-hover" 
+            onClick={() => setShowActionsMenu(!showActionsMenu)}
+            title="More Actions"
+          >
+            <MoreVertical size={20} />
+          </button>
+          
+          {showActionsMenu && (
+            <div className="absolute right-0 top-[calc(100%+8px)] w-[200px] bg-white rounded-xl border border-[#E2E8F0] shadow-[0_4px_20px_rgba(0,0,0,0.08)] py-2 z-50 dark:bg-tk-bg-elevated dark:border-tk-border dark:shadow-[0_4px_20px_rgba(0,0,0,0.2)]">
+              <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[#1A202C] hover:bg-[#F7FAFC] dark:text-tk-text dark:hover:bg-tk-bg-hover transition-colors" onClick={() => { setShowActionsMenu(false); setIsModalOpen(true); }}>
+                <Plus size={16} className="text-tk-burgundy" />
+                Add Member
               </button>
-            )}
-          </div>
-        ) : (
-          <>
-            {/* Desktop Table View - Hidden on Mobile */}
-            <div className="hidden sm:block">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr>
-                    <th className="py-5 px-6 text-[12px] font-bold text-tk-text-secondary uppercase tracking-[0.1em] border-b border-[#E2E8F0] dark:border-tk-border bg-tk-bg-surface/50">Staff Member</th>
-                    <th className="py-5 px-6 text-[12px] font-bold text-tk-text-secondary uppercase tracking-[0.1em] border-b border-[#E2E8F0] dark:border-tk-border bg-tk-bg-surface/50">Role</th>
-                    <th className="py-5 px-6 text-[12px] font-bold text-tk-text-secondary uppercase tracking-[0.1em] border-b border-[#E2E8F0] dark:border-tk-border bg-tk-bg-surface/50">Status</th>
-                    <th className="py-5 px-6 text-[12px] font-bold text-tk-text-secondary uppercase tracking-[0.1em] border-b border-[#E2E8F0] dark:border-tk-border bg-tk-bg-surface/50 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredMembers.map((member) => (
-                    <tr key={member.id} className="border-b border-[#E2E8F0] dark:border-tk-border hover:bg-tk-bg-surface/50 transition-colors last:border-0 group">
-                      <td className="py-4 px-6">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-full bg-[linear-gradient(135deg,var(--tk-burgundy),#6B2A15)] text-white shadow-[0_4px_10px_rgba(139,58,30,0.2)] flex items-center justify-center font-extrabold text-[15px] shrink-0 transform group-hover:scale-105 transition-transform duration-300">
-                            {member.profiles?.name?.charAt(0)?.toUpperCase() || 'U'}
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="font-bold text-tk-text text-[15px]">{member.profiles?.name || 'Unknown'}</span>
-                            <div className="flex items-center gap-1.5 text-[13px] font-medium text-tk-text-secondary mt-0.5">
-                              <Mail size={13} className="opacity-70" />
-                              {member.profiles?.email}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-6">
-                        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold uppercase tracking-wider ${
-                          member.role === 'admin' 
-                            ? 'bg-[#E9D8FD] text-[#44337A] border border-[#D6BCFA]' 
-                            : 'bg-[#BEE3F8] text-[#2A4365] border border-[#90CDF4]'
-                        }`}>
-                          <Shield size={13} />
-                          {member.role === 'admin' ? 'Admin' : 'Kitchen'}
-                        </span>
-                      </td>
-                      <td className="py-4 px-6">
-                        <div className="flex items-center gap-2">
-                          <span className={`relative flex h-2.5 w-2.5`}>
-                            {member.active && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-tk-success opacity-75"></span>}
-                            <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${member.active ? 'bg-tk-success' : 'bg-tk-text-secondary opacity-40'}`}></span>
-                          </span>
-                          <span className={`text-[13px] font-bold ${member.active ? 'text-tk-success' : 'text-tk-text-secondary'}`}>
-                            {member.active ? 'Active' : 'Inactive'}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="py-4 px-6 text-right">
-                        <button
-                          onClick={() => toggleMemberStatus(member)}
-                          className={`px-4 py-2 rounded-full text-[12px] font-bold uppercase tracking-wider transition-all duration-200 border shadow-sm hover:shadow-md hover:-translate-y-0.5 ${
-                            member.active
-                              ? 'text-[#E53E3E] bg-[#FFF5F5] border-[#FEB2B2] hover:bg-[#FED7D7]'
-                              : 'text-tk-success bg-tk-success-bg border-tk-success/30 hover:bg-tk-success/20'
-                          }`}
-                        >
-                          {member.active ? 'Deactivate' : 'Activate'}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="h-[1px] bg-[#E2E8F0] dark:bg-tk-border my-1"></div>
+              <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[#4A5568] hover:bg-[#F7FAFC] disabled:opacity-50 dark:text-tk-text-secondary dark:hover:bg-tk-bg-hover transition-colors" onClick={() => { setShowActionsMenu(false); fetchMembers(); }} disabled={loading}>
+                <RefreshCw size={16} className={loading ? 'spin' : ''} />
+                Refresh
+              </button>
             </div>
+          )}
+        </div>
+      </div>
 
-            {/* Mobile Cards View - Hidden on Desktop */}
-            <div className="flex flex-col gap-4 sm:hidden p-4">
-              {filteredMembers.map((member) => (
-                <div key={member.id} className="bg-white dark:bg-tk-bg-surface p-5 rounded-[20px] shadow-sm border border-[#E2E8F0] dark:border-tk-border flex flex-col gap-4 relative overflow-hidden">
-                  <div className={`absolute top-0 right-0 w-2 h-full ${member.active ? 'bg-tk-success' : 'bg-gray-300'}`} />
-                  <div className="flex items-center gap-4 pr-4">
-                    <div className="w-12 h-12 rounded-full bg-[linear-gradient(135deg,var(--tk-burgundy),#6B2A15)] text-white shadow-[0_4px_10px_rgba(139,58,30,0.2)] flex items-center justify-center font-extrabold text-[15px] shrink-0">
-                      {member.profiles?.name?.charAt(0)?.toUpperCase() || 'U'}
-                    </div>
-                    <div className="flex flex-col min-w-0">
-                      <span className="font-bold text-tk-text text-[15px] truncate">{member.profiles?.name || 'Unknown'}</span>
-                      <span className="text-[13px] font-medium text-tk-text-secondary truncate mt-0.5">{member.profiles?.email}</span>
-                    </div>
+      {/* Controls Row */}
+      <div className="flex items-center justify-between gap-6 mb-7 bg-white rounded-2xl px-6 py-4 shadow-[0_2px_8px_rgba(0,0,0,0.05)] border border-[#E2E8F0] flex-wrap max-md:flex-col max-md:items-stretch dark:bg-tk-bg-card dark:border-tk-border">
+        <div className="flex gap-3 flex-wrap max-md:w-full max-md:justify-between">
+          <div className="flex items-center gap-2 px-4 py-2 bg-[#EDF2F7] text-[#4A5568] rounded-full text-sm font-semibold shrink-0 dark:bg-tk-bg-elevated dark:text-tk-text-secondary">
+            <Users size={16} />
+            {loading ? '...' : `${members.length} Members`}
+          </div>
+          <div className="flex items-center gap-2 px-4 py-2 bg-[#EDF2F7] text-[#4A5568] rounded-full text-sm font-semibold shrink-0 dark:bg-tk-bg-elevated dark:text-tk-text-secondary bg-[#C6F6D5] text-[#22543D] dark:bg-[rgba(198,246,213,0.15)] dark:text-[#68D391]">
+            <CheckCircle size={16} />
+            {loading ? '...' : `${members.filter((m) => m.active).length} Active`}
+          </div>
+        </div>
+        
+        {/* Search */}
+        <div className="relative w-full md:w-[260px]">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A0AEC0] dark:text-tk-text-secondary" size={16} />
+          <input
+            type="text"
+            placeholder="Search staff..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-[#F7FAFC] border border-[#E2E8F0] rounded-xl text-sm text-[#1A202C] focus:outline-none focus:border-tk-burgundy focus:bg-white transition-all dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text dark:focus:bg-tk-bg-surface"
+          />
+        </div>
+      </div>
+
+      {/* States */}
+      {loading && (
+        <div className="flex flex-col items-center justify-center gap-4 py-20 px-8 text-[#4A5568] text-center">
+          <div className="w-10 h-10 border-4 border-[#E2E8F0] border-t-tk-burgundy rounded-full animate-spin"></div>
+          <p>Loading staff...</p>
+        </div>
+      )}
+
+      {!loading && filteredMembers.length === 0 && (
+        <div className="flex flex-col items-center justify-center gap-4 py-20 px-8 text-[#4A5568] text-center">
+          <Users size={64} color="#CBD5E0" />
+          <p className="text-xl font-semibold text-[#4A5568] m-0 dark:text-tk-text">No staff members found</p>
+          <p className="text-sm text-[#718096] max-w-[300px] m-0 dark:text-tk-text-secondary">
+            {searchTerm ? "No members match your search criteria." : "Invite your staff to collaborate."}
+          </p>
+          {!searchTerm && (
+            <button className="flex items-center justify-center gap-2 px-5 py-2.5 mt-2 bg-tk-burgundy border-none rounded-xl text-sm font-semibold text-white cursor-pointer transition-all duration-200 shadow-[0_4px_12px_rgba(139,58,30,0.3)] hover:bg-[#6B2A15] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(139,58,30,0.4)] max-md:flex-1" onClick={() => setIsModalOpen(true)}>
+              <Plus size={16} />
+              Add Member
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Staff Grid */}
+      {!loading && filteredMembers.length > 0 && (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-6 max-md:grid-cols-[repeat(auto-fill,minmax(200px,1fr))] max-sm:grid-cols-1">
+          {filteredMembers.map((member) => (
+            <div key={member.id} className={`bg-white rounded-xl p-6 shadow-[0_4px_16px_rgba(0,0,0,0.06)] border border-[#E2E8F0] flex flex-col gap-4 transition-all duration-200 relative hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] dark:bg-tk-bg-card dark:border-tk-border ${!member.active ? 'opacity-60 border-dashed' : ''}`}>
+              <div className="flex items-start justify-between w-full">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-[linear-gradient(135deg,var(--tk-burgundy),#6B2A15)] text-white shadow-[0_4px_10px_rgba(139,58,30,0.2)] flex items-center justify-center font-extrabold text-[15px] shrink-0">
+                    {member.profiles?.name?.charAt(0)?.toUpperCase() || 'U'}
                   </div>
-
-                  <div className="flex items-center justify-between pt-4 border-t border-[#E2E8F0] dark:border-tk-border">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider ${
-                      member.role === 'admin' 
-                        ? 'bg-[#E9D8FD] text-[#44337A] border border-[#D6BCFA]' 
-                        : 'bg-[#BEE3F8] text-[#2A4365] border border-[#90CDF4]'
-                    }`}>
-                      <Shield size={12} />
-                      {member.role === 'admin' ? 'Admin' : 'Kitchen'}
-                    </span>
-
-                    <button
-                      onClick={() => toggleMemberStatus(member)}
-                      className={`px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all duration-200 border shadow-sm ${
-                        member.active
-                          ? 'text-[#E53E3E] bg-[#FFF5F5] border-[#FEB2B2]'
-                          : 'text-tk-success bg-tk-success-bg border-tk-success/30'
-                      }`}
-                    >
-                      {member.active ? 'Deactivate' : 'Activate'}
-                    </button>
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-bold text-[#1A202C] text-[15px] truncate dark:text-tk-text">{member.profiles?.name || 'Unknown'}</span>
+                    <span className="text-[12px] font-medium text-[#718096] truncate mt-0.5 dark:text-tk-text-secondary">{member.profiles?.email}</span>
                   </div>
                 </div>
-              ))}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider ${
+                  member.role === 'admin' 
+                    ? 'bg-[#E9D8FD] text-[#44337A] border border-[#D6BCFA]' 
+                    : 'bg-[#BEE3F8] text-[#2A4365] border border-[#90CDF4]'
+                }`}>
+                  <Shield size={11} />
+                  {member.role === 'admin' ? 'Admin' : 'Kitchen'}
+                </span>
+
+                <div
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider cursor-pointer transition-all duration-200 select-none hover:scale-105 ${member.active ? 'bg-[#C6F6D5] text-[#22543D] dark:bg-[rgba(198,246,213,0.15)] dark:text-[#68D391]' : 'bg-[#FED7D7] text-[#742A2A] dark:bg-[rgba(254,215,215,0.15)] dark:text-[#FC8181]'}`}
+                  onClick={() => toggleMemberStatus(member)}
+                  title="Click to toggle status"
+                >
+                  {member.active ? (
+                    <><CheckCircle size={11} /> Active</>
+                  ) : (
+                    <><AlertCircle size={11} /> Inactive</>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex mt-2">
+                <button
+                  className={`w-full flex items-center justify-center gap-1.5 px-3 py-2 border-none rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 whitespace-nowrap shadow-sm hover:-translate-y-0.5 ${
+                    member.active
+                      ? 'bg-[#FFF5F5] text-[#C53030] hover:bg-[#FED7D7]'
+                      : 'bg-[#F0FDF4] text-[#16A34A] hover:bg-[#DCFCE7]'
+                  }`}
+                  onClick={() => toggleMemberStatus(member)}
+                >
+                  {member.active ? 'Deactivate Member' : 'Activate Member'}
+                </button>
+              </div>
             </div>
-          </>
-        )}
-      </div>
+          ))}
+        </div>
+      )}
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[1100] p-4 animate-[fadeIn_0.2s_ease]" onClick={() => !isSubmitting && setIsModalOpen(false)}>
@@ -459,7 +456,7 @@ const Team: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 

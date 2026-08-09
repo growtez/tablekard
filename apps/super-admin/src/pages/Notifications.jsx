@@ -1,23 +1,23 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { Card, CardHeader, CardTitle } from '../components/ui/Card';
-import { Badge } from '../components/ui/Badge';
-import { Megaphone, Trash2, Send, Zap, RefreshCw, AlertCircle } from 'lucide-react';
+import { Megaphone, Trash2, Send, Zap, RefreshCw, AlertCircle, Bell, Search, Filter } from 'lucide-react';
 
 export default function Notifications() {
     const [loading, setLoading] = useState(true);
-    
+
     const [title, setTitle] = useState('');
     const [message, setMessage] = useState('');
     const [type, setType] = useState('update'); // update, alert, info, feature
-    
+
     const [targetAudience, setTargetAudience] = useState('broadcast');
     const [restaurants, setRestaurants] = useState([]);
     const [selectedRestaurantId, setSelectedRestaurantId] = useState('');
-    
+
     const [submitting, setSubmitting] = useState(false);
-    
     const [historyGroups, setHistoryGroups] = useState([]);
+
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filterType, setFilterType] = useState('all');
 
     const fetchHistory = async () => {
         setLoading(true);
@@ -27,9 +27,9 @@ export default function Notifications() {
                 .select('*, restaurants(name)')
                 .order('created_at', { ascending: false })
                 .limit(300);
-                
+
             if (error) throw error;
-            
+
             if (data) {
                 // Group duplicates (from broadcasts) so the UI stays clean
                 const grouped = [];
@@ -42,7 +42,7 @@ export default function Notifications() {
                         grouped.push({
                             ...notif,
                             isBroadcast: copies.length > 1,
-                            dbIds: copies.map(c => c.id), // Store all DB ids for bulk deletion
+                            dbIds: copies.map(c => c.id),
                             restaurantCount: copies.length,
                             restaurantName: notif.restaurants?.name
                         });
@@ -81,11 +81,11 @@ export default function Notifications() {
             alert('Please select a restaurant first.');
             return;
         }
-        
+
         setSubmitting(true);
         try {
             let inserts = [];
-            
+
             if (targetAudience === 'broadcast') {
                 if (restaurants.length === 0) throw new Error('No active restaurants to broadcast to.');
                 inserts = restaurants.map(r => ({
@@ -104,15 +104,15 @@ export default function Notifications() {
                     created_at: new Date().toISOString()
                 }];
             }
-            
+
             const { error } = await supabase
                 .from('restaurant_notifications')
                 .insert(inserts);
-                
+
             if (error) throw error;
-            
+
             fetchHistory(); // Refresh history list
-            
+
             setTitle('');
             setMessage('');
             setType('update');
@@ -126,13 +126,13 @@ export default function Notifications() {
 
     const handleDelete = async (dbIds) => {
         if (!confirm('Are you sure you want to delete this notification?')) return;
-        
+
         try {
             const { error } = await supabase
                 .from('restaurant_notifications')
                 .delete()
                 .in('id', dbIds);
-                
+
             if (error) throw error;
             setHistoryGroups(prev => prev.filter(g => g.dbIds[0] !== dbIds[0]));
         } catch (error) {
@@ -142,75 +142,131 @@ export default function Notifications() {
     };
 
     const getTypeIcon = (t) => {
-        switch(t) {
-            case 'update': return <RefreshCw size={16} className="text-blue-500" />;
-            case 'feature': return <Zap size={16} className="text-yellow-500" />;
-            case 'alert': return <AlertCircle size={16} className="text-red-500" />;
-            default: return <Megaphone size={16} className="text-green-500" />;
+        switch (t) {
+            case 'update': return <RefreshCw size={20} className="text-[#3B82F6]" />;
+            case 'feature': return <Zap size={20} className="text-[#F59E0B]" />;
+            case 'alert': return <AlertCircle size={20} className="text-[#EF4444]" />;
+            case 'info':
+            default: return <Megaphone size={20} className="text-[#10B981]" />;
         }
     };
-    
-    const getTypeBadgeColor = (t) => {
-        switch(t) {
-            case 'update': return 'info';
-            case 'feature': return 'warning';
-            case 'alert': return 'danger';
-            default: return 'success';
+
+    const getIconContainerColor = (type) => {
+        switch (type) {
+            case 'update': return 'bg-[#3B82F6]/10';
+            case 'feature': return 'bg-[#F59E0B]/10';
+            case 'alert': return 'bg-[#EF4444]/10';
+            case 'info':
+            default: return 'bg-[#10B981]/10';
         }
     };
+
+    const getTimeAgo = (dateStr) => {
+        const date = new Date(dateStr);
+        const now = new Date();
+        const diffMs = now.getTime() - date.getTime();
+
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMins / 60);
+        const diffDays = Math.floor(diffHours / 24);
+
+        if (diffDays === 0 && date.getDate() === now.getDate()) {
+            if (diffHours === 0) return diffMins <= 1 ? 'Just now' : `${diffMins}m ago`;
+            return `${diffHours}h ago`;
+        }
+
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        if (date.getDate() === yesterday.getDate() && date.getMonth() === yesterday.getMonth() && date.getFullYear() === yesterday.getFullYear()) {
+            return 'Yesterday';
+        }
+
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    };
+
+    const groupNotifications = () => {
+        const groups = {
+            'Today': [],
+            'Yesterday': [],
+            'Older': []
+        };
+
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        const filtered = historyGroups.filter(notif => {
+            const matchesSearch = notif.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                notif.message.toLowerCase().includes(searchQuery.toLowerCase());
+
+            const matchesType = filterType === 'all' || notif.type === filterType;
+
+            return matchesSearch && matchesType;
+        });
+
+        filtered.forEach(notif => {
+            const date = new Date(notif.created_at);
+            if (date.toDateString() === today.toDateString()) {
+                groups['Today'].push(notif);
+            } else if (date.toDateString() === yesterday.toDateString()) {
+                groups['Yesterday'].push(notif);
+            } else {
+                groups['Older'].push(notif);
+            }
+        });
+
+        return groups;
+    };
+
+    const groupedNotifications = groupNotifications();
 
     return (
-        <div className="animate-fade-in w-full max-w-5xl mx-auto space-y-6">
-            <div className="flex justify-between items-center mb-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-text-main flex items-center gap-2">
-                        <Megaphone className="text-accent-primary" />
-                        Global Notifications
-                    </h1>
-                    <p className="text-text-muted mt-1">Broadcast announcements to all restaurant dashboards.</p>
-                </div>
-            </div>
+        <div className="animate-[fadeIn_0.3s_ease] w-full mx-auto">
 
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                <div className="lg:col-span-2">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Send Announcement</CardTitle>
-                        </CardHeader>
-                        <div className="p-4">
-                            <form onSubmit={handleSend} className="space-y-4">
+            <div className="flex flex-col xl:flex-row gap-8 items-start">
+                {/* Left Column: Send Form */}
+                <div className="w-full xl:w-[400px] shrink-0 sticky top-6">
+                    <div className="bg-surface rounded-2xl border border-border overflow-hidden shadow-sm">
+                        <div className="px-6 py-4 border-b border-border bg-surface-hover/50">
+                            <h3 className="text-[16px] font-extrabold text-text-main flex items-center gap-2">
+                                <Send size={18} className="text-accent-primary" />
+                                Send Announcement
+                            </h3>
+                        </div>
+                        <div className="p-6">
+                            <form onSubmit={handleSend} className="space-y-5">
                                 <div>
-                                    <label className="block text-sm font-semibold text-text-main mb-2">Target Audience</label>
+                                    <label className="block text-[13px] font-bold text-text-main mb-2 uppercase tracking-wide">Target Audience</label>
                                     <div className="flex gap-4 mb-3">
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <input 
-                                                type="radio" 
-                                                name="target" 
-                                                value="broadcast" 
-                                                checked={targetAudience === 'broadcast'} 
+                                        <label className="flex items-center gap-2 cursor-pointer group">
+                                            <input
+                                                type="radio"
+                                                name="target"
+                                                value="broadcast"
+                                                checked={targetAudience === 'broadcast'}
                                                 onChange={() => setTargetAudience('broadcast')}
-                                                className="accent-accent-primary"
+                                                className="accent-accent-primary w-4 h-4"
                                             />
-                                            <span className="text-sm text-text-main">Broadcast All</span>
+                                            <span className="text-[14px] font-medium text-text-main group-hover:text-accent-primary transition-colors">Broadcast All</span>
                                         </label>
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <input 
-                                                type="radio" 
-                                                name="target" 
-                                                value="specific" 
-                                                checked={targetAudience === 'specific'} 
+                                        <label className="flex items-center gap-2 cursor-pointer group">
+                                            <input
+                                                type="radio"
+                                                name="target"
+                                                value="specific"
+                                                checked={targetAudience === 'specific'}
                                                 onChange={() => setTargetAudience('specific')}
-                                                className="accent-accent-primary"
+                                                className="accent-accent-primary w-4 h-4"
                                             />
-                                            <span className="text-sm text-text-main">Specific Restaurant</span>
+                                            <span className="text-[14px] font-medium text-text-main group-hover:text-accent-primary transition-colors">Specific</span>
                                         </label>
                                     </div>
-                                    
+
                                     {targetAudience === 'specific' && (
-                                        <select 
-                                            value={selectedRestaurantId} 
+                                        <select
+                                            value={selectedRestaurantId}
                                             onChange={e => setSelectedRestaurantId(e.target.value)}
-                                            className="w-full bg-surface-hover border border-border rounded-lg px-3 py-2 text-text-main focus:outline-none focus:border-accent-primary mb-3"
+                                            className="w-full bg-surface-hover border border-border rounded-xl px-4 py-2.5 text-[14px] text-text-main focus:outline-none focus:ring-2 focus:ring-accent-primary/50 focus:border-accent-primary transition-all appearance-none"
                                         >
                                             <option value="" disabled>Select a restaurant...</option>
                                             {restaurants.map(r => (
@@ -221,109 +277,195 @@ export default function Notifications() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-semibold text-text-main mb-1">Type</label>
-                                    <select 
-                                        value={type} 
+                                    <label className="block text-[13px] font-bold text-text-main mb-2 uppercase tracking-wide">Type</label>
+                                    <select
+                                        value={type}
                                         onChange={e => setType(e.target.value)}
-                                        className="w-full bg-surface-hover border border-border rounded-lg px-3 py-2 text-text-main focus:outline-none focus:border-accent-primary"
+                                        className="w-full bg-surface-hover border border-border rounded-xl px-4 py-2.5 text-[14px] text-text-main focus:outline-none focus:ring-2 focus:ring-accent-primary/50 focus:border-accent-primary transition-all appearance-none cursor-pointer"
                                     >
-                                        <option value="info">General Info</option>
+                                        <option value="info">Announcement (Info)</option>
                                         <option value="update">System Update</option>
                                         <option value="feature">New Feature</option>
                                         <option value="alert">Important Alert</option>
                                     </select>
                                 </div>
-                                
+
                                 <div>
-                                    <label className="block text-sm font-semibold text-text-main mb-1">Title</label>
-                                    <input 
-                                        type="text" 
-                                        value={title} 
+                                    <label className="block text-[13px] font-bold text-text-main mb-2 uppercase tracking-wide">Title</label>
+                                    <input
+                                        type="text"
+                                        value={title}
                                         onChange={e => setTitle(e.target.value)}
                                         placeholder="e.g. New Pricing Plans!"
-                                        className="w-full bg-surface-hover border border-border rounded-lg px-3 py-2 text-text-main focus:outline-none focus:border-accent-primary"
+                                        className="w-full bg-surface-hover border border-border rounded-xl px-4 py-2.5 text-[14px] text-text-main focus:outline-none focus:ring-2 focus:ring-accent-primary/50 focus:border-accent-primary transition-all"
                                         required
                                     />
                                 </div>
-                                
+
                                 <div>
-                                    <label className="block text-sm font-semibold text-text-main mb-1">Message</label>
-                                    <textarea 
-                                        value={message} 
+                                    <label className="block text-[13px] font-bold text-text-main mb-2 uppercase tracking-wide">Message</label>
+                                    <textarea
+                                        value={message}
                                         onChange={e => setMessage(e.target.value)}
                                         placeholder="Write your message here..."
-                                        className="w-full bg-surface-hover border border-border rounded-lg px-3 py-2 text-text-main focus:outline-none focus:border-accent-primary min-h-[120px]"
+                                        className="w-full bg-surface-hover border border-border rounded-xl px-4 py-3 text-[14px] text-text-main focus:outline-none focus:ring-2 focus:ring-accent-primary/50 focus:border-accent-primary transition-all min-h-[120px] resize-y"
                                         required
                                     />
                                 </div>
-                                
-                                <button 
-                                    type="submit" 
+
+                                <button
+                                    type="submit"
                                     disabled={submitting}
-                                    className="w-full bg-accent-primary hover:bg-accent-secondary text-white font-bold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                                    className="w-full bg-accent-primary hover:bg-accent-secondary text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-md shadow-accent-primary/20"
                                 >
                                     <Send size={18} />
-                                    {submitting ? 'Sending...' : 'Broadcast'}
+                                    {submitting ? 'Sending...' : 'Broadcast Notification'}
                                 </button>
                             </form>
                         </div>
-                    </Card>
+                    </div>
                 </div>
-                
-                <div className="lg:col-span-3">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Sent History</CardTitle>
-                        </CardHeader>
-                        <div className="p-4 space-y-4 max-h-[600px] overflow-y-auto">
-                            {loading ? (
-                                <p className="text-text-muted text-center py-4">Loading...</p>
-                            ) : historyGroups.length === 0 ? (
-                                <div className="text-center py-10 flex flex-col items-center">
-                                    <Megaphone size={40} className="text-border mb-3" />
-                                    <p className="text-text-muted">No notifications found.</p>
+
+                {/* Right Column: History */}
+                <div className="flex-1 flex flex-col min-w-0 w-full">
+                    {/* Filters & Search */}
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full justify-between mb-6">
+                        <div className="flex items-center gap-2 w-full sm:max-w-md">
+                            {/* Search Bar */}
+                            <div className="relative flex-1">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <Search size={16} className="text-text-muted" />
                                 </div>
-                            ) : (
-                                historyGroups.map(group => (
-                                    <div key={group.dbIds[0]} className="p-5 rounded-2xl border border-border bg-surface-hover hover:border-accent-primary/40 transition-all relative group/item flex justify-between shadow-sm">
-                                        <div className="flex gap-4">
-                                            <div className="mt-1">
-                                                {getTypeIcon(group.type)}
-                                            </div>
-                                            <div>
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <h3 className="text-sm font-bold text-text-main">{group.title}</h3>
-                                                    <Badge variant={getTypeBadgeColor(group.type)} className="text-[10px] uppercase">
-                                                        {group.type}
-                                                    </Badge>
-                                                    {group.isBroadcast ? (
-                                                        <Badge variant="info" className="text-[10px] bg-blue-100 text-blue-700 border-none font-bold">
-                                                            Broadcast (Sent to {group.restaurantCount})
-                                                        </Badge>
-                                                    ) : (
-                                                        <Badge variant="secondary" className="text-[10px] border-none bg-indigo-100 text-indigo-700 font-bold">
-                                                            Targeted: {group.restaurantName || 'Specific Restaurant'}
-                                                        </Badge>
-                                                    )}
-                                                </div>
-                                                <p className="text-sm text-text-muted mb-2 whitespace-pre-wrap">{group.message}</p>
-                                                <p className="text-xs text-text-muted opacity-60">
-                                                    {new Date(group.created_at).toLocaleString()}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <button 
-                                            onClick={() => handleDelete(group.dbIds)}
-                                            className="text-text-muted hover:text-red-500 transition-colors self-start opacity-0 group-hover/item:opacity-100 p-2"
-                                            title="Delete Notification"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    </div>
-                                ))
-                            )}
+                                <input
+                                    type="text"
+                                    placeholder="Search sent history..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-9 pr-3 py-2 bg-surface border border-border rounded-xl text-[14px] text-text-main focus:outline-none focus:ring-2 focus:ring-accent-primary/50 focus:border-accent-primary transition-all shadow-sm"
+                                />
+                            </div>
+
+                            {/* Filter */}
+                            <div className="relative shrink-0">
+                                <select
+                                    value={filterType}
+                                    onChange={(e) => setFilterType(e.target.value)}
+                                    className="pl-4 pr-10 py-2 bg-surface border border-border rounded-xl text-[14px] font-bold text-text-main focus:outline-none focus:ring-2 focus:ring-accent-primary/50 focus:border-accent-primary transition-all shadow-sm appearance-none cursor-pointer"
+                                >
+                                    <option value="all">All Types</option>
+                                    <option value="update">Update</option>
+                                    <option value="feature">Feature</option>
+                                    <option value="alert">Alert</option>
+                                    <option value="info">Announcement</option>
+                                </select>
+                                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-text-muted">
+                                    <Filter size={16} />
+                                </div>
+                            </div>
                         </div>
-                    </Card>
+                    </div>
+
+                    <div className="w-full">
+                        {loading ? (
+                            <div className="flex flex-col items-center justify-center text-text-muted py-20">
+                                <RefreshCw size={32} className="animate-spin mb-4 text-accent-primary" />
+                                <p>Loading history...</p>
+                            </div>
+                        ) : historyGroups.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-20 text-center">
+                                <div className="w-20 h-20 bg-surface border border-border rounded-2xl flex items-center justify-center mb-6 shadow-sm rotate-3">
+                                    <Bell className="text-text-muted opacity-50" size={36} />
+                                </div>
+                                <h3 className="text-[20px] font-extrabold text-text-main mb-2">No notifications sent</h3>
+                                <p className="text-text-muted text-[15px] max-w-md leading-relaxed mb-6">
+                                    You haven't sent any notifications yet. Use the form to send your first broadcast.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="pb-10">
+                                <div className="bg-surface rounded-2xl border border-border overflow-hidden shadow-sm">
+                                    {['Today', 'Yesterday', 'Older'].map((groupKey) => {
+                                        const groupNotifs = groupedNotifications[groupKey];
+                                        if (groupNotifs.length === 0) return null;
+
+                                        return (
+                                            <div key={groupKey}>
+                                                <div className="bg-surface-hover/80 px-6 py-2.5 border-y border-border first:border-t-0">
+                                                    <h3 className="text-[13px] font-bold text-text-muted uppercase tracking-wider">{groupKey}</h3>
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    {groupNotifs.map(notif => {
+                                                        return (
+                                                            <div key={notif.dbIds[0]} className="flex flex-col sm:flex-row sm:items-center gap-4 px-6 py-4 border-b border-border last:border-b-0 hover:bg-surface-hover transition-colors group relative">
+                                                                <div className="flex items-center gap-4 flex-1 min-w-0">
+                                                                    <div className={`shrink-0 w-11 h-11 rounded-full flex items-center justify-center ${getIconContainerColor(notif.type)}`}>
+                                                                        {getTypeIcon(notif.type)}
+                                                                    </div>
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <div className="flex items-center gap-2 mb-1">
+                                                                            <h4 className="text-[15px] font-bold text-text-main truncate group-hover:text-accent-primary transition-colors">{notif.title}</h4>
+                                                                            <span className="text-[12px] text-text-muted whitespace-nowrap hidden sm:inline">
+                                                                                • {getTimeAgo(notif.created_at)}
+                                                                            </span>
+                                                                        </div>
+                                                                        <p className="text-[14px] text-text-muted truncate mb-1.5">
+                                                                            {notif.message}
+                                                                        </p>
+                                                                        <div className="flex items-center gap-2">
+                                                                            {notif.isBroadcast ? (
+                                                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                                                                                    BROADCAST • {notif.restaurantCount}
+                                                                                </span>
+                                                                            ) : (
+                                                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
+                                                                                    TARGETED • {notif.restaurantName || 'Specific Restaurant'}
+                                                                                </span>
+                                                                            )}
+                                                                            <span className="sm:hidden text-[11px] text-text-muted">
+                                                                                {getTimeAgo(notif.created_at)}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="hidden sm:flex pl-4 shrink-0 self-center">
+                                                                    <button
+                                                                        onClick={() => handleDelete(notif.dbIds)}
+                                                                        className="p-2 text-text-muted hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                                                                        title="Delete Notification"
+                                                                    >
+                                                                        <Trash2 size={18} />
+                                                                    </button>
+                                                                </div>
+                                                                {/* Mobile delete button */}
+                                                                <div className="sm:hidden absolute top-4 right-4">
+                                                                    <button
+                                                                        onClick={() => handleDelete(notif.dbIds)}
+                                                                        className="p-1.5 text-text-muted hover:text-red-500 bg-surface-hover rounded-md"
+                                                                    >
+                                                                        <Trash2 size={16} />
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+
+                                    {Object.values(groupedNotifications).every(group => group.length === 0) && historyGroups.length > 0 && (
+                                        <div className="flex flex-col items-center justify-center py-16 text-center">
+                                            <Search className="text-text-muted/50 mb-4" size={48} />
+                                            <h3 className="text-[18px] font-bold text-text-main mb-1">No results found</h3>
+                                            <p className="text-text-muted text-[14px]">
+                                                We couldn't find any sent notifications matching your filters.
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
