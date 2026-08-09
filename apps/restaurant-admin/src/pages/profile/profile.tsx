@@ -13,6 +13,7 @@ import {
   PhoneIcon,
   Save,
   ShieldCheck,
+  Check,
   X,
   XCircle,
 } from "lucide-react";
@@ -128,7 +129,7 @@ const createRestaurantFormState = (
   restaurant: Restaurant,
 ): RestaurantFormState => ({
   name: restaurant.name ?? "",
-  slug: restaurant.slug ?? "",
+  slug: restaurant.slug || (restaurant.name ? restaurant.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : ""),
   contactEmail: restaurant.contact.email ?? "",
   contactPhone: restaurant.contact.phone ?? "",
   contactAddress: restaurant.contact.address ?? "",
@@ -232,7 +233,22 @@ const ProfilePage: React.FC = () => {
     createAdminFormState(userProfile),
   );
   const [isLoading, setIsLoading] = useState(true);
-  const [feedback, setFeedback] = useState<FeedbackState | null>(null);
+  const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
+  const [checkingSlug, setCheckingSlug] = useState(false);
+  const [feedback, setFeedback] = useState<{
+    tone: "success" | "error" | "info";
+    message: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (feedback) {
+      const timer = setTimeout(() => {
+        setFeedback(null);
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [feedback]);
+
   const [isRestaurantEditing, setIsRestaurantEditing] = useState(false);
   const [editingSections, setEditingSections] = useState<Record<string, boolean>>({});
   const [isAdminEditing, setIsAdminEditing] = useState(false);
@@ -275,6 +291,39 @@ const ProfilePage: React.FC = () => {
   const activeMembership = memberships.find(
     (membership) => membership.restaurantId === activeRestaurantId,
   );
+
+  useEffect(() => {
+    if (!isRestaurantEditing || !restaurantForm?.slug) {
+      setSlugAvailable(null);
+      return;
+    }
+
+    if (restaurant && restaurantForm.slug === restaurant.slug) {
+      setSlugAvailable(true);
+      return;
+    }
+
+    const checkSlug = async () => {
+      setCheckingSlug(true);
+      try {
+        const { data, error } = await supabase
+          .from("restaurants")
+          .select("id")
+          .eq("slug", restaurantForm.slug);
+        
+        if (!error) {
+          setSlugAvailable(data.length === 0);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setCheckingSlug(false);
+      }
+    };
+
+    const timer = setTimeout(checkSlug, 500);
+    return () => clearTimeout(timer);
+  }, [restaurantForm?.slug, isRestaurantEditing, restaurant]);
 
   useEffect(() => {
     setAdminForm(createAdminFormState(userProfile));
@@ -601,6 +650,11 @@ const ProfilePage: React.FC = () => {
       return;
     }
 
+    if (slugAvailable === false) {
+      setFeedback({ tone: "error", message: "Custom slug is not available. Please choose another." });
+      return;
+    }
+
     setIsRestaurantSaving(true);
     setFeedback(null);
 
@@ -806,8 +860,8 @@ const ProfilePage: React.FC = () => {
       <div className="flex flex-col gap-6">
         <div
           style={{
-            display: activeTab === "general" ? "grid" : "none",
-            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))",
+            display: activeTab === "general" ? "flex" : "none",
+            flexDirection: "column",
             gap: "24px",
           }}
         >
@@ -835,54 +889,34 @@ const ProfilePage: React.FC = () => {
                     required
                   />
                 </label>
-                <label className="flex flex-col gap-2">
-                  <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Custom Slug (URL)</span>
-                  <input
-                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                    type="text"
-                    value={restaurantForm.slug}
-                    onChange={(event) =>
-                      handleRestaurantFieldChange("slug", event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))
-                    }
-                    placeholder="my-restaurant"
-                    maxLength={60}
-                    required
-                  />
-                </label>
-
-                <label className="flex flex-col gap-2">
-                  <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Restaurant Page URL</span>
-                  <div style={{ display: "flex", alignItems: "stretch" }}>
-                    <span
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        padding: "0 12px",
-                        background: "#EDF2F7",
-                        border: "1px solid #E2E8F0",
-                        borderRight: "none",
-                        borderTopLeftRadius: "8px",
-                        borderBottomLeftRadius: "8px",
-                        fontSize: "14px",
-                        color: "#4A5568",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      tablekard.com/
-                    </span>
-                    <input
-                      className="w-full border border-[#CBD5E0] rounded-xl bg-gray-100 text-[#4A5568] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border opacity-70 cursor-not-allowed dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text-secondary"
-                      style={{
-                        borderTopLeftRadius: 0,
-                        borderBottomLeftRadius: 0,
-                        flex: 1,
-                      }}
-                      type="text"
-                      value={restaurantForm.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}
-                      disabled
-                    />
-                  </div>
-                </label>
+                <div className="flex flex-col gap-1.5 relative">
+                  <label className="flex flex-col gap-2 relative">
+                    <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Restaurant Page URL</span>
+                    <div className="relative flex items-center">
+                      <div className="absolute left-0 top-0 bottom-0 flex items-center justify-center px-3.5 bg-[#EDF2F7] border border-[#CBD5E0] border-r-0 rounded-l-xl z-10 select-none text-[#4A5568] text-[14px] font-['Outfit',sans-serif] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text-secondary">
+                        tablekard.com/
+                      </div>
+                      <input
+                        className={`w-full border rounded-xl bg-white text-[#1A202C] py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none dark:bg-tk-bg-surface dark:text-tk-text pr-10 ${slugAvailable === false ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-500/20' : 'border-[#CBD5E0] focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:border-tk-border'}`}
+                        style={{ paddingLeft: '135px' }}
+                        type="text"
+                        value={restaurantForm.slug}
+                        onChange={(event) =>
+                          handleRestaurantFieldChange("slug", event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))
+                        }
+                        placeholder="my-restaurant"
+                        maxLength={60}
+                        required
+                      />
+                      {checkingSlug && (
+                        <div className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-[#CBD5E0] border-t-tk-burgundy rounded-full animate-spin z-10"></div>
+                      )}
+                    </div>
+                  </label>
+                  {slugAvailable === false && (
+                    <span className="text-[12px] text-red-500 font-medium mt-0.5">Not available, please choose another</span>
+                  )}
+                </div>
 
                 <label className="flex flex-col gap-2">
                   <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Tagline</span>
@@ -931,15 +965,10 @@ const ProfilePage: React.FC = () => {
                   <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">{restaurant?.name}</span>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Custom Slug</span>
-                  <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">{restaurant?.slug}</span>
-                </div>
-
-                <div className="flex flex-col gap-1.5">
                   <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Restaurant Page URL</span>
                   <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
                     <a
-                      href={`https://tablekard.com/${restaurant?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || ''}`}
+                      href={`https://tablekard.com/${restaurant?.slug || restaurant?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || ''}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 w-fit text-[#2B6CB0] text-[14px] font-medium no-underline break-all font-['Outfit',sans-serif] hover:underline dark:text-[#90CDF4]"
@@ -949,7 +978,7 @@ const ProfilePage: React.FC = () => {
                         gap: "4px",
                       }}
                     >
-                      tablekard.com/{restaurant?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || ''}{" "}
+                      tablekard.com/{restaurant?.slug || restaurant?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || ''}{" "}
                       <ExternalLink size={14} />
                     </a>
                   </span>
@@ -1806,141 +1835,143 @@ const ProfilePage: React.FC = () => {
           </div>
         </div>
 
-        {/* ── Card: Kitchen Web App ─────────────────────────────────────────── */}
-        <div className={cardCls}>
-          <div className={sectionHeaderCls}>
-            <div style={{ width: 36, height: 36, borderRadius: 9, background: 'linear-gradient(135deg,#1E40AF,#1E3A8A)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <ChefHat size={16} color="#fff" />
-            </div>
-            <div>
-              <div className="text-[15px] font-bold text-[#1A202C] font-['Outfit',sans-serif] dark:text-tk-text">Kitchen Web App &amp; Live Queue</div>
-              <div className="text-[12px] text-[#64748B] font-['Outfit',sans-serif]">Kitchen display system &amp; customer-facing live queue</div>
-            </div>
-          </div>
-
-          {/* Toggle row */}
-          <div className={rowCls}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-                <span className="text-[15px] font-semibold text-[#1A202C] font-['Outfit',sans-serif] dark:text-tk-text">Enable Kitchen App</span>
-                {featureBadge(kitchenOn)}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {/* ── Card: Kitchen Web App ─────────────────────────────────────────── */}
+          <div className={cardCls}>
+            <div className={sectionHeaderCls}>
+              <div style={{ width: 36, height: 36, borderRadius: 9, background: 'linear-gradient(135deg,#1E40AF,#1E3A8A)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <ChefHat size={16} color="#fff" />
               </div>
-              <p className="text-[13px] text-[#64748B] font-['Outfit',sans-serif]" style={{ margin: 0, lineHeight: 1.5 }}>
-                When enabled, kitchen staff can log in and customers see the Live Queue button everywhere.
-              </p>
-            </div>
-            <div onClick={handleKitchenFeatureToggle} style={{ cursor: 'pointer' }}>
-              <ToggleKnob on={kitchenOn} />
-            </div>
-          </div>
-
-          {/* Impact list */}
-          <div style={{ padding: '14px 20px', borderTop: '1px solid var(--tk-border,#E2E8F0)' }}>
-            <div className="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-[0.5px] font-['Outfit',sans-serif]" style={{ marginBottom: 10 }}>
-              Disabling will affect:
-            </div>
-            {['Kitchen Web App login for staff', 'Live Queue button on storefront', 'Live Queue in hamburger menu', 'Direct access to /live-queue page'].map((item, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#475569', marginBottom: 6, fontFamily: "'Outfit',sans-serif" }}>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: kitchenOn ? '#EF4444' : '#16A34A', flexShrink: 0 }} />
-                {item}
+              <div>
+                <div className="text-[15px] font-bold text-[#1A202C] font-['Outfit',sans-serif] dark:text-tk-text">Kitchen Web App &amp; Live Queue</div>
+                <div className="text-[12px] text-[#64748B] font-['Outfit',sans-serif]">Kitchen display system &amp; customer-facing live queue</div>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ── Card: Service Fee ─────────────────────────────────────────── */}
-        <div className={cardCls}>
-          <div className={sectionHeaderCls}>
-            <div style={{ width: 36, height: 36, borderRadius: 9, background: 'linear-gradient(135deg,#059669,#047857)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <CreditCardIcon size={16} color="#fff" />
             </div>
-            <div>
-              <div className="text-[15px] font-bold text-[#1A202C] font-['Outfit',sans-serif] dark:text-tk-text">Service Fee Settings</div>
-              <div className="text-[12px] text-[#64748B] font-['Outfit',sans-serif]">Add a percentage or flat fee to customer orders</div>
-            </div>
-          </div>
 
-          {/* Toggle row */}
-          <div className={rowCls}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-                <span className="text-[15px] font-semibold text-[#1A202C] font-['Outfit',sans-serif] dark:text-tk-text">Enable Service Fee</span>
-                {featureBadge(restaurant?.settings?.serviceFeeEnabled === true)}
+            {/* Toggle row */}
+            <div className={rowCls}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                  <span className="text-[15px] font-semibold text-[#1A202C] font-['Outfit',sans-serif] dark:text-tk-text">Enable Kitchen App</span>
+                  {featureBadge(kitchenOn)}
+                </div>
+                <p className="text-[13px] text-[#64748B] font-['Outfit',sans-serif]" style={{ margin: 0, lineHeight: 1.5 }}>
+                  When enabled, kitchen staff can log in and customers see the Live Queue button everywhere.
+                </p>
               </div>
-              <p className="text-[13px] text-[#64748B] font-['Outfit',sans-serif]" style={{ margin: 0, lineHeight: 1.5 }}>
-                When enabled, the service fee will be applied to the order subtotal at checkout.
-              </p>
+              <div onClick={handleKitchenFeatureToggle} style={{ cursor: 'pointer' }}>
+                <ToggleKnob on={kitchenOn} />
+              </div>
             </div>
-            <div onClick={handleServiceFeeFeatureToggle} style={{ cursor: 'pointer' }}>
-              <ToggleKnob on={restaurant?.settings?.serviceFeeEnabled === true} />
-            </div>
-          </div>
 
-          {/* Settings Section (only if enabled) */}
-          {restaurant?.settings?.serviceFeeEnabled === true && (
+            {/* Impact list */}
             <div style={{ padding: '14px 20px', borderTop: '1px solid var(--tk-border,#E2E8F0)' }}>
-              <div className="flex flex-col gap-4">
-                <div className="flex flex-col gap-2">
-                  <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Fee Type</span>
-                  <select
-                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                    value={restaurantForm?.serviceFeeType || 'percentage'}
-                    onChange={(e) => handleRestaurantFieldChange('serviceFeeType', e.target.value)}
-                  >
-                    <option value="percentage">Percentage (%)</option>
-                    <option value="flat">Flat Amount (₹)</option>
-                  </select>
+              <div className="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-[0.5px] font-['Outfit',sans-serif]" style={{ marginBottom: 10 }}>
+                Disabling will affect:
+              </div>
+              {['Kitchen Web App login for staff', 'Live Queue button on storefront', 'Live Queue in hamburger menu', 'Direct access to /live-queue page'].map((item, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#475569', marginBottom: 6, fontFamily: "'Outfit',sans-serif" }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: kitchenOn ? '#EF4444' : '#16A34A', flexShrink: 0 }} />
+                  {item}
                 </div>
-                
-                <div className="flex flex-col gap-2">
-                  <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Fee Amount</span>
-                  <input
-                    type="number"
-                    min="0"
-                    step={restaurantForm?.serviceFeeType === 'percentage' ? '0.1' : '1'}
-                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                    value={restaurantForm?.serviceFeeAmount || ''}
-                    placeholder={restaurantForm?.serviceFeeType === 'percentage' ? 'e.g. 5' : 'e.g. 50'}
-                    onChange={(e) => handleRestaurantFieldChange('serviceFeeAmount', e.target.value)}
-                  />
-                </div>
+              ))}
+            </div>
+          </div>
 
-                <div className="flex justify-end mt-2">
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (!activeRestaurantId || !restaurantForm) return;
-                      const amount = parseFloat(restaurantForm.serviceFeeAmount);
-                      if (isNaN(amount) || amount < 0) {
-                        setFeedback({ tone: 'error', message: 'Please enter a valid service fee amount.' });
-                        return;
-                      }
-                      try {
-                        await updateRestaurantProfile(activeRestaurantId, {
-                          settings: {
-                            serviceFeeType: restaurantForm.serviceFeeType,
-                            serviceFeeAmount: amount
-                          }
-                        });
-                        const updated = await getRestaurantById(activeRestaurantId);
-                        if (updated) {
-                          setRestaurant(updated);
-                          setRestaurantForm(createRestaurantFormState(updated));
-                        }
-                        setFeedback({ tone: 'success', message: 'Service fee settings saved successfully.' });
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                      } catch (err: any) {
-                        setFeedback({ tone: 'error', message: err.message || 'Failed to save service fee settings.' });
-                      }
-                    }}
-                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border-none bg-tk-burgundy text-white text-[13px] font-semibold font-['Outfit',sans-serif] cursor-pointer transition-all hover:bg-[#6B2A15]"
-                  >
-                    Save Fee Settings
-                  </button>
-                </div>
+          {/* ── Card: Service Fee ─────────────────────────────────────────── */}
+          <div className={cardCls}>
+            <div className={sectionHeaderCls}>
+              <div style={{ width: 36, height: 36, borderRadius: 9, background: 'linear-gradient(135deg,#059669,#047857)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <CreditCardIcon size={16} color="#fff" />
+              </div>
+              <div>
+                <div className="text-[15px] font-bold text-[#1A202C] font-['Outfit',sans-serif] dark:text-tk-text">Service Fee Settings</div>
+                <div className="text-[12px] text-[#64748B] font-['Outfit',sans-serif]">Add a percentage or flat fee to customer orders</div>
               </div>
             </div>
-          )}
+
+            {/* Toggle row */}
+            <div className={rowCls}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                  <span className="text-[15px] font-semibold text-[#1A202C] font-['Outfit',sans-serif] dark:text-tk-text">Enable Service Fee</span>
+                  {featureBadge(restaurant?.settings?.serviceFeeEnabled === true)}
+                </div>
+                <p className="text-[13px] text-[#64748B] font-['Outfit',sans-serif]" style={{ margin: 0, lineHeight: 1.5 }}>
+                  When enabled, the service fee will be applied to the order subtotal at checkout.
+                </p>
+              </div>
+              <div onClick={handleServiceFeeFeatureToggle} style={{ cursor: 'pointer' }}>
+                <ToggleKnob on={restaurant?.settings?.serviceFeeEnabled === true} />
+              </div>
+            </div>
+
+            {/* Settings Section (only if enabled) */}
+            {restaurant?.settings?.serviceFeeEnabled === true && (
+              <div style={{ padding: '14px 20px', borderTop: '1px solid var(--tk-border,#E2E8F0)' }}>
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-2">
+                    <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Fee Type</span>
+                    <select
+                      className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                      value={restaurantForm?.serviceFeeType || 'percentage'}
+                      onChange={(e) => handleRestaurantFieldChange('serviceFeeType', e.target.value)}
+                    >
+                      <option value="percentage">Percentage (%)</option>
+                      <option value="flat">Flat Amount (₹)</option>
+                    </select>
+                  </div>
+                  
+                  <div className="flex flex-col gap-2">
+                    <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Fee Amount</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step={restaurantForm?.serviceFeeType === 'percentage' ? '0.1' : '1'}
+                      className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                      value={restaurantForm?.serviceFeeAmount || ''}
+                      placeholder={restaurantForm?.serviceFeeType === 'percentage' ? 'e.g. 5' : 'e.g. 50'}
+                      onChange={(e) => handleRestaurantFieldChange('serviceFeeAmount', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="flex justify-end mt-2">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!activeRestaurantId || !restaurantForm) return;
+                        const amount = parseFloat(restaurantForm.serviceFeeAmount);
+                        if (isNaN(amount) || amount < 0) {
+                          setFeedback({ tone: 'error', message: 'Please enter a valid service fee amount.' });
+                          return;
+                        }
+                        try {
+                          await updateRestaurantProfile(activeRestaurantId, {
+                            settings: {
+                              serviceFeeType: restaurantForm.serviceFeeType,
+                              serviceFeeAmount: amount
+                            }
+                          });
+                          const updated = await getRestaurantById(activeRestaurantId);
+                          if (updated) {
+                            setRestaurant(updated);
+                            setRestaurantForm(createRestaurantFormState(updated));
+                          }
+                          setFeedback({ tone: 'success', message: 'Service fee settings saved successfully.' });
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        } catch (err: any) {
+                          setFeedback({ tone: 'error', message: err.message || 'Failed to save service fee settings.' });
+                        }
+                      }}
+                      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border-none bg-tk-burgundy text-white text-[13px] font-semibold font-['Outfit',sans-serif] cursor-pointer transition-all hover:bg-[#6B2A15]"
+                    >
+                      Save Fee Settings
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* ── Confirmation Modal ────────────────────────────────────────────── */}
@@ -2239,9 +2270,9 @@ const ProfilePage: React.FC = () => {
 
   return (
     <>
-      <div className="flex flex-col gap-6 mb-8">
+      <div className="flex flex-col gap-4 mb-8">
         {/* Header Row: Title & Actions */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#E2E8F0] dark:border-tk-border">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E2E8F0] dark:border-tk-border">
           <div>
             <h1 className="text-3xl font-extrabold text-[#1A202C] font-['Outfit',sans-serif] dark:text-white mb-1.5 tracking-tight">
               Restaurant Profile
@@ -2264,7 +2295,7 @@ const ProfilePage: React.FC = () => {
         </div>
 
         {/* Tabs Row */}
-        <div className="inline-flex gap-1.5 p-1.5 bg-[#F1F5F9] dark:bg-[rgba(199,91,58,0.1)] border border-[#E2E8F0] dark:border-[rgba(199,91,58,0.2)] rounded-[16px] overflow-x-auto max-w-full self-start no-scrollbar shadow-inner mt-2">
+        <div className="inline-flex gap-1.5 p-1.5 bg-[#F1F5F9] dark:bg-[rgba(199,91,58,0.1)] border border-[#E2E8F0] dark:border-[rgba(199,91,58,0.2)] rounded-[16px] overflow-x-auto max-w-full self-start no-scrollbar shadow-inner">
           {[
             { id: "general", label: "General Info" },
             { id: "branding", label: "Location & Branding" },
@@ -2293,11 +2324,25 @@ const ProfilePage: React.FC = () => {
 
         {feedback && (
           <div
-            className={`mb-6 px-[18px] py-[14px] rounded-2xl flex items-center gap-2.5 font-['Outfit',sans-serif] text-[14px] font-medium shadow-[0_2px_8px_rgba(0,0,0,0.04)] profile-banner-${feedback.tone}`}
-            style={{ marginBottom: "24px" }}
+            className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[9999] px-4 py-3 rounded-[24px] flex items-center gap-3 shadow-[0_10px_30px_rgba(0,0,0,0.3)] animate-in fade-in slide-in-from-bottom-5 duration-300 font-['Outfit',sans-serif]"
+            style={{
+              backgroundColor: "#0F172A",
+              color: "#FFFFFF",
+            }}
           >
-            <span className="w-2.5 h-2.5 rounded-full shrink-0 bg-current" />
-            <span>{feedback.message}</span>
+            <div
+              className="w-6 h-6 rounded-full flex items-center justify-center shrink-0"
+              style={{ backgroundColor: feedback.tone === 'success' ? '#4ADE80' : feedback.tone === 'error' ? '#EF4444' : '#3B82F6' }}
+            >
+              {feedback.tone === 'success' ? (
+                <Check size={14} strokeWidth={3.5} color="#FFFFFF" />
+              ) : (
+                <AlertTriangle size={14} strokeWidth={3} color="#FFFFFF" />
+              )}
+            </div>
+            <span className="text-[15px] font-medium whitespace-nowrap pr-3">
+              {feedback.message}
+            </span>
           </div>
         )}
 
