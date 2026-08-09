@@ -131,6 +131,23 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                     .eq('id', editingData.id)
                 if (error) throw error
             } else {
+                let authData = null
+                
+                // Create Admin Account FIRST to check for existing email
+                if (resFormData.admin_password) {
+                    const { data, error: authError } = await supabase.auth.admin.createUser({
+                        email: resFormData.contact_email.trim().toLowerCase(),
+                        password: resFormData.admin_password,
+                        email_confirm: true
+                    })
+                    
+                    if (authError) {
+                        throw new Error(`Admin account failed: ${authError.message}. Restaurant not created.`)
+                    }
+                    authData = data
+                }
+
+                // If auth creation succeeded (or wasn't requested), create the restaurant
                 const { data: newRes, error: resError } = await supabase
                     .from('restaurants')
                     .insert([
@@ -145,18 +162,15 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                     .select()
                     .single()
                 
-                if (resError) throw resError
+                if (resError) {
+                    // Rollback auth user if restaurant creation fails
+                    if (authData) {
+                        await supabase.auth.admin.deleteUser(authData.user.id)
+                    }
+                    throw resError
+                }
 
-                // Create Admin Account automatically
-                if (resFormData.admin_password) {
-                    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-                        email: resFormData.contact_email.trim().toLowerCase(),
-                        password: resFormData.admin_password,
-                        email_confirm: true
-                    })
-                    
-                    if (authError) throw new Error(`Restaurant created, but admin account failed: ${authError.message}`)
-
+                if (authData) {
                     // Update Profile Role
                     await supabase
                         .from('profiles')
