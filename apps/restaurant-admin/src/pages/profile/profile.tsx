@@ -29,6 +29,7 @@ import { supabase } from '@restaurant-saas/supabase';
 
 interface RestaurantFormState {
   name: string;
+  slug: string;
   contactEmail: string;
   contactPhone: string;
   contactAddress: string;
@@ -127,6 +128,7 @@ const createRestaurantFormState = (
   restaurant: Restaurant,
 ): RestaurantFormState => ({
   name: restaurant.name ?? "",
+  slug: restaurant.slug ?? "",
   contactEmail: restaurant.contact.email ?? "",
   contactPhone: restaurant.contact.phone ?? "",
   contactAddress: restaurant.contact.address ?? "",
@@ -181,6 +183,8 @@ const formatCoordinate = (value?: number | null): string => {
 
 const validateRestaurantForm = (form: RestaurantFormState): string | null => {
   if (!form.name.trim()) return "Restaurant name is required.";
+  if (!form.slug.trim()) return "Restaurant slug is required.";
+  if (!/^[a-z0-9-]+$/.test(form.slug.trim())) return "Slug can only contain lowercase letters, numbers, and hyphens.";
   if (!form.contactEmail.trim() || !emailPattern.test(form.contactEmail.trim()))
     return "A valid contact email is required.";
   if (form.logoUrl.trim() && !isValidUrl(form.logoUrl.trim()))
@@ -605,6 +609,7 @@ const ProfilePage: React.FC = () => {
         activeRestaurantId,
         {
           name: restaurantForm.name.trim(),
+          slug: restaurantForm.slug.trim().toLowerCase(),
           contactEmail: restaurantForm.contactEmail.trim().toLowerCase(),
           contactPhone: emptyToNull(restaurantForm.contactPhone),
           contactAddress: emptyToNull(restaurantForm.contactAddress),
@@ -830,6 +835,20 @@ const ProfilePage: React.FC = () => {
                     required
                   />
                 </label>
+                <label className="flex flex-col gap-2">
+                  <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Custom Slug (URL)</span>
+                  <input
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                    type="text"
+                    value={restaurantForm.slug}
+                    onChange={(event) =>
+                      handleRestaurantFieldChange("slug", event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))
+                    }
+                    placeholder="my-restaurant"
+                    maxLength={60}
+                    required
+                  />
+                </label>
 
                 <label className="flex flex-col gap-2">
                   <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Restaurant Page URL</span>
@@ -910,6 +929,10 @@ const ProfilePage: React.FC = () => {
                 <div className="flex flex-col gap-1.5">
                   <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Restaurant Name</span>
                   <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">{restaurant?.name}</span>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Custom Slug</span>
+                  <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">{restaurant?.slug}</span>
                 </div>
 
                 <div className="flex flex-col gap-1.5">

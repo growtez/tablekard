@@ -4,7 +4,8 @@ import { X, UserPlus, FilePlus, Eye, EyeOff } from 'lucide-react'
 
 export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActiveForm, editingData, onRefresh }) {
     const [loading, setLoading] = useState(false)
-    const [error, setError] = useState(null)
+    const [userError, setUserError] = useState(null)
+    const [restaurantError, setRestaurantError] = useState(null)
     const [restaurants, setRestaurants] = useState([])
     const [formData, setFormData] = useState({ email: '', password: '', role: 'customer', restaurantId: '' })
     const [resFormData, setResFormData] = useState({ name: '', contact_email: '', contact_address: '', contact_phone: '', admin_password: 'Tablekard@123' })
@@ -17,6 +18,13 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
         { value: 'restaurant_staff', label: 'Restaurant Staff' },
         { value: 'customer', label: 'Customer' }
     ]
+
+    useEffect(() => {
+        if (!isOpen) {
+            setUserError(null)
+            setRestaurantError(null)
+        }
+    }, [isOpen])
 
     useEffect(() => {
         if (isOpen) {
@@ -64,7 +72,7 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
 
     const handleCreateUser = async (e) => {
         e.preventDefault()
-        setError(null)
+        setUserError(null)
         setLoading(true)
 
         try {
@@ -107,7 +115,7 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
             }
             onClose()
         } catch (err) {
-            setError(`Failed to ${editingData ? 'update' : 'create'} user: ` + err.message)
+            setUserError(`Failed to ${editingData ? 'update' : 'create'} user: ` + err.message)
         } finally {
             setLoading(false)
         }
@@ -115,7 +123,7 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
 
     const handleCreateRestaurant = async (e) => {
         e.preventDefault()
-        setError(null)
+        setRestaurantError(null)
         setLoading(true)
 
         try {
@@ -153,6 +161,7 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                     .insert([
                         {
                             name: resFormData.name.trim(),
+                            slug: resFormData.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Math.random().toString(36).substring(2, 8),
                             contact_email: resFormData.contact_email.trim().toLowerCase(),
                             contact_address: resFormData.contact_address.trim(),
                             contact_phone: resFormData.contact_phone.trim(),
@@ -195,7 +204,7 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
             }
             onClose()
         } catch (err) {
-            setError(`Failed to ${editingData ? 'update' : 'create'} restaurant: ` + err.message)
+            setRestaurantError(`Failed to ${editingData ? 'update' : 'create'} restaurant: ` + err.message)
         } finally {
             setLoading(false)
         }
@@ -247,14 +256,21 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                                 </div>
                                 <div className="relative">
                                     <input
-                                        type="password"
+                                        type={showPassword ? "text" : "password"}
                                         placeholder={editingData ? "Leave empty to keep current" : "Min 6 characters"}
                                         value={formData.password}
                                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                         required={!editingData}
-                                        className="peer w-full bg-surface-hover border border-border rounded-xl px-4 h-12 text-sm text-text-main focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all placeholder:text-transparent focus:placeholder:text-text-muted/50"
+                                        className="peer w-full bg-surface-hover border border-border rounded-xl px-4 pr-10 h-12 text-sm text-text-main focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all placeholder:text-transparent focus:placeholder:text-text-muted/50"
                                     />
                                     <label className="absolute left-3 px-1.5 transition-all duration-200 z-10 pointer-events-none -top-2.5 text-[10px] bg-bg font-bold uppercase tracking-wider text-text-muted peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-placeholder-shown:bg-transparent peer-placeholder-shown:font-normal peer-placeholder-shown:normal-case peer-placeholder-shown:tracking-normal peer-focus:-top-2.5 peer-focus:text-[10px] peer-focus:bg-bg peer-focus:font-bold peer-focus:uppercase peer-focus:tracking-wider peer-focus:text-accent-primary">Password</label>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-transparent border-none text-text-muted cursor-pointer p-1.5 flex hover:text-text-main transition-colors z-20"
+                                    >
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
                                 </div>
                                 <div className="relative">
                                     <select
@@ -355,9 +371,9 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                                 </div>
                             </>
                         )}
-                        {error && (
+                        {(activeForm === 'user' ? userError : restaurantError) && (
                             <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm mt-4 mb-2">
-                                {error}
+                                {activeForm === 'user' ? userError : restaurantError}
                             </div>
                         )}
 

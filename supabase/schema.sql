@@ -73,6 +73,7 @@ CREATE TABLE IF NOT EXISTS public.restaurants (
     instagram_url TEXT,
     facebook_url TEXT,
     website_url TEXT,
+    slug TEXT UNIQUE NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
