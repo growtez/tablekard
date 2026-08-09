@@ -277,7 +277,8 @@ export default function App() {
     if (path.startsWith('/users/')) return { title: '', isBreadcrumb: true, backTitle: 'Users', backPath: '/users' };
     if (path.startsWith('/subscriptions/')) return { title: '', isBreadcrumb: true, backTitle: 'Subscriptions', backPath: '/subscriptions' };
     if (path.startsWith('/billing/transactions/')) return { title: '', isBreadcrumb: true, backTitle: 'Transactions', backPath: '/billing/transactions' };
-    return { title: 'Command Center' };
+    if (path === '/notifications') return { title: 'Notifications' };
+    return { title: 'Notifications' };
   };
 
   const { title, stats, isBreadcrumb, backTitle, backPath } = getPageTitle();

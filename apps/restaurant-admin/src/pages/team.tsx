@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Plus, X, Users, Mail, Shield, CheckCircle2, AlertTriangle, Loader2, Search, MoreVertical, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
+import { Plus, X, Users,  Shield, CheckCircle2, AlertTriangle, Loader2, Search, MoreVertical, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '@restaurant-saas/supabase';
 import { createClient } from '@supabase/supabase-js';
 
