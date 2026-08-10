@@ -174,11 +174,21 @@ export default function App() {
       }
       const { data, error } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
       if (error) { setAuthError(error.message); if (!metaRole) setIsAdmin(false); return; }
-      setUserRole(data.role);
-      
-      setIsAdmin(['super_admin'].includes(data.role));
+      const isUserAdmin = ['super_admin'].includes(data.role);
+      setIsAdmin(isUserAdmin);
+
+      if (!isUserAdmin) {
+        supabase.auth.signOut();
+        setSession(null);
+        setAuthError("Access Denied: Insufficient Permissions (Super Admin required)");
+      }
     } catch (err) { 
-      setAuthError(err.message); if (!metaRole) setIsAdmin(false); 
+      setAuthError(err.message); 
+      if (!metaRole) {
+        setIsAdmin(false);
+        supabase.auth.signOut();
+        setSession(null);
+      }
     } finally {
       setIsCheckingPermissions(false);
     }
@@ -195,41 +205,22 @@ export default function App() {
     } catch (e) { window.location.href = '/'; }
   };
 
+  const AuthLoadingScreen = (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-bg">
+      <div className="w-12 h-12 border-4 border-surface-hover border-t-accent-primary rounded-full animate-spin mb-6"></div>
+      <div className="text-text-main font-bold text-xl tracking-[0.2em]">TABLEKARD</div>
+      <div className="text-text-muted text-sm mt-2 font-medium">Verifying Credentials...</div>
+    </div>
+  );
+
   if (loading) {
-    return <AppLoadingSkeleton />
+    return AuthLoadingScreen;
   }
 
-  if (!session) return <Login />
+  if (!session) return <Login forcedError={authError} />
 
   if (isCheckingPermissions && !isAdmin) {
-    return <AppLoadingSkeleton />
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-bg p-4">
-        <div className="glass p-8 w-full max-w-md rounded-2xl text-center animate-fade-in">
-          <div className="mb-6">
-            <div className="w-12 h-12 bg-accent-primary text-white rounded-xl mx-auto mb-4 flex items-center justify-center text-xl font-bold">!</div>
-            <h1 className="text-2xl font-bold mb-1">Access Denied</h1>
-            <p className="text-text-muted">Insufficient Permissions</p>
-          </div>
-          <div className="flex flex-col gap-2 mb-8 p-6 bg-red-500/5 border border-red-500/10 rounded-xl text-left">
-            <div className="font-bold text-lg mb-2">Access Level Evaluation</div>
-            <div className="flex justify-between w-full text-sm">
-              <span className="text-text-muted">Detected Role:</span>
-              <code className="text-accent-primary bg-surface-hover px-2 py-0.5 rounded">{userRole || 'NotFound/Unknown'}</code>
-            </div>
-            {authError && <div className="text-xs text-red-500 mt-1 bg-red-500/5 p-2 rounded-lg"><strong>Database Error:</strong> {authError}</div>}
-            <div className="text-xs text-text-muted mt-2 border-t border-border pt-2">User ID: <span className="opacity-80">{session?.user?.id}</span></div>
-          </div>
-          <div className="flex flex-col gap-3 w-full">
-            <button onClick={() => checkIsAdmin(session)} className="w-full bg-accent-primary hover:bg-accent-secondary text-white py-2.5 rounded-xl font-semibold transition-all">Refresh Permissions</button>
-            <button onClick={handleLogout} className="w-full bg-surface-hover hover:bg-border text-text-main py-2.5 rounded-xl font-semibold transition-all">Sign Out & Try Another Account</button>
-          </div>
-        </div>
-      </div>
-    )
+    return AuthLoadingScreen;
   }
 
   const getPageTitle = () => {

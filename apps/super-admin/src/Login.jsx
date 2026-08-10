@@ -3,11 +3,11 @@ import { supabase } from './supabaseClient'
 import { Sun, Moon } from 'lucide-react'
 import './index.css'
 
-export default function Login() {
+export default function Login({ forcedError }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+  const [error, setError] = useState(forcedError || null)
   const [message, setMessage] = useState(null)
   const [isDarkMode, setIsDarkMode] = useState(false)
 
@@ -16,6 +16,12 @@ export default function Login() {
       setIsDarkMode(true)
     }
   }, [])
+
+  useEffect(() => {
+    if (forcedError) {
+      setError(forcedError);
+    }
+  }, [forcedError])
 
   const toggleDarkMode = (event) => {
     const isDark = !isDarkMode;
