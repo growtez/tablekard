@@ -4,12 +4,6 @@ import { Plus, X, Users,  Shield, CheckCircle2, AlertTriangle, Loader2, Search, 
 import { supabase } from '@restaurant-saas/supabase';
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize a separate client with the service role key for user creation
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseServiceKey = import.meta.env.VITE_SUPABASE_SERVICE_KEY;
-const adminAuthClient = supabaseServiceKey 
-  ? createClient(supabaseUrl, supabaseServiceKey) 
-  : null;
 
 interface TeamMember {
   id: string; // from restaurant_users
@@ -62,8 +56,7 @@ const Team: React.FC = () => {
   const fetchMembers = async () => {
     try {
       setLoading(true);
-      const clientToUse = adminAuthClient || (supabase as any);
-      const { data, error } = await clientToUse
+      const { data, error } = await supabase
         .from('restaurant_users')
         .select(`
           id,
@@ -89,8 +82,8 @@ const Team: React.FC = () => {
 
   const handleCreateMember = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!adminAuthClient) {
-      setError("Admin privileges not configured. Missing Service Key.");
+    if (!activeRestaurantId) {
+      setError("Restaurant context missing.");
       return;
     }
     
@@ -98,55 +91,23 @@ const Team: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      // 1. Create the user in Supabase Auth
-      const { data: authData, error: authError } = await adminAuthClient.auth.admin.createUser({
-        email: formData.email.trim().toLowerCase(),
-        password: formData.password,
-        email_confirm: true,
-        user_metadata: {
-          name: formData.name
+      const { data, error } = await supabase.functions.invoke('create-team-member', {
+        body: { 
+          name: formData.name, 
+          email: formData.email, 
+          password: formData.password, 
+          role: formData.role, 
+          restaurant_id: activeRestaurantId 
         }
       });
 
-      if (authError) throw authError;
-
-      const userId = authData.user.id;
-
-      const globalRole = formData.role === 'admin' ? 'restaurant_admin' : 'restaurant_staff';
-
-      // 2. Insert into profiles
-      const { error: profileError } = await adminAuthClient
-        .from('profiles')
-        .insert({
-          id: userId,
-          email: formData.email.trim().toLowerCase(),
-          name: formData.name,
-          role: globalRole
-        });
-
-      if (profileError) {
-        // If it already exists, update both name and email
-        await adminAuthClient
-          .from('profiles')
-          .update({ 
-            name: formData.name,
-            email: formData.email.trim().toLowerCase(),
-            role: globalRole
-          })
-          .eq('id', userId);
+      if (error) {
+        throw new Error(error.message || 'Failed to invoke function');
       }
 
-      // 3. Insert into restaurant_users
-      const { error: restUserError } = await adminAuthClient
-        .from('restaurant_users')
-        .insert({
-          restaurant_id: activeRestaurantId,
-          profile_id: userId,
-          role: formData.role,
-          active: true
-        });
-
-      if (restUserError) throw restUserError;
+      if (data?.error) {
+         throw new Error(data.error);
+      }
 
       // Success!
       setIsModalOpen(false);
@@ -163,8 +124,7 @@ const Team: React.FC = () => {
 
   const toggleMemberStatus = async (member: TeamMember) => {
     try {
-      const clientToUse = adminAuthClient || (supabase as any);
-      const { error } = await clientToUse
+      const { error } = await supabase
         .from('restaurant_users')
         .update({ active: !member.active })
         .eq('id', member.id);
@@ -361,12 +321,7 @@ const Team: React.FC = () => {
               </div>
             )}
 
-            {!adminAuthClient && (
-              <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-2xl flex items-start gap-3 text-yellow-800">
-                <AlertTriangle size={18} className="shrink-0 mt-0.5" />
-                <p className="text-[13px] font-bold m-0">Service Role Key is missing. User creation will fail.</p>
-              </div>
-            )}
+
 
             <form onSubmit={handleCreateMember} className="flex flex-col gap-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
