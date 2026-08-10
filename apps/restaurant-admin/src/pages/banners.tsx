@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@restaurant-saas/supabase';
 import { useAuth } from '../context/AuthContext';
 import { uploadProfileImage, deleteMenuItemImageFromStorage } from '../services/storageService';
-import { getMenuItems, MenuItem } from '../services/supabaseService';
+import { getMenuItems } from '../services/supabaseService';
+import type { MenuItem } from '@restaurant-saas/types';
 import { Image, Plus, Trash2, Eye, EyeOff, X, Upload, ArrowUp, ArrowDown, AlertTriangle, Pencil, Link, Utensils, Tag, Compass } from 'lucide-react';
 import ImageCropper from '../components/ImageCropper';
 
@@ -37,7 +38,6 @@ export default function BannersPage() {
   const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
   const [form, setForm] = useState<BannerForm>(defaultForm);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -102,6 +102,18 @@ export default function BannersPage() {
       setSelectedItemId('');
       setCustomUrl(url);
     }
+  };
+
+  const getDestinationLabel = (linkUrl: string | null) => {
+    if (!linkUrl) return { label: 'None', isUrl: false };
+    if (linkUrl === '/menu') return { label: 'Menu Page', isUrl: false };
+    if (linkUrl === '/offers' || linkUrl === '/discounts') return { label: 'Offers / Discounts', isUrl: false };
+    if (linkUrl.startsWith('item:')) {
+      const itemId = linkUrl.replace('item:', '');
+      const item = menuItems.find(m => m.id === itemId);
+      return { label: item ? `Item: ${item.name}` : `Item: ${itemId.slice(0, 8)}...`, isUrl: false };
+    }
+    return { label: linkUrl, isUrl: true };
   };
 
   const handleEditClick = (banner: Banner) => {
@@ -330,20 +342,13 @@ export default function BannersPage() {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading}
                     className="w-full aspect-[21/9] border-2 border-dashed border-[#CBD5E0] rounded-[16px] flex flex-col items-center justify-center gap-2 text-[#64748B] hover:border-tk-burgundy hover:text-tk-burgundy hover:bg-[#FFF5F5] dark:hover:bg-[rgba(199,91,58,0.05)] transition-all cursor-pointer bg-[#F8FAFC] dark:bg-tk-bg-surface dark:border-tk-border"
                   >
-                    {uploading ? (
-                      <div className="w-8 h-8 border-3 border-[#CBD5E0] border-t-tk-burgundy rounded-full animate-spin" />
-                    ) : (
-                      <>
-                        <div className="w-12 h-12 rounded-full bg-[#EDF2F7] dark:bg-tk-bg-elevated flex items-center justify-center mb-2">
-                          <Upload size={24} className="text-[#A0AEC0] dark:text-tk-text-secondary" />
-                        </div>
-                        <span className="text-[14px] font-bold font-['Outfit',sans-serif]">Click to upload image</span>
-                        <span className="text-[12px] font-['Outfit',sans-serif]">PNG, JPG, WebP — max 2MB (21:9 aspect ratio recommended)</span>
-                      </>
-                    )}
+                    <div className="w-12 h-12 rounded-full bg-[#EDF2F7] dark:bg-tk-bg-elevated flex items-center justify-center mb-2">
+                      <Upload size={24} className="text-[#A0AEC0] dark:text-tk-text-secondary" />
+                    </div>
+                    <span className="text-[14px] font-bold font-['Outfit',sans-serif]">Click to upload image</span>
+                    <span className="text-[12px] font-['Outfit',sans-serif]">PNG, JPG, WebP — max 2MB (21:9 aspect ratio recommended)</span>
                   </button>
                 )}
                 <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
@@ -356,7 +361,7 @@ export default function BannersPage() {
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                 {[
                   { type: 'none', label: 'No Link', icon: Link },
-                  { type: 'menu', label: 'Full Menu', icon: Compass },
+                  { type: 'menu', label: 'Menu Page', icon: Compass },
                   { type: 'offers', label: 'Offers / Discounts', icon: Tag },
                   { type: 'item', label: 'Specific Item', icon: Utensils },
                   { type: 'custom', label: 'Custom URL', icon: Link },
@@ -443,7 +448,7 @@ export default function BannersPage() {
             <button
               type="button"
               onClick={handleSave}
-              disabled={saving || uploading}
+              disabled={saving}
               className="inline-flex items-center justify-center gap-2 min-h-[44px] px-6 border-none rounded-xl font-['Outfit',sans-serif] text-[14px] font-semibold cursor-pointer transition-all duration-200 bg-[linear-gradient(135deg,var(--tk-burgundy),#6B2A15)] text-white shadow-[0_8px_18px_rgba(139,58,30,0.2)] hover:shadow-[0_12px_24px_rgba(139,58,30,0.3)] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
             >
               {saving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : null}
@@ -520,14 +525,25 @@ export default function BannersPage() {
                 {/* Info */}
                 <div className="p-5 flex flex-col flex-1">
                   <div className="mt-auto pt-1">
-                    <div className="text-[12px] font-semibold text-[#94A3B8] font-['Outfit',sans-serif] uppercase tracking-wide mb-1">Link URL</div>
-                    {banner.link_url ? (
-                      <a href={banner.link_url} target="_blank" rel="noopener noreferrer" className="text-[13px] text-tk-burgundy font-medium truncate block hover:underline">
-                        {banner.link_url}
-                      </a>
-                    ) : (
-                      <span className="text-[13px] text-[#CBD5E0] dark:text-tk-text-secondary/50 italic">None</span>
-                    )}
+                    {(() => {
+                      const dest = getDestinationLabel(banner.link_url);
+                      return (
+                        <>
+                          <div className="text-[12px] font-semibold text-[#94A3B8] font-['Outfit',sans-serif] uppercase tracking-wide mb-1">
+                            {dest.isUrl ? 'Link URL' : 'Target Destination'}
+                          </div>
+                          {dest.isUrl ? (
+                            <a href={banner.link_url!} target="_blank" rel="noopener noreferrer" className="text-[13px] text-tk-burgundy font-semibold truncate block hover:underline font-['Outfit',sans-serif]">
+                              {dest.label}
+                            </a>
+                          ) : (
+                            <span className="text-[13px] text-[#1A202C] dark:text-tk-text font-semibold truncate block font-['Outfit',sans-serif]">
+                              {dest.label}
+                            </span>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
