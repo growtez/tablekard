@@ -959,8 +959,8 @@ const ProfilePage: React.FC = () => {
         >
           <div className="flex flex-wrap justify-between items-start gap-3 mb-4">
             <div className="min-w-0">
-              <h3 className="font-bold">Location & Branding</h3>
-              <p>Where to find you and your visual identity.</p>
+              <h3 className="font-bold">Location</h3>
+              <p>Where to find you.</p>
             </div>
             <div className="shrink-0">{renderRestaurantActions("branding")}</div>
           </div>
@@ -1611,13 +1611,6 @@ const ProfilePage: React.FC = () => {
             </span>
           </div>
 
-
-          <div className="border border-[#E2E8F0] rounded-2xl bg-white px-4 py-3.5 flex flex-col gap-2.5 dark:bg-tk-bg-card dark:border-tk-border sm:col-span-2">
-            <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Account ID</span>
-            <span className="text-[12px] text-[#4A5568] font-mono break-all dark:text-tk-text-secondary" title={userProfile?.id}>
-              {userProfile?.id}
-            </span>
-          </div>
         </div>
       </div>
     );
@@ -1990,8 +1983,8 @@ const ProfilePage: React.FC = () => {
               </div>
         );
       } else if (activeEditModal === "branding") {
-        title = "Edit Location & Branding";
-        description = "Where to find you and your visual identity.";
+        title = "Edit Location";
+        description = "Where to find you.";
         content = (
           <div className="flex flex-col gap-4">
 
@@ -2246,7 +2239,7 @@ const ProfilePage: React.FC = () => {
         <div className="inline-flex gap-1.5 p-1.5 bg-[#F1F5F9] dark:bg-[rgba(199,91,58,0.1)] border border-[#E2E8F0] dark:border-[rgba(199,91,58,0.2)] rounded-[16px] overflow-x-auto max-w-full self-start no-scrollbar shadow-inner">
           {[
             { id: "general", label: "General Info" },
-            { id: "branding", label: "Location & Branding" },
+            { id: "branding", label: "Location" },
             { id: "story", label: "Story & Socials" },
             { id: "features", label: "Features" },
             { id: "admin", label: "Admin Profile" },

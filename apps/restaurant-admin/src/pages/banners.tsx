@@ -3,6 +3,7 @@ import { supabase } from '@restaurant-saas/supabase';
 import { useAuth } from '../context/AuthContext';
 import { uploadProfileImage } from '../services/storageService';
 import { Image, Plus, Trash2, Eye, EyeOff, X, Upload, ArrowUp, ArrowDown } from 'lucide-react';
+import ImageCropper from '../components/ImageCropper';
 
 interface Banner {
   id: string;
@@ -43,6 +44,8 @@ export default function BannersPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const [showCropper, setShowCropper] = useState(false);
 
   const fetchBanners = async () => {
     if (!activeRestaurantId) return;
@@ -63,9 +66,29 @@ export default function BannersPage() {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    // Reset file input so the same file can be selected again
+    e.target.value = '';
+    
+    setError(null);
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropImageSrc(reader.result as string);
+      setShowCropper(true);
+    };
+    reader.onerror = () => {
+      setError("Failed to read image file");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    setShowCropper(false);
+    setCropImageSrc(null);
     setUploading(true);
     setError(null);
     try {
+      const file = new File([croppedBlob], `banner_${Date.now()}.jpg`, { type: 'image/jpeg' });
       const url = await uploadProfileImage(`banners/${activeRestaurantId}`, file);
       setForm(prev => ({ ...prev, image_url: url }));
     } catch (err: any) {
@@ -372,6 +395,19 @@ export default function BannersPage() {
 
         </>
       )}
+
+      {showCropper && cropImageSrc && (
+        <ImageCropper
+          image={cropImageSrc}
+          onCropComplete={handleCropComplete}
+          onCancel={() => {
+            setShowCropper(false);
+            setCropImageSrc(null);
+          }}
+          aspect={21 / 9}
+        />
+      )}
+
     </div>
   );
 }
