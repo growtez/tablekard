@@ -823,6 +823,20 @@ USING (
   auth.role() = 'authenticated'
 );
 
+-- 18. storage.objects (menu-images bucket)
+DROP POLICY IF EXISTS "Public Read Menu Images" ON storage.objects;
+CREATE POLICY "Public Read Menu Images"
+ON storage.objects FOR SELECT
+USING ( bucket_id = 'menu-images' );
+
+DROP POLICY IF EXISTS "Authenticated Manage Menu Images" ON storage.objects;
+CREATE POLICY "Authenticated Manage Menu Images"
+ON storage.objects FOR ALL
+USING (
+  bucket_id = 'menu-images' AND
+  auth.role() = 'authenticated'
+);
+
 -- ======================================================================================
 -- REALTIME CONFIGURATION
 -- ======================================================================================
@@ -1142,3 +1156,31 @@ CREATE TABLE IF NOT EXISTS public.restaurant_notifications (
 ALTER TABLE public.restaurant_notifications ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all operations" ON public.restaurant_notifications;
 CREATE POLICY "Allow all operations" ON public.restaurant_notifications FOR ALL USING (true);
+
+-- ======================================================================================
+-- HOME BANNERS
+-- ======================================================================================
+CREATE TABLE IF NOT EXISTS public.home_banners (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  restaurant_id UUID NOT NULL REFERENCES public.restaurants(id) ON DELETE CASCADE,
+  image_url TEXT NOT NULL,
+  link_url TEXT,
+  sort_order INTEGER DEFAULT 0,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.home_banners ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Banners are publicly visible" ON public.home_banners;
+CREATE POLICY "Banners are publicly visible"
+  ON public.home_banners FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Restaurant staff can manage banners" ON public.home_banners;
+CREATE POLICY "Restaurant staff can manage banners"
+  ON public.home_banners FOR ALL USING (
+    restaurant_id IN (
+      SELECT restaurant_id FROM public.restaurant_users WHERE profile_id = auth.uid() AND active = true
+    )
+  );
+

@@ -92,15 +92,18 @@ const ImageCropper: React.FC<ImageCropperProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-[9999] backdrop-blur-sm">
-      <div className="bg-tk-bg-card rounded-2xl w-[90%] max-w-[800px] max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
-        <div className="p-4 px-6 flex justify-between items-center border-b border-tk-border">
-          <h3 className="m-0 text-xl text-tk-text font-bold">Crop Image</h3>
-          <button className="bg-transparent border-none text-tk-text-secondary cursor-pointer p-1 rounded-full flex items-center justify-center transition-all duration-200 hover:bg-tk-bg-hover hover:text-tk-text" onClick={onCancel}>
+    <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-[9999] backdrop-blur-md p-4 animate-in fade-in duration-200 font-['Outfit',sans-serif]">
+      <div className="bg-white dark:bg-tk-bg-card border border-[#E2E8F0] dark:border-tk-border rounded-[24px] w-full max-w-[750px] flex flex-col overflow-hidden shadow-2xl">
+        <div className="p-5 px-6 flex justify-between items-center border-b border-[#E2E8F0] dark:border-tk-border bg-[#F8FAFC] dark:bg-tk-bg-surface">
+          <div>
+            <h3 className="m-0 text-[18px] text-[#1A202C] dark:text-tk-text font-bold tracking-tight">Crop Image</h3>
+            <p className="m-0 text-[12px] text-[#64748B] dark:text-tk-text-secondary mt-0.5">Drag to adjust image placement for optimal fit</p>
+          </div>
+          <button className="bg-transparent border-none text-[#94A3B8] hover:text-[#475569] dark:hover:text-tk-text cursor-pointer p-1.5 rounded-xl flex items-center justify-center transition-colors" onClick={onCancel} type="button">
             <X size={20} />
           </button>
         </div>
-        <div className="relative w-full h-[60vh] bg-[#333]">
+        <div className="relative w-full h-[55vh] min-h-[300px] bg-[#111827]">
           <Cropper
             image={image}
             crop={crop}
@@ -113,9 +116,9 @@ const ImageCropper: React.FC<ImageCropperProps> = ({
             onZoomChange={onZoomChange}
           />
         </div>
-        <div className="p-6 flex flex-col gap-5 bg-tk-bg-card">
-          <div className="flex items-center gap-4">
-            <span className="text-sm font-semibold text-tk-text-secondary min-w-[50px]">Zoom</span>
+        <div className="p-6 flex flex-col sm:flex-row items-center justify-between gap-5 bg-white dark:bg-tk-bg-card">
+          <div className="flex items-center gap-3 w-full sm:w-1/2">
+            <span className="text-[13px] font-bold text-[#4A5568] dark:text-tk-text-secondary uppercase tracking-wider min-w-[45px]">Zoom</span>
             <input
               type="range"
               value={zoom}
@@ -124,16 +127,17 @@ const ImageCropper: React.FC<ImageCropperProps> = ({
               step={0.1}
               aria-labelledby="Zoom"
               onChange={(e) => setZoom(Number(e.target.value))}
-              className="flex-1 h-1.5 bg-tk-border rounded-full outline-none cursor-pointer"
+              className="flex-1 h-2 bg-[#E2E8F0] dark:bg-tk-border rounded-full outline-none cursor-pointer accent-[#8B3A1E]"
             />
+            <span className="text-[12px] font-semibold text-[#64748B] dark:text-tk-text-secondary min-w-[35px] text-right">{zoom.toFixed(1)}x</span>
           </div>
-          <div className="flex justify-end gap-3">
-            <button className="py-2.5 px-5 rounded-lg border border-tk-border bg-tk-bg-elevated text-tk-text-secondary font-semibold text-sm cursor-pointer transition-all duration-200 hover:bg-tk-bg-hover" onClick={onCancel}>
+          <div className="flex items-center justify-end gap-3 w-full sm:w-auto">
+            <button className="inline-flex items-center justify-center min-h-[42px] px-5 rounded-xl border-none bg-[#EDF2F7] hover:bg-[#E2E8F0] dark:bg-tk-bg-elevated dark:text-tk-text dark:hover:bg-tk-bg-hover text-[#2D3748] font-semibold text-[14px] cursor-pointer transition-all duration-200" onClick={onCancel} type="button">
               Cancel
             </button>
-            <button className="py-2.5 px-6 rounded-lg border-none bg-[#4f755c] text-white font-semibold text-sm cursor-pointer flex items-center gap-2 transition-all duration-200 shadow-sm hover:bg-[#3d5a47] hover:-translate-y-[1px] active:translate-y-0" onClick={handleDone}>
-              <Check size={18} />
-              Done
+            <button className="inline-flex items-center justify-center gap-2 min-h-[42px] px-6 rounded-xl border-none bg-[linear-gradient(135deg,var(--tk-burgundy),#6B2A15)] text-white font-bold text-[14px] cursor-pointer shadow-[0_6px_16px_rgba(139,58,30,0.25)] hover:shadow-[0_10px_20px_rgba(139,58,30,0.35)] hover:-translate-y-px transition-all duration-200" onClick={handleDone} type="button">
+              <Check size={18} strokeWidth={2.5} />
+              Apply Crop
             </button>
           </div>
         </div>

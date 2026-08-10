@@ -342,6 +342,14 @@ const HomePage = () => {
             {/* Dynamic Hero Banner Slider */}
             <HeroBannerSlider
                 banners={banners}
+                onItemClick={(itemId) => {
+                    const item = menuItems.find(m => m.id === itemId) || discountItems.find(m => m.id === itemId);
+                    if (item) {
+                        handleItemClick(item);
+                    } else {
+                        navigate('/menu');
+                    }
+                }}
                 fallback={
                     <section className="hero-section">
                         <div className="hero-text">
