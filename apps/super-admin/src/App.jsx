@@ -169,14 +169,14 @@ export default function App() {
     setAuthError(null);
     const metaRole = session.user.app_metadata?.role || session.user.user_metadata?.role;
     try {
-      if (metaRole && ['super_admin', 'restaurant_admin', 'admin'].includes(metaRole)) {
+      if (metaRole && ['super_admin'].includes(metaRole)) {
         setUserRole(metaRole + ' (metadata)'); setIsAdmin(true); return;
       }
       const { data, error } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
       if (error) { setAuthError(error.message); if (!metaRole) setIsAdmin(false); return; }
       setUserRole(data.role);
-      // user_role enum: super_admin, restaurant_admin, restaurant_staff, customer
-      setIsAdmin(['super_admin', 'restaurant_admin', 'admin', 'restaurant_owner'].includes(data.role));
+      
+      setIsAdmin(['super_admin'].includes(data.role));
     } catch (err) { 
       setAuthError(err.message); if (!metaRole) setIsAdmin(false); 
     } finally {
