@@ -762,7 +762,7 @@ const ProfilePage: React.FC = () => {
     <div className="flex items-center gap-2.5">
       <button
         type="button"
-        className="inline-flex items-center justify-center gap-2 min-h-[40px] px-4 border-none rounded-xl font-['Outfit',sans-serif] text-[13px] font-semibold cursor-pointer transition-all duration-200 bg-[#EDF2F7] text-[#2D3748] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none dark:bg-tk-bg-elevated dark:text-tk-text dark:hover:bg-tk-bg-hover"
+        className="inline-flex items-center justify-center gap-2 min-h-[40px] px-4 border border-[#CBD5E0] rounded-xl font-['Outfit',sans-serif] text-[13px] font-semibold cursor-pointer transition-all duration-200 bg-transparent text-[#4A5568] hover:bg-[#F8FAFC] hover:text-[#1A202C] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none dark:border-tk-border dark:text-tk-text dark:hover:bg-tk-bg-elevated"
         onClick={() => startRestaurantEdit(section)}
         disabled={!restaurant}
       >
