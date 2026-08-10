@@ -219,7 +219,6 @@ const ProfilePage: React.FC = () => {
   const {
     userProfile,
     activeRestaurantId,
-    memberships,
     refreshSessionData,
     signOut,
   } = useAuth();
@@ -284,9 +283,7 @@ const ProfilePage: React.FC = () => {
   });
 
 
-  const activeMembership = memberships.find(
-    (membership) => membership.restaurantId === activeRestaurantId,
-  );
+
 
   useEffect(() => {
     if (!isRestaurantEditing || !restaurantForm?.slug) {
@@ -1614,20 +1611,6 @@ const ProfilePage: React.FC = () => {
             </span>
           </div>
 
-          {activeMembership && (
-            <div className="border border-[#E2E8F0] rounded-2xl bg-white px-4 py-3.5 flex flex-col gap-2.5 dark:bg-tk-bg-card dark:border-tk-border">
-              <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Restaurant Access Role</span>
-              <span
-                className={`inline-flex items-center px-3.5 py-1.5 rounded-xl text-[12px] font-semibold capitalize w-fit font-['Outfit',sans-serif] ${
-                  String(activeMembership.role).toLowerCase() === "bg-[#D6BCFA] text-[#44337A] dark:bg-[rgba(214,188,250,0.15)] dark:text-[#D6BCFA]"
-                    ? "bg-[#D6BCFA] text-[#44337A] dark:bg-[rgba(214,188,250,0.15)] dark:text-[#D6BCFA]"
-                    : "bg-tk-burgundy text-white"
-                }`}
-              >
-                {formatLabel(activeMembership.role)}
-              </span>
-            </div>
-          )}
 
           <div className="border border-[#E2E8F0] rounded-2xl bg-white px-4 py-3.5 flex flex-col gap-2.5 dark:bg-tk-bg-card dark:border-tk-border sm:col-span-2">
             <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Account ID</span>

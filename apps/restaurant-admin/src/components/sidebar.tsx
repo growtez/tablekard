@@ -303,19 +303,6 @@ const Sidebar: React.FC = () => {
     { icon: (active) => <BannersIcon active={active} />, label: 'Home Banners', id: 'banners', path: '/banners' },
 
     { icon: (active) => <SubscriptionIcon active={active} />, label: 'Subscription', id: 'subscription', path: '/subscription' },
-    {
-      icon: (_active) => (
-        <div className="relative flex items-center justify-center">
-          <Bell size={20} />
-          {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-tk-bg z-10"></span>
-          )}
-        </div>
-      ),
-      label: 'Notifications',
-      id: 'notifications',
-      path: '/notifications'
-    },
   ];
 
   const handleNavClick = (item: NavItem) => {

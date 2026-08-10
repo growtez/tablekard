@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { Eye, EyeOff } from 'lucide-react';
 
 const LoginPage: React.FC = () => {
     const navigate = useNavigate();
@@ -151,10 +152,10 @@ const LoginPage: React.FC = () => {
                             />
                             <button
                                 type="button"
-                                className="absolute right-3 bg-transparent border-none cursor-pointer p-1 text-lg opacity-60 transition-all duration-300 hover:opacity-100"
+                                className="absolute right-3 bg-transparent border-none cursor-pointer p-1 opacity-60 transition-all duration-300 hover:opacity-100 flex items-center justify-center text-tk-text-secondary hover:text-tk-text"
                                 onClick={() => setShowPassword(!showPassword)}
                             >
-                                {showPassword ? '👁️' : '👁️‍🗨️'}
+                                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                             </button>
                         </div>
                     </div>
