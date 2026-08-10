@@ -443,9 +443,8 @@ const HomePage = () => {
                         </div>
                     )) : (
                         <div className="no-items-placeholder">
-                            <span className="no-items-icon">🥦</span>
-                            <p className="no-items-title">No veg items here</p>
-                            <p className="no-items-sub">Try a different category or turn off the Veg filter</p>
+                            <p className="no-items-title">{vegOnly ? 'No veg items here' : 'No non-veg items here'}</p>
+                            <p className="no-items-sub">{vegOnly ? 'Try a different category or turn off the Veg filter' : 'Try a different category'}</p>
                         </div>
                     )}
                 </div>
