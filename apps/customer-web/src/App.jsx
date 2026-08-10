@@ -143,15 +143,22 @@ function RequireRestaurant({ children }) {
 
   if (!isPreviewMode && restaurantId && !restaurantLoading && (!restaurant || restaurant.status !== 'active')) {
     return (
-      <div className="geofence-blocked-screen">
-        <div className="geofence-blocked-card">
-          <div className="blocked-icon-wrapper">
-            <AlertCircle size={48} color="#8B3A1E" />
+      <div className="suspended-screen">
+        <div className="suspended-card">
+          <div className="suspended-brand">tablekard</div>
+          <div className="suspended-icon-ring">
+            <div className="suspended-icon-pulse" />
+            <AlertCircle size={36} color="#8B3A1E" strokeWidth={2} />
           </div>
-          <h2>Ordering Paused</h2>
-          <p>
-            Online ordering is temporarily paused by the restaurant. Please place your order directly with the staff.
+          <span className="suspended-badge">Service Paused</span>
+          <h2 className="suspended-title">QR Ordering is Unavailable</h2>
+          <p className="suspended-desc">
+            Online ordering has been temporarily paused by this restaurant.
           </p>
+          <div className="suspended-tip">
+            <span className="suspended-tip-icon">💬</span>
+            <span>Please approach a staff member to place your order</span>
+          </div>
         </div>
       </div>
     );

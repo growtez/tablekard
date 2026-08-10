@@ -458,6 +458,23 @@ const MenuPage = () => {
             </div>
           ))}
         </div>
+      ) : filteredItems.length === 0 ? (
+        <div className="no-items-placeholder" style={{ margin: '40px auto' }}>
+          <p className="no-items-title">
+            {vegOnly
+              ? 'No veg items in this category'
+              : searchTerm
+              ? `No results for "${searchTerm}"`
+              : 'No items here'}
+          </p>
+          <p className="no-items-sub">
+            {vegOnly
+              ? 'Try another category or turn off the Veg filter'
+              : searchTerm
+              ? 'Try a different search term'
+              : 'Check back soon!'}
+          </p>
+        </div>
       ) : (
         <div className="menu-items" style={cartTotal > 0 ? { paddingBottom: '100px' } : {}}>
           {visibleItems.map(item => {
