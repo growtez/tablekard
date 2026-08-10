@@ -370,9 +370,6 @@ export default function BannersPage() {
             ))}
           </div>
 
-          <p className="text-[13px] text-[#64748B] font-['Outfit',sans-serif] dark:text-tk-text-secondary mt-8 text-center flex items-center justify-center gap-2">
-            <Eye size={14} /> Changes appear on the customer home page in real-time.
-          </p>
         </>
       )}
     </div>
