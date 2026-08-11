@@ -429,7 +429,7 @@ const ProfilePage: React.FC = () => {
   }, [isEditingProfile]);
 
   useEffect(() => {
-    if (!showMap) return;
+    if (!showMap && !isEditingProfile) return;
 
     const initMap = () => {
       const L = (window as any).L;
@@ -522,7 +522,7 @@ const ProfilePage: React.FC = () => {
         mapMarkerRef.current = null;
       }
     };
-  }, [restaurant, showMap]);
+  }, [restaurant, showMap, isEditingProfile]);
 
   useEffect(() => {
     if (mapMarkerRef.current) {
@@ -1142,42 +1142,55 @@ const ProfilePage: React.FC = () => {
                     </button>
                   </div>
                 </div>
-              </div>
-            ) : (
-              <span className="inline-flex items-center gap-2">
-                <MapPinIcon size={15} />
-                {restaurant
-                  ? `${formatCoordinate(restaurant.location?.latitude)}, ${formatCoordinate(restaurant.location?.longitude)}`
-                  : "N/A"}
-              </span>
-            )}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowMap(!showMap)}
-                className="px-4 py-2 bg-white text-[#4A5568] border border-[#CBD5E0] hover:bg-[#EDF2F7] dark:bg-tk-bg-elevated dark:text-tk-text-secondary dark:border-tk-border dark:hover:bg-tk-bg-hover rounded-xl text-[13px] font-bold w-fit transition-all duration-300 cursor-pointer shadow-sm"
-              >
-                {showMap ? "Hide Map" : "Show Map"}
-              </button>
-              {showMap && (
                 <div
                   id="profile-map"
                   style={{
-                    position: "absolute",
-                    top: "50%",
-                    left: "calc(100% + 12px)",
-                    transform: "translateY(-50%)",
-                    width: "300px",
+                    width: "100%",
                     height: "300px",
                     borderRadius: "12px",
-                    zIndex: 50,
                     backgroundColor: "#E2E8F0",
                     border: "1px solid #CBD5E0",
-                    boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+                    marginTop: "8px",
                   }}
                 />
-              )}
-            </div>
+              </div>
+            ) : (
+              <>
+                <span className="inline-flex items-center gap-2">
+                  <MapPinIcon size={15} />
+                  {restaurant
+                    ? `${formatCoordinate(restaurant.location?.latitude)}, ${formatCoordinate(restaurant.location?.longitude)}`
+                    : "N/A"}
+                </span>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowMap(!showMap)}
+                    className="px-4 py-2 bg-white text-[#4A5568] border border-[#CBD5E0] hover:bg-[#EDF2F7] dark:bg-tk-bg-elevated dark:text-tk-text-secondary dark:border-tk-border dark:hover:bg-tk-bg-hover rounded-xl text-[13px] font-bold w-fit transition-all duration-300 cursor-pointer shadow-sm"
+                  >
+                    {showMap ? "Hide Map" : "Show Map"}
+                  </button>
+                  {showMap && (
+                    <div
+                      id="profile-map"
+                      style={{
+                        position: "absolute",
+                        top: "50%",
+                        left: "calc(100% + 12px)",
+                        transform: "translateY(-50%)",
+                        width: "300px",
+                        height: "300px",
+                        borderRadius: "12px",
+                        zIndex: 50,
+                        backgroundColor: "#E2E8F0",
+                        border: "1px solid #CBD5E0",
+                        boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+                      }}
+                    />
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </Row>
 
