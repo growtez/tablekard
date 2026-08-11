@@ -167,6 +167,13 @@ export default function RestaurantProfileView({
                     <option value="suspended">Suspended — Service Halted</option>
                   </optgroup>
                 </select>
+                <span style={{ fontSize: '12px', color: 'var(--color-text-muted, #718096)', marginTop: '4px', display: 'block' }}>
+                  {formData.status === 'pending' && 'Pending: Awaiting review by super admin.'}
+                  {formData.status === 'approved' && 'Approved: Ready for subscription onboarding.'}
+                  {formData.status === 'rejected' && 'Rejected: Application rejected by super admin.'}
+                  {formData.status === 'active' && 'Active: Restaurant is live and operational.'}
+                  {formData.status === 'suspended' && 'Suspended: Restaurant operations are halted.'}
+                </span>
               </label>
             </div>
           ) : (

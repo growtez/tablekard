@@ -62,7 +62,25 @@ function getStatusInfo(restaurant: Restaurant | null): {
         return { label: 'No Restaurant', status: 'inactive', icon: <Store size={48} className="text-tk-text-secondary" />, message: 'No restaurant linked to this account.' };
     }
 
-    if (!restaurant.subscriptionStatus) {
+    const restStatus = (restaurant.status || '').toLowerCase();
+
+    if (restStatus === 'suspended') {
+        return { label: 'Suspended', status: 'inactive', icon: <PauseCircle size={48} className="text-tk-error" />, message: 'Your restaurant has been suspended by administration. Service is halted.' };
+    }
+
+    if (restStatus === 'rejected') {
+        return { label: 'Rejected', status: 'inactive', icon: <AlertTriangle size={48} className="text-tk-error" />, message: 'Your restaurant application was rejected by administration.' };
+    }
+
+    if (restStatus === 'pending') {
+        return { label: 'Pending Review', status: 'inactive', icon: <Timer size={48} className="text-tk-text-secondary" />, message: 'Your restaurant application is currently pending review.' };
+    }
+
+    if (restStatus === 'approved' && !restaurant.subscriptionStatus) {
+        return { label: 'Approved', status: 'inactive', icon: <CheckCircle size={48} className="text-tk-success" />, message: 'Your restaurant has been approved! Select a plan below to get started.' };
+    }
+
+    if (!restaurant.subscriptionStatus && restStatus !== 'active') {
         return { label: 'Inactive', status: 'inactive', icon: <PauseCircle size={48} className="text-tk-text-secondary" />, message: 'Your subscription is inactive. Choose a plan to get started.' };
     }
 
@@ -91,6 +109,15 @@ function getStatusInfo(restaurant: Restaurant | null): {
             status: 'grace',
             icon: <Timer size={48} className="text-tk-error" />,
             message: `Your subscription has expired. You have ${graceDays} day${graceDays !== 1 ? 's' : ''} remaining before services are suspended. Renew now to avoid interruption!`,
+        };
+    }
+
+    if (restStatus === 'active') {
+        return {
+            label: 'Active',
+            status: 'active',
+            icon: <CheckCircle size={48} className="text-tk-success" />,
+            message: 'Your subscription is active and operational.',
         };
     }
 
@@ -183,11 +210,44 @@ const SubscriptionPage: React.FC = () => {
 
     useEffect(() => {
         loadData();
-    }, [loadData]);
+
+        if (!activeRestaurantId) return;
+
+        const channel = supabase
+            .channel(`restaurant_subscription_status_${activeRestaurantId}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'restaurants',
+                    filter: `id=eq.${activeRestaurantId}`,
+                },
+                () => {
+                    loadData();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [activeRestaurantId, loadData]);
 
     // ── Handle payment ──
     const handleRenew = async (planDuration: number) => {
         if (!activeRestaurantId || isProcessing !== null) return;
+
+        const restStatus = (restaurant?.status || '').toLowerCase();
+        if (restStatus === 'pending') {
+            setFeedback({ tone: 'error', message: 'Waiting for approval from administration before subscription payment can be made.' });
+            return;
+        }
+
+        if (restStatus === 'rejected') {
+            setFeedback({ tone: 'error', message: 'Restaurant application rejected. Subscription payment cannot be processed.' });
+            return;
+        }
 
         setIsProcessing(planDuration);
         setFeedback(null);
@@ -269,6 +329,7 @@ const SubscriptionPage: React.FC = () => {
                             Status: <span className={`font-bold ${statusInfo.status === 'active' ? 'text-tk-success' : 'text-tk-error'}`}>{statusInfo.label}</span>
                         </span>
                     </div>
+                    <p className="text-[13px] text-tk-text-secondary mt-1.5 mb-0 max-w-[600px]">{statusInfo.message}</p>
                 </div>
                 
                 <div className="flex items-center gap-3 bg-tk-bg-surface px-4 py-2.5 rounded-xl border-[1.5px] border-tk-border shadow-sm">
@@ -353,26 +414,38 @@ const SubscriptionPage: React.FC = () => {
                                 </ul>
                                 
                                 <div className="mt-auto">
-                                    <button
-                                        className={`w-full py-4 rounded-xl font-bold text-[15px] transition-all flex items-center justify-center gap-2 uppercase tracking-wider ${
-                                            plan.popular
-                                            ? 'bg-white text-[#8B3A1E] hover:bg-gray-100 shadow-lg hover:shadow-xl hover:-translate-y-0.5'
-                                            : 'bg-tk-burgundy-bg text-tk-burgundy hover:bg-tk-burgundy hover:text-white shadow-sm'
-                                        } disabled:opacity-50 disabled:cursor-not-allowed`}
-                                        disabled={isProcessing !== null || !activeRestaurantId}
-                                        onClick={() => handleRenew(plan.duration)}
-                                    >
-                                        {isProcessing === plan.duration ? (
-                                            <>
-                                                <Loader2 size={18} className="animate-spin" />
-                                                Processing...
-                                            </>
-                                        ) : isCurrentPlan ? (
-                                            'Extend Plan'
-                                        ) : (
-                                            'Subscribe Now'
-                                        )}
-                                    </button>
+                                    {(() => {
+                                        const rStat = (restaurant?.status || '').toLowerCase();
+                                        const isBlocked = rStat === 'pending' || rStat === 'rejected';
+                                        return (
+                                            <button
+                                                className={`w-full py-4 rounded-xl font-bold text-[15px] transition-all flex items-center justify-center gap-2 uppercase tracking-wider ${
+                                                    plan.popular
+                                                    ? 'bg-white text-[#8B3A1E] hover:bg-gray-100 shadow-lg hover:shadow-xl hover:-translate-y-0.5'
+                                                    : 'bg-tk-burgundy-bg text-tk-burgundy hover:bg-tk-burgundy hover:text-white shadow-sm'
+                                                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                                disabled={isProcessing !== null || !activeRestaurantId || isBlocked}
+                                                onClick={() => handleRenew(plan.duration)}
+                                            >
+                                                {isProcessing === plan.duration ? (
+                                                    <>
+                                                        <Loader2 size={18} className="animate-spin" />
+                                                        Processing...
+                                                    </>
+                                                ) : rStat === 'pending' ? (
+                                                    'Awaiting Approval'
+                                                ) : rStat === 'rejected' ? (
+                                                    'Application Rejected'
+                                                ) : rStat === 'suspended' ? (
+                                                    'Reactivate Subscription'
+                                                ) : isCurrentPlan ? (
+                                                    'Extend Plan'
+                                                ) : (
+                                                    'Subscribe Now'
+                                                )}
+                                            </button>
+                                        );
+                                    })()}
                                 </div>
                             </div>
                         </div>
