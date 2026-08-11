@@ -1168,6 +1168,8 @@ const ProfilePage: React.FC = () => {
                     backgroundColor: "#E2E8F0",
                     border: "1px solid #CBD5E0",
                     marginTop: "8px",
+                    position: "relative",
+                    zIndex: 10,
                   }}
                 />
               </div>
