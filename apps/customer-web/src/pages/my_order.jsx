@@ -745,10 +745,14 @@ const MyOrderPage = () => {
                         
                         {/* Row 2: meta */}
                         <div className="cart-meta">
-                          <div className="cart-rating">
-                            <Star size={12} fill="#8B3A1E" color="#8B3A1E" />
-                            <span>{item.rating}</span>
-                          </div>
+                          {item.ratingCount > 0 ? (
+                            <div className="cart-rating">
+                              <Star size={12} fill="#8B3A1E" color="#8B3A1E" />
+                              <span>{item.rating}</span>
+                            </div>
+                          ) : (
+                            <span className="food-card-new-badge" style={{ marginTop: '2px' }}>NEW</span>
+                          )}
                           <div className="cart-serves">
                             <Users size={12} />
                             <span>{item.serves}</span>

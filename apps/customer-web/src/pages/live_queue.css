@@ -658,3 +658,11 @@
 
 @keyframes lq-spin { to { transform: rotate(360deg); } }
 .lq-spin { animation: lq-spin 1s linear infinite; }
+
+/* ── Kitchen Standalone Lottie Animation ─────────── */
+.lq-kitchen-standalone-anim {
+    margin: 12px 20px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

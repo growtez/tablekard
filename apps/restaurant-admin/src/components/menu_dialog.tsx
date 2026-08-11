@@ -642,18 +642,33 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, onAddC
             <input ref={fileInputRef} type="file" multiple accept="image/*" style={{ display: 'none' }} onChange={handleImageFiles} />
           </div>
 
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-tk-text-secondary">Serves (number of people)</label>
-            <input
-              type="number"
-              name="serves"
-              value={formData.serves}
-              onChange={handleChange}
-              className="p-3 px-4 border-2 border-tk-border bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.1)] placeholder:text-tk-text-muted"
-              placeholder="e.g. 2"
-              min="1"
-              onWheel={(e) => e.currentTarget.blur()}
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-tk-text-secondary">Serves</label>
+              <input
+                type="number"
+                name="serves"
+                value={formData.serves}
+                onChange={handleChange}
+                className="p-3 px-4 border-2 border-tk-border bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.1)] placeholder:text-tk-text-muted"
+                placeholder="1"
+                min="1"
+                onWheel={(e) => e.currentTarget.blur()}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-tk-text-secondary">Prep Time (mins)</label>
+              <input
+                type="number"
+                name="preparation_time"
+                value={formData.preparation_time}
+                onChange={handleChange}
+                className="p-3 px-4 border-2 border-tk-border bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.1)] placeholder:text-tk-text-muted"
+                placeholder="e.g. 15"
+                min="1"
+                onWheel={(e) => e.currentTarget.blur()}
+              />
+            </div>
           </div>
 
           {/* AR 3D Model Upload (Commented Out)
