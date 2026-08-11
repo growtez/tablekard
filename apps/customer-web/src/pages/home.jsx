@@ -442,10 +442,14 @@ const HomePage = () => {
                                     <Clock size={10} color="#888888" />
                                     {item.time}
                                 </span>
-                                <span className="food-card-rating">
-                                    <Star size={10} fill="#8B3A1E" color="#8B3A1E" />
-                                    {item.rating}
-                                </span>
+                                {item.ratingCount > 0 ? (
+                                    <span className="food-card-rating">
+                                        <Star size={10} fill="#8B3A1E" color="#8B3A1E" />
+                                        {item.rating}
+                                    </span>
+                                ) : (
+                                    <span className="food-card-new-badge">NEW</span>
+                                )}
                             </div>
                             <div className="food-card-price">₹{item.price}</div>
                         </div>
@@ -499,10 +503,14 @@ const HomePage = () => {
                                                 <Clock size={12} color="#666666" />
                                                 <span>{offer.time}</span>
                                             </div>
-                                            <div className="discount-rating">
-                                                <Star size={12} fill="#8B3A1E" color="#8B3A1E" />
-                                                <span>{offer.rating}</span>
-                                            </div>
+                                            {offer.ratingCount > 0 ? (
+                                                <div className="discount-rating">
+                                                    <Star size={12} fill="#8B3A1E" color="#8B3A1E" />
+                                                    <span>{offer.rating}</span>
+                                                </div>
+                                            ) : (
+                                                <span className="discount-new-badge">NEW</span>
+                                            )}
                                         </div>
                                         <div className="discount-price">
                                             {offer.originalPrice && offer.originalPrice !== offer.price && (
@@ -546,10 +554,14 @@ const HomePage = () => {
                                     <div className="recent-name">{item.name}</div>
                                     <div className="recent-meta">
                                         <span>{item.time}</span>
-                                        <span className="rating">
-                                            <Star size={10} fill="#8B3A1E" color="#8B3A1E" />
-                                            {item.rating}
-                                        </span>
+                                        {item.ratingCount > 0 ? (
+                                            <span className="rating">
+                                                <Star size={10} fill="#8B3A1E" color="#8B3A1E" />
+                                                {item.rating}
+                                            </span>
+                                        ) : (
+                                            <span className="food-card-new-badge">NEW</span>
+                                        )}
                                     </div>
                                 </div>
                                 <div className="recent-price">₹{item.price}</div>

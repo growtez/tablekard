@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { uploadProfileImage, deleteMenuItemImageFromStorage } from '../services/storageService';
 import { getMenuItems } from '../services/supabaseService';
 import type { MenuItem } from '@restaurant-saas/types';
-import { Image, Plus, Trash2, Eye, EyeOff, X, Upload, ArrowUp, ArrowDown, AlertTriangle, Pencil, Link, Utensils, Tag, Compass } from 'lucide-react';
+import { Image, Plus, Trash2, Eye, EyeOff, X, Upload, AlertTriangle, Pencil, Link, Utensils, Tag, Compass, GripVertical } from 'lucide-react';
 import ImageCropper from '../components/ImageCropper';
 
 interface Banner {
@@ -238,14 +238,51 @@ export default function BannersPage() {
     }
   };
 
-  const moveOrder = async (banner: Banner, direction: 'up' | 'down') => {
-    const idx = banners.findIndex(b => b.id === banner.id);
-    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
-    if (swapIdx < 0 || swapIdx >= banners.length) return;
-    const other = banners[swapIdx];
-    await (supabase as any).from('home_banners').update({ sort_order: other.sort_order }).eq('id', banner.id);
-    await (supabase as any).from('home_banners').update({ sort_order: banner.sort_order }).eq('id', other.id);
-    fetchBanners();
+  // Drag and Drop Reordering States
+  const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIdx(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', `${index}`);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedIdx === null || draggedIdx === index) return;
+    setDragOverIdx(index);
+  };
+
+  const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    if (draggedIdx === null || draggedIdx === dropIndex) return;
+
+    const newBanners = [...banners];
+    const [draggedItem] = newBanners.splice(draggedIdx, 1);
+    newBanners.splice(dropIndex, 0, draggedItem);
+
+    const updatedBanners = newBanners.map((b, idx) => ({ ...b, sort_order: idx }));
+    setBanners(updatedBanners);
+    setDraggedIdx(null);
+    setDragOverIdx(null);
+
+    try {
+      for (const b of updatedBanners) {
+        await (supabase as any)
+          .from('home_banners')
+          .update({ sort_order: b.sort_order })
+          .eq('id', b.id);
+      }
+    } catch (err) {
+      console.error('Failed to update banner order:', err);
+      fetchBanners();
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIdx(null);
+    setDragOverIdx(null);
   };
 
   useEffect(() => {
@@ -489,18 +526,40 @@ export default function BannersPage() {
         </div>
       ) : (
         <>
+          {banners.length > 0 && (
+            <div className="flex items-start sm:items-center justify-between gap-3 mb-6 p-4 rounded-[18px] bg-gradient-to-r from-[#FFF5F5] to-[#FAFAFA] dark:from-[rgba(199,91,58,0.12)] dark:to-tk-bg-card border border-tk-burgundy/20 shadow-sm font-['Outfit',sans-serif]">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-tk-burgundy/10 text-tk-burgundy flex items-center justify-center shrink-0">
+                  <GripVertical size={20} />
+                </div>
+                <div>
+                  <h4 className="text-[14px] font-bold text-[#1A202C] dark:text-tk-text m-0">How to reorder banners:</h4>
+                  <p className="text-[13px] text-[#64748B] dark:text-tk-text-secondary m-0 mt-0.5">
+                    Click & hold any banner card, then drag it to your desired position to update the customer slider order.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {banners.map((banner, idx) => (
               <div
                 key={banner.id}
+                draggable
+                onDragStart={(e) => handleDragStart(e, idx)}
+                onDragOver={(e) => handleDragOver(e, idx)}
+                onDrop={(e) => handleDrop(e, idx)}
+                onDragEnd={handleDragEnd}
                 onClick={() => handleEditClick(banner)}
-                className={`group relative flex flex-col bg-white border rounded-[24px] overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 dark:bg-tk-bg-card cursor-pointer ${banner.is_active ? 'border-[#E2E8F0] dark:border-tk-border hover:border-tk-burgundy/30' : 'border-[#E2E8F0] dark:border-tk-border opacity-70 grayscale-[20%]'}`}
+                className={`group relative flex flex-col bg-white border rounded-[24px] overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 dark:bg-tk-bg-card cursor-grab active:cursor-grabbing ${draggedIdx === idx ? 'opacity-40 scale-95 border-dashed border-tk-burgundy' : ''} ${dragOverIdx === idx ? 'border-2 border-tk-burgundy shadow-lg' : banner.is_active ? 'border-[#E2E8F0] dark:border-tk-border hover:border-tk-burgundy/30' : 'border-[#E2E8F0] dark:border-tk-border opacity-70 grayscale-[20%]'}`}
               >
                 {/* Actions Overlay */}
-                <div className="absolute top-3 right-3 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 bg-black/50 backdrop-blur-md rounded-xl p-1.5 shadow-lg">
-                  <button onClick={(e) => { e.stopPropagation(); moveOrder(banner, 'up'); }} disabled={idx === 0} className="p-2 text-white disabled:opacity-30 rounded-lg hover:bg-white/20 transition-colors cursor-pointer border-none bg-transparent" title="Move Up"><ArrowUp size={16} /></button>
-                  <button onClick={(e) => { e.stopPropagation(); moveOrder(banner, 'down'); }} disabled={idx === banners.length - 1} className="p-2 text-white disabled:opacity-30 rounded-lg hover:bg-white/20 transition-colors cursor-pointer border-none bg-transparent" title="Move Down"><ArrowDown size={16} /></button>
-                  <div className="w-px h-4 bg-white/30 mx-1" />
+                <div className="absolute top-3 right-3 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 bg-black/60 backdrop-blur-md rounded-xl p-1.5 shadow-lg">
+                  <div className="p-1.5 text-white/80 hover:text-white cursor-grab active:cursor-grabbing" title="Drag to reorder">
+                    <GripVertical size={16} />
+                  </div>
+                  <div className="w-px h-4 bg-white/30" />
                   <button onClick={(e) => { e.stopPropagation(); handleEditClick(banner); }} className="p-2 text-white rounded-lg hover:bg-white/20 transition-colors cursor-pointer border-none bg-transparent" title="Edit"><Pencil size={16} /></button>
                   <button onClick={(e) => { e.stopPropagation(); toggleActive(banner); }} className="p-2 text-white rounded-lg hover:bg-white/20 transition-colors cursor-pointer border-none bg-transparent" title={banner.is_active ? 'Hide' : 'Show'}>
                     {banner.is_active ? <EyeOff size={16} /> : <Eye size={16} />}

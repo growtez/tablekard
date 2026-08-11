@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Plus, Edit3, Trash2, Layers, Loader2, List, LayoutGrid, MoreVertical, ArrowUpDown, ChevronDown, ExternalLink } from 'lucide-react';
+import { Search, Plus, Edit3, Trash2, Layers, Loader2, List, LayoutGrid, MoreVertical, ArrowUpDown, ChevronDown, ExternalLink, Clock } from 'lucide-react';
 import MenuDialog from '../components/menu_dialog';
 import CategoryDialog from '../components/category_dialog';
 import ManageCategoriesDialog from '../components/manage_categories_dialog';
@@ -783,14 +783,15 @@ const Menu: React.FC = () => {
                           </h3>
                         </div>
 
-                        <div className="flex flex-col items-end shrink-0 gap-1 mt-1">
-                          {/* Rating */}
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] font-medium text-tk-text-secondary">(128)</span>
-                            <div className="flex items-center gap-0.5 bg-[#FFF0E6] px-1.5 py-0.5 rounded font-bold text-[11px] text-[#111] dark:text-tk-text">
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="#F6AD55" stroke="#ED8936" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                              <span className="ml-[1px]">4.6</span>
-                            </div>
+                        <div className="flex flex-col items-end shrink-0 gap-1.5 mt-1">
+                          {/* NEW Badge */}
+                          <div className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-extrabold tracking-wide uppercase text-[#8B3A1E] bg-gradient-to-r from-[#FFF2EB] to-[#FFE0D0] border border-[#8B3A1E]/15">
+                            NEW
+                          </div>
+                          {/* Prep Time */}
+                          <div className="flex items-center gap-1 bg-[#F7FAFC] dark:bg-tk-bg-surface px-2 py-0.5 rounded-md font-semibold text-[11px] text-tk-text-secondary border border-tk-border">
+                            <Clock size={11} />
+                            <span>{(item as any).preparationTime || (item as any).preparation_time ? `${(item as any).preparationTime || (item as any).preparation_time} min` : '15 min'}</span>
                           </div>
 
                           {/* Price */}
@@ -940,8 +941,12 @@ const Menu: React.FC = () => {
                                 <div className="font-semibold text-[15px] text-tk-text flex items-center gap-2">
                                   {item.name}
                                 </div>
-                                <div className="text-[12px] text-tk-text-secondary mt-1 max-w-[200px] line-clamp-2">
-                                  {item.shortDescription || `${item.isVeg ? 'Veg' : 'Non-veg'} ${categoryName}`}
+                                <div className="flex items-center gap-2 text-[12px] text-tk-text-secondary mt-1">
+                                  <span className="max-w-[180px] truncate">{item.shortDescription || `${item.isVeg ? 'Veg' : 'Non-veg'} ${categoryName}`}</span>
+                                  <span className="flex items-center gap-1 bg-tk-bg-hover px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0">
+                                    <Clock size={10} />
+                                    {(item as any).preparationTime || (item as any).preparation_time ? `${(item as any).preparationTime || (item as any).preparation_time}m` : '15m'}
+                                  </span>
                                 </div>
                               </div>
                             </div>

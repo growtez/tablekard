@@ -196,10 +196,14 @@ const DiscountsPage = () => {
                                 </div>
 
                                 <div className="details-meta">
-                                    <div className="meta-item">
-                                        <Star size={14} fill="#8B3A1E" color="#8B3A1E" />
-                                        <span>{item.rating}</span>
-                                    </div>
+                                    {item.ratingCount > 0 ? (
+                                        <div className="meta-item">
+                                            <Star size={14} fill="#8B3A1E" color="#8B3A1E" />
+                                            <span>{item.rating}</span>
+                                        </div>
+                                    ) : (
+                                        <span className="menu-new-badge">NEW</span>
+                                    )}
                                     <div className="meta-item">
                                         <Clock size={14} color="#1A1A1A" />
                                         <span>{item.time}</span>

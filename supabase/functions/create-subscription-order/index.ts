@@ -115,7 +115,7 @@ serve(async (req: Request) => {
             .from("restaurant_users")
             .select("id")
             .eq("restaurant_id", restaurant_id)
-            .eq("auth_user_id", user.id)
+            .eq("profile_id", user.id)
             .eq("active", true)
             .maybeSingle();
 
@@ -126,16 +126,16 @@ serve(async (req: Request) => {
             );
         }
 
-        // ── 5. Guard: restaurant must be 'approved' or 'active' to subscribe ──
+        // ── 5. Guard: restaurant must be 'approved', 'active', or 'suspended' to subscribe ──
         const { data: restaurantRow } = await supabaseAdmin
             .from("restaurants")
             .select("name, status")
             .eq("id", restaurant_id)
             .single();
 
-        if (!restaurantRow || !["approved", "active"].includes(restaurantRow.status)) {
+        if (!restaurantRow || !["approved", "active", "suspended"].includes((restaurantRow.status || '').toLowerCase())) {
             return new Response(
-                JSON.stringify({ error: "Restaurant must be approved before subscribing" }),
+                JSON.stringify({ error: "Restaurant must be approved, active, or suspended before subscribing" }),
                 { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }
