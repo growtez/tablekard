@@ -262,7 +262,27 @@ const ProfilePage: React.FC = () => {
   const [isAdminSaving, setIsAdminSaving] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [isLocating, setIsLocating] = useState(false);
+    const [isLocating, setIsLocating] = useState(false);
+
+  const shallowEqual = (obj1: any, obj2: any): boolean => {
+    if (obj1 === obj2) return true;
+    if (!obj1 || !obj2 || typeof obj1 !== 'object' || typeof obj2 !== 'object') return false;
+    const keys1 = Object.keys(obj1);
+    const keys2 = Object.keys(obj2);
+    if (keys1.length !== keys2.length) return false;
+    for (const key of keys1) {
+      if (obj1[key] !== obj2[key]) return false;
+    }
+    return true;
+  };
+
+  const hasChanges =
+    (restaurant && restaurantForm &&
+      !shallowEqual(restaurantForm, createRestaurantFormState(restaurant))) ||
+    (userProfile && adminForm &&
+      !shallowEqual(adminForm, createAdminFormState(userProfile)));
+
+
 
   useEffect(() => {
     if (!isEditingProfile || !restaurantForm?.slug) {
@@ -594,7 +614,11 @@ const ProfilePage: React.FC = () => {
   };
 
   const handleCancelEdit = () => {
-    setShowCancelConfirm(true);
+    if (hasChanges) {
+      setShowCancelConfirm(true);
+    } else {
+      handleConfirmCancel();
+    }
   };
 
   const handleConfirmCancel = () => {
@@ -1501,9 +1525,9 @@ const ProfilePage: React.FC = () => {
                   Cancel
                 </button>
                 <button
-                  className="relative h-10 px-5 rounded-xl bg-tk-burgundy text-white flex items-center justify-center cursor-pointer shadow-[0_2px_8px_rgba(229,62,62,0.15)] transition-all duration-300 font-bold font-['Outfit',sans-serif] text-[13px] tracking-wide hover:bg-[#6B2A15] disabled:opacity-50"
+                  className="relative h-10 px-5 rounded-xl bg-tk-burgundy text-white flex items-center justify-center cursor-pointer shadow-[0_2px_8px_rgba(229,62,62,0.15)] transition-all duration-300 font-bold font-['Outfit',sans-serif] text-[13px] tracking-wide hover:bg-[#6B2A15] disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={handleSaveProfile}
-                  disabled={isRestaurantSaving || isAdminSaving}
+                  disabled={isRestaurantSaving || isAdminSaving || !hasChanges}
                 >
                   {(isRestaurantSaving || isAdminSaving) ? (
                     <div className="flex items-center gap-2">
