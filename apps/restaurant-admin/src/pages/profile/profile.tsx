@@ -214,7 +214,7 @@ const Row = ({
   children: React.ReactNode;
   plain?: boolean;
 }) => (
-  <div className="grid grid-cols-[220px_1fr] sm:grid-cols-[260px_1fr] gap-4 py-2 items-center">
+  <div className="grid grid-cols-[220px_1fr] sm:grid-cols-[260px_1fr] gap-2 py-1 items-center">
     <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
       {label}
     </span>
@@ -748,6 +748,18 @@ const ProfilePage: React.FC = () => {
 
 
 
+  
+  const SectionHeader = ({ title }: { title: string }) => (
+    <div className="pt-4 pb-2 border-b border-[#E2E8F0] dark:border-tk-border">
+      <h3 className="text-[18px] font-bold text-[#1A202C] dark:text-tk-text font-['Outfit',sans-serif] m-0 uppercase tracking-wide">
+        {title}
+      </h3>
+    </div>
+  );
+
+
+
+
   function renderRestaurantProfileContent(): React.ReactNode {
     if (!restaurant) {
       return (
@@ -765,6 +777,7 @@ const ProfilePage: React.FC = () => {
 
     return (
       <div className="flex flex-col gap-0 w-full max-w-5xl">
+        <SectionHeader title="Core Details" />
         {/* Restaurant Name */}
         <Row label="Restaurant Name">
           {isEditingProfile ? (
@@ -787,82 +800,6 @@ const ProfilePage: React.FC = () => {
           ) : (
             <>
               <span>{restaurant?.name}</span>
-
-            </>
-          )}
-        </Row>
-
-        {/* Page URL */}
-        <Row label="Restaurant Page URL">
-          {isEditingProfile ? (
-            <div className="flex items-center justify-between w-full gap-2">
-              <div className="relative flex items-center w-full">
-                <span className="px-3 py-1.5 bg-[#EDF2F7] border border-[#CBD5E0] border-r-0 rounded-l-xl text-[#4A5568] text-[13px] font-['Outfit',sans-serif] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text-secondary select-none shrink-0">
-                  tablekard.com/
-                </span>
-                <input
-                  type="text"
-                  className={`w-full border rounded-r-xl bg-white text-[#1A202C] px-3 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none dark:bg-tk-bg-surface dark:text-tk-text pr-[130px] ${slugAvailable === false
-                    ? "border-red-500 text-red-500"
-                    : "border-[#CBD5E0] focus:border-tk-burgundy dark:border-tk-border"
-                    }`}
-                  value={restaurantForm.slug}
-                  onChange={(e) =>
-                    handleRestaurantFieldChange(
-                      "slug",
-                      e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "")
-                    )
-                  }
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleSaveProfile();
-                    if (e.key === "Escape") handleCancelEdit();
-                  }}
-                  maxLength={60}
-                />
-                {checkingSlug ? (
-                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#718096] text-[12px] font-medium bg-white dark:bg-tk-bg-surface px-1 flex items-center gap-1.5">
-                    <div className="w-3 h-3 border-[1.5px] border-[#CBD5E0] border-t-[#718096] dark:border-tk-border dark:border-t-tk-text-secondary rounded-full animate-spin" />
-                    Checking...
-                  </span>
-                ) : restaurantForm.slug !== restaurant?.slug ? (
-                  <>
-                    {slugAvailable === true && restaurantForm.slug.trim() !== "" && (
-                      <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#48BB78] text-[12px] font-medium bg-white dark:bg-tk-bg-surface px-1">
-                        ✓ URL is available
-                      </span>
-                    )}
-                    {slugAvailable === false && restaurantForm.slug.trim() !== "" && (
-                      <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-red-500 text-[12px] font-medium bg-white dark:bg-tk-bg-surface px-1">
-                        ✕ URL is not available
-                      </span>
-                    )}
-                  </>
-                ) : null}
-              </div>
-            </div>
-          ) : (
-            <>
-              <a
-                href={`https://tablekard.com/${restaurant?.slug ||
-                  restaurant?.name
-                    ?.toLowerCase()
-                    .replace(/[^a-z0-9]+/g, "-")
-                    .replace(/(^-|-$)/g, "") ||
-                  ""
-                  }`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 w-fit text-[#2B6CB0] text-[14px] font-medium no-underline break-all font-['Outfit',sans-serif] hover:underline dark:text-[#90CDF4]"
-              >
-                tablekard.com/
-                {restaurant?.slug ||
-                  restaurant?.name
-                    ?.toLowerCase()
-                    .replace(/[^a-z0-9]+/g, "-")
-                    .replace(/(^-|-$)/g, "") ||
-                  ""}{" "}
-                <ExternalLink size={14} />
-              </a>
 
             </>
           )}
@@ -895,6 +832,58 @@ const ProfilePage: React.FC = () => {
           )}
         </Row>
 
+        {/* Manifesto */}
+        <Row label="Manifesto">
+          {isEditingProfile ? (
+            <div className="flex items-start justify-between w-full gap-2">
+              <textarea
+                className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-2 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text min-h-[60px]"
+                value={restaurantForm.manifesto}
+                placeholder="Tell the story of your restaurant..."
+                onChange={(e) =>
+                  handleRestaurantFieldChange("manifesto", e.target.value)
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") handleCancelEdit();
+                }}
+                rows={3}
+              />
+
+            </div>
+          ) : (
+            <>
+              <span>{restaurant?.manifesto || "Not set"}</span>
+
+            </>
+          )}
+        </Row>
+
+        {/* Opening Date */}
+        <Row label="Opening Date">
+          {isEditingProfile ? (
+            <div className="flex items-center justify-between w-full gap-2">
+              <input
+                type="date"
+                className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                value={restaurantForm.openingDate}
+                onChange={(e) =>
+                  handleRestaurantFieldChange("openingDate", e.target.value)
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSaveProfile();
+                  if (e.key === "Escape") handleCancelEdit();
+                }}
+              />
+
+            </div>
+          ) : (
+            <>
+              <span>{restaurant?.openingDate || "Not set"}</span>
+
+            </>
+          )}
+        </Row>
+
         {/* Subscription Status */}
         <Row label="Subscription Status" plain>
           <div className="flex items-center gap-3">
@@ -922,6 +911,8 @@ const ProfilePage: React.FC = () => {
           </div>
         </Row>
 
+        
+        <SectionHeader title="Contact Information" />
         {/* Email Address */}
         <Row label="Email Address">
           {isEditingProfile ? (
@@ -982,6 +973,8 @@ const ProfilePage: React.FC = () => {
           )}
         </Row>
 
+        
+        <SectionHeader title="Location & Operations" />
         {/* Address */}
         <Row label="Address">
           {isEditingProfile ? (
@@ -1232,16 +1225,95 @@ const ProfilePage: React.FC = () => {
           )}
         </Row>
 
-        {/* Opening Date */}
-        <Row label="Opening Date">
+        
+        <SectionHeader title="Web & Social Media" />
+        {/* Page URL */}
+        <Row label="Restaurant Page URL">
+          {isEditingProfile ? (
+            <div className="flex items-center justify-between w-full gap-2">
+              <div className="relative flex items-center w-full">
+                <span className="px-3 py-1.5 bg-[#EDF2F7] border border-[#CBD5E0] border-r-0 rounded-l-xl text-[#4A5568] text-[13px] font-['Outfit',sans-serif] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text-secondary select-none shrink-0">
+                  tablekard.com/
+                </span>
+                <input
+                  type="text"
+                  className={`w-full border rounded-r-xl bg-white text-[#1A202C] px-3 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none dark:bg-tk-bg-surface dark:text-tk-text pr-[130px] ${slugAvailable === false
+                    ? "border-red-500 text-red-500"
+                    : "border-[#CBD5E0] focus:border-tk-burgundy dark:border-tk-border"
+                    }`}
+                  value={restaurantForm.slug}
+                  onChange={(e) =>
+                    handleRestaurantFieldChange(
+                      "slug",
+                      e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "")
+                    )
+                  }
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSaveProfile();
+                    if (e.key === "Escape") handleCancelEdit();
+                  }}
+                  maxLength={60}
+                />
+                {checkingSlug ? (
+                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#718096] text-[12px] font-medium bg-white dark:bg-tk-bg-surface px-1 flex items-center gap-1.5">
+                    <div className="w-3 h-3 border-[1.5px] border-[#CBD5E0] border-t-[#718096] dark:border-tk-border dark:border-t-tk-text-secondary rounded-full animate-spin" />
+                    Checking...
+                  </span>
+                ) : restaurantForm.slug !== restaurant?.slug ? (
+                  <>
+                    {slugAvailable === true && restaurantForm.slug.trim() !== "" && (
+                      <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#48BB78] text-[12px] font-medium bg-white dark:bg-tk-bg-surface px-1">
+                        ✓ URL is available
+                      </span>
+                    )}
+                    {slugAvailable === false && restaurantForm.slug.trim() !== "" && (
+                      <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-red-500 text-[12px] font-medium bg-white dark:bg-tk-bg-surface px-1">
+                        ✕ URL is not available
+                      </span>
+                    )}
+                  </>
+                ) : null}
+              </div>
+            </div>
+          ) : (
+            <>
+              <a
+                href={`https://tablekard.com/${restaurant?.slug ||
+                  restaurant?.name
+                    ?.toLowerCase()
+                    .replace(/[^a-z0-9]+/g, "-")
+                    .replace(/(^-|-$)/g, "") ||
+                  ""
+                  }`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 w-fit text-[#2B6CB0] text-[14px] font-medium no-underline break-all font-['Outfit',sans-serif] hover:underline dark:text-[#90CDF4]"
+              >
+                tablekard.com/
+                {restaurant?.slug ||
+                  restaurant?.name
+                    ?.toLowerCase()
+                    .replace(/[^a-z0-9]+/g, "-")
+                    .replace(/(^-|-$)/g, "") ||
+                  ""}{" "}
+                <ExternalLink size={14} />
+              </a>
+
+            </>
+          )}
+        </Row>
+
+        {/* Website URL */}
+        <Row label="Website URL">
           {isEditingProfile ? (
             <div className="flex items-center justify-between w-full gap-2">
               <input
-                type="date"
+                type="url"
                 className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                value={restaurantForm.openingDate}
+                value={restaurantForm.websiteUrl}
+                placeholder="https://yourrestaurant.com"
                 onChange={(e) =>
-                  handleRestaurantFieldChange("openingDate", e.target.value)
+                  handleRestaurantFieldChange("websiteUrl", e.target.value)
                 }
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleSaveProfile();
@@ -1252,39 +1324,11 @@ const ProfilePage: React.FC = () => {
             </div>
           ) : (
             <>
-              <span>{restaurant?.openingDate || "Not set"}</span>
+              <span>{restaurant?.websiteUrl || "Not set"}</span>
 
             </>
           )}
-        </Row>
-
-        {/* Manifesto */}
-        <Row label="Manifesto">
-          {isEditingProfile ? (
-            <div className="flex items-start justify-between w-full gap-2">
-              <textarea
-                className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-2 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text min-h-[60px]"
-                value={restaurantForm.manifesto}
-                placeholder="Tell the story of your restaurant..."
-                onChange={(e) =>
-                  handleRestaurantFieldChange("manifesto", e.target.value)
-                }
-                onKeyDown={(e) => {
-                  if (e.key === "Escape") handleCancelEdit();
-                }}
-                rows={3}
-              />
-
-            </div>
-          ) : (
-            <>
-              <span>{restaurant?.manifesto || "Not set"}</span>
-
-            </>
-          )}
-        </Row>
-
-        {/* Instagram URL */}
+        </Row>{/* Instagram URL */}
         <Row label="Instagram URL">
           {isEditingProfile ? (
             <div className="flex items-center justify-between w-full gap-2">
@@ -1338,32 +1382,8 @@ const ProfilePage: React.FC = () => {
           )}
         </Row>
 
-        {/* Website URL */}
-        <Row label="Website URL">
-          {isEditingProfile ? (
-            <div className="flex items-center justify-between w-full gap-2">
-              <input
-                type="url"
-                className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                value={restaurantForm.websiteUrl}
-                placeholder="https://yourrestaurant.com"
-                onChange={(e) =>
-                  handleRestaurantFieldChange("websiteUrl", e.target.value)
-                }
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSaveProfile();
-                  if (e.key === "Escape") handleCancelEdit();
-                }}
-              />
-
-            </div>
-          ) : (
-            <>
-              <span>{restaurant?.websiteUrl || "Not set"}</span>
-
-            </>
-          )}
-        </Row>
+        
+      
       </div>
     );
   }
@@ -1381,6 +1401,7 @@ const ProfilePage: React.FC = () => {
 
     return (
       <div className="flex flex-col gap-0 w-full max-w-5xl">
+        <SectionHeader title="Administrator Details" />
         <Row label="Admin Full Name">
           {isEditingProfile ? (
             <div className="flex items-center justify-between w-full gap-2">
@@ -1459,7 +1480,7 @@ const ProfilePage: React.FC = () => {
 
   return (
     <>
-      <div className="sticky top-0 z-40 bg-tk-bg-surface pt-4 pb-3 -mt-6 -mx-6 px-6 mb-6 border-b border-[#E2E8F0] dark:border-tk-border flex flex-col gap-2 shadow-sm">
+      <div className="sticky top-0 z-[60] bg-tk-bg-surface pt-4 pb-3 -mt-6 -mx-6 px-6 mb-6 border-b border-[#E2E8F0] dark:border-tk-border flex flex-col gap-2 shadow-sm">
         {/* Header Row: Title & Actions */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
@@ -1520,7 +1541,7 @@ const ProfilePage: React.FC = () => {
 
       {feedback && (
         <div
-          className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[9999] px-4 py-3 rounded-[24px] flex items-center gap-3 shadow-[0_10px_30px_rgba(0,0,0,0.3)] animate-in fade-in slide-in-from-bottom-5 duration-300 font-['Outfit',sans-serif]"
+          className="fixed bottom-10 right-10 z-[9999] px-4 py-3 rounded-[24px] flex items-center gap-3 shadow-[0_10px_30px_rgba(0,0,0,0.3)] animate-in fade-in slide-in-from-bottom-5 duration-300 font-['Outfit',sans-serif]"
           style={{
             backgroundColor: "#0F172A",
             color: "#FFFFFF",
