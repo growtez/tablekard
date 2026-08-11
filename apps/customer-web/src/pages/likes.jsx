@@ -51,7 +51,8 @@ const LikesPage = () => {
                         name: item.name,
                         description: item.short_description || item.long_description || item.description || '',
                         price: item.discount_price || item.price,
-                        rating: parseFloat((4.5 + Math.random() * 0.4).toFixed(1)),
+                        rating: '4.5',
+                        ratingCount: 0,
                         serves: item.serves || '1',
                         image: primaryImage,
                         raw: item // Keep raw data for cart
@@ -175,10 +176,14 @@ const LikesPage = () => {
                                     <p className="likes-page-desc">{item.description}</p>
 
                                     <div className="likes-page-meta">
-                                        <span className="likes-page-meta-item rating">
-                                            <Star size={12} fill="#8B3A1E" color="#8B3A1E" />
-                                            {item.rating}
-                                        </span>
+                                        {item.ratingCount > 0 ? (
+                                            <span className="likes-page-meta-item rating">
+                                                <Star size={12} fill="#8B3A1E" color="#8B3A1E" />
+                                                {item.rating}
+                                            </span>
+                                        ) : (
+                                            <span className="menu-new-badge">NEW</span>
+                                        )}
                                         <span className="likes-page-meta-item serves">
                                             <Users size={12} />
                                             Serves {item.serves}

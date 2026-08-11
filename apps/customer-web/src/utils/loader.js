@@ -7,8 +7,8 @@ export const showHomeLoader = () => {
     if (!loader) {
         loader = document.createElement('div');
         loader.id = 'global-home-loader';
-        loader.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;display:flex;justify-content:center;align-items:center;background-color:#fdfbf7;";
-        loader.innerHTML = `<lottie-player src="/assets/catering.json" background="transparent" speed="1" style="width: 200px; height: 200px; filter: invert(16%) sepia(94%) saturate(2250%) hue-rotate(352deg) brightness(96%) contrast(89%);" loop autoplay></lottie-player>`;
+        loader.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;display:flex;justify-content:center;align-items:center;background-color:#FDFBFA;";
+        loader.innerHTML = `<lottie-player src="/assets/loading_screen.json" background="transparent" speed="0.5" style="width: 340px; height: 340px; filter: invert(20%) sepia(74%) saturate(2132%) hue-rotate(345deg) brightness(88%) contrast(92%);" loop autoplay></lottie-player>`;
         document.body.appendChild(loader);
         
         if (!document.getElementById('lottie-player-script')) {

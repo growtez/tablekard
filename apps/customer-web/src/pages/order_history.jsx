@@ -432,6 +432,7 @@ const OrderHistoryPage = () => {
                     price: currentItem ? (currentItem.discount_price || currentItem.price) : item.price,
                     image: currentItem?.menu_item_images?.[0]?.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
                     rating: currentItem?.rating || '4.5',
+                    ratingCount: currentItem?.ratingCount || 0,
                     serves: currentItem?.serves || '1',
                     quantity: item.quantity,
                     outOfStock: !isAvailable
