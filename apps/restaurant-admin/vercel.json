@@ -1,4 +1,9 @@
 {
+  "git": {
+    "deploymentEnabled": {
+      "main": true
+    }
+  },
   "installCommand": "npm install --prefix ../.. && npm install",
   "rewrites": [
     {
