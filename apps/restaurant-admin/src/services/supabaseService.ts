@@ -24,7 +24,7 @@ const db = supabase as any;
 // ==========================================
 
 interface RestaurantRow {
-    id: string; name: string; status: string; status_reason: string | null;
+    id: string; name: string; slug: string | null; status: string; status_reason: string | null;
     contact_email: string | null; contact_phone: string | null; contact_address: string | null;
     logo_url: string | null; primary_color: string | null; secondary_color: string | null;
     profile_urls: string[] | null; settings: Record<string, unknown> | null;
@@ -139,6 +139,7 @@ export interface RestaurantPaymentSettingsInput {
 const mapRestaurantRow = (row: RestaurantRow): Restaurant => ({
     id: row.id,
     name: row.name,
+    slug: row.slug || '',
     status: row.status as Restaurant['status'],
     statusReason: row.status_reason,
     createdAt: row.created_at,
