@@ -115,7 +115,7 @@ serve(async (req: Request) => {
             .from("restaurant_users")
             .select("id")
             .eq("restaurant_id", restaurant_id)
-            .eq("profile_id", user.id)
+            .eq("auth_user_id", user.id)
             .eq("active", true)
             .maybeSingle();
 
