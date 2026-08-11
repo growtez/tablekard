@@ -1012,7 +1012,7 @@ BEGIN
         IF v_key_secret_id IS NOT NULL THEN
             UPDATE vault.secrets SET secret = p_razorpay_key_secret WHERE id = v_key_secret_id;
         ELSE
-            SELECT id INTO v_key_secret_id FROM vault.create_secret(p_razorpay_key_secret, 'razorpay_key_secret for ' || p_restaurant_id);
+            v_key_secret_id := vault.create_secret(p_razorpay_key_secret, 'razorpay_key_secret for ' || p_restaurant_id);
         END IF;
     END IF;
 
@@ -1020,7 +1020,7 @@ BEGIN
         IF v_webhook_secret_id IS NOT NULL THEN
             UPDATE vault.secrets SET secret = p_razorpay_webhook_secret WHERE id = v_webhook_secret_id;
         ELSE
-            SELECT id INTO v_webhook_secret_id FROM vault.create_secret(p_razorpay_webhook_secret, 'razorpay_webhook_secret for ' || p_restaurant_id);
+            v_webhook_secret_id := vault.create_secret(p_razorpay_webhook_secret, 'razorpay_webhook_secret for ' || p_restaurant_id);
         END IF;
     END IF;
 

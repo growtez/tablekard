@@ -258,17 +258,7 @@ const MyOrderPage = () => {
     setPaymentLoading(true);
     setError('');
 
-    const serviceFeeEnabled = restaurant?.settings?.serviceFeeEnabled === true;
-    const serviceFeeType = restaurant?.settings?.serviceFeeType || 'percentage';
-    const serviceFeeAmountSetting = parseFloat(restaurant?.settings?.serviceFeeAmount) || 0;
-    let serviceFee = 0;
-    if (serviceFeeEnabled && serviceFeeAmountSetting > 0) {
-      if (serviceFeeType === 'percentage') {
-        serviceFee = Math.round((getTotalPrice() * serviceFeeAmountSetting) / 100);
-      } else {
-        serviceFee = serviceFeeAmountSetting;
-      }
-    }
+
 
     try {
       const result = await processOnlinePayment({
@@ -281,7 +271,6 @@ const MyOrderPage = () => {
         userEmail: user?.email || '',
         userPhone: user?.phone || '',
         specialInstructions: orderSpecialInstructions,
-        serviceFee: serviceFee,
         onStatusChange: (status) => setPaymentStatus(status),
       });
 
@@ -352,17 +341,7 @@ const MyOrderPage = () => {
     setPaymentLoading(true);
     setError('');
 
-    const serviceFeeEnabled = restaurant?.settings?.serviceFeeEnabled === true;
-    const serviceFeeType = restaurant?.settings?.serviceFeeType || 'percentage';
-    const serviceFeeAmountSetting = parseFloat(restaurant?.settings?.serviceFeeAmount) || 0;
-    let serviceFee = 0;
-    if (serviceFeeEnabled && serviceFeeAmountSetting > 0) {
-      if (serviceFeeType === 'percentage') {
-        serviceFee = Math.round((getTotalPrice() * serviceFeeAmountSetting) / 100);
-      } else {
-        serviceFee = serviceFeeAmountSetting;
-      }
-    }
+
 
     try {
       const result = await createOrder({
@@ -375,7 +354,6 @@ const MyOrderPage = () => {
         paymentMethod: 'cash',
         type: orderType,
         specialInstructions: orderSpecialInstructions,
-        serviceFee: serviceFee,
       });
 
       const newOrder = {
@@ -959,40 +937,13 @@ const MyOrderPage = () => {
                   <span>- ₹0</span>
                 </div>
                 
-                {(() => {
-                  const serviceFeeEnabled = restaurant?.settings?.serviceFeeEnabled === true;
-                  const serviceFeeType = restaurant?.settings?.serviceFeeType || 'percentage';
-                  const serviceFeeAmountSetting = parseFloat(restaurant?.settings?.serviceFeeAmount) || 0;
-                  
-                  let serviceFee = 0;
-                  if (serviceFeeEnabled && serviceFeeAmountSetting > 0) {
-                    if (serviceFeeType === 'percentage') {
-                      serviceFee = Math.round((getTotalPrice() * serviceFeeAmountSetting) / 100);
-                    } else {
-                      serviceFee = serviceFeeAmountSetting;
-                    }
-                  }
-                  
-                  const finalTotalAmount = getTotalPrice() + serviceFee;
-                  
-                  return (
-                    <>
-                      {serviceFee > 0 && (
-                        <div className="summary-row fee">
-                          <span>Service Fee {serviceFeeType === 'percentage' ? `(${serviceFeeAmountSetting}%)` : ''}</span>
-                          <span>₹{serviceFee}</span>
-                        </div>
-                      )}
-                      <div className="summary-row total" style={{ alignItems: 'flex-start' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <span>Total Amount</span>
-                          <span style={{ fontSize: '11px', fontWeight: '500', color: '#8B3A1E', marginTop: '2px' }}>(Inclusive of all taxes & fees)</span>
-                        </div>
-                        <span>₹{finalTotalAmount}</span>
-                      </div>
-                    </>
-                  );
-                })()}
+                <div className="summary-row total" style={{ alignItems: 'flex-start' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span>Total Amount</span>
+                    <span style={{ fontSize: '11px', fontWeight: '500', color: '#8B3A1E', marginTop: '2px' }}>(Inclusive of all taxes)</span>
+                  </div>
+                  <span>₹{getTotalPrice()}</span>
+                </div>
               </div>
 
               {/* Error Message */}
