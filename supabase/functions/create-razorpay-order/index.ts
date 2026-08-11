@@ -185,6 +185,9 @@ serve(async (req: Request) => {
 
         const RAZORPAY_KEY_ID = paymentSettings.razorpay_key_id;
         const RAZORPAY_KEY_SECRET = secretData.razorpay_key_secret;
+        
+        console.log(`[DEBUG] Key ID: ${RAZORPAY_KEY_ID}`);
+        console.log(`[DEBUG] Key Secret preview: ${RAZORPAY_KEY_SECRET ? RAZORPAY_KEY_SECRET.substring(0, 4) + '...' : 'null'}`);
 
         const taxPercentage = restaurant.settings?.tax_percentage || 0;
         const total = subtotal; // The initial subtotal is the total (inclusive)

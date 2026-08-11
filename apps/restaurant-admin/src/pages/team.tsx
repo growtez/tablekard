@@ -17,7 +17,7 @@ interface TeamMember {
 }
 
 const Team: React.FC = () => {
-  const { activeRestaurantId } = useAuth();
+  const { activeRestaurantId, user } = useAuth();
   
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,6 +122,7 @@ const Team: React.FC = () => {
   };
 
   const toggleMemberStatus = async (member: TeamMember) => {
+    if (member.profile_id === user?.id) return;
     try {
       const { error } = await supabase
         .from('restaurant_users')
@@ -248,7 +249,10 @@ const Team: React.FC = () => {
                     {member.profiles?.name?.charAt(0)?.toUpperCase() || 'U'}
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <span className="font-bold text-[#1A202C] text-[15px] truncate dark:text-tk-text">{member.profiles?.name || 'Unknown'}</span>
+                    <span className="font-bold text-[#1A202C] text-[15px] truncate dark:text-tk-text">
+                      {member.profiles?.name || 'Unknown'}
+                      {member.profile_id === user?.id && ' (You)'}
+                    </span>
                     <span className="text-[12px] font-medium text-[#718096] truncate mt-0.5 dark:text-tk-text-secondary">{member.profiles?.email}</span>
                   </div>
                 </div>
@@ -265,9 +269,9 @@ const Team: React.FC = () => {
                 </span>
 
                 <div
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider cursor-pointer transition-all duration-200 select-none hover:scale-105 ${member.active ? 'bg-[#C6F6D5] text-[#22543D] dark:bg-[rgba(198,246,213,0.15)] dark:text-[#68D391]' : 'bg-[#FED7D7] text-[#742A2A] dark:bg-[rgba(254,215,215,0.15)] dark:text-[#FC8181]'}`}
-                  onClick={() => toggleMemberStatus(member)}
-                  title="Click to toggle status"
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all duration-200 select-none ${member.active ? 'bg-[#C6F6D5] text-[#22543D] dark:bg-[rgba(198,246,213,0.15)] dark:text-[#68D391]' : 'bg-[#FED7D7] text-[#742A2A] dark:bg-[rgba(254,215,215,0.15)] dark:text-[#FC8181]'} ${member.profile_id !== user?.id ? 'cursor-pointer hover:scale-105' : 'cursor-not-allowed opacity-80'}`}
+                  onClick={() => member.profile_id !== user?.id && toggleMemberStatus(member)}
+                  title={member.profile_id === user?.id ? "You cannot change your own status" : "Click to toggle status"}
                 >
                   {member.active ? (
                     <><CheckCircle size={11} /> Active</>
@@ -277,18 +281,20 @@ const Team: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex mt-2">
-                <button
-                  className={`w-full flex items-center justify-center gap-1.5 px-3 py-2 border-none rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 whitespace-nowrap shadow-sm hover:-translate-y-0.5 ${
-                    member.active
-                      ? 'bg-[#FFF5F5] text-[#C53030] hover:bg-[#FED7D7]'
-                      : 'bg-[#F0FDF4] text-[#16A34A] hover:bg-[#DCFCE7]'
-                  }`}
-                  onClick={() => toggleMemberStatus(member)}
-                >
-                  {member.active ? 'Deactivate Member' : 'Activate Member'}
-                </button>
-              </div>
+              {member.profile_id !== user?.id && (
+                <div className="flex mt-2">
+                  <button
+                    className={`w-full flex items-center justify-center gap-1.5 px-3 py-2 border-none rounded-lg text-xs font-semibold transition-all duration-200 whitespace-nowrap shadow-sm ${
+                      member.active
+                        ? 'bg-[#FFF5F5] text-[#C53030] hover:bg-[#FED7D7] cursor-pointer hover:-translate-y-0.5'
+                        : 'bg-[#F0FDF4] text-[#16A34A] hover:bg-[#DCFCE7] cursor-pointer hover:-translate-y-0.5'
+                    }`}
+                    onClick={() => toggleMemberStatus(member)}
+                  >
+                    {member.active ? 'Deactivate Member' : 'Activate Member'}
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>
