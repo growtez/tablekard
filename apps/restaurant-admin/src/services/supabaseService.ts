@@ -155,9 +155,7 @@ const mapRestaurantRow = (row: RestaurantRow): Restaurant => ({
     },
     settings: {
         ...(row.settings || {}),
-        serviceFeeEnabled: row.settings?.serviceFeeEnabled as boolean | undefined,
-        serviceFeeType: row.settings?.serviceFeeType as 'percentage' | 'flat' | undefined,
-        serviceFeeAmount: row.settings?.serviceFeeAmount as number | undefined,
+
     },
     subscriptionStatus: row.subscription_status,
     subscriptionType: row.subscription_type,

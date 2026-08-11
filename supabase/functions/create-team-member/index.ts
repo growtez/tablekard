@@ -58,7 +58,7 @@ serve(async (req: Request) => {
         const { data: adminRecord, error: adminCheckError } = await supabaseAdmin
             .from("restaurant_users")
             .select("role")
-            .eq("profile_id", callerId)
+            .eq("auth_user_id", callerId)
             .eq("restaurant_id", restaurant_id)
             .single();
 
@@ -111,9 +111,11 @@ serve(async (req: Request) => {
             .from('restaurant_users')
             .insert({
                 restaurant_id: restaurant_id,
-                profile_id: newUserId,
+                auth_user_id: newUserId,
                 role: role,
-                active: true
+                active: true,
+                name: name,
+                email: email.trim().toLowerCase()
             });
 
         if (restUserError) {

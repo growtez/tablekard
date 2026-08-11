@@ -126,9 +126,7 @@ export interface Restaurant {
     razorpayKeyId?: string | null;
     razorpayKeySecret?: string | null;
     allowPayAtCounter?: boolean;
-    serviceFeeEnabled?: boolean;
-    serviceFeeType?: 'percentage' | 'flat';
-    serviceFeeAmount?: number;
+
   };
   subscriptionStatus?: boolean;
   subscriptionType?: string | null;

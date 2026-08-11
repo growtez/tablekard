@@ -1010,18 +1010,16 @@ BEGIN
 
     IF p_razorpay_key_secret IS NOT NULL THEN
         IF v_key_secret_id IS NOT NULL THEN
-            UPDATE vault.secrets SET secret = p_razorpay_key_secret WHERE id = v_key_secret_id;
-        ELSE
-            SELECT id INTO v_key_secret_id FROM vault.create_secret(p_razorpay_key_secret, 'razorpay_key_secret for ' || p_restaurant_id);
+            DELETE FROM vault.secrets WHERE id = v_key_secret_id;
         END IF;
+        v_key_secret_id := vault.create_secret(p_razorpay_key_secret, 'razorpay_key_secret for ' || p_restaurant_id);
     END IF;
 
     IF p_razorpay_webhook_secret IS NOT NULL THEN
         IF v_webhook_secret_id IS NOT NULL THEN
-            UPDATE vault.secrets SET secret = p_razorpay_webhook_secret WHERE id = v_webhook_secret_id;
-        ELSE
-            SELECT id INTO v_webhook_secret_id FROM vault.create_secret(p_razorpay_webhook_secret, 'razorpay_webhook_secret for ' || p_restaurant_id);
+            DELETE FROM vault.secrets WHERE id = v_webhook_secret_id;
         END IF;
+        v_webhook_secret_id := vault.create_secret(p_razorpay_webhook_secret, 'razorpay_webhook_secret for ' || p_restaurant_id);
     END IF;
 
     INSERT INTO public.restaurant_payment_settings (
@@ -1088,8 +1086,8 @@ AS $$
 BEGIN
     RETURN QUERY
     SELECT 
-        k.secret AS razorpay_key_secret,
-        w.secret AS razorpay_webhook_secret
+        k.decrypted_secret AS razorpay_key_secret,
+        w.decrypted_secret AS razorpay_webhook_secret
     FROM public.restaurant_payment_settings rps
     LEFT JOIN vault.decrypted_secrets k ON k.id = rps.razorpay_key_secret_id
     LEFT JOIN vault.decrypted_secrets w ON w.id = rps.razorpay_webhook_secret_id
