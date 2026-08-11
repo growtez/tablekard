@@ -1,28 +1,27 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
-  ChefHat,
+  
   CreditCardIcon,
   Crosshair,
   Edit3,
   ExternalLink,
-  Key,
+  
   LogOut,
   MailIcon,
   MapPinIcon,
   PhoneIcon,
   Save,
-  ShieldCheck,
+  
   Check,
   X,
-  XCircle,
+  
 } from "lucide-react";
 import type { Restaurant } from "@restaurant-saas/types";
 import { useAuth } from "../../context/AuthContext";
 import {
   getRestaurantById,
-  getRestaurantPaymentSettings,
-  updateAdministratorProfile,
+    updateAdministratorProfile,
   updateRestaurantProfile,
 } from "../../services/supabaseService";
 import { supabase } from '@restaurant-saas/supabase';
@@ -244,38 +243,11 @@ const ProfilePage: React.FC = () => {
   const [isRestaurantSaving, setIsRestaurantSaving] = useState(false);
   const [isAdminSaving, setIsAdminSaving] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [activeTab, setActiveTab] = useState<
-    "general" | "branding" | "story" | "payments" | "admin" | "features"
-  >("general");
-
+  
   // Confirm modal state
-  const [confirmModal, setConfirmModal] = useState<{
-    open: boolean;
-    title: string;
-    description: string;
-    warning: string;
-    confirmLabel: string;
-    confirmColor: string;
-    onConfirm: () => Promise<void>;
-  }>({
-    open: false, title: '', description: '', warning: '',
-    confirmLabel: 'Confirm', confirmColor: '#EF4444',
-    onConfirm: async () => { },
-  });
-  const [confirmLoading, setConfirmLoading] = useState(false);
-  const [showPaymentSetupModal, setShowPaymentSetupModal] = useState(false);
-  const [paymentSetupForm, setPaymentSetupForm] = useState({ razorpayKeyId: '', razorpayKeySecret: '', razorpayWebhookSecret: '' });
-  const [paymentSetupSaving, setPaymentSetupSaving] = useState(false);
-  const [paymentSetupError, setPaymentSetupError] = useState<string | null>(null);
-
+            
   // Payment settings state
-  const [paymentSettings, setPaymentSettings] = useState({
-    razorpayKeyId: "",
-    hasRazorpayKeySecret: false,
-    hasRazorpayWebhookSecret: false,
-    onlinePaymentsEnabled: false,
-  });
-
+  
 
 
 
@@ -334,19 +306,9 @@ const ProfilePage: React.FC = () => {
       try {
         setIsLoading(true);
         setFeedback(null);
-        const [data, pmtSettings] = await Promise.all([
-          getRestaurantById(activeRestaurantId),
-          getRestaurantPaymentSettings(activeRestaurantId),
-        ]);
+        const data = await getRestaurantById(activeRestaurantId);
         setRestaurant(data);
         setRestaurantForm(data ? createRestaurantFormState(data) : null);
-        const ps = {
-          razorpayKeyId: pmtSettings.razorpayKeyId ?? "",
-          hasRazorpayKeySecret: pmtSettings.hasRazorpayKeySecret ?? false,
-          hasRazorpayWebhookSecret: pmtSettings.hasRazorpayWebhookSecret ?? false,
-          onlinePaymentsEnabled: pmtSettings.onlinePaymentsEnabled,
-        };
-        setPaymentSettings(ps);
 
       } catch (error: unknown) {
         console.error("Error fetching restaurant context:", error);
@@ -788,644 +750,87 @@ const ProfilePage: React.FC = () => {
       return null;
     }
 
-    return (
-      <div className="flex flex-col gap-6">
-        <div
-          className={activeTab === "general" ? "grid grid-cols-1 lg:grid-cols-2 gap-6" : "hidden"}
-        >
-          <div className="border border-[#E2E8F0] rounded-[18px] p-4 sm:p-[18px] bg-white dark:bg-tk-bg-card dark:border-tk-border">
-            <div className="flex flex-wrap justify-between items-start gap-3 mb-4">
-              <div className="min-w-0">
-                <h3 className="font-bold">Core Identity</h3>
-              </div>
-              <div className="shrink-0">{renderRestaurantActions("core")}</div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Restaurant Name</span>
-                <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">{restaurant?.name}</span>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Restaurant Page URL</span>
-                <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
-                  <a
-                    href={`https://tablekard.com/${restaurant?.slug || restaurant?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || ''}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 w-fit text-[#2B6CB0] text-[14px] font-medium no-underline break-all font-['Outfit',sans-serif] hover:underline dark:text-[#90CDF4]"
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "4px",
-                    }}
-                  >
-                    tablekard.com/{restaurant?.slug || restaurant?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || ''}{" "}
-                    <ExternalLink size={14} />
-                  </a>
-                </span>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Tagline</span>
-                <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
-                  {restaurant?.tagline || "Not set"}
-                </span>
-              </div>
-
-
-
-
-
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Subscription Status</span>
-                <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text inline-flex items-center gap-2">
-                  <CreditCardIcon
-                    size={15}
-                    style={{
-                      color: restaurant?.subscriptionStatus
-                        ? "#48BB78"
-                        : "#A0AEC0",
-                    }}
-                  />
-                  {restaurant?.subscriptionStatus ? "Active" : "Inactive"}
-                  {restaurant?.subscriptionType
-                    ? ` (${restaurant.subscriptionType})`
-                    : ""}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="border border-[#E2E8F0] rounded-[18px] p-4 sm:p-[18px] bg-white dark:bg-tk-bg-card dark:border-tk-border">
-            <div className="flex flex-wrap justify-between items-start gap-3 mb-4">
-              <div className="min-w-0">
-                <h3 className="font-bold">Contact & Operating Hours</h3>
-              </div>
-              <div className="shrink-0">{renderRestaurantActions("contact")}</div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div
-                className="col-span-1 sm:col-span-2"
-                style={{
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  color: "#718096",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
-                  borderBottom: "1px solid #EDF2F7",
-                  paddingBottom: "8px",
-                  marginBottom: "8px",
-                }}
-              >
-                Contact Information
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text inline-flex items-center gap-2">
-                  <MailIcon size={15} />
-                  {restaurant?.contact.email || "N/A"}
-                </span>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text inline-flex items-center gap-2">
-                  <PhoneIcon size={15} />
-                  {restaurant?.contact.phone || "N/A"}
-                </span>
-              </div>
-
-              <div className="flex flex-col gap-1.5 sm:col-span-2">
-                <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text inline-flex items-center gap-2">
-                  <MapPinIcon size={15} />
-                  {restaurant?.contact.address || "N/A"}
-                </span>
-              </div>
-
-              <div
-                className="col-span-1 sm:col-span-2"
-                style={{
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  color: "#718096",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
-                  borderBottom: "1px solid #EDF2F7",
-                  paddingBottom: "8px",
-                  marginTop: "16px",
-                  marginBottom: "8px",
-                }}
-              >
-                Operating Hours
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
-                  Operating Hours (Weekdays)
-                </span>
-                <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
-                  {restaurant?.operatingHoursWeekdays || "Not set"}
-                </span>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
-                  Operating Hours (Weekends)
-                </span>
-                <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
-                  {restaurant?.operatingHoursWeekends || "Not set"}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div
-          className="border border-[#E2E8F0] rounded-[18px] p-4 sm:p-[18px] bg-white dark:bg-tk-bg-card dark:border-tk-border"
-          style={{ display: activeTab === "branding" ? "block" : "none" }}
-        >
-          <div className="flex flex-wrap justify-between items-start gap-3 mb-4">
-            <div className="min-w-0">
-              <h3 className="font-bold">Location</h3>
-              <p>Where to find you.</p>
-            </div>
-            <div className="shrink-0">{renderRestaurantActions("branding")}</div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Location</span>
-              <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text inline-flex items-center gap-2">
-                <MapPinIcon size={15} />
-                {restaurant ? `${formatCoordinate(restaurant.location?.latitude)}, ${formatCoordinate(restaurant.location?.longitude)}` : "N/A"}
-              </span>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Access Area Radius</span>
-              <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
-                {restaurant?.location?.allowedRadius != null
-                  ? `${restaurant.location.allowedRadius} meters`
-                  : "Not set"}
-              </span>
-            </div>
-
-
-
-
-          </div>
-        </div>
-
-        {/* Our Story & Additional Info */}
-        <div
-          className="border border-[#E2E8F0] rounded-[18px] p-4 sm:p-[18px] bg-white dark:bg-tk-bg-card dark:border-tk-border"
-          style={{ display: activeTab === "story" ? "block" : "none" }}
-        >
-          <div className="flex flex-wrap justify-between items-start gap-3 mb-4">
-            <div className="min-w-0">
-              <h3 className="font-bold">Our Story & Socials</h3>
-              <p>Tell your customers about your restaurant.</p>
-            </div>
-            <div className="shrink-0">{renderRestaurantActions("story")}</div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Opening Date</span>
-              <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
-                {restaurant?.openingDate || "Not set"}
-              </span>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Manifesto</span>
-              <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
-                {restaurant?.manifesto || "Not set"}
-              </span>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Instagram</span>
-              <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
-                {restaurant?.instagramUrl ? (
-                  <a
-                    href={restaurant.instagramUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 w-fit text-[#2B6CB0] text-[14px] font-medium no-underline break-all font-['Outfit',sans-serif] hover:underline dark:text-[#90CDF4]"
-                  >
-                    {restaurant.instagramUrl} <ExternalLink size={14} />
-                  </a>
-                ) : (
-                  "Not set"
-                )}
-              </span>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Facebook</span>
-              <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
-                {restaurant?.facebookUrl ? (
-                  <a
-                    href={restaurant.facebookUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 w-fit text-[#2B6CB0] text-[14px] font-medium no-underline break-all font-['Outfit',sans-serif] hover:underline dark:text-[#90CDF4]"
-                  >
-                    {restaurant.facebookUrl} <ExternalLink size={14} />
-                  </a>
-                ) : (
-                  "Not set"
-                )}
-              </span>
-            </div>
-
-            <div className="flex flex-col gap-1.5 sm:col-span-2">
-              <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Website</span>
-              <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
-                {restaurant?.websiteUrl ? (
-                  <a
-                    href={restaurant.websiteUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 w-fit text-[#2B6CB0] text-[14px] font-medium no-underline break-all font-['Outfit',sans-serif] hover:underline dark:text-[#90CDF4]"
-                  >
-                    {restaurant.websiteUrl} <ExternalLink size={14} />
-                  </a>
-                ) : (
-                  "Not set"
-                )}
-              </span>
-            </div>
-          </div>
+    const Row = ({ label, children }: { label: string, children: React.ReactNode }) => (
+      <div className="grid grid-cols-[30%_1fr] gap-4 py-5 border-b border-[#E2E8F0] dark:border-tk-border items-center">
+        <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
+          {label}
+        </span>
+        <div className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text flex justify-between items-center w-full">
+          {children}
         </div>
       </div>
     );
-  }
-
-  // ── helpers used inside Features tab ────────────────────────────────────
-
-  // ── helpers used inside Features tab ────────────────────────────────────
-  const featureBadge = (on: boolean) => (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 5,
-      padding: '3px 10px', borderRadius: 20,
-      fontSize: 12, fontWeight: 600, fontFamily: "'Outfit',sans-serif",
-      background: on ? 'rgba(22,163,74,0.10)' : 'rgba(239,68,68,0.10)',
-      color: on ? '#15803D' : '#B91C1C',
-      border: `1px solid ${on ? 'rgba(22,163,74,0.22)' : 'rgba(239,68,68,0.22)'}`,
-    }}>
-      <span style={{ width: 6, height: 6, borderRadius: '50%', background: on ? '#16A34A' : '#EF4444', display: 'inline-block' }} />
-      {on ? 'Active' : 'Inactive'}
-    </span>
-  );
-
-  const ToggleKnob = ({ on }: { on: boolean }) => (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={on}
-      onClick={() => { }}
-      style={{
-        position: 'relative', display: 'inline-flex', alignItems: 'center',
-        width: 52, height: 28, borderRadius: 9999, border: 'none', cursor: 'pointer',
-        flexShrink: 0, transition: 'background-color 0.25s', padding: 0,
-        backgroundColor: on ? '#8B3A1E' : '#CBD5E0',
-      }}
-    >
-      <span style={{
-        display: 'block', width: 22, height: 22, borderRadius: '50%', backgroundColor: '#fff',
-        boxShadow: '0 1px 4px rgba(0,0,0,0.25)', transition: 'transform 0.25s',
-        transform: `translateX(${on ? 27 : 3}px)`,
-      }} />
-    </button>
-  );
-
-  const triggerConfirm = (
-    title: string, description: string, warning: string,
-    confirmLabel: string, confirmColor: string,
-    action: () => Promise<void>
-  ) => {
-    setConfirmModal({ open: true, title, description, warning, confirmLabel, confirmColor, onConfirm: action });
-  };
-
-  const handlePayOnlineFeatureToggle = () => {
-    const on = (restaurant as any)?.pay_online === true || restaurantForm?.payOnline === true;
-    if (!on) {
-      // turning ON — need credentials
-      const hasAll = !!paymentSettings.razorpayKeyId && paymentSettings.hasRazorpayKeySecret;
-      if (!hasAll) {
-        setPaymentSetupForm({ razorpayKeyId: '', razorpayKeySecret: '', razorpayWebhookSecret: '' });
-        setPaymentSetupError(null);
-        setShowPaymentSetupModal(true);
-        return;
-      }
-      triggerConfirm(
-        'Enable Online Payments?',
-        'Customers will be able to pay online via Razorpay. Make sure your Razorpay account is active.',
-        'This allows real money transactions on your storefront.',
-        'Enable Payments', '#16A34A',
-        async () => {
-          if (!activeRestaurantId) return;
-          await updateRestaurantProfile(activeRestaurantId, { pay_online: true });
-          const updated = await getRestaurantById(activeRestaurantId);
-          if (updated) { setRestaurant(updated); setRestaurantForm(createRestaurantFormState(updated)); }
-          setFeedback({ tone: 'success', message: 'Online payments enabled.' });
-        }
-      );
-    } else {
-      triggerConfirm(
-        'Disable Online Payments?',
-        'The "Pay Online" button will be removed from your storefront. Customers can only pay at the counter.',
-        'Ensure there are no in-progress payments before disabling.',
-        'Disable Payments', '#EF4444',
-        async () => {
-          if (!activeRestaurantId) return;
-          await updateRestaurantProfile(activeRestaurantId, { pay_online: false });
-          const updated = await getRestaurantById(activeRestaurantId);
-          if (updated) { setRestaurant(updated); setRestaurantForm(createRestaurantFormState(updated)); }
-          setFeedback({ tone: 'success', message: 'Online payments disabled.' });
-        }
-      );
-    }
-  };
-
-  const handleKitchenFeatureToggle = () => {
-    const on = (restaurant as any)?.kitchen_app_enabled !== false;
-    if (!on) {
-      triggerConfirm(
-        'Enable Kitchen Web App?',
-        'Kitchen staff will be able to log in. Customers will see the Live Queue button.',
-        'Ensure kitchen staff accounts are set up before enabling.',
-        'Enable Kitchen App', '#16A34A',
-        async () => {
-          if (!activeRestaurantId) return;
-          await updateRestaurantProfile(activeRestaurantId, { kitchen_app_enabled: true });
-          const updated = await getRestaurantById(activeRestaurantId);
-          if (updated) { setRestaurant(updated); setRestaurantForm(createRestaurantFormState(updated)); }
-          setFeedback({ tone: 'success', message: 'Kitchen App enabled.' });
-        }
-      );
-    } else {
-      triggerConfirm(
-        'Disable Kitchen Web App?',
-        'Kitchen staff will be locked out. The Live Queue button will be hidden from all customers immediately.',
-        'Any kitchen staff currently logged in will see a "Disabled" screen.',
-        'Disable Kitchen App', '#EF4444',
-        async () => {
-          if (!activeRestaurantId) return;
-          await updateRestaurantProfile(activeRestaurantId, { kitchen_app_enabled: false });
-          const updated = await getRestaurantById(activeRestaurantId);
-          if (updated) { setRestaurant(updated); setRestaurantForm(createRestaurantFormState(updated)); }
-          setFeedback({ tone: 'success', message: 'Kitchen App disabled.' });
-        }
-      );
-    }
-  };
-
-  function renderFeaturesTab(): React.ReactNode {
-    const payOn = (restaurant as any)?.pay_online === true;
-    const kitchenOn = (restaurant as any)?.kitchen_app_enabled !== false;
-
-    const cardCls = "border border-[#E2E8F0] rounded-[24px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] overflow-hidden bg-white dark:bg-tk-bg-card dark:border-tk-border";
-    const sectionHeaderCls = "flex items-center gap-3 px-5 py-4 border-b border-[#E2E8F0] dark:border-tk-border bg-[#F8FAFC] dark:bg-tk-bg-elevated";
-    const rowCls = "flex items-start justify-between gap-4 px-5 py-5 flex-wrap";
-    const credRowCls = "flex items-center justify-between px-5 py-3 border-t border-[#E2E8F0] dark:border-tk-border text-[13px] font-['Outfit',sans-serif]";
 
     return (
-      <div style={{ display: activeTab === 'features' ? 'block' : 'none' }}>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          {/* ── Card: Online Payments ─────────────────────────────────────────── */}
-          <div className={cardCls}>
-            <div className={sectionHeaderCls}>
-              <div style={{ width: 36, height: 36, borderRadius: 9, background: 'linear-gradient(135deg,#8B3A1E,#6B2A15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <CreditCardIcon size={16} color="#fff" />
-              </div>
-              <div>
-                <div className="text-[15px] font-bold text-[#1A202C] font-['Outfit',sans-serif] dark:text-tk-text">Online Payments · Razorpay</div>
-                <div className="text-[12px] text-[#64748B] font-['Outfit',sans-serif]">Let customers pay via UPI, Cards &amp; Net Banking</div>
-              </div>
-            </div>
+      <div className="flex flex-col gap-0 w-full max-w-5xl">
+        {/* Core Identity */}
+        <Row label="Restaurant Name">
+          <span>{restaurant?.name}</span>
+          {renderRestaurantActions("core")}
+        </Row>
+        <Row label="Restaurant Page URL">
+          <a
+            href={`https://tablekard.com/${restaurant?.slug || restaurant?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || ''}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 w-fit text-[#2B6CB0] text-[14px] font-medium no-underline break-all font-['Outfit',sans-serif] hover:underline dark:text-[#90CDF4]"
+          >
+            tablekard.com/{restaurant?.slug || restaurant?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || ''} <ExternalLink size={14} />
+          </a>
+        </Row>
+        <Row label="Tagline">{restaurant?.tagline || "Not set"}</Row>
+        <Row label="Subscription Status">
+          <span className="inline-flex items-center gap-2">
+            <CreditCardIcon size={15} style={{ color: restaurant?.subscriptionStatus ? "#48BB78" : "#A0AEC0" }} />
+            {restaurant?.subscriptionStatus ? "Active" : "Inactive"}
+            {restaurant?.subscriptionType ? ` (${restaurant.subscriptionType})` : ""}
+          </span>
+        </Row>
 
-            {/* Toggle row */}
-            <div className={rowCls}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-                  <span className="text-[15px] font-semibold text-[#1A202C] font-['Outfit',sans-serif] dark:text-tk-text">Enable Pay Online</span>
-                  {featureBadge(payOn)}
-                </div>
-                <p className="text-[13px] text-[#64748B] font-['Outfit',sans-serif]" style={{ margin: 0, lineHeight: 1.5 }}>
-                  When enabled, the "Pay Online" button appears at checkout.
-                  {!payOn && (!paymentSettings.razorpayKeyId || !paymentSettings.hasRazorpayKeySecret) && (
-                    <span style={{ color: '#F59E0B', display: 'block', marginTop: 4 }}>⚠ Razorpay API Keys not configured yet.</span>
-                  )}
-                </p>
-              </div>
-              <div onClick={handlePayOnlineFeatureToggle} style={{ cursor: 'pointer' }}>
-                <ToggleKnob on={payOn} />
-              </div>
-            </div>
+        {/* Contact Information */}
+        <Row label="Email Address">
+          <span className="inline-flex items-center gap-2">
+            <MailIcon size={15} />{restaurant?.contact.email || "N/A"}
+          </span>
+          {renderRestaurantActions("contact")}
+        </Row>
+        <Row label="Phone Number">
+          <span className="inline-flex items-center gap-2">
+            <PhoneIcon size={15} />{restaurant?.contact.phone || "N/A"}
+          </span>
+        </Row>
+        <Row label="Address">
+          <span className="inline-flex items-center gap-2">
+            <MapPinIcon size={15} />{restaurant?.contact.address || "N/A"}
+          </span>
+        </Row>
 
-            {/* Credential status rows */}
-            <div className={credRowCls}>
-              <span className="text-[#64748B] dark:text-tk-text-secondary flex items-center gap-1.5"><Key size={12} /> Key ID</span>
-              <span style={{ color: paymentSettings.razorpayKeyId ? '#15803D' : '#94A3B8', fontWeight: 500 }}>
-                {paymentSettings.razorpayKeyId ? paymentSettings.razorpayKeyId : 'Not set'}
-              </span>
-            </div>
-            <div className={credRowCls}>
-              <span className="text-[#64748B] dark:text-tk-text-secondary flex items-center gap-1.5"><Key size={12} /> Key Secret</span>
-              <span style={{ color: paymentSettings.hasRazorpayKeySecret ? '#15803D' : '#94A3B8', fontWeight: 500 }}>
-                {paymentSettings.hasRazorpayKeySecret ? '••••••••' : 'Not set'}
-              </span>
-            </div>
-            <div className={credRowCls}>
-              <span className="text-[#64748B] dark:text-tk-text-secondary flex items-center gap-1.5"><Key size={12} /> Webhook Secret</span>
-              <span style={{ color: paymentSettings.hasRazorpayWebhookSecret ? '#15803D' : '#94A3B8', fontWeight: 500 }}>
-                {paymentSettings.hasRazorpayWebhookSecret ? '••••••••' : 'Not set'}
-              </span>
-            </div>
+        {/* Operating Hours */}
+        <Row label="Operating Hours (Weekdays)">{restaurant?.operatingHoursWeekdays || "Not set"}</Row>
+        <Row label="Operating Hours (Weekends)">{restaurant?.operatingHoursWeekends || "Not set"}</Row>
+        
+        {/* Location */}
+        <Row label="Location Coordinates">
+          <span className="inline-flex items-center gap-2">
+            <MapPinIcon size={15} />
+            {restaurant ? `${formatCoordinate(restaurant.location?.latitude)}, ${formatCoordinate(restaurant.location?.longitude)}` : "N/A"}
+          </span>
+          {renderRestaurantActions("branding")}
+        </Row>
+        <Row label="Access Area Radius">
+          {restaurant?.location?.allowedRadius != null ? `${restaurant.location.allowedRadius} meters` : "Not set"}
+        </Row>
 
-            {/* Update credentials button */}
-            <div style={{ padding: '14px 20px', borderTop: '1px solid var(--tk-border,#E2E8F0)' }}>
-              <button
-                type="button"
-                onClick={() => { setPaymentSetupForm({ razorpayKeyId: paymentSettings.razorpayKeyId || '', razorpayKeySecret: '', razorpayWebhookSecret: '' }); setPaymentSetupError(null); setShowPaymentSetupModal(true); }}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-tk-burgundy text-tk-burgundy text-[13px] font-semibold font-['Outfit',sans-serif] bg-transparent cursor-pointer transition-all hover:bg-[rgba(139,58,30,0.06)]"
-              >
-                <CreditCardIcon size={13} />{paymentSettings.razorpayKeyId ? 'Update API Keys' : 'Configure Razorpay API'}
-              </button>
-            </div>
-          </div>
+        {/* Story */}
+        <Row label="Opening Date">
+          <span>{restaurant?.openingDate || "Not set"}</span>
+          {renderRestaurantActions("story")}
+        </Row>
+        <Row label="Manifesto">{restaurant?.manifesto || "Not set"}</Row>
 
-          {/* ── Card: Kitchen Web App ─────────────────────────────────────────── */}
-          <div className={cardCls}>
-            <div className={sectionHeaderCls}>
-              <div style={{ width: 36, height: 36, borderRadius: 9, background: 'linear-gradient(135deg,#1E40AF,#1E3A8A)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <ChefHat size={16} color="#fff" />
-              </div>
-              <div>
-                <div className="text-[15px] font-bold text-[#1A202C] font-['Outfit',sans-serif] dark:text-tk-text">Kitchen Web App &amp; Live Queue</div>
-                <div className="text-[12px] text-[#64748B] font-['Outfit',sans-serif]">Kitchen display system &amp; customer-facing live queue</div>
-              </div>
-            </div>
-
-            {/* Toggle row */}
-            <div className={rowCls}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-                  <span className="text-[15px] font-semibold text-[#1A202C] font-['Outfit',sans-serif] dark:text-tk-text">Enable Kitchen App</span>
-                  {featureBadge(kitchenOn)}
-                </div>
-                <p className="text-[13px] text-[#64748B] font-['Outfit',sans-serif]" style={{ margin: 0, lineHeight: 1.5 }}>
-                  When enabled, kitchen staff can log in and customers see the Live Queue button everywhere.
-                </p>
-              </div>
-              <div onClick={handleKitchenFeatureToggle} style={{ cursor: 'pointer' }}>
-                <ToggleKnob on={kitchenOn} />
-              </div>
-            </div>
-
-            {/* Impact list */}
-            <div style={{ padding: '14px 20px', borderTop: '1px solid var(--tk-border,#E2E8F0)' }}>
-              <div className="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-[0.5px] font-['Outfit',sans-serif]" style={{ marginBottom: 10 }}>
-                Disabling will affect:
-              </div>
-              {['Kitchen Web App login for staff', 'Live Queue button on storefront', 'Live Queue in hamburger menu', 'Direct access to /live-queue page'].map((item, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#475569', marginBottom: 6, fontFamily: "'Outfit',sans-serif" }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: kitchenOn ? '#EF4444' : '#16A34A', flexShrink: 0 }} />
-                  {item}
-                </div>
-              ))}
-            </div>
-          </div>
-
-
-        </div>
-
-        {/* ── Confirmation Modal ────────────────────────────────────────────── */}
-        {confirmModal.open && (
-          <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', padding: 20 }}>
-            <div style={{ background: 'var(--tk-bg-surface,#fff)', borderRadius: 20, padding: '32px 28px', maxWidth: 430, width: '100%', boxShadow: '0 24px 60px rgba(0,0,0,0.22)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
-                <div style={{ width: 46, height: 46, borderRadius: 12, background: 'rgba(245,158,11,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <AlertTriangle size={22} color="#F59E0B" />
-                </div>
-                <button onClick={() => setConfirmModal(m => ({ ...m, open: false }))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}><X size={18} /></button>
-              </div>
-              <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--tk-text,#1A202C)', margin: '0 0 8px', fontFamily: "'Outfit',sans-serif" }}>{confirmModal.title}</h3>
-              <p style={{ fontSize: 14, color: '#64748B', lineHeight: 1.6, margin: '0 0 14px', fontFamily: "'Outfit',sans-serif" }}>{confirmModal.description}</p>
-              <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#92400E', display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 22, fontFamily: "'Outfit',sans-serif" }}>
-                <AlertTriangle size={13} style={{ flexShrink: 0, marginTop: 1 }} />{confirmModal.warning}
-              </div>
-              <div style={{ display: 'flex', gap: 10 }}>
-                <button
-                  type="button"
-                  onClick={() => setConfirmModal(m => ({ ...m, open: false }))}
-                  disabled={confirmLoading}
-                  style={{ flex: 1, padding: '11px 16px', borderRadius: 10, border: '1.5px solid #E2E8F0', background: 'transparent', color: 'var(--tk-text,#1A202C)', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}
-                >Cancel</button>
-                <button
-                  type="button"
-                  disabled={confirmLoading}
-                  onClick={async () => {
-                    setConfirmLoading(true);
-                    try { await confirmModal.onConfirm(); setConfirmModal(m => ({ ...m, open: false })); }
-                    catch (err: any) { setFeedback({ tone: 'error', message: err?.message ?? 'Failed.' }); }
-                    finally { setConfirmLoading(false); }
-                  }}
-                  style={{ flex: 1, padding: '11px 16px', borderRadius: 10, border: 'none', background: confirmModal.confirmColor, color: '#fff', fontSize: 14, fontWeight: 600, cursor: confirmLoading ? 'not-allowed' : 'pointer', opacity: confirmLoading ? 0.7 : 1, fontFamily: "'Outfit',sans-serif" }}
-                >{confirmLoading ? 'Saving…' : confirmModal.confirmLabel}</button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ── Payment Setup Modal ───────────────────────────────────────────── */}
-        {showPaymentSetupModal && (
-          <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', padding: 20 }}>
-            <div style={{ background: 'var(--tk-bg-surface,#fff)', borderRadius: 20, padding: '32px 28px', maxWidth: 490, width: '100%', boxShadow: '0 24px 60px rgba(0,0,0,0.22)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 42, height: 42, borderRadius: 10, background: 'linear-gradient(135deg,#8B3A1E,#6B2A15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <CreditCardIcon size={18} color="#fff" />
-                  </div>
-                  <div>
-                    <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--tk-text,#1A202C)', margin: 0, fontFamily: "'Outfit',sans-serif" }}>Setup Razorpay</h3>
-                    <p style={{ fontSize: 12, color: '#64748B', margin: 0, fontFamily: "'Outfit',sans-serif" }}>Connect your Razorpay account to receive payouts</p>
-                  </div>
-                </div>
-                <button onClick={() => setShowPaymentSetupModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}><X size={18} /></button>
-              </div>
-
-              {/* Bank Details Fields */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {[
-                  { icon: <Key size={12} />, label: 'Razorpay Key ID', key: 'razorpayKeyId', placeholder: 'e.g. rzp_live_xxxxxxxx', type: 'text' },
-                  { icon: <ShieldCheck size={12} />, label: 'Razorpay Key Secret', key: 'razorpayKeySecret', placeholder: 'e.g. xxxxxxxx', type: 'password' },
-                  { icon: <ShieldCheck size={12} />, label: 'Razorpay Webhook Secret', key: 'razorpayWebhookSecret', placeholder: 'e.g. your_webhook_secret', type: 'password' },
-                ].map(f => (
-                  <div key={f.key}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6, fontFamily: "'Outfit',sans-serif" }}>
-                      {f.icon}{f.label}
-                    </label>
-                    <input
-                      type={f.type as any}
-                      placeholder={f.placeholder}
-                      value={(paymentSetupForm as any)[f.key]}
-                      onChange={e => setPaymentSetupForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                      autoComplete="off"
-                      className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                    />
-                  </div>
-                ))}
-              </div>
-
-              {paymentSetupError && (
-                <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, fontSize: 13, color: '#B91C1C', display: 'flex', gap: 8, alignItems: 'center', fontFamily: "'Outfit',sans-serif" }}>
-                  <XCircle size={13} />{paymentSetupError}
-                </div>
-              )}
-              <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
-                <button type="button" onClick={() => setShowPaymentSetupModal(false)} style={{ flex: 1, padding: '11px 16px', borderRadius: 10, border: '1.5px solid #E2E8F0', background: 'transparent', color: 'var(--tk-text,#1A202C)', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}>Cancel</button>
-                <button
-                  type="button"
-                  disabled={paymentSetupSaving || !paymentSetupForm.razorpayKeyId.trim() || (!paymentSettings.hasRazorpayKeySecret && !paymentSetupForm.razorpayKeySecret.trim()) || (!paymentSettings.hasRazorpayWebhookSecret && !paymentSetupForm.razorpayWebhookSecret.trim())}
-                  onClick={async () => {
-                    setPaymentSetupSaving(true); setPaymentSetupError(null);
-                    try {
-                      if (!activeRestaurantId) return;
-                      const { data, error } = await (supabase.rpc as any)('upsert_restaurant_payment_settings', {
-                        p_restaurant_id: activeRestaurantId,
-                        p_razorpay_key_id: paymentSetupForm.razorpayKeyId.trim(),
-                        p_razorpay_key_secret: paymentSetupForm.razorpayKeySecret.trim() || null,
-                        p_razorpay_webhook_secret: paymentSetupForm.razorpayWebhookSecret.trim() || null,
-                        p_online_payments_enabled: true,
-                        p_razorpay_linked_account_id: null
-                      });
-                      if (error) throw error;
-
-                      // Update local state since edge function updated DB
-                      setPaymentSettings({
-                        ...paymentSettings,
-                        razorpayKeyId: data?.razorpay_key_id,
-                        hasRazorpayKeySecret: data?.has_razorpay_key_secret,
-                        hasRazorpayWebhookSecret: data?.has_razorpay_webhook_secret,
-                        onlinePaymentsEnabled: true
-                      });
-                      await updateRestaurantProfile(activeRestaurantId, { pay_online: true });
-                      setShowPaymentSetupModal(false);
-                      setFeedback({ tone: 'success', message: 'Razorpay API credentials saved and payments enabled!' });
-                    } catch (err: any) {
-                      setPaymentSetupError(err?.message ?? 'Failed to save Razorpay API credentials.');
-                    } finally { setPaymentSetupSaving(false); }
-                  }}
-                  style={{ flex: 1, padding: '11px 16px', borderRadius: 10, border: 'none', background: (!paymentSetupForm.razorpayKeyId.trim() || (!paymentSettings.hasRazorpayKeySecret && !paymentSetupForm.razorpayKeySecret.trim()) || (!paymentSettings.hasRazorpayWebhookSecret && !paymentSetupForm.razorpayWebhookSecret.trim())) ? '#CBD5E0' : 'linear-gradient(135deg,#8B3A1E,#6B2A15)', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}
-                >{paymentSetupSaving ? 'Saving…' : 'Save & Enable'}</button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     );
   }
-
   function renderAdminReadOnly(): React.ReactNode {
     if (!userProfile) {
       return (
@@ -1435,43 +840,31 @@ const ProfilePage: React.FC = () => {
       );
     }
 
+    const Row = ({ label, children }: { label: string, children: React.ReactNode }) => (
+      <div className="grid grid-cols-[30%_1fr] gap-4 py-5 border-b border-[#E2E8F0] dark:border-tk-border items-center">
+        <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
+          {label}
+        </span>
+        <div className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text flex justify-between items-center w-full">
+          {children}
+        </div>
+      </div>
+    );
+
     return (
-      <div className="flex flex-col gap-6">
-        <div className="border border-[#E2E8F0] rounded-[18px] p-4 sm:p-[18px] bg-white dark:bg-tk-bg-card dark:border-tk-border">
-          <div className="flex flex-wrap justify-between items-start gap-3 mb-4">
-            <div className="min-w-0">
-              <h3 className="font-bold">Personal Information</h3>
-              <p>Your personal details and profile picture.</p>
-            </div>
-            <div className="shrink-0">{renderAdminActions()}</div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Full Name</span>
-              <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
-                {userProfile?.name || "Admin User"}
-              </span>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Email Address</span>
-              <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
-                {userProfile?.email || "N/A"}
-              </span>
-            </div>
-
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          <div className="border border-[#E2E8F0] rounded-2xl bg-white px-4 py-3.5 flex flex-col gap-2.5 dark:bg-tk-bg-card dark:border-tk-border">
-            <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Global Role</span>
-            <span className="inline-flex items-center px-3.5 py-1.5 rounded-xl text-[12px] font-semibold capitalize w-fit font-['Outfit',sans-serif] bg-[#D6BCFA] text-[#44337A] dark:bg-[rgba(214,188,250,0.15)] dark:text-[#D6BCFA]">
-              {formatLabel(userProfile?.role)}
-            </span>
-          </div>
-
-        </div>
+      <div className="flex flex-col gap-0 w-full max-w-5xl">
+        <Row label="Admin Full Name">
+          <span>{userProfile?.name || "Admin User"}</span>
+          {renderAdminActions()}
+        </Row>
+        <Row label="Admin Email Address">
+          {userProfile?.email || "N/A"}
+        </Row>
+        <Row label="Global Role">
+          <span className="inline-flex items-center px-3.5 py-1.5 rounded-xl text-[12px] font-semibold capitalize w-fit font-['Outfit',sans-serif] bg-[#D6BCFA] text-[#44337A] dark:bg-[rgba(214,188,250,0.15)] dark:text-[#D6BCFA]">
+            {formatLabel(userProfile?.role)}
+          </span>
+        </Row>
       </div>
     );
   }
@@ -2095,32 +1488,7 @@ const ProfilePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Tabs Row */}
-        <div className="inline-flex gap-1.5 p-1.5 bg-[#F1F5F9] dark:bg-[rgba(199,91,58,0.1)] border border-[#E2E8F0] dark:border-[rgba(199,91,58,0.2)] rounded-[16px] overflow-x-auto max-w-full self-start no-scrollbar shadow-inner">
-          {[
-            { id: "general", label: "General Info" },
-            { id: "branding", label: "Location" },
-            { id: "story", label: "Story & Socials" },
-            { id: "features", label: "Features" },
-            { id: "admin", label: "Admin Profile" },
-          ].map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`relative flex items-center gap-2 px-6 py-2.5 text-[14px] font-bold font-['Outfit',sans-serif] rounded-xl whitespace-nowrap transition-all duration-300 shrink-0 ${isActive
-                  ? "text-tk-burgundy bg-white shadow-sm dark:bg-tk-burgundy dark:text-white ring-1 ring-black/5 dark:ring-white/10 dark:shadow-[0_2px_10px_rgba(199,91,58,0.3)]"
-                  : "text-[#64748B] dark:text-[#F0EDE8]/70 bg-transparent hover:text-tk-burgundy dark:hover:text-white hover:bg-black/5 dark:hover:bg-[rgba(199,91,58,0.15)]"
-                  }`}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
         </div>
-      </div>
 
       {feedback && (
         <div
@@ -2147,26 +1515,13 @@ const ProfilePage: React.FC = () => {
       )}
 
       <div className="flex flex-col gap-8 w-full" style={{ display: "block" }}>
-        <form
-          onSubmit={(e) => e.preventDefault()}
-          style={{
-            display: activeTab !== "admin" ? "flex" : "none",
-            flexDirection: "column",
-          }}
-        >
-          {renderRestaurantProfileContent()}
-        </form>
+        {renderRestaurantProfileContent()}
 
-        {/* Features Tab */}
-        {renderFeaturesTab()}
+        
 
-        <form
-          onSubmit={handleAdminSave}
-          style={{
-            display: activeTab === "admin" ? "flex" : "none",
-            flexDirection: "column",
-          }}
-        >
+        {/* Admin Profile Section */}
+        <div style={{ width: '100%', height: '1px', background: '#E2E8F0', margin: '40px 0 20px 0' }} className="dark:bg-tk-border"></div>
+        <form onSubmit={handleAdminSave} style={{ display: 'flex', flexDirection: 'column' }}>
           {renderAdminReadOnly()}
         </form>
       </div>
