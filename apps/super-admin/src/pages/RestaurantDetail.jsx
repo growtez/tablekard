@@ -160,6 +160,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                     longitude: parseFloat(formData.longitude) || null,
                     allowed_radius: parseInt(formData.allowed_radius) || 100,
                     status: formData.status,
+                    subscription_status: formData.status === 'active',
                     operating_hours_weekdays: formData.operating_hours_weekdays || '09:00 AM - 10:00 PM',
                     operating_hours_weekends: formData.operating_hours_weekends || '09:00 AM - 10:00 PM',
                     cover_image_url: formData.cover_image_url,
