@@ -37,7 +37,7 @@ export const createSubscriptionOrder = async ({
     });
 
     if (error) {
-        console.error('[createSubscriptionOrder] Error:', error);
+        console.error('[createSubscriptionOrder] Error:', error, '| Response data:', data);
         throw new Error(error.message || 'Failed to create subscription order');
     }
 
