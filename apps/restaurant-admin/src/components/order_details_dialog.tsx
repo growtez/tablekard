@@ -134,13 +134,13 @@ const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
               ) : (
                 <>
                   {[
-                    { label: 'Accept', value: 'CONFIRMED' },
+                    { label: 'Placed', value: 'CONFIRMED' },
                     { label: 'Preparing', value: 'PREPARING' },
                     { label: 'Ready', value: 'READY' }
                   ].map((step, stepIdx, arr) => {
                     const getStatusIdx = (status: string) => {
                       switch (status?.toUpperCase()) {
-                        case 'PENDING': return -1;
+                        case 'PENDING': return 0;
                         case 'CONFIRMED': return 0;
                         case 'PREPARING': return 1;
                         case 'READY': return 2;
