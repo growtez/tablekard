@@ -242,6 +242,7 @@ const ProfilePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
   const [checkingSlug, setCheckingSlug] = useState(false);
+  const [activeTab, setActiveTab] = useState<"details" | "operations">("details");
   const [feedback, setFeedback] = useState<{
     tone: "success" | "error" | "info";
     message: string;
@@ -257,7 +258,7 @@ const ProfilePage: React.FC = () => {
   }, [feedback]);
 
   const [showMap, setShowMap] = useState<boolean>(false);
-  const [isEditingProfile, setIsEditingProfile] = useState<boolean>(false);
+  const [editingSection, setEditingSection] = useState<string | null>(null);
   const [isRestaurantSaving, setIsRestaurantSaving] = useState(false);
   const [isAdminSaving, setIsAdminSaving] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -285,7 +286,7 @@ const ProfilePage: React.FC = () => {
 
 
   useEffect(() => {
-    if (!isEditingProfile || !restaurantForm?.slug) {
+    if (editingSection !== "location" || !restaurantForm?.slug) {
       setSlugAvailable(null);
       setCheckingSlug(false);
       return;
@@ -325,7 +326,7 @@ const ProfilePage: React.FC = () => {
 
     const timer = setTimeout(checkSlug, 500);
     return () => clearTimeout(timer);
-  }, [restaurantForm?.slug, isEditingProfile, restaurant]);
+  }, [restaurantForm?.slug, editingSection, restaurant]);
 
   useEffect(() => {
     setAdminForm(createAdminFormState(userProfile));
@@ -442,14 +443,14 @@ const ProfilePage: React.FC = () => {
 
   const mapInstanceRef = useRef<any>(null);
   const mapMarkerRef = useRef<any>(null);
-  const isEditingProfileRef = useRef(isEditingProfile);
+  const isEditingProfileRef = useRef(editingSection === "location");
 
   useEffect(() => {
-    isEditingProfileRef.current = isEditingProfile;
+    isEditingProfileRef.current = editingSection === "location";
   }, [isEditingProfile]);
 
   useEffect(() => {
-    if (!showMap && !isEditingProfile) return;
+    if (!showMap && editingSection !== "location") return;
 
     const initMap = () => {
       const L = (window as any).L;
@@ -482,7 +483,7 @@ const ProfilePage: React.FC = () => {
       }).addTo(map);
 
       marker.on("dragend", function () {
-        if (!isEditingProfileRef.current) return;
+        if (editingSection !== "location"Ref.current) return;
         const position = marker.getLatLng();
         setRestaurantForm((current) =>
           current
@@ -496,7 +497,7 @@ const ProfilePage: React.FC = () => {
       });
 
       map.on("click", function (event: any) {
-        if (!isEditingProfileRef.current) return;
+        if (editingSection !== "location"Ref.current) return;
         const position = event.latlng;
         marker.setLatLng(position);
         map.setView(position);
@@ -546,7 +547,7 @@ const ProfilePage: React.FC = () => {
 
   useEffect(() => {
     if (mapMarkerRef.current) {
-      if (isEditingProfile) {
+      if (editingSection === "location") {
         mapMarkerRef.current.dragging.enable();
       } else {
         mapMarkerRef.current.dragging.disable();
@@ -567,7 +568,7 @@ const ProfilePage: React.FC = () => {
         mapInstanceRef.current.setView([lat, lng]);
       }
     }
-  }, [isEditingProfile, restaurantForm?.latitude, restaurantForm?.longitude]);
+  }, [editingSection, restaurantForm?.latitude, restaurantForm?.longitude]);
 
   const handleUseMyLocation = () => {
     if (!navigator.geolocation) {
@@ -624,7 +625,7 @@ const ProfilePage: React.FC = () => {
   const handleConfirmCancel = () => {
     resetRestaurantForm();
     resetAdminForm();
-    setIsEditingProfile(false);
+    setEditingSection(null);
     setShowCancelConfirm(false);
   };
 
@@ -750,7 +751,7 @@ const ProfilePage: React.FC = () => {
     }
 
     if (success) {
-      setIsEditingProfile(false);
+      setEditingSection(null);
     }
   };
 
@@ -773,11 +774,40 @@ const ProfilePage: React.FC = () => {
 
 
   
-  const SectionHeader = ({ title }: { title: string }) => (
-    <div className="pt-4 pb-2 border-b border-[#E2E8F0] dark:border-tk-border">
+  const SectionHeader = ({ title, sectionId }: { title: string, sectionId?: string }) => (
+    <div className="flex items-center justify-between pt-4 pb-2 border-b border-[#E2E8F0] dark:border-tk-border">
       <h3 className="text-[18px] font-bold text-[#1A202C] dark:text-tk-text font-['Outfit',sans-serif] m-0 uppercase tracking-wide">
         {title}
       </h3>
+      {sectionId && editingSection !== sectionId && (
+        <button
+          className="text-[#4A5568] hover:text-[#1A202C] dark:text-tk-text-secondary dark:hover:text-tk-text font-medium text-[13px] flex items-center gap-1.5 transition-colors"
+          onClick={() => {
+            setEditingSection(sectionId);
+            if (sectionId === 'location') setShowMap(true);
+          }}
+          disabled={editingSection !== null}
+        >
+          Edit
+        </button>
+      )}
+      {sectionId && editingSection === sectionId && (
+        <div className="flex items-center gap-3">
+          <button
+            className="text-[#4A5568] hover:text-[#1A202C] dark:text-tk-text-secondary dark:hover:text-tk-text font-medium text-[13px] transition-colors"
+            onClick={handleCancelEdit}
+          >
+            Cancel
+          </button>
+          <button
+            className="text-tk-burgundy hover:text-[#6B2A15] font-bold text-[13px] transition-colors flex items-center gap-1"
+            onClick={handleSaveProfile}
+            disabled={isRestaurantSaving || isAdminSaving}
+          >
+            {isRestaurantSaving || isAdminSaving ? "Saving..." : "Save"}
+          </button>
+        </div>
+      )}
     </div>
   );
 
@@ -801,10 +831,12 @@ const ProfilePage: React.FC = () => {
 
     return (
       <div className="flex flex-col gap-0 w-full max-w-5xl">
-        <SectionHeader title="Core Details" />
+        {activeTab === "details" && (
+          <>
+            <SectionHeader title="Core Details" sectionId="core" />
         {/* Restaurant Name */}
         <Row label="Restaurant Name">
-          {isEditingProfile ? (
+          {editingSection === "core" ? (
             <div className="flex items-center justify-between w-full gap-2">
               <input
                 type="text"
@@ -831,7 +863,7 @@ const ProfilePage: React.FC = () => {
 
         {/* Page URL */}
         <Row label="Restaurant Page URL">
-          {isEditingProfile ? (
+          {editingSection === "core" ? (
             <div className="flex items-center justify-between w-full gap-2">
               <div className="relative flex items-center w-full">
                 <span className="px-3 py-1.5 bg-[#EDF2F7] border border-[#CBD5E0] border-r-0 rounded-l-xl text-[#4A5568] text-[13px] font-['Outfit',sans-serif] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text-secondary select-none shrink-0">
@@ -907,7 +939,7 @@ const ProfilePage: React.FC = () => {
 
         {/* Tagline */}
         <Row label="Tagline">
-          {isEditingProfile ? (
+          {editingSection === "core" ? (
             <div className="flex items-center justify-between w-full gap-2">
               <input
                 type="text"
@@ -934,7 +966,7 @@ const ProfilePage: React.FC = () => {
 
         {/* Manifesto */}
         <Row label="Manifesto">
-          {isEditingProfile ? (
+          {editingSection === "core" ? (
             <div className="flex items-start justify-between w-full gap-2">
               <textarea
                 className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-2 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text min-h-[60px]"
@@ -960,7 +992,7 @@ const ProfilePage: React.FC = () => {
 
         {/* Opening Date */}
         <Row label="Opening Date">
-          {isEditingProfile ? (
+          {editingSection === "core" ? (
             <div className="flex items-center justify-between w-full gap-2">
               <input
                 type="date"
@@ -1012,10 +1044,10 @@ const ProfilePage: React.FC = () => {
         </Row>
 
         
-        <SectionHeader title="Contact Information" />
+        <SectionHeader title="Contact Information" sectionId="contact" />
         {/* Email Address */}
         <Row label="Email Address">
-          {isEditingProfile ? (
+          {editingSection === "contact" ? (
             <div className="flex items-center justify-between w-full gap-2">
               <input
                 type="email"
@@ -1045,7 +1077,7 @@ const ProfilePage: React.FC = () => {
 
         {/* Phone Number */}
         <Row label="Phone Number">
-          {isEditingProfile ? (
+          {editingSection === "contact" ? (
             <div className="flex items-center justify-between w-full gap-2">
               <input
                 type="tel"
@@ -1072,12 +1104,15 @@ const ProfilePage: React.FC = () => {
             </>
           )}
         </Row>
+          </>
+        )}
 
-        
-        <SectionHeader title="Location & Operations" />
+        {activeTab === "operations" && (
+          <>
+            <SectionHeader title="Location & Operations" sectionId="location" />
         {/* Address */}
         <Row label="Address">
-          {isEditingProfile ? (
+          {editingSection === "location" ? (
             <div className="flex items-start justify-between w-full gap-2">
               <textarea
                 className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-2 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text min-h-[60px]"
@@ -1106,7 +1141,7 @@ const ProfilePage: React.FC = () => {
 
         {/* Operating Hours (Weekdays) */}
         <Row label="Operating Hours (Weekdays)">
-          {isEditingProfile ? (
+          {editingSection === "location" ? (
             <div className="flex items-center justify-between w-full gap-2">
               <div className="flex items-center gap-2">
                 <input
@@ -1147,7 +1182,7 @@ const ProfilePage: React.FC = () => {
 
         {/* Operating Hours (Weekends) */}
         <Row label="Operating Hours (Weekends)">
-          {isEditingProfile ? (
+          {editingSection === "location" ? (
             <div className="flex items-center justify-between w-full gap-2">
               <div className="flex items-center gap-2">
                 <input
@@ -1189,7 +1224,7 @@ const ProfilePage: React.FC = () => {
         {/* Location Coordinates */}
         <Row label="Location Coordinates">
           <div className="flex w-full items-center flex-wrap gap-4">
-            {isEditingProfile ? (
+            {editingSection === "location" ? (
               <div className="flex flex-col w-full gap-3 py-1">
                 <div className="flex items-center justify-between w-full gap-2">
                   <div className="flex items-center gap-3 w-full flex-wrap">
@@ -1291,7 +1326,7 @@ const ProfilePage: React.FC = () => {
 
         {/* Access Area Radius */}
         <Row label="Access Area Radius">
-          {isEditingProfile ? (
+          {editingSection === "location" ? (
             <div className="flex items-center justify-between w-full gap-2">
               <div className="flex items-center gap-2 w-full">
                 <input
@@ -1328,10 +1363,10 @@ const ProfilePage: React.FC = () => {
         </Row>
 
         
-        <SectionHeader title="Web & Social Media" />
+        <SectionHeader title="Web & Social Media" sectionId="web" />
         {/* Website URL */}
         <Row label="Website URL">
-          {isEditingProfile ? (
+          {editingSection === "web" ? (
             <div className="flex items-center justify-between w-full gap-2">
               <input
                 type="url"
@@ -1356,7 +1391,7 @@ const ProfilePage: React.FC = () => {
           )}
         </Row>{/* Instagram URL */}
         <Row label="Instagram URL">
-          {isEditingProfile ? (
+          {editingSection === "web" ? (
             <div className="flex items-center justify-between w-full gap-2">
               <input
                 type="url"
@@ -1383,7 +1418,7 @@ const ProfilePage: React.FC = () => {
 
         {/* Facebook URL */}
         <Row label="Facebook URL">
-          {isEditingProfile ? (
+          {editingSection === "web" ? (
             <div className="flex items-center justify-between w-full gap-2">
               <input
                 type="url"
@@ -1407,8 +1442,8 @@ const ProfilePage: React.FC = () => {
             </>
           )}
         </Row>
-
-        
+          </>
+        )}
       
       </div>
     );
@@ -1427,9 +1462,9 @@ const ProfilePage: React.FC = () => {
 
     return (
       <div className="flex flex-col gap-0 w-full max-w-5xl">
-        <SectionHeader title="Administrator Details" />
+        <SectionHeader title="Administrator Details" sectionId="admin" />
         <Row label="Admin Full Name">
-          {isEditingProfile ? (
+          {editingSection === "admin" ? (
             <div className="flex items-center justify-between w-full gap-2">
               <input
                 type="text"
@@ -1454,7 +1489,7 @@ const ProfilePage: React.FC = () => {
         </Row>
 
         <Row label="Admin Email Address">
-          {isEditingProfile ? (
+          {editingSection === "admin" ? (
             <div className="flex flex-col w-full gap-1">
               <div className="flex items-center justify-between w-full gap-2">
                 <input
@@ -1517,7 +1552,7 @@ const ProfilePage: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
-            {isEditingProfile ? (
+            {editingSection === "admin" ? (
               <>
                 <button
                   className="relative h-10 px-4 rounded-xl bg-white dark:bg-tk-bg-elevated text-[#4A5568] border border-[#CBD5E0] flex items-center justify-center cursor-pointer transition-all duration-300 font-bold font-['Outfit',sans-serif] text-[13px] tracking-wide hover:bg-[#EDF2F7] dark:text-tk-text-secondary dark:border-tk-border dark:hover:bg-tk-bg-hover disabled:opacity-50"
@@ -1624,18 +1659,22 @@ const ProfilePage: React.FC = () => {
         {renderRestaurantProfileContent()}
 
         {/* Admin Profile Section */}
-        <div
-          style={{
-            width: "100%",
-            height: "1px",
-            background: "#E2E8F0",
-            margin: "40px 0 20px 0",
-          }}
-          className="dark:bg-tk-border"
-        />
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          {renderAdminReadOnly()}
-        </div>
+        {activeTab === "details" && (
+          <>
+            <div
+              style={{
+                width: "100%",
+                height: "1px",
+                background: "#E2E8F0",
+                margin: "40px 0 20px 0",
+              }}
+              className="dark:bg-tk-border"
+            />
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {renderAdminReadOnly()}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Logout Confirmation Modal */}
