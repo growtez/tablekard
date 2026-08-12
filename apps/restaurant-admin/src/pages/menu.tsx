@@ -82,6 +82,8 @@ const Menu: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<MenuCategory | null>(null);
   const [selectedOffer, setSelectedOffer] = useState<OfferRow | null>(null);
   const [dialogMode, setDialogMode] = useState<'add' | 'edit'>('add');
+  const [optimisticAvailability, setOptimisticAvailability] = useState<Record<string, boolean>>({});
+  const [categorySearchQuery, setCategorySearchQuery] = useState('');
 
   let filteredMenuItems = selectedCategoryId === 'all'
     ? menuItems
@@ -148,16 +150,23 @@ const Menu: React.FC = () => {
 
   // --- ITEM HANDLERS ---
   const toggleStock = async (item: MenuItem) => {
-    setIsSaving(true);
+    const currentStatus = optimisticAvailability[item.id] ?? item.available;
+    const newStatus = !currentStatus;
+    
+    setOptimisticAvailability(prev => ({ ...prev, [item.id]: newStatus }));
+    
     try {
-      await toggleMenuItemAvailability(item.id, !item.available);
+      await toggleMenuItemAvailability(item.id, newStatus);
       if (activeRestaurantId) invalidateMenu(activeRestaurantId);
       showToast('Availability updated', 'success');
     } catch (err) {
       console.error(err);
+      setOptimisticAvailability(prev => {
+        const next = { ...prev };
+        delete next[item.id];
+        return next;
+      });
       showToast('Failed to update availability', 'error');
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -619,24 +628,42 @@ const Menu: React.FC = () => {
                 </button>
                 
                 {isCategoryDropdownOpen && (
-                  <div className="absolute left-0 top-full mt-2 w-full min-w-[240px] bg-tk-bg-surface border border-tk-border rounded-xl shadow-lg z-50 py-1 overflow-hidden animate-[fadeIn_0.15s_ease-out] max-h-[300px] overflow-y-auto tk-table-scroll">
-                    <button
-                      onClick={() => { setSelectedCategoryId('all'); setIsCategoryDropdownOpen(false); }}
-                      className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors flex justify-between items-center ${selectedCategoryId === 'all' ? 'bg-tk-burgundy/10 text-tk-burgundy' : 'text-tk-text hover:bg-tk-bg-hover'}`}
-                    >
-                      <span>All Categories</span>
-                      <span className="text-xs opacity-60">{getCategoryCount('all')}</span>
-                    </button>
-                    {categories.map((category) => (
+                  <div className="absolute left-0 top-full mt-2 w-full min-w-[240px] bg-tk-bg-surface border border-tk-border rounded-xl shadow-lg z-50 py-1 overflow-hidden animate-[fadeIn_0.15s_ease-out] max-h-[300px] flex flex-col">
+                    <div className="p-2 border-b border-tk-border shrink-0 sticky top-0 bg-tk-bg-surface z-10">
+                      <div className="relative">
+                        <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-tk-text-secondary" />
+                        <input
+                          type="text"
+                          placeholder="Search categories..."
+                          value={categorySearchQuery}
+                          onChange={(e) => setCategorySearchQuery(e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-full pl-8 pr-3 py-1.5 bg-tk-bg-elevated border border-tk-border rounded-lg text-sm text-tk-text focus:outline-none focus:border-tk-burgundy transition-colors"
+                        />
+                      </div>
+                    </div>
+                    <div className="overflow-y-auto tk-table-scroll flex-1">
                       <button
-                        key={category.id}
-                        onClick={() => { setSelectedCategoryId(category.id); setIsCategoryDropdownOpen(false); }}
-                        className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors flex justify-between items-center ${selectedCategoryId === category.id ? 'bg-tk-burgundy/10 text-tk-burgundy' : 'text-tk-text hover:bg-tk-bg-hover'}`}
+                        onClick={() => { setSelectedCategoryId('all'); setIsCategoryDropdownOpen(false); setCategorySearchQuery(''); }}
+                        className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors flex justify-between items-center ${selectedCategoryId === 'all' ? 'bg-tk-burgundy/10 text-tk-burgundy' : 'text-tk-text hover:bg-tk-bg-hover'}`}
                       >
-                        <span className="truncate pr-2">{category.name}</span>
-                        <span className="text-xs opacity-60 shrink-0">{getCategoryCount(category.id)}</span>
+                        <span>All Categories</span>
+                        <span className="text-xs opacity-60">{getCategoryCount('all')}</span>
                       </button>
-                    ))}
+                      {categories.filter(c => c.name.toLowerCase().includes(categorySearchQuery.toLowerCase())).map((category) => (
+                        <button
+                          key={category.id}
+                          onClick={() => { setSelectedCategoryId(category.id); setIsCategoryDropdownOpen(false); setCategorySearchQuery(''); }}
+                          className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors flex justify-between items-center ${selectedCategoryId === category.id ? 'bg-tk-burgundy/10 text-tk-burgundy' : 'text-tk-text hover:bg-tk-bg-hover'}`}
+                        >
+                          <span className="truncate pr-2">{category.name}</span>
+                          <span className="text-xs opacity-60 shrink-0">{getCategoryCount(category.id)}</span>
+                        </button>
+                      ))}
+                      {categories.filter(c => c.name.toLowerCase().includes(categorySearchQuery.toLowerCase())).length === 0 && (
+                        <div className="px-4 py-3 text-sm text-tk-text-secondary text-center">No categories found</div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -822,11 +849,11 @@ const Menu: React.FC = () => {
                     {/* Admin Actions */}
                     <div className="flex items-center justify-between gap-3 mt-3 pt-3 border-t border-tk-border border-dashed w-full">
                       <label className="relative flex items-center gap-2 cursor-pointer bg-tk-bg-surface px-2 py-1.5 rounded-lg border border-tk-border shadow-sm group hover:border-tk-border-hover transition-all">
-                        <span className={`text-[9px] sm:text-[10px] font-extrabold transition-colors ${item.available ? 'text-[#E55A28]' : 'text-tk-text-secondary'}`}>
-                          {item.available ? 'In Stock' : 'Out'}
+                        <span className={`text-[9px] sm:text-[10px] font-extrabold transition-colors ${(optimisticAvailability[item.id] ?? item.available) ? 'text-[#E55A28]' : 'text-tk-text-secondary'}`}>
+                          {(optimisticAvailability[item.id] ?? item.available) ? 'In Stock' : 'Out'}
                         </span>
                         <div className="relative flex items-center">
-                          <input type="checkbox" checked={item.available} onChange={() => toggleStock(item)} className="sr-only peer" />
+                          <input type="checkbox" checked={optimisticAvailability[item.id] ?? item.available} onChange={() => toggleStock(item)} className="sr-only peer" />
                           <div className="w-[24px] h-3.5 bg-[#CBD5E0] dark:bg-tk-bg-elevated peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-2.5 after:w-2.5 after:transition-all peer-checked:bg-[#E55A28] shadow-inner"></div>
                         </div>
                       </label>
@@ -880,11 +907,11 @@ const Menu: React.FC = () => {
                       {/* Actions */}
                       <div className="flex items-center justify-between pt-2.5 border-t border-tk-border border-dashed">
                         <label className="relative flex items-center gap-2 cursor-pointer">
-                          <span className={`text-[10px] font-extrabold transition-colors ${item.available ? 'text-[#E55A28]' : 'text-tk-text-secondary'}`}>
-                            {item.available ? 'In Stock' : 'Out'}
+                          <span className={`text-[10px] font-extrabold transition-colors ${(optimisticAvailability[item.id] ?? item.available) ? 'text-[#E55A28]' : 'text-tk-text-secondary'}`}>
+                            {(optimisticAvailability[item.id] ?? item.available) ? 'In Stock' : 'Out'}
                           </span>
                           <div className="relative flex items-center">
-                            <input type="checkbox" checked={item.available} onChange={() => toggleStock(item)} className="sr-only peer" />
+                            <input type="checkbox" checked={optimisticAvailability[item.id] ?? item.available} onChange={() => toggleStock(item)} className="sr-only peer" />
                             <div className="w-[24px] h-3.5 bg-[#CBD5E0] dark:bg-tk-bg-elevated rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-2.5 after:w-2.5 after:transition-all peer-checked:bg-[#E55A28] shadow-inner"></div>
                           </div>
                         </label>
@@ -960,8 +987,8 @@ const Menu: React.FC = () => {
                             ₹{item.price}
                           </td>
                           <td className="py-3 px-4">
-                            <span className={`inline-flex px-2.5 py-0.5 rounded text-[11px] font-bold ${item.available ? 'bg-[#C6F6D5] text-[#22543D]' : 'bg-[#FEF2F2] text-[#E53E3E]'}`}>
-                              {item.available ? 'Available' : 'Out of Stock'}
+                            <span className={`inline-flex px-2.5 py-0.5 rounded text-[11px] font-bold ${(optimisticAvailability[item.id] ?? item.available) ? 'bg-[#C6F6D5] text-[#22543D]' : 'bg-[#FEF2F2] text-[#E53E3E]'}`}>
+                              {(optimisticAvailability[item.id] ?? item.available) ? 'Available' : 'Out of Stock'}
                             </span>
                           </td>
                           <td className="py-3 px-4">
@@ -982,7 +1009,7 @@ const Menu: React.FC = () => {
                                     className="text-left px-3 py-2 text-[13px] font-medium text-tk-text hover:bg-tk-bg-hover rounded-lg w-full transition-colors"
                                     onClick={() => toggleStock(item)}
                                   >
-                                    {item.available ? 'Mark Out of Stock' : 'Mark Available'}
+                                    {(optimisticAvailability[item.id] ?? item.available) ? 'Mark Out of Stock' : 'Mark Available'}
                                   </button>
                                   <button 
                                     className="text-left px-3 py-2 text-[13px] font-medium text-[#E53E3E] hover:bg-[#FEF2F2] rounded-lg w-full transition-colors mt-0.5"
