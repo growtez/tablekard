@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Plus, Minus, Tag, ChevronDown, Trash2, Maximize2, Edit2, ChevronLeft, ChevronRight, Crop, Loader2, FolderPlus, Check, Search } from 'lucide-react';
+import { X, Plus, Minus, Tag, ChevronDown, Trash2, Maximize2, Edit2, ChevronLeft, ChevronRight, Crop, Loader2, FolderPlus, Check, Search, Info } from 'lucide-react';
 import type { MenuCategory } from '@restaurant-saas/types';
 import ImageCropper from './ImageCropper';
 
 interface Variant {
   name: string;   // e.g. "Small", "Medium", "Large"
   price: number;
+  serves?: string | number;
+  preparation_time?: string | number;
 }
 
 interface Addon {
@@ -51,7 +53,8 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, onAddC
   });
 
   const [newTag, setNewTag] = useState('');
-  const [newVariant, setNewVariant] = useState<Variant>({ name: '', price: 0 });
+  const [isVariantModalOpen, setIsVariantModalOpen] = useState(false);
+  const [variantFormData, setVariantFormData] = useState<Variant>({ name: '', price: 0, serves: '1', preparation_time: '' });
   const [newAddon, setNewAddon] = useState<Addon>({ name: '', price: 0 });
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -64,6 +67,8 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, onAddC
   const [removeModel, setRemoveModel] = useState(false);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [currentGalleryIndex, setCurrentGalleryIndex] = useState(0);
+
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const [isCatDropdownOpen, setIsCatDropdownOpen] = useState(false);
   const [catSearchQuery, setCatSearchQuery] = useState('');
@@ -281,9 +286,10 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, onAddC
   };
 
   const addVariant = () => {
-    if (!newVariant.name) return;
-    setFormData(prev => ({ ...prev, variants: [...prev.variants, { ...newVariant }] }));
-    setNewVariant({ name: '', price: 0 });
+    if (!variantFormData.name) return;
+    setFormData(prev => ({ ...prev, variants: [...prev.variants, { ...variantFormData }] }));
+    setVariantFormData({ name: '', price: 0, serves: '1', preparation_time: '' });
+    setIsVariantModalOpen(false);
   };
 
   const removeVariant = (idx: number) => {
@@ -314,10 +320,27 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, onAddC
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.category_id) {
-      alert('Please select a valid category or create one first.');
+    
+    const errors: Record<string, string> = {};
+    if (!formData.name.trim()) errors.name = 'Please enter the Item Name.';
+    if (!formData.category_id) errors.category_id = 'Please select a valid category.';
+    if (formData.variants.length === 0 && !formData.price.toString().trim()) {
+      errors.price = 'Please enter a Base Price or add at least one Variant.';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      const firstError = Object.keys(errors)[0];
+      const element = document.querySelector(`[name="${firstError}"]`) || document.getElementById(firstError);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        (element as HTMLElement).focus?.();
+      }
       return;
     }
+    
+    setFieldErrors({});
+
     onSave({
       ...(item || {}),
       name: formData.name,
@@ -375,16 +398,28 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, onAddC
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <form 
+          onSubmit={handleSubmit} 
+          className="flex flex-col gap-5" 
+          noValidate
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              const target = e.target as HTMLElement;
+              if (target.tagName !== 'TEXTAREA' && target.tagName !== 'BUTTON') {
+                e.preventDefault();
+              }
+            }
+          }}
+        >
 
           {/* Category */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-tk-text-secondary">Category *</label>
-            <div className="relative" ref={catDropdownRef}>
+            <div className="relative" ref={catDropdownRef} id="category_id">
               <div
                 onClick={() => setIsCatDropdownOpen(!isCatDropdownOpen)}
                 className={`w-full p-3 px-4 border-2 rounded-xl text-sm font-sans cursor-pointer transition-all duration-200 flex items-center justify-between ${
-                  isCatDropdownOpen ? 'border-tk-burgundy shadow-[0_0_0_3px_rgba(139,58,30,0.1)] bg-tk-bg-elevated' : 'border-tk-border bg-tk-bg-elevated hover:border-tk-burgundy/40'
+                  isCatDropdownOpen ? 'border-tk-burgundy shadow-[0_0_0_3px_rgba(139,58,30,0.1)] bg-tk-bg-elevated' : (fieldErrors.category_id ? 'border-red-500 bg-tk-bg-elevated' : 'border-tk-border bg-tk-bg-elevated hover:border-tk-burgundy/40')
                 }`}
               >
                 <span className={formData.category_id ? "text-tk-text font-medium" : "text-tk-text-muted"}>
@@ -450,6 +485,11 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, onAddC
                 </div>
               )}
             </div>
+            {fieldErrors.category_id && (
+              <div className="text-red-500 text-sm mt-1 flex items-center gap-1.5 animate-in fade-in slide-in-from-top-1">
+                <Info size={14} /> {fieldErrors.category_id}
+              </div>
+            )}
 
             {/* Inline Add Category Box */}
             {isAddingCategory && (
@@ -498,10 +538,14 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, onAddC
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className="p-3 px-4 border-2 border-tk-border bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.1)] placeholder:text-tk-text-muted"
+              className={`p-3 px-4 border-2 bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none placeholder:text-tk-text-muted ${fieldErrors.name ? 'border-red-500 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.1)]' : 'border-tk-border focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.1)]'}`}
               placeholder="e.g. Butter Chicken"
-              required
             />
+            {fieldErrors.name && (
+              <div className="text-red-500 text-sm mt-1 flex items-center gap-1.5 animate-in fade-in slide-in-from-top-1">
+                <Info size={14} /> {fieldErrors.name}
+              </div>
+            )}
           </div>
 
           {/* Short Description */}
@@ -535,58 +579,79 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, onAddC
           {/* Price */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-tk-text-secondary">Price (₹) *</label>
-            <input
-              type="number"
-              name="price"
-              value={formData.price}
-              onChange={handleChange}
-              className="p-3 px-4 border-2 border-tk-border bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.1)] placeholder:text-tk-text-muted"
-              placeholder="0.00"
-              min="0"
-              step="any"
-              onWheel={(e) => e.currentTarget.blur()}
-              required
-            />
+            <div className="relative group w-full">
+              <input
+                type="number"
+                name="price"
+                value={formData.price}
+                onChange={handleChange}
+                className={`p-3 px-4 border-2 bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none placeholder:text-tk-text-muted disabled:opacity-50 disabled:bg-tk-bg disabled:cursor-not-allowed ${fieldErrors.price ? 'border-red-500 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.1)]' : 'border-tk-border focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.1)]'}`}
+                placeholder="0.00"
+                min="0"
+                step="any"
+                onWheel={(e) => e.currentTarget.blur()}
+                disabled={formData.variants.length > 0}
+              />
+              {formData.variants.length > 0 && (
+                <>
+                  <div className="absolute inset-0 z-10 cursor-not-allowed" title="Remove all variants to enable base price"></div>
+                  <div className="absolute left-1/2 -top-12 -translate-x-1/2 px-4 py-2.5 bg-[#8B3A26] text-white text-xs font-medium rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform group-hover:-translate-y-1 pointer-events-none whitespace-nowrap z-50 flex items-center gap-2">
+                    <Info size={14} className="opacity-80" />
+                    <span>Remove all variants to enable base price</span>
+                    <div className="absolute left-1/2 -bottom-1.5 -translate-x-1/2 border-[6px] border-transparent border-t-[#8B3A26]"></div>
+                  </div>
+                </>
+              )}
+            </div>
+            {formData.variants.length > 0 && (
+              <div className="flex items-start gap-2 p-3 mt-1 rounded-xl bg-[#8B3A26]/5 dark:bg-rose-900/10 border border-[#8B3A26]/20 dark:border-rose-800/30 text-[#8B3A26] dark:text-rose-400">
+                <Info size={16} className="shrink-0 mt-0.5" />
+                <p className="text-xs leading-relaxed m-0">
+                  Only the variant price will be shown to the customer. This base price will be hidden.
+                </p>
+              </div>
+            )}
+            {fieldErrors.price && (
+              <div className="text-red-500 text-sm mt-1 flex items-center gap-1.5 animate-in fade-in slide-in-from-top-1">
+                <Info size={14} /> {fieldErrors.price}
+              </div>
+            )}
           </div>
 
                     {/* Variants */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-tk-text-secondary">Variants (e.g. Small / Medium / Large)</label>
             {formData.variants.length > 0 && (
-              <div className="flex flex-col gap-1.5 mb-2.5">
+              <div className="flex flex-col gap-2.5 mb-2.5">
                 {formData.variants.map((v, idx) => (
-                  <div key={idx} className="flex items-center gap-3 bg-tk-bg-elevated rounded-xl p-2.5 px-3.5 border border-tk-border">
-                    <span className="flex-1 text-sm font-medium text-tk-text">{v.name}</span>
-                    <span className="text-[13px] font-semibold text-[#37724e] dark:text-green-400">₹{v.price}</span>
-                    <button type="button" onClick={() => removeVariant(idx)} className="bg-transparent border-none cursor-pointer text-red-500 p-1 rounded-md flex items-center transition-colors duration-200 hover:bg-red-500/10">
-                      <Minus size={14} />
-                    </button>
+                  <div key={idx} className="flex flex-col gap-1.5 bg-[#8B3A26]/5 dark:bg-rose-900/10 rounded-xl p-3.5 px-4 border border-[#8B3A26]/20 dark:border-rose-800/30 transition-all duration-200 hover:bg-[#8B3A26]/10 shadow-sm">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-[15px] font-bold text-[#8B3A26] dark:text-rose-400">{v.name}</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-[14px] font-bold text-tk-text bg-white dark:bg-tk-bg shadow-sm px-3 py-1 rounded-lg border border-tk-border">₹{v.price}</span>
+                        <button type="button" onClick={() => removeVariant(idx)} className="bg-white dark:bg-tk-bg-elevated border border-tk-border cursor-pointer text-red-500 p-1.5 rounded-lg flex items-center transition-all duration-200 hover:bg-red-50 hover:border-red-200 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:border-red-800 shadow-sm">
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </div>
+                    {(v.serves || v.preparation_time) && (
+                      <div className="flex items-center gap-4 text-[13px] font-medium text-tk-text-secondary mt-1 pt-1 border-t border-[#8B3A26]/10 dark:border-rose-800/20">
+                        {v.serves && <span>Serves: <strong className="text-tk-text">{v.serves}</strong></span>}
+                        {v.preparation_time && <span>Prep time: <strong className="text-tk-text">{v.preparation_time} mins</strong></span>}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
             )}
-            <div className="flex gap-2 items-center">
-              <input
-                type="text"
-                value={newVariant.name}
-                onChange={(e) => setNewVariant(prev => ({ ...prev, name: e.target.value }))}
-                className="p-3 px-4 border-2 border-tk-border bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.1)] placeholder:text-tk-text-muted"
-                placeholder="Variant name (e.g. Large)"
-              />
-              <input
-                type="number"
-                value={newVariant.price || ''}
-                onChange={(e) => setNewVariant(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
-                className="p-3 px-4 border-2 border-tk-border bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.1)] placeholder:text-tk-text-muted max-w-[110px]"
-                placeholder="Price (₹)"
-                min="0"
-                step="any"
-                onWheel={(e) => e.currentTarget.blur()}
-              />
-              <button type="button" className="flex items-center justify-center p-3 bg-[#37724e] text-white border-none rounded-xl cursor-pointer shrink-0 transition-colors duration-200 hover:bg-[#2f5e40]" onClick={addVariant}>
-                <Plus size={16} />
-              </button>
-            </div>
+            <button 
+              type="button" 
+              onClick={() => setIsVariantModalOpen(true)}
+              className="flex items-center justify-center gap-2 p-3 bg-[#8B3A26] text-white border-none rounded-xl cursor-pointer transition-colors duration-200 hover:bg-[#732F1E] w-full text-sm font-medium"
+            >
+              <Plus size={16} />
+              Add Variant
+            </button>
           </div>
 
           <div className="flex flex-col gap-2">
@@ -857,7 +922,7 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, onAddC
 
           <div className="flex gap-3 mt-3">
             <button type="button" className="flex-1 py-3 px-5 border-none rounded-xl text-sm font-medium cursor-pointer transition-all duration-200 font-sans bg-tk-bg-elevated text-tk-text-secondary flex items-center justify-center hover:bg-tk-bg-hover" onClick={onClose}>Cancel</button>
-            <button type="submit" className="flex-1 py-3 px-5 border-none rounded-xl text-sm font-medium cursor-pointer transition-all duration-200 font-sans bg-[#37724e] text-white flex items-center justify-center hover:bg-[#4f755c] hover:-translate-y-0.5">
+            <button type="submit" className="flex-1 py-3 px-5 border-none rounded-xl text-sm font-medium cursor-pointer transition-all duration-200 font-sans bg-[#8B3A26] text-white flex items-center justify-center hover:bg-[#732F1E] hover:-translate-y-0.5">
               {mode === 'add' ? 'Add Item' : 'Save Changes'}
             </button>
           </div>
@@ -956,6 +1021,96 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, onAddC
                   <img src={img.url} alt="Thumbnail" className="w-full h-full object-cover" />
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Variant Modal */}
+      {isVariantModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[99999] opacity-100 transition-opacity duration-300">
+          <div 
+            className="bg-tk-bg rounded-[24px] w-full max-w-[400px] shadow-[0_24px_48px_rgba(0,0,0,0.2)] overflow-hidden flex flex-col transform transition-all duration-300 scale-100 relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-5 px-6 border-b border-tk-border flex justify-between items-center bg-tk-bg">
+              <h2 className="m-0 text-xl font-bold text-tk-text tracking-tight">Add Variant</h2>
+              <button 
+                onClick={() => setIsVariantModalOpen(false)}
+                className="bg-transparent border-none cursor-pointer p-2 rounded-full flex items-center justify-center text-tk-text-secondary transition-all duration-200 hover:bg-tk-border hover:text-tk-text hover:rotate-90"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-6 flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-tk-text-secondary">Variant Name *</label>
+                <input
+                  type="text"
+                  value={variantFormData.name}
+                  onChange={(e) => setVariantFormData(prev => ({ ...prev, name: e.target.value }))}
+                  className="p-3 px-4 border-2 border-tk-border bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.1)] placeholder:text-tk-text-muted"
+                  placeholder="e.g. Large, Extra Cheese"
+                  autoFocus
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-tk-text-secondary">Price (₹) *</label>
+                <input
+                  type="number"
+                  value={variantFormData.price || ''}
+                  onChange={(e) => setVariantFormData(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+                  className="p-3 px-4 border-2 border-tk-border bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.1)] placeholder:text-tk-text-muted"
+                  placeholder="0.00"
+                  min="0"
+                  step="any"
+                  onWheel={(e) => e.currentTarget.blur()}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-tk-text-secondary">Serves</label>
+                  <input
+                    type="number"
+                    value={variantFormData.serves}
+                    onChange={(e) => setVariantFormData(prev => ({ ...prev, serves: e.target.value }))}
+                    className="p-3 px-4 border-2 border-tk-border bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.1)] placeholder:text-tk-text-muted"
+                    min="1"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-tk-text-secondary">Prep Time (mins)</label>
+                  <input
+                    type="number"
+                    value={variantFormData.preparation_time}
+                    onChange={(e) => setVariantFormData(prev => ({ ...prev, preparation_time: e.target.value }))}
+                    className="p-3 px-4 border-2 border-tk-border bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.1)] placeholder:text-tk-text-muted"
+                    placeholder="e.g. 15"
+                    min="0"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="p-5 px-6 border-t border-tk-border flex justify-end gap-3 bg-tk-bg">
+              <button 
+                type="button" 
+                onClick={() => setIsVariantModalOpen(false)}
+                className="px-6 py-2.5 rounded-xl font-semibold cursor-pointer transition-all duration-200 bg-transparent border-2 border-tk-border text-tk-text hover:border-gray-400 hover:bg-tk-border"
+              >
+                Cancel
+              </button>
+              <button 
+                type="button"
+                onClick={addVariant}
+                disabled={!variantFormData.name}
+                className="px-6 py-2.5 rounded-xl font-semibold cursor-pointer transition-transform duration-200 hover:-translate-y-0.5 shadow-[0_4px_12px_rgba(0,0,0,0.1)] bg-[#8B3A26] text-white border-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 hover:bg-[#732F1E]"
+              >
+                Add Variant
+              </button>
             </div>
           </div>
         </div>

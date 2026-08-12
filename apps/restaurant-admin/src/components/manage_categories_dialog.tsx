@@ -31,6 +31,7 @@ const ManageCategoriesDialog: React.FC<ManageCategoriesDialogProps> = ({
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [categoryToDelete, setCategoryToDelete] = useState<{id: string, name: string} | null>(null);
   const addInputRef = useRef<HTMLInputElement>(null);
+  const prevIsOpen = useRef(isOpen);
 
   useEffect(() => {
     if (isOpen) {
@@ -44,12 +45,33 @@ const ManageCategoriesDialog: React.FC<ManageCategoriesDialogProps> = ({
   }, [isOpen]);
 
   useEffect(() => {
-    const sorted = [...categories].sort((a, b) => (a.order || 0) - (b.order || 0));
-    setLocalCategories(sorted);
-    setShowAddForm(false);
-    setError(null);
-    setSuccessMsg(null);
-    setCategoryToDelete(null);
+    if (isOpen && !prevIsOpen.current) {
+      // Just opened: completely reset from server
+      const sorted = [...categories].sort((a, b) => (a.order || 0) - (b.order || 0));
+      setLocalCategories(sorted);
+      setShowAddForm(false);
+      setError(null);
+      setSuccessMsg(null);
+      setCategoryToDelete(null);
+    } else if (isOpen && prevIsOpen.current) {
+      // Already open but categories updated (e.g. background refetch after delete): merge to keep local order/names
+      setLocalCategories(prev => {
+        if (prev.length === 0) return [...categories].sort((a, b) => (a.order || 0) - (b.order || 0));
+        
+        const serverCatMap = new Map(categories.map(c => [c.id, c]));
+        const updatedPrev = prev.filter(c => serverCatMap.has(c.id)).map(c => ({
+          ...serverCatMap.get(c.id),
+          ...c, 
+        }));
+        
+        const localIds = new Set(prev.map(c => c.id));
+        const newCats = categories.filter(c => !localIds.has(c.id));
+        
+        return [...updatedPrev, ...newCats];
+      });
+    }
+
+    prevIsOpen.current = isOpen;
   }, [categories, isOpen]);
 
   useEffect(() => {
