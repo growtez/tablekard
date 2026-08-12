@@ -24,6 +24,49 @@ import type { OfferRow } from '../services/supabaseService';
 import { useMenuItems, useMenuCategories, useOffers, useInvalidateQueries } from '../hooks/useSupabaseQuery';
 import type { MenuItem, MenuCategory } from '@restaurant-saas/types';
 
+const VariantSelector = ({ variants, selectedIndex, onChange }: { variants: any[], selectedIndex: number, onChange: (idx: number) => void }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
+
+  if (variants.length <= 1) return null;
+
+  return (
+    <div className="relative z-20" ref={dropdownRef}>
+      <button
+        onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
+        className="flex items-center justify-between gap-1.5 w-full bg-white/90 backdrop-blur-sm dark:bg-tk-bg-surface/90 px-2 py-1 rounded-md font-semibold text-[11px] text-tk-text border border-tk-border shadow-sm focus:outline-none focus:border-tk-burgundy cursor-pointer min-w-[80px] max-w-[120px] transition-colors hover:border-tk-burgundy/50"
+      >
+        <span className="truncate">{variants[selectedIndex]?.name || 'Select'}</span>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`text-tk-text-secondary transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      
+      {isOpen && (
+        <div className="absolute top-full right-0 mt-1 w-max min-w-[120px] bg-white dark:bg-tk-bg-elevated border border-tk-border rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.1)] py-1 overflow-hidden animate-[fadeIn_0.15s_ease-out]">
+          {variants.map((v, idx) => (
+            <button
+              key={idx}
+              onClick={(e) => { e.stopPropagation(); onChange(idx); setIsOpen(false); }}
+              className={`w-full text-left px-3 py-2 text-[11px] font-bold transition-colors flex justify-between items-center ${selectedIndex === idx ? 'bg-tk-burgundy/10 text-tk-burgundy' : 'text-tk-text hover:bg-tk-bg-hover'}`}
+            >
+              <span className="truncate pr-2">{v.name}</span>
+              <span className="opacity-70 shrink-0">₹{v.price}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const Menu: React.FC = () => {
   const { activeRestaurantId, activeRestaurantName } = useAuth();
@@ -84,6 +127,7 @@ const Menu: React.FC = () => {
   const [dialogMode, setDialogMode] = useState<'add' | 'edit'>('add');
   const [optimisticAvailability, setOptimisticAvailability] = useState<Record<string, boolean>>({});
   const [categorySearchQuery, setCategorySearchQuery] = useState('');
+  const [selectedVariants, setSelectedVariants] = useState<Record<string, number>>({});
 
   let filteredMenuItems = selectedCategoryId === 'all'
     ? menuItems
@@ -769,8 +813,23 @@ const Menu: React.FC = () => {
           ) : viewMode === 'grid' ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-5">
               {filteredMenuItems.slice(0, visibleItemCount).map((item) => (
-                <div key={item.id} className="bg-white dark:bg-tk-bg-card rounded-[16px] shadow-sm border border-tk-border p-3 flex flex-col gap-3 transition-all duration-300 hover:shadow-md hover:border-[#E55A28]/30 h-full">
+                <div key={item.id} className="bg-white dark:bg-tk-bg-card rounded-[16px] shadow-sm border border-tk-border p-3 flex flex-col gap-3 transition-all duration-300 hover:shadow-md hover:border-[#E55A28]/30 h-full relative">
                   
+                  {item.variants && item.variants.length > 1 && (
+                    <div className="absolute top-4 right-4 z-10">
+                      <VariantSelector 
+                        variants={item.variants} 
+                        selectedIndex={selectedVariants[item.id] || 0} 
+                        onChange={(idx) => setSelectedVariants(prev => ({ ...prev, [item.id]: idx }))} 
+                      />
+                    </div>
+                  )}
+                  {item.variants && item.variants.length === 1 && (
+                    <div className="absolute top-4 right-4 z-10 bg-white/90 backdrop-blur-sm dark:bg-tk-bg-surface/90 px-2 py-1 rounded-md font-semibold text-[11px] text-tk-text border border-tk-border shadow-sm max-w-[100px] truncate">
+                      {item.variants[0].name}
+                    </div>
+                  )}
+
                   {/* Top Image */}
                   <div className="w-full aspect-[16/9] rounded-[12px] bg-[#f5f5f5] dark:bg-tk-bg-surface overflow-hidden relative shadow-sm border-[2px] border-white dark:border-tk-bg-card shrink-0">
                     {(item.images && item.images.length > 0) ? (
@@ -818,20 +877,28 @@ const Menu: React.FC = () => {
                           {/* Prep Time */}
                           <div className="flex items-center gap-1 bg-[#F7FAFC] dark:bg-tk-bg-surface px-2 py-0.5 rounded-md font-semibold text-[11px] text-tk-text-secondary border border-tk-border">
                             <Clock size={11} />
-                            <span>{(item as any).preparationTime || (item as any).preparation_time ? `${(item as any).preparationTime || (item as any).preparation_time} min` : '15 min'}</span>
+                            <span>
+                              {item.variants && item.variants.length > 0 && item.variants[selectedVariants[item.id] || 0]?.preparation_time 
+                                ? `${item.variants[selectedVariants[item.id] || 0].preparation_time} min`
+                                : (item as any).preparationTime || (item as any).preparation_time ? `${(item as any).preparationTime || (item as any).preparation_time} min` : '15 min'}
+                            </span>
                           </div>
 
                           {/* Price */}
                           <div className="flex flex-col items-end mt-1">
                             <div className="text-[18px] sm:text-[20px] font-extrabold text-[#111] dark:text-tk-text leading-none tracking-tighter">
-                              ₹{item.discountPrice && item.discountPrice < item.price ? item.discountPrice : item.price}
+                              {item.variants && item.variants.length > 0 ? (
+                                <>₹{item.variants[selectedVariants[item.id] || 0].price}</>
+                              ) : (
+                                <>₹{item.discountPrice && item.discountPrice < item.price ? item.discountPrice : item.price}</>
+                              )}
                             </div>
-                            {item.discountPrice && item.discountPrice < item.price && (
+                            {(!item.variants || item.variants.length === 0) && item.discountPrice && item.discountPrice < item.price && (
                               <div className="text-[12px] text-tk-text-secondary font-semibold line-through decoration-tk-text-secondary/60 mt-[2px]">
                                 ₹{item.price}
                               </div>
                             )}
-                            {(!item.discountPrice || item.discountPrice >= item.price) && (
+                            {(!item.variants || item.variants.length === 0) && (!item.discountPrice || item.discountPrice >= item.price) && (
                                <div className="text-[12px] text-tk-text-secondary font-semibold line-through decoration-tk-text-secondary/60 mt-[2px]">
                                  ₹{Math.floor(item.price * 1.25)}
                                </div>
@@ -879,7 +946,23 @@ const Menu: React.FC = () => {
                 {filteredMenuItems.slice(0, visibleItemCount).map((item) => {
                   const categoryName = getCategoryName(item.categoryId);
                   return (
-                    <div key={item.id} className="bg-tk-bg-card p-4 rounded-xl shadow-sm border border-tk-border flex flex-col gap-3">
+                    <div key={item.id} className="bg-tk-bg-card p-4 rounded-xl shadow-sm border border-tk-border flex flex-col gap-3 relative">
+                      
+                      {item.variants && item.variants.length > 1 && (
+                        <div className="absolute top-4 right-4 z-10">
+                          <VariantSelector 
+                            variants={item.variants} 
+                            selectedIndex={selectedVariants[item.id] || 0} 
+                            onChange={(idx) => setSelectedVariants(prev => ({ ...prev, [item.id]: idx }))} 
+                          />
+                        </div>
+                      )}
+                      {item.variants && item.variants.length === 1 && (
+                        <div className="absolute top-4 right-4 z-10 bg-white/90 backdrop-blur-sm dark:bg-tk-bg-surface/90 px-2 py-1 rounded-md font-semibold text-[11px] text-tk-text border border-tk-border shadow-sm max-w-[100px] truncate">
+                          {item.variants[0].name}
+                        </div>
+                      )}
+
                       <div className="flex gap-3">
                         {/* Image */}
                         <div className="w-16 h-16 rounded-xl bg-[#FFF5E6] flex items-center justify-center text-[24px] shadow-sm overflow-hidden shrink-0">
@@ -895,11 +978,19 @@ const Menu: React.FC = () => {
                             <span className="text-[10px] font-bold text-tk-text-secondary uppercase">{categoryName}</span>
                           </div>
                           <h4 className="font-semibold text-sm text-tk-text truncate">{item.name}</h4>
-                          <div className="flex items-baseline gap-1.5 mt-1">
-                            <span className="text-sm font-bold text-tk-text">₹{item.discountPrice && item.discountPrice < item.price ? item.discountPrice : item.price}</span>
-                            {item.discountPrice && item.discountPrice < item.price && (
-                              <span className="text-[11px] text-tk-text-secondary line-through">₹{item.price}</span>
-                            )}
+                          <div className="flex flex-col items-start gap-1.5 mt-1">
+                            <div className="flex items-baseline gap-1.5">
+                              {item.variants && item.variants.length > 0 ? (
+                                <span className="text-sm font-bold text-tk-text">₹{item.variants[selectedVariants[item.id] || 0].price}</span>
+                              ) : (
+                                <>
+                                  <span className="text-sm font-bold text-tk-text">₹{item.discountPrice && item.discountPrice < item.price ? item.discountPrice : item.price}</span>
+                                  {item.discountPrice && item.discountPrice < item.price && (
+                                    <span className="text-[11px] text-tk-text-secondary line-through">₹{item.price}</span>
+                                  )}
+                                </>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -983,8 +1074,26 @@ const Menu: React.FC = () => {
                               <span>{categoryName}</span>
                             </div>
                           </td>
-                          <td className="py-3 px-4 text-[15px] font-semibold text-tk-text">
-                            ₹{item.price}
+                          <td className="py-3 px-4">
+                            <div className="flex flex-col gap-1.5">
+                              {item.variants && item.variants.length > 1 ? (
+                                <>
+                                  <VariantSelector 
+                                    variants={item.variants} 
+                                    selectedIndex={selectedVariants[item.id] || 0} 
+                                    onChange={(idx) => setSelectedVariants(prev => ({ ...prev, [item.id]: idx }))} 
+                                  />
+                                  <span className="text-[14px] font-semibold text-tk-text">₹{item.variants[selectedVariants[item.id] || 0].price}</span>
+                                </>
+                              ) : item.variants && item.variants.length === 1 ? (
+                                <>
+                                  <span className="text-[11px] font-semibold text-tk-text-secondary truncate max-w-[120px]">{item.variants[0].name}</span>
+                                  <span className="text-[14px] font-semibold text-tk-text">₹{item.variants[0].price}</span>
+                                </>
+                              ) : (
+                                <span className="text-[15px] font-semibold text-tk-text">₹{item.price}</span>
+                              )}
+                            </div>
                           </td>
                           <td className="py-3 px-4">
                             <span className={`inline-flex px-2.5 py-0.5 rounded text-[11px] font-bold ${(optimisticAvailability[item.id] ?? item.available) ? 'bg-[#C6F6D5] text-[#22543D]' : 'bg-[#FEF2F2] text-[#E53E3E]'}`}>

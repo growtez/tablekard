@@ -140,13 +140,13 @@ const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
               ) : (
                 <>
                   {[
-                    { label: 'Accept', value: 'CONFIRMED' },
+                    { label: 'Placed', value: 'CONFIRMED' },
                     { label: 'Preparing', value: 'PREPARING' },
                     { label: 'Ready', value: 'READY' }
                   ].map((step, stepIdx, arr) => {
                     const getStatusIdx = (status: string) => {
                       switch (status?.toUpperCase()) {
-                        case 'PENDING': return -1;
+                        case 'PENDING': return 0;
                         case 'CONFIRMED': return 0;
                         case 'PREPARING': return 1;
                         case 'READY': return 2;
@@ -883,7 +883,7 @@ const Order: React.FC = () => {
                         ) : (
                           <div className="flex items-center w-full pb-5">
                             {[
-                              { label: 'Accept', value: 'CONFIRMED' },
+                              { label: 'Placed', value: 'CONFIRMED' },
                               { label: 'Preparing', value: 'PREPARING' },
                               { label: 'Ready', value: 'READY' }
                             ].map((step, stepIdx, arr) => {
@@ -1067,13 +1067,13 @@ const Order: React.FC = () => {
                             ) : (
                               <div className="flex-1 flex items-center relative">
                                 {[
-                                  { label: 'Accept', value: 'CONFIRMED' },
+                                  { label: 'Placed', value: 'CONFIRMED' },
                                   { label: 'Preparing', value: 'PREPARING' },
                                   { label: 'Ready', value: 'READY' }
                                 ].map((step, idx, arr) => {
                                   const getStatusIdx = (status: string) => {
                                     switch (status?.toUpperCase()) {
-                                      case 'PENDING': return -1;
+                                      case 'PENDING': return 0;
                                       case 'CONFIRMED': return 0;
                                       case 'PREPARING': return 1;
                                       case 'READY': return 2;
@@ -1254,7 +1254,7 @@ const Order: React.FC = () => {
                         ) : (
                           <>
                             {[
-                              { label: 'Accept', value: 'CONFIRMED' },
+                              { label: 'Placed', value: 'CONFIRMED' },
                               { label: 'Preparing', value: 'PREPARING' },
                               { label: 'Ready', value: 'READY' }
                             ].map((step, stepIdx, arr) => {
