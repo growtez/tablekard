@@ -216,6 +216,8 @@ export interface MenuItemVariant {
   id: string;
   name: string;
   price: number;
+  preparation_time?: string;
+  serves?: string;
 }
 
 export interface MenuItemAddon {
