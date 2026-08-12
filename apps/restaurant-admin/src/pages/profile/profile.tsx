@@ -231,7 +231,7 @@ const Row = ({
 );
 
 const ProfilePage: React.FC = () => {
-  const { userProfile, activeRestaurantId, refreshSessionData, signOut } =
+  const { user, userProfile, activeRestaurantId, refreshSessionData, signOut } =
     useAuth();
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [restaurantForm, setRestaurantForm] =
@@ -1046,7 +1046,7 @@ const ProfilePage: React.FC = () => {
 
             <SectionHeader title="Contact Information" sectionId="contact" />
             {/* Email Address */}
-            <Row label="Email Address">
+            <Row label="Contact Email">
               {editingSection === "contact" ? (
                 <div className="flex items-center justify-between w-full gap-2">
                   <input
@@ -1512,18 +1512,18 @@ const ProfilePage: React.FC = () => {
               </span>
             </div>
           ) : (
-            <>
+            <div className="flex flex-col gap-1">
               <span>{userProfile?.email || "N/A"}</span>
-
-            </>
+              {user?.new_email && (
+                <span className="text-orange-500 text-[12px] font-medium font-['Outfit',sans-serif]">
+                  Pending verification: {user.new_email}
+                </span>
+              )}
+            </div>
           )}
         </Row>
 
-        <Row label="Global Role" plain>
-          <span className="inline-flex items-center px-3.5 py-1.5 rounded-xl text-[12px] font-semibold capitalize w-fit font-['Outfit',sans-serif] bg-[#D6BCFA] text-[#44337A] dark:bg-[rgba(214,188,250,0.15)] dark:text-[#D6BCFA]">
-            {formatLabel(userProfile?.role)}
-          </span>
-        </Row>
+
       </div>
     );
   }
@@ -1541,18 +1541,37 @@ const ProfilePage: React.FC = () => {
 
   return (
     <>
-      <div className="sticky top-0 z-[60] bg-tk-bg-surface pt-4 pb-3 -mt-6 -mx-6 px-6 mb-6 border-b border-[#E2E8F0] dark:border-tk-border flex flex-col gap-2 shadow-sm">
-        {/* Header Row: Title & Actions */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-extrabold text-[#1A202C] font-['Outfit',sans-serif] dark:text-white mb-1 tracking-tight">
+      <div className="sticky top-0 z-[60] bg-tk-bg-surface pt-4 -mt-6 -mx-6 px-6 mb-6 border-b border-[#E2E8F0] dark:border-tk-border shadow-sm">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 relative">
+          
+          <div className="flex-1 w-full flex justify-start pb-2 sm:pb-3">
+            <h1 className="text-2xl font-extrabold text-[#1A202C] font-['Outfit',sans-serif] dark:text-white tracking-tight">
               Restaurant Profile
             </h1>
-
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex justify-center gap-8 shrink-0">
+            <button
+              className={`pb-3 px-2 border-b-2 -mb-[2px] sm:-mb-[14px] text-[14px] font-bold font-['Outfit',sans-serif] transition-colors ${activeTab === "details"
+                ? "border-tk-burgundy text-tk-burgundy"
+                : "border-transparent text-[#4A5568] hover:text-[#1A202C] dark:text-tk-text-secondary dark:hover:text-tk-text"
+                }`}
+              onClick={() => setActiveTab("details")}
+            >
+              Details
+            </button>
+            <button
+              className={`pb-3 px-2 border-b-2 -mb-[2px] sm:-mb-[14px] text-[14px] font-bold font-['Outfit',sans-serif] transition-colors ${activeTab === "operations"
+                ? "border-tk-burgundy text-tk-burgundy"
+                : "border-transparent text-[#4A5568] hover:text-[#1A202C] dark:text-tk-text-secondary dark:hover:text-tk-text"
+                }`}
+              onClick={() => setActiveTab("operations")}
+            >
+              Operations
+            </button>
+          </div>
 
+          <div className="flex-1 w-full flex items-center justify-end gap-3 shrink-0 pb-2 sm:pb-3 hidden sm:flex">
             <button
               className="relative h-10 px-4 rounded-xl bg-white dark:bg-tk-bg-elevated text-[#E53E3E] border border-[#E53E3E]/20 flex items-center justify-center cursor-pointer shadow-[0_2px_8px_rgba(229,62,62,0.08)] overflow-hidden transition-all duration-300 z-10 before:absolute before:inset-0 before:w-full before:h-full before:bg-[#E53E3E] before:-z-10 before:-translate-x-full before:transition-transform before:duration-300 hover:before:translate-x-0 hover:text-white hover:shadow-[0_8px_16px_rgba(229,62,62,0.3)] hover:-translate-y-0.5 active:translate-y-0 font-bold font-['Outfit',sans-serif] text-[13px] tracking-wide"
               title="Sign Out"
@@ -1563,26 +1582,15 @@ const ProfilePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Tabs Row */}
-        <div className="flex justify-center gap-8 mt-2">
-          <button
-            className={`pb-3 px-2 border-b-2 text-[14px] font-bold font-['Outfit',sans-serif] transition-colors ${activeTab === "details"
-                ? "border-tk-burgundy text-tk-burgundy"
-                : "border-transparent text-[#4A5568] hover:text-[#1A202C] dark:text-tk-text-secondary dark:hover:text-tk-text"
-              }`}
-            onClick={() => setActiveTab("details")}
-          >
-            Details
-          </button>
-          <button
-            className={`pb-3 px-2 border-b-2 text-[14px] font-bold font-['Outfit',sans-serif] transition-colors ${activeTab === "operations"
-                ? "border-tk-burgundy text-tk-burgundy"
-                : "border-transparent text-[#4A5568] hover:text-[#1A202C] dark:text-tk-text-secondary dark:hover:text-tk-text"
-              }`}
-            onClick={() => setActiveTab("operations")}
-          >
-            Operations
-          </button>
+        {/* Mobile sign out button placed below if needed, or we can just leave it inline. Since sm:flex is applied to the container, it's fine. */}
+        <div className="flex w-full items-center justify-end pb-3 sm:hidden mt-2">
+            <button
+              className="relative h-10 px-4 rounded-xl bg-white dark:bg-tk-bg-elevated text-[#E53E3E] border border-[#E53E3E]/20 flex items-center justify-center cursor-pointer shadow-[0_2px_8px_rgba(229,62,62,0.08)] overflow-hidden transition-all duration-300 z-10 before:absolute before:inset-0 before:w-full before:h-full before:bg-[#E53E3E] before:-z-10 before:-translate-x-full before:transition-transform before:duration-300 hover:before:translate-x-0 hover:text-white hover:shadow-[0_8px_16px_rgba(229,62,62,0.3)] hover:-translate-y-0.5 active:translate-y-0 font-bold font-['Outfit',sans-serif] text-[13px] tracking-wide"
+              title="Sign Out"
+              onClick={() => setShowLogoutConfirm(true)}
+            >
+              Sign Out
+            </button>
         </div>
       </div>
 
@@ -1617,7 +1625,7 @@ const ProfilePage: React.FC = () => {
         </div>
       )}
 
-      <div className="flex flex-col gap-8 w-full" style={{ display: "block" }}>
+      <div className="flex flex-col gap-8 w-full min-h-[100vh]" style={{ display: "block" }}>
         {renderRestaurantProfileContent()}
 
         {/* Admin Profile Section */}

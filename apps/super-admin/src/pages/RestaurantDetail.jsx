@@ -243,7 +243,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
 
     const filteredPayments = payments
         .filter(p => {
-            const matchesSearch = p.id.toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesSearch = (p.id ? String(p.id).toLowerCase() : '').includes(searchQuery.toLowerCase());
             const matchesFilter = filterStatus === 'all' || p.status === filterStatus;
             return matchesSearch && matchesFilter;
         })

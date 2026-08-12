@@ -3,7 +3,7 @@ import { supabase } from '../supabaseClient';
 import {
     Download, Calendar, Loader2, ChevronLeft, ChevronRight, X,
     Eye, ShoppingCart, Hash, User, CreditCard, CheckCircle, IndianRupee,
-    Search, Filter, ArrowUpDown, ArrowUp, ArrowDown, Download
+    Search, Filter, ArrowUpDown, ArrowUp, ArrowDown
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle } from './ui/Card';
 import { Badge } from './ui/Badge';
@@ -381,6 +381,7 @@ export default function OrderHistoryTab({ restaurantId, viewMode = 'orders' }) {
     const [filterStatus, setFilterStatus] = useState('all');
     const [sortBy, setSortBy] = useState('newest');
     const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const [isDateOpen, setIsDateOpen] = useState(false);
 
     const [summary, setSummary] = useState({
         totalRevenue: 0, totalOrders: 0, aov: 0,
@@ -604,56 +605,7 @@ export default function OrderHistoryTab({ restaurantId, viewMode = 'orders' }) {
                 setTopItems(Object.values(map).sort((a, b) => b.revenue - a.revenue));
             }
 
-            const filteredOrders = orders
-        .filter(o => {
-            const num = o.order_number || o.id.slice(0, 8);
-            const matchesSearch = num.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                (o.type && o.type.toLowerCase().includes(searchQuery.toLowerCase()));
-            const matchesFilter = filterStatus === 'all' || o.status === filterStatus;
-            return matchesSearch && matchesFilter;
-        })
-        .sort((a, b) => {
-            if (sortBy === 'newest') return new Date(b.created_at) - new Date(a.created_at);
-            if (sortBy === 'oldest') return new Date(a.created_at) - new Date(b.created_at);
-            if (sortBy === 'amount') return Number(b.total) - Number(a.total);
-            if (sortBy === 'status') return (a.status || '').localeCompare(b.status || '');
-            return 0;
-        });
-
-    const totalPages = Math.max(1, Math.ceil(filteredOrders.length / perPage));
-    const safePage = Math.min(page, totalPages);
-    const pagedOrders = filteredOrders.slice((safePage - 1) * perPage, safePage * perPage);
-
-    const getPaginationPages = () => {
-        if (totalPages <= 3) return Array.from({ length: totalPages }, (_, i) => i + 1);
-        if (safePage === totalPages) return [1, '...', totalPages];
-        if (safePage === totalPages - 1) return [safePage - 1, safePage, totalPages];
-        return [safePage, '...', totalPages];
-    };
-
-    const toggleSort = (newSort) => {
-        if (sortBy === newSort) setSortBy(newSort === 'newest' ? 'oldest' : 'newest');
-        else setSortBy(newSort);
-    };
-
-    const getSortIcon = (field) => {
-        if (sortBy === field) return <ArrowUp size={14} />;
-        if (field === 'newest' && sortBy === 'oldest') return <ArrowDown size={14} />;
-        return <ArrowUpDown size={14} style={{ opacity: 0.3 }} />;
-    };
-
-    const handleExportOrders = () => {
-        const csvContent = "data:text/csv;charset=utf-8," 
-            + "Order #,Date,Type,Table,Amount,Status,Payment\n"
-            + filteredOrders.map(o => `${o.order_number || o.id.slice(0, 8)},${new Date(o.created_at).toLocaleString('en-IN').replace(/,/g, '')},${o.type},${o.table_number || ''},${o.total},${o.status},${o.payment_method}`).join("\n");
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `orders_${new Date().toISOString().split('T')[0]}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
+    // Moved to outer scope
 
     // Feedback
             const { data: fbData, error: fbErr } = await supabase
@@ -697,6 +649,57 @@ export default function OrderHistoryTab({ restaurantId, viewMode = 'orders' }) {
         setOrdersModal({ start, end, label: chartTitle() });
     };
 
+    const filteredOrders = orders
+        .filter(o => {
+            const num = o.order_number || (o.id ? String(o.id).slice(0, 8) : '');
+            const matchesSearch = num.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                (o.type && o.type.toLowerCase().includes(searchQuery.toLowerCase()));
+            const matchesFilter = filterStatus === 'all' || o.status === filterStatus;
+            return matchesSearch && matchesFilter;
+        })
+        .sort((a, b) => {
+            if (sortBy === 'newest') return new Date(b.created_at) - new Date(a.created_at);
+            if (sortBy === 'oldest') return new Date(a.created_at) - new Date(b.created_at);
+            if (sortBy === 'amount') return Number(b.total) - Number(a.total);
+            if (sortBy === 'status') return (a.status || '').localeCompare(b.status || '');
+            return 0;
+        });
+
+    const totalPages = Math.max(1, Math.ceil(filteredOrders.length / perPage));
+    const safePage = Math.min(page, totalPages);
+    const pagedOrders = filteredOrders.slice((safePage - 1) * perPage, safePage * perPage);
+
+    const getPaginationPages = () => {
+        if (totalPages <= 3) return Array.from({ length: totalPages }, (_, i) => i + 1);
+        if (safePage === totalPages) return [1, '...', totalPages];
+        if (safePage === totalPages - 1) return [safePage - 1, safePage, totalPages];
+        return [safePage, '...', totalPages];
+    };
+
+    const toggleSort = (newSort) => {
+        if (sortBy === newSort) setSortBy(newSort === 'newest' ? 'oldest' : 'newest');
+        else setSortBy(newSort);
+    };
+
+    const getSortIcon = (field) => {
+        if (sortBy === field) return <ArrowUp size={14} />;
+        if (field === 'newest' && sortBy === 'oldest') return <ArrowDown size={14} />;
+        return <ArrowUpDown size={14} style={{ opacity: 0.3 }} />;
+    };
+
+    const handleExportOrders = () => {
+        const csvContent = "data:text/csv;charset=utf-8," 
+            + "Order #,Date,Type,Table,Amount,Status,Payment\n"
+            + filteredOrders.map(o => `${o.order_number || (o.id ? String(o.id).slice(0, 8) : '')},${new Date(o.created_at).toLocaleString('en-IN').replace(/,/g, '')},${o.type},${o.table_number || ''},${o.total},${o.status},${o.payment_method}`).join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `orders_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     const maxRev  = Math.max(...summary.revenueHistory.map(b => b.revenue), 1);
     const peakMax = Math.max(...summary.peakData.map(d => Math.max(...d)), 1);
 
@@ -713,50 +716,8 @@ export default function OrderHistoryTab({ restaurantId, viewMode = 'orders' }) {
     return (
         <div className="flex flex-col gap-8 animate-fade-in">
 
-            {/* ── Filters ── */}
-            <div className="flex flex-wrap items-center justify-between gap-4 bg-surface p-4 rounded-2xl border border-border">
-                <div className="flex items-center gap-2 flex-wrap">
-                    {['today', 'week', 'month', 'all'].map(t => (
-                        <button key={t} onClick={() => { setTimeframe(t); setWeekOffset(0); setMonthOffset(0); }}
-                            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all border-none cursor-pointer ${timeframe === t ? 'bg-accent-primary text-black' : 'bg-surface-hover text-text-muted hover:text-text-main'}`}>
-                            {t.charAt(0).toUpperCase() + t.slice(1)}
-                        </button>
-                    ))}
-                    <div className="flex items-center gap-2 border-l border-border pl-2 ml-1">
-                        <button onClick={() => setTimeframe('custom')}
-                            className={`px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 border-none cursor-pointer ${timeframe === 'custom' ? 'bg-accent-primary text-black' : 'bg-surface-hover text-text-muted hover:text-text-main'}`}>
-                            <Calendar size={16} /> Custom
-                        </button>
-                        {timeframe === 'custom' && (
-                            <div className="flex items-center gap-2">
-                                <input type="date" value={customStart} onChange={e => setCustomStart(e.target.value)} className="bg-surface-hover border border-border rounded-lg px-3 py-1.5 text-sm text-text-main" />
-                                <span className="text-text-muted text-sm">to</span>
-                                <input type="date" value={customEnd} onChange={e => setCustomEnd(e.target.value)} className="bg-surface-hover border border-border rounded-lg px-3 py-1.5 text-sm text-text-main" />
-                            </div>
-                        )}
-                    </div>
-                    {timeframe === 'week' && (
-                        <div className="flex items-center gap-3 bg-surface-hover px-3 py-1.5 rounded-xl ml-1">
-                            <button onClick={() => setWeekOffset(p => p + 1)} className="text-text-muted hover:text-text-main border-none bg-transparent cursor-pointer"><ChevronLeft size={16} /></button>
-                            <span className="text-sm font-semibold whitespace-nowrap">{getWeekDateRange(weekOffset)}</span>
-                            <button onClick={() => setWeekOffset(p => Math.max(0, p - 1))} disabled={weekOffset === 0} className="text-text-muted hover:text-text-main border-none bg-transparent cursor-pointer disabled:opacity-30"><ChevronRight size={16} /></button>
-                        </div>
-                    )}
-                    {timeframe === 'month' && (
-                        <div className="flex items-center gap-3 bg-surface-hover px-3 py-1.5 rounded-xl ml-1">
-                            <button onClick={() => setMonthOffset(p => p + 1)} className="text-text-muted hover:text-text-main border-none bg-transparent cursor-pointer"><ChevronLeft size={16} /></button>
-                            <span className="text-sm font-semibold whitespace-nowrap">{getMonthLabel(monthOffset)}</span>
-                            <button onClick={() => setMonthOffset(p => Math.max(0, p - 1))} disabled={monthOffset === 0} className="text-text-muted hover:text-text-main border-none bg-transparent cursor-pointer disabled:opacity-30"><ChevronRight size={16} /></button>
-                        </div>
-                    )}
-                </div>
-                <button onClick={handleExportCSV} className="flex items-center gap-2 px-4 py-2 bg-surface-hover text-text-main font-semibold rounded-xl border border-border hover:bg-border transition-all cursor-pointer">
-                    <Download size={16} /> Export CSV
-                </button>
-            </div>
-
             {loading && (
-                <div className="flex items-center gap-2 text-sm text-accent-primary animate-pulse">
+                <div className="flex items-center gap-2 text-sm text-accent-primary animate-pulse mb-4">
                     <Loader2 size={16} className="animate-spin" /> Updating…
                 </div>
             )}
@@ -764,6 +725,43 @@ export default function OrderHistoryTab({ restaurantId, viewMode = 'orders' }) {
             {/* ── Metrics ── */}
             {viewMode === 'stats' && (
                 <>
+                    <div className="flex flex-wrap justify-between items-center mb-4 gap-3 bg-surface p-3 rounded-xl border border-border shadow-sm">
+                        <div className="flex flex-wrap items-center gap-2">
+                            {/* Date Filter for Stats */}
+                            <div className="relative group">
+                                <button 
+                                    onClick={() => setIsDateOpen(!isDateOpen)}
+                                    className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface text-text-main hover:bg-surface-hover transition-colors text-[12px] font-medium cursor-pointer"
+                                >
+                                    <Calendar size={14} className="text-accent-primary" />
+                                    {timeframe === 'all' ? 'All Time' : timeframe === 'today' ? 'Today' : timeframe === 'week' ? 'This Week' : timeframe === 'month' ? 'This Month' : 'Custom'}
+                                </button>
+                                <div className={`absolute left-0 top-full mt-2 w-48 bg-surface border border-border rounded-xl shadow-lg transition-all z-50 flex flex-col overflow-hidden py-1 ${
+                                    isDateOpen ? 'opacity-100 visible' : 'opacity-0 invisible group-hover:opacity-100 group-hover:visible'
+                                }`}>
+                                    {['today', 'week', 'month', 'all'].map(t => (
+                                        <button key={t} onClick={() => { setTimeframe(t); setIsDateOpen(false); setWeekOffset(0); setMonthOffset(0); }} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors cursor-pointer border-none ${timeframe === t ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main bg-transparent'}`}>
+                                            {t === 'today' ? 'Today' : t === 'week' ? 'This Week' : t === 'month' ? 'This Month' : 'All Time'}
+                                        </button>
+                                    ))}
+                                    <button onClick={() => { setTimeframe('custom'); setIsDateOpen(false); }} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors cursor-pointer border-none ${timeframe === 'custom' ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main bg-transparent'}`}>
+                                        Custom Range
+                                    </button>
+                                </div>
+                            </div>
+                            {timeframe === 'custom' && (
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <input type="date" value={customStart} onChange={e => setCustomStart(e.target.value)} className="bg-surface border border-border rounded-lg px-2 py-1.5 text-[12px] text-text-main focus:ring-1 focus:ring-accent-primary focus:outline-none" />
+                                    <span className="text-text-muted text-[12px]">to</span>
+                                    <input type="date" value={customEnd} onChange={e => setCustomEnd(e.target.value)} className="bg-surface border border-border rounded-lg px-2 py-1.5 text-[12px] text-text-main focus:ring-1 focus:ring-accent-primary focus:outline-none" />
+                                </div>
+                            )}
+                        </div>
+                        <button onClick={handleExportCSV} className="flex items-center gap-1.5 px-3 py-2 bg-surface-hover text-text-main text-[12px] font-semibold rounded-lg border border-border hover:bg-border transition-all cursor-pointer">
+                            <Download size={14} /> Export CSV
+                        </button>
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[
                     { label: 'Total Revenue',    value: fmtCurrency(summary.totalRevenue), bar: 'bg-blue-500',   sub: 'Paid orders only' },
@@ -969,7 +967,6 @@ export default function OrderHistoryTab({ restaurantId, viewMode = 'orders' }) {
 
             {/* ── Recent Orders Table ── */}
             {viewMode === 'orders' && (
-            {viewMode === 'orders' && (
             <div className="space-y-3">
                 <div className="flex flex-col md:flex-row md:items-center gap-3 w-full bg-surface p-3 md:p-2 rounded-xl shadow-sm border border-border">
                     <div className="relative w-full md:max-w-[260px] shrink-0">
@@ -1037,7 +1034,7 @@ export default function OrderHistoryTab({ restaurantId, viewMode = 'orders' }) {
                         <div className="relative group flex-1 md:flex-none">
                             <button 
                                 onClick={() => setIsFilterOpen(!isFilterOpen)}
-                                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface text-text-main hover:bg-surface-hover transition-colors text-[12px] font-medium"
+                                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface text-text-main hover:bg-surface-hover transition-colors text-[12px] font-medium cursor-pointer"
                             >
                                 <Filter size={14} className="text-accent-primary" /> Filter
                             </button>
@@ -1045,12 +1042,42 @@ export default function OrderHistoryTab({ restaurantId, viewMode = 'orders' }) {
                                 isFilterOpen ? 'opacity-100 visible' : 'opacity-0 invisible group-hover:opacity-100 group-hover:visible'
                             }`}>
                                 {['all', 'pending', 'served', 'completed', 'cancelled'].map(status => (
-                                    <button key={status} onClick={() => { setFilterStatus(status); setIsFilterOpen(false); }} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${filterStatus === status ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>
+                                    <button key={status} onClick={() => { setFilterStatus(status); setIsFilterOpen(false); }} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors cursor-pointer border-none ${filterStatus === status ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main bg-transparent'}`}>
                                         {status.charAt(0).toUpperCase() + status.slice(1)}
                                     </button>
                                 ))}
                             </div>
                         </div>
+
+                        {/* Date Filter Dropdown for Orders */}
+                        <div className="relative group flex-1 md:flex-none">
+                            <button 
+                                onClick={() => setIsDateOpen(!isDateOpen)}
+                                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface text-text-main hover:bg-surface-hover transition-colors text-[12px] font-medium cursor-pointer"
+                            >
+                                <Calendar size={14} className="text-accent-primary" />
+                                {timeframe === 'all' ? 'All Time' : timeframe === 'today' ? 'Today' : timeframe === 'week' ? 'This Week' : timeframe === 'month' ? 'This Month' : 'Custom'}
+                            </button>
+                            <div className={`absolute right-0 top-full mt-2 w-48 bg-surface border border-border rounded-xl shadow-lg transition-all z-50 flex flex-col overflow-hidden py-1 ${
+                                isDateOpen ? 'opacity-100 visible' : 'opacity-0 invisible group-hover:opacity-100 group-hover:visible'
+                            }`}>
+                                {['today', 'week', 'month', 'all'].map(t => (
+                                    <button key={t} onClick={() => { setTimeframe(t); setIsDateOpen(false); setWeekOffset(0); setMonthOffset(0); }} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors cursor-pointer border-none ${timeframe === t ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main bg-transparent'}`}>
+                                        {t === 'today' ? 'Today' : t === 'week' ? 'This Week' : t === 'month' ? 'This Month' : 'All Time'}
+                                    </button>
+                                ))}
+                                <button onClick={() => { setTimeframe('custom'); setIsDateOpen(false); }} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors cursor-pointer border-none ${timeframe === 'custom' ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main bg-transparent'}`}>
+                                    Custom Range
+                                </button>
+                            </div>
+                        </div>
+                        {timeframe === 'custom' && (
+                            <div className="flex items-center gap-2 shrink-0">
+                                <input type="date" value={customStart} onChange={e => setCustomStart(e.target.value)} className="bg-surface border border-border rounded-lg px-2 py-1.5 text-[12px] text-text-main focus:ring-1 focus:ring-accent-primary focus:outline-none" />
+                                <span className="text-text-muted text-[12px]">to</span>
+                                <input type="date" value={customEnd} onChange={e => setCustomEnd(e.target.value)} className="bg-surface border border-border rounded-lg px-2 py-1.5 text-[12px] text-text-main focus:ring-1 focus:ring-accent-primary focus:outline-none" />
+                            </div>
+                        )}
                         <button 
                             onClick={handleExportOrders}
                             className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-accent-primary text-white hover:bg-accent-hover transition-colors text-[12px] font-medium shadow-sm cursor-pointer border-none flex-1 md:flex-none"
@@ -1086,7 +1113,7 @@ export default function OrderHistoryTab({ restaurantId, viewMode = 'orders' }) {
                                 ) : pagedOrders.map(o => (
                                     <tr key={o.id} className="group even:bg-bg hover:bg-surface-hover border-b border-border/40 last:border-b-0 cursor-pointer transition-colors">
                                         <td className="py-3 px-4 text-[13px] text-text-muted">{new Date(o.created_at).toLocaleString('en-IN')}</td>
-                                        <td className="py-3 px-4 text-[13px] font-semibold" style={{ color: '#4C51BF' }}>#{o.order_number || o.id.slice(0, 8)}</td>
+                                        <td className="py-3 px-4 text-[13px] font-semibold" style={{ color: '#4C51BF' }}>#{o.order_number || (o.id ? String(o.id).slice(0, 8) : '')}</td>
                                         <td className="py-3 px-4 text-[13px] text-text-main capitalize">{o.type?.replace('_', ' ')}</td>
                                         <td className="py-3 px-4 text-[13px] text-text-main">{o.table_number || '—'}</td>
                                         <td className="py-3 px-4 text-[13px] font-semibold text-text-main text-right">{fmtCurrency(o.total)}</td>

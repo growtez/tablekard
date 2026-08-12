@@ -52,10 +52,12 @@ const BottomNav = () => {
                 )}
             </NavLink>
 
-            <NavLink to="/profile" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
-                <User size={22} />
-                <span className="bottom-nav-label">Profile</span>
-            </NavLink>
+            {sessionStorage.getItem('previewMode') !== 'true' && (
+                <NavLink to="/profile" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
+                    <User size={22} />
+                    <span className="bottom-nav-label">Profile</span>
+                </NavLink>
+            )}
         </nav>
     );
 };

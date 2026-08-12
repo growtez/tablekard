@@ -36,7 +36,7 @@ const NAV_ITEMS = [
   { to: "/",        Icon: Home,           label: "Home"    },
   { to: "/menu",    Icon: CustomMenuIcon, label: "Menu"    },
   { to: "/orders",  Icon: ShoppingCart,   label: "Orders"  },
-  { to: "/profile", Icon: User,           label: "Profile" },
+  ...(sessionStorage.getItem('previewMode') !== 'true' ? [{ to: "/profile", Icon: User,           label: "Profile" }] : []),
 ];
 
 export function SkeletonBottomNav() {
