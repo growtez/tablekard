@@ -377,7 +377,6 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, onAddC
       setArModelFile(null);
       setRemoveModel(false);
       setNewTag('');
-      setNewVariant({ name: '', price: 0 });
       setNewAddon({ name: '', price: 0 });
     }
     onClose();
