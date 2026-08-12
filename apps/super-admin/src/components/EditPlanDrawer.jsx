@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from '../supabaseClient';
 import { X, CheckCircle, Plus, Trash2, Zap, Clock, Star, Award, Shield, DollarSign, Search } from 'lucide-react';
 
@@ -93,7 +94,7 @@ export default function EditPlanDrawer({ isOpen, onClose, initialData, type, onS
 
     const accentColor = type === 'trial' ? 'emerald-500' : 'accent-primary';
 
-    return (
+    return createPortal(
         <>
             <div className={`fixed inset-0 bg-black/40 backdrop-blur-sm z-[1100] transition-opacity duration-300 ${visible ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} onClick={onClose} />
             <div className={`fixed top-0 right-0 h-screen w-full max-w-[450px] bg-bg z-[1101] transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] shadow-2xl flex flex-col ${visible ? 'translate-x-0' : 'translate-x-full'}`}>
@@ -378,5 +379,5 @@ export default function EditPlanDrawer({ isOpen, onClose, initialData, type, onS
                 </div>
             </div>
         </>
-    );
+    , document.body);
 }

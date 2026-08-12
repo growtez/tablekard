@@ -166,8 +166,8 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
 
     const handleExport = () => {
         const csvContent = "data:text/csv;charset=utf-8," 
-            + "Name,Status,Plan,Email,Phone,Created\n"
-            + filteredRestaurants.map(r => `${r.name},${r.status},${r.subscription_type || (r.subscription_status ? 'PRO PLAN' : 'TRIAL PLAN')},${r.contact_email || ''},${r.contact_phone || ''},${new Date(r.created_at).toLocaleDateString()}`).join("\n");
+            + "Name,Status,Email,Phone,Created\n"
+            + filteredRestaurants.map(r => `${r.name},${r.status},${r.contact_email || ''},${r.contact_phone || ''},${new Date(r.created_at).toLocaleDateString()}`).join("\n");
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
@@ -288,13 +288,13 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                                     Name {getSortIcon('name')}
                                 </div>
                             </th>
-                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[15%]" onClick={() => toggleSort('status')}>
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[25%]" onClick={() => toggleSort('status')}>
                                 <div className="flex items-center gap-2 whitespace-nowrap">
                                     Status {getSortIcon('status')}
                                 </div>
                             </th>
-                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[15%]">Plan</th>
-                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[25%]">Email</th>
+
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[30%]">Email</th>
                             <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[15%]">Phone</th>
                         </tr>
                     </thead>
@@ -335,7 +335,7 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                                                         ? (res.subscription_status 
                                                             ? (billingPlans.find(p => p.name?.toLowerCase() === res.subscription_type?.toLowerCase())?.id 
                                                                 ? `active-plan-${billingPlans.find(p => p.name?.toLowerCase() === res.subscription_type?.toLowerCase()).id}` 
-                                                                : (res.subscription_type?.toLowerCase().includes('pro') && billingPlans.length === 0 ? 'active-plan-custom' : 'active-custom'))
+                                                                : 'active-custom')
                                                             : (trialPlans.find(t => t.name?.toLowerCase() === res.subscription_type?.toLowerCase())?.id
                                                                 ? `active-trial-${trialPlans.find(t => t.name?.toLowerCase() === res.subscription_type?.toLowerCase()).id}`
                                                                 : 'active-trial-14_days_trial'))
@@ -375,11 +375,7 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                                                 <option value="rejected" className="text-red-600 font-bold">REJECTED</option>
                                             </select>
                                         </td>
-                                        <td className="py-2.5 px-4 align-middle">
-                                            <span className={`text-[12px] font-bold ${res.subscription_status ? 'text-blue-600' : 'text-text-muted opacity-80'}`}>
-                                                {(res.subscription_type || (res.subscription_status ? 'PRO PLAN' : 'TRIAL PLAN')).toUpperCase()}
-                                            </span>
-                                        </td>
+
                                         <td className="py-2.5 px-4 align-middle">
                                             <div className="flex items-center gap-2 text-[12px] text-text-main">
                                                 <Mail size={12} className="text-blue-500 shrink-0" />
@@ -456,7 +452,7 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                                                     ? (res.subscription_status 
                                                         ? (billingPlans.find(p => p.name?.toLowerCase() === res.subscription_type?.toLowerCase())?.id 
                                                             ? `active-plan-${billingPlans.find(p => p.name?.toLowerCase() === res.subscription_type?.toLowerCase()).id}` 
-                                                            : (res.subscription_type?.toLowerCase().includes('pro') && billingPlans.length === 0 ? 'active-plan-custom' : 'active-custom'))
+                                                            : 'active-custom')
                                                         : (trialPlans.find(t => t.name?.toLowerCase() === res.subscription_type?.toLowerCase())?.id
                                                             ? `active-trial-${trialPlans.find(t => t.name?.toLowerCase() === res.subscription_type?.toLowerCase()).id}`
                                                             : 'active-trial-14_days_trial'))
@@ -512,12 +508,7 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                                         </div>
                                     )}
 
-                                    <div className="flex items-center justify-between text-[11px] text-text-muted mt-1 pt-1.5 border-t border-border/20">
-                                        <span>Plan</span>
-                                        <span className={`font-bold ${res.subscription_status ? 'text-blue-600' : 'text-text-muted'}`}>
-                                            {(res.subscription_type || (res.subscription_status ? 'PRO PLAN' : 'TRIAL PLAN')).toUpperCase()}
-                                        </span>
-                                    </div>
+
                                 </div>
                             </div>
                         ))
