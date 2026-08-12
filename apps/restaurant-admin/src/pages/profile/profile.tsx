@@ -263,7 +263,7 @@ const ProfilePage: React.FC = () => {
   const [isAdminSaving, setIsAdminSaving] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-    const [isLocating, setIsLocating] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
 
   const shallowEqual = (obj1: any, obj2: any): boolean => {
     if (obj1 === obj2) return true;
@@ -286,7 +286,7 @@ const ProfilePage: React.FC = () => {
 
 
   useEffect(() => {
-    if (editingSection !== "location" || !restaurantForm?.slug) {
+    if (editingSection !== "core" || !restaurantForm?.slug) {
       setSlugAvailable(null);
       setCheckingSlug(false);
       return;
@@ -447,7 +447,7 @@ const ProfilePage: React.FC = () => {
 
   useEffect(() => {
     isEditingProfileRef.current = editingSection === "location";
-  }, [isEditingProfile]);
+  }, [editingSection]);
 
   useEffect(() => {
     if (!showMap && editingSection !== "location") return;
@@ -483,7 +483,7 @@ const ProfilePage: React.FC = () => {
       }).addTo(map);
 
       marker.on("dragend", function () {
-        if (editingSection !== "location"Ref.current) return;
+        if (!isEditingProfileRef.current) return;
         const position = marker.getLatLng();
         setRestaurantForm((current) =>
           current
@@ -497,7 +497,7 @@ const ProfilePage: React.FC = () => {
       });
 
       map.on("click", function (event: any) {
-        if (editingSection !== "location"Ref.current) return;
+        if (!isEditingProfileRef.current) return;
         const position = event.latlng;
         marker.setLatLng(position);
         map.setView(position);
@@ -543,7 +543,7 @@ const ProfilePage: React.FC = () => {
         mapMarkerRef.current = null;
       }
     };
-  }, [restaurant, showMap, isEditingProfile]);
+  }, [restaurant, showMap, editingSection]);
 
   useEffect(() => {
     if (mapMarkerRef.current) {
@@ -553,7 +553,7 @@ const ProfilePage: React.FC = () => {
         mapMarkerRef.current.dragging.disable();
       }
     }
-  }, [isEditingProfile]);
+  }, [editingSection]);
 
   useEffect(() => {
     if (mapInstanceRef.current && mapMarkerRef.current && restaurantForm) {
@@ -773,7 +773,7 @@ const ProfilePage: React.FC = () => {
 
 
 
-  
+
   const SectionHeader = ({ title, sectionId }: { title: string, sectionId?: string }) => (
     <div className="flex items-center justify-between pt-4 pb-2 border-b border-[#E2E8F0] dark:border-tk-border">
       <h3 className="text-[18px] font-bold text-[#1A202C] dark:text-tk-text font-['Outfit',sans-serif] m-0 uppercase tracking-wide">
@@ -834,617 +834,617 @@ const ProfilePage: React.FC = () => {
         {activeTab === "details" && (
           <>
             <SectionHeader title="Core Details" sectionId="core" />
-        {/* Restaurant Name */}
-        <Row label="Restaurant Name">
-          {editingSection === "core" ? (
-            <div className="flex items-center justify-between w-full gap-2">
-              <input
-                type="text"
-                className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                value={restaurantForm.name}
-                onChange={(e) =>
-                  handleRestaurantFieldChange("name", e.target.value)
-                }
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSaveProfile();
-                  if (e.key === "Escape") handleCancelEdit();
-                }}
-                maxLength={120}
-              />
+            {/* Restaurant Name */}
+            <Row label="Restaurant Name">
+              {editingSection === "core" ? (
+                <div className="flex items-center justify-between w-full gap-2">
+                  <input
+                    type="text"
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                    value={restaurantForm.name}
+                    onChange={(e) =>
+                      handleRestaurantFieldChange("name", e.target.value)
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSaveProfile();
+                      if (e.key === "Escape") handleCancelEdit();
+                    }}
+                    maxLength={120}
+                  />
 
-            </div>
-          ) : (
-            <>
-              <span>{restaurant?.name}</span>
+                </div>
+              ) : (
+                <>
+                  <span>{restaurant?.name}</span>
 
-            </>
-          )}
-        </Row>
+                </>
+              )}
+            </Row>
 
-        {/* Page URL */}
-        <Row label="Restaurant Page URL">
-          {editingSection === "core" ? (
-            <div className="flex items-center justify-between w-full gap-2">
-              <div className="relative flex items-center w-full">
-                <span className="px-3 py-1.5 bg-[#EDF2F7] border border-[#CBD5E0] border-r-0 rounded-l-xl text-[#4A5568] text-[13px] font-['Outfit',sans-serif] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text-secondary select-none shrink-0">
-                  tablekard.com/
-                </span>
-                <input
-                  type="text"
-                  className={`w-full border rounded-r-xl bg-white text-[#1A202C] px-3 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none dark:bg-tk-bg-surface dark:text-tk-text pr-[130px] ${slugAvailable === false
-                    ? "border-red-500 text-red-500"
-                    : "border-[#CBD5E0] focus:border-tk-burgundy dark:border-tk-border"
-                    }`}
-                  value={restaurantForm.slug}
-                  onChange={(e) =>
-                    handleRestaurantFieldChange(
-                      "slug",
-                      e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "")
-                    )
-                  }
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleSaveProfile();
-                    if (e.key === "Escape") handleCancelEdit();
+            {/* Page URL */}
+            <Row label="Restaurant Page URL">
+              {editingSection === "core" ? (
+                <div className="flex items-center justify-between w-full gap-2">
+                  <div className="relative flex items-center w-full">
+                    <span className="px-3 py-1.5 bg-[#EDF2F7] border border-[#CBD5E0] border-r-0 rounded-l-xl text-[#4A5568] text-[13px] font-['Outfit',sans-serif] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text-secondary select-none shrink-0">
+                      tablekard.com/
+                    </span>
+                    <input
+                      type="text"
+                      className={`w-full border rounded-r-xl bg-white text-[#1A202C] px-3 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none dark:bg-tk-bg-surface dark:text-tk-text pr-[130px] ${slugAvailable === false
+                        ? "border-red-500 text-red-500"
+                        : "border-[#CBD5E0] focus:border-tk-burgundy dark:border-tk-border"
+                        }`}
+                      value={restaurantForm.slug}
+                      onChange={(e) =>
+                        handleRestaurantFieldChange(
+                          "slug",
+                          e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "")
+                        )
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleSaveProfile();
+                        if (e.key === "Escape") handleCancelEdit();
+                      }}
+                      maxLength={60}
+                    />
+                    {checkingSlug ? (
+                      <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#718096] text-[12px] font-medium bg-white dark:bg-tk-bg-surface px-1 flex items-center gap-1.5">
+                        <div className="w-3 h-3 border-[1.5px] border-[#CBD5E0] border-t-[#718096] dark:border-tk-border dark:border-t-tk-text-secondary rounded-full animate-spin" />
+                        Checking...
+                      </span>
+                    ) : restaurantForm.slug !== restaurant?.slug ? (
+                      <>
+                        {slugAvailable === true && restaurantForm.slug.trim() !== "" && (
+                          <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#48BB78] text-[12px] font-medium bg-white dark:bg-tk-bg-surface px-1">
+                            ✓ URL is available
+                          </span>
+                        )}
+                        {slugAvailable === false && restaurantForm.slug.trim() !== "" && (
+                          <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-red-500 text-[12px] font-medium bg-white dark:bg-tk-bg-surface px-1">
+                            ✕ URL is not available
+                          </span>
+                        )}
+                      </>
+                    ) : null}
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <a
+                    href={`https://tablekard.com/${restaurant?.slug ||
+                      restaurant?.name
+                        ?.toLowerCase()
+                        .replace(/[^a-z0-9]+/g, "-")
+                        .replace(/(^-|-$)/g, "") ||
+                      ""
+                      }`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 w-fit text-[#2B6CB0] text-[14px] font-medium no-underline break-all font-['Outfit',sans-serif] hover:underline dark:text-[#90CDF4]"
+                  >
+                    tablekard.com/
+                    {restaurant?.slug ||
+                      restaurant?.name
+                        ?.toLowerCase()
+                        .replace(/[^a-z0-9]+/g, "-")
+                        .replace(/(^-|-$)/g, "") ||
+                      ""}{" "}
+                    <ExternalLink size={14} />
+                  </a>
+
+                </>
+              )}
+            </Row>
+
+            {/* Tagline */}
+            <Row label="Tagline">
+              {editingSection === "core" ? (
+                <div className="flex items-center justify-between w-full gap-2">
+                  <input
+                    type="text"
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                    value={restaurantForm.tagline}
+                    placeholder="A short catchy phrase"
+                    onChange={(e) =>
+                      handleRestaurantFieldChange("tagline", e.target.value)
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSaveProfile();
+                      if (e.key === "Escape") handleCancelEdit();
+                    }}
+                  />
+
+                </div>
+              ) : (
+                <>
+                  <span>{restaurant?.tagline || "Not set"}</span>
+
+                </>
+              )}
+            </Row>
+
+            {/* Manifesto */}
+            <Row label="Manifesto">
+              {editingSection === "core" ? (
+                <div className="flex items-start justify-between w-full gap-2">
+                  <textarea
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-2 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text min-h-[60px]"
+                    value={restaurantForm.manifesto}
+                    placeholder="Tell the story of your restaurant..."
+                    onChange={(e) =>
+                      handleRestaurantFieldChange("manifesto", e.target.value)
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") handleCancelEdit();
+                    }}
+                    rows={3}
+                  />
+
+                </div>
+              ) : (
+                <>
+                  <span>{restaurant?.manifesto || "Not set"}</span>
+
+                </>
+              )}
+            </Row>
+
+            {/* Opening Date */}
+            <Row label="Opening Date">
+              {editingSection === "core" ? (
+                <div className="flex items-center justify-between w-full gap-2">
+                  <input
+                    type="date"
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                    value={restaurantForm.openingDate}
+                    onChange={(e) =>
+                      handleRestaurantFieldChange("openingDate", e.target.value)
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSaveProfile();
+                      if (e.key === "Escape") handleCancelEdit();
+                    }}
+                  />
+
+                </div>
+              ) : (
+                <>
+                  <span>{restaurant?.openingDate || "Not set"}</span>
+
+                </>
+              )}
+            </Row>
+
+            {/* Subscription Status */}
+            <Row label="Subscription Status" plain>
+              <div className="flex items-center gap-3">
+                <span
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[13px] font-semibold"
+                  style={{
+                    backgroundColor: restaurant?.subscriptionStatus ? "rgba(72, 187, 120, 0.15)" : "rgba(160, 174, 192, 0.2)",
+                    color: restaurant?.subscriptionStatus ? "#2F855A" : "#4A5568",
                   }}
-                  maxLength={60}
-                />
-                {checkingSlug ? (
-                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#718096] text-[12px] font-medium bg-white dark:bg-tk-bg-surface px-1 flex items-center gap-1.5">
-                    <div className="w-3 h-3 border-[1.5px] border-[#CBD5E0] border-t-[#718096] dark:border-tk-border dark:border-t-tk-text-secondary rounded-full animate-spin" />
-                    Checking...
-                  </span>
-                ) : restaurantForm.slug !== restaurant?.slug ? (
-                  <>
-                    {slugAvailable === true && restaurantForm.slug.trim() !== "" && (
-                      <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#48BB78] text-[12px] font-medium bg-white dark:bg-tk-bg-surface px-1">
-                        ✓ URL is available
-                      </span>
-                    )}
-                    {slugAvailable === false && restaurantForm.slug.trim() !== "" && (
-                      <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-red-500 text-[12px] font-medium bg-white dark:bg-tk-bg-surface px-1">
-                        ✕ URL is not available
-                      </span>
-                    )}
-                  </>
-                ) : null}
+                >
+                  <CreditCardIcon size={14} />
+                  {restaurant?.subscriptionStatus ? "Active" : "Inactive"}
+                  {restaurant?.subscriptionType
+                    ? ` (${restaurant.subscriptionType})`
+                    : ""}
+                </span>
+                {!restaurant?.subscriptionStatus && (
+                  <Link
+                    to="/subscription"
+                    className="text-tk-burgundy hover:text-[#6B2A15] text-[13px] font-semibold underline underline-offset-2 decoration-tk-burgundy/30 hover:decoration-tk-burgundy transition-colors"
+                  >
+                    Upgrade Subscription
+                  </Link>
+                )}
               </div>
-            </div>
-          ) : (
-            <>
-              <a
-                href={`https://tablekard.com/${restaurant?.slug ||
-                  restaurant?.name
-                    ?.toLowerCase()
-                    .replace(/[^a-z0-9]+/g, "-")
-                    .replace(/(^-|-$)/g, "") ||
-                  ""
-                  }`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 w-fit text-[#2B6CB0] text-[14px] font-medium no-underline break-all font-['Outfit',sans-serif] hover:underline dark:text-[#90CDF4]"
-              >
-                tablekard.com/
-                {restaurant?.slug ||
-                  restaurant?.name
-                    ?.toLowerCase()
-                    .replace(/[^a-z0-9]+/g, "-")
-                    .replace(/(^-|-$)/g, "") ||
-                  ""}{" "}
-                <ExternalLink size={14} />
-              </a>
+            </Row>
 
-            </>
-          )}
-        </Row>
 
-        {/* Tagline */}
-        <Row label="Tagline">
-          {editingSection === "core" ? (
-            <div className="flex items-center justify-between w-full gap-2">
-              <input
-                type="text"
-                className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                value={restaurantForm.tagline}
-                placeholder="A short catchy phrase"
-                onChange={(e) =>
-                  handleRestaurantFieldChange("tagline", e.target.value)
-                }
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSaveProfile();
-                  if (e.key === "Escape") handleCancelEdit();
-                }}
-              />
+            <SectionHeader title="Contact Information" sectionId="contact" />
+            {/* Email Address */}
+            <Row label="Email Address">
+              {editingSection === "contact" ? (
+                <div className="flex items-center justify-between w-full gap-2">
+                  <input
+                    type="email"
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                    value={restaurantForm.contactEmail}
+                    placeholder="ops@restaurant.com"
+                    onChange={(e) =>
+                      handleRestaurantFieldChange("contactEmail", e.target.value)
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSaveProfile();
+                      if (e.key === "Escape") handleCancelEdit();
+                    }}
+                  />
 
-            </div>
-          ) : (
-            <>
-              <span>{restaurant?.tagline || "Not set"}</span>
+                </div>
+              ) : (
+                <>
+                  <span className="inline-flex items-center gap-2">
+                    <MailIcon size={15} />
+                    {restaurant?.contact.email || "N/A"}
+                  </span>
 
-            </>
-          )}
-        </Row>
+                </>
+              )}
+            </Row>
 
-        {/* Manifesto */}
-        <Row label="Manifesto">
-          {editingSection === "core" ? (
-            <div className="flex items-start justify-between w-full gap-2">
-              <textarea
-                className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-2 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text min-h-[60px]"
-                value={restaurantForm.manifesto}
-                placeholder="Tell the story of your restaurant..."
-                onChange={(e) =>
-                  handleRestaurantFieldChange("manifesto", e.target.value)
-                }
-                onKeyDown={(e) => {
-                  if (e.key === "Escape") handleCancelEdit();
-                }}
-                rows={3}
-              />
+            {/* Phone Number */}
+            <Row label="Phone Number">
+              {editingSection === "contact" ? (
+                <div className="flex items-center justify-between w-full gap-2">
+                  <input
+                    type="tel"
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                    value={restaurantForm.contactPhone}
+                    placeholder="+91 98765 43210"
+                    onChange={(e) =>
+                      handleRestaurantFieldChange("contactPhone", e.target.value)
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSaveProfile();
+                      if (e.key === "Escape") handleCancelEdit();
+                    }}
+                  />
 
-            </div>
-          ) : (
-            <>
-              <span>{restaurant?.manifesto || "Not set"}</span>
+                </div>
+              ) : (
+                <>
+                  <span className="inline-flex items-center gap-2">
+                    <PhoneIcon size={15} />
+                    {restaurant?.contact.phone || "N/A"}
+                  </span>
 
-            </>
-          )}
-        </Row>
-
-        {/* Opening Date */}
-        <Row label="Opening Date">
-          {editingSection === "core" ? (
-            <div className="flex items-center justify-between w-full gap-2">
-              <input
-                type="date"
-                className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                value={restaurantForm.openingDate}
-                onChange={(e) =>
-                  handleRestaurantFieldChange("openingDate", e.target.value)
-                }
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSaveProfile();
-                  if (e.key === "Escape") handleCancelEdit();
-                }}
-              />
-
-            </div>
-          ) : (
-            <>
-              <span>{restaurant?.openingDate || "Not set"}</span>
-
-            </>
-          )}
-        </Row>
-
-        {/* Subscription Status */}
-        <Row label="Subscription Status" plain>
-          <div className="flex items-center gap-3">
-            <span
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[13px] font-semibold"
-              style={{
-                backgroundColor: restaurant?.subscriptionStatus ? "rgba(72, 187, 120, 0.15)" : "rgba(160, 174, 192, 0.2)",
-                color: restaurant?.subscriptionStatus ? "#2F855A" : "#4A5568",
-              }}
-            >
-              <CreditCardIcon size={14} />
-              {restaurant?.subscriptionStatus ? "Active" : "Inactive"}
-              {restaurant?.subscriptionType
-                ? ` (${restaurant.subscriptionType})`
-                : ""}
-            </span>
-            {!restaurant?.subscriptionStatus && (
-              <Link
-                to="/subscription"
-                className="text-tk-burgundy hover:text-[#6B2A15] text-[13px] font-semibold underline underline-offset-2 decoration-tk-burgundy/30 hover:decoration-tk-burgundy transition-colors"
-              >
-                Upgrade Subscription
-              </Link>
-            )}
-          </div>
-        </Row>
-
-        
-        <SectionHeader title="Contact Information" sectionId="contact" />
-        {/* Email Address */}
-        <Row label="Email Address">
-          {editingSection === "contact" ? (
-            <div className="flex items-center justify-between w-full gap-2">
-              <input
-                type="email"
-                className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                value={restaurantForm.contactEmail}
-                placeholder="ops@restaurant.com"
-                onChange={(e) =>
-                  handleRestaurantFieldChange("contactEmail", e.target.value)
-                }
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSaveProfile();
-                  if (e.key === "Escape") handleCancelEdit();
-                }}
-              />
-
-            </div>
-          ) : (
-            <>
-              <span className="inline-flex items-center gap-2">
-                <MailIcon size={15} />
-                {restaurant?.contact.email || "N/A"}
-              </span>
-
-            </>
-          )}
-        </Row>
-
-        {/* Phone Number */}
-        <Row label="Phone Number">
-          {editingSection === "contact" ? (
-            <div className="flex items-center justify-between w-full gap-2">
-              <input
-                type="tel"
-                className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                value={restaurantForm.contactPhone}
-                placeholder="+91 98765 43210"
-                onChange={(e) =>
-                  handleRestaurantFieldChange("contactPhone", e.target.value)
-                }
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSaveProfile();
-                  if (e.key === "Escape") handleCancelEdit();
-                }}
-              />
-
-            </div>
-          ) : (
-            <>
-              <span className="inline-flex items-center gap-2">
-                <PhoneIcon size={15} />
-                {restaurant?.contact.phone || "N/A"}
-              </span>
-
-            </>
-          )}
-        </Row>
+                </>
+              )}
+            </Row>
           </>
         )}
 
         {activeTab === "operations" && (
           <>
             <SectionHeader title="Location & Operations" sectionId="location" />
-        {/* Address */}
-        <Row label="Address">
-          {editingSection === "location" ? (
-            <div className="flex items-start justify-between w-full gap-2">
-              <textarea
-                className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-2 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text min-h-[60px]"
-                value={restaurantForm.contactAddress}
-                placeholder="Street, locality, city, state"
-                onChange={(e) =>
-                  handleRestaurantFieldChange("contactAddress", e.target.value)
-                }
-                onKeyDown={(e) => {
-                  if (e.key === "Escape") handleCancelEdit();
-                }}
-                rows={2}
-              />
+            {/* Address */}
+            <Row label="Address">
+              {editingSection === "location" ? (
+                <div className="flex items-start justify-between w-full gap-2">
+                  <textarea
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-2 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text min-h-[60px]"
+                    value={restaurantForm.contactAddress}
+                    placeholder="Street, locality, city, state"
+                    onChange={(e) =>
+                      handleRestaurantFieldChange("contactAddress", e.target.value)
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") handleCancelEdit();
+                    }}
+                    rows={2}
+                  />
 
-            </div>
-          ) : (
-            <>
-              <span className="inline-flex items-center gap-2">
-                <MapPinIcon size={15} />
-                {restaurant?.contact.address || "N/A"}
-              </span>
-
-            </>
-          )}
-        </Row>
-
-        {/* Operating Hours (Weekdays) */}
-        <Row label="Operating Hours (Weekdays)">
-          {editingSection === "location" ? (
-            <div className="flex items-center justify-between w-full gap-2">
-              <div className="flex items-center gap-2">
-                <input
-                  type="time"
-                  className="border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                  value={get24hTime(
-                    restaurantForm.operatingHoursWeekdays,
-                    "open"
-                  )}
-                  onChange={(e) =>
-                    handleTimeChange("weekdays", "open", e.target.value)
-                  }
-                />
-                <span className="text-[#718096] dark:text-tk-text-secondary text-[13px]">
-                  to
-                </span>
-                <input
-                  type="time"
-                  className="border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                  value={get24hTime(
-                    restaurantForm.operatingHoursWeekdays,
-                    "close"
-                  )}
-                  onChange={(e) =>
-                    handleTimeChange("weekdays", "close", e.target.value)
-                  }
-                />
-              </div>
-
-            </div>
-          ) : (
-            <>
-              <span>{restaurant?.operatingHoursWeekdays || "Not set"}</span>
-
-            </>
-          )}
-        </Row>
-
-        {/* Operating Hours (Weekends) */}
-        <Row label="Operating Hours (Weekends)">
-          {editingSection === "location" ? (
-            <div className="flex items-center justify-between w-full gap-2">
-              <div className="flex items-center gap-2">
-                <input
-                  type="time"
-                  className="border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                  value={get24hTime(
-                    restaurantForm.operatingHoursWeekends,
-                    "open"
-                  )}
-                  onChange={(e) =>
-                    handleTimeChange("weekends", "open", e.target.value)
-                  }
-                />
-                <span className="text-[#718096] dark:text-tk-text-secondary text-[13px]">
-                  to
-                </span>
-                <input
-                  type="time"
-                  className="border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                  value={get24hTime(
-                    restaurantForm.operatingHoursWeekends,
-                    "close"
-                  )}
-                  onChange={(e) =>
-                    handleTimeChange("weekends", "close", e.target.value)
-                  }
-                />
-              </div>
-
-            </div>
-          ) : (
-            <>
-              <span>{restaurant?.operatingHoursWeekends || "Not set"}</span>
-
-            </>
-          )}
-        </Row>
-
-        {/* Location Coordinates */}
-        <Row label="Location Coordinates">
-          <div className="flex w-full items-center flex-wrap gap-4">
-            {editingSection === "location" ? (
-              <div className="flex flex-col w-full gap-3 py-1">
-                <div className="flex items-center justify-between w-full gap-2">
-                  <div className="flex items-center gap-3 w-full flex-wrap">
-                    <label className="flex items-center gap-1.5 text-[12px] text-[#4A5568] dark:text-tk-text-secondary font-semibold">
-                      Lat:
-                      <input
-                        type="number"
-                        min="-90"
-                        max="90"
-                        step="0.000001"
-                        className="w-28 border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-2.5 py-1 text-[13px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                        value={restaurantForm.latitude}
-                        onChange={(e) =>
-                          handleRestaurantFieldChange("latitude", e.target.value)
-                        }
-                      />
-                    </label>
-                    <label className="flex items-center gap-1.5 text-[12px] text-[#4A5568] dark:text-tk-text-secondary font-semibold">
-                      Lng:
-                      <input
-                        type="number"
-                        min="-180"
-                        max="180"
-                        step="0.000001"
-                        className="w-28 border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-2.5 py-1 text-[13px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                        value={restaurantForm.longitude}
-                        onChange={(e) =>
-                          handleRestaurantFieldChange("longitude", e.target.value)
-                        }
-                      />
-                    </label>
-                    <button
-                      type="button"
-                      className="inline-flex items-center gap-1.5 px-3 py-1 border border-dashed border-tk-burgundy rounded-xl bg-[#F0FFF4] text-tk-burgundy text-[12px] font-semibold cursor-pointer dark:bg-[rgba(72,187,120,0.1)] shrink-0"
-                      onClick={handleUseMyLocation}
-                      disabled={isLocating}
-                    >
-                      <Crosshair
-                        size={14}
-                        className={isLocating ? "profile-locate-spin" : ""}
-                      />
-                      {isLocating ? "Locating…" : "Current Location"}
-                    </button>
-                  </div>
                 </div>
-                <div
-                  id="profile-map"
-                  style={{
-                    width: "100%",
-                    height: "300px",
-                    borderRadius: "12px",
-                    backgroundColor: "#E2E8F0",
-                    border: "1px solid #CBD5E0",
-                    marginTop: "8px",
-                    position: "relative",
-                    zIndex: 10,
-                  }}
-                />
-              </div>
-            ) : (
-              <>
-                <span className="inline-flex items-center gap-2">
-                  <MapPinIcon size={15} />
-                  {restaurant
-                    ? `${formatCoordinate(restaurant.location?.latitude)}, ${formatCoordinate(restaurant.location?.longitude)}`
-                    : "N/A"}
-                </span>
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setShowMap(!showMap)}
-                    className="px-4 py-2 bg-white text-[#4A5568] border border-[#CBD5E0] hover:bg-[#EDF2F7] dark:bg-tk-bg-elevated dark:text-tk-text-secondary dark:border-tk-border dark:hover:bg-tk-bg-hover rounded-xl text-[13px] font-bold w-fit transition-all duration-300 cursor-pointer shadow-sm"
-                  >
-                    {showMap ? "Hide Map" : "Show Map"}
-                  </button>
-                  {showMap && (
+              ) : (
+                <>
+                  <span className="inline-flex items-center gap-2">
+                    <MapPinIcon size={15} />
+                    {restaurant?.contact.address || "N/A"}
+                  </span>
+
+                </>
+              )}
+            </Row>
+
+            {/* Operating Hours (Weekdays) */}
+            <Row label="Operating Hours (Weekdays)">
+              {editingSection === "location" ? (
+                <div className="flex items-center justify-between w-full gap-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="time"
+                      className="border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                      value={get24hTime(
+                        restaurantForm.operatingHoursWeekdays,
+                        "open"
+                      )}
+                      onChange={(e) =>
+                        handleTimeChange("weekdays", "open", e.target.value)
+                      }
+                    />
+                    <span className="text-[#718096] dark:text-tk-text-secondary text-[13px]">
+                      to
+                    </span>
+                    <input
+                      type="time"
+                      className="border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                      value={get24hTime(
+                        restaurantForm.operatingHoursWeekdays,
+                        "close"
+                      )}
+                      onChange={(e) =>
+                        handleTimeChange("weekdays", "close", e.target.value)
+                      }
+                    />
+                  </div>
+
+                </div>
+              ) : (
+                <>
+                  <span>{restaurant?.operatingHoursWeekdays || "Not set"}</span>
+
+                </>
+              )}
+            </Row>
+
+            {/* Operating Hours (Weekends) */}
+            <Row label="Operating Hours (Weekends)">
+              {editingSection === "location" ? (
+                <div className="flex items-center justify-between w-full gap-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="time"
+                      className="border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                      value={get24hTime(
+                        restaurantForm.operatingHoursWeekends,
+                        "open"
+                      )}
+                      onChange={(e) =>
+                        handleTimeChange("weekends", "open", e.target.value)
+                      }
+                    />
+                    <span className="text-[#718096] dark:text-tk-text-secondary text-[13px]">
+                      to
+                    </span>
+                    <input
+                      type="time"
+                      className="border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                      value={get24hTime(
+                        restaurantForm.operatingHoursWeekends,
+                        "close"
+                      )}
+                      onChange={(e) =>
+                        handleTimeChange("weekends", "close", e.target.value)
+                      }
+                    />
+                  </div>
+
+                </div>
+              ) : (
+                <>
+                  <span>{restaurant?.operatingHoursWeekends || "Not set"}</span>
+
+                </>
+              )}
+            </Row>
+
+            {/* Location Coordinates */}
+            <Row label="Location Coordinates">
+              <div className="flex w-full items-center flex-wrap gap-4">
+                {editingSection === "location" ? (
+                  <div className="flex flex-col w-full gap-3 py-1">
+                    <div className="flex items-center justify-between w-full gap-2">
+                      <div className="flex items-center gap-3 w-full flex-wrap">
+                        <label className="flex items-center gap-1.5 text-[12px] text-[#4A5568] dark:text-tk-text-secondary font-semibold">
+                          Lat:
+                          <input
+                            type="number"
+                            min="-90"
+                            max="90"
+                            step="0.000001"
+                            className="w-28 border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-2.5 py-1 text-[13px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                            value={restaurantForm.latitude}
+                            onChange={(e) =>
+                              handleRestaurantFieldChange("latitude", e.target.value)
+                            }
+                          />
+                        </label>
+                        <label className="flex items-center gap-1.5 text-[12px] text-[#4A5568] dark:text-tk-text-secondary font-semibold">
+                          Lng:
+                          <input
+                            type="number"
+                            min="-180"
+                            max="180"
+                            step="0.000001"
+                            className="w-28 border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-2.5 py-1 text-[13px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                            value={restaurantForm.longitude}
+                            onChange={(e) =>
+                              handleRestaurantFieldChange("longitude", e.target.value)
+                            }
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1.5 px-3 py-1 border border-dashed border-tk-burgundy rounded-xl bg-[#F0FFF4] text-tk-burgundy text-[12px] font-semibold cursor-pointer dark:bg-[rgba(72,187,120,0.1)] shrink-0"
+                          onClick={handleUseMyLocation}
+                          disabled={isLocating}
+                        >
+                          <Crosshair
+                            size={14}
+                            className={isLocating ? "profile-locate-spin" : ""}
+                          />
+                          {isLocating ? "Locating…" : "Current Location"}
+                        </button>
+                      </div>
+                    </div>
                     <div
                       id="profile-map"
                       style={{
-                        position: "absolute",
-                        top: "50%",
-                        left: "calc(100% + 12px)",
-                        transform: "translateY(-50%)",
-                        width: "300px",
+                        width: "100%",
                         height: "300px",
                         borderRadius: "12px",
-                        zIndex: 50,
                         backgroundColor: "#E2E8F0",
                         border: "1px solid #CBD5E0",
-                        boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+                        marginTop: "8px",
+                        position: "relative",
+                        zIndex: 10,
                       }}
                     />
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-        </Row>
-
-        {/* Access Area Radius */}
-        <Row label="Access Area Radius">
-          {editingSection === "location" ? (
-            <div className="flex items-center justify-between w-full gap-2">
-              <div className="flex items-center gap-2 w-full">
-                <input
-                  type="number"
-                  min="1"
-                  step="1"
-                  className="w-32 border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                  value={restaurantForm.allowedRadius}
-                  placeholder="150"
-                  onChange={(e) =>
-                    handleRestaurantFieldChange("allowedRadius", e.target.value)
-                  }
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleSaveProfile();
-                    if (e.key === "Escape") handleCancelEdit();
-                  }}
-                />
-                <span className="text-[14px] text-[#4A5568] dark:text-tk-text-secondary">
-                  meters
-                </span>
+                  </div>
+                ) : (
+                  <>
+                    <span className="inline-flex items-center gap-2">
+                      <MapPinIcon size={15} />
+                      {restaurant
+                        ? `${formatCoordinate(restaurant.location?.latitude)}, ${formatCoordinate(restaurant.location?.longitude)}`
+                        : "N/A"}
+                    </span>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowMap(!showMap)}
+                        className="px-4 py-2 bg-white text-[#4A5568] border border-[#CBD5E0] hover:bg-[#EDF2F7] dark:bg-tk-bg-elevated dark:text-tk-text-secondary dark:border-tk-border dark:hover:bg-tk-bg-hover rounded-xl text-[13px] font-bold w-fit transition-all duration-300 cursor-pointer shadow-sm"
+                      >
+                        {showMap ? "Hide Map" : "Show Map"}
+                      </button>
+                      {showMap && (
+                        <div
+                          id="profile-map"
+                          style={{
+                            position: "absolute",
+                            top: "50%",
+                            left: "calc(100% + 12px)",
+                            transform: "translateY(-50%)",
+                            width: "300px",
+                            height: "300px",
+                            borderRadius: "12px",
+                            zIndex: 50,
+                            backgroundColor: "#E2E8F0",
+                            border: "1px solid #CBD5E0",
+                            boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+                          }}
+                        />
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
+            </Row>
 
-            </div>
-          ) : (
-            <>
-              <span>
-                {restaurant?.location?.allowedRadius != null
-                  ? `${restaurant.location.allowedRadius} meters`
-                  : "Not set"}
-              </span>
+            {/* Access Area Radius */}
+            <Row label="Access Area Radius">
+              {editingSection === "location" ? (
+                <div className="flex items-center justify-between w-full gap-2">
+                  <div className="flex items-center gap-2 w-full">
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      className="w-32 border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                      value={restaurantForm.allowedRadius}
+                      placeholder="150"
+                      onChange={(e) =>
+                        handleRestaurantFieldChange("allowedRadius", e.target.value)
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleSaveProfile();
+                        if (e.key === "Escape") handleCancelEdit();
+                      }}
+                    />
+                    <span className="text-[14px] text-[#4A5568] dark:text-tk-text-secondary">
+                      meters
+                    </span>
+                  </div>
 
-            </>
-          )}
-        </Row>
+                </div>
+              ) : (
+                <>
+                  <span>
+                    {restaurant?.location?.allowedRadius != null
+                      ? `${restaurant.location.allowedRadius} meters`
+                      : "Not set"}
+                  </span>
 
-        
-        <SectionHeader title="Web & Social Media" sectionId="web" />
-        {/* Website URL */}
-        <Row label="Website URL">
-          {editingSection === "web" ? (
-            <div className="flex items-center justify-between w-full gap-2">
-              <input
-                type="url"
-                className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                value={restaurantForm.websiteUrl}
-                placeholder="https://yourrestaurant.com"
-                onChange={(e) =>
-                  handleRestaurantFieldChange("websiteUrl", e.target.value)
-                }
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSaveProfile();
-                  if (e.key === "Escape") handleCancelEdit();
-                }}
-              />
+                </>
+              )}
+            </Row>
 
-            </div>
-          ) : (
-            <>
-              <span>{restaurant?.websiteUrl || "Not set"}</span>
 
-            </>
-          )}
-        </Row>{/* Instagram URL */}
-        <Row label="Instagram URL">
-          {editingSection === "web" ? (
-            <div className="flex items-center justify-between w-full gap-2">
-              <input
-                type="url"
-                className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                value={restaurantForm.instagramUrl}
-                placeholder="https://instagram.com/yourrestaurant"
-                onChange={(e) =>
-                  handleRestaurantFieldChange("instagramUrl", e.target.value)
-                }
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSaveProfile();
-                  if (e.key === "Escape") handleCancelEdit();
-                }}
-              />
+            <SectionHeader title="Web & Social Media" sectionId="web" />
+            {/* Website URL */}
+            <Row label="Website URL">
+              {editingSection === "web" ? (
+                <div className="flex items-center justify-between w-full gap-2">
+                  <input
+                    type="url"
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                    value={restaurantForm.websiteUrl}
+                    placeholder="https://yourrestaurant.com"
+                    onChange={(e) =>
+                      handleRestaurantFieldChange("websiteUrl", e.target.value)
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSaveProfile();
+                      if (e.key === "Escape") handleCancelEdit();
+                    }}
+                  />
 
-            </div>
-          ) : (
-            <>
-              <span>{restaurant?.instagramUrl || "Not set"}</span>
+                </div>
+              ) : (
+                <>
+                  <span>{restaurant?.websiteUrl || "Not set"}</span>
 
-            </>
-          )}
-        </Row>
+                </>
+              )}
+            </Row>{/* Instagram URL */}
+            <Row label="Instagram URL">
+              {editingSection === "web" ? (
+                <div className="flex items-center justify-between w-full gap-2">
+                  <input
+                    type="url"
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                    value={restaurantForm.instagramUrl}
+                    placeholder="https://instagram.com/yourrestaurant"
+                    onChange={(e) =>
+                      handleRestaurantFieldChange("instagramUrl", e.target.value)
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSaveProfile();
+                      if (e.key === "Escape") handleCancelEdit();
+                    }}
+                  />
 
-        {/* Facebook URL */}
-        <Row label="Facebook URL">
-          {editingSection === "web" ? (
-            <div className="flex items-center justify-between w-full gap-2">
-              <input
-                type="url"
-                className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                value={restaurantForm.facebookUrl}
-                placeholder="https://facebook.com/yourrestaurant"
-                onChange={(e) =>
-                  handleRestaurantFieldChange("facebookUrl", e.target.value)
-                }
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSaveProfile();
-                  if (e.key === "Escape") handleCancelEdit();
-                }}
-              />
+                </div>
+              ) : (
+                <>
+                  <span>{restaurant?.instagramUrl || "Not set"}</span>
 
-            </div>
-          ) : (
-            <>
-              <span>{restaurant?.facebookUrl || "Not set"}</span>
+                </>
+              )}
+            </Row>
 
-            </>
-          )}
-        </Row>
+            {/* Facebook URL */}
+            <Row label="Facebook URL">
+              {editingSection === "web" ? (
+                <div className="flex items-center justify-between w-full gap-2">
+                  <input
+                    type="url"
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                    value={restaurantForm.facebookUrl}
+                    placeholder="https://facebook.com/yourrestaurant"
+                    onChange={(e) =>
+                      handleRestaurantFieldChange("facebookUrl", e.target.value)
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSaveProfile();
+                      if (e.key === "Escape") handleCancelEdit();
+                    }}
+                  />
+
+                </div>
+              ) : (
+                <>
+                  <span>{restaurant?.facebookUrl || "Not set"}</span>
+
+                </>
+              )}
+            </Row>
           </>
         )}
-      
+
       </div>
     );
   }
@@ -1552,43 +1552,7 @@ const ProfilePage: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
-            {editingSection === "admin" ? (
-              <>
-                <button
-                  className="relative h-10 px-4 rounded-xl bg-white dark:bg-tk-bg-elevated text-[#4A5568] border border-[#CBD5E0] flex items-center justify-center cursor-pointer transition-all duration-300 font-bold font-['Outfit',sans-serif] text-[13px] tracking-wide hover:bg-[#EDF2F7] dark:text-tk-text-secondary dark:border-tk-border dark:hover:bg-tk-bg-hover disabled:opacity-50"
-                  onClick={handleCancelEdit}
-                  disabled={isRestaurantSaving || isAdminSaving}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="relative h-10 px-5 rounded-xl bg-tk-burgundy text-white flex items-center justify-center cursor-pointer shadow-[0_2px_8px_rgba(229,62,62,0.15)] transition-all duration-300 font-bold font-['Outfit',sans-serif] text-[13px] tracking-wide hover:bg-[#6B2A15] disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={handleSaveProfile}
-                  disabled={isRestaurantSaving || isAdminSaving || !hasChanges}
-                >
-                  {(isRestaurantSaving || isAdminSaving) ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Saving...
-                    </div>
-                  ) : (
-                    "Save Changes"
-                  )}
-                </button>
-              </>
-            ) : (
-              <button
-                className="relative h-10 px-5 rounded-xl bg-tk-burgundy text-white flex items-center justify-center cursor-pointer shadow-[0_2px_8px_rgba(229,62,62,0.15)] transition-all duration-300 font-bold font-['Outfit',sans-serif] text-[13px] tracking-wide hover:bg-[#6B2A15]"
-                onClick={() => {
-                  setRestaurantForm(restaurant ? createRestaurantFormState(restaurant) : null);
-                  setAdminForm(createAdminFormState(userProfile));
-                  setIsEditingProfile(true);
-                  setShowMap(true);
-                }}
-              >
-                Edit Profile
-              </button>
-            )}
+
             <button
               className="relative h-10 px-4 rounded-xl bg-white dark:bg-tk-bg-elevated text-[#E53E3E] border border-[#E53E3E]/20 flex items-center justify-center cursor-pointer shadow-[0_2px_8px_rgba(229,62,62,0.08)] overflow-hidden transition-all duration-300 z-10 before:absolute before:inset-0 before:w-full before:h-full before:bg-[#E53E3E] before:-z-10 before:-translate-x-full before:transition-transform before:duration-300 hover:before:translate-x-0 hover:text-white hover:shadow-[0_8px_16px_rgba(229,62,62,0.3)] hover:-translate-y-0.5 active:translate-y-0 font-bold font-['Outfit',sans-serif] text-[13px] tracking-wide"
               title="Sign Out"
@@ -1598,25 +1562,23 @@ const ProfilePage: React.FC = () => {
             </button>
           </div>
         </div>
-        
+
         {/* Tabs Row */}
         <div className="flex justify-center gap-8 mt-2">
           <button
-            className={`pb-3 px-2 border-b-2 text-[14px] font-bold font-['Outfit',sans-serif] transition-colors ${
-              activeTab === "details"
+            className={`pb-3 px-2 border-b-2 text-[14px] font-bold font-['Outfit',sans-serif] transition-colors ${activeTab === "details"
                 ? "border-tk-burgundy text-tk-burgundy"
                 : "border-transparent text-[#4A5568] hover:text-[#1A202C] dark:text-tk-text-secondary dark:hover:text-tk-text"
-            }`}
+              }`}
             onClick={() => setActiveTab("details")}
           >
             Details
           </button>
           <button
-            className={`pb-3 px-2 border-b-2 text-[14px] font-bold font-['Outfit',sans-serif] transition-colors ${
-              activeTab === "operations"
+            className={`pb-3 px-2 border-b-2 text-[14px] font-bold font-['Outfit',sans-serif] transition-colors ${activeTab === "operations"
                 ? "border-tk-burgundy text-tk-burgundy"
                 : "border-transparent text-[#4A5568] hover:text-[#1A202C] dark:text-tk-text-secondary dark:hover:text-tk-text"
-            }`}
+              }`}
             onClick={() => setActiveTab("operations")}
           >
             Operations
