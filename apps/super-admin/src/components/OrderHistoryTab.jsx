@@ -359,7 +359,7 @@ function OrdersModal({ restaurantId, startDate, endDate, periodLabel, onClose })
 /* ─────────────────────────────────────────────────────────────
    Main Component
 ───────────────────────────────────────────────────────────── */
-export default function OrderHistoryTab({ restaurantId }) {
+export default function OrderHistoryTab({ restaurantId, viewMode = 'orders' }) {
     const [timeframe,   setTimeframe]   = useState('month');
     const [weekOffset,  setWeekOffset]  = useState(0);
     const [monthOffset, setMonthOffset] = useState(0);
@@ -704,7 +704,9 @@ export default function OrderHistoryTab({ restaurantId }) {
             )}
 
             {/* ── Metrics ── */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {viewMode === 'stats' && (
+                <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[
                     { label: 'Total Revenue',    value: fmtCurrency(summary.totalRevenue), bar: 'bg-blue-500',   sub: 'Paid orders only' },
                     { label: 'Total Orders',     value: summary.totalOrders,               bar: 'bg-green-500',  sub: 'Paid orders only' },
@@ -904,8 +906,11 @@ export default function OrderHistoryTab({ restaurantId }) {
                     </div>
                 </Card>
             </div>
+            </>
+            )}
 
             {/* ── Recent Orders Table ── */}
+            {viewMode === 'orders' && (
             <Card>
                 <CardHeader>
                     <div className="flex items-center justify-between w-full">
@@ -946,9 +951,10 @@ export default function OrderHistoryTab({ restaurantId }) {
                     </table>
                 </div>
             </Card>
+            )}
 
             {/* ── Feedback ── */}
-            {feedback.length > 0 && (
+            {viewMode === 'stats' && feedback.length > 0 && (
                 <Card>
                     <CardHeader><CardTitle>Recent Feedback</CardTitle></CardHeader>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6 pt-0">

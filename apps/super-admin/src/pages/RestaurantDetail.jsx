@@ -40,7 +40,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
     const [menuItems, setMenuItems] = useState([]);
     const [payments, setPayments] = useState([]);
     const [admins, setAdmins] = useState([]);
-    const [activeTab, setActiveTab] = useState('general');
+    const [activeTab, setActiveTab] = useState('stats');
 
     const [editingCard, setEditingCard] = useState(null);
     const [formData, setFormData] = useState({});
@@ -326,13 +326,10 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
             {/* Tabs Navigation */}
             <div className="flex gap-10 border-b border-border mb-8 overflow-x-auto whitespace-nowrap scrollbar-hide">
                 {[
-                    { id: 'general', label: 'General Info', icon: Info },
-                    { id: 'branding', label: 'Location & Branding', icon: Palette },
-                    { id: 'story', label: 'Story & Socials', icon: BookOpen },
-                    { id: 'admin', label: 'Admin Profile', icon: User },
-                    { id: 'menu', label: 'Menu & Catalog', icon: Utensils },
-                    { id: 'billing', label: 'Billing & Sub', icon: CreditCard },
-                    { id: 'orders', label: 'Order History', icon: ShoppingBag }
+                    { id: 'stats', label: 'Stats', icon: Activity },
+                    { id: 'orders', label: 'Transaction History', icon: ShoppingBag },
+                    { id: 'billing', label: 'Subscription History', icon: CreditCard },
+                    { id: 'general', label: 'General Info', icon: Info }
                 ].map(tab => (
                     <button
                         key={tab.id}
@@ -499,8 +496,8 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                     </div>
                 )}
 
-                {activeTab === 'orders' && (
-                    <OrderHistoryTab restaurantId={id} />
+                {(activeTab === 'orders' || activeTab === 'stats') && (
+                    <OrderHistoryTab restaurantId={id} viewMode={activeTab} />
                 )}
 
                 {activeTab === 'branding' && (

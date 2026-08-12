@@ -6,7 +6,7 @@ import {
     Clock, Info, AlertTriangle, Edit, Save, X as CloseIcon, Loader2,
     Hash, Camera, Activity, ShieldCheck, MapPin, ExternalLink, ArrowUpRight,
     Lock, History, Settings, Plus, CreditCard, CheckCircle2, Utensils,
-    ShoppingBag, Receipt
+    ShoppingBag, Receipt, AlertCircle, Store
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
@@ -390,7 +390,7 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
                             </div>
                         </CardHeader>
                         <div className="space-y-4">
-                            {orders.length > 0 ? orders.map((order, i) => (
+                            {orders.length > 0 ? orders.map((order) => (
                                 <div key={order.id} className="flex items-center justify-between p-4 bg-surface-hover rounded-2xl">
                                     <div className="flex items-center gap-4">
                                         <div className="w-12 h-12 rounded-xl bg-surface flex items-center justify-center shrink-0">

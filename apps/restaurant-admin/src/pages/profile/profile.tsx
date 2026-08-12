@@ -829,6 +829,82 @@ const ProfilePage: React.FC = () => {
           )}
         </Row>
 
+        {/* Page URL */}
+        <Row label="Restaurant Page URL">
+          {isEditingProfile ? (
+            <div className="flex items-center justify-between w-full gap-2">
+              <div className="relative flex items-center w-full">
+                <span className="px-3 py-1.5 bg-[#EDF2F7] border border-[#CBD5E0] border-r-0 rounded-l-xl text-[#4A5568] text-[13px] font-['Outfit',sans-serif] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text-secondary select-none shrink-0">
+                  tablekard.com/
+                </span>
+                <input
+                  type="text"
+                  className={`w-full border rounded-r-xl bg-white text-[#1A202C] px-3 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none dark:bg-tk-bg-surface dark:text-tk-text pr-[130px] ${slugAvailable === false
+                    ? "border-red-500 text-red-500"
+                    : "border-[#CBD5E0] focus:border-tk-burgundy dark:border-tk-border"
+                    }`}
+                  value={restaurantForm.slug}
+                  onChange={(e) =>
+                    handleRestaurantFieldChange(
+                      "slug",
+                      e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "")
+                    )
+                  }
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSaveProfile();
+                    if (e.key === "Escape") handleCancelEdit();
+                  }}
+                  maxLength={60}
+                />
+                {checkingSlug ? (
+                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#718096] text-[12px] font-medium bg-white dark:bg-tk-bg-surface px-1 flex items-center gap-1.5">
+                    <div className="w-3 h-3 border-[1.5px] border-[#CBD5E0] border-t-[#718096] dark:border-tk-border dark:border-t-tk-text-secondary rounded-full animate-spin" />
+                    Checking...
+                  </span>
+                ) : restaurantForm.slug !== restaurant?.slug ? (
+                  <>
+                    {slugAvailable === true && restaurantForm.slug.trim() !== "" && (
+                      <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#48BB78] text-[12px] font-medium bg-white dark:bg-tk-bg-surface px-1">
+                        ✓ URL is available
+                      </span>
+                    )}
+                    {slugAvailable === false && restaurantForm.slug.trim() !== "" && (
+                      <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-red-500 text-[12px] font-medium bg-white dark:bg-tk-bg-surface px-1">
+                        ✕ URL is not available
+                      </span>
+                    )}
+                  </>
+                ) : null}
+              </div>
+            </div>
+          ) : (
+            <>
+              <a
+                href={`https://tablekard.com/${restaurant?.slug ||
+                  restaurant?.name
+                    ?.toLowerCase()
+                    .replace(/[^a-z0-9]+/g, "-")
+                    .replace(/(^-|-$)/g, "") ||
+                  ""
+                  }`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 w-fit text-[#2B6CB0] text-[14px] font-medium no-underline break-all font-['Outfit',sans-serif] hover:underline dark:text-[#90CDF4]"
+              >
+                tablekard.com/
+                {restaurant?.slug ||
+                  restaurant?.name
+                    ?.toLowerCase()
+                    .replace(/[^a-z0-9]+/g, "-")
+                    .replace(/(^-|-$)/g, "") ||
+                  ""}{" "}
+                <ExternalLink size={14} />
+              </a>
+
+            </>
+          )}
+        </Row>
+
         {/* Tagline */}
         <Row label="Tagline">
           {isEditingProfile ? (
@@ -1253,82 +1329,6 @@ const ProfilePage: React.FC = () => {
 
         
         <SectionHeader title="Web & Social Media" />
-        {/* Page URL */}
-        <Row label="Restaurant Page URL">
-          {isEditingProfile ? (
-            <div className="flex items-center justify-between w-full gap-2">
-              <div className="relative flex items-center w-full">
-                <span className="px-3 py-1.5 bg-[#EDF2F7] border border-[#CBD5E0] border-r-0 rounded-l-xl text-[#4A5568] text-[13px] font-['Outfit',sans-serif] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text-secondary select-none shrink-0">
-                  tablekard.com/
-                </span>
-                <input
-                  type="text"
-                  className={`w-full border rounded-r-xl bg-white text-[#1A202C] px-3 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none dark:bg-tk-bg-surface dark:text-tk-text pr-[130px] ${slugAvailable === false
-                    ? "border-red-500 text-red-500"
-                    : "border-[#CBD5E0] focus:border-tk-burgundy dark:border-tk-border"
-                    }`}
-                  value={restaurantForm.slug}
-                  onChange={(e) =>
-                    handleRestaurantFieldChange(
-                      "slug",
-                      e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "")
-                    )
-                  }
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleSaveProfile();
-                    if (e.key === "Escape") handleCancelEdit();
-                  }}
-                  maxLength={60}
-                />
-                {checkingSlug ? (
-                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#718096] text-[12px] font-medium bg-white dark:bg-tk-bg-surface px-1 flex items-center gap-1.5">
-                    <div className="w-3 h-3 border-[1.5px] border-[#CBD5E0] border-t-[#718096] dark:border-tk-border dark:border-t-tk-text-secondary rounded-full animate-spin" />
-                    Checking...
-                  </span>
-                ) : restaurantForm.slug !== restaurant?.slug ? (
-                  <>
-                    {slugAvailable === true && restaurantForm.slug.trim() !== "" && (
-                      <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#48BB78] text-[12px] font-medium bg-white dark:bg-tk-bg-surface px-1">
-                        ✓ URL is available
-                      </span>
-                    )}
-                    {slugAvailable === false && restaurantForm.slug.trim() !== "" && (
-                      <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-red-500 text-[12px] font-medium bg-white dark:bg-tk-bg-surface px-1">
-                        ✕ URL is not available
-                      </span>
-                    )}
-                  </>
-                ) : null}
-              </div>
-            </div>
-          ) : (
-            <>
-              <a
-                href={`https://tablekard.com/${restaurant?.slug ||
-                  restaurant?.name
-                    ?.toLowerCase()
-                    .replace(/[^a-z0-9]+/g, "-")
-                    .replace(/(^-|-$)/g, "") ||
-                  ""
-                  }`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 w-fit text-[#2B6CB0] text-[14px] font-medium no-underline break-all font-['Outfit',sans-serif] hover:underline dark:text-[#90CDF4]"
-              >
-                tablekard.com/
-                {restaurant?.slug ||
-                  restaurant?.name
-                    ?.toLowerCase()
-                    .replace(/[^a-z0-9]+/g, "-")
-                    .replace(/(^-|-$)/g, "") ||
-                  ""}{" "}
-                <ExternalLink size={14} />
-              </a>
-
-            </>
-          )}
-        </Row>
-
         {/* Website URL */}
         <Row label="Website URL">
           {isEditingProfile ? (
@@ -1562,6 +1562,30 @@ const ProfilePage: React.FC = () => {
               Sign Out
             </button>
           </div>
+        </div>
+        
+        {/* Tabs Row */}
+        <div className="flex justify-center gap-8 mt-2">
+          <button
+            className={`pb-3 px-2 border-b-2 text-[14px] font-bold font-['Outfit',sans-serif] transition-colors ${
+              activeTab === "details"
+                ? "border-tk-burgundy text-tk-burgundy"
+                : "border-transparent text-[#4A5568] hover:text-[#1A202C] dark:text-tk-text-secondary dark:hover:text-tk-text"
+            }`}
+            onClick={() => setActiveTab("details")}
+          >
+            Details
+          </button>
+          <button
+            className={`pb-3 px-2 border-b-2 text-[14px] font-bold font-['Outfit',sans-serif] transition-colors ${
+              activeTab === "operations"
+                ? "border-tk-burgundy text-tk-burgundy"
+                : "border-transparent text-[#4A5568] hover:text-[#1A202C] dark:text-tk-text-secondary dark:hover:text-tk-text"
+            }`}
+            onClick={() => setActiveTab("operations")}
+          >
+            Operations
+          </button>
         </div>
       </div>
 
