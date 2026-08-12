@@ -121,29 +121,19 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                     .eq('id', editingData.id)
                 if (profileError) throw profileError
             } else {
-                const { data, error } = await supabase.auth.admin.createUser({
-                    email: formData.email.trim().toLowerCase(),
-                    password: formData.password,
-                    email_confirm: true
+                const { data, error } = await supabase.functions.invoke('create-admin-user', {
+                    body: {
+                        action: 'create_user',
+                        userData: {
+                            email: formData.email.trim().toLowerCase(),
+                            password: formData.password,
+                            role: formData.role,
+                            restaurantId: formData.restaurantId
+                        }
+                    }
                 })
                 if (error) throw error
-
-                await supabase
-                    .from('profiles')
-                    .update({ role: formData.role })
-                    .eq('id', data.user.id)
-
-                if (['restaurant_admin', 'restaurant_staff'].includes(formData.role)) {
-                    const restaurantRole = formData.role === 'restaurant_admin' ? 'admin' : 'staff'
-                    await supabase
-                        .from('restaurant_users')
-                        .insert({
-                            restaurant_id: formData.restaurantId,
-                            profile_id: data.user.id,
-                            role: restaurantRole,
-                            active: true
-                        })
-                }
+                if (data.error) throw new Error(data.error)
             }
 
             onRefresh && onRefresh()
@@ -177,63 +167,23 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                     .eq('id', editingData.id)
                 if (error) throw error
             } else {
-                let authData = null
-                
-                // Create Admin Account FIRST to check for existing email
-                if (resFormData.admin_password) {
-                    const { data, error: authError } = await supabase.auth.admin.createUser({
-                        email: resFormData.contact_email.trim().toLowerCase(),
-                        password: resFormData.admin_password,
-                        email_confirm: true
-                    })
-                    
-                    if (authError) {
-                        throw new Error(`Admin account failed: ${authError.message}. Restaurant not created.`)
-                    }
-                    authData = data
-                }
-
-                // If auth creation succeeded (or wasn't requested), create the restaurant
-                const { data: newRes, error: resError } = await supabase
-                    .from('restaurants')
-                    .insert([
-                        {
+                const { data, error } = await supabase.functions.invoke('create-admin-user', {
+                    body: {
+                        action: 'create_restaurant',
+                        restaurant: {
                             name: resFormData.name.trim(),
                             slug: resFormData.slug.trim() || resFormData.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-'),
                             contact_email: resFormData.contact_email.trim().toLowerCase(),
                             contact_address: resFormData.contact_address.trim(),
                             contact_phone: resFormData.contact_phone.trim(),
                             status: 'pending'
-                        }
-                    ])
-                    .select()
-                    .single()
-                
-                if (resError) {
-                    // Rollback auth user if restaurant creation fails
-                    if (authData) {
-                        await supabase.auth.admin.deleteUser(authData.user.id)
+                        },
+                        admin_password: resFormData.admin_password
                     }
-                    throw resError
-                }
-
-                if (authData) {
-                    // Update Profile Role
-                    await supabase
-                        .from('profiles')
-                        .update({ role: 'restaurant_admin' })
-                        .eq('id', authData.user.id)
-
-                    // Link to Restaurant
-                    await supabase
-                        .from('restaurant_users')
-                        .insert({
-                            restaurant_id: newRes.id,
-                            profile_id: authData.user.id,
-                            role: 'admin',
-                            active: true
-                        })
-                }
+                })
+                
+                if (error) throw error
+                if (data.error) throw new Error(data.error)
             }
 
             onRefresh && onRefresh()
