@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
 import {
     Download, Calendar, Loader2, ChevronLeft, ChevronRight, X,
-    Eye, ShoppingCart, Hash, User, CreditCard, CheckCircle, IndianRupee
+    Eye, ShoppingCart, Hash, User, CreditCard, CheckCircle, IndianRupee,
+    Search, Filter, ArrowUpDown, ArrowUp, ArrowDown
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle } from './ui/Card';
 import { Badge } from './ui/Badge';
@@ -359,7 +360,7 @@ function OrdersModal({ restaurantId, startDate, endDate, periodLabel, onClose })
 /* ─────────────────────────────────────────────────────────────
    Main Component
 ───────────────────────────────────────────────────────────── */
-export default function OrderHistoryTab({ restaurantId }) {
+export default function OrderHistoryTab({ restaurantId, viewMode = 'orders' }) {
     const [timeframe,   setTimeframe]   = useState('month');
     const [weekOffset,  setWeekOffset]  = useState(0);
     const [monthOffset, setMonthOffset] = useState(0);
@@ -374,6 +375,13 @@ export default function OrderHistoryTab({ restaurantId }) {
 
     // Orders modal state
     const [ordersModal, setOrdersModal] = useState(null); // { start, end, label }
+    const [searchQuery, setSearchQuery] = useState('');
+    const [page, setPage] = useState(1);
+    const [perPage, setPerPage] = useState(8);
+    const [filterStatus, setFilterStatus] = useState('all');
+    const [sortBy, setSortBy] = useState('newest');
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const [isDateOpen, setIsDateOpen] = useState(false);
 
     const [summary, setSummary] = useState({
         totalRevenue: 0, totalOrders: 0, aov: 0,
@@ -597,7 +605,9 @@ export default function OrderHistoryTab({ restaurantId }) {
                 setTopItems(Object.values(map).sort((a, b) => b.revenue - a.revenue));
             }
 
-            // Feedback
+    // Moved to outer scope
+
+    // Feedback
             const { data: fbData, error: fbErr } = await supabase
                 .from('feedback')
                 .select(`id, rating, comment, created_at, orders!inner(restaurant_id, profiles(name), order_items(name))`)
@@ -639,6 +649,57 @@ export default function OrderHistoryTab({ restaurantId }) {
         setOrdersModal({ start, end, label: chartTitle() });
     };
 
+    const filteredOrders = orders
+        .filter(o => {
+            const num = o.order_number || (o.id ? String(o.id).slice(0, 8) : '');
+            const matchesSearch = num.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                (o.type && o.type.toLowerCase().includes(searchQuery.toLowerCase()));
+            const matchesFilter = filterStatus === 'all' || o.status === filterStatus;
+            return matchesSearch && matchesFilter;
+        })
+        .sort((a, b) => {
+            if (sortBy === 'newest') return new Date(b.created_at) - new Date(a.created_at);
+            if (sortBy === 'oldest') return new Date(a.created_at) - new Date(b.created_at);
+            if (sortBy === 'amount') return Number(b.total) - Number(a.total);
+            if (sortBy === 'status') return (a.status || '').localeCompare(b.status || '');
+            return 0;
+        });
+
+    const totalPages = Math.max(1, Math.ceil(filteredOrders.length / perPage));
+    const safePage = Math.min(page, totalPages);
+    const pagedOrders = filteredOrders.slice((safePage - 1) * perPage, safePage * perPage);
+
+    const getPaginationPages = () => {
+        if (totalPages <= 3) return Array.from({ length: totalPages }, (_, i) => i + 1);
+        if (safePage === totalPages) return [1, '...', totalPages];
+        if (safePage === totalPages - 1) return [safePage - 1, safePage, totalPages];
+        return [safePage, '...', totalPages];
+    };
+
+    const toggleSort = (newSort) => {
+        if (sortBy === newSort) setSortBy(newSort === 'newest' ? 'oldest' : 'newest');
+        else setSortBy(newSort);
+    };
+
+    const getSortIcon = (field) => {
+        if (sortBy === field) return <ArrowUp size={14} />;
+        if (field === 'newest' && sortBy === 'oldest') return <ArrowDown size={14} />;
+        return <ArrowUpDown size={14} style={{ opacity: 0.3 }} />;
+    };
+
+    const handleExportOrders = () => {
+        const csvContent = "data:text/csv;charset=utf-8," 
+            + "Order #,Date,Type,Table,Amount,Status,Payment\n"
+            + filteredOrders.map(o => `${o.order_number || (o.id ? String(o.id).slice(0, 8) : '')},${new Date(o.created_at).toLocaleString('en-IN').replace(/,/g, '')},${o.type},${o.table_number || ''},${o.total},${o.status},${o.payment_method}`).join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `orders_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     const maxRev  = Math.max(...summary.revenueHistory.map(b => b.revenue), 1);
     const peakMax = Math.max(...summary.peakData.map(d => Math.max(...d)), 1);
 
@@ -655,56 +716,53 @@ export default function OrderHistoryTab({ restaurantId }) {
     return (
         <div className="flex flex-col gap-8 animate-fade-in">
 
-            {/* ── Filters ── */}
-            <div className="flex flex-wrap items-center justify-between gap-4 bg-surface p-4 rounded-2xl border border-border">
-                <div className="flex items-center gap-2 flex-wrap">
-                    {['today', 'week', 'month', 'all'].map(t => (
-                        <button key={t} onClick={() => { setTimeframe(t); setWeekOffset(0); setMonthOffset(0); }}
-                            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all border-none cursor-pointer ${timeframe === t ? 'bg-accent-primary text-black' : 'bg-surface-hover text-text-muted hover:text-text-main'}`}>
-                            {t.charAt(0).toUpperCase() + t.slice(1)}
-                        </button>
-                    ))}
-                    <div className="flex items-center gap-2 border-l border-border pl-2 ml-1">
-                        <button onClick={() => setTimeframe('custom')}
-                            className={`px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 border-none cursor-pointer ${timeframe === 'custom' ? 'bg-accent-primary text-black' : 'bg-surface-hover text-text-muted hover:text-text-main'}`}>
-                            <Calendar size={16} /> Custom
-                        </button>
-                        {timeframe === 'custom' && (
-                            <div className="flex items-center gap-2">
-                                <input type="date" value={customStart} onChange={e => setCustomStart(e.target.value)} className="bg-surface-hover border border-border rounded-lg px-3 py-1.5 text-sm text-text-main" />
-                                <span className="text-text-muted text-sm">to</span>
-                                <input type="date" value={customEnd} onChange={e => setCustomEnd(e.target.value)} className="bg-surface-hover border border-border rounded-lg px-3 py-1.5 text-sm text-text-main" />
-                            </div>
-                        )}
-                    </div>
-                    {timeframe === 'week' && (
-                        <div className="flex items-center gap-3 bg-surface-hover px-3 py-1.5 rounded-xl ml-1">
-                            <button onClick={() => setWeekOffset(p => p + 1)} className="text-text-muted hover:text-text-main border-none bg-transparent cursor-pointer"><ChevronLeft size={16} /></button>
-                            <span className="text-sm font-semibold whitespace-nowrap">{getWeekDateRange(weekOffset)}</span>
-                            <button onClick={() => setWeekOffset(p => Math.max(0, p - 1))} disabled={weekOffset === 0} className="text-text-muted hover:text-text-main border-none bg-transparent cursor-pointer disabled:opacity-30"><ChevronRight size={16} /></button>
-                        </div>
-                    )}
-                    {timeframe === 'month' && (
-                        <div className="flex items-center gap-3 bg-surface-hover px-3 py-1.5 rounded-xl ml-1">
-                            <button onClick={() => setMonthOffset(p => p + 1)} className="text-text-muted hover:text-text-main border-none bg-transparent cursor-pointer"><ChevronLeft size={16} /></button>
-                            <span className="text-sm font-semibold whitespace-nowrap">{getMonthLabel(monthOffset)}</span>
-                            <button onClick={() => setMonthOffset(p => Math.max(0, p - 1))} disabled={monthOffset === 0} className="text-text-muted hover:text-text-main border-none bg-transparent cursor-pointer disabled:opacity-30"><ChevronRight size={16} /></button>
-                        </div>
-                    )}
-                </div>
-                <button onClick={handleExportCSV} className="flex items-center gap-2 px-4 py-2 bg-surface-hover text-text-main font-semibold rounded-xl border border-border hover:bg-border transition-all cursor-pointer">
-                    <Download size={16} /> Export CSV
-                </button>
-            </div>
-
             {loading && (
-                <div className="flex items-center gap-2 text-sm text-accent-primary animate-pulse">
+                <div className="flex items-center gap-2 text-sm text-accent-primary animate-pulse mb-4">
                     <Loader2 size={16} className="animate-spin" /> Updating…
                 </div>
             )}
 
             {/* ── Metrics ── */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {viewMode === 'stats' && (
+                <>
+                    <div className="flex flex-wrap justify-between items-center mb-4 gap-3 bg-surface p-3 rounded-xl border border-border shadow-sm">
+                        <div className="flex flex-wrap items-center gap-2">
+                            {/* Date Filter for Stats */}
+                            <div className="relative group">
+                                <button 
+                                    onClick={() => setIsDateOpen(!isDateOpen)}
+                                    className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface text-text-main hover:bg-surface-hover transition-colors text-[12px] font-medium cursor-pointer"
+                                >
+                                    <Calendar size={14} className="text-accent-primary" />
+                                    {timeframe === 'all' ? 'All Time' : timeframe === 'today' ? 'Today' : timeframe === 'week' ? 'This Week' : timeframe === 'month' ? 'This Month' : 'Custom'}
+                                </button>
+                                <div className={`absolute left-0 top-full mt-2 w-48 bg-surface border border-border rounded-xl shadow-lg transition-all z-50 flex flex-col overflow-hidden py-1 ${
+                                    isDateOpen ? 'opacity-100 visible' : 'opacity-0 invisible group-hover:opacity-100 group-hover:visible'
+                                }`}>
+                                    {['today', 'week', 'month', 'all'].map(t => (
+                                        <button key={t} onClick={() => { setTimeframe(t); setIsDateOpen(false); setWeekOffset(0); setMonthOffset(0); }} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors cursor-pointer border-none ${timeframe === t ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main bg-transparent'}`}>
+                                            {t === 'today' ? 'Today' : t === 'week' ? 'This Week' : t === 'month' ? 'This Month' : 'All Time'}
+                                        </button>
+                                    ))}
+                                    <button onClick={() => { setTimeframe('custom'); setIsDateOpen(false); }} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors cursor-pointer border-none ${timeframe === 'custom' ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main bg-transparent'}`}>
+                                        Custom Range
+                                    </button>
+                                </div>
+                            </div>
+                            {timeframe === 'custom' && (
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <input type="date" value={customStart} onChange={e => setCustomStart(e.target.value)} className="bg-surface border border-border rounded-lg px-2 py-1.5 text-[12px] text-text-main focus:ring-1 focus:ring-accent-primary focus:outline-none" />
+                                    <span className="text-text-muted text-[12px]">to</span>
+                                    <input type="date" value={customEnd} onChange={e => setCustomEnd(e.target.value)} className="bg-surface border border-border rounded-lg px-2 py-1.5 text-[12px] text-text-main focus:ring-1 focus:ring-accent-primary focus:outline-none" />
+                                </div>
+                            )}
+                        </div>
+                        <button onClick={handleExportCSV} className="flex items-center gap-1.5 px-3 py-2 bg-surface-hover text-text-main text-[12px] font-semibold rounded-lg border border-border hover:bg-border transition-all cursor-pointer">
+                            <Download size={14} /> Export CSV
+                        </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[
                     { label: 'Total Revenue',    value: fmtCurrency(summary.totalRevenue), bar: 'bg-blue-500',   sub: 'Paid orders only' },
                     { label: 'Total Orders',     value: summary.totalOrders,               bar: 'bg-green-500',  sub: 'Paid orders only' },
@@ -904,51 +962,174 @@ export default function OrderHistoryTab({ restaurantId }) {
                     </div>
                 </Card>
             </div>
+            </>
+            )}
 
             {/* ── Recent Orders Table ── */}
-            <Card>
-                <CardHeader>
-                    <div className="flex items-center justify-between w-full">
-                        <CardTitle className="m-0">Recent Orders</CardTitle>
-                        <button onClick={openModalForFull} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-accent-primary bg-accent-primary/10 rounded-lg border-none cursor-pointer hover:bg-accent-primary/20 transition-colors">
-                            <Eye size={14} /> View All
+            {viewMode === 'orders' && (
+            <div className="space-y-3">
+                <div className="flex flex-col md:flex-row md:items-center gap-3 w-full bg-surface p-3 md:p-2 rounded-xl shadow-sm border border-border">
+                    <div className="relative w-full md:max-w-[260px] shrink-0">
+                        <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
+                        <input
+                            type="text"
+                            placeholder="Search Orders..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full py-2 pl-4 pr-10 bg-surface-hover border border-border rounded-full text-text-main text-[13px] focus:outline-none focus:ring-1 focus:ring-accent-primary transition-all"
+                        />
+                    </div>
+                    <div className="flex-1 flex items-center gap-1.5 overflow-x-auto no-scrollbar min-w-0 px-2 md:border-x md:border-border/50 py-1 md:py-0">
+                        {(searchQuery || filterStatus !== 'all' || sortBy !== 'newest') ? (
+                            <>
+                                <span className="text-[11px] text-text-muted font-medium uppercase tracking-wider shrink-0 mr-1">Active:</span>
+                                {searchQuery && (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 text-[11px] font-medium border border-blue-500/20 shrink-0">
+                                        "{searchQuery}"
+                                        <button onClick={() => setSearchQuery('')} className="hover:text-blue-800 focus:outline-none flex items-center justify-center bg-transparent border-none cursor-pointer p-0 ml-1"><X size={10} /></button>
+                                    </span>
+                                )}
+                                {filterStatus !== 'all' && (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 text-[11px] font-medium border border-blue-500/20 shrink-0">
+                                        {filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1)}
+                                        <button onClick={() => setFilterStatus('all')} className="hover:text-blue-800 focus:outline-none flex items-center justify-center bg-transparent border-none cursor-pointer p-0 ml-1"><X size={10} /></button>
+                                    </span>
+                                )}
+                                {sortBy !== 'newest' && (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 text-[11px] font-medium border border-blue-500/20 shrink-0">
+                                        {sortBy === 'oldest' ? 'Oldest' : sortBy === 'amount' ? 'Amount' : sortBy === 'status' ? 'Status' : sortBy}
+                                        <button onClick={() => setSortBy('newest')} className="hover:text-blue-800 focus:outline-none flex items-center justify-center bg-transparent border-none cursor-pointer p-0 ml-1"><X size={10} /></button>
+                                    </span>
+                                )}
+                                <button 
+                                    onClick={() => { setSearchQuery(''); setFilterStatus('all'); setSortBy('newest'); setPage(1); }}
+                                    className="text-[11px] text-text-muted hover:text-red-500 transition-colors ml-1 bg-transparent border-none cursor-pointer font-medium shrink-0"
+                                >
+                                    Clear
+                                </button>
+                            </>
+                        ) : (
+                            <span className="text-[11px] text-text-muted italic opacity-50">No active filters</span>
+                        )}
+                    </div>
+                    <div className="flex items-center justify-between md:justify-start gap-1 shrink-0 md:border-x md:border-border/50 px-3 py-1.5 md:py-0 w-full md:w-auto">
+                        <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
+                            <ChevronLeft size={14} />
+                        </button>
+                        <div className="flex items-center justify-center gap-1 w-[80px]">
+                            {getPaginationPages().map((p, i) => p === '...' ? (
+                                <div key={`ellipsis-${i}`} className="w-6 h-6 flex items-center justify-center text-[11px] text-text-muted">…</div>
+                            ) : (
+                                <button key={p} onClick={() => setPage(p)} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
+                            ))}
+                        </div>
+                        <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
+                            <ChevronRight size={14} />
                         </button>
                     </div>
-                </CardHeader>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                        <thead className="text-xs text-text-muted uppercase tracking-wider bg-surface-hover">
-                            <tr>
-                                <th className="px-6 py-4 font-semibold">Order #</th>
-                                <th className="px-6 py-4 font-semibold">Date & Time</th>
-                                <th className="px-6 py-4 font-semibold">Type</th>
-                                <th className="px-6 py-4 font-semibold">Table</th>
-                                <th className="px-6 py-4 font-semibold text-right">Amount</th>
-                                <th className="px-6 py-4 font-semibold">Status</th>
-                                <th className="px-6 py-4 font-semibold">Payment</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border">
-                            {orders.length === 0 ? (
-                                <tr><td colSpan={7} className="text-center py-12 text-text-muted">No orders found in this period.</td></tr>
-                            ) : orders.slice(0, 10).map(o => (
-                                <tr key={o.id} className="hover:bg-surface-hover/50 transition-colors">
-                                    <td className="px-6 py-4 font-mono font-semibold" style={{ color: '#4C51BF' }}>#{o.order_number || o.id.slice(0, 8)}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-text-muted">{new Date(o.created_at).toLocaleString('en-IN')}</td>
-                                    <td className="px-6 py-4 capitalize">{o.type?.replace('_', ' ')}</td>
-                                    <td className="px-6 py-4">{o.table_number || '—'}</td>
-                                    <td className="px-6 py-4 text-right font-semibold text-text-main">{fmtCurrency(o.total)}</td>
-                                    <td className="px-6 py-4"><Badge variant={o.status === 'completed' || o.status === 'served' ? 'success' : o.status === 'cancelled' ? 'error' : 'warning'}>{o.status}</Badge></td>
-                                    <td className="px-6 py-4"><Badge variant="secondary">{methodLabel(o.payment_method)}</Badge></td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                    <div className="flex flex-wrap items-center gap-2 shrink-0 w-full md:w-auto">
+                        <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1); }} className="py-1.5 px-2 rounded-lg border border-border bg-surface text-text-main text-[12px] focus:outline-none focus:ring-1 focus:ring-accent-primary cursor-pointer flex-1 md:flex-none">
+                            {[8, 20, 50, 100].map(n => <option key={n} value={n}>{n} / page</option>)}
+                        </select>
+                        <div className="relative group flex-1 md:flex-none">
+                            <button 
+                                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface text-text-main hover:bg-surface-hover transition-colors text-[12px] font-medium cursor-pointer"
+                            >
+                                <Filter size={14} className="text-accent-primary" /> Filter
+                            </button>
+                            <div className={`absolute right-0 top-full mt-2 w-48 bg-surface border border-border rounded-xl shadow-lg transition-all z-50 flex flex-col overflow-hidden py-1 ${
+                                isFilterOpen ? 'opacity-100 visible' : 'opacity-0 invisible group-hover:opacity-100 group-hover:visible'
+                            }`}>
+                                {['all', 'pending', 'served', 'completed', 'cancelled'].map(status => (
+                                    <button key={status} onClick={() => { setFilterStatus(status); setIsFilterOpen(false); }} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors cursor-pointer border-none ${filterStatus === status ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main bg-transparent'}`}>
+                                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Date Filter Dropdown for Orders */}
+                        <div className="relative group flex-1 md:flex-none">
+                            <button 
+                                onClick={() => setIsDateOpen(!isDateOpen)}
+                                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface text-text-main hover:bg-surface-hover transition-colors text-[12px] font-medium cursor-pointer"
+                            >
+                                <Calendar size={14} className="text-accent-primary" />
+                                {timeframe === 'all' ? 'All Time' : timeframe === 'today' ? 'Today' : timeframe === 'week' ? 'This Week' : timeframe === 'month' ? 'This Month' : 'Custom'}
+                            </button>
+                            <div className={`absolute right-0 top-full mt-2 w-48 bg-surface border border-border rounded-xl shadow-lg transition-all z-50 flex flex-col overflow-hidden py-1 ${
+                                isDateOpen ? 'opacity-100 visible' : 'opacity-0 invisible group-hover:opacity-100 group-hover:visible'
+                            }`}>
+                                {['today', 'week', 'month', 'all'].map(t => (
+                                    <button key={t} onClick={() => { setTimeframe(t); setIsDateOpen(false); setWeekOffset(0); setMonthOffset(0); }} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors cursor-pointer border-none ${timeframe === t ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main bg-transparent'}`}>
+                                        {t === 'today' ? 'Today' : t === 'week' ? 'This Week' : t === 'month' ? 'This Month' : 'All Time'}
+                                    </button>
+                                ))}
+                                <button onClick={() => { setTimeframe('custom'); setIsDateOpen(false); }} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors cursor-pointer border-none ${timeframe === 'custom' ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main bg-transparent'}`}>
+                                    Custom Range
+                                </button>
+                            </div>
+                        </div>
+                        {timeframe === 'custom' && (
+                            <div className="flex items-center gap-2 shrink-0">
+                                <input type="date" value={customStart} onChange={e => setCustomStart(e.target.value)} className="bg-surface border border-border rounded-lg px-2 py-1.5 text-[12px] text-text-main focus:ring-1 focus:ring-accent-primary focus:outline-none" />
+                                <span className="text-text-muted text-[12px]">to</span>
+                                <input type="date" value={customEnd} onChange={e => setCustomEnd(e.target.value)} className="bg-surface border border-border rounded-lg px-2 py-1.5 text-[12px] text-text-main focus:ring-1 focus:ring-accent-primary focus:outline-none" />
+                            </div>
+                        )}
+                        <button 
+                            onClick={handleExportOrders}
+                            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-accent-primary text-white hover:bg-accent-hover transition-colors text-[12px] font-medium shadow-sm cursor-pointer border-none flex-1 md:flex-none"
+                        >
+                            <Download size={14} /> Export
+                        </button>
+                    </div>
                 </div>
-            </Card>
+
+                <div className="w-full bg-surface rounded-xl shadow-sm border border-border overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse whitespace-nowrap table-fixed min-w-[700px]">
+                            <thead>
+                                <tr className="border-b border-border bg-surface-hover/30">
+                                    <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[15%]" onClick={() => toggleSort('newest')}>
+                                        <div className="flex items-center gap-2 cursor-pointer">Date & Time {getSortIcon('newest')}</div>
+                                    </th>
+                                    <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[12%]">Order #</th>
+                                    <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[13%]">Type</th>
+                                    <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[10%]">Table</th>
+                                    <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[15%] text-right" onClick={() => toggleSort('amount')}>
+                                        <div className="flex items-center justify-end gap-2 cursor-pointer">Amount {getSortIcon('amount')}</div>
+                                    </th>
+                                    <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[15%]" onClick={() => toggleSort('status')}>
+                                        <div className="flex items-center gap-2 cursor-pointer">Status {getSortIcon('status')}</div>
+                                    </th>
+                                    <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[15%]">Payment</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredOrders.length === 0 ? (
+                                    <tr><td colSpan={7} className="text-center py-12 text-text-muted text-[13px]">No orders found matching your criteria.</td></tr>
+                                ) : pagedOrders.map(o => (
+                                    <tr key={o.id} className="group even:bg-bg hover:bg-surface-hover border-b border-border/40 last:border-b-0 cursor-pointer transition-colors">
+                                        <td className="py-3 px-4 text-[13px] text-text-muted">{new Date(o.created_at).toLocaleString('en-IN')}</td>
+                                        <td className="py-3 px-4 text-[13px] font-semibold" style={{ color: '#4C51BF' }}>#{o.order_number || (o.id ? String(o.id).slice(0, 8) : '')}</td>
+                                        <td className="py-3 px-4 text-[13px] text-text-main capitalize">{o.type?.replace('_', ' ')}</td>
+                                        <td className="py-3 px-4 text-[13px] text-text-main">{o.table_number || '—'}</td>
+                                        <td className="py-3 px-4 text-[13px] font-semibold text-text-main text-right">{fmtCurrency(o.total)}</td>
+                                        <td className="py-3 px-4 text-[13px]"><Badge variant={o.status === 'completed' || o.status === 'served' ? 'success' : o.status === 'cancelled' ? 'error' : 'warning'}>{o.status}</Badge></td>
+                                        <td className="py-3 px-4 text-[13px]"><Badge variant="secondary">{methodLabel(o.payment_method)}</Badge></td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            )}
 
             {/* ── Feedback ── */}
-            {feedback.length > 0 && (
+            {viewMode === 'stats' && feedback.length > 0 && (
                 <Card>
                     <CardHeader><CardTitle>Recent Feedback</CardTitle></CardHeader>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6 pt-0">

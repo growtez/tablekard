@@ -235,14 +235,32 @@ const MyOrderPage = () => {
       setError('Please remove out of stock items from your cart before proceeding.');
       return;
     }
-    if (!isAuthenticated) {
+    if (!isAuthenticated && sessionStorage.getItem('previewMode') !== 'true') {
       const currentPath = encodeURIComponent(window.location.pathname);
       navigate(`/login?redirect=${currentPath}`);
       return;
     }
 
     if (sessionStorage.getItem('previewMode') === 'true') {
-      setError('Checkout is disabled in Preview Mode.');
+      const dummyOrder = {
+        id: `DUMMY-${Date.now().toString(36).toUpperCase()}`,
+        status: 'placed',
+        items: cartItems.map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          variant: item.variant || null,
+          addons: item.addons || null
+        })),
+        total: getTotalPrice(),
+        orderDate: 'Just now',
+        paymentStatus: 'Paid Online (Dummy)',
+        statusLabel: 'Order Placed',
+        rawOrder: { id: 'dummy_order_id', type: orderType }
+      };
+      setOrders(prev => [dummyOrder, ...prev]);
+      clearCart();
+      setActiveTab('orders');
       return;
     }
 
@@ -313,14 +331,31 @@ const MyOrderPage = () => {
       setError('Please remove out of stock items from your cart before proceeding.');
       return;
     }
-    if (!isAuthenticated) {
+    if (!isAuthenticated && sessionStorage.getItem('previewMode') !== 'true') {
       const currentPath = encodeURIComponent(window.location.pathname);
       navigate(`/login?redirect=${currentPath}`);
       return;
     }
 
     if (sessionStorage.getItem('previewMode') === 'true') {
-      setError('Checkout is disabled in Preview Mode.');
+      const dummyOrder = {
+        id: `DUMMY-${Date.now().toString(36).toUpperCase()}`,
+        status: 'placed',
+        items: cartItems.map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          addons: item.addons || null
+        })),
+        total: getTotalPrice(),
+        orderDate: 'Just now',
+        paymentStatus: 'Pay at Counter (Dummy)',
+        statusLabel: 'Order Placed',
+        rawOrder: { id: 'dummy_order_id', type: orderType }
+      };
+      setOrders(prev => [dummyOrder, ...prev]);
+      clearCart();
+      setActiveTab('orders');
       return;
     }
 

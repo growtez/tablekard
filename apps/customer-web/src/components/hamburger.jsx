@@ -116,16 +116,18 @@ const Hamburger = () => {
             </NavLink>
           )}
 
-          <NavLink to="/profile"     className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`} onClick={close}>
-            <User size={20} /><span>Profile</span>
-          </NavLink>
+          {sessionStorage.getItem('previewMode') !== 'true' && (
+            <NavLink to="/profile"     className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`} onClick={close}>
+              <User size={20} /><span>Profile</span>
+            </NavLink>
+          )}
 
           <NavLink to="/about"       className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`} onClick={close}>
             <Info size={20} /><span>About</span>
           </NavLink>
 
           {/* ── Auth action ── */}
-          {!authLoading && (
+          {sessionStorage.getItem('previewMode') !== 'true' && !authLoading && (
             isAuthenticated ? (
               <button className="sidebar-item logout-btn" onClick={handleLogout}>
                 <LogOut size={20} />

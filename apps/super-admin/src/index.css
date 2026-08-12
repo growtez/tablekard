@@ -65,12 +65,12 @@
 @layer base {
   body {
     @apply min-h-screen bg-bg text-text-main overflow-x-hidden antialiased;
-    font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
   
   h1, h2, h3, h4 {
     @apply font-semibold tracking-tight;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Inter', sans-serif;
   }
 }
 

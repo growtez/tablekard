@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
-import { X, UserPlus, FilePlus, Eye, EyeOff } from 'lucide-react'
+import { X, UserPlus, FilePlus, Eye, EyeOff, Check } from 'lucide-react'
 
 export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActiveForm, editingData, onRefresh }) {
     const [loading, setLoading] = useState(false)
@@ -329,9 +329,17 @@ export default function QuickCreateDrawer({ isOpen, onClose, activeForm, setActi
                                         {checkingSlug && (
                                             <div className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-text-muted/30 border-t-accent-primary rounded-full animate-spin"></div>
                                         )}
+                                        {slugAvailable === true && resFormData.slug && !checkingSlug && (
+                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-green-500">
+                                                <Check size={18} />
+                                            </div>
+                                        )}
                                     </div>
                                     {slugAvailable === false && (
                                         <span className="text-[11px] text-red-500 font-medium ml-2">Not available, please choose another</span>
+                                    )}
+                                    {slugAvailable === true && resFormData.slug && !checkingSlug && (
+                                        <span className="text-[11px] text-green-500 font-medium ml-2">Available</span>
                                     )}
                                 </div>
                                 <div className="relative">
