@@ -557,6 +557,23 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
 
+CREATE OR REPLACE FUNCTION public.handle_user_update()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.email <> OLD.email THEN
+    UPDATE public.profiles
+    SET email = NEW.email
+    WHERE id = NEW.id;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_updated ON auth.users;
+CREATE TRIGGER on_auth_user_updated
+  AFTER UPDATE OF email ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_user_update();
+
 -- ======================================================================================
 -- RLS HELPER FUNCTIONS
 -- ======================================================================================

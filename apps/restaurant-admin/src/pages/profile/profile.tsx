@@ -1514,7 +1514,7 @@ const ProfilePage: React.FC = () => {
           ) : (
             <div className="flex flex-col gap-1">
               <span>{userProfile?.email || "N/A"}</span>
-              {user?.new_email && (
+              {user?.new_email && user.new_email !== userProfile?.email && (
                 <span className="text-orange-500 text-[12px] font-medium font-['Outfit',sans-serif]">
                   Pending verification: {user.new_email}
                 </span>
