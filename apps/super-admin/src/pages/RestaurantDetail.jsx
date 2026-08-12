@@ -6,7 +6,8 @@ import {
     Shield, Activity, CreditCard, MapPin, Settings as SettingsIcon,
     Clock, Tag, Info, AlertTriangle, AlertCircle, Edit, Save, X as CloseIcon, Loader2,
     Utensils, Layers, List, ArrowUpRight, CheckCircle2, XCircle, Timer,
-    Hash, Map, Palette, Image as ImageIcon, Box, Plus, BookOpen, User, ShoppingBag
+    Hash, Map, Palette, Image as ImageIcon, Box, Plus, BookOpen, User, ShoppingBag,
+    Search, Filter, ArrowUpDown, ArrowUp, ArrowDown, Download, ChevronRight, X
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
@@ -40,7 +41,15 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
     const [menuItems, setMenuItems] = useState([]);
     const [payments, setPayments] = useState([]);
     const [admins, setAdmins] = useState([]);
-    const [activeTab, setActiveTab] = useState('general');
+    const [activeTab, setActiveTab] = useState('stats');
+
+    // Payments list state
+    const [searchQuery, setSearchQuery] = useState('');
+    const [page, setPage] = useState(1);
+    const [perPage, setPerPage] = useState(8);
+    const [filterStatus, setFilterStatus] = useState('all');
+    const [sortBy, setSortBy] = useState('newest');
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
 
     const [editingCard, setEditingCard] = useState(null);
     const [formData, setFormData] = useState({});
@@ -160,6 +169,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                     longitude: parseFloat(formData.longitude) || null,
                     allowed_radius: parseInt(formData.allowed_radius) || 100,
                     status: formData.status,
+                    subscription_status: formData.status === 'active',
                     operating_hours_weekdays: formData.operating_hours_weekdays || '09:00 AM - 10:00 PM',
                     operating_hours_weekends: formData.operating_hours_weekends || '09:00 AM - 10:00 PM',
                     cover_image_url: formData.cover_image_url,
@@ -224,12 +234,61 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                 <AlertCircle size={48} className="text-red-500 opacity-50 mb-4 mx-auto" />
                 <h2 className="text-2xl font-bold mb-2">Restaurant Not Found</h2>
                 <p className="text-text-muted mb-6">{error || 'The requested restaurant could not be located.'}</p>
-                <button onClick={() => navigate('/restaurants')} className="flex items-center gap-2 px-4 py-2 bg-accent-primary text-black font-bold rounded-xl mx-auto shadow-sm hover:shadow-md transition-all">
+                <button onClick={() => navigate('/restaurants')} className="flex items-center gap-2 px-4 py-2 bg-accent-primary text-black font-bold rounded-xl mx-auto shadow-sm hover:shadow-md transition-all border-none cursor-pointer">
                     <ChevronLeft size={18} /> Back to Restaurants
                 </button>
             </div>
         );
     }
+
+    const filteredPayments = payments
+        .filter(p => {
+            const matchesSearch = (p.id ? String(p.id).toLowerCase() : '').includes(searchQuery.toLowerCase());
+            const matchesFilter = filterStatus === 'all' || p.status === filterStatus;
+            return matchesSearch && matchesFilter;
+        })
+        .sort((a, b) => {
+            if (sortBy === 'newest') return new Date(b.created_at) - new Date(a.created_at);
+            if (sortBy === 'oldest') return new Date(a.created_at) - new Date(b.created_at);
+            if (sortBy === 'amount') return Number(b.amount) - Number(a.amount);
+            if (sortBy === 'status') return (a.status || '').localeCompare(b.status || '');
+            return 0;
+        });
+
+    const totalPages = Math.max(1, Math.ceil(filteredPayments.length / perPage));
+    const safePage = Math.min(page, totalPages);
+    const pagedPayments = filteredPayments.slice((safePage - 1) * perPage, safePage * perPage);
+
+    const getPaginationPages = () => {
+        if (totalPages <= 3) return Array.from({ length: totalPages }, (_, i) => i + 1);
+        if (safePage === totalPages) return [1, '...', totalPages];
+        if (safePage === totalPages - 1) return [safePage - 1, safePage, totalPages];
+        return [safePage, '...', totalPages];
+    };
+
+    const toggleSort = (newSort) => {
+        if (sortBy === newSort) setSortBy(newSort === 'newest' ? 'oldest' : 'newest');
+        else setSortBy(newSort);
+    };
+
+    const getSortIcon = (field) => {
+        if (sortBy === field) return <ArrowUp size={14} />;
+        if (field === 'newest' && sortBy === 'oldest') return <ArrowDown size={14} />;
+        return <ArrowUpDown size={14} style={{ opacity: 0.3 }} />;
+    };
+
+    const handleExportPayments = () => {
+        const csvContent = "data:text/csv;charset=utf-8," 
+            + "ID,Date,Duration,Status,Amount\n"
+            + filteredPayments.map(p => `${p.id},${new Date(p.created_at).toLocaleDateString()},${p.plan_duration} Days,${p.status},${p.amount}`).join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `payments_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     const renderCardHeader = (title, cardId) => (
         <CardHeader>
@@ -325,13 +384,10 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
             {/* Tabs Navigation */}
             <div className="flex gap-10 border-b border-border mb-8 overflow-x-auto whitespace-nowrap scrollbar-hide">
                 {[
-                    { id: 'general', label: 'General Info', icon: Info },
-                    { id: 'branding', label: 'Location & Branding', icon: Palette },
-                    { id: 'story', label: 'Story & Socials', icon: BookOpen },
-                    { id: 'admin', label: 'Admin Profile', icon: User },
-                    { id: 'menu', label: 'Menu & Catalog', icon: Utensils },
-                    { id: 'billing', label: 'Billing & Sub', icon: CreditCard },
-                    { id: 'orders', label: 'Order History', icon: ShoppingBag }
+                    { id: 'stats', label: 'Stats', icon: Activity },
+                    { id: 'orders', label: 'Transaction History', icon: ShoppingBag },
+                    { id: 'billing', label: 'Subscription History', icon: CreditCard },
+                    { id: 'general', label: 'General Info', icon: Info }
                 ].map(tab => (
                     <button
                         key={tab.id}
@@ -428,8 +484,8 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                 )}
 
                 {activeTab === 'billing' && (
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                        <div className="lg:col-span-6">
+                    <div className="flex flex-col gap-6">
+                        <div className="max-w-md">
                             <Card className="bg-gradient-to-br from-surface to-amber-500/5">
                                 <CardHeader><CardTitle>Subscription Status</CardTitle></CardHeader>
                                 <div className="text-center py-4">
@@ -451,55 +507,145 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                                 </div>
                             </Card>
                         </div>
-                        <div className="lg:col-span-6">
-                            <Card>
-                                <CardHeader>
-                                    <div className="flex items-center justify-between w-full">
-                                        <CardTitle className="m-0">Payment History</CardTitle>
-                                        <Badge variant="secondary">{payments.length} Transactions</Badge>
-                                    </div>
-                                </CardHeader>
-                                <div className="space-y-3">
-                                    {payments.length > 0 ? (
-                                        payments.map((payment) => (
-                                            <div 
-                                                key={payment.id}
-                                                onClick={() => navigate(`/subscriptions/${payment.id}`)}
-                                                className="flex items-center justify-between p-4 rounded-xl bg-surface-hover cursor-pointer border border-transparent transition-all hover:border-accent-primary/50 group/payment"
+                        
+                        <div className="w-full space-y-3">
+                            <div className="flex flex-col md:flex-row md:items-center gap-3 w-full bg-surface p-3 md:p-2 rounded-xl shadow-sm border border-border">
+                                <div className="relative w-full md:max-w-[260px] shrink-0">
+                                    <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
+                                    <input
+                                        type="text"
+                                        placeholder="Search Payments..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="w-full py-2 pl-4 pr-10 bg-surface-hover border border-border rounded-full text-text-main text-[13px] focus:outline-none focus:ring-1 focus:ring-accent-primary transition-all"
+                                    />
+                                </div>
+                                <div className="flex-1 flex items-center gap-1.5 overflow-x-auto no-scrollbar min-w-0 px-2 md:border-x md:border-border/50 py-1 md:py-0">
+                                    {(searchQuery || filterStatus !== 'all' || sortBy !== 'newest') ? (
+                                        <>
+                                            <span className="text-[11px] text-text-muted font-medium uppercase tracking-wider shrink-0 mr-1">Active:</span>
+                                            {searchQuery && (
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 text-[11px] font-medium border border-blue-500/20 shrink-0">
+                                                    "{searchQuery}"
+                                                    <button onClick={() => setSearchQuery('')} className="hover:text-blue-800 focus:outline-none flex items-center justify-center bg-transparent border-none cursor-pointer p-0 ml-1"><X size={10} /></button>
+                                                </span>
+                                            )}
+                                            {filterStatus !== 'all' && (
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 text-[11px] font-medium border border-blue-500/20 shrink-0">
+                                                    {filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1)}
+                                                    <button onClick={() => setFilterStatus('all')} className="hover:text-blue-800 focus:outline-none flex items-center justify-center bg-transparent border-none cursor-pointer p-0 ml-1"><X size={10} /></button>
+                                                </span>
+                                            )}
+                                            {sortBy !== 'newest' && (
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 text-[11px] font-medium border border-blue-500/20 shrink-0">
+                                                    {sortBy === 'oldest' ? 'Oldest' : sortBy === 'amount' ? 'Amount' : sortBy === 'status' ? 'Status' : sortBy}
+                                                    <button onClick={() => setSortBy('newest')} className="hover:text-blue-800 focus:outline-none flex items-center justify-center bg-transparent border-none cursor-pointer p-0 ml-1"><X size={10} /></button>
+                                                </span>
+                                            )}
+                                            <button 
+                                                onClick={() => { setSearchQuery(''); setFilterStatus('all'); setSortBy('newest'); setPage(1); }}
+                                                className="text-[11px] text-text-muted hover:text-red-500 transition-colors ml-1 bg-transparent border-none cursor-pointer font-medium shrink-0"
                                             >
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${payment.status === 'paid' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
-                                                        <CreditCard size={18} />
-                                                    </div>
-                                                    <div>
-                                                        <div className="font-bold text-[15px] text-text-main group-hover/payment:text-accent-primary transition-colors">₹{Number(payment.amount).toLocaleString()}</div>
-                                                        <div className="text-xs text-text-muted">{new Date(payment.created_at).toLocaleDateString()}</div>
-                                                    </div>
-                                                </div>
-                                                <div className="text-right">
-                                                    <Badge variant={payment.status === 'paid' ? 'success' : (payment.status === 'pending' ? 'warning' : 'error')} className="text-[10px] px-1.5 py-0.5">
-                                                        {payment.status.toUpperCase()}
-                                                    </Badge>
-                                                    <div className="text-[11px] font-medium text-text-muted mt-1">
-                                                        {payment.plan_duration} Days
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))
+                                                Clear
+                                            </button>
+                                        </>
                                     ) : (
-                                        <div className="flex flex-col items-center justify-center py-8 px-4 text-center text-text-muted">
-                                            <Activity size={32} className="opacity-20 mb-4" />
-                                            <p className="text-sm">No payment records found for this restaurant.</p>
-                                        </div>
+                                        <span className="text-[11px] text-text-muted italic opacity-50">No active filters</span>
                                     )}
                                 </div>
-                            </Card>
+                                <div className="flex items-center justify-between md:justify-start gap-1 shrink-0 md:border-x md:border-border/50 px-3 py-1.5 md:py-0 w-full md:w-auto">
+                                    <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
+                                        <ChevronLeft size={14} />
+                                    </button>
+                                    <div className="flex items-center justify-center gap-1 w-[80px]">
+                                        {getPaginationPages().map((p, i) => p === '...' ? (
+                                            <div key={`ellipsis-${i}`} className="w-6 h-6 flex items-center justify-center text-[11px] text-text-muted">…</div>
+                                        ) : (
+                                            <button key={p} onClick={() => setPage(p)} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
+                                        ))}
+                                    </div>
+                                    <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
+                                        <ChevronRight size={14} />
+                                    </button>
+                                </div>
+                                <div className="flex flex-wrap items-center gap-2 shrink-0 w-full md:w-auto">
+                                    <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1); }} className="py-1.5 px-2 rounded-lg border border-border bg-surface text-text-main text-[12px] focus:outline-none focus:ring-1 focus:ring-accent-primary cursor-pointer flex-1 md:flex-none">
+                                        {[8, 20, 50, 100].map(n => <option key={n} value={n}>{n} / page</option>)}
+                                    </select>
+                                    <div className="relative group flex-1 md:flex-none">
+                                        <button 
+                                            onClick={() => setIsFilterOpen(!isFilterOpen)}
+                                            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface text-text-main hover:bg-surface-hover transition-colors text-[12px] font-medium"
+                                        >
+                                            <Filter size={14} className="text-accent-primary" /> Filter
+                                        </button>
+                                        <div className={`absolute right-0 top-full mt-2 w-48 bg-surface border border-border rounded-xl shadow-lg transition-all z-50 flex flex-col overflow-hidden py-1 ${
+                                            isFilterOpen ? 'opacity-100 visible' : 'opacity-0 invisible group-hover:opacity-100 group-hover:visible'
+                                        }`}>
+                                            {['all', 'paid', 'pending', 'error'].map(status => (
+                                                <button key={status} onClick={() => { setFilterStatus(status); setIsFilterOpen(false); }} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${filterStatus === status ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>
+                                                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <button 
+                                        onClick={handleExportPayments}
+                                        className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-accent-primary text-white hover:bg-accent-hover transition-colors text-[12px] font-medium shadow-sm cursor-pointer border-none flex-1 md:flex-none"
+                                    >
+                                        <Download size={14} /> Export
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="w-full bg-surface rounded-xl shadow-sm border border-border overflow-hidden">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left border-collapse whitespace-nowrap table-fixed min-w-[700px]">
+                                        <thead>
+                                            <tr className="border-b border-border bg-surface-hover/30">
+                                                <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[30%]" onClick={() => toggleSort('newest')}>
+                                                    <div className="flex items-center gap-2 cursor-pointer">Date {getSortIcon('newest')}</div>
+                                                </th>
+                                                <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[20%]">Duration</th>
+                                                <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[20%]" onClick={() => toggleSort('status')}>
+                                                    <div className="flex items-center gap-2 cursor-pointer">Status {getSortIcon('status')}</div>
+                                                </th>
+                                                <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[30%] text-right" onClick={() => toggleSort('amount')}>
+                                                    <div className="flex items-center justify-end gap-2 cursor-pointer">Amount {getSortIcon('amount')}</div>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {filteredPayments.length === 0 ? (
+                                                <tr><td colSpan={4} className="text-center py-12 text-text-muted text-[13px]">No payment records found matching your criteria.</td></tr>
+                                            ) : (
+                                                pagedPayments.map(payment => (
+                                                    <tr 
+                                                        key={payment.id} 
+                                                        onClick={() => navigate(`/subscriptions/${payment.id}`)}
+                                                        className="group even:bg-bg hover:bg-surface-hover border-b border-border/40 last:border-b-0 cursor-pointer transition-colors"
+                                                    >
+                                                        <td className="py-3 px-4 text-[13px] text-text-main">{new Date(payment.created_at).toLocaleDateString()}</td>
+                                                        <td className="py-3 px-4 text-[13px] text-text-muted">{payment.plan_duration} Days</td>
+                                                        <td className="py-3 px-4 text-[13px]">
+                                                            <Badge variant={payment.status === 'paid' ? 'success' : (payment.status === 'pending' ? 'warning' : 'error')}>
+                                                                {payment.status.toUpperCase()}
+                                                            </Badge>
+                                                        </td>
+                                                        <td className="py-3 px-4 text-[13px] font-semibold text-text-main text-right">₹{Number(payment.amount).toLocaleString()}</td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
 
-                {activeTab === 'orders' && (
-                    <OrderHistoryTab restaurantId={id} />
+                {(activeTab === 'orders' || activeTab === 'stats') && (
+                    <OrderHistoryTab restaurantId={id} viewMode={activeTab} />
                 )}
 
                 {activeTab === 'branding' && (

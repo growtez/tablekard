@@ -1,32 +1,24 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
-  ChefHat,
+  Check,
   CreditCardIcon,
   Crosshair,
-  Edit3,
   ExternalLink,
-  Key,
   LogOut,
   MailIcon,
   MapPinIcon,
   PhoneIcon,
-  Save,
-  ShieldCheck,
-  Check,
-  X,
-  XCircle,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import type { Restaurant } from "@restaurant-saas/types";
 import { useAuth } from "../../context/AuthContext";
 import {
   getRestaurantById,
-  getRestaurantPaymentSettings,
   updateAdministratorProfile,
   updateRestaurantProfile,
 } from "../../services/supabaseService";
-import { supabase } from '@restaurant-saas/supabase';
-
+import { supabase } from "@restaurant-saas/supabase";
 
 interface RestaurantFormState {
   name: string;
@@ -54,8 +46,6 @@ interface AdminFormState {
   name: string;
   email: string;
 }
-
-
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -106,8 +96,6 @@ const isValidUrl = (value: string): boolean => {
   }
 };
 
-
-
 const formatLabel = (value?: string | null): string => {
   if (!value) {
     return "N/A";
@@ -120,10 +108,17 @@ const formatLabel = (value?: string | null): string => {
 };
 
 const createRestaurantFormState = (
-  restaurant: Restaurant,
+  restaurant: Restaurant
 ): RestaurantFormState => ({
   name: restaurant.name ?? "",
-  slug: restaurant.slug || (restaurant.name ? restaurant.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : ""),
+  slug:
+    restaurant.slug ||
+    (restaurant.name
+      ? restaurant.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "")
+      : ""),
   contactEmail: restaurant.contact.email ?? "",
   contactPhone: restaurant.contact.phone ?? "",
   contactAddress: restaurant.contact.address ?? "",
@@ -159,7 +154,7 @@ const createAdminFormState = (
     name?: string | null;
     email?: string | null;
     avatarUrl?: string | null;
-  } | null,
+  } | null
 ): AdminFormState => ({
   name: profile?.name ?? "",
   email: profile?.email ?? "",
@@ -176,7 +171,8 @@ const formatCoordinate = (value?: number | null): string => {
 const validateRestaurantForm = (form: RestaurantFormState): string | null => {
   if (!form.name.trim()) return "Restaurant name is required.";
   if (!form.slug.trim()) return "Restaurant slug is required.";
-  if (!/^[a-z0-9-]+$/.test(form.slug.trim())) return "Slug can only contain lowercase letters, numbers, and hyphens.";
+  if (!/^[a-z0-9-]+$/.test(form.slug.trim()))
+    return "Slug can only contain lowercase letters, numbers, and hyphens.";
   if (!form.contactEmail.trim() || !emailPattern.test(form.contactEmail.trim()))
     return "A valid contact email is required.";
   if (form.logoUrl.trim() && !isValidUrl(form.logoUrl.trim()))
@@ -209,22 +205,44 @@ const validateAdminForm = (form: AdminFormState): string | null => {
   return null;
 };
 
+const Row = ({
+  label,
+  children,
+  plain,
+}: {
+  label: string;
+  children: React.ReactNode;
+  plain?: boolean;
+}) => (
+  <div className="grid grid-cols-[220px_1fr] sm:grid-cols-[260px_1fr] gap-2 py-1 items-center">
+    <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
+      {label}
+    </span>
+    {plain ? (
+      <div className="text-[15px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text flex items-center w-full">
+        {children}
+      </div>
+    ) : (
+      <div className="text-[15px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text flex justify-start items-center w-full gap-2 min-h-[46px]">
+        {children}
+      </div>
+    )}
+  </div>
+);
+
 const ProfilePage: React.FC = () => {
-  const {
-    userProfile,
-    activeRestaurantId,
-    refreshSessionData,
-    signOut,
-  } = useAuth();
+  const { user, userProfile, activeRestaurantId, refreshSessionData, signOut } =
+    useAuth();
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [restaurantForm, setRestaurantForm] =
     useState<RestaurantFormState | null>(null);
   const [adminForm, setAdminForm] = useState<AdminFormState>(
-    createAdminFormState(userProfile),
+    createAdminFormState(userProfile)
   );
   const [isLoading, setIsLoading] = useState(true);
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
   const [checkingSlug, setCheckingSlug] = useState(false);
+  const [activeTab, setActiveTab] = useState<"details" | "operations">("details");
   const [feedback, setFeedback] = useState<{
     tone: "success" | "error" | "info";
     message: string;
@@ -239,59 +257,51 @@ const ProfilePage: React.FC = () => {
     }
   }, [feedback]);
 
-  const [activeEditModal, setActiveEditModal] = useState<"core" | "contact" | "branding" | "story" | "admin" | null>(null);
-  const isRestaurantEditing = activeEditModal !== null && activeEditModal !== "admin";
+  const [showMap, setShowMap] = useState<boolean>(false);
+  const [editingSection, setEditingSection] = useState<string | null>(null);
   const [isRestaurantSaving, setIsRestaurantSaving] = useState(false);
   const [isAdminSaving, setIsAdminSaving] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [activeTab, setActiveTab] = useState<
-    "general" | "branding" | "story" | "payments" | "admin" | "features"
-  >("general");
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
 
-  // Confirm modal state
-  const [confirmModal, setConfirmModal] = useState<{
-    open: boolean;
-    title: string;
-    description: string;
-    warning: string;
-    confirmLabel: string;
-    confirmColor: string;
-    onConfirm: () => Promise<void>;
-  }>({
-    open: false, title: '', description: '', warning: '',
-    confirmLabel: 'Confirm', confirmColor: '#EF4444',
-    onConfirm: async () => { },
-  });
-  const [confirmLoading, setConfirmLoading] = useState(false);
-  const [showPaymentSetupModal, setShowPaymentSetupModal] = useState(false);
-  const [paymentSetupForm, setPaymentSetupForm] = useState({ razorpayKeyId: '', razorpayKeySecret: '', razorpayWebhookSecret: '' });
-  const [paymentSetupSaving, setPaymentSetupSaving] = useState(false);
-  const [paymentSetupError, setPaymentSetupError] = useState<string | null>(null);
+  const shallowEqual = (obj1: any, obj2: any): boolean => {
+    if (obj1 === obj2) return true;
+    if (!obj1 || !obj2 || typeof obj1 !== 'object' || typeof obj2 !== 'object') return false;
+    const keys1 = Object.keys(obj1);
+    const keys2 = Object.keys(obj2);
+    if (keys1.length !== keys2.length) return false;
+    for (const key of keys1) {
+      if (obj1[key] !== obj2[key]) return false;
+    }
+    return true;
+  };
 
-  // Payment settings state
-  const [paymentSettings, setPaymentSettings] = useState({
-    razorpayKeyId: "",
-    hasRazorpayKeySecret: false,
-    hasRazorpayWebhookSecret: false,
-    onlinePaymentsEnabled: false,
-  });
-
+  const hasChanges =
+    (restaurant && restaurantForm &&
+      !shallowEqual(restaurantForm, createRestaurantFormState(restaurant))) ||
+    (userProfile && adminForm &&
+      !shallowEqual(adminForm, createAdminFormState(userProfile)));
 
 
 
   useEffect(() => {
-    if (!isRestaurantEditing || !restaurantForm?.slug) {
+    if (editingSection !== "core" || !restaurantForm?.slug) {
       setSlugAvailable(null);
+      setCheckingSlug(false);
       return;
     }
 
     if (restaurant && restaurantForm.slug === restaurant.slug) {
       setSlugAvailable(true);
+      setCheckingSlug(false);
       return;
     }
 
+    setSlugAvailable(null);
+    setCheckingSlug(true);
+
     const checkSlug = async () => {
-      setCheckingSlug(true);
       try {
         let query = supabase
           .from("restaurants")
@@ -316,7 +326,7 @@ const ProfilePage: React.FC = () => {
 
     const timer = setTimeout(checkSlug, 500);
     return () => clearTimeout(timer);
-  }, [restaurantForm?.slug, isRestaurantEditing, restaurant]);
+  }, [restaurantForm?.slug, editingSection, restaurant]);
 
   useEffect(() => {
     setAdminForm(createAdminFormState(userProfile));
@@ -334,27 +344,16 @@ const ProfilePage: React.FC = () => {
       try {
         setIsLoading(true);
         setFeedback(null);
-        const [data, pmtSettings] = await Promise.all([
-          getRestaurantById(activeRestaurantId),
-          getRestaurantPaymentSettings(activeRestaurantId),
-        ]);
+        const data = await getRestaurantById(activeRestaurantId);
         setRestaurant(data);
         setRestaurantForm(data ? createRestaurantFormState(data) : null);
-        const ps = {
-          razorpayKeyId: pmtSettings.razorpayKeyId ?? "",
-          hasRazorpayKeySecret: pmtSettings.hasRazorpayKeySecret ?? false,
-          hasRazorpayWebhookSecret: pmtSettings.hasRazorpayWebhookSecret ?? false,
-          onlinePaymentsEnabled: pmtSettings.onlinePaymentsEnabled,
-        };
-        setPaymentSettings(ps);
-
       } catch (error: unknown) {
         console.error("Error fetching restaurant context:", error);
         setFeedback({
           tone: "error",
           message: getErrorMessage(
             error,
-            "Failed to load restaurant details. Please try again.",
+            "Failed to load restaurant details. Please try again."
           ),
         });
       } finally {
@@ -375,25 +374,23 @@ const ProfilePage: React.FC = () => {
 
   const handleRestaurantFieldChange = (
     field: keyof RestaurantFormState,
-    value: string,
+    value: string
   ) => {
     setRestaurantForm((current) =>
-      current ? { ...current, [field]: value } : current,
+      current ? { ...current, [field]: value } : current
     );
   };
 
   const handleAdminFieldChange = (
     field: keyof AdminFormState,
-    value: string,
+    value: string
   ) => {
     setAdminForm((current) => ({ ...current, [field]: value }));
   };
 
-  const [isLocating, setIsLocating] = useState(false);
-
   const get24hTime = (
     text: string | undefined | null,
-    type: "open" | "close",
+    type: "open" | "close"
   ) => {
     if (!text) return type === "open" ? "10:00" : "22:00";
     const times = text.match(/(\d{1,2}:\d{2}\s*(?:AM|PM)?)/gi);
@@ -415,7 +412,7 @@ const ProfilePage: React.FC = () => {
   const handleTimeChange = (
     dayType: "weekdays" | "weekends",
     timeType: "open" | "close",
-    val: string,
+    val: string
   ) => {
     if (!restaurantForm) return;
     const field =
@@ -440,105 +437,123 @@ const ProfilePage: React.FC = () => {
 
     handleRestaurantFieldChange(
       field,
-      `${formatTime12h(newOpen24)} - ${formatTime12h(newClose24)}`,
+      `${formatTime12h(newOpen24)} - ${formatTime12h(newClose24)}`
     );
   };
 
   const mapInstanceRef = useRef<any>(null);
   const mapMarkerRef = useRef<any>(null);
+  const isEditingProfileRef = useRef(editingSection === "location");
 
   useEffect(() => {
-    if (isRestaurantEditing) {
-      const initMap = () => {
-        const L = (window as any).L;
-        if (!L) return;
-        const mapEl = document.getElementById("profile-map");
-        if (!mapEl) return;
+    isEditingProfileRef.current = editingSection === "location";
+  }, [editingSection]);
 
-        if (mapInstanceRef.current) return;
+  useEffect(() => {
+    if (!showMap && editingSection !== "location") return;
 
-        const initialLat = parseFloat(restaurantForm?.latitude || "26.1445");
-        const initialLng = parseFloat(restaurantForm?.longitude || "91.7362");
+    const initMap = () => {
+      const L = (window as any).L;
+      if (!L) return;
+      const mapEl = document.getElementById("profile-map");
+      if (!mapEl) return;
 
-        // Fix for leaflet marker icon
-        delete L.Icon.Default.prototype._getIconUrl;
-        L.Icon.Default.mergeOptions({
-          iconRetinaUrl:
-            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
-          iconUrl:
-            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-          shadowUrl:
-            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-        });
+      if (mapInstanceRef.current) return;
 
-        const map = L.map("profile-map").setView([initialLat, initialLng], 13);
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          attribution: "© OpenStreetMap",
-        }).addTo(map);
+      const initialLat = parseFloat(String(restaurantForm?.latitude || restaurant?.location?.latitude || "26.1445"));
+      const initialLng = parseFloat(String(restaurantForm?.longitude || restaurant?.location?.longitude || "91.7362"));
 
-        const marker = L.marker([initialLat, initialLng], {
-          draggable: true,
-        }).addTo(map);
+      delete L.Icon.Default.prototype._getIconUrl;
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl:
+          "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+        iconUrl:
+          "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+        shadowUrl:
+          "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+      });
 
-        marker.on("dragend", function () {
-          const position = marker.getLatLng();
-          setRestaurantForm((current) =>
-            current
-              ? {
-                ...current,
-                latitude: position.lat.toFixed(6),
-                longitude: position.lng.toFixed(6),
-              }
-              : current,
-          );
-        });
+      const map = L.map("profile-map").setView([initialLat, initialLng], 13);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap",
+      }).addTo(map);
 
-        map.on("click", function (event: any) {
-          const position = event.latlng;
-          marker.setLatLng(position);
-          map.setView(position);
-          setRestaurantForm((current) =>
-            current
-              ? {
-                ...current,
-                latitude: position.lat.toFixed(6),
-                longitude: position.lng.toFixed(6),
-              }
-              : current,
-          );
-        });
+      const marker = L.marker([initialLat, initialLng], {
+        draggable: isEditingProfileRef.current,
+      }).addTo(map);
 
-        mapInstanceRef.current = map;
-        mapMarkerRef.current = marker;
-      };
+      marker.on("dragend", function () {
+        if (!isEditingProfileRef.current) return;
+        const position = marker.getLatLng();
+        setRestaurantForm((current) =>
+          current
+            ? {
+              ...current,
+              latitude: position.lat.toFixed(6),
+              longitude: position.lng.toFixed(6),
+            }
+            : current
+        );
+      });
 
-      if (!(window as any).L) {
-        if (!document.getElementById("leaflet-css")) {
-          const link = document.createElement("link");
-          link.id = "leaflet-css";
-          link.rel = "stylesheet";
-          link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-          document.head.appendChild(link);
-        }
+      map.on("click", function (event: any) {
+        if (!isEditingProfileRef.current) return;
+        const position = event.latlng;
+        marker.setLatLng(position);
+        map.setView(position);
+        setRestaurantForm((current) =>
+          current
+            ? {
+              ...current,
+              latitude: position.lat.toFixed(6),
+              longitude: position.lng.toFixed(6),
+            }
+            : current
+        );
+      });
 
-        if (!document.getElementById("leaflet-script")) {
-          const script = document.createElement("script");
-          script.id = "leaflet-script";
-          script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-          script.onload = initMap;
-          document.head.appendChild(script);
-        }
-      } else {
-        setTimeout(initMap, 100);
+      mapInstanceRef.current = map;
+      mapMarkerRef.current = marker;
+    };
+
+    if (!(window as any).L) {
+      if (!document.getElementById("leaflet-css")) {
+        const link = document.createElement("link");
+        link.id = "leaflet-css";
+        link.rel = "stylesheet";
+        link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+        document.head.appendChild(link);
+      }
+
+      if (!document.getElementById("leaflet-script")) {
+        const script = document.createElement("script");
+        script.id = "leaflet-script";
+        script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+        script.onload = initMap;
+        document.head.appendChild(script);
       }
     } else {
+      setTimeout(initMap, 100);
+    }
+
+    return () => {
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
         mapMarkerRef.current = null;
       }
+    };
+  }, [restaurant, showMap, editingSection]);
+
+  useEffect(() => {
+    if (mapMarkerRef.current) {
+      if (editingSection === "location") {
+        mapMarkerRef.current.dragging.enable();
+      } else {
+        mapMarkerRef.current.dragging.disable();
+      }
     }
-  }, [isRestaurantEditing]);
+  }, [editingSection]);
 
   useEffect(() => {
     if (mapInstanceRef.current && mapMarkerRef.current && restaurantForm) {
@@ -553,7 +568,7 @@ const ProfilePage: React.FC = () => {
         mapInstanceRef.current.setView([lat, lng]);
       }
     }
-  }, [restaurantForm?.latitude, restaurantForm?.longitude]);
+  }, [editingSection, restaurantForm?.latitude, restaurantForm?.longitude]);
 
   const handleUseMyLocation = () => {
     if (!navigator.geolocation) {
@@ -574,7 +589,7 @@ const ProfilePage: React.FC = () => {
               latitude: position.coords.latitude.toFixed(6),
               longitude: position.coords.longitude.toFixed(6),
             }
-            : current,
+            : current
         );
         setIsLocating(false);
         setFeedback({
@@ -595,141 +610,148 @@ const ProfilePage: React.FC = () => {
         }
         setFeedback({ tone: "error", message });
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
 
+  const handleCancelEdit = () => {
+    if (hasChanges) {
+      setShowCancelConfirm(true);
+    } else {
+      handleConfirmCancel();
+    }
+  };
 
-  const startRestaurantEdit = (section: 'core' | 'contact' | 'branding' | 'story') => {
+  const handleConfirmCancel = () => {
     resetRestaurantForm();
-    setFeedback(null);
-    setActiveEditModal(section);
-  };
-  const cancelRestaurantEdit = () => {
-    setActiveEditModal(null);
-    resetRestaurantForm();
-  };
-  const startAdminEdit = () => {
     resetAdminForm();
-    setFeedback(null);
-    setActiveEditModal("admin");
-  };
-  const cancelAdminEdit = () => {
-    resetAdminForm();
-    setActiveEditModal(null);
+    setEditingSection(null);
+    setShowCancelConfirm(false);
   };
 
-  const handleRestaurantSave = async () => {
-    if (!activeRestaurantId || !restaurantForm) {
-      return;
-    }
+  const handleSaveProfile = async () => {
+    let success = true;
 
-    const validationError = validateRestaurantForm(restaurantForm);
-    if (validationError) {
-      setFeedback({ tone: "error", message: validationError });
-      return;
-    }
+    // Save Restaurant
+    if (activeRestaurantId && restaurantForm) {
+      const validationError = validateRestaurantForm(restaurantForm);
+      if (validationError) {
+        setFeedback({ tone: "error", message: validationError });
+        return;
+      }
 
-    if (slugAvailable === false) {
-      setFeedback({ tone: "error", message: "Custom slug is not available. Please choose another." });
-      return;
-    }
+      if (
+        restaurantForm.slug !== restaurant?.slug &&
+        slugAvailable === false
+      ) {
+        setFeedback({
+          tone: "error",
+          message: "Custom slug is not available. Please choose another.",
+        });
+        return;
+      }
 
-    setIsRestaurantSaving(true);
-    setFeedback(null);
+      setIsRestaurantSaving(true);
+      setFeedback(null);
 
-    try {
-      const updatedRestaurant = await updateRestaurantProfile(
-        activeRestaurantId,
-        {
-          name: restaurantForm.name.trim(),
-          slug: restaurantForm.slug.trim().toLowerCase(),
-          contactEmail: restaurantForm.contactEmail.trim().toLowerCase(),
-          contactPhone: emptyToNull(restaurantForm.contactPhone),
-          contactAddress: emptyToNull(restaurantForm.contactAddress),
-          logoUrl: emptyToNull(restaurantForm.logoUrl),
-          latitude: parseOptionalNumber(restaurantForm.latitude),
-          longitude: parseOptionalNumber(restaurantForm.longitude),
-          allowedRadius: parseOptionalInteger(restaurantForm.allowedRadius),
-          openingDate: emptyToNull(restaurantForm.openingDate),
-          tagline: emptyToNull(restaurantForm.tagline),
-          manifesto: emptyToNull(restaurantForm.manifesto),
-          operatingHoursWeekdays: emptyToNull(
-            restaurantForm.operatingHoursWeekdays,
+      try {
+        const updatedRestaurant = await updateRestaurantProfile(
+          activeRestaurantId,
+          {
+            name: restaurantForm.name.trim(),
+            slug: restaurantForm.slug.trim().toLowerCase(),
+            contactEmail: restaurantForm.contactEmail.trim().toLowerCase(),
+            contactPhone: emptyToNull(restaurantForm.contactPhone),
+            contactAddress: emptyToNull(restaurantForm.contactAddress),
+            logoUrl: emptyToNull(restaurantForm.logoUrl),
+            latitude: parseOptionalNumber(restaurantForm.latitude),
+            longitude: parseOptionalNumber(restaurantForm.longitude),
+            allowedRadius: parseOptionalInteger(restaurantForm.allowedRadius),
+            openingDate: emptyToNull(restaurantForm.openingDate),
+            tagline: emptyToNull(restaurantForm.tagline),
+            manifesto: emptyToNull(restaurantForm.manifesto),
+            operatingHoursWeekdays: emptyToNull(
+              restaurantForm.operatingHoursWeekdays
+            ),
+            operatingHoursWeekends: emptyToNull(
+              restaurantForm.operatingHoursWeekends
+            ),
+            instagramUrl: emptyToNull(restaurantForm.instagramUrl),
+            facebookUrl: emptyToNull(restaurantForm.facebookUrl),
+            websiteUrl: emptyToNull(restaurantForm.websiteUrl),
+            pay_online: restaurantForm.payOnline,
+            kitchen_app_enabled: restaurantForm.kitchenAppEnabled,
+          }
+        );
+
+        setRestaurant(updatedRestaurant);
+        setRestaurantForm(createRestaurantFormState(updatedRestaurant));
+      } catch (error: unknown) {
+        setFeedback({
+          tone: "error",
+          message: getErrorMessage(
+            error,
+            "Failed to save restaurant information."
           ),
-          operatingHoursWeekends: emptyToNull(
-            restaurantForm.operatingHoursWeekends,
-          ),
-          instagramUrl: emptyToNull(restaurantForm.instagramUrl),
-          facebookUrl: emptyToNull(restaurantForm.facebookUrl),
-          websiteUrl: emptyToNull(restaurantForm.websiteUrl),
-          pay_online: restaurantForm.payOnline,
-          kitchen_app_enabled: restaurantForm.kitchenAppEnabled,
-        },
-      );
-
-      setRestaurant(updatedRestaurant);
-      setRestaurantForm(createRestaurantFormState(updatedRestaurant));
-      setActiveEditModal(null);
-      setFeedback({
-        tone: "success",
-        message: "Restaurant information updated successfully.",
-      });
-    } catch (error: unknown) {
-      setFeedback({
-        tone: "error",
-        message: getErrorMessage(
-          error,
-          "Failed to save restaurant information.",
-        ),
-      });
-    } finally {
-      setIsRestaurantSaving(false);
-    }
-  };
-
-  const handleAdminSave = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (!userProfile) {
-      return;
+        });
+        success = false;
+      } finally {
+        setIsRestaurantSaving(false);
+      }
     }
 
-    const validationError = validateAdminForm(adminForm);
-    if (validationError) {
-      setFeedback({ tone: "error", message: validationError });
-      return;
+    // Save Admin
+    if (success && userProfile && adminForm) {
+      if (
+        adminForm.name !== userProfile.name ||
+        adminForm.email !== userProfile.email
+      ) {
+        const validationError = validateAdminForm(adminForm);
+        if (validationError) {
+          setFeedback({ tone: "error", message: validationError });
+          return;
+        }
+
+        setIsAdminSaving(true);
+        setFeedback(null);
+
+        try {
+          const result = await updateAdministratorProfile(userProfile.id, {
+            currentEmail: userProfile.email,
+            email: adminForm.email,
+            name: adminForm.name.trim(),
+          });
+
+          await refreshSessionData();
+          setAdminForm(createAdminFormState(result.profile));
+          setFeedback({
+            tone: result.emailChangePending ? "info" : "success",
+            message: result.emailChangePending
+              ? `Profile saved. Confirm the email change sent to ${result.pendingEmail}.`
+              : "Profile updated successfully.",
+          });
+        } catch (error: unknown) {
+          setFeedback({
+            tone: "error",
+            message: getErrorMessage(
+              error,
+              "Failed to save administrator details."
+            ),
+          });
+          success = false;
+        } finally {
+          setIsAdminSaving(false);
+        }
+      } else if (success) {
+        setFeedback({
+          tone: "success",
+          message: "Profile updated successfully.",
+        });
+      }
     }
 
-    setIsAdminSaving(true);
-    setFeedback(null);
-
-    try {
-      const result = await updateAdministratorProfile(userProfile.id, {
-        currentEmail: userProfile.email,
-        email: adminForm.email,
-        name: adminForm.name.trim(),
-      });
-
-      await refreshSessionData();
-      setAdminForm(createAdminFormState(result.profile));
-      setActiveEditModal(null);
-      setFeedback({
-        tone: result.emailChangePending ? "info" : "success",
-        message: result.emailChangePending
-          ? `Administrator details saved. Confirm the email change sent to ${result.pendingEmail}.`
-          : "Administrator details updated successfully.",
-      });
-    } catch (error: unknown) {
-      setFeedback({
-        tone: "error",
-        message: getErrorMessage(
-          error,
-          "Failed to save administrator details.",
-        ),
-      });
-    } finally {
-      setIsAdminSaving(false);
+    if (success) {
+      setEditingSection(null);
     }
   };
 
@@ -743,37 +765,54 @@ const ProfilePage: React.FC = () => {
         tone: "error",
         message: getErrorMessage(
           error,
-          "Failed to sign out. Please try again.",
+          "Failed to sign out. Please try again."
         ),
       });
     }
   };
 
-  const renderRestaurantActions = (section: 'core' | 'contact' | 'branding' | 'story') => (
-    <div className="flex items-center gap-2.5">
-      <button
-        type="button"
-        className="inline-flex items-center justify-center gap-2 min-h-[40px] px-4 border border-[#CBD5E0] rounded-xl font-['Outfit',sans-serif] text-[13px] font-semibold cursor-pointer transition-all duration-200 bg-transparent text-[#4A5568] hover:bg-[#F8FAFC] hover:text-[#1A202C] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none dark:border-tk-border dark:text-tk-text dark:hover:bg-tk-bg-elevated"
-        onClick={() => startRestaurantEdit(section)}
-        disabled={!restaurant}
-      >
-        <Edit3 size={16} /> Edit
-      </button>
+
+
+
+  const SectionHeader = ({ title, sectionId }: { title: string, sectionId?: string }) => (
+    <div className="flex items-center justify-between pt-4 pb-2 border-b border-[#E2E8F0] dark:border-tk-border">
+      <h3 className="text-[18px] font-bold text-[#1A202C] dark:text-tk-text font-['Outfit',sans-serif] m-0 uppercase tracking-wide">
+        {title}
+      </h3>
+      {sectionId && editingSection !== sectionId && (
+        <button
+          className="text-[#4A5568] hover:text-[#1A202C] dark:text-tk-text-secondary dark:hover:text-tk-text font-medium text-[13px] flex items-center gap-1.5 transition-colors"
+          onClick={() => {
+            setEditingSection(sectionId);
+            if (sectionId === 'location') setShowMap(true);
+          }}
+          disabled={editingSection !== null}
+        >
+          Edit
+        </button>
+      )}
+      {sectionId && editingSection === sectionId && (
+        <div className="flex items-center gap-3">
+          <button
+            className="text-[#4A5568] hover:text-[#1A202C] dark:text-tk-text-secondary dark:hover:text-tk-text font-medium text-[13px] transition-colors"
+            onClick={handleCancelEdit}
+          >
+            Cancel
+          </button>
+          <button
+            className="text-tk-burgundy hover:text-[#6B2A15] font-bold text-[13px] transition-colors flex items-center gap-1"
+            onClick={handleSaveProfile}
+            disabled={isRestaurantSaving || isAdminSaving}
+          >
+            {isRestaurantSaving || isAdminSaving ? "Saving..." : "Save"}
+          </button>
+        </div>
+      )}
     </div>
   );
 
-  const renderAdminActions = () => (
-    <div className="flex items-center gap-2.5">
-      <button
-        type="button"
-        className="inline-flex items-center justify-center gap-2 min-h-[40px] px-4 border-none rounded-xl font-['Outfit',sans-serif] text-[13px] font-semibold cursor-pointer transition-all duration-200 bg-[#EDF2F7] text-[#2D3748] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none dark:bg-tk-bg-elevated dark:text-tk-text dark:hover:bg-tk-bg-hover"
-        onClick={startAdminEdit}
-        disabled={!userProfile}
-      >
-        <Edit3 size={16} /> Edit
-      </button>
-    </div>
-  );
+
+
 
   function renderRestaurantProfileContent(): React.ReactNode {
     if (!restaurant) {
@@ -788,640 +827,624 @@ const ProfilePage: React.FC = () => {
       return null;
     }
 
+
+
     return (
-      <div className="flex flex-col gap-6">
-        <div
-          className={activeTab === "general" ? "grid grid-cols-1 lg:grid-cols-2 gap-6" : "hidden"}
-        >
-          <div className="border border-[#E2E8F0] rounded-[18px] p-4 sm:p-[18px] bg-white dark:bg-tk-bg-card dark:border-tk-border">
-            <div className="flex flex-wrap justify-between items-start gap-3 mb-4">
-              <div className="min-w-0">
-                <h3 className="font-bold">Core Identity</h3>
-              </div>
-              <div className="shrink-0">{renderRestaurantActions("core")}</div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Restaurant Name</span>
-                <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">{restaurant?.name}</span>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Restaurant Page URL</span>
-                <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
+      <div className="flex flex-col gap-0 w-full max-w-5xl">
+        {activeTab === "details" && (
+          <>
+            <SectionHeader title="Core Details" sectionId="core" />
+            {/* Restaurant Name */}
+            <Row label="Restaurant Name">
+              {editingSection === "core" ? (
+                <div className="flex items-center justify-between w-full gap-2">
+                  <input
+                    type="text"
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                    value={restaurantForm.name}
+                    onChange={(e) =>
+                      handleRestaurantFieldChange("name", e.target.value)
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSaveProfile();
+                      if (e.key === "Escape") handleCancelEdit();
+                    }}
+                    maxLength={120}
+                  />
+
+                </div>
+              ) : (
+                <>
+                  <span>{restaurant?.name}</span>
+
+                </>
+              )}
+            </Row>
+
+            {/* Page URL */}
+            <Row label="Restaurant Page URL">
+              {editingSection === "core" ? (
+                <div className="flex items-center justify-between w-full gap-2">
+                  <div className="relative flex items-center w-full">
+                    <span className="px-3 py-1.5 bg-[#EDF2F7] border border-[#CBD5E0] border-r-0 rounded-l-xl text-[#4A5568] text-[13px] font-['Outfit',sans-serif] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text-secondary select-none shrink-0">
+                      tablekard.com/
+                    </span>
+                    <input
+                      type="text"
+                      className={`w-full border rounded-r-xl bg-white text-[#1A202C] px-3 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none dark:bg-tk-bg-surface dark:text-tk-text pr-[130px] ${slugAvailable === false
+                        ? "border-red-500 text-red-500"
+                        : "border-[#CBD5E0] focus:border-tk-burgundy dark:border-tk-border"
+                        }`}
+                      value={restaurantForm.slug}
+                      onChange={(e) =>
+                        handleRestaurantFieldChange(
+                          "slug",
+                          e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "")
+                        )
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleSaveProfile();
+                        if (e.key === "Escape") handleCancelEdit();
+                      }}
+                      maxLength={60}
+                    />
+                    {checkingSlug ? (
+                      <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#718096] text-[12px] font-medium bg-white dark:bg-tk-bg-surface px-1 flex items-center gap-1.5">
+                        <div className="w-3 h-3 border-[1.5px] border-[#CBD5E0] border-t-[#718096] dark:border-tk-border dark:border-t-tk-text-secondary rounded-full animate-spin" />
+                        Checking...
+                      </span>
+                    ) : restaurantForm.slug !== restaurant?.slug ? (
+                      <>
+                        {slugAvailable === true && restaurantForm.slug.trim() !== "" && (
+                          <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#48BB78] text-[12px] font-medium bg-white dark:bg-tk-bg-surface px-1">
+                            ✓ URL is available
+                          </span>
+                        )}
+                        {slugAvailable === false && restaurantForm.slug.trim() !== "" && (
+                          <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-red-500 text-[12px] font-medium bg-white dark:bg-tk-bg-surface px-1">
+                            ✕ URL is not available
+                          </span>
+                        )}
+                      </>
+                    ) : null}
+                  </div>
+                </div>
+              ) : (
+                <>
                   <a
-                    href={`https://tablekard.com/${restaurant?.slug || restaurant?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || ''}`}
+                    href={`https://tablekard.com/${restaurant?.slug ||
+                      restaurant?.name
+                        ?.toLowerCase()
+                        .replace(/[^a-z0-9]+/g, "-")
+                        .replace(/(^-|-$)/g, "") ||
+                      ""
+                      }`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 w-fit text-[#2B6CB0] text-[14px] font-medium no-underline break-all font-['Outfit',sans-serif] hover:underline dark:text-[#90CDF4]"
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "4px",
-                    }}
                   >
-                    tablekard.com/{restaurant?.slug || restaurant?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || ''}{" "}
+                    tablekard.com/
+                    {restaurant?.slug ||
+                      restaurant?.name
+                        ?.toLowerCase()
+                        .replace(/[^a-z0-9]+/g, "-")
+                        .replace(/(^-|-$)/g, "") ||
+                      ""}{" "}
                     <ExternalLink size={14} />
                   </a>
-                </span>
-              </div>
 
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Tagline</span>
-                <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
-                  {restaurant?.tagline || "Not set"}
-                </span>
-              </div>
+                </>
+              )}
+            </Row>
 
-
-
-
-
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Subscription Status</span>
-                <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text inline-flex items-center gap-2">
-                  <CreditCardIcon
-                    size={15}
-                    style={{
-                      color: restaurant?.subscriptionStatus
-                        ? "#48BB78"
-                        : "#A0AEC0",
+            {/* Tagline */}
+            <Row label="Tagline">
+              {editingSection === "core" ? (
+                <div className="flex items-center justify-between w-full gap-2">
+                  <input
+                    type="text"
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                    value={restaurantForm.tagline}
+                    placeholder="A short catchy phrase"
+                    onChange={(e) =>
+                      handleRestaurantFieldChange("tagline", e.target.value)
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSaveProfile();
+                      if (e.key === "Escape") handleCancelEdit();
                     }}
                   />
+
+                </div>
+              ) : (
+                <>
+                  <span>{restaurant?.tagline || "Not set"}</span>
+
+                </>
+              )}
+            </Row>
+
+            {/* Manifesto */}
+            <Row label="Manifesto">
+              {editingSection === "core" ? (
+                <div className="flex items-start justify-between w-full gap-2">
+                  <textarea
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-2 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text min-h-[60px]"
+                    value={restaurantForm.manifesto}
+                    placeholder="Tell the story of your restaurant..."
+                    onChange={(e) =>
+                      handleRestaurantFieldChange("manifesto", e.target.value)
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") handleCancelEdit();
+                    }}
+                    rows={3}
+                  />
+
+                </div>
+              ) : (
+                <>
+                  <span>{restaurant?.manifesto || "Not set"}</span>
+
+                </>
+              )}
+            </Row>
+
+            {/* Opening Date */}
+            <Row label="Opening Date">
+              {editingSection === "core" ? (
+                <div className="flex items-center justify-between w-full gap-2">
+                  <input
+                    type="date"
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                    value={restaurantForm.openingDate}
+                    onChange={(e) =>
+                      handleRestaurantFieldChange("openingDate", e.target.value)
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSaveProfile();
+                      if (e.key === "Escape") handleCancelEdit();
+                    }}
+                  />
+
+                </div>
+              ) : (
+                <>
+                  <span>{restaurant?.openingDate || "Not set"}</span>
+
+                </>
+              )}
+            </Row>
+
+            {/* Subscription Status */}
+            <Row label="Subscription Status" plain>
+              <div className="flex items-center gap-3">
+                <span
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[13px] font-semibold"
+                  style={{
+                    backgroundColor: restaurant?.subscriptionStatus ? "rgba(72, 187, 120, 0.15)" : "rgba(160, 174, 192, 0.2)",
+                    color: restaurant?.subscriptionStatus ? "#2F855A" : "#4A5568",
+                  }}
+                >
+                  <CreditCardIcon size={14} />
                   {restaurant?.subscriptionStatus ? "Active" : "Inactive"}
                   {restaurant?.subscriptionType
                     ? ` (${restaurant.subscriptionType})`
                     : ""}
                 </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="border border-[#E2E8F0] rounded-[18px] p-4 sm:p-[18px] bg-white dark:bg-tk-bg-card dark:border-tk-border">
-            <div className="flex flex-wrap justify-between items-start gap-3 mb-4">
-              <div className="min-w-0">
-                <h3 className="font-bold">Contact & Operating Hours</h3>
-              </div>
-              <div className="shrink-0">{renderRestaurantActions("contact")}</div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div
-                className="col-span-1 sm:col-span-2"
-                style={{
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  color: "#718096",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
-                  borderBottom: "1px solid #EDF2F7",
-                  paddingBottom: "8px",
-                  marginBottom: "8px",
-                }}
-              >
-                Contact Information
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text inline-flex items-center gap-2">
-                  <MailIcon size={15} />
-                  {restaurant?.contact.email || "N/A"}
-                </span>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text inline-flex items-center gap-2">
-                  <PhoneIcon size={15} />
-                  {restaurant?.contact.phone || "N/A"}
-                </span>
-              </div>
-
-              <div className="flex flex-col gap-1.5 sm:col-span-2">
-                <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text inline-flex items-center gap-2">
-                  <MapPinIcon size={15} />
-                  {restaurant?.contact.address || "N/A"}
-                </span>
-              </div>
-
-              <div
-                className="col-span-1 sm:col-span-2"
-                style={{
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  color: "#718096",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
-                  borderBottom: "1px solid #EDF2F7",
-                  paddingBottom: "8px",
-                  marginTop: "16px",
-                  marginBottom: "8px",
-                }}
-              >
-                Operating Hours
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
-                  Operating Hours (Weekdays)
-                </span>
-                <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
-                  {restaurant?.operatingHoursWeekdays || "Not set"}
-                </span>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
-                  Operating Hours (Weekends)
-                </span>
-                <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
-                  {restaurant?.operatingHoursWeekends || "Not set"}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div
-          className="border border-[#E2E8F0] rounded-[18px] p-4 sm:p-[18px] bg-white dark:bg-tk-bg-card dark:border-tk-border"
-          style={{ display: activeTab === "branding" ? "block" : "none" }}
-        >
-          <div className="flex flex-wrap justify-between items-start gap-3 mb-4">
-            <div className="min-w-0">
-              <h3 className="font-bold">Location</h3>
-              <p>Where to find you.</p>
-            </div>
-            <div className="shrink-0">{renderRestaurantActions("branding")}</div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Location</span>
-              <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text inline-flex items-center gap-2">
-                <MapPinIcon size={15} />
-                {restaurant ? `${formatCoordinate(restaurant.location?.latitude)}, ${formatCoordinate(restaurant.location?.longitude)}` : "N/A"}
-              </span>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Access Area Radius</span>
-              <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
-                {restaurant?.location?.allowedRadius != null
-                  ? `${restaurant.location.allowedRadius} meters`
-                  : "Not set"}
-              </span>
-            </div>
-
-
-
-
-          </div>
-        </div>
-
-        {/* Our Story & Additional Info */}
-        <div
-          className="border border-[#E2E8F0] rounded-[18px] p-4 sm:p-[18px] bg-white dark:bg-tk-bg-card dark:border-tk-border"
-          style={{ display: activeTab === "story" ? "block" : "none" }}
-        >
-          <div className="flex flex-wrap justify-between items-start gap-3 mb-4">
-            <div className="min-w-0">
-              <h3 className="font-bold">Our Story & Socials</h3>
-              <p>Tell your customers about your restaurant.</p>
-            </div>
-            <div className="shrink-0">{renderRestaurantActions("story")}</div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Opening Date</span>
-              <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
-                {restaurant?.openingDate || "Not set"}
-              </span>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Manifesto</span>
-              <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
-                {restaurant?.manifesto || "Not set"}
-              </span>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Instagram</span>
-              <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
-                {restaurant?.instagramUrl ? (
-                  <a
-                    href={restaurant.instagramUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 w-fit text-[#2B6CB0] text-[14px] font-medium no-underline break-all font-['Outfit',sans-serif] hover:underline dark:text-[#90CDF4]"
+                {!restaurant?.subscriptionStatus && (
+                  <Link
+                    to="/subscription"
+                    className="text-tk-burgundy hover:text-[#6B2A15] text-[13px] font-semibold underline underline-offset-2 decoration-tk-burgundy/30 hover:decoration-tk-burgundy transition-colors"
                   >
-                    {restaurant.instagramUrl} <ExternalLink size={14} />
-                  </a>
-                ) : (
-                  "Not set"
+                    Upgrade Subscription
+                  </Link>
                 )}
-              </span>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Facebook</span>
-              <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
-                {restaurant?.facebookUrl ? (
-                  <a
-                    href={restaurant.facebookUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 w-fit text-[#2B6CB0] text-[14px] font-medium no-underline break-all font-['Outfit',sans-serif] hover:underline dark:text-[#90CDF4]"
-                  >
-                    {restaurant.facebookUrl} <ExternalLink size={14} />
-                  </a>
-                ) : (
-                  "Not set"
-                )}
-              </span>
-            </div>
-
-            <div className="flex flex-col gap-1.5 sm:col-span-2">
-              <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Website</span>
-              <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
-                {restaurant?.websiteUrl ? (
-                  <a
-                    href={restaurant.websiteUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 w-fit text-[#2B6CB0] text-[14px] font-medium no-underline break-all font-['Outfit',sans-serif] hover:underline dark:text-[#90CDF4]"
-                  >
-                    {restaurant.websiteUrl} <ExternalLink size={14} />
-                  </a>
-                ) : (
-                  "Not set"
-                )}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ── helpers used inside Features tab ────────────────────────────────────
-
-  // ── helpers used inside Features tab ────────────────────────────────────
-  const featureBadge = (on: boolean) => (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 5,
-      padding: '3px 10px', borderRadius: 20,
-      fontSize: 12, fontWeight: 600, fontFamily: "'Outfit',sans-serif",
-      background: on ? 'rgba(22,163,74,0.10)' : 'rgba(239,68,68,0.10)',
-      color: on ? '#15803D' : '#B91C1C',
-      border: `1px solid ${on ? 'rgba(22,163,74,0.22)' : 'rgba(239,68,68,0.22)'}`,
-    }}>
-      <span style={{ width: 6, height: 6, borderRadius: '50%', background: on ? '#16A34A' : '#EF4444', display: 'inline-block' }} />
-      {on ? 'Active' : 'Inactive'}
-    </span>
-  );
-
-  const ToggleKnob = ({ on }: { on: boolean }) => (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={on}
-      onClick={() => { }}
-      style={{
-        position: 'relative', display: 'inline-flex', alignItems: 'center',
-        width: 52, height: 28, borderRadius: 9999, border: 'none', cursor: 'pointer',
-        flexShrink: 0, transition: 'background-color 0.25s', padding: 0,
-        backgroundColor: on ? '#8B3A1E' : '#CBD5E0',
-      }}
-    >
-      <span style={{
-        display: 'block', width: 22, height: 22, borderRadius: '50%', backgroundColor: '#fff',
-        boxShadow: '0 1px 4px rgba(0,0,0,0.25)', transition: 'transform 0.25s',
-        transform: `translateX(${on ? 27 : 3}px)`,
-      }} />
-    </button>
-  );
-
-  const triggerConfirm = (
-    title: string, description: string, warning: string,
-    confirmLabel: string, confirmColor: string,
-    action: () => Promise<void>
-  ) => {
-    setConfirmModal({ open: true, title, description, warning, confirmLabel, confirmColor, onConfirm: action });
-  };
-
-  const handlePayOnlineFeatureToggle = () => {
-    const on = (restaurant as any)?.pay_online === true || restaurantForm?.payOnline === true;
-    if (!on) {
-      // turning ON — need credentials
-      const hasAll = !!paymentSettings.razorpayKeyId && paymentSettings.hasRazorpayKeySecret;
-      if (!hasAll) {
-        setPaymentSetupForm({ razorpayKeyId: '', razorpayKeySecret: '', razorpayWebhookSecret: '' });
-        setPaymentSetupError(null);
-        setShowPaymentSetupModal(true);
-        return;
-      }
-      triggerConfirm(
-        'Enable Online Payments?',
-        'Customers will be able to pay online via Razorpay. Make sure your Razorpay account is active.',
-        'This allows real money transactions on your storefront.',
-        'Enable Payments', '#16A34A',
-        async () => {
-          if (!activeRestaurantId) return;
-          await updateRestaurantProfile(activeRestaurantId, { pay_online: true });
-          const updated = await getRestaurantById(activeRestaurantId);
-          if (updated) { setRestaurant(updated); setRestaurantForm(createRestaurantFormState(updated)); }
-          setFeedback({ tone: 'success', message: 'Online payments enabled.' });
-        }
-      );
-    } else {
-      triggerConfirm(
-        'Disable Online Payments?',
-        'The "Pay Online" button will be removed from your storefront. Customers can only pay at the counter.',
-        'Ensure there are no in-progress payments before disabling.',
-        'Disable Payments', '#EF4444',
-        async () => {
-          if (!activeRestaurantId) return;
-          await updateRestaurantProfile(activeRestaurantId, { pay_online: false });
-          const updated = await getRestaurantById(activeRestaurantId);
-          if (updated) { setRestaurant(updated); setRestaurantForm(createRestaurantFormState(updated)); }
-          setFeedback({ tone: 'success', message: 'Online payments disabled.' });
-        }
-      );
-    }
-  };
-
-  const handleKitchenFeatureToggle = () => {
-    const on = (restaurant as any)?.kitchen_app_enabled !== false;
-    if (!on) {
-      triggerConfirm(
-        'Enable Kitchen Web App?',
-        'Kitchen staff will be able to log in. Customers will see the Live Queue button.',
-        'Ensure kitchen staff accounts are set up before enabling.',
-        'Enable Kitchen App', '#16A34A',
-        async () => {
-          if (!activeRestaurantId) return;
-          await updateRestaurantProfile(activeRestaurantId, { kitchen_app_enabled: true });
-          const updated = await getRestaurantById(activeRestaurantId);
-          if (updated) { setRestaurant(updated); setRestaurantForm(createRestaurantFormState(updated)); }
-          setFeedback({ tone: 'success', message: 'Kitchen App enabled.' });
-        }
-      );
-    } else {
-      triggerConfirm(
-        'Disable Kitchen Web App?',
-        'Kitchen staff will be locked out. The Live Queue button will be hidden from all customers immediately.',
-        'Any kitchen staff currently logged in will see a "Disabled" screen.',
-        'Disable Kitchen App', '#EF4444',
-        async () => {
-          if (!activeRestaurantId) return;
-          await updateRestaurantProfile(activeRestaurantId, { kitchen_app_enabled: false });
-          const updated = await getRestaurantById(activeRestaurantId);
-          if (updated) { setRestaurant(updated); setRestaurantForm(createRestaurantFormState(updated)); }
-          setFeedback({ tone: 'success', message: 'Kitchen App disabled.' });
-        }
-      );
-    }
-  };
-
-  function renderFeaturesTab(): React.ReactNode {
-    const payOn = (restaurant as any)?.pay_online === true;
-    const kitchenOn = (restaurant as any)?.kitchen_app_enabled !== false;
-
-    const cardCls = "border border-[#E2E8F0] rounded-[24px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] overflow-hidden bg-white dark:bg-tk-bg-card dark:border-tk-border";
-    const sectionHeaderCls = "flex items-center gap-3 px-5 py-4 border-b border-[#E2E8F0] dark:border-tk-border bg-[#F8FAFC] dark:bg-tk-bg-elevated";
-    const rowCls = "flex items-start justify-between gap-4 px-5 py-5 flex-wrap";
-    const credRowCls = "flex items-center justify-between px-5 py-3 border-t border-[#E2E8F0] dark:border-tk-border text-[13px] font-['Outfit',sans-serif]";
-
-    return (
-      <div style={{ display: activeTab === 'features' ? 'block' : 'none' }}>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          {/* ── Card: Online Payments ─────────────────────────────────────────── */}
-          <div className={cardCls}>
-            <div className={sectionHeaderCls}>
-              <div style={{ width: 36, height: 36, borderRadius: 9, background: 'linear-gradient(135deg,#8B3A1E,#6B2A15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <CreditCardIcon size={16} color="#fff" />
               </div>
-              <div>
-                <div className="text-[15px] font-bold text-[#1A202C] font-['Outfit',sans-serif] dark:text-tk-text">Online Payments · Razorpay</div>
-                <div className="text-[12px] text-[#64748B] font-['Outfit',sans-serif]">Let customers pay via UPI, Cards &amp; Net Banking</div>
-              </div>
-            </div>
+            </Row>
 
-            {/* Toggle row */}
-            <div className={rowCls}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-                  <span className="text-[15px] font-semibold text-[#1A202C] font-['Outfit',sans-serif] dark:text-tk-text">Enable Pay Online</span>
-                  {featureBadge(payOn)}
+
+            <SectionHeader title="Contact Information" sectionId="contact" />
+            {/* Email Address */}
+            <Row label="Contact Email">
+              {editingSection === "contact" ? (
+                <div className="flex items-center justify-between w-full gap-2">
+                  <input
+                    type="email"
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                    value={restaurantForm.contactEmail}
+                    placeholder="ops@restaurant.com"
+                    onChange={(e) =>
+                      handleRestaurantFieldChange("contactEmail", e.target.value)
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSaveProfile();
+                      if (e.key === "Escape") handleCancelEdit();
+                    }}
+                  />
+
                 </div>
-                <p className="text-[13px] text-[#64748B] font-['Outfit',sans-serif]" style={{ margin: 0, lineHeight: 1.5 }}>
-                  When enabled, the "Pay Online" button appears at checkout.
-                  {!payOn && (!paymentSettings.razorpayKeyId || !paymentSettings.hasRazorpayKeySecret) && (
-                    <span style={{ color: '#F59E0B', display: 'block', marginTop: 4 }}>⚠ Razorpay API Keys not configured yet.</span>
-                  )}
-                </p>
-              </div>
-              <div onClick={handlePayOnlineFeatureToggle} style={{ cursor: 'pointer' }}>
-                <ToggleKnob on={payOn} />
-              </div>
-            </div>
+              ) : (
+                <>
+                  <span className="inline-flex items-center gap-2">
+                    <MailIcon size={15} />
+                    {restaurant?.contact.email || "N/A"}
+                  </span>
 
-            {/* Credential status rows */}
-            <div className={credRowCls}>
-              <span className="text-[#64748B] dark:text-tk-text-secondary flex items-center gap-1.5"><Key size={12} /> Key ID</span>
-              <span style={{ color: paymentSettings.razorpayKeyId ? '#15803D' : '#94A3B8', fontWeight: 500 }}>
-                {paymentSettings.razorpayKeyId ? paymentSettings.razorpayKeyId : 'Not set'}
-              </span>
-            </div>
-            <div className={credRowCls}>
-              <span className="text-[#64748B] dark:text-tk-text-secondary flex items-center gap-1.5"><Key size={12} /> Key Secret</span>
-              <span style={{ color: paymentSettings.hasRazorpayKeySecret ? '#15803D' : '#94A3B8', fontWeight: 500 }}>
-                {paymentSettings.hasRazorpayKeySecret ? '••••••••' : 'Not set'}
-              </span>
-            </div>
-            <div className={credRowCls}>
-              <span className="text-[#64748B] dark:text-tk-text-secondary flex items-center gap-1.5"><Key size={12} /> Webhook Secret</span>
-              <span style={{ color: paymentSettings.hasRazorpayWebhookSecret ? '#15803D' : '#94A3B8', fontWeight: 500 }}>
-                {paymentSettings.hasRazorpayWebhookSecret ? '••••••••' : 'Not set'}
-              </span>
-            </div>
+                </>
+              )}
+            </Row>
 
-            {/* Update credentials button */}
-            <div style={{ padding: '14px 20px', borderTop: '1px solid var(--tk-border,#E2E8F0)' }}>
-              <button
-                type="button"
-                onClick={() => { setPaymentSetupForm({ razorpayKeyId: paymentSettings.razorpayKeyId || '', razorpayKeySecret: '', razorpayWebhookSecret: '' }); setPaymentSetupError(null); setShowPaymentSetupModal(true); }}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-tk-burgundy text-tk-burgundy text-[13px] font-semibold font-['Outfit',sans-serif] bg-transparent cursor-pointer transition-all hover:bg-[rgba(139,58,30,0.06)]"
-              >
-                <CreditCardIcon size={13} />{paymentSettings.razorpayKeyId ? 'Update API Keys' : 'Configure Razorpay API'}
-              </button>
-            </div>
-          </div>
+            {/* Phone Number */}
+            <Row label="Phone Number">
+              {editingSection === "contact" ? (
+                <div className="flex items-center justify-between w-full gap-2">
+                  <input
+                    type="tel"
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                    value={restaurantForm.contactPhone}
+                    placeholder="+91 98765 43210"
+                    onChange={(e) =>
+                      handleRestaurantFieldChange("contactPhone", e.target.value)
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSaveProfile();
+                      if (e.key === "Escape") handleCancelEdit();
+                    }}
+                  />
 
-          {/* ── Card: Kitchen Web App ─────────────────────────────────────────── */}
-          <div className={cardCls}>
-            <div className={sectionHeaderCls}>
-              <div style={{ width: 36, height: 36, borderRadius: 9, background: 'linear-gradient(135deg,#1E40AF,#1E3A8A)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <ChefHat size={16} color="#fff" />
-              </div>
-              <div>
-                <div className="text-[15px] font-bold text-[#1A202C] font-['Outfit',sans-serif] dark:text-tk-text">Kitchen Web App &amp; Live Queue</div>
-                <div className="text-[12px] text-[#64748B] font-['Outfit',sans-serif]">Kitchen display system &amp; customer-facing live queue</div>
-              </div>
-            </div>
-
-            {/* Toggle row */}
-            <div className={rowCls}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-                  <span className="text-[15px] font-semibold text-[#1A202C] font-['Outfit',sans-serif] dark:text-tk-text">Enable Kitchen App</span>
-                  {featureBadge(kitchenOn)}
                 </div>
-                <p className="text-[13px] text-[#64748B] font-['Outfit',sans-serif]" style={{ margin: 0, lineHeight: 1.5 }}>
-                  When enabled, kitchen staff can log in and customers see the Live Queue button everywhere.
-                </p>
-              </div>
-              <div onClick={handleKitchenFeatureToggle} style={{ cursor: 'pointer' }}>
-                <ToggleKnob on={kitchenOn} />
-              </div>
-            </div>
+              ) : (
+                <>
+                  <span className="inline-flex items-center gap-2">
+                    <PhoneIcon size={15} />
+                    {restaurant?.contact.phone || "N/A"}
+                  </span>
 
-            {/* Impact list */}
-            <div style={{ padding: '14px 20px', borderTop: '1px solid var(--tk-border,#E2E8F0)' }}>
-              <div className="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-[0.5px] font-['Outfit',sans-serif]" style={{ marginBottom: 10 }}>
-                Disabling will affect:
-              </div>
-              {['Kitchen Web App login for staff', 'Live Queue button on storefront', 'Live Queue in hamburger menu', 'Direct access to /live-queue page'].map((item, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#475569', marginBottom: 6, fontFamily: "'Outfit',sans-serif" }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: kitchenOn ? '#EF4444' : '#16A34A', flexShrink: 0 }} />
-                  {item}
-                </div>
-              ))}
-            </div>
-          </div>
-
-
-        </div>
-
-        {/* ── Confirmation Modal ────────────────────────────────────────────── */}
-        {confirmModal.open && (
-          <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', padding: 20 }}>
-            <div style={{ background: 'var(--tk-bg-surface,#fff)', borderRadius: 20, padding: '32px 28px', maxWidth: 430, width: '100%', boxShadow: '0 24px 60px rgba(0,0,0,0.22)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
-                <div style={{ width: 46, height: 46, borderRadius: 12, background: 'rgba(245,158,11,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <AlertTriangle size={22} color="#F59E0B" />
-                </div>
-                <button onClick={() => setConfirmModal(m => ({ ...m, open: false }))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}><X size={18} /></button>
-              </div>
-              <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--tk-text,#1A202C)', margin: '0 0 8px', fontFamily: "'Outfit',sans-serif" }}>{confirmModal.title}</h3>
-              <p style={{ fontSize: 14, color: '#64748B', lineHeight: 1.6, margin: '0 0 14px', fontFamily: "'Outfit',sans-serif" }}>{confirmModal.description}</p>
-              <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#92400E', display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 22, fontFamily: "'Outfit',sans-serif" }}>
-                <AlertTriangle size={13} style={{ flexShrink: 0, marginTop: 1 }} />{confirmModal.warning}
-              </div>
-              <div style={{ display: 'flex', gap: 10 }}>
-                <button
-                  type="button"
-                  onClick={() => setConfirmModal(m => ({ ...m, open: false }))}
-                  disabled={confirmLoading}
-                  style={{ flex: 1, padding: '11px 16px', borderRadius: 10, border: '1.5px solid #E2E8F0', background: 'transparent', color: 'var(--tk-text,#1A202C)', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}
-                >Cancel</button>
-                <button
-                  type="button"
-                  disabled={confirmLoading}
-                  onClick={async () => {
-                    setConfirmLoading(true);
-                    try { await confirmModal.onConfirm(); setConfirmModal(m => ({ ...m, open: false })); }
-                    catch (err: any) { setFeedback({ tone: 'error', message: err?.message ?? 'Failed.' }); }
-                    finally { setConfirmLoading(false); }
-                  }}
-                  style={{ flex: 1, padding: '11px 16px', borderRadius: 10, border: 'none', background: confirmModal.confirmColor, color: '#fff', fontSize: 14, fontWeight: 600, cursor: confirmLoading ? 'not-allowed' : 'pointer', opacity: confirmLoading ? 0.7 : 1, fontFamily: "'Outfit',sans-serif" }}
-                >{confirmLoading ? 'Saving…' : confirmModal.confirmLabel}</button>
-              </div>
-            </div>
-          </div>
+                </>
+              )}
+            </Row>
+          </>
         )}
 
-        {/* ── Payment Setup Modal ───────────────────────────────────────────── */}
-        {showPaymentSetupModal && (
-          <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', padding: 20 }}>
-            <div style={{ background: 'var(--tk-bg-surface,#fff)', borderRadius: 20, padding: '32px 28px', maxWidth: 490, width: '100%', boxShadow: '0 24px 60px rgba(0,0,0,0.22)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 42, height: 42, borderRadius: 10, background: 'linear-gradient(135deg,#8B3A1E,#6B2A15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <CreditCardIcon size={18} color="#fff" />
-                  </div>
-                  <div>
-                    <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--tk-text,#1A202C)', margin: 0, fontFamily: "'Outfit',sans-serif" }}>Setup Razorpay</h3>
-                    <p style={{ fontSize: 12, color: '#64748B', margin: 0, fontFamily: "'Outfit',sans-serif" }}>Connect your Razorpay account to receive payouts</p>
-                  </div>
-                </div>
-                <button onClick={() => setShowPaymentSetupModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}><X size={18} /></button>
-              </div>
+        {activeTab === "operations" && (
+          <>
+            <SectionHeader title="Location & Operations" sectionId="location" />
+            {/* Address */}
+            <Row label="Address">
+              {editingSection === "location" ? (
+                <div className="flex items-start justify-between w-full gap-2">
+                  <textarea
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-2 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text min-h-[60px]"
+                    value={restaurantForm.contactAddress}
+                    placeholder="Street, locality, city, state"
+                    onChange={(e) =>
+                      handleRestaurantFieldChange("contactAddress", e.target.value)
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") handleCancelEdit();
+                    }}
+                    rows={2}
+                  />
 
-              {/* Bank Details Fields */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {[
-                  { icon: <Key size={12} />, label: 'Razorpay Key ID', key: 'razorpayKeyId', placeholder: 'e.g. rzp_live_xxxxxxxx', type: 'text' },
-                  { icon: <ShieldCheck size={12} />, label: 'Razorpay Key Secret', key: 'razorpayKeySecret', placeholder: 'e.g. xxxxxxxx', type: 'password' },
-                  { icon: <ShieldCheck size={12} />, label: 'Razorpay Webhook Secret', key: 'razorpayWebhookSecret', placeholder: 'e.g. your_webhook_secret', type: 'password' },
-                ].map(f => (
-                  <div key={f.key}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6, fontFamily: "'Outfit',sans-serif" }}>
-                      {f.icon}{f.label}
-                    </label>
+                </div>
+              ) : (
+                <>
+                  <span className="inline-flex items-center gap-2">
+                    <MapPinIcon size={15} />
+                    {restaurant?.contact.address || "N/A"}
+                  </span>
+
+                </>
+              )}
+            </Row>
+
+            {/* Operating Hours (Weekdays) */}
+            <Row label="Operating Hours (Weekdays)">
+              {editingSection === "location" ? (
+                <div className="flex items-center justify-between w-full gap-2">
+                  <div className="flex items-center gap-2">
                     <input
-                      type={f.type as any}
-                      placeholder={f.placeholder}
-                      value={(paymentSetupForm as any)[f.key]}
-                      onChange={e => setPaymentSetupForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                      autoComplete="off"
-                      className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                      type="time"
+                      className="border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                      value={get24hTime(
+                        restaurantForm.operatingHoursWeekdays,
+                        "open"
+                      )}
+                      onChange={(e) =>
+                        handleTimeChange("weekdays", "open", e.target.value)
+                      }
+                    />
+                    <span className="text-[#718096] dark:text-tk-text-secondary text-[13px]">
+                      to
+                    </span>
+                    <input
+                      type="time"
+                      className="border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                      value={get24hTime(
+                        restaurantForm.operatingHoursWeekdays,
+                        "close"
+                      )}
+                      onChange={(e) =>
+                        handleTimeChange("weekdays", "close", e.target.value)
+                      }
                     />
                   </div>
-                ))}
-              </div>
 
-              {paymentSetupError && (
-                <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, fontSize: 13, color: '#B91C1C', display: 'flex', gap: 8, alignItems: 'center', fontFamily: "'Outfit',sans-serif" }}>
-                  <XCircle size={13} />{paymentSetupError}
                 </div>
-              )}
-              <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
-                <button type="button" onClick={() => setShowPaymentSetupModal(false)} style={{ flex: 1, padding: '11px 16px', borderRadius: 10, border: '1.5px solid #E2E8F0', background: 'transparent', color: 'var(--tk-text,#1A202C)', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}>Cancel</button>
-                <button
-                  type="button"
-                  disabled={paymentSetupSaving || !paymentSetupForm.razorpayKeyId.trim() || (!paymentSettings.hasRazorpayKeySecret && !paymentSetupForm.razorpayKeySecret.trim()) || (!paymentSettings.hasRazorpayWebhookSecret && !paymentSetupForm.razorpayWebhookSecret.trim())}
-                  onClick={async () => {
-                    setPaymentSetupSaving(true); setPaymentSetupError(null);
-                    try {
-                      if (!activeRestaurantId) return;
-                      const { data, error } = await (supabase.rpc as any)('upsert_restaurant_payment_settings', {
-                        p_restaurant_id: activeRestaurantId,
-                        p_razorpay_key_id: paymentSetupForm.razorpayKeyId.trim(),
-                        p_razorpay_key_secret: paymentSetupForm.razorpayKeySecret.trim() || null,
-                        p_razorpay_webhook_secret: paymentSetupForm.razorpayWebhookSecret.trim() || null,
-                        p_online_payments_enabled: true,
-                        p_razorpay_linked_account_id: null
-                      });
-                      if (error) throw error;
+              ) : (
+                <>
+                  <span>{restaurant?.operatingHoursWeekdays || "Not set"}</span>
 
-                      // Update local state since edge function updated DB
-                      setPaymentSettings({
-                        ...paymentSettings,
-                        razorpayKeyId: data?.razorpay_key_id,
-                        hasRazorpayKeySecret: data?.has_razorpay_key_secret,
-                        hasRazorpayWebhookSecret: data?.has_razorpay_webhook_secret,
-                        onlinePaymentsEnabled: true
-                      });
-                      await updateRestaurantProfile(activeRestaurantId, { pay_online: true });
-                      setShowPaymentSetupModal(false);
-                      setFeedback({ tone: 'success', message: 'Razorpay API credentials saved and payments enabled!' });
-                    } catch (err: any) {
-                      setPaymentSetupError(err?.message ?? 'Failed to save Razorpay API credentials.');
-                    } finally { setPaymentSetupSaving(false); }
-                  }}
-                  style={{ flex: 1, padding: '11px 16px', borderRadius: 10, border: 'none', background: (!paymentSetupForm.razorpayKeyId.trim() || (!paymentSettings.hasRazorpayKeySecret && !paymentSetupForm.razorpayKeySecret.trim()) || (!paymentSettings.hasRazorpayWebhookSecret && !paymentSetupForm.razorpayWebhookSecret.trim())) ? '#CBD5E0' : 'linear-gradient(135deg,#8B3A1E,#6B2A15)', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}
-                >{paymentSetupSaving ? 'Saving…' : 'Save & Enable'}</button>
+                </>
+              )}
+            </Row>
+
+            {/* Operating Hours (Weekends) */}
+            <Row label="Operating Hours (Weekends)">
+              {editingSection === "location" ? (
+                <div className="flex items-center justify-between w-full gap-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="time"
+                      className="border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                      value={get24hTime(
+                        restaurantForm.operatingHoursWeekends,
+                        "open"
+                      )}
+                      onChange={(e) =>
+                        handleTimeChange("weekends", "open", e.target.value)
+                      }
+                    />
+                    <span className="text-[#718096] dark:text-tk-text-secondary text-[13px]">
+                      to
+                    </span>
+                    <input
+                      type="time"
+                      className="border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                      value={get24hTime(
+                        restaurantForm.operatingHoursWeekends,
+                        "close"
+                      )}
+                      onChange={(e) =>
+                        handleTimeChange("weekends", "close", e.target.value)
+                      }
+                    />
+                  </div>
+
+                </div>
+              ) : (
+                <>
+                  <span>{restaurant?.operatingHoursWeekends || "Not set"}</span>
+
+                </>
+              )}
+            </Row>
+
+            {/* Location Coordinates */}
+            <Row label="Location Coordinates">
+              <div className="flex w-full items-center flex-wrap gap-4">
+                {editingSection === "location" ? (
+                  <div className="flex flex-col w-full gap-3 py-1">
+                    <div className="flex items-center justify-between w-full gap-2">
+                      <div className="flex items-center gap-3 w-full flex-wrap">
+                        <label className="flex items-center gap-1.5 text-[12px] text-[#4A5568] dark:text-tk-text-secondary font-semibold">
+                          Lat:
+                          <input
+                            type="number"
+                            min="-90"
+                            max="90"
+                            step="0.000001"
+                            className="w-28 border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-2.5 py-1 text-[13px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                            value={restaurantForm.latitude}
+                            onChange={(e) =>
+                              handleRestaurantFieldChange("latitude", e.target.value)
+                            }
+                          />
+                        </label>
+                        <label className="flex items-center gap-1.5 text-[12px] text-[#4A5568] dark:text-tk-text-secondary font-semibold">
+                          Lng:
+                          <input
+                            type="number"
+                            min="-180"
+                            max="180"
+                            step="0.000001"
+                            className="w-28 border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-2.5 py-1 text-[13px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                            value={restaurantForm.longitude}
+                            onChange={(e) =>
+                              handleRestaurantFieldChange("longitude", e.target.value)
+                            }
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1.5 px-3 py-1 border border-dashed border-tk-burgundy rounded-xl bg-[#F0FFF4] text-tk-burgundy text-[12px] font-semibold cursor-pointer dark:bg-[rgba(72,187,120,0.1)] shrink-0"
+                          onClick={handleUseMyLocation}
+                          disabled={isLocating}
+                        >
+                          <Crosshair
+                            size={14}
+                            className={isLocating ? "profile-locate-spin" : ""}
+                          />
+                          {isLocating ? "Locating…" : "Current Location"}
+                        </button>
+                      </div>
+                    </div>
+                    <div
+                      id="profile-map"
+                      style={{
+                        width: "100%",
+                        height: "300px",
+                        borderRadius: "12px",
+                        backgroundColor: "#E2E8F0",
+                        border: "1px solid #CBD5E0",
+                        marginTop: "8px",
+                        position: "relative",
+                        zIndex: 10,
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <span className="inline-flex items-center gap-2">
+                      <MapPinIcon size={15} />
+                      {restaurant
+                        ? `${formatCoordinate(restaurant.location?.latitude)}, ${formatCoordinate(restaurant.location?.longitude)}`
+                        : "N/A"}
+                    </span>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowMap(!showMap)}
+                        className="px-4 py-2 bg-white text-[#4A5568] border border-[#CBD5E0] hover:bg-[#EDF2F7] dark:bg-tk-bg-elevated dark:text-tk-text-secondary dark:border-tk-border dark:hover:bg-tk-bg-hover rounded-xl text-[13px] font-bold w-fit transition-all duration-300 cursor-pointer shadow-sm"
+                      >
+                        {showMap ? "Hide Map" : "Show Map"}
+                      </button>
+                      {showMap && (
+                        <div
+                          id="profile-map"
+                          style={{
+                            position: "absolute",
+                            top: "50%",
+                            left: "calc(100% + 12px)",
+                            transform: "translateY(-50%)",
+                            width: "300px",
+                            height: "300px",
+                            borderRadius: "12px",
+                            zIndex: 50,
+                            backgroundColor: "#E2E8F0",
+                            border: "1px solid #CBD5E0",
+                            boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+                          }}
+                        />
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
-            </div>
-          </div>
+            </Row>
+
+            {/* Access Area Radius */}
+            <Row label="Access Area Radius">
+              {editingSection === "location" ? (
+                <div className="flex items-center justify-between w-full gap-2">
+                  <div className="flex items-center gap-2 w-full">
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      className="w-32 border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                      value={restaurantForm.allowedRadius}
+                      placeholder="150"
+                      onChange={(e) =>
+                        handleRestaurantFieldChange("allowedRadius", e.target.value)
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleSaveProfile();
+                        if (e.key === "Escape") handleCancelEdit();
+                      }}
+                    />
+                    <span className="text-[14px] text-[#4A5568] dark:text-tk-text-secondary">
+                      meters
+                    </span>
+                  </div>
+
+                </div>
+              ) : (
+                <>
+                  <span>
+                    {restaurant?.location?.allowedRadius != null
+                      ? `${restaurant.location.allowedRadius} meters`
+                      : "Not set"}
+                  </span>
+
+                </>
+              )}
+            </Row>
+
+
+            <SectionHeader title="Web & Social Media" sectionId="web" />
+            {/* Website URL */}
+            <Row label="Website URL">
+              {editingSection === "web" ? (
+                <div className="flex items-center justify-between w-full gap-2">
+                  <input
+                    type="url"
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                    value={restaurantForm.websiteUrl}
+                    placeholder="https://yourrestaurant.com"
+                    onChange={(e) =>
+                      handleRestaurantFieldChange("websiteUrl", e.target.value)
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSaveProfile();
+                      if (e.key === "Escape") handleCancelEdit();
+                    }}
+                  />
+
+                </div>
+              ) : (
+                <>
+                  <span>{restaurant?.websiteUrl || "Not set"}</span>
+
+                </>
+              )}
+            </Row>{/* Instagram URL */}
+            <Row label="Instagram URL">
+              {editingSection === "web" ? (
+                <div className="flex items-center justify-between w-full gap-2">
+                  <input
+                    type="url"
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                    value={restaurantForm.instagramUrl}
+                    placeholder="https://instagram.com/yourrestaurant"
+                    onChange={(e) =>
+                      handleRestaurantFieldChange("instagramUrl", e.target.value)
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSaveProfile();
+                      if (e.key === "Escape") handleCancelEdit();
+                    }}
+                  />
+
+                </div>
+              ) : (
+                <>
+                  <span>{restaurant?.instagramUrl || "Not set"}</span>
+
+                </>
+              )}
+            </Row>
+
+            {/* Facebook URL */}
+            <Row label="Facebook URL">
+              {editingSection === "web" ? (
+                <div className="flex items-center justify-between w-full gap-2">
+                  <input
+                    type="url"
+                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                    value={restaurantForm.facebookUrl}
+                    placeholder="https://facebook.com/yourrestaurant"
+                    onChange={(e) =>
+                      handleRestaurantFieldChange("facebookUrl", e.target.value)
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSaveProfile();
+                      if (e.key === "Escape") handleCancelEdit();
+                    }}
+                  />
+
+                </div>
+              ) : (
+                <>
+                  <span>{restaurant?.facebookUrl || "Not set"}</span>
+
+                </>
+              )}
+            </Row>
+          </>
         )}
+
       </div>
     );
   }
@@ -1435,43 +1458,72 @@ const ProfilePage: React.FC = () => {
       );
     }
 
+
+
     return (
-      <div className="flex flex-col gap-6">
-        <div className="border border-[#E2E8F0] rounded-[18px] p-4 sm:p-[18px] bg-white dark:bg-tk-bg-card dark:border-tk-border">
-          <div className="flex flex-wrap justify-between items-start gap-3 mb-4">
-            <div className="min-w-0">
-              <h3 className="font-bold">Personal Information</h3>
-              <p>Your personal details and profile picture.</p>
+      <div className="flex flex-col gap-0 w-full max-w-5xl">
+        <SectionHeader title="Administrator Details" sectionId="admin" />
+        <Row label="Admin Full Name">
+          {editingSection === "admin" ? (
+            <div className="flex items-center justify-between w-full gap-2">
+              <input
+                type="text"
+                className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                value={adminForm.name}
+                placeholder="Administrator name"
+                onChange={(e) => handleAdminFieldChange("name", e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSaveProfile();
+                  if (e.key === "Escape") handleCancelEdit();
+                }}
+                maxLength={120}
+              />
+
             </div>
-            <div className="shrink-0">{renderAdminActions()}</div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Full Name</span>
-              <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
-                {userProfile?.name || "Admin User"}
+          ) : (
+            <>
+              <span>{userProfile?.name || "Admin User"}</span>
+
+            </>
+          )}
+        </Row>
+
+        <Row label="Admin Email Address">
+          {editingSection === "admin" ? (
+            <div className="flex flex-col w-full gap-1">
+              <div className="flex items-center justify-between w-full gap-2">
+                <input
+                  type="email"
+                  className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                  value={adminForm.email}
+                  placeholder="admin@restaurant.com"
+                  onChange={(e) =>
+                    handleAdminFieldChange("email", e.target.value)
+                  }
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSaveProfile();
+                    if (e.key === "Escape") handleCancelEdit();
+                  }}
+                />
+
+              </div>
+              <span className="text-[#4A5568] text-[11px] leading-relaxed font-['Outfit',sans-serif] dark:text-tk-text-secondary">
+                Changing email may require confirmation before it becomes active.
               </span>
             </div>
-
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Email Address</span>
-              <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text">
-                {userProfile?.email || "N/A"}
-              </span>
+          ) : (
+            <div className="flex flex-col gap-1">
+              <span>{userProfile?.email || "N/A"}</span>
+              {user?.new_email && user.new_email !== userProfile?.email && (
+                <span className="text-orange-500 text-[12px] font-medium font-['Outfit',sans-serif]">
+                  Pending verification: {user.new_email}
+                </span>
+              )}
             </div>
+          )}
+        </Row>
 
-          </div>
-        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          <div className="border border-[#E2E8F0] rounded-2xl bg-white px-4 py-3.5 flex flex-col gap-2.5 dark:bg-tk-bg-card dark:border-tk-border">
-            <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Global Role</span>
-            <span className="inline-flex items-center px-3.5 py-1.5 rounded-xl text-[12px] font-semibold capitalize w-fit font-['Outfit',sans-serif] bg-[#D6BCFA] text-[#44337A] dark:bg-[rgba(214,188,250,0.15)] dark:text-[#D6BCFA]">
-              {formatLabel(userProfile?.role)}
-            </span>
-          </div>
-
-        </div>
       </div>
     );
   }
@@ -1487,644 +1539,64 @@ const ProfilePage: React.FC = () => {
     );
   }
 
-
-  const renderEditModal = () => {
-    if (!activeEditModal) return null;
-
-    let title = "";
-    let description = "";
-    let content = null;
-    let onSave: any = () => { };
-    let onCancel = () => { };
-    let isSaving = false;
-
-    if (activeEditModal === "admin") {
-      title = "Edit Admin Profile";
-      description = "Update your personal details.";
-      content = (
-        <div className="flex flex-col gap-4">
-          <label className="flex flex-col gap-2">
-            <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Full Name</span>
-            <input
-              className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-              type="text"
-              value={adminForm.name}
-              onChange={(event) =>
-                handleAdminFieldChange("name", event.target.value)
-              }
-              placeholder="Administrator name"
-              maxLength={120}
-              required
-            />
-          </label>
-
-          <label className="flex flex-col gap-2">
-            <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Email Address</span>
-            <input
-              className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-              type="email"
-              value={adminForm.email}
-              onChange={(event) =>
-                handleAdminFieldChange("email", event.target.value)
-              }
-              placeholder="admin@restaurant.com"
-              required
-            />
-            <span className="text-[#4A5568] text-[12px] leading-relaxed font-['Outfit',sans-serif] dark:text-tk-text-secondary">
-              Changing email may require confirmation before it becomes
-              active.
-            </span>
-          </label>
-
-        </div>
-      );
-      onSave = (e: any) => {
-        if (e && e.preventDefault) e.preventDefault();
-        handleAdminSave(e);
-      };
-      onCancel = cancelAdminEdit;
-      isSaving = isAdminSaving;
-    } else {
-      if (!restaurantForm) return null;
-      onSave = () => handleRestaurantSave();
-      onCancel = cancelRestaurantEdit;
-      isSaving = isRestaurantSaving;
-
-      if (activeEditModal === "core") {
-        title = "Edit Core Identity";
-        description = "Essential details about the restaurant.";
-        content = (
-          <div className="flex flex-col gap-4">
-            <label className="flex flex-col gap-2">
-              <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Restaurant Name</span>
-              <input
-                className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                type="text"
-                value={restaurantForm.name}
-                onChange={(event) =>
-                  handleRestaurantFieldChange("name", event.target.value)
-                }
-                placeholder="Restaurant name"
-                maxLength={120}
-                required
-              />
-            </label>
-            <div className="flex flex-col gap-1.5 relative">
-              <label className="flex flex-col gap-2 relative">
-                <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Restaurant Page URL</span>
-                <div className="relative flex items-center">
-                  <div className="absolute left-0 top-0 bottom-0 flex items-center justify-center px-3.5 bg-[#EDF2F7] border border-[#CBD5E0] border-r-0 rounded-l-xl z-10 select-none text-[#4A5568] text-[14px] font-['Outfit',sans-serif] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text-secondary">
-                    tablekard.com/
-                  </div>
-                  <input
-                    className={`w-full border rounded-xl bg-white text-[#1A202C] py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none dark:bg-tk-bg-surface dark:text-tk-text pr-10 ${slugAvailable === false ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-500/20' : 'border-[#CBD5E0] focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:border-tk-border'}`}
-                    style={{ paddingLeft: '135px' }}
-                    type="text"
-                    value={restaurantForm.slug}
-                    onChange={(event) =>
-                      handleRestaurantFieldChange("slug", event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))
-                    }
-                    placeholder="my-restaurant"
-                    maxLength={60}
-                    required
-                  />
-                  {checkingSlug && (
-                    <div className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-[#CBD5E0] border-t-tk-burgundy rounded-full animate-spin z-10"></div>
-                  )}
-                </div>
-              </label>
-              {slugAvailable === false && (
-                <span className="text-[12px] text-red-500 font-medium mt-0.5">Not available, please choose another</span>
-              )}
-            </div>
-
-            <label className="flex flex-col gap-2">
-              <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Tagline</span>
-              <input
-                className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                type="text"
-                value={restaurantForm.tagline}
-                onChange={(event) =>
-                  handleRestaurantFieldChange("tagline", event.target.value)
-                }
-                placeholder="A short catchy phrase"
-              />
-            </label>
-
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Status</span>
-              <span
-                className={`inline-flex items-center px-3.5 py-1.5 rounded-xl text-[12px] font-semibold capitalize w-fit font-['Outfit',sans-serif] ${String(restaurant?.status || "").toLowerCase()}`}
-              >
-                {formatLabel(String(restaurant?.status || "unknown"))}
-              </span>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Subscription Status</span>
-              <span className="text-[16px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text inline-flex items-center gap-2">
-                <CreditCardIcon
-                  size={15}
-                  style={{
-                    color: restaurant?.subscriptionStatus
-                      ? "#48BB78"
-                      : "#A0AEC0",
-                  }}
-                />
-                {restaurant?.subscriptionStatus ? "Active" : "Inactive"}
-                {restaurant?.subscriptionType
-                  ? ` (${restaurant.subscriptionType})`
-                  : ""}
-              </span>
-            </div>
-          </div>
-        );
-      } else if (activeEditModal === "contact") {
-        title = "Edit Contact & Operating Hours";
-        description = "How customers can reach you and when you're open.";
-        content = (
-          <div className="flex flex-col gap-4">
-            <div
-              className="col-span-1"
-              style={{
-                fontSize: "13px",
-                fontWeight: 600,
-                color: "#718096",
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-                borderBottom: "1px solid #EDF2F7",
-                paddingBottom: "8px",
-                marginBottom: "8px",
-              }}
-            >
-              Contact Information
-            </div>
-
-            <label className="flex flex-col gap-2">
-              <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Contact Email</span>
-              <input
-                className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                type="email"
-                value={restaurantForm.contactEmail}
-                onChange={(event) =>
-                  handleRestaurantFieldChange(
-                    "contactEmail",
-                    event.target.value,
-                  )
-                }
-                placeholder="ops@restaurant.com"
-                required
-              />
-            </label>
-
-            <label className="flex flex-col gap-2">
-              <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Contact Phone</span>
-              <input
-                className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                type="tel"
-                value={restaurantForm.contactPhone}
-                onChange={(event) =>
-                  handleRestaurantFieldChange(
-                    "contactPhone",
-                    event.target.value,
-                  )
-                }
-                placeholder="+91 98765 43210"
-              />
-            </label>
-
-            <label className="flex flex-col gap-2">
-              <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Address</span>
-              <textarea
-                className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text resize-y min-h-[96px]"
-                value={restaurantForm.contactAddress}
-                onChange={(event) =>
-                  handleRestaurantFieldChange(
-                    "contactAddress",
-                    event.target.value,
-                  )
-                }
-                placeholder="Street, locality, city, state"
-                rows={3}
-              />
-            </label>
-
-            <div
-              className="col-span-1"
-              style={{
-                fontSize: "13px",
-                fontWeight: 600,
-                color: "#718096",
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-                borderBottom: "1px solid #EDF2F7",
-                paddingBottom: "8px",
-                marginTop: "16px",
-                marginBottom: "8px",
-              }}
-            >
-              Operating Hours
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
-                Operating Hours (Weekdays)
-              </span>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex flex-col gap-2" style={{ gap: "4px" }}>
-                  <span
-                    style={{
-                      fontSize: "10px",
-                      color: "#718096",
-                      textTransform: "uppercase",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Opening Time
-                  </span>
-                  <input
-                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                    type="time"
-                    value={get24hTime(
-                      restaurantForm.operatingHoursWeekdays,
-                      "open",
-                    )}
-                    onChange={(event) =>
-                      handleTimeChange("weekdays", "open", event.target.value)
-                    }
-                  />
-                </div>
-                <div className="flex flex-col gap-2" style={{ gap: "4px" }}>
-                  <span
-                    style={{
-                      fontSize: "10px",
-                      color: "#718096",
-                      textTransform: "uppercase",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Closing Time
-                  </span>
-                  <input
-                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                    type="time"
-                    value={get24hTime(
-                      restaurantForm.operatingHoursWeekdays,
-                      "close",
-                    )}
-                    onChange={(event) =>
-                      handleTimeChange(
-                        "weekdays",
-                        "close",
-                        event.target.value,
-                      )
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-col gap-2">
-              <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
-                Operating Hours (Weekends)
-              </span>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex flex-col gap-2" style={{ gap: "4px" }}>
-                  <span
-                    style={{
-                      fontSize: "10px",
-                      color: "#718096",
-                      textTransform: "uppercase",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Opening Time
-                  </span>
-                  <input
-                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                    type="time"
-                    value={get24hTime(
-                      restaurantForm.operatingHoursWeekends,
-                      "open",
-                    )}
-                    onChange={(event) =>
-                      handleTimeChange("weekends", "open", event.target.value)
-                    }
-                  />
-                </div>
-                <div className="flex flex-col gap-2" style={{ gap: "4px" }}>
-                  <span
-                    style={{
-                      fontSize: "10px",
-                      color: "#718096",
-                      textTransform: "uppercase",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Closing Time
-                  </span>
-                  <input
-                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                    type="time"
-                    value={get24hTime(
-                      restaurantForm.operatingHoursWeekends,
-                      "close",
-                    )}
-                    onChange={(event) =>
-                      handleTimeChange(
-                        "weekends",
-                        "close",
-                        event.target.value,
-                      )
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      } else if (activeEditModal === "branding") {
-        title = "Edit Location";
-        description = "Where to find you.";
-        content = (
-          <div className="flex flex-col gap-4">
-
-            <label className="flex flex-col gap-2">
-              <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
-                Access Area Radius (meters)
-              </span>
-              <input
-                className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                type="number"
-                min="1"
-                step="1"
-                value={restaurantForm.allowedRadius}
-                onChange={(event) =>
-                  handleRestaurantFieldChange(
-                    "allowedRadius",
-                    event.target.value,
-                  )
-                }
-                placeholder="250"
-              />
-            </label>
-
-            <div className="flex flex-col gap-2 col-span-1">
-              <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Location Coordinates</span>
-              <div className="flex flex-col gap-4">
-                <label className="flex flex-col gap-2" style={{ gap: "4px" }}>
-                  <span
-                    className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary"
-                    style={{ fontSize: "10px", color: "#718096" }}
-                  >
-                    Latitude
-                  </span>
-                  <input
-                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                    type="number"
-                    min="-90"
-                    max="90"
-                    step="0.000001"
-                    value={restaurantForm.latitude}
-                    onChange={(event) =>
-                      handleRestaurantFieldChange(
-                        "latitude",
-                        event.target.value,
-                      )
-                    }
-                    placeholder="26.144516"
-                  />
-                </label>
-                <label className="flex flex-col gap-2" style={{ gap: "4px" }}>
-                  <span
-                    className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary"
-                    style={{ fontSize: "10px", color: "#718096" }}
-                  >
-                    Longitude
-                  </span>
-                  <input
-                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                    type="number"
-                    min="-180"
-                    max="180"
-                    step="0.000001"
-                    value={restaurantForm.longitude}
-                    onChange={(event) =>
-                      handleRestaurantFieldChange(
-                        "longitude",
-                        event.target.value,
-                      )
-                    }
-                    placeholder="91.736237"
-                  />
-                </label>
-              </div>
-
-              <div
-                id="profile-map"
-                style={{
-                  height: "300px",
-                  width: "100%",
-                  borderRadius: "14px",
-                  marginTop: "12px",
-                  zIndex: 1,
-                  backgroundColor: "#E2E8F0",
-                  border: "1px solid #CBD5E0",
-                }}
-              ></div>
-
-              <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-3">
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-2 px-[18px] py-2.5 border-2 border-dashed border-tk-burgundy rounded-xl bg-[#F0FFF4] text-tk-burgundy text-[13px] font-semibold font-['Outfit',sans-serif] cursor-pointer transition-all duration-200 disabled:opacity-70 disabled:cursor-wait dark:bg-[rgba(72,187,120,0.1)] shrink-0"
-                  onClick={handleUseMyLocation}
-                  disabled={isLocating}
-                >
-                  <Crosshair
-                    size={16}
-                    className={isLocating ? "profile-locate-spin" : ""}
-                  />
-                  {isLocating ? "Locating…" : "Use My Current Location"}
-                </button>
-                <span className="text-[#4A5568] text-[12px] leading-relaxed font-['Outfit',sans-serif] dark:text-tk-text-secondary">
-                  Drag the pin or click on the map to set location accurately.
-                </span>
-              </div>
-            </div>
-
-          </div>
-        );
-      } else if (activeEditModal === "story") {
-        title = "Edit Our Story & Socials";
-        description = "Tell your customers about your restaurant.";
-        content = (
-          <div className="flex flex-col gap-4">
-            <label className="flex flex-col gap-2">
-              <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Opening Date</span>
-              <input
-                className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                type="date"
-                value={restaurantForm.openingDate}
-                onChange={(event) =>
-                  handleRestaurantFieldChange("openingDate", event.target.value)
-                }
-              />
-            </label>
-
-            <label className="flex flex-col gap-2">
-              <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Manifesto / Our Story</span>
-              <textarea
-                className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text resize-y min-h-[96px]"
-                value={restaurantForm.manifesto}
-                onChange={(event) =>
-                  handleRestaurantFieldChange("manifesto", event.target.value)
-                }
-                placeholder="Tell the story of your restaurant..."
-                rows={4}
-              />
-            </label>
-
-            <label className="flex flex-col gap-2">
-              <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Instagram URL</span>
-              <input
-                className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                type="url"
-                value={restaurantForm.instagramUrl}
-                onChange={(event) =>
-                  handleRestaurantFieldChange(
-                    "instagramUrl",
-                    event.target.value,
-                  )
-                }
-                placeholder="https://instagram.com/yourrestaurant"
-              />
-            </label>
-
-            <label className="flex flex-col gap-2">
-              <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Facebook URL</span>
-              <input
-                className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                type="url"
-                value={restaurantForm.facebookUrl}
-                onChange={(event) =>
-                  handleRestaurantFieldChange("facebookUrl", event.target.value)
-                }
-                placeholder="https://facebook.com/yourrestaurant"
-              />
-            </label>
-
-            <label className="flex flex-col gap-2">
-              <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Website URL</span>
-              <input
-                className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                type="url"
-                value={restaurantForm.websiteUrl}
-                onChange={(event) =>
-                  handleRestaurantFieldChange("websiteUrl", event.target.value)
-                }
-                placeholder="https://yourrestaurant.com"
-              />
-            </label>
-          </div>
-        );
-      }
-    }
-
-    return (
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[100] p-5">
-        <div className="bg-white rounded-3xl p-8 max-w-[500px] w-full shadow-[0_24px_48px_rgba(0,0,0,0.12)] dark:bg-tk-bg-card dark:border dark:border-tk-border flex flex-col max-h-[90vh]">
-          <div className="flex justify-between items-center mb-6 shrink-0">
-            <div>
-              <h2 className="text-[20px] font-bold text-[#1A202C] font-['Outfit',sans-serif] dark:text-tk-text m-0">{title}</h2>
-              <p className="text-[13px] text-[#64748B] font-['Outfit',sans-serif] m-0 mt-1">{description}</p>
-            </div>
-            <button onClick={onCancel} className="bg-transparent border-none cursor-pointer text-[#94A3B8] hover:text-[#475569] transition-colors p-1" type="button">
-              <X size={20} />
-            </button>
-          </div>
-
-          <div className="overflow-y-auto no-scrollbar flex-1 pr-2 pb-4 -mr-2">
-            {content}
-          </div>
-
-          <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-[#E2E8F0] dark:border-tk-border shrink-0">
-            <button
-              type="button"
-              className="inline-flex items-center justify-center gap-2 min-h-[44px] px-5 border-none rounded-xl font-['Outfit',sans-serif] text-[14px] font-semibold cursor-pointer transition-all duration-200 bg-[#EDF2F7] text-[#2D3748] hover:bg-[#E2E8F0] dark:bg-tk-bg-elevated dark:text-tk-text dark:hover:bg-tk-bg-hover"
-              onClick={onCancel}
-              disabled={isSaving}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="inline-flex items-center justify-center gap-2 min-h-[44px] px-6 border-none rounded-xl font-['Outfit',sans-serif] text-[14px] font-semibold cursor-pointer transition-all duration-200 bg-[linear-gradient(135deg,var(--tk-burgundy),#6B2A15)] text-white shadow-[0_8px_18px_rgba(139,58,30,0.2)] hover:shadow-[0_12px_24px_rgba(139,58,30,0.3)] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
-              onClick={onSave}
-              disabled={isSaving}
-            >
-              <Save size={16} /> {isSaving ? "Saving..." : "Save"}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <>
-      <div className="flex flex-col gap-4 mb-8">
-        {/* Header Row: Title & Actions */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E2E8F0] dark:border-tk-border">
-          <div>
-            <h1 className="text-3xl font-extrabold text-[#1A202C] font-['Outfit',sans-serif] dark:text-white mb-1.5 tracking-tight">
+      <div className="sticky top-0 z-[60] bg-tk-bg-surface pt-4 -mt-6 -mx-6 px-6 mb-6 border-b border-[#E2E8F0] dark:border-tk-border shadow-sm">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 relative">
+          
+          <div className="flex-1 w-full flex justify-start pb-2 sm:pb-3">
+            <h1 className="text-2xl font-extrabold text-[#1A202C] font-['Outfit',sans-serif] dark:text-white tracking-tight">
               Restaurant Profile
             </h1>
-            <p className="text-[14px] text-[#64748B] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
-              Manage your restaurant details, branding, features, and settings.
-            </p>
           </div>
 
-          <div className="flex items-center gap-4 shrink-0">
+          <div className="flex justify-center gap-8 shrink-0">
             <button
-              className="relative h-11 px-5 rounded-xl bg-white dark:bg-tk-bg-elevated text-[#E53E3E] border border-[#E53E3E]/20 flex items-center justify-center cursor-pointer shadow-[0_2px_8px_rgba(229,62,62,0.08)] overflow-hidden transition-all duration-300 z-10 before:absolute before:inset-0 before:w-full before:h-full before:bg-[#E53E3E] before:-z-10 before:-translate-x-full before:transition-transform before:duration-300 hover:before:translate-x-0 hover:text-white hover:shadow-[0_8px_16px_rgba(229,62,62,0.3)] hover:-translate-y-0.5 active:translate-y-0 font-bold font-['Outfit',sans-serif] text-[13px] tracking-wide"
+              className={`pb-3 px-2 border-b-2 -mb-[2px] sm:-mb-[14px] text-[14px] font-bold font-['Outfit',sans-serif] transition-colors ${activeTab === "details"
+                ? "border-tk-burgundy text-tk-burgundy"
+                : "border-transparent text-[#4A5568] hover:text-[#1A202C] dark:text-tk-text-secondary dark:hover:text-tk-text"
+                }`}
+              onClick={() => setActiveTab("details")}
+            >
+              Details
+            </button>
+            <button
+              className={`pb-3 px-2 border-b-2 -mb-[2px] sm:-mb-[14px] text-[14px] font-bold font-['Outfit',sans-serif] transition-colors ${activeTab === "operations"
+                ? "border-tk-burgundy text-tk-burgundy"
+                : "border-transparent text-[#4A5568] hover:text-[#1A202C] dark:text-tk-text-secondary dark:hover:text-tk-text"
+                }`}
+              onClick={() => setActiveTab("operations")}
+            >
+              Operations
+            </button>
+          </div>
+
+          <div className="flex-1 w-full flex items-center justify-end gap-3 shrink-0 pb-2 sm:pb-3 hidden sm:flex">
+            <button
+              className="relative h-10 px-4 rounded-xl bg-white dark:bg-tk-bg-elevated text-[#E53E3E] border border-[#E53E3E]/20 flex items-center justify-center cursor-pointer shadow-[0_2px_8px_rgba(229,62,62,0.08)] overflow-hidden transition-all duration-300 z-10 before:absolute before:inset-0 before:w-full before:h-full before:bg-[#E53E3E] before:-z-10 before:-translate-x-full before:transition-transform before:duration-300 hover:before:translate-x-0 hover:text-white hover:shadow-[0_8px_16px_rgba(229,62,62,0.3)] hover:-translate-y-0.5 active:translate-y-0 font-bold font-['Outfit',sans-serif] text-[13px] tracking-wide"
               title="Sign Out"
               onClick={() => setShowLogoutConfirm(true)}
             >
               Sign Out
             </button>
-
           </div>
         </div>
 
-        {/* Tabs Row */}
-        <div className="inline-flex gap-1.5 p-1.5 bg-[#F1F5F9] dark:bg-[rgba(199,91,58,0.1)] border border-[#E2E8F0] dark:border-[rgba(199,91,58,0.2)] rounded-[16px] overflow-x-auto max-w-full self-start no-scrollbar shadow-inner">
-          {[
-            { id: "general", label: "General Info" },
-            { id: "branding", label: "Location" },
-            { id: "story", label: "Story & Socials" },
-            { id: "features", label: "Features" },
-            { id: "admin", label: "Admin Profile" },
-          ].map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`relative flex items-center gap-2 px-6 py-2.5 text-[14px] font-bold font-['Outfit',sans-serif] rounded-xl whitespace-nowrap transition-all duration-300 shrink-0 ${isActive
-                  ? "text-tk-burgundy bg-white shadow-sm dark:bg-tk-burgundy dark:text-white ring-1 ring-black/5 dark:ring-white/10 dark:shadow-[0_2px_10px_rgba(199,91,58,0.3)]"
-                  : "text-[#64748B] dark:text-[#F0EDE8]/70 bg-transparent hover:text-tk-burgundy dark:hover:text-white hover:bg-black/5 dark:hover:bg-[rgba(199,91,58,0.15)]"
-                  }`}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
+        {/* Mobile sign out button placed below if needed, or we can just leave it inline. Since sm:flex is applied to the container, it's fine. */}
+        <div className="flex w-full items-center justify-end pb-3 sm:hidden mt-2">
+            <button
+              className="relative h-10 px-4 rounded-xl bg-white dark:bg-tk-bg-elevated text-[#E53E3E] border border-[#E53E3E]/20 flex items-center justify-center cursor-pointer shadow-[0_2px_8px_rgba(229,62,62,0.08)] overflow-hidden transition-all duration-300 z-10 before:absolute before:inset-0 before:w-full before:h-full before:bg-[#E53E3E] before:-z-10 before:-translate-x-full before:transition-transform before:duration-300 hover:before:translate-x-0 hover:text-white hover:shadow-[0_8px_16px_rgba(229,62,62,0.3)] hover:-translate-y-0.5 active:translate-y-0 font-bold font-['Outfit',sans-serif] text-[13px] tracking-wide"
+              title="Sign Out"
+              onClick={() => setShowLogoutConfirm(true)}
+            >
+              Sign Out
+            </button>
         </div>
       </div>
 
       {feedback && (
         <div
-          className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[9999] px-4 py-3 rounded-[24px] flex items-center gap-3 shadow-[0_10px_30px_rgba(0,0,0,0.3)] animate-in fade-in slide-in-from-bottom-5 duration-300 font-['Outfit',sans-serif]"
+          className="fixed bottom-10 right-10 z-[9999] px-4 py-3 rounded-[24px] flex items-center gap-3 shadow-[0_10px_30px_rgba(0,0,0,0.3)] animate-in fade-in slide-in-from-bottom-5 duration-300 font-['Outfit',sans-serif]"
           style={{
             backgroundColor: "#0F172A",
             color: "#FFFFFF",
@@ -2132,9 +1604,16 @@ const ProfilePage: React.FC = () => {
         >
           <div
             className="w-6 h-6 rounded-full flex items-center justify-center shrink-0"
-            style={{ backgroundColor: feedback.tone === 'success' ? '#4ADE80' : feedback.tone === 'error' ? '#EF4444' : '#3B82F6' }}
+            style={{
+              backgroundColor:
+                feedback.tone === "success"
+                  ? "#4ADE80"
+                  : feedback.tone === "error"
+                    ? "#EF4444"
+                    : "#3B82F6",
+            }}
           >
-            {feedback.tone === 'success' ? (
+            {feedback.tone === "success" ? (
               <Check size={14} strokeWidth={3.5} color="#FFFFFF" />
             ) : (
               <AlertTriangle size={14} strokeWidth={3} color="#FFFFFF" />
@@ -2146,32 +1625,27 @@ const ProfilePage: React.FC = () => {
         </div>
       )}
 
-      <div className="flex flex-col gap-8 w-full" style={{ display: "block" }}>
-        <form
-          onSubmit={(e) => e.preventDefault()}
-          style={{
-            display: activeTab !== "admin" ? "flex" : "none",
-            flexDirection: "column",
-          }}
-        >
-          {renderRestaurantProfileContent()}
-        </form>
+      <div className="flex flex-col gap-8 w-full min-h-[100vh]" style={{ display: "block" }}>
+        {renderRestaurantProfileContent()}
 
-        {/* Features Tab */}
-        {renderFeaturesTab()}
-
-        <form
-          onSubmit={handleAdminSave}
-          style={{
-            display: activeTab === "admin" ? "flex" : "none",
-            flexDirection: "column",
-          }}
-        >
-          {renderAdminReadOnly()}
-        </form>
+        {/* Admin Profile Section */}
+        {activeTab === "details" && (
+          <>
+            <div
+              style={{
+                width: "100%",
+                height: "1px",
+                background: "#E2E8F0",
+                margin: "40px 0 20px 0",
+              }}
+              className="dark:bg-tk-border"
+            />
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {renderAdminReadOnly()}
+            </div>
+          </>
+        )}
       </div>
-
-      {renderEditModal()}
 
       {/* Logout Confirmation Modal */}
       {showLogoutConfirm && (
@@ -2196,6 +1670,34 @@ const ProfilePage: React.FC = () => {
                 onClick={handleLogout}
               >
                 Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCancelConfirm && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[100] p-5">
+          <div className="bg-white rounded-3xl p-8 max-w-[420px] w-full shadow-[0_24px_48px_rgba(0,0,0,0.12)] dark:bg-tk-bg-card dark:border dark:border-tk-border">
+            <div className="flex justify-between items-center mb-6">
+              <div className="profile-modal-icon logout-icon">
+                <AlertTriangle size={24} />
+              </div>
+              <h3 className="text-[20px] font-bold text-tk-text font-['Outfit',sans-serif] m-0">Discard Changes?</h3>
+            </div>
+            <p className="text-[#4A5568] text-[15px] font-['Outfit',sans-serif] leading-[1.5] mb-8 dark:text-tk-text-secondary">Are you sure you want to cancel? All unsaved changes will be lost.</p>
+            <div className="flex gap-3 justify-end">
+              <button
+                className="inline-flex items-center justify-center gap-2 min-h-[40px] px-4 border-none rounded-xl font-['Outfit',sans-serif] text-[13px] font-semibold cursor-pointer transition-all duration-200 bg-[#EDF2F7] text-[#2D3748] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none dark:bg-tk-bg-elevated dark:text-tk-text dark:hover:bg-tk-bg-hover"
+                onClick={() => setShowCancelConfirm(false)}
+              >
+                Keep Editing
+              </button>
+              <button
+                className="relative inline-flex items-center justify-center gap-2 min-h-[40px] px-6 border-none rounded-xl font-['Outfit',sans-serif] text-[13px] font-bold cursor-pointer overflow-hidden transition-all duration-300 z-10 bg-tk-burgundy text-white shadow-[0_4px_12px_rgba(139,58,30,0.3)] hover:-translate-y-0.5 before:absolute before:inset-0 before:w-full before:h-full before:bg-[#6B2A15] before:-z-10 before:-translate-x-full before:transition-transform before:duration-300 hover:before:translate-x-0 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+                onClick={handleConfirmCancel}
+              >
+                Discard Changes
               </button>
             </div>
           </div>

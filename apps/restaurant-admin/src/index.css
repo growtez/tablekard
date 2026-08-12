@@ -84,12 +84,12 @@
   --tk-burgundy-glow: rgba(199, 91, 58, 0.35);
 
   /* Backgrounds – Deep dark */
-  --tk-bg: #121212;
-  --tk-bg-card: #1E1E1E;
-  --tk-bg-elevated: #252525;
-  --tk-bg-hover: #2A2A2A;
-  --tk-bg-sidebar: #161616;
-  --tk-bg-surface: #0F0F0F;
+  --tk-bg: #191c1b;
+  --tk-bg-card: #202423;
+  --tk-bg-elevated: #252a28;
+  --tk-bg-hover: #2a302e;
+  --tk-bg-sidebar: #191c1b;
+  --tk-bg-surface: #191c1b;
 
   /* Text */
   --tk-text: #F0EDE8;
