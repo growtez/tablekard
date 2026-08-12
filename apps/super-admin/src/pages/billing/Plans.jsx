@@ -1,9 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
-import { Card, CardHeader, CardTitle } from '../../components/ui/Card';
-import { Badge } from '../../components/ui/Badge';
-import { CheckCircle, Zap, Award, Sparkles, Clock, Calendar, AlertCircle, Trash2, Plus } from 'lucide-react';
+import { CheckCircle, Zap, Award, Sparkles, Clock, Calendar, AlertCircle, Edit2, Plus, Search } from 'lucide-react';
 import { PlansPageSkeleton } from '../../components/ui/Skeleton';
+import EditPlanDrawer from '../../components/EditPlanDrawer';
 
 const ICON_MAP = {
     Clock: Clock,
@@ -12,15 +11,6 @@ const ICON_MAP = {
     Award: Award,
     Calendar: Calendar
 };
-
-const COLOR_OPTIONS = [
-    { value: '#1e40af', label: 'Deep Blue' },
-    { value: '#10b981', label: 'Emerald' },
-    { value: '#059669', label: 'Forest Green' },
-    { value: '#6d28d9', label: 'Deep Purple' },
-    { value: '#d97706', label: 'Amber/Orange' },
-    { value: '#dc2626', label: 'Red' }
-];
 
 const DEFAULT_PLANS = [
     {
@@ -113,25 +103,23 @@ const DEFAULT_PLANS = [
 export default function Plans({ setSyncAction, setHeaderData }) {
     const [plans, setPlans] = useState([]);
     const [trials, setTrials] = useState([]);
-    const [editedTrials, setEditedTrials] = useState([]);
-    const [editedPlans, setEditedPlans] = useState([]);
-    const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
     const [successMsg, setSuccessMsg] = useState(null);
     
-    // Feature temp states
-    const [newFeatureText, setNewFeatureText] = useState({});
-
-    const saveRef = useRef(null);
-    const cancelRef = useRef(null);
-    const startEditRef = useRef(null);
+    const [editingItem, setEditingItem] = useState(null);
+    const [allRestaurants, setAllRestaurants] = useState([]);
+    const [searchQueries, setSearchQueries] = useState({});
+    const [activeTab, setActiveTab] = useState('plans');
 
     const fetchData = async () => {
         setLoading(true);
         setError(null);
         try {
+            const { data: restData } = await supabase.from('restaurants').select('id, name');
+            setAllRestaurants(restData || []);
+
             const { data, error: err } = await supabase
                 .from('platform_settings')
                 .select('config')
@@ -140,10 +128,18 @@ export default function Plans({ setSyncAction, setHeaderData }) {
 
             if (err) throw err;
 
-            if (data?.config) { setPlans(data.config.plans || []); setTrials(data.config.trials || []); } else { setPlans(DEFAULT_PLANS); setTrials([]); }
+            if (data?.config) { 
+                setPlans(data.config.plans || []); 
+                setTrials(data.config.trials || []); 
+            } else { 
+                setPlans(DEFAULT_PLANS); 
+                setTrials([]); 
+            }
         } catch (err) {
             console.error('Error fetching plans:', err);
-            setError('Failed to fetch pricing plans from the database. Using defaults.'); setPlans(DEFAULT_PLANS); setTrials([]);
+            setError('Failed to fetch pricing plans from the database. Using defaults.'); 
+            setPlans(DEFAULT_PLANS); 
+            setTrials([]);
         } finally {
             setLoading(false);
         }
@@ -159,64 +155,83 @@ export default function Plans({ setSyncAction, setHeaderData }) {
         }
     }, [loading, setSyncAction]);
 
-    const handleStartEdit = () => {
-        setEditedPlans(JSON.parse(JSON.stringify(plans)));
-        setEditedTrials(JSON.parse(JSON.stringify(trials)));
-        setIsEditing(true);
+    useEffect(() => {
+        if (!setHeaderData || loading) return;
+
+        setHeaderData({
+            name: 'Pricing Plans',
+            showAvatar: false,
+            saving,
+        });
+
+        return () => setHeaderData(null);
+    }, [loading, saving, setHeaderData]);
+
+    const performSaveToDb = async (newPlans, newTrials) => {
+        setSaving(true);
         setError(null);
         setSuccessMsg(null);
-    };
-
-    const handleCancelEdit = () => {
-        setIsEditing(false);
-        setEditedPlans([]);
-        setEditedTrials([]);
-        setError(null);
-    };
-
-    
-    const handleTrialChange = (index, field, value) => {
-        const updated = [...editedTrials];
-        updated[index][field] = value;
-        setEditedTrials(updated);
-    };
-    
-    const handleAddTrial = () => {
-        const newTrial = {
-            id: 'trial_' + Date.now(),
-            name: 'New Trial',
-            duration_days: 14
-        };
-        setEditedTrials([...editedTrials, newTrial]);
-    };
-    
-    const handleDeleteTrial = (index) => {
-        if (!window.confirm('Are you sure you want to delete this trial plan?')) return;
-        const updated = editedTrials.filter((_, idx) => idx !== index);
-        setEditedTrials(updated);
-    };
-
-    const handlePlanChange = (index, field, value) => {
-        const updated = [...editedPlans];
-        updated[index][field] = value;
-        setEditedPlans(updated);
-    };
-
-    const handleFeatureDelete = (planIndex, featureIndex) => {
-        const updated = [...editedPlans];
-        updated[planIndex].features = updated[planIndex].features.filter((_, idx) => idx !== featureIndex);
-        setEditedPlans(updated);
-    };
-
-    const handleFeatureAdd = (planIndex) => {
-        const text = newFeatureText[planIndex]?.trim();
-        if (!text) return;
-
-        const updated = [...editedPlans];
-        updated[planIndex].features = [...updated[planIndex].features, text];
-        setEditedPlans(updated);
         
-        setNewFeatureText(prev => ({ ...prev, [planIndex]: '' }));
+        try {
+            const { error: err } = await supabase
+                .from('platform_settings')
+                .upsert(
+                    { 
+                        id: 'billing_plans', 
+                        config: { plans: newPlans, trials: newTrials }, 
+                        updated_at: new Date().toISOString() 
+                    }, 
+                    { onConflict: 'id' }
+                );
+
+            if (err) throw err;
+
+            setPlans(newPlans);
+            setTrials(newTrials);
+            setSuccessMsg('🎉 Pricing plans successfully synchronized to the database!');
+            setEditingItem(null);
+        } catch (err) {
+            console.error('Error saving plans:', err);
+            setError(err.message || 'Failed to save changes. Please verify permissions.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleDrawerSave = async (updatedData, type) => {
+        let newPlans = [...plans];
+        let newTrials = [...trials];
+
+        if (type === 'trial') {
+            if (editingItem.index !== undefined) {
+                newTrials[editingItem.index] = updatedData;
+            } else {
+                newTrials.push(updatedData);
+            }
+        } else {
+            if (editingItem.index !== undefined) {
+                newPlans[editingItem.index] = updatedData;
+            } else {
+                newPlans.push(updatedData);
+            }
+        }
+
+        await performSaveToDb(newPlans, newTrials);
+    };
+
+    const handleDrawerDelete = async (id, type) => {
+        if (!window.confirm(`Are you sure you want to delete this ${type}?`)) return;
+        
+        let newPlans = [...plans];
+        let newTrials = [...trials];
+
+        if (type === 'trial') {
+            newTrials = newTrials.filter(t => t.id !== id);
+        } else {
+            newPlans = newPlans.filter(p => p.id !== id);
+        }
+
+        await performSaveToDb(newPlans, newTrials);
     };
 
     const handleAddPlan = () => {
@@ -229,87 +244,23 @@ export default function Plans({ setSyncAction, setHeaderData }) {
             color: '#1e40af',
             description: 'Custom plan description here.',
             features: ['Core QR Ordering System'],
-            iconName: 'Zap'
+            iconName: 'Zap',
+            isNew: true
         };
-        setEditedPlans([...editedPlans, newPlan]);
+        setEditingItem({ data: newPlan, type: 'plan' });
     };
 
-    const handleDeletePlan = (index) => {
-        if (!window.confirm('Are you sure you want to delete this pricing plan? Restaurants will no longer be able to subscribe to it.')) return;
-        const updated = editedPlans.filter((_, idx) => idx !== index);
-        setEditedPlans(updated);
+    const handleAddTrial = () => {
+        const newTrial = {
+            id: 'trial_' + Date.now(),
+            name: 'New Trial',
+            duration_days: 14,
+            is_public: false,
+            isNew: true
+        };
+        setEditingItem({ data: newTrial, type: 'trial' });
     };
 
-    const handleSave = async () => {
-        setSaving(true);
-        setError(null);
-        setSuccessMsg(null);
-
-        // Validation
-        for (const plan of editedPlans) {
-            if (!plan.name.trim()) {
-                setError('All plans must have a name.');
-                setSaving(false);
-                return;
-            }
-            if (!plan.id.trim()) {
-                setError('All plans must have a unique identifier key.');
-                setSaving(false);
-                return;
-            }
-            if (plan.price < 0 || plan.duration <= 0) {
-                setError('Prices must be positive and duration must be at least 1 day.');
-                setSaving(false);
-                return;
-            }
-        }
-
-        try {
-            const { error: err } = await supabase
-                .from('platform_settings')
-                .upsert(
-                    { 
-                        id: 'billing_plans', 
-                        config: { plans: editedPlans, trials: editedTrials }, 
-                        updated_at: new Date().toISOString() 
-                    }, 
-                    { onConflict: 'id' }
-                );
-
-            if (err) throw err;
-
-            setPlans(editedPlans);
-            setTrials(editedTrials);
-            setIsEditing(false);
-            setSuccessMsg('🎉 Pricing plans successfully synchronized to the database!');
-        } catch (err) {
-            console.error('Error saving plans:', err);
-            setError(err.message || 'Failed to save changes. Please verify permissions.');
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    saveRef.current = handleSave;
-    cancelRef.current = handleCancelEdit;
-    startEditRef.current = handleStartEdit;
-
-    useEffect(() => {
-        if (!setHeaderData || loading) return;
-
-        setHeaderData({
-            name: 'Pricing Plans',
-            showAvatar: false,
-            onEdit: !isEditing ? () => startEditRef.current?.() : null,
-            isEditing,
-            onSave: () => saveRef.current?.(),
-            onCancel: () => cancelRef.current?.(),
-            saving,
-            editLabel: 'Edit Pricing Plans',
-        });
-
-        return () => setHeaderData(null);
-    }, [loading, isEditing, saving, setHeaderData]);
 
     if (loading) {
         return <PlansPageSkeleton />;
@@ -330,311 +281,161 @@ export default function Plans({ setSyncAction, setHeaderData }) {
                 </div>
             )}
 
-            {/* Active Plans Display (Read-Only) */}
-            {!isEditing ? (
-                <>
-                    
-                    {trials.length > 0 && (
-                        <div className="mb-10">
-                            <h2 className="text-xl font-bold text-text-main mb-5 flex items-center gap-2"><Sparkles size={20} className="text-emerald-500" /> Free Trial Plans</h2>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                                {trials.map(trial => (
-                                    <div key={trial.id} className="relative bg-surface rounded-2xl p-6 border-2 border-emerald-500/20 shadow-sm flex flex-col items-start hover:shadow-md transition-shadow">
-                                        <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center mb-4"><Zap size={20} /></div>
-                                        <h3 className="font-bold text-[16px] text-text-main mb-1">{trial.name}</h3>
-                                        <div className="text-[13px] text-text-muted mb-4">{trial.duration_days} Days Free</div>
-                                        <code className="text-[10px] text-text-muted bg-surface-hover px-1.5 py-0.5 rounded mt-auto border border-border">{trial.id}</code>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                    
-                    <h2 className="text-xl font-bold text-text-main mb-5 flex items-center gap-2"><Award size={20} className="text-accent-primary" /> Paid Subscription Packages</h2>
-<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                        {plans.map(plan => {
-                            const IconComponent = ICON_MAP[plan.iconName] || Clock;
-                            const perMonth = Math.round(plan.price / plan.duration);
+            {/* Tab Switcher */}
+            <div className="flex bg-surface-hover p-1 rounded-lg mb-8 border border-border max-w-[320px]">
+                <button
+                    className={`flex-1 p-2.5 rounded-md text-sm font-semibold transition-all border-none cursor-pointer flex items-center justify-center gap-2 ${activeTab === 'plans' ? 'bg-accent-primary text-white shadow-sm' : 'bg-transparent text-text-muted hover:bg-surface hover:text-text-main'}`}
+                    onClick={() => setActiveTab('plans')}
+                >
+                    <Award size={16} /> Paid Plans
+                </button>
+                <button
+                    className={`flex-1 p-2.5 rounded-md text-sm font-semibold transition-all border-none cursor-pointer flex items-center justify-center gap-2 ${activeTab === 'trials' ? 'bg-emerald-500 text-white shadow-sm' : 'bg-transparent text-text-muted hover:bg-surface hover:text-text-main'}`}
+                    onClick={() => setActiveTab('trials')}
+                >
+                    <Zap size={16} /> Trials
+                    {trials.length > 0 && <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${activeTab === 'trials' ? 'bg-white/20' : 'bg-emerald-500/10 text-emerald-600'}`}>{trials.length}</span>}
+                </button>
+            </div>
 
-                            return (
-                                <div
-                                    key={plan.id}
-                                    className="relative bg-surface rounded-2xl overflow-hidden flex flex-col transition-all hover:-translate-y-1 hover:shadow-xl"
-                                    style={{ border: plan.recommended ? `2px solid ${plan.color}` : '1px solid #e5e7eb', boxShadow: plan.recommended ? `0 8px 32px ${plan.color}22` : '0 2px 12px rgba(0,0,0,0.04)' }}
-                                >
-                                    {/* Recommended ribbon */}
-                                    {plan.recommended && (
-                                        <div className="absolute top-4 right-0 text-white text-[10px] font-bold px-3 py-1 rounded-l-full uppercase tracking-wider z-10" style={{ background: plan.color }}>
-                                            Best Value
-                                        </div>
-                                    )}
-
-                                    {/* Color top band */}
-                                    <div className="h-1.5 w-full" style={{ background: `linear-gradient(90deg, ${plan.color}, ${plan.color}88)` }} />
-
-                                    <div className="p-6 flex flex-col flex-1">
-                                        {/* Icon + Title */}
-                                        <div className="flex items-center gap-3 mb-5">
-                                            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${plan.color}18`, color: plan.color }}>
-                                                <IconComponent size={20} />
-                                            </div>
-                                            <div>
-                                                <h3 className="text-[15px] font-bold text-text-main m-0 leading-tight">{plan.name}</h3>
-                                                <p className="text-[11px] text-text-muted m-0 mt-0.5 leading-snug">{plan.description}</p>
-                                            </div>
-                                        </div>
-
-                                        {/* Pricing */}
-                                        <div className="mb-5 pb-5 border-b border-border">
-                                            <div className="flex items-baseline gap-1.5">
-                                                <span className="text-[38px] font-extrabold leading-none" style={{ color: plan.color }}>₹{plan.price.toLocaleString('en-IN')}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2 mt-1.5">
-                                                <span className="text-[12px] text-text-muted font-medium">{plan.duration} {plan.duration === 1 ? 'month' : 'months'} · ₹{perMonth}/mo</span>
-                                                {plan.savings > 0 && (
-                                                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-full" style={{ background: `${plan.color}18`, color: plan.color }}>
-                                                        Save {plan.savings}%
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        {/* Features */}
-                                        <div className="flex flex-col gap-2 flex-1">
-                                            {plan.features?.map(f => (
-                                                <div key={f} className="flex items-start gap-2.5">
-                                                    <CheckCircle size={13} className="shrink-0 mt-0.5" style={{ color: plan.color }} />
-                                                    <span className="text-[12px] text-text-main leading-snug">{f}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-
-                                        {/* Footer */}
-                                        <div className="mt-5 pt-4 border-t border-border flex items-center justify-between">
-                                            <code className="text-[10px] text-text-muted bg-surface-hover px-1.5 py-0.5 rounded">{plan.id}</code>
-                                            <span className="text-[11px] font-semibold" style={{ color: plan.color }}>{plan.duration}M Plan</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
+            {/* Trials Tab */}
+            {activeTab === 'trials' && (
+                <div className="animate-fade-in">
+                    <div className="flex justify-between items-center mb-5">
+                        <h2 className="text-xl font-bold text-text-main flex items-center gap-2"><Sparkles size={20} className="text-emerald-500" /> Free Trial Plans</h2>
+                        <button onClick={handleAddTrial} className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-none cursor-pointer flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-[13px] transition-colors">
+                            <Plus size={16} /> New Trial
+                        </button>
                     </div>
-
-                    
-                </>
-            ) : (
-                /* Editable Form Grid */
-                <div className="flex flex-col gap-8">
-                    
-                    <div className="mb-10">
-                        <h2 className="text-xl font-bold text-text-main mb-5 flex items-center gap-2"><Sparkles size={20} className="text-emerald-500" /> Edit Free Trial Plans</h2>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {editedTrials.map((trial, idx) => (
-                                <div key={trial.id} className="bg-surface rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.04)] p-6 relative animate-fade-in" style={{ border: '2px dashed #10b981' }}>
-                                    <button onClick={() => handleDeleteTrial(idx)} className="absolute top-5 right-5 bg-red-500/10 text-red-600 border border-red-500/20 p-2 rounded-lg cursor-pointer hover:bg-red-500/20 transition-colors" title="Delete Trial"><Trash2 size={16} /></button>
-                                    <h3 className="text-base font-bold mb-5 border-b border-border pb-2.5 flex items-center gap-2.5">
-                                        <Badge style={{ background: '#10b981', color: 'white' }}>Trial #{idx + 1}</Badge>
-                                        Editing {trial.name || 'Untitled Trial'}
-                                    </h3>
-                                    <div className="flex flex-col gap-4">
-                                        <div>
-                                            <label className="text-xs font-semibold text-text-muted">Trial Name</label>
-                                            <input value={trial.name} onChange={e => handleTrialChange(idx, 'name', e.target.value)} className="mt-1 w-full text-[13px] px-3 py-2 rounded-lg border border-border bg-surface text-text-main focus:outline-none focus:border-emerald-500" />
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="text-xs font-semibold text-text-muted">Duration (Days)</label>
-                                                <input type="number" value={trial.duration_days} onChange={e => handleTrialChange(idx, 'duration_days', parseInt(e.target.value) || 0)} className="mt-1 w-full text-[13px] px-3 py-2 rounded-lg border border-border bg-surface text-text-main focus:outline-none focus:border-emerald-500" />
-                                            </div>
-                                            <div>
-                                                <label className="text-xs font-semibold text-text-muted">Identifier Key (ID)</label>
-                                                <input value={trial.id} onChange={e => handleTrialChange(idx, 'id', e.target.value)} className="mt-1 w-full text-[13px] px-3 py-2 rounded-lg border border-border bg-surface text-text-main focus:outline-none focus:border-emerald-500" />
-                                            </div>
-                                        </div>
-                                    </div>
+                    {trials.length === 0 ? (
+                        <div className="text-center py-16 bg-surface rounded-2xl border border-dashed border-border">
+                            <Zap size={40} className="text-text-muted mx-auto mb-3 opacity-30" />
+                            <p className="text-text-muted text-sm font-medium mb-4">No trial plans created yet.</p>
+                            <button onClick={handleAddTrial} className="bg-emerald-500 text-white hover:bg-emerald-600 border-none cursor-pointer px-5 py-2.5 rounded-xl font-bold text-sm transition-colors shadow-sm">
+                                <Plus size={16} className="inline mr-1.5" /> Create First Trial
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                            {trials.map((trial, idx) => (
+                                <div key={trial.id} className="relative bg-surface rounded-2xl p-6 border-2 border-emerald-500/20 shadow-sm flex flex-col items-start hover:shadow-md transition-shadow group">
+                                    <button 
+                                        onClick={() => setEditingItem({ data: trial, type: 'trial', index: idx })}
+                                        className="absolute top-4 right-4 bg-surface text-text-muted hover:text-emerald-600 border border-border hover:border-emerald-500/30 w-8 h-8 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer shadow-sm"
+                                    >
+                                        <Edit2 size={14} />
+                                    </button>
+                                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center mb-4"><Zap size={20} /></div>
+                                    <h3 className="font-bold text-[16px] text-text-main mb-1">{trial.name}</h3>
+                                    <div className="text-[13px] text-text-muted mb-2">{trial.duration_days} Days Free</div>
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full mb-3 ${trial.visibility === 'global' ? 'bg-emerald-500/10 text-emerald-600' : trial.visibility === 'specific' ? 'bg-blue-500/10 text-blue-600' : 'bg-surface-hover text-text-muted'}`}>
+                                        {trial.visibility === 'global' ? '🌍 Global' : trial.visibility === 'specific' ? '🎯 Specific' : '🔒 Hidden'}
+                                    </span>
+                                    <code className="text-[10px] text-text-muted bg-surface-hover px-1.5 py-0.5 rounded mt-auto border border-border">{trial.id}</code>
                                 </div>
                             ))}
-                            <div onClick={handleAddTrial} className="border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center min-h-[260px] cursor-pointer transition-colors bg-black/5 hover:border-emerald-500 hover:bg-emerald-500/5 group">
-                                <Plus size={36} className="text-text-muted mb-3 group-hover:text-emerald-500 transition-colors" />
-                                <span className="font-semibold text-[15px] text-text-main">Create New Trial</span>
-                                <span className="text-xs text-text-muted mt-1">Add a free tier package</span>
-                            </div>
                         </div>
-                    </div>
-                    
-                    <h2 className="text-xl font-bold text-text-main mb-5 flex items-center gap-2"><Award size={20} className="text-accent-primary" /> Edit Paid Subscription Packages</h2>
-<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {editedPlans.map((plan, idx) => {
-                            return (
-                                <div
-                                    key={plan.id}
-                                    className="bg-surface rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.04)] p-6 relative animate-fade-in"
-                                    style={{
-                                        border: `2px dashed ${plan.color}`,
-                                    }}
-                                >
-                                    {/* Delete Plan Icon */}
-                                    <button 
-                                        onClick={() => handleDeletePlan(idx)}
-                                        className="absolute top-5 right-5 bg-red-500/10 text-red-600 border border-red-500/20 p-2 rounded-lg cursor-pointer hover:bg-red-500/20 transition-colors"
-                                        title="Delete Plan"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
-
-                                    <h3 className="text-base font-bold mb-5 border-b border-border pb-2.5 flex items-center gap-2.5">
-                                        <Badge style={{ background: plan.color, color: 'white' }}>Plan #{idx + 1}</Badge>
-                                        Editing {plan.name || 'Untitled Plan'}
-                                    </h3>
-
-                                    <div className="flex flex-col gap-4">
-                                        <div>
-                                            <label className="text-xs font-semibold text-text-muted">Package Name</label>
-                                            <input 
-                                                value={plan.name} 
-                                                onChange={e => handlePlanChange(idx, 'name', e.target.value)}
-                                                className="mt-1 w-full text-[13px] px-3 py-2 rounded-lg border border-border bg-surface text-text-main focus:outline-none focus:border-accent-primary"
-                                                placeholder="e.g. 6 Months Package"
-                                            />
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="text-xs font-semibold text-text-muted">Price (₹)</label>
-                                                <input 
-                                                    type="number"
-                                                    value={plan.price} 
-                                                    onChange={e => handlePlanChange(idx, 'price', parseInt(e.target.value) || 0)}
-                                                    className="mt-1 w-full text-[13px] px-3 py-2 rounded-lg border border-border bg-surface text-text-main focus:outline-none focus:border-accent-primary"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-xs font-semibold text-text-muted">Duration (Months)</label>
-                                                <input 
-                                                    type="number"
-                                                    value={plan.duration} 
-                                                    onChange={e => handlePlanChange(idx, 'duration', parseInt(e.target.value) || 1)}
-                                                    className="mt-1 w-full text-[13px] px-3 py-2 rounded-lg border border-border bg-surface text-text-main focus:outline-none focus:border-accent-primary"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="text-xs font-semibold text-text-muted">Savings %</label>
-                                                <input 
-                                                    type="number"
-                                                    value={plan.savings || 0} 
-                                                    onChange={e => handlePlanChange(idx, 'savings', parseInt(e.target.value) || 0)}
-                                                    className="mt-1 w-full text-[13px] px-3 py-2 rounded-lg border border-border bg-surface text-text-main focus:outline-none focus:border-accent-primary"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-xs font-semibold text-text-muted">Best Value Tag</label>
-                                                <div className="mt-2 flex items-center gap-2">
-                                                    <input 
-                                                        type="checkbox"
-                                                        id={`rec-${plan.id}`}
-                                                        checked={!!plan.recommended}
-                                                        onChange={e => handlePlanChange(idx, 'recommended', e.target.checked)}
-                                                        className="w-4 h-4 cursor-pointer"
-                                                    />
-                                                    <label htmlFor={`rec-${plan.id}`} className="text-[13px] cursor-pointer text-text-main">Featured Plan</label>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="text-xs font-semibold text-text-muted">Visual Icon</label>
-                                                <select 
-                                                    value={plan.iconName || 'Zap'}
-                                                    onChange={e => handlePlanChange(idx, 'iconName', e.target.value)}
-                                                    className="mt-1 w-full text-[13px] px-3 py-2 rounded-lg border border-border bg-surface text-text-main focus:outline-none focus:border-accent-primary"
-                                                >
-                                                    {Object.keys(ICON_MAP).map(k => (
-                                                        <option key={k} value={k}>{k}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <label className="text-xs font-semibold text-text-muted">Color Theme</label>
-                                                <select 
-                                                    value={plan.color}
-                                                    onChange={e => handlePlanChange(idx, 'color', e.target.value)}
-                                                    className="mt-1 w-full text-[13px] px-3 py-2 rounded-lg border border-border bg-surface text-text-main focus:outline-none focus:border-accent-primary"
-                                                >
-                                                    {COLOR_OPTIONS.map(opt => (
-                                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                            <label className="text-xs font-semibold text-text-muted">Short Description</label>
-                                            <textarea 
-                                                value={plan.description} 
-                                                onChange={e => handlePlanChange(idx, 'description', e.target.value)}
-                                                rows={2}
-                                                className="mt-1 w-full text-[13px] px-3 py-2 rounded-lg border border-border bg-surface text-text-main focus:outline-none focus:border-accent-primary resize-y"
-                                                placeholder="e.g. Standard medium-term package..."
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="text-xs font-semibold text-text-muted">Features list</label>
-                                            <div className="flex flex-col gap-1.5 mt-1.5 max-h-48 overflow-y-auto">
-                                                {plan.features?.map((f, fIdx) => (
-                                                    <div key={fIdx} className="flex items-center gap-1.5 bg-surface-hover px-2 py-1 rounded-md">
-                                                        <span className="flex-1 text-xs text-text-main">{f}</span>
-                                                        <button 
-                                                            onClick={() => handleFeatureDelete(idx, fIdx)}
-                                                            className="border-none bg-transparent text-red-600 p-0.5 cursor-pointer hover:bg-red-500/10 rounded"
-                                                        >
-                                                            <Trash2 size={12} />
-                                                        </button>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                            {/* Add feature line */}
-                                            <div className="flex gap-1.5 mt-2">
-                                                <input 
-                                                    value={newFeatureText[idx] || ''}
-                                                    onChange={e => setNewFeatureText(prev => ({ ...prev, [idx]: e.target.value }))}
-                                                    placeholder="Add feature..."
-                                                    className="flex-1 px-2 py-1 text-xs border border-dashed border-border rounded bg-surface text-text-main focus:outline-none focus:border-accent-primary"
-                                                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleFeatureAdd(idx); } }}
-                                                />
-                                                <button 
-                                                    onClick={() => handleFeatureAdd(idx)}
-                                                    className="bg-accent-primary border-none text-white px-2.5 py-1 rounded text-xs font-semibold cursor-pointer hover:bg-emerald-600"
-                                                >
-                                                    Add
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <div className="text-[11px] text-text-muted pt-3 border-t border-border flex justify-between items-center mt-2">
-                                            <span>Identifier Key: <strong>{plan.id}</strong></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
-
-                        {/* Add New Plan Card */}
-                        <div
-                            onClick={handleAddPlan}
-                            className="border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center min-h-[440px] cursor-pointer transition-colors bg-black/5 hover:border-accent-primary hover:bg-emerald-500/5 group"
-                        >
-                            <Plus size={36} className="text-text-muted mb-3 group-hover:text-accent-primary transition-colors" />
-                            <span className="font-semibold text-[15px] text-text-main">Create New Pricing Plan</span>
-                            <span className="text-xs text-text-muted mt-1">Add a customizable duration package</span>
-                        </div>
-                    </div>
+                    )}
                 </div>
             )}
+
+            {/* Paid Plans Tab */}
+            {activeTab === 'plans' && (
+                <div className="animate-fade-in">
+                    <div className="flex justify-between items-center mb-5">
+                        <h2 className="text-xl font-bold text-text-main flex items-center gap-2"><Award size={20} className="text-accent-primary" /> Paid Subscription Packages</h2>
+                        <button onClick={handleAddPlan} className="bg-accent-primary text-white hover:bg-accent-hover border-none cursor-pointer flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-[13px] transition-colors shadow-sm">
+                            <Plus size={16} /> New Package
+                        </button>
+                    </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                {plans.map((plan, idx) => {
+                    const IconComponent = ICON_MAP[plan.iconName] || Clock;
+                    const perMonth = Math.round(plan.price / plan.duration);
+
+                    return (
+                        <div
+                            key={plan.id}
+                            className="relative bg-surface rounded-2xl overflow-hidden flex flex-col transition-all hover:-translate-y-1 hover:shadow-xl group"
+                            style={{ border: plan.recommended ? `2px solid ${plan.color}` : '1px solid #e5e7eb', boxShadow: plan.recommended ? `0 8px 32px ${plan.color}22` : '0 2px 12px rgba(0,0,0,0.04)' }}
+                        >
+                            {/* Recommended ribbon */}
+                            {plan.recommended && (
+                                <div className="absolute top-4 right-0 text-white text-[10px] font-bold px-3 py-1 rounded-l-full uppercase tracking-wider z-10" style={{ background: plan.color }}>
+                                    Best Value
+                                </div>
+                            )}
+
+                            {/* Color top band */}
+                            <div className="h-1.5 w-full" style={{ background: `linear-gradient(90deg, ${plan.color}, ${plan.color}88)` }} />
+
+                            <div className="p-6 flex flex-col flex-1 relative">
+                                <button 
+                                    onClick={() => setEditingItem({ data: plan, type: 'plan', index: idx })}
+                                    className="absolute top-4 right-4 bg-surface text-text-muted border border-border w-8 h-8 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer shadow-sm z-20 hover:scale-105 hover:bg-surface-hover"
+                                >
+                                    <Edit2 size={14} style={{ color: plan.color }} />
+                                </button>
+                                
+                                {/* Icon + Title */}
+                                <div className="flex items-center gap-3 mb-5">
+                                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${plan.color}18`, color: plan.color }}>
+                                        <IconComponent size={20} />
+                                    </div>
+                                    <div className="pr-8">
+                                        <h3 className="text-[15px] font-bold text-text-main m-0 leading-tight">{plan.name}</h3>
+                                        <p className="text-[11px] text-text-muted m-0 mt-0.5 leading-snug">{plan.description}</p>
+                                    </div>
+                                </div>
+
+                                {/* Pricing */}
+                                <div className="mb-5 pb-5 border-b border-border">
+                                    <div className="flex items-baseline gap-1.5">
+                                        <span className="text-[38px] font-extrabold leading-none" style={{ color: plan.color }}>₹{plan.price.toLocaleString('en-IN')}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-1.5">
+                                        <span className="text-[12px] text-text-muted font-medium">{plan.duration} {plan.duration === 1 ? 'month' : 'months'} · ₹{perMonth}/mo</span>
+                                        {plan.savings > 0 && (
+                                            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full" style={{ background: `${plan.color}18`, color: plan.color }}>
+                                                Save {plan.savings}%
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Features */}
+                                <div className="flex flex-col gap-2 flex-1">
+                                    {plan.features?.map(f => (
+                                        <div key={f} className="flex items-start gap-2.5">
+                                            <CheckCircle size={13} className="shrink-0 mt-0.5" style={{ color: plan.color }} />
+                                            <span className="text-[12px] text-text-main leading-snug">{f}</span>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Footer */}
+                                <div className="mt-5 pt-4 border-t border-border flex items-center justify-between">
+                                    <code className="text-[10px] text-text-muted bg-surface-hover px-1.5 py-0.5 rounded">{plan.id}</code>
+                                    <span className="text-[11px] font-semibold" style={{ color: plan.color }}>{plan.duration}M Plan</span>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+                </div>
+            )}
+
+            {/* Edit Drawer */}
+            <EditPlanDrawer 
+                isOpen={!!editingItem} 
+                onClose={() => setEditingItem(null)} 
+                initialData={editingItem?.data} 
+                type={editingItem?.type}
+                onSave={handleDrawerSave}
+                onDelete={handleDrawerDelete}
+            />
         </div>
     );
 }

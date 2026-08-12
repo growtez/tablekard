@@ -5,7 +5,7 @@ import type { SubscriptionPaymentRecord } from '../../services/supabaseService';
 import { processSubscriptionPayment } from '../../services/subscriptionService';
 import type { Restaurant } from '@restaurant-saas/types';
 import { supabase } from '@restaurant-saas/supabase';
-import { CheckCircle2, Loader2, Calendar, X, Store, PauseCircle, Timer, AlertTriangle, CheckCircle } from 'lucide-react';
+import { CheckCircle2, Loader2, Calendar, X, Store, PauseCircle, Timer, AlertTriangle, CheckCircle, Sparkles } from 'lucide-react';
 
 // ──────────────────────────────────────────────
 // Plan definitions (display only — pricing enforced server-side)
@@ -138,6 +138,7 @@ const SubscriptionPage: React.FC = () => {
     const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
     const [payments, setPayments] = useState<SubscriptionPaymentRecord[]>([]);
     const [dbPlans, setDbPlans] = useState<Plan[]>(DEFAULT_PLANS);
+    const [dbTrials, setDbTrials] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isProcessing, setIsProcessing] = useState<number | null>(null);
     const [feedback, setFeedback] = useState<{ tone: 'success' | 'error' | 'info'; message: string } | null>(null);
@@ -173,7 +174,6 @@ const SubscriptionPage: React.FC = () => {
                 const config = data?.config as any;
                 if (config?.plans) {
                     const mapped = config.plans.map((p: any) => {
-                        // Fix incorrect data from platform_settings
                         let fixedDuration = p.duration;
                         let fixedPrice = p.price;
                         if (p.id === '6_months' || fixedDuration === 5) {
@@ -182,7 +182,6 @@ const SubscriptionPage: React.FC = () => {
                         } else if (p.id === '12_months' || fixedDuration === 11) {
                             fixedDuration = 12;
                         }
-                        
                         return {
                             duration: fixedDuration,
                             label: p.name,
@@ -195,6 +194,21 @@ const SubscriptionPage: React.FC = () => {
                     setDbPlans(mapped);
                 } else {
                     setDbPlans(DEFAULT_PLANS);
+                }
+
+                if (config?.trials) {
+                    const publicTrials = config.trials.filter((t: any) => {
+                        if (t.visibility === 'global') return true;
+                        if (t.visibility === 'specific') {
+                            const allowedIds = (t.allowed_restaurant_ids || '').split(',').map((id: string) => id.trim());
+                            if (allowedIds.includes(activeRestaurantId)) return true;
+                        }
+                        if (t.visibility === undefined && t.is_public === true) return true; // Legacy fallback
+                        return false;
+                    });
+                    setDbTrials(publicTrials);
+                } else {
+                    setDbTrials([]);
                 }
             } catch (plansErr) {
                 console.error('Failed to load DB plans, utilizing fallbacks:', plansErr);
@@ -348,6 +362,42 @@ const SubscriptionPage: React.FC = () => {
             </div>
 
             {/* SaaS Pricing Cards */}
+            
+            {dbTrials.length > 0 && (
+                <div className="mb-10">
+                    <div className="text-center mb-6">
+                        <h2 className="text-[24px] font-extrabold text-tk-text m-0 mb-2 tracking-tight text-tk-success">Start Your Free Trial</h2>
+                        <p className="text-[14px] text-tk-text-secondary m-0">Experience Tablekard risk-free before choosing a paid package.</p>
+                    </div>
+                    <div className="flex flex-wrap justify-center gap-6 max-w-[800px] mx-auto pt-2">
+                        {dbTrials.map(trial => (
+                            <div key={trial.id} className="bg-tk-bg-card border-2 border-tk-success/40 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all rounded-[24px] p-8 flex flex-col sm:flex-row items-center justify-between gap-8 relative overflow-hidden w-full text-left">
+                                <div className="absolute top-0 left-0 w-64 h-64 bg-tk-success/10 rounded-full blur-3xl -translate-y-1/2 -translate-x-1/4 pointer-events-none"></div>
+                                <div className="relative z-10 flex-1">
+                                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-tk-success/10 text-tk-success rounded-full text-[12px] font-bold uppercase tracking-wider mb-4">
+                                        <Sparkles size={14} /> Risk-Free
+                                    </div>
+                                    <h3 className="text-[28px] font-black text-tk-text m-0 mb-2">{trial.name}</h3>
+                                    <p className="text-[15px] text-tk-text-secondary m-0 max-w-md">
+                                        Get full access to all premium features for {trial.duration_days} days. No credit card required. Cancel anytime.
+                                    </p>
+                                </div>
+                                <div className="relative z-10 flex flex-col items-center shrink-0 min-w-[180px] bg-tk-bg-surface/50 p-6 rounded-2xl border border-tk-border">
+                                    <div className="text-[56px] font-black leading-none text-tk-success mb-1">{trial.duration_days}</div>
+                                    <div className="text-[12px] font-bold text-tk-text-secondary uppercase tracking-widest mb-4">Days Free</div>
+                                    <button
+                                        onClick={() => alert('Trial activation flow goes here! Contacting backend...')}
+                                        className="w-full py-3 rounded-xl font-bold text-[14px] uppercase tracking-wider bg-tk-success text-white hover:bg-tk-success/90 shadow-[0_8px_20px_rgba(16,185,129,0.25)] transition-colors"
+                                    >
+                                        Claim Trial
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             <div className="mb-10">
                 <div className="text-center mb-6">
                     <h2 className="text-[24px] font-extrabold text-tk-text m-0 mb-2 tracking-tight">Choose the Perfect Plan</h2>
