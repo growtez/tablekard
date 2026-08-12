@@ -47,7 +47,12 @@ const LoginPage = () => {
     setIsLoading(true);
     setError('');
     try {
-      await sendMagicLink(email, oauthRedirectUrl);
+      const baseRedirectUrl = import.meta.env.VITE_SUPABASE_REDIRECT_URL || window.location.origin;
+      const magicLinkRedirectUrl = redirectTo !== '/' 
+        ? new URL(redirectTo, baseRedirectUrl).toString()
+        : baseRedirectUrl;
+
+      await sendMagicLink(email, magicLinkRedirectUrl);
       setMagicLinkSent(true);
     } catch (err) {
       console.error('Magic link error:', err);
@@ -126,7 +131,7 @@ const LoginPage = () => {
 
             {magicLinkSent && (
               <div className="success-message">
-                ✨ Magic link sent! Please check your inbox.
+                We've sent a secure sign-in link to your email.
               </div>
             )}
           </div>

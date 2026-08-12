@@ -7,6 +7,8 @@ import { TableRowsSkeleton } from '../components/ui/Skeleton';
 export default function Restaurants({ openDrawer, setSyncAction }) {
     const navigate = useNavigate();
     const [restaurants, setRestaurants] = useState([]);
+    const [billingPlans, setBillingPlans] = useState([]);
+    const [trialPlans, setTrialPlans] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
@@ -33,18 +35,85 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
         setLoading(true);
         setError(null);
         try {
-            const { data, error } = await supabase
-                .from('restaurants')
-                .select('*')
-                .order('created_at', { ascending: false });
+            const [restRes, plansRes] = await Promise.all([
+                supabase.from('restaurants').select('*').order('created_at', { ascending: false }),
+                supabase.from('platform_settings').select('config').eq('id', 'billing_plans').maybeSingle()
+            ]);
 
-            if (error) throw error;
-            setRestaurants(data || []);
+            if (restRes.error) throw restRes.error;
+            setRestaurants(restRes.data || []);
+
+            if (plansRes.data?.config) {
+                setBillingPlans(plansRes.data.config.plans || []);
+                setTrialPlans(plansRes.data.config.trials || [
+                    { id: '14_days_trial', name: '14 Days Free Trial', duration_days: 14 }
+                ]);
+            }
         } catch (err) {
-            console.error('Failed to fetch restaurants:', err);
+            console.error('Failed to fetch data:', err);
             setError(err.message);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleStatusChange = async (resId, newStatusVal) => {
+        let status = newStatusVal;
+        let subType = undefined;
+        let subStatus = undefined;
+
+        if (newStatusVal.startsWith('active-trial-')) {
+            const trialId = newStatusVal.replace('active-trial-', '');
+            const selectedTrial = trialPlans.find(t => t.id === trialId);
+            status = 'active';
+            subType = selectedTrial ? selectedTrial.name : 'trial plan';
+            subStatus = false;
+
+            if (selectedTrial) {
+                const endsAt = new Date();
+                const days = selectedTrial.duration_days || 14;
+                endsAt.setDate(endsAt.getDate() + days);
+                updates.subscription_end_at = endsAt.toISOString();
+            }
+        } else if (newStatusVal.startsWith('active-plan-')) {
+            const planId = newStatusVal.replace('active-plan-', '');
+            const selectedPlan = billingPlans.find(p => p.id === planId);
+            status = 'active';
+            subType = selectedPlan ? selectedPlan.name : 'paid plan';
+            subStatus = true;
+            
+            if (selectedPlan) {
+                const endsAt = new Date();
+                const durationMonths = selectedPlan.duration || 1;
+                endsAt.setMonth(endsAt.getMonth() + durationMonths);
+                updates.subscription_end_at = endsAt.toISOString();
+            }
+        } else if (newStatusVal === 'active-custom') {
+            status = 'active';
+            subStatus = true;
+        } else {
+            status = newStatusVal;
+        }
+
+        const updates = { status };
+        if (subType !== undefined) {
+            updates.subscription_type = subType;
+            updates.subscription_status = subStatus;
+        }
+
+        // Optimistic update
+        setRestaurants(prev => prev.map(r => r.id === resId ? { ...r, ...updates } : r));
+
+        try {
+            const { error: updateError } = await supabase
+                .from('restaurants')
+                .update(updates)
+                .eq('id', resId);
+            
+            if (updateError) throw updateError;
+        } catch (err) {
+            console.error('Error updating status:', err);
+            fetchRestaurants(); // revert on error
         }
     };
 
@@ -259,10 +328,52 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                                                 <span className="font-semibold text-text-main text-[13px] group-hover:text-accent-primary transition-colors max-w-[220px] truncate block" title={res.name}>{res.name}</span>
                                             </div>
                                         </td>
-                                        <td className="py-2.5 px-4 align-middle">
-                                            <span className={`text-[12px] font-bold ${res.status === 'active' ? 'text-green-600' : res.status === 'pending' ? 'text-amber-600' : 'text-red-600'}`}>
-                                                {(res.status || 'pending').toUpperCase()}
-                                            </span>
+                                        <td className="py-2.5 px-4 align-middle" onClick={(e) => e.stopPropagation()}>
+                                            <select 
+                                                value={
+                                                    res.status === 'active' 
+                                                        ? (res.subscription_status 
+                                                            ? (billingPlans.find(p => p.name?.toLowerCase() === res.subscription_type?.toLowerCase())?.id 
+                                                                ? `active-plan-${billingPlans.find(p => p.name?.toLowerCase() === res.subscription_type?.toLowerCase()).id}` 
+                                                                : (res.subscription_type?.toLowerCase().includes('pro') && billingPlans.length === 0 ? 'active-plan-custom' : 'active-custom'))
+                                                            : (trialPlans.find(t => t.name?.toLowerCase() === res.subscription_type?.toLowerCase())?.id
+                                                                ? `active-trial-${trialPlans.find(t => t.name?.toLowerCase() === res.subscription_type?.toLowerCase()).id}`
+                                                                : 'active-trial-14_days_trial'))
+                                                        : (res.status || 'pending')
+                                                }
+                                                onChange={(e) => handleStatusChange(res.id, e.target.value)}
+                                                className={`text-[11px] font-bold px-2 py-1 rounded border-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-accent-primary ${
+                                                    res.status === 'active' ? 'bg-green-500/10 text-green-600' : 
+                                                    res.status === 'pending' ? 'bg-amber-500/10 text-amber-600' : 
+                                                    'bg-red-500/10 text-red-600'
+                                                }`}
+                                            >
+                                                <option value="pending" className="text-amber-600 font-bold">PENDING</option>
+                                                
+                                                {trialPlans.map(trial => (
+                                                    <option key={`active-trial-${trial.id}`} value={`active-trial-${trial.id}`} className="text-green-600 font-bold">
+                                                        ACTIVE ({trial.name?.toUpperCase()})
+                                                    </option>
+                                                ))}
+                                                
+                                                {billingPlans.length > 0 ? (
+                                                    billingPlans.map(plan => (
+                                                        <option key={`active-plan-${plan.id}`} value={`active-plan-${plan.id}`} className="text-green-600 font-bold">
+                                                            ACTIVE ({plan.name?.toUpperCase()})
+                                                        </option>
+                                                    ))
+                                                ) : (
+                                                    <option value="active-plan-custom" className="text-green-600 font-bold">ACTIVE (PAID PLAN)</option>
+                                                )}
+
+                                                {res.status === 'active' && res.subscription_status && 
+                                                 !billingPlans.some(p => p.name?.toLowerCase() === res.subscription_type?.toLowerCase()) && (
+                                                    <option value="active-custom" className="text-green-600 font-bold">ACTIVE ({res.subscription_type?.toUpperCase() || 'CUSTOM'})</option>
+                                                )}
+
+                                                <option value="suspended" className="text-red-600 font-bold">SUSPENDED</option>
+                                                <option value="rejected" className="text-red-600 font-bold">REJECTED</option>
+                                            </select>
                                         </td>
                                         <td className="py-2.5 px-4 align-middle">
                                             <span className={`text-[12px] font-bold ${res.subscription_status ? 'text-blue-600' : 'text-text-muted opacity-80'}`}>
@@ -338,10 +449,52 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                                         </div>
                                         <span className="font-semibold text-text-main text-[13px] group-hover:text-accent-primary transition-colors truncate" title={res.name}>{res.name}</span>
                                     </div>
-                                    <div className="flex items-center gap-1.5 shrink-0">
-                                        <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded bg-surface-hover border border-border/40 ${res.status === 'active' ? 'text-green-600' : res.status === 'pending' ? 'text-amber-600' : 'text-red-600'}`}>
-                                            {(res.status || 'pending').toUpperCase()}
-                                        </span>
+                                    <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                                        <select 
+                                            value={
+                                                res.status === 'active' 
+                                                    ? (res.subscription_status 
+                                                        ? (billingPlans.find(p => p.name?.toLowerCase() === res.subscription_type?.toLowerCase())?.id 
+                                                            ? `active-plan-${billingPlans.find(p => p.name?.toLowerCase() === res.subscription_type?.toLowerCase()).id}` 
+                                                            : (res.subscription_type?.toLowerCase().includes('pro') && billingPlans.length === 0 ? 'active-plan-custom' : 'active-custom'))
+                                                        : (trialPlans.find(t => t.name?.toLowerCase() === res.subscription_type?.toLowerCase())?.id
+                                                            ? `active-trial-${trialPlans.find(t => t.name?.toLowerCase() === res.subscription_type?.toLowerCase()).id}`
+                                                            : 'active-trial-14_days_trial'))
+                                                    : (res.status || 'pending')
+                                            }
+                                            onChange={(e) => handleStatusChange(res.id, e.target.value)}
+                                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded border border-border/40 cursor-pointer focus:outline-none focus:ring-1 focus:ring-accent-primary ${
+                                                res.status === 'active' ? 'bg-green-500/10 text-green-600' : 
+                                                res.status === 'pending' ? 'bg-amber-500/10 text-amber-600' : 
+                                                'bg-red-500/10 text-red-600'
+                                            }`}
+                                        >
+                                            <option value="pending" className="text-amber-600 font-bold">PENDING</option>
+                                            
+                                            {trialPlans.map(trial => (
+                                                <option key={`active-trial-${trial.id}`} value={`active-trial-${trial.id}`} className="text-green-600 font-bold">
+                                                    ACTIVE ({trial.name?.toUpperCase()})
+                                                </option>
+                                            ))}
+                                            
+                                            {billingPlans.length > 0 ? (
+                                                billingPlans.map(plan => (
+                                                    <option key={`active-plan-${plan.id}`} value={`active-plan-${plan.id}`} className="text-green-600 font-bold">
+                                                        ACTIVE ({plan.name?.toUpperCase()})
+                                                    </option>
+                                                ))
+                                            ) : (
+                                                <option value="active-plan-custom" className="text-green-600 font-bold">ACTIVE (PAID PLAN)</option>
+                                            )}
+
+                                            {res.status === 'active' && res.subscription_status && 
+                                                !billingPlans.some(p => p.name?.toLowerCase() === res.subscription_type?.toLowerCase()) && (
+                                                <option value="active-custom" className="text-green-600 font-bold">ACTIVE ({res.subscription_type?.toUpperCase() || 'CUSTOM'})</option>
+                                            )}
+
+                                            <option value="suspended" className="text-red-600 font-bold">SUSPENDED</option>
+                                            <option value="rejected" className="text-red-600 font-bold">REJECTED</option>
+                                        </select>
                                     </div>
                                 </div>
                                 

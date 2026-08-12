@@ -67,15 +67,22 @@ serve(async (req: Request) => {
 
         // 4. Send email via Brevo REST API
         const emailHtml = `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                <h2 style="color: #8B3A1E;">Sign in to Tablekard</h2>
-                <p>Hello,</p>
-                <p>Use the secure link below to sign in to your Tablekard account.</p>
-                <div style="text-align: center; margin: 30px 0;">
-                    <a href="${actionLink}" style="background-color: #8B3A1E; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Sign In</a>
+            <div style="font-family: 'Inter', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
+                <div style="background-color: #ffffff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); border: 1px solid #f3f4f6;">
+                    <h2 style="color: #111827; margin-top: 0; font-size: 24px; text-align: center; font-weight: 600;">Sign in to Tablekard</h2>
+                    <p style="color: #4b5563; font-size: 16px; line-height: 1.6; text-align: center; margin-bottom: 30px;">
+                        Click the secure button below to seamlessly sign in to your account and continue your dining experience.
+                    </p>
+                    <div style="text-align: center; margin: 35px 0;">
+                        <a href="${actionLink}" style="background-color: #8B3A1E; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; display: inline-block; box-shadow: 0 2px 4px rgba(139, 58, 30, 0.2);">Sign In Securely</a>
+                    </div>
+                    <p style="color: #9ca3af; font-size: 14px; text-align: center; margin-bottom: 0; line-height: 1.5;">
+                        This link will securely sign you in. If you didn't request this, you can safely ignore this email.
+                    </p>
                 </div>
-                <p>If you did not request this link, you can safely ignore this email.</p>
-                <p>Best regards,<br>The Tablekard Team</p>
+                <div style="text-align: center; margin-top: 24px; color: #9ca3af; font-size: 12px;">
+                    <p>The Tablekard Team</p>
+                </div>
             </div>
         `;
 
