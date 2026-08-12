@@ -41,6 +41,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
     const [menuItems, setMenuItems] = useState([]);
     const [payments, setPayments] = useState([]);
     const [admins, setAdmins] = useState([]);
+    const [billingPlans, setBillingPlans] = useState({ plans: [], trials: [] });
     const [activeTab, setActiveTab] = useState('stats');
 
     // Payments list state
@@ -97,7 +98,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                 .select('*')
                 .eq('restaurant_id', id)
                 .order('created_at', { ascending: false });
-            
+
             if (error) throw error;
             setPayments(data || []);
         } catch (err) {
@@ -134,7 +135,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                         `)
                         .eq('restaurant_id', id)
                         .eq('role', 'admin');
-                    
+
                     if (adminError) throw adminError;
                     setAdmins(adminData?.map(d => d.profiles).filter(Boolean) || []);
                 } catch (err) {
@@ -142,7 +143,22 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                 }
             };
 
-            await Promise.all([fetchMenuData(), fetchPayments(), fetchAdmins()]);
+            const fetchBillingPlans = async () => {
+                try {
+                    const { data, error } = await supabase
+                        .from('platform_settings')
+                        .select('config')
+                        .eq('id', 'billing_plans')
+                        .maybeSingle();
+                    if (!error && data?.config) {
+                        setBillingPlans(data.config);
+                    }
+                } catch (err) {
+                    console.error('Failed to fetch billing plans:', err);
+                }
+            };
+
+            await Promise.all([fetchMenuData(), fetchPayments(), fetchAdmins(), fetchBillingPlans()]);
         } catch (err) {
             setError('Failed to fetch restaurant details: ' + err.message);
         } finally {
@@ -278,7 +294,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
     };
 
     const handleExportPayments = () => {
-        const csvContent = "data:text/csv;charset=utf-8," 
+        const csvContent = "data:text/csv;charset=utf-8,"
             + "ID,Date,Duration,Status,Amount\n"
             + filteredPayments.map(p => `${p.id},${new Date(p.created_at).toLocaleDateString()},${p.plan_duration} Days,${p.status},${p.amount}`).join("\n");
         const encodedUri = encodeURI(csvContent);
@@ -370,11 +386,11 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
     };
 
     const STATUS_COLORS = {
-        active:    '#10b981',
-        approved:  '#3b82f6',
-        pending:   '#f59e0b',
+        active: '#10b981',
+        approved: '#3b82f6',
+        pending: '#f59e0b',
         suspended: '#ef4444',
-        rejected:  '#71717a',
+        rejected: '#71717a',
     };
 
     return (
@@ -402,7 +418,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
 
             <div className="tab-content">
                 {['general', 'branding', 'story', 'admin'].includes(activeTab) && (
-                    <RestaurantProfileView 
+                    <RestaurantProfileView
                         restaurant={restaurant}
                         formData={formData}
                         updateField={updateField}
@@ -483,166 +499,183 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                     </div>
                 )}
 
-                {activeTab === 'billing' && (
-                    <div className="flex flex-col gap-6">
-                        <div className="max-w-md">
-                            <Card className="bg-gradient-to-br from-surface to-amber-500/5">
-                                <CardHeader><CardTitle>Subscription Status</CardTitle></CardHeader>
-                                <div className="text-center py-4">
-                                    <div className="text-xs font-bold text-text-muted uppercase tracking-wider">Current Plan</div>
-                                    <div className="text-3xl font-extrabold text-amber-500 mt-2">{restaurant.subscription_type?.toUpperCase() || 'LITE PLAN'}</div>
-                                    <Badge variant={restaurant.subscription_status ? 'success' : 'warning'} className="mt-3 px-4 py-1.5 text-xs">
-                                        {restaurant.subscription_status ? 'ACTIVE & PAID' : 'TRIAL PERIOD'}
-                                    </Badge>
-                                </div>
-                                <div className="space-y-3 mt-4 pt-4 border-t border-border">
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-text-muted">Valid Until</span>
-                                        <span className="font-semibold">{restaurant.subscription_end_at ? new Date(restaurant.subscription_end_at).toLocaleDateString('en-IN', { dateStyle: 'long' }) : 'N/A'}</span>
+                {activeTab === 'billing' && (() => {
+                    const getPlanName = () => {
+                        if (!restaurant?.subscription_type || restaurant?.subscription_type === 'lite_plan' || restaurant?.subscription_type === 'lite') return 'NO PLAN SELECTED';
+                        const { plans = [], trials = [] } = billingPlans;
+                        const plan = plans.find(p => p.id === restaurant.subscription_type);
+                        if (plan) return plan.name.toUpperCase();
+                        const trial = trials.find(t => t.id === restaurant.subscription_type);
+                        if (trial) return trial.name.toUpperCase();
+                        return restaurant.subscription_type.toUpperCase().replace(/_/g, ' ');
+                    };
+
+                    const isTrial = () => {
+                        if (!restaurant?.subscription_type) return false;
+                        const { trials = [] } = billingPlans;
+                        if (trials.find(t => t.id === restaurant?.subscription_type)) return true;
+                        return false;
+                    };
+
+                    const planName = getPlanName();
+                    const isLite = planName === 'NO PLAN SELECTED';
+
+                    let badgeText = '';
+                    let badgeVariant = '';
+
+                    if (restaurant?.subscription_status) {
+                        badgeText = 'ACTIVE & PAID';
+                        badgeVariant = 'success';
+                    } else if (isTrial()) {
+                        badgeText = 'TRIAL PERIOD';
+                        badgeVariant = 'warning';
+                    } else if (isLite) {
+                        badgeText = 'FREE TIER (ACTIVE)';
+                        badgeVariant = 'info';
+                    } else {
+                        badgeText = 'EXPIRED / INACTIVE';
+                        badgeVariant = 'error';
+                    }
+
+                    return (
+                        <div className="flex flex-col gap-6">
+
+
+                            <div className="w-full space-y-3">
+                                <div className="flex flex-col md:flex-row md:items-center gap-3 w-full bg-surface p-3 md:p-2 rounded-xl shadow-sm border border-border">
+                                    <div className="relative w-full md:max-w-[260px] shrink-0">
+                                        <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
+                                        <input
+                                            type="text"
+                                            placeholder="Search Payments..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            className="w-full py-2 pl-4 pr-10 bg-surface-hover border border-border rounded-full text-text-main text-[13px] focus:outline-none focus:ring-1 focus:ring-accent-primary transition-all"
+                                        />
                                     </div>
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-text-muted">Auto Renewal</span>
-                                        <Badge variant="secondary">ENABLED</Badge>
-                                    </div>
-                                </div>
-                            </Card>
-                        </div>
-                        
-                        <div className="w-full space-y-3">
-                            <div className="flex flex-col md:flex-row md:items-center gap-3 w-full bg-surface p-3 md:p-2 rounded-xl shadow-sm border border-border">
-                                <div className="relative w-full md:max-w-[260px] shrink-0">
-                                    <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
-                                    <input
-                                        type="text"
-                                        placeholder="Search Payments..."
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-full py-2 pl-4 pr-10 bg-surface-hover border border-border rounded-full text-text-main text-[13px] focus:outline-none focus:ring-1 focus:ring-accent-primary transition-all"
-                                    />
-                                </div>
-                                <div className="flex-1 flex items-center gap-1.5 overflow-x-auto no-scrollbar min-w-0 px-2 md:border-x md:border-border/50 py-1 md:py-0">
-                                    {(searchQuery || filterStatus !== 'all' || sortBy !== 'newest') ? (
-                                        <>
-                                            <span className="text-[11px] text-text-muted font-medium uppercase tracking-wider shrink-0 mr-1">Active:</span>
-                                            {searchQuery && (
-                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 text-[11px] font-medium border border-blue-500/20 shrink-0">
-                                                    "{searchQuery}"
-                                                    <button onClick={() => setSearchQuery('')} className="hover:text-blue-800 focus:outline-none flex items-center justify-center bg-transparent border-none cursor-pointer p-0 ml-1"><X size={10} /></button>
-                                                </span>
-                                            )}
-                                            {filterStatus !== 'all' && (
-                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 text-[11px] font-medium border border-blue-500/20 shrink-0">
-                                                    {filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1)}
-                                                    <button onClick={() => setFilterStatus('all')} className="hover:text-blue-800 focus:outline-none flex items-center justify-center bg-transparent border-none cursor-pointer p-0 ml-1"><X size={10} /></button>
-                                                </span>
-                                            )}
-                                            {sortBy !== 'newest' && (
-                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 text-[11px] font-medium border border-blue-500/20 shrink-0">
-                                                    {sortBy === 'oldest' ? 'Oldest' : sortBy === 'amount' ? 'Amount' : sortBy === 'status' ? 'Status' : sortBy}
-                                                    <button onClick={() => setSortBy('newest')} className="hover:text-blue-800 focus:outline-none flex items-center justify-center bg-transparent border-none cursor-pointer p-0 ml-1"><X size={10} /></button>
-                                                </span>
-                                            )}
-                                            <button 
-                                                onClick={() => { setSearchQuery(''); setFilterStatus('all'); setSortBy('newest'); setPage(1); }}
-                                                className="text-[11px] text-text-muted hover:text-red-500 transition-colors ml-1 bg-transparent border-none cursor-pointer font-medium shrink-0"
-                                            >
-                                                Clear
-                                            </button>
-                                        </>
-                                    ) : (
-                                        <span className="text-[11px] text-text-muted italic opacity-50">No active filters</span>
-                                    )}
-                                </div>
-                                <div className="flex items-center justify-between md:justify-start gap-1 shrink-0 md:border-x md:border-border/50 px-3 py-1.5 md:py-0 w-full md:w-auto">
-                                    <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
-                                        <ChevronLeft size={14} />
-                                    </button>
-                                    <div className="flex items-center justify-center gap-1 w-[80px]">
-                                        {getPaginationPages().map((p, i) => p === '...' ? (
-                                            <div key={`ellipsis-${i}`} className="w-6 h-6 flex items-center justify-center text-[11px] text-text-muted">…</div>
-                                        ) : (
-                                            <button key={p} onClick={() => setPage(p)} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
-                                        ))}
-                                    </div>
-                                    <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
-                                        <ChevronRight size={14} />
-                                    </button>
-                                </div>
-                                <div className="flex flex-wrap items-center gap-2 shrink-0 w-full md:w-auto">
-                                    <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1); }} className="py-1.5 px-2 rounded-lg border border-border bg-surface text-text-main text-[12px] focus:outline-none focus:ring-1 focus:ring-accent-primary cursor-pointer flex-1 md:flex-none">
-                                        {[8, 20, 50, 100].map(n => <option key={n} value={n}>{n} / page</option>)}
-                                    </select>
-                                    <div className="relative group flex-1 md:flex-none">
-                                        <button 
-                                            onClick={() => setIsFilterOpen(!isFilterOpen)}
-                                            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface text-text-main hover:bg-surface-hover transition-colors text-[12px] font-medium"
-                                        >
-                                            <Filter size={14} className="text-accent-primary" /> Filter
-                                        </button>
-                                        <div className={`absolute right-0 top-full mt-2 w-48 bg-surface border border-border rounded-xl shadow-lg transition-all z-50 flex flex-col overflow-hidden py-1 ${
-                                            isFilterOpen ? 'opacity-100 visible' : 'opacity-0 invisible group-hover:opacity-100 group-hover:visible'
-                                        }`}>
-                                            {['all', 'paid', 'pending', 'error'].map(status => (
-                                                <button key={status} onClick={() => { setFilterStatus(status); setIsFilterOpen(false); }} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${filterStatus === status ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>
-                                                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                                    <div className="flex-1 flex items-center gap-1.5 overflow-x-auto no-scrollbar min-w-0 px-2 md:border-x md:border-border/50 py-1 md:py-0">
+                                        {(searchQuery || filterStatus !== 'all' || sortBy !== 'newest') ? (
+                                            <>
+                                                <span className="text-[11px] text-text-muted font-medium uppercase tracking-wider shrink-0 mr-1">Active:</span>
+                                                {searchQuery && (
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 text-[11px] font-medium border border-blue-500/20 shrink-0">
+                                                        "{searchQuery}"
+                                                        <button onClick={() => setSearchQuery('')} className="hover:text-blue-800 focus:outline-none flex items-center justify-center bg-transparent border-none cursor-pointer p-0 ml-1"><X size={10} /></button>
+                                                    </span>
+                                                )}
+                                                {filterStatus !== 'all' && (
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 text-[11px] font-medium border border-blue-500/20 shrink-0">
+                                                        {filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1)}
+                                                        <button onClick={() => setFilterStatus('all')} className="hover:text-blue-800 focus:outline-none flex items-center justify-center bg-transparent border-none cursor-pointer p-0 ml-1"><X size={10} /></button>
+                                                    </span>
+                                                )}
+                                                {sortBy !== 'newest' && (
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 text-[11px] font-medium border border-blue-500/20 shrink-0">
+                                                        {sortBy === 'oldest' ? 'Oldest' : sortBy === 'amount' ? 'Amount' : sortBy === 'status' ? 'Status' : sortBy}
+                                                        <button onClick={() => setSortBy('newest')} className="hover:text-blue-800 focus:outline-none flex items-center justify-center bg-transparent border-none cursor-pointer p-0 ml-1"><X size={10} /></button>
+                                                    </span>
+                                                )}
+                                                <button
+                                                    onClick={() => { setSearchQuery(''); setFilterStatus('all'); setSortBy('newest'); setPage(1); }}
+                                                    className="text-[11px] text-text-muted hover:text-red-500 transition-colors ml-1 bg-transparent border-none cursor-pointer font-medium shrink-0"
+                                                >
+                                                    Clear
                                                 </button>
+                                            </>
+                                        ) : (
+                                            <span className="text-[11px] text-text-muted italic opacity-50">No active filters</span>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center justify-between md:justify-start gap-1 shrink-0 md:border-x md:border-border/50 px-3 py-1.5 md:py-0 w-full md:w-auto">
+                                        <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
+                                            <ChevronLeft size={14} />
+                                        </button>
+                                        <div className="flex items-center justify-center gap-1 w-[80px]">
+                                            {getPaginationPages().map((p, i) => p === '...' ? (
+                                                <div key={`ellipsis-${i}`} className="w-6 h-6 flex items-center justify-center text-[11px] text-text-muted">…</div>
+                                            ) : (
+                                                <button key={p} onClick={() => setPage(p)} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
                                             ))}
                                         </div>
+                                        <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
+                                            <ChevronRight size={14} />
+                                        </button>
                                     </div>
-                                    <button 
-                                        onClick={handleExportPayments}
-                                        className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-accent-primary text-white hover:bg-accent-hover transition-colors text-[12px] font-medium shadow-sm cursor-pointer border-none flex-1 md:flex-none"
-                                    >
-                                        <Download size={14} /> Export
-                                    </button>
+                                    <div className="flex flex-wrap items-center gap-2 shrink-0 w-full md:w-auto">
+                                        <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1); }} className="py-1.5 px-2 rounded-lg border border-border bg-surface text-text-main text-[12px] focus:outline-none focus:ring-1 focus:ring-accent-primary cursor-pointer flex-1 md:flex-none">
+                                            {[8, 20, 50, 100].map(n => <option key={n} value={n}>{n} / page</option>)}
+                                        </select>
+                                        <div className="relative group flex-1 md:flex-none">
+                                            <button
+                                                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                                                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface text-text-main hover:bg-surface-hover transition-colors text-[12px] font-medium"
+                                            >
+                                                <Filter size={14} className="text-accent-primary" /> Filter
+                                            </button>
+                                            <div className={`absolute right-0 top-full mt-2 w-48 bg-surface border border-border rounded-xl shadow-lg transition-all z-50 flex flex-col overflow-hidden py-1 ${isFilterOpen ? 'opacity-100 visible' : 'opacity-0 invisible group-hover:opacity-100 group-hover:visible'
+                                                }`}>
+                                                {['all', 'paid', 'pending', 'error'].map(status => (
+                                                    <button key={status} onClick={() => { setFilterStatus(status); setIsFilterOpen(false); }} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${filterStatus === status ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>
+                                                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={handleExportPayments}
+                                            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-accent-primary text-white hover:bg-accent-hover transition-colors text-[12px] font-medium shadow-sm cursor-pointer border-none flex-1 md:flex-none"
+                                        >
+                                            <Download size={14} /> Export
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div className="w-full bg-surface rounded-xl shadow-sm border border-border overflow-hidden">
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left border-collapse whitespace-nowrap table-fixed min-w-[700px]">
-                                        <thead>
-                                            <tr className="border-b border-border bg-surface-hover/30">
-                                                <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[30%]" onClick={() => toggleSort('newest')}>
-                                                    <div className="flex items-center gap-2 cursor-pointer">Date {getSortIcon('newest')}</div>
-                                                </th>
-                                                <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[20%]">Duration</th>
-                                                <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[20%]" onClick={() => toggleSort('status')}>
-                                                    <div className="flex items-center gap-2 cursor-pointer">Status {getSortIcon('status')}</div>
-                                                </th>
-                                                <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[30%] text-right" onClick={() => toggleSort('amount')}>
-                                                    <div className="flex items-center justify-end gap-2 cursor-pointer">Amount {getSortIcon('amount')}</div>
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {filteredPayments.length === 0 ? (
-                                                <tr><td colSpan={4} className="text-center py-12 text-text-muted text-[13px]">No payment records found matching your criteria.</td></tr>
-                                            ) : (
-                                                pagedPayments.map(payment => (
-                                                    <tr 
-                                                        key={payment.id} 
-                                                        onClick={() => navigate(`/subscriptions/${payment.id}`)}
-                                                        className="group even:bg-bg hover:bg-surface-hover border-b border-border/40 last:border-b-0 cursor-pointer transition-colors"
-                                                    >
-                                                        <td className="py-3 px-4 text-[13px] text-text-main">{new Date(payment.created_at).toLocaleDateString()}</td>
-                                                        <td className="py-3 px-4 text-[13px] text-text-muted">{payment.plan_duration} Days</td>
-                                                        <td className="py-3 px-4 text-[13px]">
-                                                            <Badge variant={payment.status === 'paid' ? 'success' : (payment.status === 'pending' ? 'warning' : 'error')}>
-                                                                {payment.status.toUpperCase()}
-                                                            </Badge>
-                                                        </td>
-                                                        <td className="py-3 px-4 text-[13px] font-semibold text-text-main text-right">₹{Number(payment.amount).toLocaleString()}</td>
-                                                    </tr>
-                                                ))
-                                            )}
-                                        </tbody>
-                                    </table>
+                                <div className="w-full bg-surface rounded-xl shadow-sm border border-border overflow-hidden">
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-left border-collapse whitespace-nowrap table-fixed min-w-[700px]">
+                                            <thead>
+                                                <tr className="border-b border-border bg-surface-hover/30">
+                                                    <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[30%]" onClick={() => toggleSort('newest')}>
+                                                        <div className="flex items-center gap-2 cursor-pointer">Date {getSortIcon('newest')}</div>
+                                                    </th>
+                                                    <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[20%]">Duration</th>
+                                                    <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[20%]" onClick={() => toggleSort('status')}>
+                                                        <div className="flex items-center gap-2 cursor-pointer">Status {getSortIcon('status')}</div>
+                                                    </th>
+                                                    <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[30%] text-right" onClick={() => toggleSort('amount')}>
+                                                        <div className="flex items-center justify-end gap-2 cursor-pointer">Amount {getSortIcon('amount')}</div>
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {filteredPayments.length === 0 ? (
+                                                    <tr><td colSpan={4} className="text-center py-12 text-text-muted text-[13px]">No payment records found matching your criteria.</td></tr>
+                                                ) : (
+                                                    pagedPayments.map(payment => (
+                                                        <tr
+                                                            key={payment.id}
+                                                            onClick={() => navigate(`/subscriptions/${payment.id}`)}
+                                                            className="group even:bg-bg hover:bg-surface-hover border-b border-border/40 last:border-b-0 cursor-pointer transition-colors"
+                                                        >
+                                                            <td className="py-3 px-4 text-[13px] text-text-main">{new Date(payment.created_at).toLocaleDateString()}</td>
+                                                            <td className="py-3 px-4 text-[13px] text-text-muted">{payment.plan_duration} Days</td>
+                                                            <td className="py-3 px-4 text-[13px]">
+                                                                <Badge variant={payment.status === 'paid' ? 'success' : (payment.status === 'pending' ? 'warning' : 'error')}>
+                                                                    {payment.status.toUpperCase()}
+                                                                </Badge>
+                                                            </td>
+                                                            <td className="py-3 px-4 text-[13px] font-semibold text-text-main text-right">₹{Number(payment.amount).toLocaleString()}</td>
+                                                        </tr>
+                                                    ))
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                )}
+                    );
+                })()}
 
                 {(activeTab === 'orders' || activeTab === 'stats') && (
                     <OrderHistoryTab restaurantId={id} viewMode={activeTab} />

@@ -96,16 +96,7 @@ const isValidUrl = (value: string): boolean => {
   }
 };
 
-const formatLabel = (value?: string | null): string => {
-  if (!value) {
-    return "N/A";
-  }
 
-  return value
-    .replace(/_/g, " ")
-    .toLowerCase()
-    .replace(/\b\w/g, (char) => char.toUpperCase());
-};
 
 const createRestaurantFormState = (
   restaurant: Restaurant

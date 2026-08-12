@@ -281,7 +281,7 @@ export default function SubscriptionDetail({ setHeaderData }) {
                                 <div className="space-y-4">
                                     <div className="flex justify-between items-center">
                                         <span className="text-sm text-text-muted">Subscription Tier</span>
-                                        <Badge variant="info">{data.restaurants?.subscription_type || 'Lite Plan'}</Badge>
+                                        <Badge variant="info">{data.restaurants?.subscription_type || 'No Plan'}</Badge>
                                     </div>
                                     <div className="flex justify-between items-center">
                                         <span className="text-sm text-text-muted">Contact Email</span>
