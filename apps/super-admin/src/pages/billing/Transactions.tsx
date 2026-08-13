@@ -80,7 +80,7 @@ export default function Transactions({ setSyncAction }) {
             const merged = [
                 ...(payments || []).map(normalisePayment),
                 ...filteredCash.map(normaliseOrder),
-            ].sort((a, b) => new Date(b.date) - new Date(a.date));
+            ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
             setData(merged);
         } catch (err) {
@@ -104,8 +104,8 @@ export default function Transactions({ setSyncAction }) {
             (filterGateway === 'counter' && row.gateway === 'Pay at Counter');
         return ms && ms2 && ms3;
     }).sort((a, b) => {
-        if (sortBy === 'newest') return new Date(b.date) - new Date(a.date);
-        if (sortBy === 'oldest') return new Date(a.date) - new Date(b.date);
+        if (sortBy === 'newest') return new Date(b.date).getTime() - new Date(a.date).getTime();
+        if (sortBy === 'oldest') return new Date(a.date).getTime() - new Date(b.date).getTime();
         if (sortBy === 'amount') return b.amount - a.amount;
         return 0;
     });
@@ -219,7 +219,7 @@ export default function Transactions({ setSyncAction }) {
                         {getPaginationPages().map((p, i) => p === '...' ? (
                             <div key={`ellipsis-${i}`} className="w-6 h-6 flex items-center justify-center text-[11px] text-text-muted">…</div>
                         ) : (
-                            <button key={p} onClick={() => setPage(p)} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
+                            <button key={p} onClick={() => setPage(Number(p))} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
                         ))}
                     </div>
                     <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
@@ -299,9 +299,9 @@ export default function Transactions({ setSyncAction }) {
                         {loading ? (
                             <TableRowsSkeleton rows={perPage} columns={6} />
                         ) : error ? (
-                            <tr><td colSpan="6" className="text-center py-10 text-red-500 text-[13px] font-medium">{error}</td></tr>
+                            <tr><td colSpan={6} className="text-center py-10 text-red-500 text-[13px] font-medium">{error}</td></tr>
                         ) : paged.length === 0 ? (
-                            <tr><td colSpan="6" className="text-center py-10 text-text-muted text-[13px]">No transactions found.</td></tr>
+                            <tr><td colSpan={6} className="text-center py-10 text-text-muted text-[13px]">No transactions found.</td></tr>
                         ) : (
                             <>
                                 {paged.map(row => (
@@ -348,7 +348,7 @@ export default function Transactions({ setSyncAction }) {
                                 ))}
                                 {perPage - paged.length > 0 && Array.from({ length: perPage - paged.length }).map((_, idx) => (
                                     <tr key={`empty-${idx}`} className="border-b border-border/40 last:border-b-0 opacity-0 pointer-events-none">
-                                        <td colSpan="6" className="py-2.5 px-4 align-middle">
+                                        <td colSpan={6} className="py-2.5 px-4 align-middle">
                                             <div className="h-8"></div>
                                         </td>
                                     </tr>

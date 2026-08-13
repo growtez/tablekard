@@ -4,16 +4,31 @@ import { supabase } from '../supabaseClient';
 import { Mail, Phone, Calendar, Search, ExternalLink, Filter, SlidersHorizontal, ArrowUpDown, ArrowUp, ArrowDown, Download, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { TableRowsSkeleton } from '../components/ui/Skeleton';
 
-export default function Restaurants({ openDrawer, setSyncAction }) {
+import { DashboardProps } from './Dashboard';
+
+export interface Restaurant {
+    id: string;
+    name: string;
+    status: string;
+    contact_email?: string;
+    created_at: string;
+    logo_url?: string;
+    subscription_type?: string;
+    subscription_status?: string;
+    subscription_end_at?: string;
+    contact_phone?: string;
+}
+
+export default function Restaurants({ openDrawer, setSyncAction }: { openDrawer: (drawer: string) => void } & DashboardProps) {
     const navigate = useNavigate();
-    const [restaurants, setRestaurants] = useState([]);
-    const [billingPlans, setBillingPlans] = useState([]);
-    const [trialPlans, setTrialPlans] = useState([]);
+    const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+    const [billingPlans, setBillingPlans] = useState<any[]>([]);
+    const [trialPlans, setTrialPlans] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
     const [sortBy, setSortBy] = useState('newest');
-    const [error, setError] = useState(null);
+    const [error, setError] = useState<string | null>(null);
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(8);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -57,10 +72,11 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
         }
     };
 
-    const handleStatusChange = async (resId, newStatusVal) => {
+    const handleStatusChange = async (resId: string, newStatusVal: string) => {
         let status = newStatusVal;
-        let subType = undefined;
-        let subStatus = undefined;
+        let subType;
+        let subStatus;
+        const updates: any = {};
 
         if (newStatusVal.startsWith('active-trial-')) {
             const trialId = newStatusVal.replace('active-trial-', '');
@@ -73,7 +89,7 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                 const endsAt = new Date();
                 const days = selectedTrial.duration_days || 14;
                 endsAt.setDate(endsAt.getDate() + days);
-                updates.subscription_end_at = endsAt.toISOString();
+                (updates as any).subscription_end_at = endsAt.toISOString();
             }
         } else if (newStatusVal.startsWith('active-plan-')) {
             const planId = newStatusVal.replace('active-plan-', '');
@@ -86,7 +102,7 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                 const endsAt = new Date();
                 const durationMonths = selectedPlan.duration || 1;
                 endsAt.setMonth(endsAt.getMonth() + durationMonths);
-                updates.subscription_end_at = endsAt.toISOString();
+                (updates as any).subscription_end_at = endsAt.toISOString();
             }
         } else if (newStatusVal === 'active-custom') {
             status = 'active';
@@ -95,7 +111,7 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
             status = newStatusVal;
         }
 
-        const updates = { status };
+        updates.status = status;
         if (subType !== undefined) {
             updates.subscription_type = subType;
             updates.subscription_status = subStatus;
@@ -127,8 +143,8 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
             return matchesSearch && matchesFilter;
         })
         .sort((a, b) => {
-            if (sortBy === 'newest') return new Date(b.created_at) - new Date(a.created_at);
-            if (sortBy === 'oldest') return new Date(a.created_at) - new Date(b.created_at);
+            if (sortBy === 'newest') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+            if (sortBy === 'oldest') return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
             if (sortBy === 'name') return a.name.localeCompare(b.name);
             if (sortBy === 'status') return (a.status || '').localeCompare(b.status || '');
         });
@@ -237,7 +253,7 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                         {getPaginationPages().map((p, i) => p === '...' ? (
                             <div key={`ellipsis-${i}`} className="w-6 h-6 flex items-center justify-center text-[11px] text-text-muted">…</div>
                         ) : (
-                            <button key={p} onClick={() => setPage(p)} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
+                            <button key={p} onClick={() => setPage(Number(p))} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
                         ))}
                     </div>
                     <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
@@ -303,7 +319,7 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                             <TableRowsSkeleton rows={perPage} columns={5} />
                         ) : filteredRestaurants.length === 0 ? (
                             <tr>
-                                <td colSpan="5" className="text-center py-10 text-text-muted text-[13px]">
+                                <td colSpan={5} className="text-center py-10 text-text-muted text-[13px]">
                                     No restaurants found matching your criteria.
                                 </td>
                             </tr>
@@ -314,10 +330,9 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                                         key={res.id}
                                         className="group even:bg-bg hover:bg-surface-hover border-b border-border/40 last:border-b-0 cursor-pointer transition-colors"
                                         onClick={(e) => {
-                                            if (e.target.closest('a')) {
-                                                return;
+                                            if (!(e.target as Element).closest('.actions-cell') && !(e.target as Element).closest('button') && !(e.target as Element).closest('select')) {
+                                                navigate(`/restaurants/${res.id}`, { state: { name: res.name, logo_url: res.logo_url } });
                                             }
-                                            navigate(`/restaurants/${res.id}`, { state: { name: res.name, logo_url: res.logo_url } });
                                         }}
                                     >
                                         <td className="py-2.5 px-4 align-middle">
@@ -328,7 +343,7 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                                                 <span className="font-semibold text-text-main text-[13px] group-hover:text-accent-primary transition-colors max-w-[220px] truncate block" title={res.name}>{res.name}</span>
                                             </div>
                                         </td>
-                                        <td className="py-2.5 px-4 align-middle" onClick={(e) => e.stopPropagation()}>
+                                        <td className="py-2.5 px-4 align-middle actions-cell">
                                             <select 
                                                 value={
                                                     res.status === 'active' 
@@ -392,7 +407,7 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                                 ))}
                                 {perPage - pagedRestaurants.length > 0 && Array.from({ length: perPage - pagedRestaurants.length }).map((_, idx) => (
                                     <tr key={`empty-${idx}`} className="border-b border-border/40 last:border-b-0 opacity-0 pointer-events-none">
-                                        <td colSpan="5" className="py-2.5 px-4 align-middle">
+                                        <td colSpan={5} className="py-2.5 px-4 align-middle">
                                             <div className="h-8"></div>
                                         </td>
                                     </tr>
@@ -431,10 +446,7 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                             <div
                                 key={res.id}
                                 className="p-4 hover:bg-surface-hover border-b border-border/40 last:border-b-0 cursor-pointer transition-colors flex flex-col gap-2.5 active:bg-surface-hover/80"
-                                onClick={(e) => {
-                                    if (e.target.closest('a')) {
-                                        return;
-                                    }
+                                onClick={() => {
                                     navigate(`/restaurants/${res.id}`, { state: { name: res.name, logo_url: res.logo_url } });
                                 }}
                             >

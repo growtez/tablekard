@@ -134,7 +134,7 @@ export interface Restaurant {
     allowPayAtCounter?: boolean;
 
   };
-  subscriptionStatus?: boolean;
+  subscriptionStatus?: string;
   subscriptionType?: string | null;
   subscriptionEndAt?: IsoDateString | null;
   profileUrls?: string[] | null;

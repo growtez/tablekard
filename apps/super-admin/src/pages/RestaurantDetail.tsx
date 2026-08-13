@@ -17,6 +17,57 @@ import RestaurantProfileView from '../components/RestaurantProfileView';
 import { DetailPageSkeleton } from '../components/ui/Skeleton';
 import OrderHistoryTab from '../components/OrderHistoryTab';
 
+interface Restaurant {
+    id: string;
+    name: string;
+    status: string;
+    logo_url: string;
+    subscription_type: string;
+    subscription_status: string;
+    [key: string]: any;
+}
+
+interface MenuCategory {
+    id: string;
+    name: string;
+    active: boolean;
+    sort_order: number;
+}
+
+interface MenuItem {
+    id: string;
+    name: string;
+    price: number;
+    image_url: string;
+    category_id: string;
+    is_available: boolean;
+}
+
+interface Payment {
+    id: string;
+    created_at: string;
+    plan_duration: number;
+    status: string;
+    amount: number;
+}
+
+interface AdminProfile {
+    id: string;
+    name: string;
+    email: string;
+    avatar_url: string | null;
+}
+
+interface BillingPlans {
+    plans: any[];
+    trials: any[];
+}
+
+interface RestaurantDetailProps {
+    setHeaderData?: (data: any) => void;
+    setSyncAction?: (action: any) => void;
+}
+
 const TIME_OPTIONS = [
     { value: 'Closed', label: 'Closed' }
 ];
@@ -30,34 +81,34 @@ for (let h = 0; h < 24; h++) {
     }
 }
 
-export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
-    const { id } = useParams();
+export default function RestaurantDetail({ setHeaderData, setSyncAction }: RestaurantDetailProps) {
+    const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const location = useLocation();
-    const [restaurant, setRestaurant] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [categories, setCategories] = useState([]);
-    const [menuItems, setMenuItems] = useState([]);
-    const [payments, setPayments] = useState([]);
-    const [admins, setAdmins] = useState([]);
-    const [billingPlans, setBillingPlans] = useState({ plans: [], trials: [] });
-    const [activeTab, setActiveTab] = useState('stats');
+    const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
+    const [categories, setCategories] = useState<MenuCategory[]>([]);
+    const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+    const [payments, setPayments] = useState<Payment[]>([]);
+    const [admins, setAdmins] = useState<AdminProfile[]>([]);
+    const [billingPlans, setBillingPlans] = useState<BillingPlans>({ plans: [], trials: [] });
+    const [activeTab, setActiveTab] = useState<string>('stats');
 
     // Payments list state
-    const [searchQuery, setSearchQuery] = useState('');
-    const [page, setPage] = useState(1);
-    const [perPage, setPerPage] = useState(8);
-    const [filterStatus, setFilterStatus] = useState('all');
-    const [sortBy, setSortBy] = useState('newest');
-    const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState<string>('');
+    const [page, setPage] = useState<number>(1);
+    const [perPage, setPerPage] = useState<number>(8);
+    const [filterStatus, setFilterStatus] = useState<string>('all');
+    const [sortBy, setSortBy] = useState<string>('newest');
+    const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
 
-    const [editingCard, setEditingCard] = useState(null);
-    const [formData, setFormData] = useState({});
-    const [saving, setSaving] = useState(false);
+    const [editingCard, setEditingCard] = useState<string | null>(null);
+    const [formData, setFormData] = useState<Partial<Restaurant>>({});
+    const [saving, setSaving] = useState<boolean>(false);
 
-    const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
-    const [isAddItemOpen, setIsAddItemOpen] = useState(false);
+    const [isAddCategoryOpen, setIsAddCategoryOpen] = useState<boolean>(false);
+    const [isAddItemOpen, setIsAddItemOpen] = useState<boolean>(false);
 
     useEffect(() => {
         if (id) {
@@ -137,7 +188,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                         .eq('role', 'admin');
 
                     if (adminError) throw adminError;
-                    setAdmins(adminData?.map(d => d.profiles).filter(Boolean) || []);
+                    setAdmins((adminData?.map(d => Array.isArray(d.profiles) ? d.profiles[0] : d.profiles) as unknown as AdminProfile[]).filter(Boolean) || []);
                 } catch (err) {
                     console.error('Failed to fetch admins:', err);
                 }
@@ -236,8 +287,8 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
         }
     }, [restaurant, location.state, id, setHeaderData]);
 
-    const updateField = (field, value) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+    const updateField = (field: string, value: any) => {
+        setFormData((prev: any) => ({ ...prev, [field]: value }));
     };
 
     if (loading) {
@@ -264,8 +315,8 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
             return matchesSearch && matchesFilter;
         })
         .sort((a, b) => {
-            if (sortBy === 'newest') return new Date(b.created_at) - new Date(a.created_at);
-            if (sortBy === 'oldest') return new Date(a.created_at) - new Date(b.created_at);
+            if (sortBy === 'newest') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+            if (sortBy === 'oldest') return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
             if (sortBy === 'amount') return Number(b.amount) - Number(a.amount);
             if (sortBy === 'status') return (a.status || '').localeCompare(b.status || '');
             return 0;
@@ -282,12 +333,12 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
         return [safePage, '...', totalPages];
     };
 
-    const toggleSort = (newSort) => {
+    const toggleSort = (newSort: string) => {
         if (sortBy === newSort) setSortBy(newSort === 'newest' ? 'oldest' : 'newest');
         else setSortBy(newSort);
     };
 
-    const getSortIcon = (field) => {
+    const getSortIcon = (field: string) => {
         if (sortBy === field) return <ArrowUp size={14} />;
         if (field === 'newest' && sortBy === 'oldest') return <ArrowDown size={14} />;
         return <ArrowUpDown size={14} style={{ opacity: 0.3 }} />;
@@ -306,7 +357,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
         document.body.removeChild(link);
     };
 
-    const renderCardHeader = (title, cardId) => (
+    const renderCardHeader = (title: string, cardId: string) => (
         <CardHeader>
             <div className="flex justify-between items-center w-full">
                 <CardTitle className="m-0">{title}</CardTitle>
@@ -326,7 +377,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
         </CardHeader>
     );
 
-    const renderField = (label, field, cardId, type = 'text', options = []) => {
+    const renderField = (label: string | null, field: string, cardId: string, type = 'text', options: any[] = []) => {
         const isEditingCard = editingCard === cardId;
         return (
             <div className="flex-1 w-full space-y-1">
@@ -428,7 +479,6 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                         editingCard={editingCard}
                         setEditingCard={setEditingCard}
                         activeTab={activeTab}
-                        admins={admins}
                     />
                 )}
 
@@ -457,7 +507,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                                 </CardHeader>
                                 <div className="flex flex-wrap gap-2">
                                     {categories.map(cat => (
-                                        <Badge key={cat.id} variant={cat.active ? 'success' : 'secondary'}>{cat.name}</Badge>
+                                        <Badge key={cat.id} variant={cat.active ? 'success' : 'default'}>{cat.name}</Badge>
                                     ))}
                                 </div>
                             </Card>
@@ -594,7 +644,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                                             {getPaginationPages().map((p, i) => p === '...' ? (
                                                 <div key={`ellipsis-${i}`} className="w-6 h-6 flex items-center justify-center text-[11px] text-text-muted">…</div>
                                             ) : (
-                                                <button key={p} onClick={() => setPage(p)} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
+                                                <button key={p} onClick={() => setPage(Number(p))} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
                                             ))}
                                         </div>
                                         <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">

@@ -1,6 +1,18 @@
+import { HTMLAttributes } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { LucideIcon } from 'lucide-react';
 
-export const StatCard = ({ label, value, icon: Icon, color = 'green', change = '+0%', path, className = '', ...props }) => {
+export interface StatCardProps extends HTMLAttributes<HTMLDivElement> {
+    label: string;
+    value: string | number;
+    icon: LucideIcon;
+    color?: 'green' | 'purple' | 'blue' | 'orange';
+    change?: string;
+    path?: string;
+    className?: string;
+}
+
+export const StatCard = ({ label, value, icon: Icon, color = 'green', change = '+0%', path, className = '', ...props }: StatCardProps) => {
     const navigate = useNavigate();
     const isClickable = !!path;
 

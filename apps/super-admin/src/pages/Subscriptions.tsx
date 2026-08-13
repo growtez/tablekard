@@ -3,13 +3,31 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { Search, Filter, SlidersHorizontal, Download, X, ChevronLeft, ChevronRight, Clock, Store, Calendar, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { TableRowsSkeleton } from '../components/ui/Skeleton';
+import { DashboardProps } from './Dashboard';
 
-export default function Subscriptions({ setSyncAction }) {
+export interface SubscriptionPayment {
+    id: string;
+    plan_duration: number;
+    amount: number;
+    currency: string;
+    status: string;
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    paid_at: string;
+    starts_at: string;
+    ends_at: string;
+    created_at: string;
+    restaurant_id: string;
+    restaurants?: any;
+    profiles?: any;
+}
+
+export default function Subscriptions({ setSyncAction }: DashboardProps) {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
-    const [data, setData] = useState([]);
+    const [data, setData] = useState<SubscriptionPayment[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [error, setError] = useState<string | null>(null);
     const [search, setSearch] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
     const [filterMonth, setFilterMonth] = useState(searchParams.get('month') || 'all');
@@ -62,8 +80,8 @@ export default function Subscriptions({ setSyncAction }) {
     useEffect(() => { if (setSyncAction) setSyncAction({ onSync: fetchData, loading }); }, [loading, setSyncAction]);
 
     const getAvailableMonths = () => {
-        const monthsMap = {};
-        data.forEach(row => {
+        const monthsMap: Record<string, string> = {};
+        data.forEach((row) => {
             if (!row.created_at) return;
             const d = new Date(row.created_at);
             const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -73,7 +91,7 @@ export default function Subscriptions({ setSyncAction }) {
         return Object.entries(monthsMap).sort((a, b) => b[0].localeCompare(a[0]));
     };
 
-    const handleMonthChange = (val) => {
+    const handleMonthChange = (val: string) => {
         setPage(1);
         if (val === 'all') {
             searchParams.delete('month');
@@ -98,8 +116,8 @@ export default function Subscriptions({ setSyncAction }) {
             return matchSearch && matchStatus && matchMonth;
         })
         .sort((a, b) => {
-            if (sortBy === 'newest') return new Date(b.created_at) - new Date(a.created_at);
-            if (sortBy === 'oldest') return new Date(a.created_at) - new Date(b.created_at);
+            if (sortBy === 'newest') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+            if (sortBy === 'oldest') return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
             if (sortBy === 'amount') return Number(b.amount) - Number(a.amount);
             return 0;
         });
@@ -210,17 +228,17 @@ export default function Subscriptions({ setSyncAction }) {
 
                 {/* Pagination */}
                 <div className="flex items-center justify-between md:justify-start gap-1 shrink-0 md:border-x md:border-border/50 px-3 py-1.5 md:py-0 w-full md:w-auto">
-                    <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
+                    <button onClick={() => setPage(p => Math.max(1, Number(p) - 1))} disabled={safePage === 1} className="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-text-muted hover:bg-surface-hover hover:text-text-main disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent cursor-pointer shadow-sm">
                         <ChevronLeft size={14} />
                     </button>
                     <div className="flex items-center justify-center gap-1 w-[80px]">
                         {getPaginationPages().map((p, i) => p === '...' ? (
                             <div key={`ellipsis-${i}`} className="w-6 h-6 flex items-center justify-center text-[11px] text-text-muted">…</div>
                         ) : (
-                            <button key={p} onClick={() => setPage(p)} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
+                            <button key={p} onClick={() => setPage(Number(p))} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
                         ))}
                     </div>
-                    <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
+                    <button onClick={() => setPage(p => Math.min(totalPages, Number(p) + 1))} disabled={safePage === totalPages} className="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-text-muted hover:bg-surface-hover hover:text-text-main disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent cursor-pointer shadow-sm">
                         <ChevronRight size={14} />
                     </button>
                 </div>
@@ -303,9 +321,9 @@ export default function Subscriptions({ setSyncAction }) {
                         {loading ? (
                             <TableRowsSkeleton rows={perPage} columns={7} />
                         ) : error ? (
-                            <tr><td colSpan="7" className="text-center py-10 text-red-500 text-[13px] font-medium">{error}</td></tr>
+                            <tr><td colSpan={7} className="text-center py-10 text-red-500 text-[13px] font-medium">{error}</td></tr>
                         ) : paged.length === 0 ? (
-                            <tr><td colSpan="7" className="text-center py-10 text-text-muted text-[13px]">No subscription records found.</td></tr>
+                            <tr><td colSpan={7} className="text-center py-10 text-text-muted text-[13px]">No subscription records found.</td></tr>
                         ) : (
                             <>
                                 {paged.map(row => (
@@ -351,7 +369,7 @@ export default function Subscriptions({ setSyncAction }) {
                                 ))}
                                 {perPage - paged.length > 0 && Array.from({ length: perPage - paged.length }).map((_, idx) => (
                                     <tr key={`empty-${idx}`} className="border-b border-border/40 last:border-b-0 opacity-0 pointer-events-none">
-                                        <td colSpan="7" className="py-2.5 px-4 align-middle">
+                                        <td colSpan={7} className="py-2.5 px-4 align-middle">
                                             <div className="h-8"></div>
                                         </td>
                                     </tr>

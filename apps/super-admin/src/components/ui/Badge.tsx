@@ -1,4 +1,12 @@
-export const Badge = ({ children, variant = 'default', className = '', ...props }) => {
+import { HTMLAttributes, ReactNode } from 'react';
+
+export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
+    children: ReactNode;
+    variant?: 'default' | 'success' | 'error' | 'warning' | 'info';
+    className?: string;
+}
+
+export const Badge = ({ children, variant = 'default', className = '', ...props }: BadgeProps) => {
     const getVariantClasses = () => {
         switch (variant) {
             case 'success': return 'bg-emerald-500/10 text-emerald-700';

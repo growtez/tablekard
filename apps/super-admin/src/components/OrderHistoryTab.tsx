@@ -169,7 +169,7 @@ function OrdersModal({ restaurantId, startDate, endDate, periodLabel, onClose })
 
     useEffect(() => { setPage(1); fetchPage(1); }, [fetchPage]);
 
-    const goToPage = (p) => { if (p < 1 || p > totalPages) return; setPage(p); fetchPage(p); };
+    const goToPage = (p) => { if (p < 1 || p > totalPages) return; setPage(Number(p)); fetchPage(p); };
 
     // Page numbers to show (with ellipsis logic)
     const pageNums = Array.from({ length: totalPages }, (_, i) => i + 1)
@@ -658,8 +658,8 @@ export default function OrderHistoryTab({ restaurantId, viewMode = 'orders' }) {
             return matchesSearch && matchesFilter;
         })
         .sort((a, b) => {
-            if (sortBy === 'newest') return new Date(b.created_at) - new Date(a.created_at);
-            if (sortBy === 'oldest') return new Date(a.created_at) - new Date(b.created_at);
+            if (sortBy === 'newest') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+            if (sortBy === 'oldest') return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
             if (sortBy === 'amount') return Number(b.total) - Number(a.total);
             if (sortBy === 'status') return (a.status || '').localeCompare(b.status || '');
             return 0;
@@ -1020,7 +1020,7 @@ export default function OrderHistoryTab({ restaurantId, viewMode = 'orders' }) {
                             {getPaginationPages().map((p, i) => p === '...' ? (
                                 <div key={`ellipsis-${i}`} className="w-6 h-6 flex items-center justify-center text-[11px] text-text-muted">…</div>
                             ) : (
-                                <button key={p} onClick={() => setPage(p)} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
+                                <button key={p} onClick={() => setPage(Number(p))} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
                             ))}
                         </div>
                         <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
@@ -1118,7 +1118,7 @@ export default function OrderHistoryTab({ restaurantId, viewMode = 'orders' }) {
                                         <td className="py-3 px-4 text-[13px] text-text-main">{o.table_number || '—'}</td>
                                         <td className="py-3 px-4 text-[13px] font-semibold text-text-main text-right">{fmtCurrency(o.total)}</td>
                                         <td className="py-3 px-4 text-[13px]"><Badge variant={o.status === 'completed' || o.status === 'served' ? 'success' : o.status === 'cancelled' ? 'error' : 'warning'}>{o.status}</Badge></td>
-                                        <td className="py-3 px-4 text-[13px]"><Badge variant="secondary">{methodLabel(o.payment_method)}</Badge></td>
+                                        <td className="py-3 px-4 text-[13px]"><Badge variant="default">{methodLabel(o.payment_method)}</Badge></td>
                                     </tr>
                                 ))}
                             </tbody>
