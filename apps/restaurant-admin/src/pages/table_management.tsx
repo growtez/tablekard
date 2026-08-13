@@ -15,14 +15,19 @@ import {
     Save,
     Users,
     ExternalLink,
-    MoreVertical
+    MoreVertical,
+    Link as LinkIcon,
+    Unlink
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import {
     createRestaurantTable,
     updateRestaurantTable,
     deleteRestaurantTable,
-    getRestaurantById
+    getRestaurantById,
+    getAvailableQrTokens,
+    linkQrTokenToTable,
+    unlinkQrTokenFromTable
 } from '../services/supabaseService';
 import type { RestaurantTable } from '../services/supabaseService';
 import { useRestaurantTables, useInvalidateQueries } from '../hooks/useSupabaseQuery';
@@ -65,6 +70,12 @@ const TableManagementPage: React.FC = () => {
     const [showActionsMenu, setShowActionsMenu] = useState(false);
     const actionsMenuRef = useRef<HTMLDivElement>(null);
 
+    // QR Linking state for modals
+    const [qrMode, setQrMode] = useState<'auto' | 'link'>('auto');
+    const [availableTokens, setAvailableTokens] = useState<{ id: string; token: string }[]>([]);
+    const [selectedTokenCode, setSelectedTokenCode] = useState<string>('');
+    const [linkingToken, setLinkingToken] = useState(false);
+
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (actionsMenuRef.current && !actionsMenuRef.current.contains(event.target as Node)) {
@@ -84,11 +95,13 @@ const TableManagementPage: React.FC = () => {
     const [formErrors, setFormErrors] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
 
-    const buildQrUrl = (_tableId: string, _tableNumber: number) =>
-        `${BASE_URL}?restaurant_id=${activeRestaurantId}&table_id=${_tableId}`;
+    const buildQrUrl = (_tableId: string, _tableNumber: number, qrToken?: string | null) =>
+        qrToken
+            ? `${CUSTOMER_APP_URL}/q/${qrToken}`
+            : `${BASE_URL}?restaurant_id=${activeRestaurantId}&table_id=${_tableId}`;
 
-    const downloadQR = async (tableId: string, tableNumber: number) => {
-        const url = buildQrUrl(tableId, tableNumber);
+    const downloadQR = async (tableId: string, tableNumber: number, qrToken?: string | null) => {
+        const url = buildQrUrl(tableId, tableNumber, qrToken);
         try {
             const canvas = await paintQrTemplate({
                 qrSvgElementId: `qr-svg-${tableId}`,
@@ -107,12 +120,14 @@ const TableManagementPage: React.FC = () => {
         }
     };
 
-    const downloadPDF = async (tableId: string, tableNumber: number) => {
+    const downloadPDF = async (tableId: string, tableNumber: number, qrToken?: string | null) => {
+        const url = buildQrUrl(tableId, tableNumber, qrToken);
         try {
             const canvas = await paintQrTemplate({
                 qrSvgElementId: `qr-svg-${tableId}`,
                 restaurantName,
                 tableNumber,
+                qrUrl: url,
                 qrSize: 180,
             });
             const imgData = canvas.toDataURL('image/png', 1.0);
@@ -131,19 +146,29 @@ const TableManagementPage: React.FC = () => {
 
     const downloadAll = () => {
         tables.forEach((t: RestaurantTable, i: number) => {
-            setTimeout(() => downloadQR(t.id, t.table_number), i * 300);
+            setTimeout(() => downloadQR(t.id, t.table_number, t.qr_token), i * 300);
         });
     };
 
     // Add Table
-    const handleAddTable = () => {
+    const handleAddTable = async () => {
         setFormData({
             table_number: tables.length > 0 ? Math.max(...tables.map((t: RestaurantTable) => t.table_number)) + 1 : 1,
             capacity: 4,
             active: true
         });
+        setQrMode('auto');
+        setSelectedTokenCode('');
         setFormErrors(null);
         setShowAddModal(true);
+
+        // Fetch available tokens
+        try {
+            const tokensList = await getAvailableQrTokens();
+            setAvailableTokens(tokensList);
+        } catch (err) {
+            console.warn('Failed to load available tokens', err);
+        }
     };
 
     const handleSubmitAdd = async (e: React.FormEvent) => {
@@ -162,11 +187,18 @@ const TableManagementPage: React.FC = () => {
             setFormErrors(`Table ${formData.table_number} already exists`);
             return;
         }
+        if (qrMode === 'link' && !selectedTokenCode.trim()) {
+            setFormErrors('Please select or enter a valid QR token code.');
+            return;
+        }
 
         setSubmitting(true);
         setFormErrors(null);
         try {
-            await createRestaurantTable(activeRestaurantId, formData);
+            await createRestaurantTable(activeRestaurantId, {
+                ...formData,
+                qr_token: qrMode === 'link' ? selectedTokenCode.trim().toUpperCase() : null
+            });
             invalidateTables(activeRestaurantId);
             setShowAddModal(false);
         } catch (err: any) {
@@ -178,15 +210,23 @@ const TableManagementPage: React.FC = () => {
     };
 
     // Edit Table
-    const handleEditTable = (table: RestaurantTable) => {
+    const handleEditTable = async (table: RestaurantTable) => {
         setCurrentTable(table);
         setFormData({
             table_number: table.table_number,
             capacity: table.capacity,
             active: table.active
         });
+        setSelectedTokenCode('');
         setFormErrors(null);
         setShowEditModal(true);
+
+        try {
+            const tokensList = await getAvailableQrTokens();
+            setAvailableTokens(tokensList);
+        } catch (err) {
+            console.warn('Failed to load available tokens', err);
+        }
     };
 
     const handleSubmitEdit = async (e: React.FormEvent) => {
@@ -218,6 +258,38 @@ const TableManagementPage: React.FC = () => {
             setFormErrors(err.message || 'Failed to update table. Please try again.');
         } finally {
             setSubmitting(false);
+        }
+    };
+
+    const handleLinkTokenInEdit = async () => {
+        if (!currentTable || !activeRestaurantId || !selectedTokenCode.trim()) return;
+        setLinkingToken(true);
+        setFormErrors(null);
+        try {
+            await linkQrTokenToTable(currentTable.id, selectedTokenCode.trim(), activeRestaurantId);
+            invalidateTables(activeRestaurantId);
+            const updatedTable = { ...currentTable, qr_token: selectedTokenCode.trim().toUpperCase() };
+            setCurrentTable(updatedTable);
+            setSelectedTokenCode('');
+        } catch (err: any) {
+            setFormErrors(err.message || 'Failed to link QR token.');
+        } finally {
+            setLinkingToken(false);
+        }
+    };
+
+    const handleUnlinkTokenInEdit = async () => {
+        if (!currentTable || !currentTable.qr_token || !activeRestaurantId) return;
+        setLinkingToken(true);
+        setFormErrors(null);
+        try {
+            await unlinkQrTokenFromTable(currentTable.id, currentTable.qr_token);
+            invalidateTables(activeRestaurantId);
+            setCurrentTable({ ...currentTable, qr_token: null });
+        } catch (err: any) {
+            setFormErrors(err.message || 'Failed to unlink QR token.');
+        } finally {
+            setLinkingToken(false);
         }
     };
 
@@ -267,9 +339,6 @@ const TableManagementPage: React.FC = () => {
                 <div className="flex flex-row items-center justify-between gap-2 sm:gap-4 max-md:-mt-[52px] max-md:mb-[8px] flex-nowrap mb-7">
                     <div className="max-md:ml-[56px]">
                         <h1 className="text-[18px] sm:text-[22px] font-semibold text-[#1A202C] m-0 mb-1 dark:text-tk-text whitespace-nowrap">Table<span className="hidden sm:inline"> Management</span></h1>
-                        {/* <p className="text-sm text-[#4A5568] m-0 dark:text-tk-text-secondary">
-                            Manage your restaurant tables and generate QR codes for customer access.
-                        </p> */}
                     </div>
                     {/* Desktop Actions */}
                     <div className="hidden md:flex gap-2 items-center shrink-0 flex-nowrap overflow-x-auto hide-scrollbar w-full lg:w-auto max-md:pb-1 max-md:justify-start">
@@ -376,7 +445,8 @@ const TableManagementPage: React.FC = () => {
                 {!loading && tables.length > 0 && (
                     <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-6 max-md:grid-cols-[repeat(auto-fill,minmax(200px,1fr))] max-sm:grid-cols-1">
                         {tables.map((table: RestaurantTable) => {
-                            const url = buildQrUrl(table.id, table.table_number);
+                            const url = buildQrUrl(table.id, table.table_number, table.qr_token);
+                            const autoUrl = `${BASE_URL}?restaurant_id=${activeRestaurantId}&table_id=${table.id}`;
                             return (
                                 <div key={table.id} className={`bg-white rounded-xl p-6 shadow-[0_4px_16px_rgba(0,0,0,0.06)] border border-[#E2E8F0] flex flex-col items-center gap-4 transition-all duration-200 relative hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] dark:bg-tk-bg-card dark:border-tk-border ${!table.active ? 'opacity-60 border-dashed' : ''}`}>
                                     <div className="flex justify-between items-center w-full">
@@ -399,15 +469,26 @@ const TableManagementPage: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    <div
-                                        className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold cursor-pointer transition-all duration-200 select-none hover:scale-105 ${table.active ? 'bg-[#C6F6D5] text-[#22543D] dark:bg-[rgba(198,246,213,0.15)] dark:text-[#68D391]' : 'bg-[#FED7D7] text-[#742A2A] dark:bg-[rgba(254,215,215,0.15)] dark:text-[#FC8181]'}`}
-                                        onClick={() => handleToggleActive(table)}
-                                        title="Click to toggle status"
-                                    >
-                                        {table.active ? (
-                                            <><CheckCircle size={12} /> Active</>
+                                    <div className="flex gap-2 items-center flex-wrap">
+                                        <div
+                                            className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold cursor-pointer transition-all duration-200 select-none hover:scale-105 ${table.active ? 'bg-[#C6F6D5] text-[#22543D] dark:bg-[rgba(198,246,213,0.15)] dark:text-[#68D391]' : 'bg-[#FED7D7] text-[#742A2A] dark:bg-[rgba(254,215,215,0.15)] dark:text-[#FC8181]'}`}
+                                            onClick={() => handleToggleActive(table)}
+                                            title="Click to toggle status"
+                                        >
+                                            {table.active ? (
+                                                <><CheckCircle size={12} /> Active</>
+                                            ) : (
+                                                <><AlertCircle size={12} /> Inactive</>
+                                            )}
+                                        </div>
+                                        {table.qr_token ? (
+                                            <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[#EBF8FF] text-[#2B6CB0] border border-[#BEE3F8] dark:bg-[rgba(43,108,176,0.2)] dark:text-[#90CDF4]" title={`Linked to token ${table.qr_token}`}>
+                                                <LinkIcon size={11} /> {table.qr_token}
+                                            </span>
                                         ) : (
-                                            <><AlertCircle size={12} /> Inactive</>
+                                            <span className="flex items-center gap-1 px-2 py-1 rounded-full text-[11px] text-[#718096] bg-[#EDF2F7] dark:bg-tk-bg-elevated dark:text-tk-text-secondary" title="Standard auto-generated QR">
+                                                Auto QR
+                                            </span>
                                         )}
                                     </div>
 
@@ -424,7 +505,7 @@ const TableManagementPage: React.FC = () => {
                                     </div>
 
                                     <div className="w-full flex flex-col gap-2.5 items-center">
-                                        <p className="text-[10px] text-[#718096] break-all text-center m-0 leading-relaxed dark:text-tk-text-secondary">{url}</p>
+                                        <p className="text-[10px] text-[#718096] break-all text-center m-0 leading-relaxed dark:text-tk-text-secondary">{autoUrl}</p>
                                         <div className="flex gap-3 text-[13px] text-[#4A5568] font-medium dark:text-tk-text-secondary">
                                             <span className="flex items-center gap-1.5">
                                                 <Users size={14} />
@@ -434,7 +515,7 @@ const TableManagementPage: React.FC = () => {
                                         <div className="flex gap-2.5 w-full">
                                             <button
                                                 className="flex items-center justify-center gap-1.5 px-2 py-2 border-none rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 flex-1 min-w-0 whitespace-nowrap bg-[#EDF2F7] text-[#4A5568] border border-[#E2E8F0] hover:bg-[#E2E8F0] hover:-translate-y-0.5 dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text dark:hover:bg-tk-bg-hover"
-                                                onClick={() => downloadQR(table.id, table.table_number)}
+                                                onClick={() => downloadQR(table.id, table.table_number, table.qr_token)}
                                                 title="Download as PNG"
                                             >
                                                 <Download size={14} />
@@ -442,7 +523,7 @@ const TableManagementPage: React.FC = () => {
                                             </button>
                                             <button
                                                 className="flex items-center justify-center gap-1.5 px-2 py-2 border-none rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 flex-1 min-w-0 whitespace-nowrap bg-tk-burgundy text-white shadow-[0_4px_12px_rgba(139,58,30,0.2)] hover:bg-[#6B2A15] hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(139,58,30,0.3)]"
-                                                onClick={() => downloadPDF(table.id, table.table_number)}
+                                                onClick={() => downloadPDF(table.id, table.table_number, table.qr_token)}
                                                 title="Download as PDF"
                                             >
                                                 <Download size={14} />
@@ -458,21 +539,68 @@ const TableManagementPage: React.FC = () => {
             {/* Add Table Modal */}
             {showAddModal && (
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[1000] backdrop-blur-sm p-5" onClick={() => setShowAddModal(false)}>
-                    <div className="bg-white rounded-[20px] w-full max-w-[500px] shadow-[0_20px_60px_rgba(0,0,0,0.3)] animate-[modalSlideIn_0.3s_ease-out] dark:bg-tk-bg-card dark:border-tk-border dark:border max-md:max-w-full max-md:mx-5" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex justify-between items-center p-6 border-b border-[#E2E8F0] dark:border-tk-border">
+                    <div className="bg-white rounded-[20px] w-full max-w-[500px] max-h-[90vh] flex flex-col shadow-[0_20px_60px_rgba(0,0,0,0.3)] animate-[modalSlideIn_0.3s_ease-out] dark:bg-tk-bg-card dark:border-tk-border dark:border max-md:max-w-full max-md:mx-5 overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex justify-between items-center p-6 border-b border-[#E2E8F0] dark:border-tk-border shrink-0">
                             <h2 className="text-xl font-bold text-tk-text m-0 tracking-tight font-sans">Add New Table</h2>
                             <button className="bg-transparent border-none text-[#4A5568] cursor-pointer p-1 flex items-center justify-center rounded-lg transition-all duration-200 hover:bg-[#F7FAFC] hover:text-[#1A202C] dark:text-tk-text-secondary dark:hover:bg-tk-bg-elevated" onClick={() => setShowAddModal(false)}>
                                 <X size={20} />
                             </button>
                         </div>
-                        <form onSubmit={handleSubmitAdd}>
-                            <div className="p-6">
+                        <form onSubmit={handleSubmitAdd} className="flex flex-col flex-1 overflow-hidden min-h-0">
+                            <div className="p-6 overflow-y-auto flex-1">
                                 {formErrors && (
                                     <div className="flex items-center gap-2 px-4 py-3 bg-[#FFF5F5] border border-[#FEB2B2] rounded-lg text-[#C53030] text-[13px] mb-5">
                                         <AlertCircle size={16} />
                                         {formErrors}
                                     </div>
                                 )}
+                                <div className="mb-5">
+                                    <label className="block text-sm font-medium text-tk-text-secondary mb-2">QR Code Mode</label>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setQrMode('auto')}
+                                            className={`p-3 rounded-xl border text-xs font-semibold text-left transition-all ${qrMode === 'auto' ? 'border-tk-burgundy bg-tk-burgundy/5 text-tk-burgundy' : 'border-tk-border bg-tk-bg-elevated text-tk-text-secondary hover:bg-tk-bg-hover'}`}
+                                        >
+                                            Auto-generate QR
+                                            <span className="block text-[10px] font-normal text-[#718096] mt-0.5">Standard system QR</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setQrMode('link')}
+                                            className={`p-3 rounded-xl border text-xs font-semibold text-left transition-all ${qrMode === 'link' ? 'border-tk-burgundy bg-tk-burgundy/5 text-tk-burgundy' : 'border-tk-border bg-tk-bg-elevated text-tk-text-secondary hover:bg-tk-bg-hover'}`}
+                                        >
+                                            Link Existing QR
+                                            <span className="block text-[10px] font-normal text-[#718096] mt-0.5">Use pre-printed sticker</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {qrMode === 'link' && (
+                                    <div className="mb-5 p-4 bg-[#F7FAFC] border border-[#E2E8F0] rounded-xl dark:bg-tk-bg-elevated dark:border-tk-border">
+                                        <label className="block text-xs font-semibold text-tk-text mb-1.5">Select or Enter QR Token Code *</label>
+                                        {availableTokens.length > 0 ? (
+                                            <select
+                                                value={selectedTokenCode}
+                                                onChange={(e) => setSelectedTokenCode(e.target.value)}
+                                                className="p-2.5 px-3 border border-tk-border bg-white rounded-lg text-xs text-tk-text w-full mb-2 focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-card"
+                                            >
+                                                <option value="">-- Pick from available tokens --</option>
+                                                {availableTokens.map(t => (
+                                                    <option key={t.id} value={t.token}>{t.token}</option>
+                                                ))}
+                                            </select>
+                                        ) : null}
+                                        <input
+                                            type="text"
+                                            placeholder="Or type token e.g. TK-A1B2C3"
+                                            value={selectedTokenCode}
+                                            onChange={(e) => setSelectedTokenCode(e.target.value.toUpperCase())}
+                                            className="p-2.5 px-3 border border-tk-border bg-white rounded-lg text-xs font-mono text-tk-text w-full focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-card"
+                                        />
+                                    </div>
+                                )}
+
                                 <div className="mb-5 last:mb-0">
                                     <label className="block text-sm font-medium text-tk-text-secondary mb-1.5">Table Number *</label>
                                     <input
@@ -510,7 +638,7 @@ const TableManagementPage: React.FC = () => {
                                     </label>
                                 </div>
                             </div>
-                            <div className="flex gap-3 px-7 py-5 border-t border-[#E2E8F0] justify-end dark:border-tk-border max-md:flex-col-reverse">
+                            <div className="flex gap-3 px-7 py-5 border-t border-[#E2E8F0] justify-end dark:border-tk-border max-md:flex-col-reverse shrink-0">
                                 <button
                                     type="button"
                                     className="px-6 py-2.5 rounded-lg text-sm font-semibold cursor-pointer transition-all duration-200 flex items-center justify-center gap-2 border-none max-md:w-full bg-[#F7FAFC] text-[#4A5568] border-[1.5px] border-[#E2E8F0] hover:bg-[#EDF2F7] hover:border-[#CBD5E0] disabled:opacity-60 disabled:cursor-not-allowed dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text dark:hover:bg-tk-bg-hover"
@@ -550,7 +678,7 @@ const TableManagementPage: React.FC = () => {
                                         {formErrors}
                                     </div>
                                 )}
-                                <div className="mb-5 last:mb-0">
+                                <div className="mb-5">
                                     <label className="block text-sm font-medium text-tk-text-secondary mb-1.5">Table Number *</label>
                                     <input
                                         type="number"
@@ -561,7 +689,7 @@ const TableManagementPage: React.FC = () => {
                                         required
                                     />
                                 </div>
-                                <div className="mb-5 last:mb-0">
+                                <div className="mb-5">
                                     <label className="block text-sm font-medium text-tk-text-secondary mb-1.5">Capacity (Seats) *</label>
                                     <input
                                         type="number"
@@ -572,7 +700,66 @@ const TableManagementPage: React.FC = () => {
                                         required
                                     />
                                 </div>
-                                <div className="mb-5 last:mb-0 flex items-center gap-2.5 cursor-pointer font-medium">
+
+                                {/* QR Token Section */}
+                                <div className="mb-5 p-4 bg-[#F7FAFC] border border-[#E2E8F0] rounded-xl dark:bg-tk-bg-elevated dark:border-tk-border">
+                                    <label className="block text-xs font-semibold text-tk-text mb-2">Pre-printed QR Sticker</label>
+                                    {currentTable.qr_token ? (
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div>
+                                                <span className="text-xs font-mono font-bold text-[#2B6CB0] bg-[#EBF8FF] px-2.5 py-1 rounded-md border border-[#BEE3F8]">
+                                                    {currentTable.qr_token}
+                                                </span>
+                                                <span className="block text-[11px] text-[#718096] mt-1">Currently linked to this table</span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={handleUnlinkTokenInEdit}
+                                                disabled={linkingToken}
+                                                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-colors disabled:opacity-50 flex items-center gap-1"
+                                            >
+                                                <Unlink size={12} />
+                                                Unlink Token
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            <p className="text-xs text-[#718096] m-0">No pre-printed QR sticker linked yet.</p>
+                                            {availableTokens.length > 0 && (
+                                                <select
+                                                    value={selectedTokenCode}
+                                                    onChange={(e) => setSelectedTokenCode(e.target.value)}
+                                                    className="p-2.5 px-3 border border-tk-border bg-white rounded-lg text-xs text-tk-text w-full focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-card"
+                                                >
+                                                    <option value="">-- Pick from available tokens --</option>
+                                                    {availableTokens.map(t => (
+                                                        <option key={t.id} value={t.token}>{t.token}</option>
+                                                    ))}
+                                                </select>
+                                            )}
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Or type token e.g. TK-A1B2C3"
+                                                    value={selectedTokenCode}
+                                                    onChange={(e) => setSelectedTokenCode(e.target.value.toUpperCase())}
+                                                    className="p-2.5 px-3 border border-tk-border bg-white rounded-lg text-xs font-mono text-tk-text flex-1 focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-card"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={handleLinkTokenInEdit}
+                                                    disabled={linkingToken || !selectedTokenCode.trim()}
+                                                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#2B6CB0] text-white border-none hover:bg-[#2C5282] transition-colors disabled:opacity-50 flex items-center gap-1"
+                                                >
+                                                    <LinkIcon size={12} />
+                                                    Link Token
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="mb-5 flex items-center gap-2.5 cursor-pointer font-medium">
                                     <label className="flex items-center gap-3 cursor-pointer">
                                         <div className="relative inline-block w-11 h-6 shrink-0">
                                             <input
