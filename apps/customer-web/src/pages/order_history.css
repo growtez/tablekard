@@ -264,6 +264,17 @@
     color: #FFFFFF;
 }
 
+.oh-tab.active-placed {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+    border-color: rgba(245, 158, 11, 0.2);
+}
+
+.oh-tab.active-placed .oh-tab-count {
+    background: rgba(245, 158, 11, 0.15);
+    color: #b45309;
+}
+
 .oh-tab.active-completed {
     background: #1A7A4A;
     border-color: #1A7A4A;
@@ -330,7 +341,7 @@
     background: linear-gradient(90deg, #C53030, #FC5C7D);
 }
 
-.oh-card-accent.pending {
+.oh-card-accent.placed {
     background: linear-gradient(90deg, #D97706, #F59E0B);
 }
 
@@ -418,16 +429,16 @@
     background: #FC5C7D;
 }
 
-.oh-status-badge.pending,
+.oh-status-badge.placed,
 .oh-status-badge.confirmed,
 .oh-status-badge.preparing,
 .oh-status-badge.ready {
-    background: #FFFBEB;
-    color: #B45309;
-    border: 1px solid #FEF08A;
+    background: rgba(245, 158, 11, 0.1);
+    color: #b45309;
+    border: 1px solid rgba(245, 158, 11, 0.2);
 }
 
-.oh-status-badge.pending .oh-status-dot,
+.oh-status-badge.placed .oh-status-dot,
 .oh-status-badge.confirmed .oh-status-dot,
 .oh-status-badge.preparing .oh-status-dot,
 .oh-status-badge.ready .oh-status-dot {

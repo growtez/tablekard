@@ -506,12 +506,12 @@ const Order: React.FC = () => {
 
                                             const getStatusIdx = (status: string) => {
                                                 switch (status?.toUpperCase()) {
-                                                    case 'PENDING': return -1;
-                                                    case 'CONFIRMED': return 0;
+                                                    case 'PLACED': return -1;
+                                                    
                                                     case 'PREPARING': return 1;
                                                     case 'READY': return 2;
                                                     case 'COMPLETED':
-                                                    case 'SERVED': return 2;
+                                                    
                                                     default: return -1;
                                                 }
                                             };
@@ -569,7 +569,7 @@ const Order: React.FC = () => {
                                                                 ) : (
                                                                     <div className="flex-1 flex items-center relative pb-3">
                                                                         {[
-                                                                            { label: 'Placed', value: 'CONFIRMED' },
+                                                                            { label: 'Placed', value: 'PLACED' },
                                                                             { label: 'Preparing', value: 'PREPARING' },
                                                                             { label: 'Ready', value: 'READY' }
                                                                         ].map((step, stepIdx, arr) => {
@@ -647,12 +647,12 @@ const Order: React.FC = () => {
 
                                     const getStatusIdx = (status: string) => {
                                         switch (status?.toUpperCase()) {
-                                            case 'PENDING': return -1;
-                                            case 'CONFIRMED': return 0;
+                                            case 'PLACED': return -1;
+                                            
                                             case 'PREPARING': return 1;
                                             case 'READY': return 2;
                                             case 'COMPLETED':
-                                            case 'SERVED': return 2;
+                                            
                                             default: return -1;
                                         }
                                     };

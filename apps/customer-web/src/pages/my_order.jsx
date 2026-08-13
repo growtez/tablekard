@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { formatTime, formatDate } from '@restaurant-saas/types';
 import { Home, ShoppingBag, MessageCircle, User, Minus, Plus, Trash2, Clock, CheckCircle, Utensils, ShoppingCart, ListOrdered, ArrowRight, Star, Users, CreditCard, Wallet, Loader2, AlertCircle, Download, Pencil } from 'lucide-react';
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from '../context/AuthContext';
@@ -95,8 +96,8 @@ const MyOrderPage = () => {
           })),
           total: order.total,
           discount: order.discount || 0,
-          orderDate: new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          fullDate: new Date(order.created_at).toLocaleDateString(),
+          orderDate: formatTime(order.created_at),
+          fullDate: formatDate(order.created_at),
           paymentStatus: order.payment_status?.toLowerCase(),
           paymentMethod: order.payment_method,
           statusLabel: order.status.charAt(0).toUpperCase() + order.status.slice(1).toLowerCase(),
@@ -1105,11 +1106,6 @@ const MyOrderPage = () => {
                       {/* ── Tier 2: Items ── */}
                       <div className="oi-items">
                         {order.items.map((item, index) => {
-                          const itemStatus = item.status || 'placed';
-                          let badgeColor = '#FF9800';
-                          if (itemStatus === 'preparing') badgeColor = '#3B82F6';
-                          if (itemStatus === 'ready') badgeColor = '#22C55E';
-
                           // Aggregate addons by name
                           const addonCounts = {};
                           if (item.addons && item.addons.length > 0) {
@@ -1129,12 +1125,6 @@ const MyOrderPage = () => {
                                 <div className="oi-item-left">
                                   <span className="oi-item-qty-badge">{item.quantity}×</span>
                                   <span className="oi-item-name">{item.name}</span>
-                                  <span className="oi-item-status-badge" style={{
-                                    color: badgeColor, backgroundColor: badgeColor + '12',
-                                    border: `1px solid ${badgeColor}30`
-                                  }}>
-                                    {itemStatus}
-                                  </span>
                                 </div>
                                 <span className="oi-item-price">₹{item.price * item.quantity}</span>
                               </div>

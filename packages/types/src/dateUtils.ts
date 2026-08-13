@@ -101,6 +101,18 @@ export function formatDateTimeLong(input: DateInput): string {
   });
 }
 
+/** "08:37 pm" — time only */
+export function formatTime(input: DateInput): string {
+  const d = toDate(input);
+  if (!d) return '—';
+  return d.toLocaleTimeString(LOCALE, {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+    timeZone: TIMEZONE,
+  });
+}
+
 // ─── Chart / Axis Label Formatters ────────────
 
 /** "Aug 2026" — month + year for chart grouping */

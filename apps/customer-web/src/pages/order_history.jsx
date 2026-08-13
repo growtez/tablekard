@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { formatDateTimeShort, formatDayMonth } from '@restaurant-saas/types';
 import {
     ArrowLeft,
     RotateCcw,
@@ -35,22 +36,21 @@ import './order_history.css';
 
 /* ─── Helpers ──────────────────────────────────────────────────────────────── */
 const STATUS_MAP = {
-    pending:    { label: 'Pending',    cls: 'pending',   icon: <Clock3 size={10} /> },
-    confirmed:  { label: 'Confirmed',  cls: 'confirmed', icon: <Clock3 size={10} /> },
-    preparing:  { label: 'Preparing', cls: 'preparing', icon: <ChefHat size={10} /> },
-    ready:      { label: 'Ready',      cls: 'ready',     icon: <Clock3 size={10} /> },
-    SERVED:     { label: 'Served',     cls: 'completed', icon: <CheckCircle2 size={10} /> },
-    served:     { label: 'Served',     cls: 'completed', icon: <CheckCircle2 size={10} /> },
-    completed:  { label: 'Completed',  cls: 'completed', icon: <CheckCircle2 size={10} /> },
-    cancelled:  { label: 'Cancelled', cls: 'cancelled', icon: <XCircle size={10} /> },
-    CANCELLED:  { label: 'Cancelled', cls: 'cancelled', icon: <XCircle size={10} /> },
+    placed:    { label: 'Placed',    cls: 'pending',   icon: <Clock3 size={10} /> },
+    preparing: { label: 'Preparing', cls: 'preparing', icon: <ChefHat size={10} /> },
+    ready:     { label: 'Ready',     cls: 'ready',     icon: <Clock3 size={10} /> },
+    completed: { label: 'Completed', cls: 'completed', icon: <CheckCircle2 size={10} /> }, // Derived state for Paid Ready orders
+    cancelled: { label: 'Cancelled', cls: 'cancelled', icon: <XCircle size={10} /> },
+    CANCELLED: { label: 'Cancelled', cls: 'cancelled', icon: <XCircle size={10} /> },
 };
 
-const UI_STATUS = (status) => {
-    const s = (status || '').toLowerCase();
-    if (s === 'served' || s === 'completed') return 'completed';
+const UI_STATUS = (order) => {
+    const s = (order.status || '').toLowerCase();
+    if (s === 'ready' && order.payment_status === 'paid') return 'completed';
+    if (s === 'ready') return 'ready';
     if (s === 'cancelled') return 'cancelled';
-    return 'pending';
+    if (s === 'preparing') return 'preparing';
+    return 'placed';
 };
 
 const PAYMENT_ICON = {
@@ -75,11 +75,11 @@ const ORDER_TYPE_LABEL = {
 };
 
 const formatDate = (iso) => {
-    const d = new Date(iso);
-    return d.toLocaleString('en-IN', {
-        day: '2-digit', month: 'short', year: 'numeric',
-        hour: '2-digit', minute: '2-digit', hour12: true
-    });
+    return formatDateTimeShort(iso);
+};
+
+const formatDateShort = (iso) => {
+    return formatDayMonth(iso);
 };
 
 const groupLabel = (iso) => {
@@ -89,7 +89,7 @@ const groupLabel = (iso) => {
     yesterday.setDate(today.getDate() - 1);
     if (d.toDateString() === today.toDateString()) return 'Today';
     if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
-    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
+    return formatDateShort(iso);
 };
 
 /* ─── Sub-components ────────────────────────────────────────────────────────── */
@@ -201,8 +201,8 @@ const downloadInvoice = (order) => {
 
 const OrderCard = ({ order, onReorder }) => {
     const [expanded, setExpanded] = useState(false);
-    const statusInfo = STATUS_MAP[order.realStatus] || STATUS_MAP[order.status] || STATUS_MAP.pending;
-    const uiStatus = UI_STATUS(order.realStatus);
+    const statusInfo = STATUS_MAP[order.realStatus] || STATUS_MAP[order.status] || STATUS_MAP.placed;
+    const uiStatus = UI_STATUS(order);
 
     const MAX_VISIBLE = 3;
     const visibleItems = expanded ? order.items : order.items.slice(0, MAX_VISIBLE);
@@ -354,7 +354,7 @@ const OrderHistoryPage = () => {
                 total: parseFloat(order.total) || 0,
                 subtotal: parseFloat(order.subtotal) || 0,
                 taxes: parseFloat(order.taxes) || 0,
-                status: UI_STATUS(order.status),
+                status: UI_STATUS(order),
                 realStatus: order.status,
                 paymentMethod: order.payment_method,
                 paymentStatus: order.payment_status?.toLowerCase(),
@@ -379,10 +379,10 @@ const OrderHistoryPage = () => {
     }, [authLoading, fetchHistory]);
 
     /* ── Computed stats ──────────────────────────────────────────── */
-    const completedOrders = orders.filter(o => o.status === 'completed');
+    const completedOrders = orders.filter(o => o.status === 'completed'); // UI_STATUS sets to completed
     const nonCancelledOrders = orders.filter(o => o.status !== 'cancelled');
     const cancelledOrders = orders.filter(o => o.status === 'cancelled');
-    const pendingOrders   = orders.filter(o => o.status === 'pending');
+    const pendingOrders   = orders.filter(o => o.status === 'placed' || o.status === 'preparing' || o.status === 'ready');
 
     const totalSpent = nonCancelledOrders.reduce((s, o) => s + o.total, 0);
     const avgOrder   = nonCancelledOrders.length
@@ -393,13 +393,15 @@ const OrderHistoryPage = () => {
     const filters = [
         { id: 'all',       label: 'All',       count: orders.length,          icon: <ShoppingBag size={13} /> },
         { id: 'completed', label: 'Completed',  count: completedOrders.length, icon: <CheckCircle2 size={13} /> },
-        { id: 'pending',   label: 'In Progress',count: pendingOrders.length,   icon: <Clock3 size={13} /> },
+        { id: 'placed',    label: 'In Progress',count: pendingOrders.length,   icon: <Clock3 size={13} /> },
         { id: 'cancelled', label: 'Cancelled',  count: cancelledOrders.length, icon: <XCircle size={13} /> },
     ];
 
     const filtered = activeFilter === 'all'
         ? orders
-        : orders.filter(o => o.status === activeFilter);
+        : activeFilter === 'placed' 
+            ? pendingOrders
+            : orders.filter(o => o.status === activeFilter);
 
     const { visibleItems, loaderRef, hasMore } = useInfiniteScroll(filtered, 10);
 

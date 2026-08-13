@@ -114,12 +114,10 @@ const LiveQueuePage = () => {
         try {
             const { data, error } = await supabase
                 .from('orders')
-                .select(`id, order_number, status, customer_id, updated_at, order_items (status, name)`)
+                .select(`id, order_number, status, customer_id, updated_at, payment_status, order_items (status, name)`)
                 .eq('restaurant_id', restaurant.id)
                 .gte('created_at', twelveHoursAgo.toISOString())
                 .neq('status', 'cancelled')
-                .neq('status', 'completed')
-                .neq('status', 'served')
                 .order('created_at', { ascending: true });
             if (error) throw error;
 
@@ -135,17 +133,17 @@ const LiveQueuePage = () => {
 
             const now = new Date();
             const activeData = data.filter(o => {
-                if (o.status === 'ready') {
+                if (o.status === 'ready' && o.payment_status === 'paid') {
                     const updatedAt = new Date(o.updated_at);
                     const diffMins = (now - updatedAt) / (1000 * 60);
-                    return diffMins <= 60;
+                    return diffMins <= 15;
                 }
                 return true;
             });
 
             const readyOrders = activeData.filter(o => o.status === 'ready');
             const preparingOrders = activeData.filter(o => o.status === 'preparing');
-            const upcomingOrders = activeData.filter(o => o.status === 'pending' || o.status === 'confirmed');
+            const upcomingOrders = activeData.filter(o => o.status === 'placed');
 
             const nowServing = readyOrders.length > 0 ? formatToken(readyOrders[readyOrders.length - 1]) : null;
             const preparingTokens = preparingOrders.map(formatToken);
@@ -268,7 +266,7 @@ const LiveQueuePage = () => {
     const getTimelineStep = (status) => {
         if (status === 'ready')     return 2; // all done
         if (status === 'preparing') return 1; // on step 2
-        return 0;                             // waiting (step 1)
+        return 0;                             // placed (step 1)
     };
 
     /* ── guard states ───────────────────────────────── */
@@ -432,12 +430,12 @@ const LiveQueuePage = () => {
                                 <div className="lq-timeline-wrap">
                                     <div className="lq-timeline-title">Order Status</div>
                                     <div className="lq-timeline">
-                                        {/* Step 1 – Waiting */}
+                                        {/* Step 1 – Placed */}
                                         <div className="lq-tl-step">
                                             <div className={`lq-tl-dot ${currentStep === 0 ? 'active' : currentStep > 0 ? 'done' : ''}`}>
                                                 {currentStep > 0 ? '✓' : '1'}
                                             </div>
-                                            <span className={`lq-tl-label ${currentStep === 0 ? 'active' : currentStep > 0 ? 'done' : ''}`}>Waiting</span>
+                                            <span className={`lq-tl-label ${currentStep === 0 ? 'active' : currentStep > 0 ? 'done' : ''}`}>Placed</span>
                                         </div>
                                         <div className={`lq-tl-line ${currentStep > 0 ? 'done' : ''}`} />
                                         {/* Step 2 – Preparing */}
@@ -518,7 +516,7 @@ const LiveQueuePage = () => {
                     <span className="lq-sec-count">{queueData.upcoming.length} order{queueData.upcoming.length !== 1 ? 's' : ''}</span>
                 </div>
                 {queueData.upcoming.length === 0 ? (
-                    <div className="lq-empty-section">No orders waiting right now</div>
+                    <div className="lq-empty-section">No placed orders right now</div>
                 ) : (
                     <div className="lq-tokens">
                         {queueData.upcoming.map((order) => {
