@@ -31,7 +31,7 @@ body {
 
 /* Extra bottom room when the floating "View Cart" popup is visible */
 .menu-container.has-cart {
-  padding-bottom: 200px;
+  padding-bottom: 140px;
 }
 
 /* Header Styles */
@@ -590,7 +590,7 @@ body {
 /* Modern Frosted Glow Cart Indicator */
 .cart-modern-glow {
   position: fixed;
-  bottom: 110px;
+  bottom: 85px;
   left: 0;
   right: 0;
   margin: 0 auto;

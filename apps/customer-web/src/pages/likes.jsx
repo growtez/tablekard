@@ -18,6 +18,13 @@ const LikesPage = () => {
     const [loading, setLoading] = useState(true);
     const [selectedItem, setSelectedItem] = useState(null);
     const [showItemModal, setShowItemModal] = useState(false);
+    const [isVariantSheetOpen, setIsVariantSheetOpen] = useState(false);
+
+    const closeItemModal = () => {
+        setShowItemModal(false);
+        setIsVariantSheetOpen(false);
+        setSelectedItem(null);
+    };
 
     const { visibleItems, loaderRef, hasMore } = useInfiniteScroll(favorites, 10);
 
@@ -50,12 +57,20 @@ const LikesPage = () => {
                         id: item.id,
                         name: item.name,
                         description: item.short_description || item.long_description || item.description || '',
-                        price: item.discount_price || item.price,
+                        price: item.discount_price || (item.variants && item.variants.length > 0 ? Math.min(...item.variants.map(v => v.price)) : item.price),
                         rating: '4.5',
                         ratingCount: 0,
                         serves: item.serves || '1',
                         image: primaryImage,
-                        raw: item // Keep raw data for cart
+                        raw: item, // Keep raw data for cart
+                        variants: (item.variants || []).map((v, i) => ({
+                            ...v,
+                            _key: v.id ?? `${v.name}_${v.price}_${i}`,
+                        })),
+                        addons: (item.addons || []).map((a, i) => ({
+                            ...a,
+                            _key: a.id ?? `${a.name}_${a.price}_${i}`,
+                        }))
                     };
                 });
                 setFavorites(mapped);
@@ -74,10 +89,6 @@ const LikesPage = () => {
         setShowItemModal(true);
     };
 
-    const closeItemModal = () => {
-        setShowItemModal(false);
-        setSelectedItem(null);
-    };
 
     const removeFavorite = async (itemId) => {
         if (!user) return;
@@ -232,7 +243,7 @@ const LikesPage = () => {
             </div>
 
             {/* Modern Frosted Glow Cart Indicator */}
-            {cartTotal > 0 && (
+            {cartTotal > 0 && !(showItemModal && !isVariantSheetOpen) && (
                 <NavLink to="/orders" className="cart-modern-glow">
                     <div className="glow-content">
                         <div className="glow-badge">
@@ -273,6 +284,7 @@ const LikesPage = () => {
                     removeFavorite(id);
                     closeItemModal();
                 }}
+                onVariantSheetChange={setIsVariantSheetOpen}
             />
             {/* Bottom Navigation */}
             {!showItemModal && <BottomNav />}

@@ -415,18 +415,6 @@ const ItemModal = ({ isOpen, onClose, item, favorites, onToggleFavorite, initial
                                 )}
                             </div>
                         </div>
-                        {selectedQuantity > 0 && (
-                            <button 
-                                className="variant-add-btn" 
-                                style={{ marginTop: '16px', background: '#1A1A1A', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                                onClick={() => {
-                                    handleClose();
-                                    navigate('/orders');
-                                }}
-                            >
-                                View Cart
-                            </button>
-                        )}
                     </div>
                 </div>
             </div>
