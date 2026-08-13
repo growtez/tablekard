@@ -76,10 +76,6 @@ serve(async (req: Request) => {
                     <div style="text-align: center; margin: 35px 0;">
                         <a href="${actionLink}" style="background-color: #8B3A1E; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; display: inline-block; box-shadow: 0 2px 4px rgba(139, 58, 30, 0.2);">Sign In Securely</a>
                     </div>
-                    <p style="color: #6b7280; font-size: 13px; text-align: center; margin-bottom: 30px; word-break: break-all; line-height: 1.5;">
-                        Or if the sign in button does not work, copy and paste this URL into your browser:<br>
-                        <a href="${actionLink}" style="color: #8B3A1E; text-decoration: underline;">${actionLink}</a>
-                    </p>
                     <p style="color: #9ca3af; font-size: 14px; text-align: center; margin-bottom: 0; line-height: 1.5;">
                         This link will securely sign you in. If you didn't request this, you can safely ignore this email.
                     </p>
