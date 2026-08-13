@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { formatDateTimeShort, formatDateTime } from '@restaurant-saas/types';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import {
@@ -455,7 +456,7 @@ export default function UserDetail({ setHeaderData, setSyncAction }: UserDetailP
                                                 <span className="text-sm text-text-muted">at {order.restaurants?.name}</span>
                                             </div>
                                             <div className="text-xs text-text-muted mt-1">
-                                                {new Date(order.created_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                                                {formatDateTimeShort(order.created_at)}
                                             </div>
                                         </div>
                                     </div>
@@ -516,7 +517,7 @@ export default function UserDetail({ setHeaderData, setSyncAction }: UserDetailP
                                     </div>
                                     <div>
                                         <div className="text-xs font-bold text-text-muted uppercase tracking-wider mb-1">Last Heartbeat</div>
-                                        <div className="text-sm text-text-main">{new Date(profile.updated_at).toLocaleString()}</div>
+                                        <div className="text-sm text-text-main">{formatDateTime(profile.updated_at)}</div>
                                     </div>
                                 </div>
                             </Card>

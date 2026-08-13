@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { formatDateTimeShort } from '@restaurant-saas/types';
 import { supabase } from '../../supabaseClient';
 import { Card, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
@@ -144,7 +145,7 @@ export default function Announcements({ setSyncAction }) {
                                     <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>{a.body}</p>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.6rem', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
                                         <Clock size={12} />
-                                        {new Date(a.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                        {formatDateTimeShort(a.created_at)}
                                     </div>
                                 </div>
                                 <button onClick={() => handleDelete(a.id)} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', padding: '6px 10px', borderRadius: '8px', flexShrink: 0 }} title="Delete">

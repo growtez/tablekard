@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { formatDateShort } from '@restaurant-saas/types';
 import { Search, Plus, Edit3, Trash2, Layers, Loader2, List, LayoutGrid, MoreVertical, ArrowUpDown, ChevronDown, ExternalLink, Clock } from 'lucide-react';
 import MenuDialog from '../components/menu_dialog';
 import CategoryDialog from '../components/category_dialog';
@@ -1178,7 +1179,7 @@ const Menu: React.FC = () => {
                     </div>
                     {offer.valid_until && (
                       <div className="text-[11px] text-tk-text-secondary mb-4 flex items-center gap-1">
-                        🕒 Valid until: {new Date(offer.valid_until).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        🕒 Valid until: {formatDateShort(offer.valid_until)}
                       </div>
                     )}
                     <div className="flex items-center justify-between gap-3 mt-auto pt-2 border-t border-tk-border">

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { formatDate, formatDateShort } from '@restaurant-saas/types'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import { Filter, SlidersHorizontal, Search, RefreshCw, MoreVertical, Edit2, Trash2, Store, ArrowUpDown, ArrowUp, ArrowDown, X, Download, Mail, ChevronLeft, ChevronRight } from 'lucide-react'
@@ -238,7 +239,7 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
   const handleExport = () => {
     const csvContent = "data:text/csv;charset=utf-8,"
         + "Name,Email,Role,Restaurant,Joined\n"
-        + filteredUsers.map(u => `${u.name || 'Anonymous User'},${u.email},${roleOptions.find(r => r.value === u.role)?.label || u.role},${u.restaurant_users?.[0]?.restaurants?.name || 'Unassigned'},${new Date(u.created_at).toLocaleDateString()}`).join("\n");
+        + filteredUsers.map(u => `${u.name || 'Anonymous User'},${u.email},${roleOptions.find(r => r.value === u.role)?.label || u.role},${u.restaurant_users?.[0]?.restaurants?.name || 'Unassigned'},${formatDate(u.created_at)}`).join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -425,7 +426,7 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
                     </td>
                     <td className="py-2.5 px-4 align-middle">
                       <span className="text-text-muted text-[12px] font-medium">
-                        {new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        {formatDateShort(user.created_at)}
                       </span>
                     </td>
                   </tr>
@@ -505,7 +506,7 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
                   <div className="flex items-center justify-between text-[11px] text-text-muted mt-1 pt-1.5 border-t border-border/20">
                     <span>Joined</span>
                     <span className="font-medium text-text-main">
-                      {new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      {formatDateShort(user.created_at)}
                     </span>
                   </div>
                 </div>

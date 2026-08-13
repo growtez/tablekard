@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { formatDayMonth, formatMonthYearLong, formatDateShort } from '@restaurant-saas/types';
 import { TrendingUp, X, CheckCircle, Check, ChevronDown, Search, ArrowUpDown, List, LayoutGrid, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 
@@ -260,16 +261,16 @@ const Order: React.FC = () => {
     startOfWeek.setDate(startOfWeek.getDate() - offset * 7);
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(endOfWeek.getDate() + 6);
-    const formatDate = (d: Date) => {
-      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const formatD = (d: Date) => {
+      return formatDayMonth(d);
     };
-    return `${formatDate(startOfWeek)} - ${formatDate(endOfWeek)}, ${endOfWeek.getFullYear()}`;
+    return `${formatD(startOfWeek)} - ${formatD(endOfWeek)}, ${endOfWeek.getFullYear()}`;
   };
 
   const getMonthLabel = (offset: number) => {
     const now = new Date();
     const targetMonth = new Date(now.getFullYear(), now.getMonth() - offset, 1);
-    return targetMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    return formatMonthYearLong(targetMonth);
   };
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'amount_high' | 'amount_low'>('newest');
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('grid');
@@ -859,7 +860,7 @@ const Order: React.FC = () => {
                       {/* Customer & Date */}
                       <div className="flex justify-between items-end text-[12px] text-tk-text-secondary">
                         <span className="font-semibold text-tk-text">{order.customer}</span>
-                        <span className="text-[11px]">{new Date(order.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                        <span className="text-[11px]">{formatDateShort(order.createdAt)}</span>
                       </div>
 
                       {/* Tracking stepper */}
@@ -1001,7 +1002,7 @@ const Order: React.FC = () => {
                         </td>
                         <td className="py-3 px-4 text-sm text-tk-text cursor-pointer" onClick={() => setSelectedOrder(order)}>
                           <div className="flex flex-col">
-                            <span className="font-semibold">{new Date(order.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                            <span className="font-semibold">{formatDateShort(order.createdAt)}</span>
                             <span className="text-xs text-tk-text-secondary font-medium mt-0.5">{order.time}</span>
                           </div>
                         </td>
@@ -1181,7 +1182,7 @@ const Order: React.FC = () => {
                       <div className="flex flex-col">
                         <span className="font-medium text-tk-text text-xs">{order.orderNumber}</span>
                         <span className="text-[10px] text-tk-text-secondary font-semibold mt-0.5">
-                          {new Date(order.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          {formatDateShort(order.createdAt)}
                         </span>
                         <span className="text-[10px] text-tk-text-secondary font-medium mt-0.5">{order.time}</span>
                       </div>

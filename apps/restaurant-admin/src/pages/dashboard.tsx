@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { formatFullDate } from '@restaurant-saas/types';
 import { TrendingUp, X, CheckCircle, Check, ChevronDown, Search, ArrowUpDown, List, LayoutGrid, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -238,7 +239,7 @@ const Dashboard: React.FC = () => {
             </div>
             <span className="text-tk-text-secondary opacity-50 text-[12px] hidden sm:block">•</span>
             <p className="text-[12px] sm:text-[13px] text-tk-text-secondary font-medium whitespace-nowrap hidden sm:block">
-              {currentTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              {formatFullDate(currentTime)}
             </p>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { formatDate, formatDateShort, formatDayMonth, formatDateTimeShort } from '@restaurant-saas/types';
 import { supabase } from '../supabaseClient';
 import { Download, Search, Filter, SlidersHorizontal, Mail, Phone, MapPin, Store, User, X, Trash2, AlertTriangle, Loader2, ChevronLeft, ChevronRight, Calendar, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { TableRowsSkeleton } from '../components/ui/Skeleton';
@@ -153,7 +154,7 @@ export default function LandingLeads() {
     const csvRows = [
       headers.join(','),
       ...filteredLeads.map(lead => [
-        `"${new Date(lead.created_at).toLocaleDateString()}"`,
+        `"${formatDate(lead.created_at)}"`,
         `"${lead.owner_name || ''}"`,
         `"${lead.restaurant_name || ''}"`,
         `"\t${lead.phone_number || ''}"`,
@@ -331,7 +332,7 @@ export default function LandingLeads() {
                       <span className={`text-[12px] font-bold ${statusColor(lead.status)}`}>{(lead.status || 'new').toUpperCase()}</span>
                     </td>
                     <td className="py-2.5 px-4 align-middle">
-                      <span className="text-[12px] text-text-muted font-medium">{new Date(lead.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                      <span className="text-[12px] text-text-muted font-medium">{formatDateShort(lead.created_at)}</span>
                     </td>
                     <td className="py-2.5 px-4 align-middle">
                       <button
@@ -405,7 +406,7 @@ export default function LandingLeads() {
                     <span className={`text-[11px] font-bold px-2 py-1 rounded bg-surface-hover border border-border/40 ${statusColor(lead.status)}`}>
                       {(lead.status || 'new').toUpperCase()}
                     </span>
-                    <span className="text-[10px] text-text-muted font-medium">{new Date(lead.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+                    <span className="text-[10px] text-text-muted font-medium">{formatDayMonth(lead.created_at)}</span>
                   </div>
                 </div>
 
@@ -442,7 +443,7 @@ export default function LandingLeads() {
                   <h2 className="m-0 mb-1.5 text-[1.4rem] font-extrabold text-text-main tracking-tight">{selectedLead.owner_name}</h2>
                   <div className="flex items-center gap-2 text-text-muted text-[13px] font-medium">
                     <Calendar size={14} />
-                    {new Date(selectedLead.created_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+                    {formatDateTimeShort(selectedLead.created_at)}
                   </div>
                 </div>
               </div>

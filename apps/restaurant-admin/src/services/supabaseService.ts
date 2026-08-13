@@ -14,6 +14,7 @@
 
 import { supabase } from '@restaurant-saas/supabase';
 import type { MenuItem, MenuCategory, Restaurant, Order, OrderStatus, Profile } from '@restaurant-saas/types';
+import { formatDateTimeShort } from '@restaurant-saas/types';
 
 // Shorthand to avoid the generic type conflict in supabase-js v2.95+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -931,10 +932,7 @@ export const getPaymentTransactions = async (restaurantId: string): Promise<Paym
             orderNumber: row.order_number || 'UNKNOWN',
             customerName: profile?.name || 'Guest',
             tableNo: table?.table_number ? `Table ${table.table_number}` : 'N/A',
-            dateTime: createdDate.toLocaleString('en-US', {
-                month: 'short', day: '2-digit', year: 'numeric',
-                hour: '2-digit', minute: '2-digit'
-            }),
+            dateTime: formatDateTimeShort(createdDate),
             paymentMethod: row.payment_method || 'Cash',
             paymentStatus: pStatus.charAt(0).toUpperCase() + pStatus.slice(1),
             statusColor: pStatus,
@@ -993,10 +991,7 @@ export const getTransactionDetails = async (orderId: string): Promise<Transactio
         customerName: profile?.name || 'Guest',
         customerEmail: profile?.email || '',
         tableNo: table?.table_number ? `Table ${table.table_number}` : 'N/A',
-        dateTime: createdDate.toLocaleString('en-US', {
-            month: 'short', day: '2-digit', year: 'numeric',
-            hour: '2-digit', minute: '2-digit'
-        }),
+        dateTime: formatDateTimeShort(createdDate),
         paymentMethod: row.payment_method || 'Cash',
         paymentStatus: pStatus.charAt(0).toUpperCase() + pStatus.slice(1),
         statusColor: pStatus,

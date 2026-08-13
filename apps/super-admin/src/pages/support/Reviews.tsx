@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { formatDateShort } from '@restaurant-saas/types';
 import { supabase } from '../../supabaseClient';
 import { Card, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
@@ -107,7 +108,7 @@ export default function Reviews({ setSyncAction }) {
                                             <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>{row.profiles?.name || row.profiles?.email || 'Anonymous'}</span>
                                             {row.orders?.restaurants?.name && <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', background: 'var(--surface-hover)', padding: '1px 8px', borderRadius: '20px' }}>{row.orders.restaurants.name}</span>}
                                         </div>
-                                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', flexShrink: 0 }}>{new Date(row.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', flexShrink: 0 }}>{formatDateShort(row.created_at)}</span>
                                     </div>
                                     <p style={{ margin: 0, fontSize: '0.875rem', color: row.comment ? 'var(--text-main)' : 'var(--text-muted)', fontStyle: row.comment ? 'normal' : 'italic', lineHeight: 1.6 }}>{row.comment || 'No written comment.'}</p>
                                     {row.orders?.order_number && <div style={{ marginTop: '0.35rem', fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>Order #{row.orders.order_number}</div>}

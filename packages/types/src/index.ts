@@ -4,6 +4,9 @@
 
 export type IsoDateString = string;
 
+// Re-export date formatting utilities
+export * from './dateUtils';
+
 // ==========================================
 // Enums
 // ==========================================

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { formatDateShort, formatDateTime, formatDate, formatMonthYearCompact, formatWeekday, formatDayMonth, formatDateRange, formatMonthYearLong } from '@restaurant-saas/types';
 import { supabase } from '../supabaseClient';
 import {
     Download, Calendar, Loader2, ChevronLeft, ChevronRight, X,
@@ -288,7 +289,7 @@ function OrdersModal({ restaurantId, startDate, endDate, periodLabel, onClose })
                                             <td style={{ padding: '13px 16px', verticalAlign: 'middle', fontWeight: 600, color: '#4C51BF', whiteSpace: 'nowrap' }}>#{order.orderNumber}</td>
                                             <td style={{ padding: '13px 16px', verticalAlign: 'middle', whiteSpace: 'nowrap', color: 'var(--color-text-main, #2D3748)' }}>
                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                                    <span>{new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                                                    <span>{formatDateShort(order.createdAt)}</span>
                                                     <span style={{ fontSize: '11.5px', color: '#A0AEC0' }}>{new Date(order.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
                                                 </div>
                                             </td>
@@ -423,12 +424,12 @@ export default function OrderHistoryTab({ restaurantId, viewMode = 'orders' }) {
         const mon = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysFromMon);
         const s   = new Date(mon); s.setDate(s.getDate() - offset * 7);
         const e   = new Date(s); e.setDate(e.getDate() + 6);
-        return `${s.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${e.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, ${e.getFullYear()}`;
+        return formatDateRange(s, e);
     };
 
     const getMonthLabel = (offset) => {
         const d = new Date(new Date().getFullYear(), new Date().getMonth() - offset, 1);
-        return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        return formatMonthYearLong(d);
     };
 
     const chartTitle = () => {
@@ -547,7 +548,7 @@ export default function OrderHistoryTab({ restaurantId, viewMode = 'orders' }) {
                         const mStart = new Date(year, month, 1, 0, 0, 0, 0);
                         const mEnd   = new Date(year, month + 1, 0, 23, 59, 59, 999);
                         monthMap[key] = {
-                            label: d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+                            label: formatMonthYearCompact(d),
                             revenue: 0, orders: 0,
                             dateStart: mStart, dateEnd: mEnd,
                             date: new Date(year, month, 1)
@@ -564,14 +565,14 @@ export default function OrderHistoryTab({ restaurantId, viewMode = 'orders' }) {
                 const de = new Date(); de.setHours(23, 59, 59, 999);
                 const totalRev = Object.values(revMap).reduce((s: any, v: any) => s + v.revenue, 0);
                 const totalOrd = Object.values(revMap).reduce((s: any, v: any) => s + v.orders, 0);
-                revHistory.push({ label: ds.toLocaleDateString('en-US', { weekday: 'short' }), revenue: totalRev, orders: totalOrd, dateStart: ds, dateEnd: de });
+                revHistory.push({ label: formatWeekday(ds), revenue: totalRev, orders: totalOrd, dateStart: ds, dateEnd: de });
             } else {
                 for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
                     const dKey = toISTDateKey(d.toISOString());
                     const ds = new Date(d); ds.setHours(0, 0, 0, 0);
                     const de = new Date(d); de.setHours(23, 59, 59, 999);
-                    let label = d.toLocaleDateString('en-US', { weekday: 'short' });
-                    if (dayDifference > 14) label = d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+                    let label = formatWeekday(d);
+                    if (dayDifference > 14) label = formatDayMonth(d);
                     revHistory.push({ label, revenue: revMap[dKey]?.revenue || 0, orders: revMap[dKey]?.orders || 0, dateStart: ds, dateEnd: de });
                 }
             }
@@ -688,7 +689,7 @@ export default function OrderHistoryTab({ restaurantId, viewMode = 'orders' }) {
     const handleExportOrders = () => {
         const csvContent = "data:text/csv;charset=utf-8," 
             + "Order #,Date,Type,Table,Amount,Status,Payment\n"
-            + filteredOrders.map(o => `${o.order_number || (o.id ? String(o.id).slice(0, 8) : '')},${new Date(o.created_at).toLocaleString('en-IN').replace(/,/g, '')},${o.type},${o.table_number || ''},${o.total},${o.status},${o.payment_method}`).join("\n");
+            + filteredOrders.map(o => `${o.order_number || (o.id ? String(o.id).slice(0, 8) : '')},${formatDateTime(o.created_at)},${o.type},${o.table_number || ''},${o.total},${o.status},${o.payment_method}`).join("\n");
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
@@ -1110,7 +1111,7 @@ export default function OrderHistoryTab({ restaurantId, viewMode = 'orders' }) {
                                     <tr><td colSpan={7} className="text-center py-12 text-text-muted text-[13px]">No orders found matching your criteria.</td></tr>
                                 ) : pagedOrders.map(o => (
                                     <tr key={o.id} className="group even:bg-bg hover:bg-surface-hover border-b border-border/40 last:border-b-0 cursor-pointer transition-colors">
-                                        <td className="py-3 px-4 text-[13px] text-text-muted">{new Date(o.created_at).toLocaleString('en-IN')}</td>
+                                        <td className="py-3 px-4 text-[13px] text-text-muted">{formatDateTime(o.created_at)}</td>
                                         <td className="py-3 px-4 text-[13px] font-semibold" style={{ color: '#4C51BF' }}>#{o.order_number || (o.id ? String(o.id).slice(0, 8) : '')}</td>
                                         <td className="py-3 px-4 text-[13px] text-text-main capitalize">{o.type?.replace('_', ' ')}</td>
                                         <td className="py-3 px-4 text-[13px] text-text-main">{o.table_number || '—'}</td>
@@ -1137,7 +1138,7 @@ export default function OrderHistoryTab({ restaurantId, viewMode = 'orders' }) {
                                     <div className="font-semibold text-text-main">{fb.customerName}</div>
                                     <div className="text-yellow-500 text-sm">{'★'.repeat(fb.rating)}{'☆'.repeat(5 - fb.rating)}</div>
                                 </div>
-                                <div className="text-xs text-text-muted mb-2">{new Date(fb.createdAt).toLocaleDateString()}</div>
+                                <div className="text-xs text-text-muted mb-2">{formatDate(fb.createdAt)}</div>
                                 {fb.comment   && <p className="text-sm text-text-main mb-2 line-clamp-3">"{fb.comment}"</p>}
                                 {fb.orderItems && <div className="text-[10px] text-text-muted bg-surface px-2 py-1 rounded">Items: {fb.orderItems}</div>}
                             </div>
