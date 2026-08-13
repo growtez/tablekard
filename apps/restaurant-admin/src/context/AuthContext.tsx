@@ -108,6 +108,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
             fetchMemberships(nextUser.id)
         ]);
 
+        // Gate: only restaurant_admin and super_admin may use this app.
+        // If this session belongs to a kitchen_staff (or any other disallowed role),
+        // sign them out immediately before setting any state, so no render ever
+        // sees isAuthenticated = true for a disallowed user.
+        const roleStr = String(profile?.role).toLowerCase();
+        const isAllowed = roleStr === 'restaurant_admin'
+            || roleStr === 'super_admin'
+            || profile?.role === UserRole.RESTAURANT_ADMIN
+            || profile?.role === UserRole.SUPER_ADMIN;
+
+        if (!isAllowed) {
+            // Sign out silently — do not set any state so isAuthenticated stays false
+            await supabase.auth.signOut();
+            setUserProfile(null);
+            setMemberships([]);
+            setActiveRestaurantIdState(null);
+            return;
+        }
+
         setUserProfile(profile);
         setMemberships(membershipList);
 
@@ -201,16 +220,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
         ]);
 
         const roleStr = String(profile?.role).toLowerCase();
-        const roleAllowed = roleStr === 'restaurant_admin'
-            || roleStr === 'restaurant_staff'
+        const isAllowedRole = roleStr === 'restaurant_admin'
             || roleStr === 'super_admin'
             || profile?.role === UserRole.RESTAURANT_ADMIN
-            || profile?.role === UserRole.RESTAURANT_STAFF
             || profile?.role === UserRole.SUPER_ADMIN;
 
-        if (!roleAllowed || membershipList.length === 0) {
+        if (!isAllowedRole || membershipList.length === 0) {
             await supabase.auth.signOut();
-            throw new Error('You are not authorized to access the restaurant admin panel');
+            throw new Error('Access denied. Only restaurant administrators can access the admin panel.');
         }
 
         setUserProfile(profile);
@@ -248,6 +265,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (error) throw error;
     };
 
+    const isAllowedAdminRole = useMemo(() => {
+        if (!userProfile) return false;
+        const roleStr = String(userProfile.role).toLowerCase();
+        return roleStr === 'restaurant_admin'
+            || roleStr === 'super_admin'
+            || userProfile.role === UserRole.RESTAURANT_ADMIN
+            || userProfile.role === UserRole.SUPER_ADMIN;
+    }, [userProfile]);
+
     const value: AuthContextType = useMemo(() => ({
         user,
         userProfile,
@@ -262,9 +288,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         signOut,
         resetPassword,
         updatePassword,
-        isAuthenticated: !!user && memberships.length > 0,
+        isAuthenticated: !!user && memberships.length > 0 && isAllowedAdminRole,
         isRestaurantAdmin: memberships.some(m => String(m.role).toLowerCase() === 'admin') || String(userProfile?.role).toLowerCase() === 'super_admin'
-    }), [user, userProfile, memberships, activeRestaurantId, activeRestaurantName, activeRestaurantLogo, loading]);
+    }), [user, userProfile, memberships, activeRestaurantId, activeRestaurantName, activeRestaurantLogo, loading, isAllowedAdminRole]);
 
     return (
         <AuthContext.Provider value={value}>

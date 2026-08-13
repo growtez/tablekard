@@ -20,12 +20,14 @@ const LoginPage: React.FC = () => {
     const [resetMessage, setResetMessage] = useState('');
     const [isResetLoading, setIsResetLoading] = useState(false);
 
-    // Redirect if already logged in
+    // Redirect if already logged in (only on mount — not reactive to isAuthenticated changes
+    // to avoid race conditions when a disallowed user's session is being cleaned up)
     useEffect(() => {
         if (!loading && isAuthenticated) {
             navigate('/dashboard');
         }
-    }, [isAuthenticated, loading, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [loading]);  // intentionally only runs once after initial load resolves
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mail, Phone, MessageSquare, HeadphonesIcon, Globe, MapPin, ExternalLink, ArrowRight } from 'lucide-react';
+import { Mail, Phone, MessageSquare, HeadphonesIcon, Globe, MapPin, ArrowRight } from 'lucide-react';
 
 const ContactPage: React.FC = () => {
   const contactMethods = [
