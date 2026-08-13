@@ -139,18 +139,14 @@ export default function LandingLeads() {
   };
 
   const handleExport = () => {
-    const headers = ['Date', 'Restaurant Name', 'Owner Name', 'Phone', 'Email', 'Country', 'State', 'District', 'Status'];
+    const headers = ['Date', 'Owner Name', 'Restaurant Name', 'Phone', 'Status'];
     const csvRows = [
       headers.join(','),
       ...filteredLeads.map(lead => [
         `"${new Date(lead.created_at).toLocaleDateString()}"`,
-        `"${lead.restaurant_name || ''}"`,
         `"${lead.owner_name || ''}"`,
+        `"${lead.restaurant_name || ''}"`,
         `"\t${lead.phone_number || ''}"`,
-        `"${lead.email || ''}"`,
-        `"${lead.country || ''}"`,
-        `"${lead.state || ''}"`,
-        `"${lead.district || ''}"`,
         `"${lead.status || ''}"`,
       ].join(','))
     ];
@@ -274,31 +270,29 @@ export default function LandingLeads() {
         <table className="hidden md:table w-full text-left border-collapse whitespace-nowrap table-fixed">
           <thead>
             <tr className="border-b border-border">
-              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[20%]" onClick={() => toggleSort('name')}>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[25%]" onClick={() => toggleSort('name')}>
                 <div className="flex items-center gap-2">
-                  Restaurant {getSortIcon('name')}
+                  Owner Name {getSortIcon('name')}
                 </div>
               </th>
-              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[14%]">Owner</th>
-              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[13%]">Phone</th>
-              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[18%]">Email</th>
-              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[14%]">Location</th>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[25%]">Restaurant (Optional)</th>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[20%]">Phone Number</th>
               <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[10%]">Status</th>
-              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[9%]" onClick={() => toggleSort('newest')}>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[15%]" onClick={() => toggleSort('newest')}>
                 <div className="flex items-center gap-2">
                   Date {getSortIcon('newest')}
                 </div>
               </th>
-              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[2%]"></th>
+              <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[5%]"></th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <TableRowsSkeleton rows={perPage} columns={8} />
+              <TableRowsSkeleton rows={perPage} columns={6} />
             ) : error ? (
-              <tr><td colSpan="8" className="text-center py-10 text-red-500 text-[13px] font-medium">{error}</td></tr>
+              <tr><td colSpan="6" className="text-center py-10 text-red-500 text-[13px] font-medium">{error}</td></tr>
             ) : paged.length === 0 ? (
-              <tr><td colSpan="8" className="text-center py-10 text-text-muted text-[13px]">No leads found matching your criteria.</td></tr>
+              <tr><td colSpan="6" className="text-center py-10 text-text-muted text-[13px]">No leads found matching your criteria.</td></tr>
             ) : (
               <>
                 {paged.map(lead => (
@@ -306,33 +300,21 @@ export default function LandingLeads() {
                     <td className="py-2.5 px-4 align-middle">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center font-bold text-blue-600 text-[12px] shrink-0">
-                          {(lead.restaurant_name || '?')[0].toUpperCase()}
+                          {(lead.owner_name || '?')[0].toUpperCase()}
                         </div>
-                        <span className="font-semibold text-text-main text-[13px] truncate group-hover:text-accent-primary transition-colors max-w-[160px]" title={lead.restaurant_name}>{lead.restaurant_name}</span>
+                        <span className="font-bold text-text-main text-[13px] truncate group-hover:text-accent-primary transition-colors max-w-[160px]" title={lead.owner_name}>{lead.owner_name}</span>
                       </div>
                     </td>
                     <td className="py-2.5 px-4 align-middle">
                       <div className="flex items-center gap-1.5 text-[12px] text-text-main">
-                        <User size={11} className="text-text-muted shrink-0" />
-                        <span className="truncate max-w-[120px]" title={lead.owner_name}>{lead.owner_name || '—'}</span>
+                        <Store size={12} className="text-text-muted shrink-0" />
+                        <span className="truncate max-w-[150px]" title={lead.restaurant_name}>{lead.restaurant_name || <span className="italic text-text-muted opacity-80">Not provided</span>}</span>
                       </div>
                     </td>
                     <td className="py-2.5 px-4 align-middle">
                       <div className="flex items-center gap-1.5 text-[12px] text-text-main">
-                        <Phone size={11} className="text-text-muted shrink-0" />
-                        <span>{lead.phone_number || '—'}</span>
-                      </div>
-                    </td>
-                    <td className="py-2.5 px-4 align-middle">
-                      <div className="flex items-center gap-1.5 text-[12px] text-text-main">
-                        <Mail size={11} className="text-blue-500 shrink-0" />
-                        <span className="truncate max-w-[170px]" title={lead.email}>{lead.email || '—'}</span>
-                      </div>
-                    </td>
-                    <td className="py-2.5 px-4 align-middle">
-                      <div className="flex items-center gap-1.5 text-[12px] text-text-muted">
-                        <MapPin size={11} className="shrink-0" />
-                        <span className="truncate max-w-[120px]">{[lead.district, lead.state, lead.country].filter(Boolean).join(', ') || '—'}</span>
+                        <Phone size={12} className="text-text-muted shrink-0" />
+                        <span className="font-medium">{lead.phone_number || '—'}</span>
                       </div>
                     </td>
                     <td className="py-2.5 px-4 align-middle">
@@ -355,7 +337,7 @@ export default function LandingLeads() {
                 ))}
                 {perPage - paged.length > 0 && Array.from({ length: perPage - paged.length }).map((_, idx) => (
                   <tr key={`empty-${idx}`} className="border-b border-border/40 last:border-b-0 opacity-0 pointer-events-none">
-                    <td colSpan="8" className="py-2.5 px-4 align-middle">
+                    <td colSpan="6" className="py-2.5 px-4 align-middle">
                       <div className="h-8"></div>
                     </td>
                   </tr>
@@ -394,56 +376,42 @@ export default function LandingLeads() {
               <div
                 key={lead.id}
                 onClick={() => setSelectedLead(lead)}
-                className="p-4 hover:bg-surface-hover border-b border-border/40 last:border-b-0 cursor-pointer transition-colors flex flex-col gap-2.5 active:bg-surface-hover/80"
+                className="p-4 hover:bg-surface-hover border-b border-border/40 last:border-b-0 cursor-pointer transition-colors flex flex-col gap-3 active:bg-surface-hover/80"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center font-bold text-blue-600 text-[12px] shrink-0">
-                      {(lead.restaurant_name || '?')[0].toUpperCase()}
+                    <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center font-bold text-blue-600 text-[14px] shrink-0">
+                      {(lead.owner_name || '?')[0].toUpperCase()}
                     </div>
                     <div className="flex flex-col min-w-0">
-                      <span className="font-semibold text-text-main text-[13px] truncate" title={lead.restaurant_name}>{lead.restaurant_name}</span>
-                      <span className="text-[11px] text-text-muted flex items-center gap-1 mt-0.5">
-                        <User size={10} className="shrink-0" />
-                        {lead.owner_name || '—'}
+                      <span className="font-bold text-text-main text-[14px] truncate" title={lead.owner_name}>{lead.owner_name}</span>
+                      <span className="text-[12px] text-text-muted flex items-center gap-1.5 mt-0.5">
+                        <Store size={11} className="shrink-0" />
+                        <span className="truncate">{lead.restaurant_name || <span className="italic opacity-80">Not provided</span>}</span>
                       </span>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-1.5 shrink-0">
-                    <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded bg-surface-hover border border-border/40 ${statusColor(lead.status)}`}>
+                  <div className="flex flex-col items-end gap-2 shrink-0">
+                    <span className={`text-[11px] font-bold px-2 py-1 rounded bg-surface-hover border border-border/40 ${statusColor(lead.status)}`}>
                       {(lead.status || 'new').toUpperCase()}
                     </span>
-                    <span className="text-[10px] text-text-muted">{new Date(lead.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+                    <span className="text-[10px] text-text-muted font-medium">{new Date(lead.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-1.5 pl-11">
-                  <div className="flex items-center gap-2 text-[12px] text-text-main">
-                    <Phone size={12} className="text-text-muted shrink-0" />
+                <div className="mt-1 pt-3 border-t border-border/30 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-[13px] font-semibold text-text-main">
+                    <Phone size={14} className="text-text-muted shrink-0" />
                     <span>{lead.phone_number || '—'}</span>
                   </div>
-
-                  {lead.email && (
-                    <div className="flex items-center gap-2 text-[12px] text-text-main">
-                      <Mail size={12} className="text-blue-500 shrink-0" />
-                      <span className="truncate">{lead.email}</span>
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between mt-1 pt-1.5 border-t border-border/20">
-                    <div className="flex items-center gap-1.5 text-[11px] text-text-muted truncate mr-4">
-                      <MapPin size={11} className="shrink-0" />
-                      <span className="truncate">{[lead.district, lead.state, lead.country].filter(Boolean).join(', ') || '—'}</span>
-                    </div>
-                    <button
-                      onClick={e => { e.stopPropagation(); setDeleteConfirmId(lead.id); }}
-                      disabled={updatingId === lead.id}
-                      className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-red-500/10 hover:text-red-500 transition-colors bg-transparent border-none cursor-pointer shrink-0"
-                      title="Delete Lead"
-                    >
-                      {updatingId === lead.id ? <Loader2 className="animate-spin" size={12} /> : <Trash2 size={12} />}
-                    </button>
-                  </div>
+                  <button
+                    onClick={e => { e.stopPropagation(); setDeleteConfirmId(lead.id); }}
+                    disabled={updatingId === lead.id}
+                    className="w-7 h-7 flex items-center justify-center rounded text-text-muted hover:bg-red-500/10 hover:text-red-500 transition-colors bg-transparent border-none cursor-pointer shrink-0"
+                    title="Delete Lead"
+                  >
+                    {updatingId === lead.id ? <Loader2 className="animate-spin" size={14} /> : <Trash2 size={14} />}
+                  </button>
                 </div>
               </div>
             ))
@@ -454,15 +422,15 @@ export default function LandingLeads() {
       {/* Details Modal */}
       {selectedLead && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-[8px] flex items-center justify-center z-[1000] p-4" onClick={() => setSelectedLead(null)}>
-          <div className="bg-surface rounded-[24px] w-full max-w-[520px] max-h-[90vh] shadow-[0_24px_50px_rgba(0,0,0,0.15)] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+          <div className="bg-surface rounded-[24px] w-full max-w-[480px] max-h-[90vh] shadow-[0_24px_50px_rgba(0,0,0,0.15)] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-start pt-8 px-8 pb-6 border-b border-border shrink-0">
               <div className="flex gap-4 items-center">
                 <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-600">
-                  <Store size={28} />
+                  <User size={28} />
                 </div>
                 <div>
-                  <h2 className="m-0 mb-1.5 text-[1.4rem] font-extrabold text-text-main tracking-tight">{selectedLead.restaurant_name}</h2>
-                  <div className="flex items-center gap-2 text-text-muted text-[14px] font-medium">
+                  <h2 className="m-0 mb-1.5 text-[1.4rem] font-extrabold text-text-main tracking-tight">{selectedLead.owner_name}</h2>
+                  <div className="flex items-center gap-2 text-text-muted text-[13px] font-medium">
                     <Calendar size={14} />
                     {new Date(selectedLead.created_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
                   </div>
@@ -475,10 +443,8 @@ export default function LandingLeads() {
 
             <div className="px-8 py-6 flex flex-col gap-4 bg-surface-hover overflow-y-auto min-h-0 flex-1">
               {[
-                { icon: <User size={20} />, color: 'bg-blue-500/10 text-blue-600', label: 'Owner Name', value: selectedLead.owner_name },
+                { icon: <Store size={20} />, color: 'bg-indigo-500/10 text-indigo-600', label: 'Restaurant Name', value: selectedLead.restaurant_name ? <span className="text-[16px] font-semibold text-text-main">{selectedLead.restaurant_name}</span> : <span className="text-[16px] italic text-text-muted opacity-80">Not provided</span> },
                 { icon: <Phone size={20} />, color: 'bg-emerald-500/10 text-emerald-600', label: 'Phone Number', value: <a href={`tel:${selectedLead.phone_number}`} className="text-[16px] font-semibold text-text-main no-underline hover:underline">{selectedLead.phone_number}</a> },
-                { icon: <Mail size={20} />, color: 'bg-amber-500/10 text-amber-600', label: 'Email Address', value: selectedLead.email ? <a href={`mailto:${selectedLead.email}`} className="text-[16px] font-semibold text-text-main no-underline hover:underline">{selectedLead.email}</a> : <span className="text-[16px] italic text-text-muted">Not provided</span> },
-                { icon: <MapPin size={20} />, color: 'bg-purple-500/10 text-purple-600', label: 'Location', value: [selectedLead.district, selectedLead.state, selectedLead.country].filter(Boolean).join(', ') || '—' },
               ].map(({ icon, color, label, value }) => (
                 <div key={label} className="bg-surface px-5 py-4 rounded-2xl flex items-center gap-4 border border-border">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color}`}>{icon}</div>

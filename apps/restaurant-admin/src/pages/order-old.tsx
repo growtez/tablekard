@@ -568,7 +568,7 @@ const Order: React.FC = () => {
                                                                 ) : (
                                                                     <div className="flex-1 flex items-center relative pb-3">
                                                                         {[
-                                                                            { label: 'Accept', value: 'CONFIRMED' },
+                                                                            { label: 'Placed', value: 'CONFIRMED' },
                                                                             { label: 'Preparing', value: 'PREPARING' },
                                                                             { label: 'Ready', value: 'READY' }
                                                                         ].map((step, stepIdx, arr) => {
