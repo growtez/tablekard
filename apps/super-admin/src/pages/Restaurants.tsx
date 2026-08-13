@@ -89,7 +89,7 @@ export default function Restaurants({ openDrawer, setSyncAction }: { openDrawer:
     const handleSubscriptionChange = async (resId: string, newStatusVal: string) => {
         const updates: any = {};
         let subType = null;
-        let subStatus = 'INACTIVE';
+        let subStatus = 'inactive';
         
         if (newStatusVal === 'none') {
             updates.subscription_end_at = null;
@@ -97,7 +97,7 @@ export default function Restaurants({ openDrawer, setSyncAction }: { openDrawer:
             const trialId = newStatusVal.replace('active-trial-', '');
             const selectedTrial = trialPlans.find(t => t.id === trialId);
             subType = selectedTrial ? selectedTrial.name : 'trial plan';
-            subStatus = 'TRIAL';
+            subStatus = 'trial';
             if (selectedTrial) {
                 const endsAt = new Date();
                 const days = selectedTrial.duration_days || 14;
@@ -108,7 +108,7 @@ export default function Restaurants({ openDrawer, setSyncAction }: { openDrawer:
             const planId = newStatusVal.replace('active-plan-', '');
             const selectedPlan = billingPlans.find(p => p.id === planId);
             subType = selectedPlan ? selectedPlan.name : 'paid plan';
-            subStatus = 'ACTIVE';
+            subStatus = 'active';
             if (selectedPlan) {
                 const endsAt = new Date();
                 const durationMonths = selectedPlan.duration || 1;
@@ -116,9 +116,11 @@ export default function Restaurants({ openDrawer, setSyncAction }: { openDrawer:
                 updates.subscription_end_at = endsAt.toISOString();
             }
         } else if (newStatusVal === 'active-custom') {
-            subStatus = 'ACTIVE';
+            subStatus = 'active';
         } else if (newStatusVal === 'suspended') {
-            subStatus = 'SUSPENDED';
+            subStatus = 'suspended';
+        } else if (newStatusVal === 'expired') {
+            subStatus = 'expired';
         }
 
         updates.subscription_plan = subType;

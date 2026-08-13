@@ -92,7 +92,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const [activeRestaurantName, setActiveRestaurantName] = useState('Restaurant');
     const [activeRestaurantLogo, setActiveRestaurantLogo] = useState<string | null>(null);
     const [activeRestaurantStatus, setActiveRestaurantStatus] = useState<string>('pending');
-    const [activeRestaurantSubscriptionStatus, setActiveRestaurantSubscriptionStatus] = useState<string>('INACTIVE');
+    const [activeRestaurantSubscriptionStatus, setActiveRestaurantSubscriptionStatus] = useState<string>('inactive');
     const [activeRestaurantSubscriptionPlan, setActiveRestaurantSubscriptionPlan] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -134,7 +134,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             setActiveRestaurantName('Restaurant');
             setActiveRestaurantLogo(null);
             setActiveRestaurantStatus('pending');
-            setActiveRestaurantSubscriptionStatus('INACTIVE');
+            setActiveRestaurantSubscriptionStatus('inactive');
             setActiveRestaurantSubscriptionPlan(null);
             return;
         }
@@ -148,7 +148,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 setActiveRestaurantName(data.name || 'Restaurant');
                 setActiveRestaurantLogo(data.logo_url || null);
                 setActiveRestaurantStatus(data.status || 'pending');
-                setActiveRestaurantSubscriptionStatus(data.subscription_status || 'INACTIVE');
+                setActiveRestaurantSubscriptionStatus(data.subscription_status || 'inactive');
                 setActiveRestaurantSubscriptionPlan(data.subscription_plan || null);
             }
         } catch {

@@ -42,12 +42,12 @@ export default function StatusGuard({ children }: { children: React.ReactNode })
     }
 
     // 2. Check Subscription Status (Billing) - Only applies if Account is Active
-    const subStatus = (activeRestaurantSubscriptionStatus || 'INACTIVE').toUpperCase();
+    const subStatus = (activeRestaurantSubscriptionStatus || 'inactive').toLowerCase();
     const isSubscriptionPage = location.pathname.includes('/subscription');
 
     // Assuming SUSPENDED blocks access to all pages except /subscription.
     // (EXPIRED and INACTIVE now allow full access to Restaurant Admin)
-    if (subStatus === 'SUSPENDED') {
+    if (subStatus === 'suspended') {
         // Allow access to the subscription/billing page to renew
         if (isSubscriptionPage) {
             return <>{children}</>;
@@ -73,7 +73,7 @@ export default function StatusGuard({ children }: { children: React.ReactNode })
     }
 
     // 3. Handle Trial Banner
-    const isTrial = subStatus === 'TRIAL' || subStatus.includes('TRIAL');
+    const isTrial = subStatus === 'trial' || subStatus.includes('trial');
 
     return (
         <div className="relative w-full h-full flex flex-col min-h-screen">

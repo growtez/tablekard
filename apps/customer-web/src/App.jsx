@@ -129,7 +129,7 @@ function RequireAuth({ children }) {
 
 // ─── Restaurant guard ─────────────────────────────────────────────────────────
 function RequireRestaurant({ children }) {
-  const { restaurantId, restaurantLoading, restaurant, geofenceStatus, distance, allowedRadius, checkGeofence } = useRestaurant();
+  const { restaurantId, restaurantLoading, restaurant, isServicePaused, geofenceStatus, distance, allowedRadius, checkGeofence } = useRestaurant();
   const location = useLocation();
 
   const searchParams = new URLSearchParams(location.search);
@@ -144,7 +144,7 @@ function RequireRestaurant({ children }) {
     return <ScanQRPage />;
   }
 
-  if (!isPreviewMode && restaurantId && !restaurantLoading && (!restaurant || restaurant.status !== 'active')) {
+  if (!isPreviewMode && restaurantId && !restaurantLoading && (!restaurant || restaurant.status !== 'active' || isServicePaused)) {
     return (
       <div className="suspended-screen">
         <div className="suspended-card">

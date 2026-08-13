@@ -76,17 +76,29 @@ function getStatusInfo(restaurant: Restaurant | null): {
         return { label: 'Pending Review', status: 'inactive', icon: <Timer size={48} className="text-tk-text-secondary" />, message: 'Your restaurant application is currently pending review.' };
     }
 
-    if (restStatus === 'approved' && restaurant.subscriptionStatus !== 'ACTIVE' && restaurant.subscriptionStatus !== 'TRIAL') {
+    if (restStatus === 'approved' && restaurant.subscriptionStatus !== 'active' && restaurant.subscriptionStatus !== 'trial') {
         return { label: 'Approved', status: 'inactive', icon: <CheckCircle size={48} className="text-tk-success" />, message: 'Your restaurant has been approved! Select a plan below to get started.' };
     }
 
-    if (restaurant.subscriptionStatus !== 'ACTIVE' && restaurant.subscriptionStatus !== 'TRIAL' && restStatus !== 'active') {
+    if (restaurant.subscriptionStatus !== 'active' && restaurant.subscriptionStatus !== 'trial' && restStatus !== 'active') {
         return { label: 'Inactive', status: 'inactive', icon: <PauseCircle size={48} className="text-tk-text-secondary" />, message: 'Your subscription is inactive. Choose a plan to get started.' };
     }
 
     const now = new Date();
     const endAt = restaurant.subscriptionEndAt;
     const graceEnd = (restaurant as any).gracePeriodEndsAt;
+
+    if (restaurant.subscriptionStatus === 'trial') {
+        const days = endAt ? daysUntil(endAt) : 0;
+        return {
+            label: 'Trial Period',
+            status: 'trial',
+            icon: <CheckCircle size={48} className="text-blue-500" />,
+            message: endAt 
+                ? `Your free trial expires in ${days} day${days !== 1 ? 's' : ''} on ${formatDate(endAt)}.` 
+                : 'Your restaurant is currently on a free trial.',
+        };
+    }
 
     if (endAt && new Date(endAt) > now) {
         // Still within the paid subscription period

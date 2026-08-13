@@ -262,12 +262,12 @@ export default function RestaurantProfileView({
           <span
             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[13px] font-semibold"
             style={{
-              backgroundColor: restaurant.subscription_status === 'ACTIVE' || restaurant.subscription_status === 'TRIAL' ? "rgba(16, 185, 129, 0.15)" : "rgba(113, 113, 122, 0.2)",
-              color: restaurant.subscription_status === 'ACTIVE' || restaurant.subscription_status === 'TRIAL' ? "#10b981" : "#71717a",
+              backgroundColor: restaurant.subscription_status === 'active' || restaurant.subscription_status === 'trial' ? "rgba(16, 185, 129, 0.15)" : "rgba(113, 113, 122, 0.2)",
+              color: restaurant.subscription_status === 'active' || restaurant.subscription_status === 'trial' ? "#10b981" : "#71717a",
             }}
           >
             <CreditCard size={14} />
-            {restaurant.subscription_status === 'ACTIVE' || restaurant.subscription_status === 'TRIAL' ? "Active" : "Inactive"}
+            {restaurant.subscription_status === 'active' || restaurant.subscription_status === 'trial' ? "Active" : restaurant.subscription_status ? restaurant.subscription_status.charAt(0).toUpperCase() + restaurant.subscription_status.slice(1) : "Inactive"}
 
           </span>
         </div>

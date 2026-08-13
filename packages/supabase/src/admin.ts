@@ -63,7 +63,7 @@ export const forceApproveRestaurant = async (restaurantId: string) => {
         .from('restaurants')
         .update({ 
             status: 'active',
-            subscription_status: 'ACTIVE',
+            subscription_status: 'active',
             updated_at: new Date().toISOString()
         })
         .eq('id', restaurantId);
