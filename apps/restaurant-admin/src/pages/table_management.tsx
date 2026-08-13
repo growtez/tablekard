@@ -424,7 +424,7 @@ const TableManagementPage: React.FC = () => {
                                     </div>
 
                                     <div className="w-full flex flex-col gap-2.5 items-center">
-                                        <p className="text-[10px] text-[#718096] break-all text-center m-0 leading-relaxed max-h-9 overflow-hidden line-clamp-2 dark:text-tk-text-secondary" title={url}>{url}</p>
+                                        <p className="text-[10px] text-[#718096] break-all text-center m-0 leading-relaxed dark:text-tk-text-secondary">{url}</p>
                                         <div className="flex gap-3 text-[13px] text-[#4A5568] font-medium dark:text-tk-text-secondary">
                                             <span className="flex items-center gap-1.5">
                                                 <Users size={14} />
