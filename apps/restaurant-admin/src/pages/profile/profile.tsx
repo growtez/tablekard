@@ -1019,17 +1019,17 @@ const ProfilePage: React.FC = () => {
                 <span
                   className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[13px] font-semibold"
                   style={{
-                    backgroundColor: restaurant?.subscriptionStatus === 'ACTIVE' || restaurant?.subscriptionStatus === 'TRIAL' ? "rgba(72, 187, 120, 0.15)" : "rgba(160, 174, 192, 0.2)",
-                    color: restaurant?.subscriptionStatus === 'ACTIVE' || restaurant?.subscriptionStatus === 'TRIAL' ? "#2F855A" : "#4A5568",
+                    backgroundColor: restaurant?.subscriptionStatus === 'active' || restaurant?.subscriptionStatus === 'trial' ? "rgba(72, 187, 120, 0.15)" : "rgba(160, 174, 192, 0.2)",
+                    color: restaurant?.subscriptionStatus === 'active' || restaurant?.subscriptionStatus === 'trial' ? "#2F855A" : "#4A5568",
                   }}
                 >
                   <CreditCardIcon size={14} />
-                  {restaurant?.subscriptionStatus === 'ACTIVE' || restaurant?.subscriptionStatus === 'TRIAL' ? "Active" : "Inactive"}
+                  {restaurant?.subscriptionStatus === 'active' || restaurant?.subscriptionStatus === 'trial' ? "Active" : restaurant?.subscriptionStatus ? restaurant?.subscriptionStatus.charAt(0).toUpperCase() + restaurant?.subscriptionStatus.slice(1) : "Inactive"}
                   {restaurant?.subscriptionType
                     ? ` (${restaurant.subscriptionType})`
                     : ""}
                 </span>
-                {(restaurant?.subscriptionStatus !== 'ACTIVE' && restaurant?.subscriptionStatus !== 'TRIAL') && (
+                {(restaurant?.subscriptionStatus !== 'active' && restaurant?.subscriptionStatus !== 'trial') && (
                   <Link
                     to="/subscription"
                     className="text-tk-burgundy hover:text-[#6B2A15] text-[13px] font-semibold underline underline-offset-2 decoration-tk-burgundy/30 hover:decoration-tk-burgundy transition-colors"

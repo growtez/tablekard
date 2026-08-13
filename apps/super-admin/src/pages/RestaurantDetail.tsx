@@ -271,7 +271,6 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }: Resta
                     longitude: formData.longitude ? parseFloat(String(formData.longitude)) : null,
                     allowed_radius: formData.allowed_radius ? parseInt(String(formData.allowed_radius)) : 100,
                     status: formData.status,
-                    subscription_status: formData.status === 'active' ? 'ACTIVE' : 'INACTIVE',
                     operating_hours_weekdays: formData.operating_hours_weekdays || '09:00 AM - 10:00 PM',
                     operating_hours_weekends: formData.operating_hours_weekends || '09:00 AM - 10:00 PM',
                     cover_image_url: formData.cover_image_url,
@@ -608,17 +607,17 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }: Resta
                     let badgeText = '';
                     let badgeVariant = '';
 
-                    if (restaurant?.subscription_status === 'ACTIVE' || restaurant?.subscription_status === 'TRIAL') {
+                    if (restaurant?.subscription_status === 'active') {
                         badgeText = 'ACTIVE & PAID';
                         badgeVariant = 'success';
-                    } else if (isTrial()) {
+                    } else if (restaurant?.subscription_status === 'trial') {
                         badgeText = 'TRIAL PERIOD';
                         badgeVariant = 'warning';
-                    } else if (isLite) {
+                    } else if (restaurant?.subscription_status === 'inactive' && isLite) {
                         badgeText = 'FREE TIER (ACTIVE)';
                         badgeVariant = 'info';
                     } else {
-                        badgeText = 'EXPIRED / INACTIVE';
+                        badgeText = restaurant?.subscription_status === 'suspended' ? 'SUSPENDED' : 'EXPIRED / INACTIVE';
                         badgeVariant = 'error';
                     }
 

@@ -26,6 +26,9 @@ interface AuthContextType {
     activeRestaurantId: string | null;
     activeRestaurantName: string;
     activeRestaurantLogo: string | null;
+    activeRestaurantStatus: string;
+    activeRestaurantSubscriptionStatus: string;
+    activeRestaurantSubscriptionPlan: string | null;
     setActiveRestaurantId: (restaurantId: string) => void;
     refreshSessionData: () => Promise<void>;
     loading: boolean;
@@ -88,6 +91,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const [activeRestaurantId, setActiveRestaurantIdState] = useState<string | null>(null);
     const [activeRestaurantName, setActiveRestaurantName] = useState('Restaurant');
     const [activeRestaurantLogo, setActiveRestaurantLogo] = useState<string | null>(null);
+    const [activeRestaurantStatus, setActiveRestaurantStatus] = useState<string>('pending');
+    const [activeRestaurantSubscriptionStatus, setActiveRestaurantSubscriptionStatus] = useState<string>('inactive');
+    const [activeRestaurantSubscriptionPlan, setActiveRestaurantSubscriptionPlan] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
     const setActiveRestaurantId = (restaurantId: string) => {
@@ -146,17 +152,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (!restaurantId) {
             setActiveRestaurantName('Restaurant');
             setActiveRestaurantLogo(null);
+            setActiveRestaurantStatus('pending');
+            setActiveRestaurantSubscriptionStatus('inactive');
+            setActiveRestaurantSubscriptionPlan(null);
             return;
         }
         try {
             const { data, error } = await supabase
                 .from('restaurants')
-                .select('name, logo_url')
+                .select('name, logo_url, status, subscription_status, subscription_plan')
                 .eq('id', restaurantId)
                 .maybeSingle();
             if (!error && data) {
                 setActiveRestaurantName(data.name || 'Restaurant');
                 setActiveRestaurantLogo(data.logo_url || null);
+                setActiveRestaurantStatus(data.status || 'pending');
+                setActiveRestaurantSubscriptionStatus(data.subscription_status || 'inactive');
+                setActiveRestaurantSubscriptionPlan(data.subscription_plan || null);
             }
         } catch {
             // silently ignore
@@ -165,6 +177,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     useEffect(() => {
         fetchRestaurantBranding(activeRestaurantId);
+        
+        // Subscribe to real-time changes on the active restaurant record
+        if (!activeRestaurantId) return;
+
+        const subscription = supabase
+            .channel(`restaurant-status-${activeRestaurantId}`)
+            .on('postgres_changes', { 
+                event: 'UPDATE', 
+                schema: 'public', 
+                table: 'restaurants', 
+                filter: `id=eq.${activeRestaurantId}` 
+            }, (payload) => {
+                const updated = payload.new;
+                if (updated.name !== undefined) setActiveRestaurantName(updated.name);
+                if (updated.logo_url !== undefined) setActiveRestaurantLogo(updated.logo_url);
+                if (updated.status !== undefined) setActiveRestaurantStatus(updated.status);
+                if (updated.subscription_status !== undefined) setActiveRestaurantSubscriptionStatus(updated.subscription_status);
+                if (updated.subscription_plan !== undefined) setActiveRestaurantSubscriptionPlan(updated.subscription_plan);
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(subscription);
+        };
     }, [activeRestaurantId, fetchRestaurantBranding]);
 
     const refreshSessionData = async (): Promise<void> => {
@@ -281,6 +317,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         activeRestaurantId,
         activeRestaurantName,
         activeRestaurantLogo,
+        activeRestaurantStatus,
+        activeRestaurantSubscriptionStatus,
+        activeRestaurantSubscriptionPlan,
         setActiveRestaurantId,
         refreshSessionData,
         loading,
@@ -290,7 +329,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         updatePassword,
         isAuthenticated: !!user && memberships.length > 0 && isAllowedAdminRole,
         isRestaurantAdmin: memberships.some(m => String(m.role).toLowerCase() === 'admin') || String(userProfile?.role).toLowerCase() === 'super_admin'
-    }), [user, userProfile, memberships, activeRestaurantId, activeRestaurantName, activeRestaurantLogo, loading, isAllowedAdminRole]);
+    }), [
+        user, userProfile, memberships, activeRestaurantId, 
+        activeRestaurantName, activeRestaurantLogo, 
+        activeRestaurantStatus, activeRestaurantSubscriptionStatus, activeRestaurantSubscriptionPlan, 
+        loading, isAllowedAdminRole
+    ]);
 
     return (
         <AuthContext.Provider value={value}>

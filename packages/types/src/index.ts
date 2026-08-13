@@ -57,11 +57,11 @@ export const RestaurantStatus = {
 export type RestaurantStatus = typeof RestaurantStatus[keyof typeof RestaurantStatus];
 
 export const SubscriptionStatus = {
-  INACTIVE: 'INACTIVE',
-  ACTIVE: 'ACTIVE',
-  SUSPENDED: 'SUSPENDED',
-  TRIAL: 'TRIAL',
-  EXPIRED: 'EXPIRED',
+  INACTIVE: 'inactive',
+  ACTIVE: 'active',
+  TRIAL: 'trial',
+  EXPIRED: 'expired',
+  SUSPENDED: 'suspended',
 } as const;
 export type SubscriptionStatus = typeof SubscriptionStatus[keyof typeof SubscriptionStatus];
 
@@ -405,7 +405,7 @@ export interface Database {
           secondary_color: string | null;
           profile_urls: string[] | null;
           settings: Record<string, unknown> | null;
-          subscription_status: string;
+          subscription_status: SubscriptionStatus;
           subscription_plan: string | null;
           subscription_end_at: string | null;
           latitude: number | null;
@@ -436,7 +436,7 @@ export interface Database {
           secondary_color?: string | null;
           profile_urls?: string[] | null;
           settings?: Record<string, unknown> | null;
-          subscription_status?: string;
+          subscription_status?: SubscriptionStatus;
           subscription_plan?: string | null;
           subscription_end_at?: string | null;
           latitude?: number | null;
@@ -466,7 +466,7 @@ export interface Database {
           secondary_color?: string | null;
           profile_urls?: string[] | null;
           settings?: Record<string, unknown> | null;
-          subscription_status?: string;
+          subscription_status?: SubscriptionStatus;
           subscription_plan?: string | null;
           subscription_end_at?: string | null;
           latitude?: number | null;
