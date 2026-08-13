@@ -1100,7 +1100,7 @@ CREATE TABLE public.restaurants (
     secondary_color text,
     settings jsonb DEFAULT '{}'::jsonb,
     subscription_status text DEFAULT 'INACTIVE',
-    subscription_type text,
+    subscription_plan text,
     latitude numeric,
     longitude numeric,
     allowed_radius integer,

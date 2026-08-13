@@ -12,24 +12,73 @@ import { Card, CardHeader, CardTitle } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { DetailPageSkeleton } from '../components/ui/Skeleton';
 
-export default function UserDetail({ setHeaderData, setSyncAction }) {
+interface UserProfile {
+    id: string;
+    name: string | null;
+    email: string;
+    role: string;
+    avatar_url: string | null;
+    updated_at: string;
+    restaurant_id?: string;
+}
+
+interface Restaurant {
+    id: string;
+    name: string;
+}
+
+interface Order {
+    id: string;
+    order_number: string;
+    total: number | string;
+    status: string;
+    payment_status: string;
+    created_at: string;
+    restaurants?: { name: string } | null;
+}
+
+interface HeaderData {
+    id?: string;
+    name?: string;
+    logo_url?: string | null;
+    status?: string;
+    onEdit?: (() => void) | null;
+    isEditing?: boolean;
+    onSave?: () => void;
+    onCancel?: () => void;
+    saving?: boolean;
+    backPath?: string;
+    backTitle?: string;
+}
+
+interface SyncAction {
+    onSync: () => void;
+    loading: boolean;
+}
+
+interface UserDetailProps {
+    setHeaderData?: (data: HeaderData | null) => void;
+    setSyncAction?: (action: SyncAction | null) => void;
+}
+
+export default function UserDetail({ setHeaderData, setSyncAction }: UserDetailProps) {
     const { id } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
-    const [profile, setProfile] = useState(null);
-    const [restaurants, setRestaurants] = useState([]);
-    const [orders, setOrders] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [activeTab, setActiveTab] = useState('overview');
+    const [profile, setProfile] = useState<UserProfile | null>(null);
+    const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<string>('overview');
 
-    const [isEditing, setIsEditing] = useState(location.state?.edit || false);
-    const [formData, setFormData] = useState({});
-    const [saving, setSaving] = useState(false);
+    const [isEditing, setIsEditing] = useState<boolean>(location.state?.edit || false);
+    const [formData, setFormData] = useState<Partial<UserProfile>>({});
+    const [saving, setSaving] = useState<boolean>(false);
 
     // Refs to handle stale closures in header actions
-    const saveRef = useRef();
-    const cancelRef = useRef();
+    const saveRef = useRef<(() => void) | null>(null);
+    const cancelRef = useRef<(() => void) | null>(null);
 
     useEffect(() => {
         if (id) {
@@ -68,7 +117,7 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
                 .order('name');
             if (error) throw error;
             setRestaurants(data || []);
-        } catch (err) {
+        } catch (err: unknown) {
             console.error('Failed to fetch restaurants:', err);
         }
     };
@@ -90,8 +139,8 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
-            setOrders(data || []);
-        } catch (err) {
+            setOrders((data as unknown as Order[]) || []);
+        } catch (err: unknown) {
             console.error('Failed to fetch user orders:', err);
         }
     };
@@ -122,8 +171,8 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
 
             setProfile(profileData);
             setFormData({ ...profileData, restaurant_id: restaurantId });
-        } catch (err) {
-            setError('Failed to fetch user profile: ' + err.message);
+        } catch (err: unknown) {
+            setError('Failed to fetch user profile: ' + (err instanceof Error ? err.message : String(err)));
         }
     };
 
@@ -184,8 +233,8 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
 
             setIsEditing(false);
             fetchUserProfile();
-        } catch (err) {
-            setError('Failed to save changes: ' + err.message);
+        } catch (err: unknown) {
+            setError('Failed to save changes: ' + (err instanceof Error ? err.message : String(err)));
         } finally {
             setSaving(false);
         }
@@ -210,8 +259,12 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
                 status: profile.role,
                 onEdit: !isEditing ? () => setIsEditing(true) : null,
                 isEditing,
-                onSave: () => saveRef.current?.(),
-                onCancel: () => cancelRef.current?.(),
+                onSave: () => {
+                    if (saveRef.current) saveRef.current();
+                },
+                onCancel: () => {
+                    if (cancelRef.current) cancelRef.current();
+                },
                 saving,
                 backPath: '/users',
                 backTitle: 'Back to Users'
@@ -219,8 +272,8 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
         }
     }, [profile, setHeaderData, isEditing, saving]);
 
-    const updateField = (field, value) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+    const updateField = (field: keyof UserProfile, value: string) => {
+        setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
     if (loading) {
@@ -240,7 +293,7 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
         );
     }
 
-    const renderField = (label, field, type = 'text', options = []) => {
+    const renderField = (label: string, field: keyof UserProfile, type = 'text', options: {value: string, label: string}[] = []) => {
         return (
             <div className="space-y-2">
                 <label className="text-xs text-text-muted uppercase tracking-wider">{label}</label>
@@ -271,7 +324,7 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
         );
     };
 
-    const ORDER_STATUS_COLORS = {
+    const ORDER_STATUS_COLORS: Record<string, string> = {
         completed: '#065f46',
         delivered: '#065f46',
         pending: '#92400e',
@@ -386,7 +439,7 @@ export default function UserDetail({ setHeaderData, setSyncAction }) {
                                     <ShoppingBag size={18} className="text-accent-primary" />
                                     <CardTitle className="m-0">Recent Food Orders</CardTitle>
                                 </div>
-                                <Badge variant="secondary">{orders.length} Total Orders</Badge>
+                                <Badge variant="default">{orders.length} Total Orders</Badge>
                             </div>
                         </CardHeader>
                         <div className="space-y-4">

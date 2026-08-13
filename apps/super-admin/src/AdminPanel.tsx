@@ -197,8 +197,8 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
       return matchesSearch && matchesFilter;
     })
     .sort((a, b) => {
-      if (sortBy === 'newest') return new Date(b.created_at) - new Date(a.created_at);
-      if (sortBy === 'oldest') return new Date(a.created_at) - new Date(b.created_at);
+      if (sortBy === 'newest') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      if (sortBy === 'oldest') return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
       if (sortBy === 'name') return (a.name || '').localeCompare(b.name || '');
       if (sortBy === 'role') return (a.role || '').localeCompare(b.role || '');
       return 0;
@@ -301,17 +301,17 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
 
         {/* Pagination Controls */}
         <div className="flex items-center justify-between md:justify-start gap-1 shrink-0 md:border-x md:border-border/50 px-3 py-1.5 md:py-0 w-full md:w-auto">
-          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
+          <button onClick={() => setPage(p => Math.max(1, Number(p) - 1))} disabled={safePage === 1} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
             <ChevronLeft size={14} />
           </button>
           <div className="flex items-center justify-center gap-1 w-[80px]">
             {getPaginationPages().map((p, i) => p === '...' ? (
               <div key={`ellipsis-${i}`} className="w-6 h-6 flex items-center justify-center text-[11px] text-text-muted">…</div>
             ) : (
-              <button key={p} onClick={() => setPage(p)} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
+              <button key={p} onClick={() => setPage(Number(p))} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
             ))}
           </div>
-          <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
+          <button onClick={() => setPage(p => Math.min(totalPages, Number(p) + 1))} disabled={safePage === totalPages} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
             <ChevronRight size={14} />
           </button>
         </div>
@@ -378,7 +378,7 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
               <TableRowsSkeleton rows={perPage} columns={5} />
             ) : filteredUsers.length === 0 ? (
               <tr>
-                <td colSpan="5" className="text-center py-10 text-text-muted text-[13px]">
+                <td colSpan={5} className="text-center py-10 text-text-muted text-[13px]">
                   No users found matching your criteria.
                 </td>
               </tr>
@@ -432,7 +432,7 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
                 ))}
                 {perPage - pagedUsers.length > 0 && Array.from({ length: perPage - pagedUsers.length }).map((_, idx) => (
                   <tr key={`empty-${idx}`} className="border-b border-border/40 last:border-b-0 opacity-0 pointer-events-none">
-                    <td colSpan="5" className="py-2.5 px-4 align-middle">
+                    <td colSpan={5} className="py-2.5 px-4 align-middle">
                       <div className="h-8"></div>
                     </td>
                   </tr>

@@ -46,7 +46,13 @@ const PIE_COLORS = {
 //     { name: 'Payment Gateway', uptime: '100%', icon: CreditCard },
 // ];
 
-const CustomTooltip = ({ active, payload, label }) => {
+interface CustomTooltipProps {
+    active?: boolean;
+    payload?: any[];
+    label?: string;
+}
+
+const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
     if (active && payload && payload.length) {
         return (
             <div style={{
@@ -72,17 +78,22 @@ const CustomTooltip = ({ active, payload, label }) => {
     return null;
 };
 
-export default function Dashboard({ setSyncAction }) {
+export interface DashboardProps {
+    setSyncAction: (action: { onSync: () => void; loading: boolean }) => void;
+}
+
+export default function Dashboard({ setSyncAction }: DashboardProps) {
     const navigate = useNavigate();
     const [stats, setStats] = useState({
         totalUsers: 0,
         totalRestaurants: 0,
         totalOrders: 0,
         totalRevenue: 0,
+        totalSubscriptions: 0,
     });
-    const [revenueChartData, setRevenueChartData] = useState([]);
-    const [subscriptionPieData, setSubscriptionPieData] = useState([]);
-    const [recentSubscriptions, setRecentSubscriptions] = useState([]);
+    const [revenueChartData, setRevenueChartData] = useState<any[]>([]);
+    const [subscriptionPieData, setSubscriptionPieData] = useState<any[]>([]);
+    const [recentSubscriptions, setRecentSubscriptions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     const fetchRealStats = async () => {
@@ -100,6 +111,7 @@ export default function Dashboard({ setSyncAction }) {
             setStats({
                 totalUsers: usersRes.count || 0,
                 totalRestaurants: restaurantsRes.count || 0,
+                totalOrders: 0, // Not currently fetched for Dashboard
                 totalSubscriptions: (subPaymentsRes.data || []).length,
                 totalRevenue,
             });
@@ -202,7 +214,7 @@ export default function Dashboard({ setSyncAction }) {
                                     fill="var(--color-accent-primary)" 
                                     radius={[6, 6, 0, 0]} 
                                     maxBarSize={45} 
-                                    onClick={(data, index, event) => {
+                                    onClick={(data: any, index: number, event: any) => {
                                         if (event) event.stopPropagation();
                                         if (data && data.monthKey) {
                                             navigate(`/subscriptions?month=${data.monthKey}`);

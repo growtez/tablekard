@@ -51,7 +51,7 @@ const handleTimeChange = (dayType, openClose, val, updateField, formData) => {
   updateField(field, `${open} - ${close}`);
 };
 
-const Row = ({ label, children, plain }) => (
+const Row = ({ label, children, plain }: { label: React.ReactNode; children: React.ReactNode; plain?: boolean }) => (
   <div className="grid grid-cols-[220px_1fr] sm:grid-cols-[260px_1fr] gap-2 py-1 items-center">
     <span className="text-[13px] text-text-muted font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif]">
       {label}
@@ -233,7 +233,7 @@ export default function RestaurantProfileView({
         )}
       </Row>
 
-      <Row label="Status">
+      <Row label="Rest Account Status">
         {isEditingProfile ? (
           <div className="flex items-center justify-between w-full gap-2">
             <select

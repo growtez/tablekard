@@ -205,7 +205,7 @@ const Row = ({
   children: React.ReactNode;
   plain?: boolean;
 }) => (
-  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-1.5 border-b border-[#E2E8F0] dark:border-tk-border/50 last:border-0 hover:bg-slate-50/50 dark:hover:bg-tk-bg-hover/50 transition-colors px-2 -mx-2 rounded-md">
+  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-1.5 border-b border-[#E2E8F0] dark:border-tk-border last:border-0 hover:bg-slate-50/50 dark:hover:bg-tk-bg-hover transition-colors px-2 -mx-2 rounded-md">
     <div className="sm:w-[240px] shrink-0">
       <span className="text-[12px] text-slate-500 dark:text-tk-text-secondary font-bold uppercase tracking-wider font-['Outfit',sans-serif]">
         {label}
@@ -827,7 +827,7 @@ const ProfilePage: React.FC = () => {
         {activeTab === "details" && (
           <div className="flex flex-col gap-4 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Core Details Card */}
-            <div className="bg-white/80 dark:bg-tk-bg-card/80 backdrop-blur-2xl border border-[#E2E8F0] dark:border-tk-border shadow-[0_4px_20px_rgb(0,0,0,0.03)] rounded-lg p-3 sm:p-4 transition-all duration-500 hover:shadow-[0_4px_20px_rgb(0,0,0,0.06)] relative overflow-hidden group">
+            <div className="bg-white/80 dark:bg-tk-bg-card backdrop-blur-2xl border border-[#E2E8F0] dark:border-tk-border shadow-[0_4px_20px_rgb(0,0,0,0.03)] rounded-lg p-3 sm:p-4 transition-all duration-500 hover:shadow-[0_4px_20px_rgb(0,0,0,0.06)] relative overflow-hidden group">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#1A202C] via-tk-burgundy to-[#4A5568] opacity-20 group-hover:opacity-100 transition-opacity duration-500" />
               <SectionHeader title="Core Details" sectionId="core" description="Manage your restaurant's identity and basic information." />
               <div className="flex flex-col mt-2">
@@ -1045,7 +1045,7 @@ const ProfilePage: React.FC = () => {
             </div>
 
             {/* Contact Information Card */}
-            <div className="bg-white/80 dark:bg-tk-bg-card/80 backdrop-blur-2xl border border-[#E2E8F0] dark:border-tk-border shadow-[0_4px_20px_rgb(0,0,0,0.03)] rounded-lg p-3 sm:p-4 transition-all duration-500 hover:shadow-[0_4px_20px_rgb(0,0,0,0.06)] relative overflow-hidden group">
+            <div className="bg-white/80 dark:bg-tk-bg-card backdrop-blur-2xl border border-[#E2E8F0] dark:border-tk-border shadow-[0_4px_20px_rgb(0,0,0,0.03)] rounded-lg p-3 sm:p-4 transition-all duration-500 hover:shadow-[0_4px_20px_rgb(0,0,0,0.06)] relative overflow-hidden group">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-tk-burgundy via-[#1A202C] to-[#4A5568] opacity-20 group-hover:opacity-100 transition-opacity duration-500" />
               <SectionHeader title="Contact Information" sectionId="contact" description="How customers can reach your restaurant." />
               <div className="flex flex-col mt-2">
@@ -1115,7 +1115,7 @@ const ProfilePage: React.FC = () => {
 
         {activeTab === "operations" && (
           <div className="flex flex-col gap-4 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="bg-white/80 dark:bg-tk-bg-card/80 backdrop-blur-2xl border border-[#E2E8F0] dark:border-tk-border shadow-[0_4px_20px_rgb(0,0,0,0.03)] rounded-lg p-3 sm:p-4 transition-all duration-500 hover:shadow-[0_4px_20px_rgb(0,0,0,0.06)] relative overflow-hidden group">
+            <div className="bg-white/80 dark:bg-tk-bg-card backdrop-blur-2xl border border-[#E2E8F0] dark:border-tk-border shadow-[0_4px_20px_rgb(0,0,0,0.03)] rounded-lg p-3 sm:p-4 transition-all duration-500 hover:shadow-[0_4px_20px_rgb(0,0,0,0.06)] relative overflow-hidden group">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-tk-burgundy via-[#1A202C] to-[#4A5568] opacity-20 group-hover:opacity-100 transition-opacity duration-500" />
               <SectionHeader title="Location & Operations" sectionId="location" description="Manage your physical presence and timings." />
               <div className="flex flex-col mt-2">
@@ -1375,7 +1375,7 @@ const ProfilePage: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white/80 dark:bg-tk-bg-card/80 backdrop-blur-2xl border border-[#E2E8F0] dark:border-tk-border shadow-[0_4px_20px_rgb(0,0,0,0.03)] rounded-lg p-3 sm:p-4 transition-all duration-500 hover:shadow-[0_4px_20px_rgb(0,0,0,0.06)] relative overflow-hidden group">
+            <div className="bg-white/80 dark:bg-tk-bg-card backdrop-blur-2xl border border-[#E2E8F0] dark:border-tk-border shadow-[0_4px_20px_rgb(0,0,0,0.03)] rounded-lg p-3 sm:p-4 transition-all duration-500 hover:shadow-[0_4px_20px_rgb(0,0,0,0.06)] relative overflow-hidden group">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#1A202C] via-tk-burgundy to-[#4A5568] opacity-20 group-hover:opacity-100 transition-opacity duration-500" />
               <SectionHeader title="Web & Social Media" sectionId="web" description="Connect your customers to your online presence." />
               <div className="flex flex-col mt-2">
@@ -1479,7 +1479,7 @@ const ProfilePage: React.FC = () => {
 
     return (
       <div className="flex flex-col gap-4 w-full max-w-5xl animate-in fade-in slide-in-from-bottom-4 duration-500 mt-8">
-        <div className="bg-white/80 dark:bg-tk-bg-card/80 backdrop-blur-2xl border border-[#E2E8F0] dark:border-tk-border shadow-[0_4px_20px_rgb(0,0,0,0.03)] rounded-lg p-3 sm:p-4 transition-all duration-500 hover:shadow-[0_4px_20px_rgb(0,0,0,0.06)] relative overflow-hidden group">
+        <div className="bg-white/80 dark:bg-tk-bg-card backdrop-blur-2xl border border-[#E2E8F0] dark:border-tk-border shadow-[0_4px_20px_rgb(0,0,0,0.03)] rounded-lg p-3 sm:p-4 transition-all duration-500 hover:shadow-[0_4px_20px_rgb(0,0,0,0.06)] relative overflow-hidden group">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-tk-burgundy via-[#1A202C] to-[#4A5568] opacity-20 group-hover:opacity-100 transition-opacity duration-500" />
           <SectionHeader title="Administrator Details" sectionId="admin" description="Manage your personal admin account." />
           <div className="flex flex-col mt-2">
@@ -1561,7 +1561,7 @@ const ProfilePage: React.FC = () => {
 
   return (
     <>
-      <div className="sticky top-0 z-[60] bg-white/80 dark:bg-tk-bg-surface/80 backdrop-blur-2xl pt-6 -mt-6 -mx-6 px-8 mb-8 border-b border-[#E2E8F0] dark:border-tk-border shadow-[0_4px_20px_rgb(0,0,0,0.03)] transition-all duration-300">
+      <div className="sticky top-0 z-[60] bg-white/80 dark:bg-tk-bg-surface backdrop-blur-2xl pt-6 -mt-6 -mx-6 px-8 mb-8 border-b border-[#E2E8F0] dark:border-tk-border shadow-[0_4px_20px_rgb(0,0,0,0.03)] transition-all duration-300">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 relative">
           
           <div className="flex-1 w-full flex justify-start pb-2 sm:pb-4">
@@ -1570,7 +1570,7 @@ const ProfilePage: React.FC = () => {
             </h1>
           </div>
 
-          <div className="flex justify-center gap-2 shrink-0 bg-slate-100/50 dark:bg-tk-bg-elevated/50 p-1 rounded-xl backdrop-blur-md border border-[#E2E8F0]/50 dark:border-tk-border/50">
+          <div className="flex justify-center gap-2 shrink-0 bg-slate-100/50 dark:bg-tk-bg-elevated p-1 rounded-xl backdrop-blur-md border border-[#E2E8F0]/50 dark:border-tk-border">
             <button
               className={`px-6 py-2 rounded-lg text-[14px] font-bold font-['Outfit',sans-serif] transition-all duration-300 ${activeTab === "details"
                 ? "bg-white dark:bg-tk-bg-surface text-tk-burgundy shadow-sm ring-1 ring-[#E2E8F0] dark:ring-tk-border"

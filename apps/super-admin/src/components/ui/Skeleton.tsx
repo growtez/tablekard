@@ -1,4 +1,12 @@
-export function Skeleton({ className = '', style, width, height }) {
+import { CSSProperties } from 'react';
+
+export interface SkeletonProps {
+    className?: string;
+    style?: CSSProperties;
+    width?: string | number;
+    height?: string | number;
+}
+export function Skeleton({ className = '', style, width, height }: SkeletonProps) {
     return (
         <div
             className={`animate-pulse bg-surface-hover rounded-md ${className}`}
@@ -7,7 +15,11 @@ export function Skeleton({ className = '', style, width, height }) {
     );
 }
 
-export function TableRowsSkeleton({ rows = 8, columns = 6 }) {
+export interface TableRowsSkeletonProps {
+    rows?: number;
+    columns?: number;
+}
+export function TableRowsSkeleton({ rows = 8, columns = 6 }: TableRowsSkeletonProps) {
     const cellWidths = ['w-24', 'w-16', 'w-20', 'w-28', 'w-16', 'w-20', 'w-24', 'w-12'];
 
     return [...Array(rows)].map((_, i) => (
@@ -27,7 +39,10 @@ export function TableRowsSkeleton({ rows = 8, columns = 6 }) {
     ));
 }
 
-export function CardListSkeleton({ count = 5 }) {
+export interface CardListSkeletonProps {
+    count?: number;
+}
+export function CardListSkeleton({ count = 5 }: CardListSkeletonProps) {
     return (
         <div className="flex flex-col gap-3">
             {[...Array(count)].map((_, i) => (

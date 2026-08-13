@@ -154,9 +154,9 @@ export default function TransactionDetail({ setHeaderData }) {
         }
     }, [txData, orderData, setHeaderData]);
 
-    const formatDate = (d, time = false) => {
+    const formatDate = (d: any, time = false) => {
         if (!d) return '—';
-        const options = { day: 'numeric', month: 'long', year: 'numeric' };
+        const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
         if (time) {
             options.hour = '2-digit';
             options.minute = '2-digit';
@@ -251,7 +251,7 @@ export default function TransactionDetail({ setHeaderData }) {
                                 </CardTitle>
                                 <div className="flex gap-2">
                                     {orderData.type && (
-                                        <Badge variant="outline" className="capitalize">
+                                        <Badge variant="default" className="capitalize">
                                             {orderData.type}
                                         </Badge>
                                     )}

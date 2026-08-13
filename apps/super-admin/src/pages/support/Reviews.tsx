@@ -52,7 +52,7 @@ export default function Reviews({ setSyncAction }) {
                 <div className="premium-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: '0.5rem', padding: '1.5rem' }}>
                     <div style={{ fontSize: '3rem', fontWeight: 800, color: '#92400e', lineHeight: 1 }}>{loading ? '—' : (avgRating || '—')}</div>
                     <div style={{ display: 'flex', gap: '2px' }}>
-                        {[1,2,3,4,5].map(i => <Star key={i} size={14} fill={avgRating && i <= Math.round(avgRating) ? '#92400e' : 'transparent'} color="#92400e" />)}
+                        {[1,2,3,4,5].map(i => <Star key={i} size={14} fill={avgRating && i <= Math.round(Number(avgRating)) ? '#92400e' : 'transparent'} color="#92400e" />)}
                     </div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{data.length} review{data.length !== 1 ? 's' : ''}</div>
                 </div>

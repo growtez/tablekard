@@ -3,26 +3,36 @@ import { supabase } from '../supabaseClient';
 import { Download, Search, Filter, SlidersHorizontal, Mail, Phone, MapPin, Store, User, X, Trash2, AlertTriangle, Loader2, ChevronLeft, ChevronRight, Calendar, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { TableRowsSkeleton } from '../components/ui/Skeleton';
 
+interface LandingLead {
+  id: string;
+  restaurant_name: string | null;
+  owner_name: string | null;
+  email: string | null;
+  phone_number: string | null;
+  status: string | null;
+  created_at: string;
+}
+
 export default function LandingLeads() {
-  const [leads, setLeads] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [leads, setLeads] = useState<LandingLead[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Filtering & Sorting
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [sortOrder, setSortOrder] = useState('newest');
-  const [dateFilter, setDateFilter] = useState('');
-  const [isStatusFilterOpen, setIsStatusFilterOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [sortOrder, setSortOrder] = useState<string>('newest');
+  const [dateFilter, setDateFilter] = useState<string>('');
+  const [isStatusFilterOpen, setIsStatusFilterOpen] = useState<boolean>(false);
 
   // Pagination
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(8);
+  const [page, setPage] = useState<number>(1);
+  const [perPage, setPerPage] = useState<number>(8);
 
   // Modal & Actions
-  const [selectedLead, setSelectedLead] = useState(null);
-  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
-  const [updatingId, setUpdatingId] = useState(null);
+  const [selectedLead, setSelectedLead] = useState<LandingLead | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const fetchLeads = async () => {
     setLoading(true);
@@ -34,8 +44,8 @@ export default function LandingLeads() {
         .order('created_at', { ascending: false });
       if (fetchError) throw fetchError;
       setLeads(data || []);
-    } catch (err) {
-      setError('Failed to fetch leads: ' + err.message);
+    } catch (err: unknown) {
+      setError('Failed to fetch leads: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setLoading(false);
     }
@@ -52,7 +62,7 @@ export default function LandingLeads() {
     return () => { document.body.style.overflow = 'unset'; };
   }, [selectedLead, deleteConfirmId]);
 
-  const handleStatusChange = async (leadId, newStatus) => {
+  const handleStatusChange = async (leadId: string, newStatus: string) => {
     setUpdatingId(leadId);
     try {
       const { error: updateError } = await supabase
@@ -60,8 +70,8 @@ export default function LandingLeads() {
       if (updateError) throw updateError;
       setLeads(leads.map(l => l.id === leadId ? { ...l, status: newStatus } : l));
       if (selectedLead?.id === leadId) setSelectedLead({ ...selectedLead, status: newStatus });
-    } catch (err) {
-      alert('Failed to update status: ' + err.message);
+    } catch (err: unknown) {
+      alert('Failed to update status: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setUpdatingId(null);
     }
@@ -76,8 +86,8 @@ export default function LandingLeads() {
       setLeads(prev => prev.filter(l => l.id !== deleteConfirmId));
       if (selectedLead?.id === deleteConfirmId) setSelectedLead(null);
       setDeleteConfirmId(null);
-    } catch (err) {
-      alert('Failed to delete lead: ' + err.message);
+    } catch (err: unknown) {
+      alert('Failed to delete lead: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setUpdatingId(null);
     }
@@ -94,8 +104,8 @@ export default function LandingLeads() {
     const matchesDate = !dateFilter || leadDateStr === dateFilter;
     return matchesSearch && matchesStatus && matchesDate;
   }).sort((a, b) => {
-    if (sortOrder === 'newest') return new Date(b.created_at) - new Date(a.created_at);
-    if (sortOrder === 'oldest') return new Date(a.created_at) - new Date(b.created_at);
+    if (sortOrder === 'newest') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    if (sortOrder === 'oldest') return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
     if (sortOrder === 'name') return (a.restaurant_name || '').localeCompare(b.restaurant_name || '');
     return 0;
   });
@@ -117,7 +127,7 @@ export default function LandingLeads() {
     return [safePage, '...', totalPages];
   };
 
-  const toggleSort = (newSort) => {
+  const toggleSort = (newSort: string) => {
     setPage(1);
     if (newSort === 'newest') {
       setSortOrder(sortOrder === 'newest' ? 'oldest' : 'newest');
@@ -128,7 +138,7 @@ export default function LandingLeads() {
     }
   };
 
-  const getSortIcon = (field) => {
+  const getSortIcon = (field: string) => {
     if (field === 'newest') {
       if (sortOrder === 'newest') return <ArrowUp size={14} />;
       if (sortOrder === 'oldest') return <ArrowDown size={14} />;
@@ -158,7 +168,7 @@ export default function LandingLeads() {
     document.body.removeChild(link);
   };
 
-  const statusColor = s => s === 'converted' ? 'text-green-600' : s === 'contacted' ? 'text-amber-600' : s === 'rejected' ? 'text-red-600' : 'text-blue-600';
+  const statusColor = (s: string | null) => s === 'converted' ? 'text-green-600' : s === 'contacted' ? 'text-amber-600' : s === 'rejected' ? 'text-red-600' : 'text-blue-600';
   const hasActiveFilters = searchTerm || statusFilter !== 'all' || dateFilter;
 
   return (
@@ -208,17 +218,17 @@ export default function LandingLeads() {
 
         {/* Pagination */}
         <div className="flex items-center justify-between md:justify-start gap-1 shrink-0 md:border-x md:border-border/50 px-3 py-1.5 md:py-0 w-full md:w-auto">
-          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
+          <button onClick={() => setPage(p => Math.max(1, Number(p) - 1))} disabled={safePage === 1} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
             <ChevronLeft size={14} />
           </button>
           <div className="flex items-center justify-center gap-1 w-[80px]">
             {getPaginationPages().map((p, i) => p === '...' ? (
               <div key={`ellipsis-${i}`} className="w-6 h-6 flex items-center justify-center text-[11px] text-text-muted">…</div>
             ) : (
-              <button key={p} onClick={() => setPage(p)} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
+              <button key={p} onClick={() => setPage(Number(p))} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
             ))}
           </div>
-          <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
+          <button onClick={() => setPage(p => Math.min(totalPages, Number(p) + 1))} disabled={safePage === totalPages} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
             <ChevronRight size={14} />
           </button>
         </div>
@@ -290,9 +300,9 @@ export default function LandingLeads() {
             {loading ? (
               <TableRowsSkeleton rows={perPage} columns={6} />
             ) : error ? (
-              <tr><td colSpan="6" className="text-center py-10 text-red-500 text-[13px] font-medium">{error}</td></tr>
+              <tr><td colSpan={6} className="text-center py-10 text-red-500 text-[13px] font-medium">{error}</td></tr>
             ) : paged.length === 0 ? (
-              <tr><td colSpan="6" className="text-center py-10 text-text-muted text-[13px]">No leads found matching your criteria.</td></tr>
+              <tr><td colSpan={6} className="text-center py-10 text-text-muted text-[13px]">No leads found matching your criteria.</td></tr>
             ) : (
               <>
                 {paged.map(lead => (
@@ -337,7 +347,7 @@ export default function LandingLeads() {
                 ))}
                 {perPage - paged.length > 0 && Array.from({ length: perPage - paged.length }).map((_, idx) => (
                   <tr key={`empty-${idx}`} className="border-b border-border/40 last:border-b-0 opacity-0 pointer-events-none">
-                    <td colSpan="6" className="py-2.5 px-4 align-middle">
+                    <td colSpan={6} className="py-2.5 px-4 align-middle">
                       <div className="h-8"></div>
                     </td>
                   </tr>

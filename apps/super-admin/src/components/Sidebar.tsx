@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, MouseEvent } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard,
@@ -53,7 +53,26 @@ const navItems = [
 const ICON_BOX = 20; // matches w-5/h-5
 const ICON_SIZE = 18; // rendered glyph size, slightly smaller than its box
 
-const NavItemComponent = ({ item, collapsed, onMouseEnter, onMouseLeave }) => {
+interface SubItem {
+    path: string;
+    label: string;
+}
+
+interface NavItem {
+    path?: string;
+    icon: any; // Using any for LucideIcon to prevent overly strict type mismatch with LucideReact versions
+    label: string;
+    subItems?: SubItem[];
+}
+
+interface NavItemComponentProps {
+    item: NavItem;
+    collapsed: boolean;
+    onMouseEnter: (e: MouseEvent<HTMLAnchorElement | HTMLButtonElement>, label: string) => void;
+    onMouseLeave: () => void;
+}
+
+const NavItemComponent = ({ item, collapsed, onMouseEnter, onMouseLeave }: NavItemComponentProps) => {
     const location = useLocation();
 
     // Check if any subitem is active to keep accordion open
@@ -129,11 +148,20 @@ const NavItemComponent = ({ item, collapsed, onMouseEnter, onMouseLeave }) => {
     );
 };
 
-export default function Sidebar({ collapsed, setCollapsed, session, onLogout, mobileOpen = false, setMobileOpen }) {
-    const [isDarkMode, setIsDarkMode] = useState(false);
-    const [tooltip, setTooltip] = useState(null);
+export interface SidebarProps {
+    collapsed: boolean;
+    setCollapsed?: (val: boolean) => void;
+    session?: any;
+    onLogout?: () => void;
+    mobileOpen?: boolean;
+    setMobileOpen?: (val: boolean) => void;
+}
 
-    const handleMouseEnter = (e, label) => {
+export default function Sidebar({ collapsed, setCollapsed, session, onLogout, mobileOpen = false, setMobileOpen }: SidebarProps) {
+    const [isDarkMode, setIsDarkMode] = useState(false);
+    const [tooltip, setTooltip] = useState<{label: string; top: number} | null>(null);
+
+    const handleMouseEnter = (e: MouseEvent<HTMLAnchorElement | HTMLButtonElement>, label: string) => {
         if (!(collapsed && !mobileOpen)) return;
         const rect = e.currentTarget.getBoundingClientRect();
         setTooltip({
@@ -154,7 +182,7 @@ export default function Sidebar({ collapsed, setCollapsed, session, onLogout, mo
         }
     }, []);
 
-    const toggleDarkMode = (event) => {
+    const toggleDarkMode = (event: MouseEvent<HTMLButtonElement>) => {
         const isDark = !isDarkMode;
         
         const updateTheme = () => {
