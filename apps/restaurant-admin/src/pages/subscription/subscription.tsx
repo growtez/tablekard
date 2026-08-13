@@ -54,7 +54,7 @@ function daysUntil(dateStr: string | null | undefined): number {
 
 function getStatusInfo(restaurant: Restaurant | null): {
     label: string;
-    status: 'active' | 'grace' | 'expired' | 'inactive';
+    status: 'active' | 'grace' | 'expired' | 'inactive' | 'trial';
     icon: React.ReactNode;
     message: string;
 } {
