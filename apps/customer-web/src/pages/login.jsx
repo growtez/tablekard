@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Mail } from 'lucide-react';
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from '../context/AuthContext';
+import { useRestaurant } from '../context/RestaurantContext';
 import './login.css';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { signInWithGoogle, sendMagicLink, isAuthenticated } = useAuth();
+  const { restaurantId, tableId } = useRestaurant();
 
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -30,7 +32,14 @@ const LoginPage = () => {
     setIsLoading(true);
     setError('');
     try {
-      await signInWithGoogle(oauthRedirectUrl);
+      let finalRedirectUrl = oauthRedirectUrl;
+      if (restaurantId || tableId) {
+        const urlObj = new URL(finalRedirectUrl);
+        if (restaurantId) urlObj.searchParams.set('restaurant_id', restaurantId);
+        if (tableId) urlObj.searchParams.set('table_id', tableId);
+        finalRedirectUrl = urlObj.toString();
+      }
+      await signInWithGoogle(finalRedirectUrl);
     } catch (err) {
       console.error('Google sign-in error:', err);
       setError('Sign in failed. Please try again.');
@@ -48,9 +57,16 @@ const LoginPage = () => {
     setError('');
     try {
       const baseRedirectUrl = import.meta.env.VITE_SUPABASE_REDIRECT_URL || window.location.origin;
-      const magicLinkRedirectUrl = redirectTo !== '/' 
+      let magicLinkRedirectUrl = redirectTo !== '/' 
         ? new URL(redirectTo, baseRedirectUrl).toString()
         : baseRedirectUrl;
+
+      if (restaurantId || tableId) {
+        const urlObj = new URL(magicLinkRedirectUrl);
+        if (restaurantId) urlObj.searchParams.set('restaurant_id', restaurantId);
+        if (tableId) urlObj.searchParams.set('table_id', tableId);
+        magicLinkRedirectUrl = urlObj.toString();
+      }
 
       await sendMagicLink(email, magicLinkRedirectUrl);
       setMagicLinkSent(true);
