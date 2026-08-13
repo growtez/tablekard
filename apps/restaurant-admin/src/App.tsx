@@ -22,6 +22,7 @@ const NotificationsPage = lazy(() => import("./pages/notifications"));
 const BannersPage = lazy(() => import("./pages/banners"));
 const UpdatePasswordPage = lazy(() => import("./pages/UpdatePassword"));
 const FeatureSettingsPage = lazy(() => import("./pages/feature-settings"));
+const ContactPage = lazy(() => import("./pages/contact"));
 // Loading fallback for Suspense
 const PageLoader = () => (
   <div className="flex justify-center items-center h-screen bg-[#F4F6F9] text-[#1E293B] font-sans text-base font-medium">
@@ -100,6 +101,10 @@ function AppRoutes() {
         <Route path="/feature-settings" element={
           <ProtectedRoute><FeatureSettingsPage /></ProtectedRoute>
         } />
+        <Route path="/contact" element={
+          <ProtectedRoute><ContactPage /></ProtectedRoute>
+        } />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </Suspense>
   );

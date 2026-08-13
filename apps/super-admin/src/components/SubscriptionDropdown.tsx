@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { ChevronRight, ChevronDown } from 'lucide-react';
 
 interface Plan {
@@ -31,7 +31,9 @@ export default function SubscriptionDropdown({
 }: SubscriptionDropdownProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
+    const [openUpward, setOpenUpward] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
+    const dropdownRef = useRef<HTMLDivElement>(null);
     const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Close on outside click
@@ -46,6 +48,18 @@ export default function SubscriptionDropdown({
         return () => document.removeEventListener('mousedown', handler);
     }, []);
 
+    // Detect if dropdown should open upward
+    const handleToggle = useCallback(() => {
+        if (disabled) return;
+        if (!isOpen && containerRef.current) {
+            const rect = containerRef.current.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - rect.bottom;
+            setOpenUpward(spaceBelow < 220);
+        }
+        setIsOpen(!isOpen);
+        if (isOpen) setHoveredGroup(null);
+    }, [disabled, isOpen]);
+
     const getDisplayLabel = () => {
         if (subscriptionStatus === 'ACTIVE' || subscriptionStatus === 'TRIAL') {
             const matchedPlan = billingPlans.find(p => p.name?.toLowerCase() === subscriptionPlan?.toLowerCase());
@@ -55,6 +69,7 @@ export default function SubscriptionDropdown({
             return subscriptionPlan?.toUpperCase() || 'CUSTOM';
         }
         if (subscriptionStatus === 'SUSPENDED') return 'SUSPENDED';
+        if (subscriptionStatus === 'EXPIRED') return 'EXPIRED';
         return 'INACTIVE';
     };
 
@@ -62,7 +77,8 @@ export default function SubscriptionDropdown({
         if (subscriptionStatus === 'ACTIVE') return 'text-green-500 bg-green-500/10';
         if (subscriptionStatus === 'TRIAL') return 'text-blue-500 bg-blue-500/10';
         if (subscriptionStatus === 'SUSPENDED') return 'text-red-500 bg-red-500/10';
-        return 'text-zinc-400 bg-zinc-500/10';
+        if (subscriptionStatus === 'EXPIRED') return 'text-amber-500 bg-amber-500/10';
+        return 'text-text-muted bg-surface-hover border border-border/50';
     };
 
     const handleSelect = (value: string) => {
@@ -88,13 +104,18 @@ export default function SubscriptionDropdown({
 
     const isSm = size === 'sm';
 
+    // Submenu position: align to bottom of parent item so it grows upward when near page bottom
+    const submenuPositionClass = openUpward
+        ? 'absolute left-full bottom-0 ml-0.5'
+        : 'absolute left-full top-0 ml-0.5';
+
     return (
         <div ref={containerRef} className="relative inline-block">
             {/* Trigger Button */}
             <button
                 type="button"
                 disabled={disabled}
-                onClick={() => { if (!disabled) setIsOpen(!isOpen); }}
+                onClick={handleToggle}
                 className={`${isSm ? 'text-[10px] px-1.5 py-0.5' : 'text-[11px] px-2 py-1'} font-bold rounded border border-border/50 cursor-pointer focus:outline-none focus:ring-1 focus:ring-accent-primary bg-surface disabled:opacity-50 flex items-center gap-1 whitespace-nowrap ${getStatusColor()}`}
             >
                 {getDisplayLabel()}
@@ -104,7 +125,10 @@ export default function SubscriptionDropdown({
             {/* Dropdown Menu */}
             {isOpen && (
                 <div
-                    className="absolute top-full left-0 mt-1 bg-surface border border-border rounded-lg shadow-xl z-50 min-w-[150px] py-1"
+                    ref={dropdownRef}
+                    className={`absolute left-0 bg-surface border border-border rounded-lg shadow-xl z-50 min-w-[150px] py-1 ${
+                        openUpward ? 'bottom-full mb-1' : 'top-full mt-1'
+                    }`}
                     style={{ fontFamily: "'Outfit', sans-serif" }}
                 >
                     {/* INACTIVE */}
@@ -115,7 +139,7 @@ export default function SubscriptionDropdown({
                         }`}
                         onClick={() => handleSelect('none')}
                     >
-                        <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 shrink-0" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-text-muted shrink-0" />
                         Inactive
                     </button>
 
@@ -140,7 +164,7 @@ export default function SubscriptionDropdown({
 
                         {hoveredGroup === 'trial' && trialPlans.length > 0 && (
                             <div
-                                className="absolute left-full top-0 ml-0.5 bg-surface border border-border rounded-lg shadow-xl z-50 min-w-[180px] py-1 flex flex-col"
+                                className={`${submenuPositionClass} bg-surface border border-border rounded-lg shadow-xl z-50 min-w-[180px] py-1 flex flex-col`}
                                 onMouseEnter={handleSubmenuEnter}
                                 onMouseLeave={handleGroupLeave}
                             >
@@ -179,7 +203,7 @@ export default function SubscriptionDropdown({
 
                         {hoveredGroup === 'plan' && billingPlans.length > 0 && (
                             <div
-                                className="absolute left-full top-0 ml-0.5 bg-surface border border-border rounded-lg shadow-xl z-50 min-w-[200px] py-1 flex flex-col"
+                                className={`${submenuPositionClass} bg-surface border border-border rounded-lg shadow-xl z-50 min-w-[200px] py-1 flex flex-col`}
                                 onMouseEnter={handleSubmenuEnter}
                                 onMouseLeave={handleGroupLeave}
                             >
@@ -207,6 +231,18 @@ export default function SubscriptionDropdown({
                     >
                         <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
                         Suspended
+                    </button>
+
+                    {/* EXPIRED */}
+                    <button
+                        type="button"
+                        className={`w-full text-left px-3 py-1.5 text-[11px] font-semibold hover:bg-surface-hover transition-colors flex items-center gap-2 ${
+                            subscriptionStatus === 'EXPIRED' ? 'text-amber-500' : 'text-text-main'
+                        }`}
+                        onClick={() => handleSelect('expired')}
+                    >
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                        Expired
                     </button>
                 </div>
             )}

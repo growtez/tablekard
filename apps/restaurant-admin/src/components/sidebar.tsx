@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { ChevronLeft, ChevronRight, LogOut, Menu, Bell, Pencil, Settings2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LogOut, Menu, Bell, Pencil, Settings2, PhoneCall } from 'lucide-react';
 import { supabase as db } from '@restaurant-saas/supabase';
 import { uploadProfileImage } from '../services/storageService';
 import ImageCropper from './ImageCropper';
@@ -149,6 +149,10 @@ const BannersIcon = ({ active }: { active: boolean }) => (
   </svg>
 );
 
+const ContactIcon = ({ active }: { active: boolean }) => (
+  <PhoneCall size={18} strokeWidth={active ? 2.5 : 2} />
+);
+
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -248,6 +252,7 @@ const Sidebar: React.FC = () => {
     if (path.includes('/notifications')) return 'notifications';
     if (path.includes('/feature-settings')) return 'feature-settings';
     if (path.includes('/banners')) return 'banners';
+    if (path.includes('/contact')) return 'contact';
     return 'dashboard';
   };
 
@@ -302,8 +307,8 @@ const Sidebar: React.FC = () => {
     { icon: (active) => <UsersIcon active={active} />, label: 'Staff Management', id: 'team', path: '/team' },
     { icon: (active) => <BannersIcon active={active} />, label: 'Home Banners', id: 'banners', path: '/banners' },
     { icon: (active) => <Settings2 size={18} strokeWidth={active ? 2.5 : 2} />, label: 'Feature Settings', id: 'feature-settings', path: '/feature-settings' },
-
     { icon: (active) => <SubscriptionIcon active={active} />, label: 'Subscription', id: 'subscription', path: '/subscription' },
+    { icon: (active) => <ContactIcon active={active} />, label: 'Contact Tablekard', id: 'contact', path: '/contact' },
   ];
 
   const handleNavClick = (item: NavItem) => {

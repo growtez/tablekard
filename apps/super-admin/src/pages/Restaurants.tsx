@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient';
 import { Mail, Phone, Calendar, Search, ExternalLink, Filter, SlidersHorizontal, ArrowUpDown, ArrowUp, ArrowDown, Download, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { TableRowsSkeleton } from '../components/ui/Skeleton';
 import SubscriptionDropdown from '../components/SubscriptionDropdown';
+import AccountStatusDropdown from '../components/AccountStatusDropdown';
 
 import { DashboardProps } from './Dashboard';
 
@@ -196,7 +197,7 @@ export default function Restaurants({ openDrawer, setSyncAction }: { openDrawer:
     return (
         <div className="space-y-3">
             {/* List Control */}
-            <div className="flex flex-col md:flex-row md:items-center gap-3 w-full bg-surface p-3 md:p-2 rounded-xl shadow-sm border border-border">
+            <div className="flex flex-col md:flex-row md:items-center gap-3 w-full bg-surface/50 rounded-xl px-3 py-2">
                 {/* Search Box */}
                 <div className="relative w-full md:max-w-[260px] shrink-0">
                     <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
@@ -294,10 +295,10 @@ export default function Restaurants({ openDrawer, setSyncAction }: { openDrawer:
             </div>
 
             {/* Restaurants List Container */}
-            <div className="w-full bg-surface rounded-xl shadow-sm border border-border overflow-hidden">
-                {/* Desktop View Table */}
-                <table className="hidden md:table w-full text-left border-collapse whitespace-nowrap table-fixed">
-                    <thead>
+            <div className="w-full overflow-x-auto pb-32">
+                {/* Table View */}
+                <table className="w-full text-left border-collapse whitespace-nowrap table-fixed min-w-[900px]">
+                    <thead className="bg-surface">
                         <tr className="border-b border-border">
                             <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent cursor-pointer hover:bg-surface-hover transition-colors w-[22%]" onClick={() => toggleSort('name')}>
                                 <div className="flex items-center gap-2">
@@ -333,7 +334,7 @@ export default function Restaurants({ openDrawer, setSyncAction }: { openDrawer:
                                 {pagedRestaurants.map((res) => (
                                     <tr
                                         key={res.id}
-                                        className="group even:bg-bg hover:bg-surface-hover border-b border-border/40 last:border-b-0 cursor-pointer transition-colors"
+                                        className="group hover:bg-surface-hover border-b border-border/40 last:border-b-0 cursor-pointer transition-colors"
                                         onClick={(e) => {
                                             if (!(e.target as Element).closest('.actions-cell') && !(e.target as Element).closest('button') && !(e.target as Element).closest('select')) {
                                                 navigate(`/restaurants/${res.id}`, { state: { name: res.name, logo_url: res.logo_url } });
@@ -348,21 +349,11 @@ export default function Restaurants({ openDrawer, setSyncAction }: { openDrawer:
                                                 <span className="font-semibold text-text-main text-[13px] group-hover:text-accent-primary transition-colors max-w-[220px] truncate block" title={res.name}>{res.name}</span>
                                             </div>
                                         </td>
-                                        <td className="py-2.5 px-4 align-middle actions-cell overflow-hidden">
-                                            <select 
-                                                value={res.status || 'pending'}
-                                                onChange={(e) => handleAccountStatusChange(res.id, e.target.value)}
-                                                className={`text-[11px] font-bold px-2 py-1 rounded border-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-accent-primary max-w-full ${
-                                                    res.status === 'active' ? 'bg-green-500/10 text-green-600' : 
-                                                    res.status === 'pending' ? 'bg-amber-500/10 text-amber-600' : 
-                                                    'bg-red-500/10 text-red-600'
-                                                }`}
-                                            >
-                                                <option value="pending" className="text-amber-600 font-bold">PENDING</option>
-                                                <option value="active" className="text-green-600 font-bold">ACTIVE</option>
-                                                <option value="suspended" className="text-red-600 font-bold">SUSPENDED</option>
-                                                <option value="rejected" className="text-red-600 font-bold">REJECTED</option>
-                                            </select>
+                                        <td className="py-2.5 px-4 align-middle actions-cell">
+                                            <AccountStatusDropdown 
+                                                status={res.status || 'pending'}
+                                                onChange={(val) => handleAccountStatusChange(res.id, val)}
+                                            />
                                         </td>
                                         <td className="py-2.5 px-4 align-middle actions-cell">
                                             <SubscriptionDropdown
@@ -401,96 +392,6 @@ export default function Restaurants({ openDrawer, setSyncAction }: { openDrawer:
                         )}
                     </tbody>
                 </table>
-
-                {/* Mobile Card View */}
-                <div className="block md:hidden divide-y divide-border/40">
-                    {loading ? (
-                        <div className="p-4 space-y-4">
-                            {[1, 2, 3].map(n => (
-                                <div key={n} className="animate-pulse flex flex-col gap-3">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-border/40" />
-                                            <div className="h-4 bg-border/40 rounded w-28" />
-                                        </div>
-                                        <div className="h-4 bg-border/40 rounded w-16" />
-                                    </div>
-                                    <div className="space-y-2 pl-11">
-                                        <div className="h-3.5 bg-border/40 rounded w-48" />
-                                        <div className="h-3.5 bg-border/40 rounded w-36" />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : filteredRestaurants.length === 0 ? (
-                        <div className="text-center py-10 text-text-muted text-[13px]">
-                            No restaurants found matching your criteria.
-                        </div>
-                    ) : (
-                        pagedRestaurants.map((res) => (
-                            <div
-                                key={res.id}
-                                className="p-4 hover:bg-surface-hover border-b border-border/40 last:border-b-0 cursor-pointer transition-colors flex flex-col gap-2.5 active:bg-surface-hover/80"
-                                onClick={() => {
-                                    navigate(`/restaurants/${res.id}`, { state: { name: res.name, logo_url: res.logo_url } });
-                                }}
-                            >
-                                <div className="flex items-center justify-between gap-3">
-                                    <div className="flex items-center gap-3 min-w-0">
-                                        <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center font-bold text-blue-600 text-[12px] shrink-0">
-                                            {res.name[0].toUpperCase()}
-                                        </div>
-                                        <span className="font-semibold text-text-main text-[13px] group-hover:text-accent-primary transition-colors truncate" title={res.name}>{res.name}</span>
-                                    </div>
-                                    <div className="flex flex-col items-end gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-                                        <select 
-                                            value={res.status || 'pending'}
-                                            onChange={(e) => handleAccountStatusChange(res.id, e.target.value)}
-                                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded border border-border/40 cursor-pointer focus:outline-none focus:ring-1 focus:ring-accent-primary ${
-                                                res.status === 'active' ? 'bg-green-500/10 text-green-600' : 
-                                                res.status === 'pending' ? 'bg-amber-500/10 text-amber-600' : 
-                                                'bg-red-500/10 text-red-600'
-                                            }`}
-                                        >
-                                            <option value="pending" className="text-amber-600 font-bold">PENDING</option>
-                                            <option value="active" className="text-green-600 font-bold">ACTIVE</option>
-                                            <option value="suspended" className="text-red-600 font-bold">SUSPENDED</option>
-                                            <option value="rejected" className="text-red-600 font-bold">REJECTED</option>
-                                        </select>
-                                        
-                                        <SubscriptionDropdown
-                                            currentValue=""
-                                            subscriptionStatus={res.subscription_status || ''}
-                                            subscriptionPlan={res.subscription_plan || ''}
-                                            trialPlans={trialPlans}
-                                            billingPlans={billingPlans}
-                                            disabled={res.status !== 'active'}
-                                            onChange={(val) => handleSubscriptionChange(res.id, val)}
-                                            size="sm"
-                                        />
-                                    </div>
-                                </div>
-                                
-                                <div className="flex flex-col gap-1.5 pl-11">
-
-                                    <div className="flex items-center gap-2 text-[12px] text-text-main">
-                                        <Mail size={12} className="text-blue-500 shrink-0" />
-                                        <span className="truncate">{res.contact_email || '—'}</span>
-                                    </div>
-
-                                    {res.contact_phone && (
-                                        <div className="flex items-center gap-2 text-[12px] text-text-main">
-                                            <Phone size={12} className="text-blue-500 shrink-0" />
-                                            <span>{res.contact_phone}</span>
-                                        </div>
-                                    )}
-
-
-                                </div>
-                            </div>
-                        ))
-                    )}
-                </div>
             </div>
         </div>
     );
