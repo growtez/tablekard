@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { formatFullDate } from '@restaurant-saas/types';
 import { TrendingUp, X, CheckCircle, Check, ChevronDown, Search, ArrowUpDown, List, LayoutGrid, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -164,14 +165,14 @@ const Dashboard: React.FC = () => {
 
   const getCardColorClass = (status?: string) => {
     switch (status?.toUpperCase()) {
-      case 'PENDING':
-      case 'CONFIRMED':
+      case 'PLACED':
+      
         return 'bg-[#F0F9FF] border-[#BAE6FD] dark:bg-[#38BDF8]/[0.22] dark:border-[#38BDF8]/65';
       case 'PREPARING':
         return 'bg-[#FFFBEB] border-[#FDE68A] dark:bg-[#FBBF24]/[0.22] dark:border-[#FBBF24]/65';
       case 'READY':
       case 'COMPLETED':
-      case 'SERVED':
+      
         return 'bg-[#F0FDF4] border-[#BBF7D0] dark:bg-[#4ADE80]/[0.22] dark:border-[#4ADE80]/65';
       case 'CANCELLED':
         return 'bg-[#FEF2F2] border-[#FECACA] dark:bg-[#F87171]/[0.22] dark:border-[#F87171]/65';
@@ -182,14 +183,14 @@ const Dashboard: React.FC = () => {
 
   const getRowColorClass = (status?: string) => {
     switch (status?.toUpperCase()) {
-      case 'PENDING':
-      case 'CONFIRMED':
+      case 'PLACED':
+      
         return 'bg-[#F0F9FF]/80 hover:bg-[#E0F2FE] dark:bg-[#38BDF8]/[0.22] dark:hover:bg-[#38BDF8]/[0.32]';
       case 'PREPARING':
         return 'bg-[#FFFBEB]/80 hover:bg-[#FEF3C7] dark:bg-[#FBBF24]/[0.22] dark:hover:bg-[#FBBF24]/[0.32]';
       case 'READY':
       case 'COMPLETED':
-      case 'SERVED':
+      
         return 'bg-[#F0FDF4]/80 hover:bg-[#DCFCE7] dark:bg-[#4ADE80]/[0.22] dark:hover:bg-[#4ADE80]/[0.32]';
       case 'CANCELLED':
         return 'bg-[#FEF2F2]/80 hover:bg-[#FEE2E2] dark:bg-[#F87171]/[0.22] dark:hover:bg-[#F87171]/[0.32]';
@@ -238,7 +239,7 @@ const Dashboard: React.FC = () => {
             </div>
             <span className="text-tk-text-secondary opacity-50 text-[12px] hidden sm:block">•</span>
             <p className="text-[12px] sm:text-[13px] text-tk-text-secondary font-medium whitespace-nowrap hidden sm:block">
-              {currentTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              {formatFullDate(currentTime)}
             </p>
           </div>
         </div>
@@ -426,12 +427,12 @@ const Dashboard: React.FC = () => {
                 filteredOrders().map((order, idx) => {
                   const getStatusIdx = (status: string) => {
                     switch (status?.toUpperCase()) {
-                      case 'PENDING': return 0;
-                      case 'CONFIRMED': return 0;
+                      case 'PLACED': return 0;
+                      
                       case 'PREPARING': return 1;
                       case 'READY': return 2;
                       case 'COMPLETED':
-                      case 'SERVED': return 2;
+                      
                       default: return -1;
                     }
                   };
@@ -483,7 +484,7 @@ const Dashboard: React.FC = () => {
                         ) : (
                           <div className="flex items-center w-full pb-5">
                             {[
-                              { label: 'Placed', value: 'CONFIRMED' },
+                              { label: 'Placed', value: 'PLACED' },
                               { label: 'Preparing', value: 'PREPARING' },
                               { label: 'Ready', value: 'READY' }
                             ].map((step, stepIdx, arr) => {
@@ -649,18 +650,18 @@ const Dashboard: React.FC = () => {
                             ) : (
                               <div className="flex-1 flex items-center relative">
                                 {[
-                                  { label: 'Placed', value: 'CONFIRMED' },
+                                  { label: 'Placed', value: 'PLACED' },
                                   { label: 'Preparing', value: 'PREPARING' },
                                   { label: 'Ready', value: 'READY' }
                                 ].map((step, idx, arr) => {
                                   const getStatusIdx = (status: string) => {
                                     switch (status?.toUpperCase()) {
-                                      case 'PENDING': return 0;
-                                      case 'CONFIRMED': return 0;
+                                      case 'PLACED': return 0;
+                                      
                                       case 'PREPARING': return 1;
                                       case 'READY': return 2;
                                       case 'COMPLETED':
-                                      case 'SERVED': return 2;
+                                      
                                       default: return -1;
                                     }
                                   };
@@ -746,12 +747,12 @@ const Dashboard: React.FC = () => {
               filteredOrders().map((order, idx) => {
                 const getStatusIdx = (status: string) => {
                   switch (status?.toUpperCase()) {
-                    case 'PENDING': return -1;
-                    case 'CONFIRMED': return 0;
+                    case 'PLACED': return -1;
+                    
                     case 'PREPARING': return 1;
                     case 'READY': return 2;
                     case 'COMPLETED':
-                    case 'SERVED': return 2;
+                    
                     default: return -1;
                   }
                 };
@@ -792,7 +793,7 @@ const Dashboard: React.FC = () => {
                         ) : (
                           <>
                             {[
-                              { label: 'Placed', value: 'CONFIRMED' },
+                              { label: 'Placed', value: 'PLACED' },
                               { label: 'Preparing', value: 'PREPARING' },
                               { label: 'Ready', value: 'READY' }
                             ].map((step, stepIdx, arr) => {

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { formatDateTime } from '@restaurant-saas/types';
 import { supabase } from '../../supabaseClient';
 import { Card, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Save, RefreshCw, AlertCircle } from 'lucide-react';
@@ -76,7 +77,7 @@ export default function General({ setSyncAction }) {
                     <h2 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>General Settings</h2>
                     <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0.25rem 0 0' }}>
                         Stored in <code>platform_settings</code> (id = <code>'general'</code>).
-                        {lastUpdated && <span style={{ marginLeft: '0.5rem' }}>Last saved: {new Date(lastUpdated).toLocaleString('en-IN')}</span>}
+                        {lastUpdated && <span style={{ marginLeft: '0.5rem' }}>Last saved: {formatDateTime(lastUpdated)}</span>}
                     </p>
                 </div>
                 <button onClick={handleSave} disabled={saving || loading}

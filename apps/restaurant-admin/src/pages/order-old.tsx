@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { formatDayMonth, formatMonthYearLong } from '@restaurant-saas/types';
 import { Search, TrendingUp, Calendar, Package, ChevronLeft, ChevronRight, LayoutGrid, List, Check, X, ArrowUpDown, ChevronDown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
@@ -225,17 +226,17 @@ const Order: React.FC = () => {
         startOfWeek.setDate(startOfWeek.getDate() - offset * 7);
         const endOfWeek = new Date(startOfWeek);
         endOfWeek.setDate(endOfWeek.getDate() + 6);
-        const formatDate = (d: Date) => {
-            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const formatD = (d: Date) => {
+            return formatDayMonth(d);
         };
-        return `${formatDate(startOfWeek)} - ${formatDate(endOfWeek)}, ${endOfWeek.getFullYear()}`;
+        return `${formatD(startOfWeek)} - ${formatD(endOfWeek)}, ${endOfWeek.getFullYear()}`;
     };
 
     // Helper to get month label
     const getMonthLabel = (offset: number) => {
         const now = new Date();
         const targetMonth = new Date(now.getFullYear(), now.getMonth() - offset, 1);
-        return targetMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        return formatMonthYearLong(targetMonth);
     };
 
     const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -505,12 +506,12 @@ const Order: React.FC = () => {
 
                                             const getStatusIdx = (status: string) => {
                                                 switch (status?.toUpperCase()) {
-                                                    case 'PENDING': return -1;
-                                                    case 'CONFIRMED': return 0;
+                                                    case 'PLACED': return -1;
+                                                    
                                                     case 'PREPARING': return 1;
                                                     case 'READY': return 2;
                                                     case 'COMPLETED':
-                                                    case 'SERVED': return 2;
+                                                    
                                                     default: return -1;
                                                 }
                                             };
@@ -568,7 +569,7 @@ const Order: React.FC = () => {
                                                                 ) : (
                                                                     <div className="flex-1 flex items-center relative pb-3">
                                                                         {[
-                                                                            { label: 'Placed', value: 'CONFIRMED' },
+                                                                            { label: 'Placed', value: 'PLACED' },
                                                                             { label: 'Preparing', value: 'PREPARING' },
                                                                             { label: 'Ready', value: 'READY' }
                                                                         ].map((step, stepIdx, arr) => {
@@ -646,12 +647,12 @@ const Order: React.FC = () => {
 
                                     const getStatusIdx = (status: string) => {
                                         switch (status?.toUpperCase()) {
-                                            case 'PENDING': return -1;
-                                            case 'CONFIRMED': return 0;
+                                            case 'PLACED': return -1;
+                                            
                                             case 'PREPARING': return 1;
                                             case 'READY': return 2;
                                             case 'COMPLETED':
-                                            case 'SERVED': return 2;
+                                            
                                             default: return -1;
                                         }
                                     };

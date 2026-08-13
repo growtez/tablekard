@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { formatDate } from '@restaurant-saas/types';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { Mail, Phone, Calendar, Search, ExternalLink, Filter, SlidersHorizontal, ArrowUpDown, ArrowUp, ArrowDown, Download, X, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -186,7 +187,7 @@ export default function Restaurants({ openDrawer, setSyncAction }: { openDrawer:
     const handleExport = () => {
         const csvContent = "data:text/csv;charset=utf-8," 
             + "Name,Status,Email,Phone,Created\n"
-            + filteredRestaurants.map(r => `${r.name},${r.status},${r.contact_email || ''},${r.contact_phone || ''},${new Date(r.created_at).toLocaleDateString()}`).join("\n");
+            + filteredRestaurants.map(r => `${r.name},${r.status},${r.contact_email || ''},${r.contact_phone || ''},${formatDate(r.created_at)}`).join("\n");
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);

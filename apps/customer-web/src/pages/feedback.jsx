@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { formatDateTimeShort } from '@restaurant-saas/types';
 import { ArrowLeft, Star, Send, ThumbsUp, Edit3, Calendar, ShoppingBag, ChevronRight, Loader2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -116,13 +117,7 @@ const FeedbackPage = () => {
     };
 
     const formatDate = (dateStr) => {
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('en-IN', { 
-            day: '2-digit', 
-            month: 'short', 
-            hour: '2-digit', 
-            minute: '2-digit' 
-        });
+        return formatDateTimeShort(dateStr);
     };
 
     if (loading && orders.length === 0) {

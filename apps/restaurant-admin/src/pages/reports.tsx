@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { formatDayMonth, formatMonthYearLong, formatMonthYearCompact, formatWeekday, formatDate } from '@restaurant-saas/types';
 import { Download, Calendar, Info, ChevronLeft, ChevronRight, ChevronDown, Check, X, Eye, TrendingUp } from 'lucide-react';
 import RevenueOrdersModal from '../components/RevenueOrdersModal';
 import './reports.css';
@@ -102,17 +103,17 @@ const Reports: React.FC = () => {
         startOfWeek.setDate(startOfWeek.getDate() - offset * 7);
         const endOfWeek = new Date(startOfWeek);
         endOfWeek.setDate(endOfWeek.getDate() + 6);
-        const formatDate = (d: Date) => {
-            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const formatD = (d: Date) => {
+            return formatDayMonth(d);
         };
-        return `${formatDate(startOfWeek)} - ${formatDate(endOfWeek)}, ${endOfWeek.getFullYear()}`;
+        return `${formatD(startOfWeek)} - ${formatD(endOfWeek)}, ${endOfWeek.getFullYear()}`;
     };
 
     // Helper to get month label
     const getMonthLabel = (offset: number) => {
         const now = new Date();
         const targetMonth = new Date(now.getFullYear(), now.getMonth() - offset, 1);
-        return targetMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        return formatMonthYearLong(targetMonth);
     };
 
     useEffect(() => {
@@ -316,7 +317,7 @@ const Reports: React.FC = () => {
                     const mStart = new Date(year, month, 1, 0, 0, 0, 0);
                     const mEnd   = new Date(year, month + 1, 0, 23, 59, 59, 999);
                     monthlyBuckets[key] = {
-                        label:     d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+                        label:     formatMonthYearCompact(d),
                         revenue:   0,
                         orders:    0,
                         dateStart: mStart,
@@ -338,9 +339,9 @@ const Reports: React.FC = () => {
             const dayEnd   = new Date(d); dayEnd.setHours(23, 59, 59, 999);
             let label: string;
             if (revenueHistory.length > 14) {
-                label = d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+                label = formatDayMonth(d);
             } else {
-                label = d.toLocaleDateString('en-US', { weekday: 'short' });
+                label = formatWeekday(d);
             }
             return { label, revenue: record.totalRevenue, orders: record.totalOrders, dateStart: dayStart, dateEnd: dayEnd };
         });
@@ -835,7 +836,7 @@ const Reports: React.FC = () => {
                                         <div className="feedback-header">
                                             <span className="feedback-rating">{'⭐'.repeat(fb.rating)}{'☆'.repeat(5 - fb.rating)}</span>
                                             <span className="feedback-name">{fb.customerName}</span>
-                                            <span className="feedback-date">{new Date(fb.createdAt).toLocaleDateString()}</span>
+                                            <span className="feedback-date">{formatDate(fb.createdAt)}</span>
                                         </div>
                                         {fb.comment && <div className="feedback-comment">"{fb.comment}"</div>}
                                         {fb.orderItems && <div className="feedback-items">Ordered: {fb.orderItems}</div>}

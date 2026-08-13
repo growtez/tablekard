@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { formatDateShort, formatMonthYearLong, formatMonthYear } from '@restaurant-saas/types';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { Search, Filter, SlidersHorizontal, Download, X, ChevronLeft, ChevronRight, Clock, Store, Calendar, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
@@ -85,7 +86,7 @@ export default function Subscriptions({ setSyncAction }: DashboardProps) {
             if (!row.created_at) return;
             const d = new Date(row.created_at);
             const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-            const label = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            const label = formatMonthYearLong(d);
             monthsMap[key] = label;
         });
         return Object.entries(monthsMap).sort((a, b) => b[0].localeCompare(a[0]));
@@ -172,7 +173,7 @@ export default function Subscriptions({ setSyncAction }: DashboardProps) {
         document.body.removeChild(link);
     };
 
-    const formatDate = d => d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+    const formatDate = (d: string | null | undefined) => formatDateShort(d);
 
     const statusColor = s => s === 'paid' ? 'text-green-600' : s === 'pending' ? 'text-amber-600' : 'text-red-600';
 
@@ -214,7 +215,7 @@ export default function Subscriptions({ setSyncAction }: DashboardProps) {
                                     {(() => {
                                         const [year, month] = filterMonth.split('-');
                                         const d = new Date(parseInt(year), parseInt(month) - 1, 1);
-                                        return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                                        return formatMonthYear(d);
                                     })()}
                                     <button onClick={() => handleMonthChange('all')} className="hover:text-blue-800 focus:outline-none flex items-center justify-center bg-transparent border-none cursor-pointer p-0 ml-1"><X size={10} /></button>
                                 </span>

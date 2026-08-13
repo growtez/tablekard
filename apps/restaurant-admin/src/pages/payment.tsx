@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { formatDateTime, formatDayMonth, formatMonthYearLong } from '@restaurant-saas/types';
 import { Download, Calendar, CreditCard, CheckCircle, Search, ChevronLeft, ChevronRight, LayoutGrid, List, ArrowUpDown, ChevronDown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { updatePaymentStatus, updateOrderStatus, updatePaymentStatus as updatePmtStatus } from '../services/supabaseService';
@@ -151,7 +152,7 @@ const Payment: React.FC = () => {
       headers.join(","),
       ...filteredTransactions.map(t => [
         t.orderNumber,
-        new Date(t.createdAt).toLocaleString().replace(/,/g, ''),
+        formatDateTime(t.createdAt),
         `"${(t.customerName || 'Walk-in').replace(/"/g, '""')}"`,
         t.amount,
         t.paymentMethod,
@@ -221,17 +222,17 @@ const Payment: React.FC = () => {
     startOfWeek.setDate(startOfWeek.getDate() - offset * 7);
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(endOfWeek.getDate() + 6);
-    const formatDate = (d: Date) => {
-      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const formatD = (d: Date) => {
+      return formatDayMonth(d);
     };
-    return `${formatDate(startOfWeek)} - ${formatDate(endOfWeek)}, ${endOfWeek.getFullYear()}`;
+    return `${formatD(startOfWeek)} - ${formatD(endOfWeek)}, ${endOfWeek.getFullYear()}`;
   };
 
   // Helper to get month label
   const getMonthLabel = (offset: number) => {
     const now = new Date();
     const targetMonth = new Date(now.getFullYear(), now.getMonth() - offset, 1);
-    return targetMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    return formatMonthYearLong(targetMonth);
   };
 
 

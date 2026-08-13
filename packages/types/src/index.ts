@@ -4,6 +4,9 @@
 
 export type IsoDateString = string;
 
+// Re-export date formatting utilities
+export * from './dateUtils';
+
 // ==========================================
 // Enums
 // ==========================================
@@ -24,11 +27,9 @@ export const OrderType = {
 export type OrderType = typeof OrderType[keyof typeof OrderType];
 
 export const OrderStatus = {
-  PENDING: 'PENDING',
-  CONFIRMED: 'CONFIRMED',
+  PLACED: 'PLACED',
   PREPARING: 'PREPARING',
   READY: 'READY',
-  SERVED: 'SERVED',
   CANCELLED: 'CANCELLED',
 } as const;
 export type OrderStatus = typeof OrderStatus[keyof typeof OrderStatus];

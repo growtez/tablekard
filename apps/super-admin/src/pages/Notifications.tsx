@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { formatDayMonth } from '@restaurant-saas/types';
 import { supabase } from '../supabaseClient';
 import { Megaphone, Trash2, Send, Zap, RefreshCw, AlertCircle, Bell, Search, Filter, X, Edit3, Save, Loader2 } from 'lucide-react';
 
@@ -238,7 +239,7 @@ export default function Notifications() {
             return 'Yesterday';
         }
 
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        return formatDayMonth(date);
     };
 
     const groupNotifications = () => {

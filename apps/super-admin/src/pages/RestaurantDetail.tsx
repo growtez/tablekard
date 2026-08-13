@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { formatDate } from '@restaurant-saas/types';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import {
@@ -381,7 +382,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }: Resta
     const handleExportPayments = () => {
         const csvContent = "data:text/csv;charset=utf-8,"
             + "ID,Date,Duration,Status,Amount\n"
-            + filteredPayments.map(p => `${p.id},${new Date(p.created_at).toLocaleDateString()},${p.plan_duration} Days,${p.status},${p.amount}`).join("\n");
+            + filteredPayments.map(p => `${p.id},${formatDate(p.created_at)},${p.plan_duration} Days,${p.status},${p.amount}`).join("\n");
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
@@ -741,7 +742,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }: Resta
                                                             onClick={() => navigate(`/subscriptions/${payment.id}`)}
                                                             className="group even:bg-bg hover:bg-surface-hover border-b border-border/40 last:border-b-0 cursor-pointer transition-colors"
                                                         >
-                                                            <td className="py-3 px-4 text-[13px] text-text-main">{new Date(payment.created_at).toLocaleDateString()}</td>
+                                                            <td className="py-3 px-4 text-[13px] text-text-main">{formatDate(payment.created_at)}</td>
                                                             <td className="py-3 px-4 text-[13px] text-text-muted">{payment.plan_duration} Days</td>
                                                             <td className="py-3 px-4 text-[13px]">
                                                                 <Badge variant={payment.status === 'paid' ? 'success' : (payment.status === 'pending' ? 'warning' : 'error')}>

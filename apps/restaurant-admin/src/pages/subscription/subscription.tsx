@@ -4,6 +4,7 @@ import { getRestaurantById, getSubscriptionPayments } from '../../services/supab
 import type { SubscriptionPaymentRecord } from '../../services/supabaseService';
 import { processSubscriptionPayment } from '../../services/subscriptionService';
 import type { Restaurant } from '@restaurant-saas/types';
+import { formatDateShort as formatDateShortUtil } from '@restaurant-saas/types';
 import { supabase } from '@restaurant-saas/supabase';
 import { CheckCircle2, Loader2, Calendar, X, Store, PauseCircle, Timer, AlertTriangle, CheckCircle, Sparkles } from 'lucide-react';
 
@@ -39,11 +40,7 @@ const PLAN_FEATURES = [
 // ──────────────────────────────────────────────
 function formatDate(dateStr: string | null | undefined): string {
     if (!dateStr) return '—';
-    return new Date(dateStr).toLocaleDateString('en-IN', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-    });
+    return formatDateShortUtil(dateStr);
 }
 
 function daysUntil(dateStr: string | null | undefined): number {

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { formatDateLong, formatDateTimeLong } from '@restaurant-saas/types';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import {
@@ -119,12 +120,7 @@ export default function TransactionDetail({ setHeaderData }) {
 
     const formatDate = (d: any, time = false) => {
         if (!d) return '—';
-        const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
-        if (time) {
-            options.hour = '2-digit';
-            options.minute = '2-digit';
-        }
-        return new Date(d).toLocaleDateString('en-IN', options);
+        return time ? formatDateTimeLong(d) : formatDateLong(d);
     };
 
     if (loading) return <DetailPageSkeleton />;

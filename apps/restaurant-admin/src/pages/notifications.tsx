@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { formatDayMonth, formatDateTimeShort } from '@restaurant-saas/types';
 import { Bell, Megaphone, Zap, RefreshCw, AlertCircle, Loader2, Search, X, Filter } from 'lucide-react';
 import { supabase as db } from '@restaurant-saas/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -125,7 +126,7 @@ const NotificationsPage: React.FC = () => {
       return 'Yesterday';
     }
     
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return formatDayMonth(date);
   };
 
   const groupNotifications = () => {
@@ -340,7 +341,7 @@ const NotificationsPage: React.FC = () => {
                 <div>
                   <h3 className="text-[16px] font-bold text-gray-900 dark:text-tk-text">Notification Details</h3>
                   <span className="text-[12px] text-gray-500 dark:text-tk-text-secondary">
-                    {new Date(selectedNotification.date).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                    {formatDateTimeShort(selectedNotification.date)}
                   </span>
                 </div>
               </div>

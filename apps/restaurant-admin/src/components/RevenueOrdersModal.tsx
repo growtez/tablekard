@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { formatDateShort } from '@restaurant-saas/types';
 import {
     X, ChevronLeft, ChevronRight, Loader2,
     Hash, User, CreditCard, CheckCircle, IndianRupee, ShoppingCart
@@ -140,9 +141,7 @@ const RevenueOrdersModal: React.FC<RevenueOrdersModalProps> = ({
                                         <tr key={order.id} className="border-b border-tk-border transition-colors duration-150 hover:bg-tk-bg-hover last:border-b-0">
                                             <td className="p-3.5 px-4 align-middle text-indigo-600 font-semibold whitespace-nowrap dark:text-purple-400">#{order.orderNumber}</td>
                                             <td className="p-3.5 px-4 align-middle text-tk-text whitespace-nowrap flex flex-col gap-0.5">
-                                                {new Date(order.createdAt).toLocaleDateString('en-IN', {
-                                                    day: '2-digit', month: 'short', year: 'numeric'
-                                                })}
+                                                {formatDateShort(order.createdAt)}
                                                 <span className="text-[11.5px] text-tk-text-muted">
                                                     {new Date(order.createdAt).toLocaleTimeString('en-IN', {
                                                         hour: '2-digit', minute: '2-digit', hour12: true

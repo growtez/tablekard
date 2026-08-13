@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { formatDateShort } from '@restaurant-saas/types';
 import { supabase } from '../../supabaseClient';
 import { Card, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
@@ -91,7 +92,7 @@ export default function Complaints({ setSyncAction }) {
                                     <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{row.profiles?.name || row.profiles?.email || 'Anonymous'}
                                         {row.orders?.restaurants?.name && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: '0.5rem' }}>@ {row.orders.restaurants.name}</span>}
                                     </span>
-                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{new Date(row.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{formatDateShort(row.created_at)}</span>
                                 </div>
                                 <p style={{ margin: 0, fontSize: '0.875rem', color: row.comment ? 'var(--text-main)' : 'var(--text-muted)', fontStyle: row.comment ? 'normal' : 'italic', lineHeight: 1.6 }}>
                                     {row.comment || 'No comment left.'}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { formatDateShort } from '@restaurant-saas/types';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import { Search, Filter, SlidersHorizontal, Download, X, ChevronLeft, ChevronRight, Store, Hash, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
@@ -160,7 +161,7 @@ export default function Transactions({ setSyncAction }) {
         document.body.removeChild(link);
     };
 
-    const fmt = d => d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+    const fmt = (d: string | null | undefined) => formatDateShort(d);
     const statusColor = s => s === 'paid' || s === 'completed' ? 'text-green-600' : s === 'pending' ? 'text-amber-600' : s === 'refunded' ? 'text-blue-600' : 'text-red-600';
     const hasActiveFilters = search || filterStatus !== 'all' || filterGateway !== 'all';
 

@@ -95,7 +95,7 @@ export const createOrder = async ({
             order_number: orderNumber,
             type: type,
             table_id: (typeof tableNumber === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tableNumber)) ? tableNumber : null,
-            status: 'pending',
+            status: 'placed',
             payment_method: paymentMethod,
             payment_status: 'pending',
             subtotal,
