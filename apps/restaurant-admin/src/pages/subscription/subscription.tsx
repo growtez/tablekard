@@ -76,11 +76,11 @@ function getStatusInfo(restaurant: Restaurant | null): {
         return { label: 'Pending Review', status: 'inactive', icon: <Timer size={48} className="text-tk-text-secondary" />, message: 'Your restaurant application is currently pending review.' };
     }
 
-    if (restStatus === 'approved' && !restaurant.subscriptionStatus) {
+    if (restStatus === 'approved' && restaurant.subscriptionStatus !== 'ACTIVE' && restaurant.subscriptionStatus !== 'TRIAL') {
         return { label: 'Approved', status: 'inactive', icon: <CheckCircle size={48} className="text-tk-success" />, message: 'Your restaurant has been approved! Select a plan below to get started.' };
     }
 
-    if (!restaurant.subscriptionStatus && restStatus !== 'active') {
+    if (restaurant.subscriptionStatus !== 'ACTIVE' && restaurant.subscriptionStatus !== 'TRIAL' && restStatus !== 'active') {
         return { label: 'Inactive', status: 'inactive', icon: <PauseCircle size={48} className="text-tk-text-secondary" />, message: 'Your subscription is inactive. Choose a plan to get started.' };
     }
 

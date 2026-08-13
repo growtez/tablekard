@@ -226,7 +226,7 @@ serve(async (req: Request) => {
                             .from("restaurants")
                             .update({
                                 status: "active",
-                                subscription_status: true,
+                                subscription_status: 'ACTIVE',
                                 subscription_type: planName ?? "QR",
                                 subscription_end_at: endsAt.toISOString(),
                                 grace_period_ends_at: gracePeriodEndsAt.toISOString(),

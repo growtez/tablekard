@@ -442,7 +442,7 @@ BEGIN
     UPDATE public.restaurants
     SET
         status              = 'suspended',
-        subscription_status = false
+        subscription_status = 'SUSPENDED'
     WHERE
         status                  = 'active'
         AND grace_period_ends_at IS NOT NULL
@@ -1099,7 +1099,7 @@ CREATE TABLE public.restaurants (
     primary_color text,
     secondary_color text,
     settings jsonb DEFAULT '{}'::jsonb,
-    subscription_status boolean DEFAULT false,
+    subscription_status text DEFAULT 'INACTIVE',
     subscription_type text,
     latitude numeric,
     longitude numeric,

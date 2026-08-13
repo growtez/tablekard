@@ -191,7 +191,7 @@ serve(async (req: Request) => {
             .from("restaurants")
             .update({
                 status: "active",                                       // access control gate
-                subscription_status: true,                              // UI billing badge
+                subscription_status: 'ACTIVE',                              // UI billing badge
                 subscription_type: planName ?? "QR",                   // plan name snapshot
                 subscription_end_at: endsAt.toISOString(),
                 grace_period_ends_at: gracePeriodEndsAt.toISOString(), // auto-suspend after this

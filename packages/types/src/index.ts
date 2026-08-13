@@ -16,10 +16,6 @@ export const UserRole = {
 } as const;
 export type UserRole = typeof UserRole[keyof typeof UserRole];
 
-export const SubscriptionPlan = {
-  QR: 'QR',
-} as const;
-export type SubscriptionPlan = typeof SubscriptionPlan[keyof typeof SubscriptionPlan];
 
 export const OrderType = {
   DINE_IN: 'DINE_IN',
@@ -51,7 +47,16 @@ export const PaymentStatus = {
 } as const;
 export type PaymentStatus = typeof PaymentStatus[keyof typeof PaymentStatus];
 
+export const RestaurantStatus = {
+  PENDING: 'PENDING',
+  ACTIVE: 'ACTIVE',
+  REJECTED: 'REJECTED',
+  SUSPENDED: 'SUSPENDED',
+} as const;
+export type RestaurantStatus = typeof RestaurantStatus[keyof typeof RestaurantStatus];
+
 export const SubscriptionStatus = {
+  INACTIVE: 'INACTIVE',
   ACTIVE: 'ACTIVE',
   SUSPENDED: 'SUSPENDED',
   TRIAL: 'TRIAL',
@@ -59,11 +64,11 @@ export const SubscriptionStatus = {
 } as const;
 export type SubscriptionStatus = typeof SubscriptionStatus[keyof typeof SubscriptionStatus];
 
-export const RestaurantStatus = {
+export const OperatingStatus = {
   OPEN: 'OPEN',
   CLOSED: 'CLOSED',
 } as const;
-export type RestaurantStatus = typeof RestaurantStatus[keyof typeof RestaurantStatus];
+export type OperatingStatus = typeof OperatingStatus[keyof typeof OperatingStatus];
 
 // ==========================================
 // User Types
@@ -148,7 +153,7 @@ export interface Restaurant {
 }
 
 export interface RestaurantSubscription {
-  plan: SubscriptionPlan;
+  type: string;
   price: number | null; // null for custom/negotiated
   active: boolean;
   trialEndsAt?: IsoDateString;
@@ -341,7 +346,7 @@ export interface SaasSettings {
   supportPhone: string;
   defaultTrialDays: number;
   plans: {
-    [key in SubscriptionPlan]?: {
+    [planId: string]: {
       name?: string;
       price?: number | null;
       features?: Record<string, boolean>;
@@ -399,7 +404,7 @@ export interface Database {
           secondary_color: string | null;
           profile_urls: string[] | null;
           settings: Record<string, unknown> | null;
-          subscription_status: boolean;
+          subscription_status: string;
           subscription_type: string | null;
           subscription_end_at: string | null;
           latitude: number | null;
@@ -430,7 +435,7 @@ export interface Database {
           secondary_color?: string | null;
           profile_urls?: string[] | null;
           settings?: Record<string, unknown> | null;
-          subscription_status?: boolean;
+          subscription_status?: string;
           subscription_type?: string | null;
           subscription_end_at?: string | null;
           latitude?: number | null;
@@ -460,7 +465,7 @@ export interface Database {
           secondary_color?: string | null;
           profile_urls?: string[] | null;
           settings?: Record<string, unknown> | null;
-          subscription_status?: boolean;
+          subscription_status?: string;
           subscription_type?: string | null;
           subscription_end_at?: string | null;
           latitude?: number | null;

@@ -185,7 +185,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                     longitude: parseFloat(formData.longitude) || null,
                     allowed_radius: parseInt(formData.allowed_radius) || 100,
                     status: formData.status,
-                    subscription_status: formData.status === 'active',
+                    subscription_status: formData.status === 'active' ? 'ACTIVE' : 'INACTIVE',
                     operating_hours_weekdays: formData.operating_hours_weekdays || '09:00 AM - 10:00 PM',
                     operating_hours_weekends: formData.operating_hours_weekends || '09:00 AM - 10:00 PM',
                     cover_image_url: formData.cover_image_url,
@@ -501,7 +501,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
 
                 {activeTab === 'billing' && (() => {
                     const getPlanName = () => {
-                        if (!restaurant?.subscription_type || restaurant?.subscription_type === 'lite_plan' || restaurant?.subscription_type === 'lite') return 'NO PLAN SELECTED';
+                        if (!restaurant?.subscription_type) return 'NO PLAN SELECTED';
                         const { plans = [], trials = [] } = billingPlans;
                         const plan = plans.find(p => p.id === restaurant.subscription_type);
                         if (plan) return plan.name.toUpperCase();
@@ -523,7 +523,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }) {
                     let badgeText = '';
                     let badgeVariant = '';
 
-                    if (restaurant?.subscription_status) {
+                    if (restaurant?.subscription_status === 'ACTIVE' || restaurant?.subscription_status === 'TRIAL') {
                         badgeText = 'ACTIVE & PAID';
                         badgeVariant = 'success';
                     } else if (isTrial()) {
