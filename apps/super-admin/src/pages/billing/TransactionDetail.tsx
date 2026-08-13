@@ -1,17 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
-import { 
-    ChevronLeft, 
-    CreditCard, 
-    Store, 
-    Calendar, 
-    Clock, 
-    User, 
-    Mail, 
-    FileText, 
+import {
+    ChevronLeft,
+    CreditCard,
+    Store,
+    Calendar,
+    User,
+    Mail,
+    FileText,
     AlertCircle,
-    Hash,
     Info,
     ArrowUpRight,
     CheckCircle2,
@@ -23,14 +21,6 @@ import {
 import { Card, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { DetailPageSkeleton } from '../../components/ui/Skeleton';
-
-const STATUS_VARIANTS = {
-    paid: 'success',
-    completed: 'success',
-    pending: 'warning',
-    failed: 'error',
-    refunded: 'info'
-};
 
 export default function TransactionDetail({ setHeaderData }) {
     const { source, id } = useParams();
@@ -46,18 +36,11 @@ export default function TransactionDetail({ setHeaderData }) {
         setError(null);
         try {
             if (source === 'payments') {
-                // Fetch from payments
                 const { data: payment, error: pErr } = await supabase
                     .from('payments')
-                    .select(`
-                        *,
-                        restaurants(id, name, contact_email, contact_phone),
-                        orders(*),
-                        profiles:user_id(id, email, name)
-                    `)
+                    .select(`*, restaurants(id, name, contact_email, contact_phone), orders(*), profiles:user_id(id, email, name)`)
                     .eq('id', id)
                     .single();
-
                 if (pErr) throw pErr;
                 setTxData({
                     id: payment.id,
@@ -71,34 +54,19 @@ export default function TransactionDetail({ setHeaderData }) {
                     customer: payment.profiles,
                     raw: payment
                 });
-
                 if (payment.orders) {
                     setOrderData(payment.orders);
                     fetchOrderItems(payment.orders.id);
                 }
-
             } else if (source === 'orders') {
-                // Fetch from orders
                 const { data: order, error: oErr } = await supabase
                     .from('orders')
-                    .select(`
-                        *,
-                        restaurants(id, name, contact_email, contact_phone),
-                        profiles:customer_id(id, email, name)
-                    `)
+                    .select(`*, restaurants(id, name, contact_email, contact_phone), profiles:customer_id(id, email, name)`)
                     .eq('id', id)
                     .single();
-
                 if (oErr) throw oErr;
-
-                // Also attempt to get any associated payment record
-                const { data: assocPayments } = await supabase
-                    .from('payments')
-                    .select('*')
-                    .eq('order_id', id);
-
+                const { data: assocPayments } = await supabase.from('payments').select('*').eq('order_id', id);
                 const payment = assocPayments?.[0];
-
                 setTxData({
                     id: order.id,
                     amount: order.total,
@@ -111,7 +79,6 @@ export default function TransactionDetail({ setHeaderData }) {
                     customer: order.profiles,
                     raw: { order, payment }
                 });
-
                 setOrderData(order);
                 fetchOrderItems(order.id);
             }
@@ -125,11 +92,7 @@ export default function TransactionDetail({ setHeaderData }) {
 
     const fetchOrderItems = async (orderId) => {
         try {
-            const { data: items, error } = await supabase
-                .from('order_items')
-                .select('*')
-                .eq('order_id', orderId);
-            
+            const { data: items, error } = await supabase.from('order_items').select('*').eq('order_id', orderId);
             if (error) throw error;
             setOrderItems(items || []);
         } catch (err) {
@@ -164,9 +127,7 @@ export default function TransactionDetail({ setHeaderData }) {
         return new Date(d).toLocaleDateString('en-IN', options);
     };
 
-    if (loading) {
-        return <DetailPageSkeleton />;
-    }
+    if (loading) return <DetailPageSkeleton />;
 
     if (error || !txData) {
         return (
@@ -181,73 +142,80 @@ export default function TransactionDetail({ setHeaderData }) {
         );
     }
 
+    const statusKey = txData.status?.toLowerCase();
+    const StatusIcon = statusKey === 'paid' || statusKey === 'completed' ? CheckCircle2 : statusKey === 'failed' ? XCircle : Timer;
+    const statusColor = statusKey === 'paid' || statusKey === 'completed' ? 'text-emerald-500' : statusKey === 'failed' ? 'text-red-500' : 'text-amber-500';
+    const statusBg = statusKey === 'paid' || statusKey === 'completed' ? 'bg-emerald-500/10 border-emerald-500/20' : statusKey === 'failed' ? 'bg-red-500/10 border-red-500/20' : 'bg-amber-500/10 border-amber-500/20';
+    const orderTotal = orderItems.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+
     return (
-        <div className="animate-fade-in max-w-[1200px] mx-auto pb-12">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Main Transaction Info (ColSpan 2) */}
-                <div className="lg:col-span-2 flex flex-col gap-8">
-                    {/* General Card */}
-                    <Card>
-                        <CardHeader className="flex justify-between items-center border-b border-border pb-4">
-                            <CardTitle className="text-base font-bold flex items-center gap-2">
-                                <CreditCard size={18} className="text-accent-primary" />
-                                Transaction Overview
-                            </CardTitle>
-                            <Badge variant={STATUS_VARIANTS[txData.status?.toLowerCase()] || 'secondary'}>
-                                {txData.status?.toUpperCase()}
-                            </Badge>
-                        </CardHeader>
+        <div className="animate-fade-in max-w-[1100px] mx-auto pb-12">
 
-                        <div className="p-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                                <div>
-                                    <div className="text-[11px] text-text-muted font-bold uppercase tracking-wider mb-1">Transaction ID</div>
-                                    <div className="text-sm font-semibold text-text-main font-mono">{txData.id}</div>
-                                </div>
-                                <div>
-                                    <div className="text-[11px] text-text-muted font-bold uppercase tracking-wider mb-1">Amount</div>
-                                    <div className="text-xl font-black text-text-main font-mono">₹{txData.amount?.toLocaleString()}</div>
-                                </div>
-                                <div>
-                                    <div className="text-[11px] text-text-muted font-bold uppercase tracking-wider mb-1">Gateway</div>
-                                    <div className="text-sm font-semibold text-text-main capitalize">{txData.gateway}</div>
-                                </div>
-                                <div>
-                                    <div className="text-[11px] text-text-muted font-bold uppercase tracking-wider mb-1">Razorpay Payment ID</div>
-                                    <div className="text-sm font-semibold text-text-main font-mono break-all">{txData.gateway_payment_id || '—'}</div>
-                                </div>
-                                <div>
-                                    <div className="text-[11px] text-text-muted font-bold uppercase tracking-wider mb-1">Created At</div>
-                                    <div className="text-sm font-semibold text-text-main flex items-center gap-1.5">
-                                        <Calendar size={14} className="text-text-muted" />
-                                        {formatDate(txData.created_at, true)}
-                                    </div>
-                                </div>
-                                <div>
-                                    <div className="text-[11px] text-text-muted font-bold uppercase tracking-wider mb-1">Source Record</div>
-                                    <div className="text-sm font-semibold text-text-main capitalize">{source} Table</div>
-                                </div>
-                            </div>
-
-                            {txData.failure_reason && (
-                                <div className="mt-6 p-4 rounded-xl bg-red-500/5 border border-red-500/10 flex gap-3">
-                                    <AlertCircle className="text-red-500 shrink-0" size={18} />
-                                    <div>
-                                        <div className="text-xs font-bold text-red-600 uppercase mb-0.5">Payment Failure Reason</div>
-                                        <p className="text-sm text-red-600/90 font-medium">{txData.failure_reason}</p>
-                                    </div>
-                                </div>
-                            )}
+            {/* Hero Amount Banner */}
+            <div className="rounded-2xl border border-border bg-gradient-to-br from-surface to-surface-hover overflow-hidden mb-8 shadow-sm">
+                <div className="px-8 py-7 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                    <div className="flex items-center gap-5">
+                        <div className="w-14 h-14 rounded-2xl bg-accent-primary/10 border border-accent-primary/20 flex items-center justify-center shrink-0">
+                            <CreditCard size={26} className="text-accent-primary" />
                         </div>
-                    </Card>
+                        <div>
+                            <div className="text-[11px] font-bold text-text-muted uppercase tracking-widest mb-1">Transaction Amount</div>
+                            <div className="text-4xl font-black text-text-main tracking-tight">₹{Number(txData.amount || 0).toLocaleString('en-IN')}</div>
+                        </div>
+                    </div>
+                    <div className="flex flex-col items-start sm:items-end gap-3">
+                        <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border font-bold text-[13px] ${statusBg} ${statusColor}`}>
+                            <StatusIcon size={15} />
+                            {txData.status?.toUpperCase()}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[13px] text-text-muted">
+                            <Calendar size={13} />
+                            {formatDate(txData.created_at, true)}
+                        </div>
+                    </div>
+                </div>
 
-                    {/* Order Details & Items */}
+                <div className="border-t border-border px-8 py-4 flex flex-wrap gap-6">
+                    <div>
+                        <div className="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-0.5">Gateway</div>
+                        <div className="text-[13px] font-semibold text-text-main capitalize">{txData.gateway}</div>
+                    </div>
+                    {txData.gateway_payment_id && (
+                        <div>
+                            <div className="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-0.5">Gateway ID</div>
+                            <div className="text-[13px] font-mono text-text-main">{txData.gateway_payment_id}</div>
+                        </div>
+                    )}
+                    <div>
+                        <div className="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-0.5">Source</div>
+                        <div className="text-[13px] font-semibold text-text-main capitalize">{source} Table</div>
+                    </div>
+                    <div className="ml-auto hidden sm:block">
+                        <div className="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-0.5">Record ID</div>
+                        <div className="text-[11px] font-mono text-text-muted truncate max-w-[220px]" title={txData.id}>{txData.id}</div>
+                    </div>
+                </div>
+
+                {txData.failure_reason && (
+                    <div className="border-t border-red-500/10 bg-red-500/5 px-8 py-4 flex items-start gap-3">
+                        <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={16} />
+                        <div>
+                            <div className="text-[11px] font-bold text-red-600 uppercase tracking-wider mb-0.5">Failure Reason</div>
+                            <p className="text-[13px] text-red-600/90 font-medium">{txData.failure_reason}</p>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Main Column */}
+                <div className="lg:col-span-2 flex flex-col gap-6">
                     {orderData && (
                         <Card>
                             <CardHeader className="flex justify-between items-center border-b border-border pb-4">
                                 <CardTitle className="text-base font-bold flex items-center gap-2">
                                     <ShoppingCart size={18} className="text-accent-primary" />
-                                    Order Info: #{orderData.order_number}
+                                    Order #{orderData.order_number}
                                 </CardTitle>
                                 <div className="flex gap-2">
                                     {orderData.type && (
@@ -262,145 +230,158 @@ export default function TransactionDetail({ setHeaderData }) {
                                     )}
                                 </div>
                             </CardHeader>
-
                             <div className="p-6">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 pb-6 border-b border-border">
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6 p-4 bg-surface-hover rounded-xl">
                                     <div>
-                                        <div className="text-[11px] text-text-muted font-bold uppercase tracking-wider mb-1">Order UUID</div>
-                                        <div className="text-sm font-semibold text-text-main font-mono truncate" title={orderData.id}>{orderData.id}</div>
+                                        <div className="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-0.5">Payment Method</div>
+                                        <div className="text-[13px] font-semibold text-text-main capitalize">{orderData.payment_method || '—'}</div>
                                     </div>
                                     <div>
-                                        <div className="text-[11px] text-text-muted font-bold uppercase tracking-wider mb-1">Payment Method</div>
-                                        <div className="text-sm font-semibold text-text-main capitalize">{orderData.payment_method || '—'}</div>
+                                        <div className="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-0.5">Order Date</div>
+                                        <div className="text-[13px] font-semibold text-text-main">{formatDate(orderData.created_at, true)}</div>
                                     </div>
                                     <div>
-                                        <div className="text-[11px] text-text-muted font-bold uppercase tracking-wider mb-1">Order Date</div>
-                                        <div className="text-sm font-semibold text-text-main">{formatDate(orderData.created_at, true)}</div>
+                                        <div className="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-0.5">Order UUID</div>
+                                        <div className="text-[11px] font-mono text-text-muted truncate" title={orderData.id}>{orderData.id}</div>
                                     </div>
                                 </div>
 
-                                <div className="text-sm font-bold text-text-main mb-3">Order Items ({orderItems.length})</div>
+                                <div className="text-[13px] font-bold text-text-main mb-3 flex items-center gap-2">
+                                    Order Items
+                                    <span className="text-[11px] font-bold bg-accent-primary/10 text-accent-primary px-2 py-0.5 rounded-full">{orderItems.length}</span>
+                                </div>
+
                                 {orderItems.length === 0 ? (
-                                    <div className="text-center py-6 text-text-muted border border-dashed border-border rounded-xl">
+                                    <div className="text-center py-8 text-text-muted border border-dashed border-border rounded-xl text-sm">
                                         No item details available.
                                     </div>
                                 ) : (
                                     <div className="border border-border rounded-xl overflow-hidden">
                                         <table className="w-full text-left border-collapse">
                                             <thead>
-                                                <tr className="border-b border-border bg-bg/50">
-                                                    <th className="py-2.5 px-4 text-xs font-bold text-text-muted w-[50%]">Item Name</th>
-                                                    <th className="py-2.5 px-4 text-xs font-bold text-text-muted w-[15%] text-right">Price</th>
-                                                    <th className="py-2.5 px-4 text-xs font-bold text-text-muted w-[15%] text-right">Qty</th>
-                                                    <th className="py-2.5 px-4 text-xs font-bold text-text-muted w-[20%] text-right">Total</th>
+                                                <tr className="border-b border-border bg-surface-hover">
+                                                    <th className="py-3 px-4 text-[11px] font-bold text-text-muted uppercase tracking-wider">Item</th>
+                                                    <th className="py-3 px-4 text-[11px] font-bold text-text-muted uppercase tracking-wider text-right">Price</th>
+                                                    <th className="py-3 px-4 text-[11px] font-bold text-text-muted uppercase tracking-wider text-right">Qty</th>
+                                                    <th className="py-3 px-4 text-[11px] font-bold text-text-muted uppercase tracking-wider text-right">Subtotal</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {orderItems.map((item, idx) => (
-                                                    <tr key={item.id || idx} className="border-b border-border last:border-b-0">
-                                                        <td className="py-2.5 px-4 text-[13px] font-semibold text-text-main">
-                                                            {item.name}
-                                                            {item.variant_name && <span className="text-[11px] text-text-muted ml-2">({item.variant_name})</span>}
+                                                    <tr key={item.id || idx} className="border-b border-border last:border-b-0 hover:bg-surface-hover/50 transition-colors">
+                                                        <td className="py-3 px-4">
+                                                            <div className="text-[13px] font-semibold text-text-main">{item.name}</div>
+                                                            {item.variant_name && <div className="text-[11px] text-text-muted mt-0.5">{item.variant_name}</div>}
                                                         </td>
-                                                        <td className="py-2.5 px-4 text-[13px] text-text-main text-right">₹{item.price?.toLocaleString()}</td>
-                                                        <td className="py-2.5 px-4 text-[13px] text-text-main text-right">{item.quantity}</td>
-                                                        <td className="py-2.5 px-4 text-[13px] font-bold text-text-main text-right">₹{(item.price * item.quantity)?.toLocaleString()}</td>
+                                                        <td className="py-3 px-4 text-[13px] text-text-muted text-right">₹{Number(item.price).toLocaleString('en-IN')}</td>
+                                                        <td className="py-3 px-4 text-right">
+                                                            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-surface-hover text-[12px] font-bold text-text-main">{item.quantity}</span>
+                                                        </td>
+                                                        <td className="py-3 px-4 text-[13px] font-bold text-text-main text-right">₹{(item.price * item.quantity).toLocaleString('en-IN')}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
+                                            <tfoot>
+                                                <tr className="border-t border-border bg-surface-hover">
+                                                    <td colSpan={3} className="py-3 px-4 text-[12px] font-bold text-text-muted uppercase tracking-wider text-right">Order Total</td>
+                                                    <td className="py-3 px-4 text-[15px] font-black text-text-main text-right">₹{orderTotal.toLocaleString('en-IN')}</td>
+                                                </tr>
+                                            </tfoot>
                                         </table>
                                     </div>
                                 )}
                             </div>
                         </Card>
                     )}
-                </div>
 
-                {/* Sidebar details */}
-                <div className="flex flex-col gap-8">
-                    {/* Restaurant Info */}
+                    {/* Raw JSON collapsible */}
                     <Card>
-                        <CardHeader className="border-b border-border pb-4">
-                            <CardTitle className="text-base font-bold flex items-center gap-2">
-                                <Store size={18} className="text-accent-primary" />
-                                Restaurant Details
-                            </CardTitle>
-                        </CardHeader>
-                        <div className="p-6 flex flex-col gap-4">
-                            <div>
-                                <div className="text-[11px] text-text-muted font-bold uppercase tracking-wider mb-0.5">Name</div>
-                                <div className="text-[14px] font-bold text-text-main">{txData.restaurant?.name || 'Unknown Restaurant'}</div>
-                            </div>
-                            <div>
-                                <div className="text-[11px] text-text-muted font-bold uppercase tracking-wider mb-0.5">Slug</div>
-                                <div className="text-[13px] font-mono text-text-main">/{txData.restaurant?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || '—'}</div>
-                            </div>
-                            {txData.restaurant?.contact_email && (
-                                <div>
-                                    <div className="text-[11px] text-text-muted font-bold uppercase tracking-wider mb-0.5">Contact Email</div>
-                                    <a href={`mailto:${txData.restaurant.contact_email}`} className="text-[13px] font-medium text-blue-500 hover:underline flex items-center gap-1">
-                                        <Mail size={12} /> {txData.restaurant.contact_email}
-                                    </a>
-                                </div>
-                            )}
-                            {txData.restaurant?.contact_phone && (
-                                <div>
-                                    <div className="text-[11px] text-text-muted font-bold uppercase tracking-wider mb-0.5">Contact Phone</div>
-                                    <div className="text-[13px] font-medium text-text-main flex items-center gap-1">
-                                        <Phone size={12} className="text-text-muted" /> {txData.restaurant.contact_phone}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </Card>
-
-                    {/* Customer Info */}
-                    <Card>
-                        <CardHeader className="border-b border-border pb-4">
-                            <CardTitle className="text-base font-bold flex items-center gap-2">
-                                <User size={18} className="text-accent-primary" />
-                                Customer Details
-                            </CardTitle>
-                        </CardHeader>
-                        <div className="p-6">
-                            {txData.customer ? (
-                                <div className="flex flex-col gap-4">
-                                    <div>
-                                        <div className="text-[11px] text-text-muted font-bold uppercase tracking-wider mb-0.5">Name</div>
-                                        <div className="text-[14px] font-bold text-text-main">{txData.customer.name || 'Anonymous Customer'}</div>
-                                    </div>
-                                    <div>
-                                        <div className="text-[11px] text-text-muted font-bold uppercase tracking-wider mb-0.5">Email</div>
-                                        <a href={`mailto:${txData.customer.email}`} className="text-[13px] font-medium text-blue-500 hover:underline flex items-center gap-1">
-                                            <Mail size={12} /> {txData.customer.email}
-                                        </a>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="text-sm text-text-muted italic opacity-70 flex items-center gap-1.5">
-                                    <Info size={14} /> No customer details linked to this transaction record.
-                                </div>
-                            )}
-                        </div>
-                    </Card>
-
-                    {/* Raw JSON View */}
-                    <Card>
-                        <CardHeader className="border-b border-border pb-4">
-                            <CardTitle className="text-xs font-bold text-text-muted uppercase tracking-wider flex items-center gap-2">
-                                <FileText size={14} />
-                                Raw Record JSON
-                            </CardTitle>
-                        </CardHeader>
                         <div className="p-4">
-                            <details className="cursor-pointer group">
-                                <summary className="text-xs text-blue-500 font-semibold select-none outline-none hover:underline">
-                                    Show Database Payload
+                            <details className="group">
+                                <summary className="flex items-center gap-2 text-[12px] font-bold text-text-muted uppercase tracking-wider select-none outline-none hover:text-text-main transition-colors list-none cursor-pointer">
+                                    <FileText size={14} />
+                                    Raw Database Payload
+                                    <span className="ml-auto text-[11px] font-semibold text-blue-500 group-open:hidden">Show</span>
+                                    <span className="ml-auto text-[11px] font-semibold text-blue-500 hidden group-open:inline">Hide</span>
                                 </summary>
-                                <pre className="mt-3 text-[11px] font-mono leading-relaxed bg-bg border border-border rounded-xl p-3 overflow-x-auto whitespace-pre select-all max-h-60">
+                                <pre className="mt-4 text-[11px] font-mono leading-relaxed bg-bg border border-border rounded-xl p-4 overflow-x-auto whitespace-pre select-all max-h-64 text-text-muted">
                                     {JSON.stringify(txData.raw, null, 2)}
                                 </pre>
                             </details>
+                        </div>
+                    </Card>
+                </div>
+
+                {/* Sidebar */}
+                <div className="flex flex-col gap-6">
+                    <Card>
+                        <CardHeader className="border-b border-border pb-4">
+                            <CardTitle className="text-sm font-bold flex items-center gap-2">
+                                <Store size={16} className="text-accent-primary" />
+                                Restaurant
+                            </CardTitle>
+                        </CardHeader>
+                        <div className="p-5 flex flex-col gap-4">
+                            <div className="text-[15px] font-bold text-text-main">{txData.restaurant?.name || 'Unknown'}</div>
+                            {txData.restaurant?.contact_email && (
+                                <a href={`mailto:${txData.restaurant.contact_email}`} className="text-[13px] text-blue-500 hover:underline flex items-center gap-1.5 font-medium">
+                                    <Mail size={12} /> {txData.restaurant.contact_email}
+                                </a>
+                            )}
+                            {txData.restaurant?.contact_phone && (
+                                <div className="text-[13px] font-medium text-text-main flex items-center gap-1.5">
+                                    <Phone size={12} className="text-text-muted" /> {txData.restaurant.contact_phone}
+                                </div>
+                            )}
+                            {txData.restaurant?.id && (
+                                <button
+                                    onClick={() => navigate(`/restaurants/${txData.restaurant.id}`)}
+                                    className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl border border-border text-[13px] font-bold text-text-muted hover:text-text-main hover:bg-surface-hover transition-all cursor-pointer bg-transparent"
+                                >
+                                    View Restaurant <ArrowUpRight size={14} />
+                                </button>
+                            )}
+                        </div>
+                    </Card>
+
+                    <Card>
+                        <CardHeader className="border-b border-border pb-4">
+                            <CardTitle className="text-sm font-bold flex items-center gap-2">
+                                <User size={16} className="text-accent-primary" />
+                                Customer
+                            </CardTitle>
+                        </CardHeader>
+                        <div className="p-5">
+                            {txData.customer ? (
+                                <div className="flex flex-col gap-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-accent-primary/10 flex items-center justify-center shrink-0">
+                                            <User size={18} className="text-accent-primary" />
+                                        </div>
+                                        <div>
+                                            <div className="text-[14px] font-bold text-text-main">{txData.customer.name || 'Anonymous'}</div>
+                                            <div className="text-[12px] text-text-muted">Customer</div>
+                                        </div>
+                                    </div>
+                                    {txData.customer.email && (
+                                        <a href={`mailto:${txData.customer.email}`} className="text-[13px] text-blue-500 hover:underline flex items-center gap-1.5 font-medium">
+                                            <Mail size={12} /> {txData.customer.email}
+                                        </a>
+                                    )}
+                                    {txData.customer.id && (
+                                        <button
+                                            onClick={() => navigate(`/users/${txData.customer.id}`)}
+                                            className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl border border-border text-[13px] font-bold text-text-muted hover:text-text-main hover:bg-surface-hover transition-all cursor-pointer bg-transparent"
+                                        >
+                                            View Profile <ArrowUpRight size={14} />
+                                        </button>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="text-sm text-text-muted italic flex items-center gap-1.5 py-2">
+                                    <Info size={14} /> No customer linked.
+                                </div>
+                            )}
                         </div>
                     </Card>
                 </div>

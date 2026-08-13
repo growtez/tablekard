@@ -339,8 +339,7 @@ export default function UserDetail({ setHeaderData, setSyncAction }: UserDetailP
             <div className="flex gap-8 border-b border-border mb-8 overflow-x-auto whitespace-nowrap scrollbar-hide">
                 {[
                     { id: 'overview', label: 'Overview', icon: User },
-                    { id: 'activity', label: 'Order History', icon: ShoppingBag },
-                    { id: 'security', label: 'Security & Access', icon: ShieldCheck }
+                    { id: 'activity', label: 'Order History', icon: ShoppingBag }
                 ].map(tab => (
                     <button
                         key={tab.id}
@@ -480,49 +479,7 @@ export default function UserDetail({ setHeaderData, setSyncAction }: UserDetailP
                     </Card>
                 )}
 
-                {activeTab === 'security' && (
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                        <div className="lg:col-span-7">
-                            <Card>
-                                <CardHeader>
-                                    <div className="flex items-center gap-3">
-                                        <ShieldCheck size={18} className="text-emerald-500" />
-                                        <CardTitle className="m-0">Access Control</CardTitle>
-                                    </div>
-                                </CardHeader>
-                                <div className="space-y-6">
-                                    <div className="p-4 bg-surface-hover rounded-xl">
-                                        <div className="font-semibold text-[15px] text-text-main">Two-Factor Authentication</div>
-                                        <p className="text-sm text-text-muted mt-1">Secure account access with an additional verification step.</p>
-                                        <Badge variant="warning" className="mt-3">Not Configured</Badge>
-                                    </div>
-                                    <div className="p-4 bg-surface-hover rounded-xl">
-                                        <div className="font-semibold text-[15px] text-text-main">Account Status</div>
-                                        <p className="text-sm text-text-muted mt-1">Current standing of the user account on the platform.</p>
-                                        <div className="flex items-center gap-2 mt-3 text-emerald-600 font-semibold text-sm">
-                                            <CheckCircle2 size={16} /> Fully Operational
-                                        </div>
-                                    </div>
-                                </div>
-                            </Card>
-                        </div>
-                        <div className="lg:col-span-5">
-                            <Card>
-                                <CardHeader><CardTitle className="m-0">System Meta</CardTitle></CardHeader>
-                                <div className="space-y-4">
-                                    <div>
-                                        <div className="text-xs font-bold text-text-muted uppercase tracking-wider mb-2">Internal UUID</div>
-                                        <code className="block p-2 bg-surface-hover rounded-lg text-xs text-text-main font-mono overflow-x-auto">{profile.id}</code>
-                                    </div>
-                                    <div>
-                                        <div className="text-xs font-bold text-text-muted uppercase tracking-wider mb-1">Last Heartbeat</div>
-                                        <div className="text-sm text-text-main">{new Date(profile.updated_at).toLocaleString()}</div>
-                                    </div>
-                                </div>
-                            </Card>
-                        </div>
-                    </div>
-                )}
+
             </div>
         </div>
     );

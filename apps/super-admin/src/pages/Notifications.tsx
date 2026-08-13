@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { Megaphone, Trash2, Send, Zap, RefreshCw, AlertCircle, Bell, Search, Filter } from 'lucide-react';
+import { Megaphone, Trash2, Send, Zap, RefreshCw, AlertCircle, Bell, Search, Filter, X, Edit3, Save, Loader2 } from 'lucide-react';
 
 export default function Notifications() {
     const [loading, setLoading] = useState(true);
@@ -18,6 +18,14 @@ export default function Notifications() {
 
     const [searchQuery, setSearchQuery] = useState('');
     const [filterType, setFilterType] = useState('all');
+
+    // Modal state
+    const [selectedNotif, setSelectedNotif] = useState(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editTitle, setEditTitle] = useState('');
+    const [editMessage, setEditMessage] = useState('');
+    const [editType, setEditType] = useState('update');
+    const [saving, setSaving] = useState(false);
 
     const fetchHistory = async () => {
         setLoading(true);
@@ -43,6 +51,7 @@ export default function Notifications() {
                             ...notif,
                             isBroadcast: copies.length > 1,
                             dbIds: copies.map(c => c.id),
+                            restaurantIds: copies.map(c => c.restaurant_id),
                             restaurantCount: copies.length,
                             restaurantName: notif.restaurants?.name
                         });
@@ -141,13 +150,61 @@ export default function Notifications() {
         }
     };
 
-    const getTypeIcon = (t) => {
+    // Modal open/close
+    const handleOpenModal = (notif) => {
+        setSelectedNotif(notif);
+        setIsEditing(false);
+        setEditTitle(notif.title);
+        setEditMessage(notif.message);
+        setEditType(notif.type);
+    };
+
+    const handleCloseModal = () => {
+        setSelectedNotif(null);
+        setIsEditing(false);
+    };
+
+    // Save edit: delete old rows and insert fresh ones → restaurant-admin sees them as new/unread
+    const handleSaveEdit = async () => {
+        if (!editTitle.trim() || !editMessage.trim()) return;
+        setSaving(true);
+        try {
+            const now = new Date().toISOString();
+            const { error: delError } = await supabase
+                .from('restaurant_notifications')
+                .delete()
+                .in('id', selectedNotif.dbIds);
+            if (delError) throw delError;
+
+            const inserts = selectedNotif.restaurantIds.map(rid => ({
+                restaurant_id: rid,
+                title: editTitle.trim(),
+                message: editMessage.trim(),
+                type: editType,
+                created_at: now
+            }));
+            const { error: insError } = await supabase
+                .from('restaurant_notifications')
+                .insert(inserts);
+            if (insError) throw insError;
+
+            handleCloseModal();
+            fetchHistory();
+        } catch (err) {
+            console.error('Error updating notification:', err);
+            alert('Failed to update notification');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const getTypeIcon = (t, size = 20) => {
         switch (t) {
-            case 'update': return <RefreshCw size={20} className="text-[#3B82F6]" />;
-            case 'feature': return <Zap size={20} className="text-[#F59E0B]" />;
-            case 'alert': return <AlertCircle size={20} className="text-[#EF4444]" />;
+            case 'update': return <RefreshCw size={size} className="text-[#3B82F6]" />;
+            case 'feature': return <Zap size={size} className="text-[#F59E0B]" />;
+            case 'alert': return <AlertCircle size={size} className="text-[#EF4444]" />;
             case 'info':
-            default: return <Megaphone size={20} className="text-[#10B981]" />;
+            default: return <Megaphone size={size} className="text-[#10B981]" />;
         }
     };
 
@@ -396,7 +453,7 @@ export default function Notifications() {
                                                 <div className="flex flex-col">
                                                     {groupNotifs.map(notif => {
                                                         return (
-                                                            <div key={notif.dbIds[0]} className="flex flex-col sm:flex-row sm:items-center gap-4 px-6 py-4 border-b border-border last:border-b-0 hover:bg-surface-hover transition-colors group relative">
+                                                            <div key={notif.dbIds[0]} onClick={() => handleOpenModal(notif)} className="flex flex-col sm:flex-row sm:items-center gap-4 px-6 py-4 border-b border-border last:border-b-0 hover:bg-surface-hover transition-colors group relative cursor-pointer">
                                                                 <div className="flex items-center gap-4 flex-1 min-w-0">
                                                                     <div className={`shrink-0 w-11 h-11 rounded-full flex items-center justify-center ${getIconContainerColor(notif.type)}`}>
                                                                         {getTypeIcon(notif.type)}
@@ -427,9 +484,10 @@ export default function Notifications() {
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                                <div className="hidden sm:flex pl-4 shrink-0 self-center">
+                                                                <div className="hidden sm:flex items-center gap-2 pl-4 shrink-0 self-center">
+                                                                    <span className="text-[12px] font-bold text-accent-primary opacity-0 group-hover:opacity-100 transition-opacity">View</span>
                                                                     <button
-                                                                        onClick={() => handleDelete(notif.dbIds)}
+                                                                        onClick={(e) => { e.stopPropagation(); handleDelete(notif.dbIds); }}
                                                                         className="p-2 text-text-muted hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
                                                                         title="Delete Notification"
                                                                     >
@@ -439,7 +497,7 @@ export default function Notifications() {
                                                                 {/* Mobile delete button */}
                                                                 <div className="sm:hidden absolute top-4 right-4">
                                                                     <button
-                                                                        onClick={() => handleDelete(notif.dbIds)}
+                                                                        onClick={(e) => { e.stopPropagation(); handleDelete(notif.dbIds); }}
                                                                         className="p-1.5 text-text-muted hover:text-red-500 bg-surface-hover rounded-md"
                                                                     >
                                                                         <Trash2 size={16} />
@@ -468,6 +526,107 @@ export default function Notifications() {
                     </div>
                 </div>
             </div>
+
+            {/* Notification Detail / Edit Modal */}
+            {selectedNotif && (
+                <div
+                    className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-[fadeIn_0.2s_ease]"
+                    onClick={handleCloseModal}
+                >
+                    <div
+                        className="bg-surface rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col border border-border animate-[slideUp_0.25s_ease]"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-surface-hover/40">
+                            <div className="flex items-center gap-3">
+                                <div className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${getIconContainerColor(isEditing ? editType : selectedNotif.type)}`}>
+                                    {getTypeIcon(isEditing ? editType : selectedNotif.type, 18)}
+                                </div>
+                                <div>
+                                    <h3 className="text-[15px] font-bold text-text-main">
+                                        {isEditing ? 'Edit Notification' : 'Notification Details'}
+                                    </h3>
+                                    <span className="text-[12px] text-text-muted">
+                                        {selectedNotif.isBroadcast
+                                            ? `Broadcast · ${selectedNotif.restaurantCount} restaurants`
+                                            : `Targeted · ${selectedNotif.restaurantName || 'Specific'}`}
+                                    </span>
+                                </div>
+                            </div>
+                            <button onClick={handleCloseModal} className="p-2 rounded-full text-text-muted hover:text-text-main hover:bg-surface-hover transition-colors">
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-6 space-y-5 overflow-y-auto max-h-[60vh]">
+                            {isEditing ? (
+                                <>
+                                    <div>
+                                        <label className="block text-[12px] font-bold text-text-muted uppercase tracking-wider mb-2">Type</label>
+                                        <select value={editType} onChange={e => setEditType(e.target.value)} className="w-full bg-surface-hover border border-border rounded-xl px-4 py-2.5 text-[14px] text-text-main focus:outline-none focus:ring-2 focus:ring-accent-primary/50 focus:border-accent-primary transition-all appearance-none">
+                                            <option value="info">Announcement (Info)</option>
+                                            <option value="update">System Update</option>
+                                            <option value="feature">New Feature</option>
+                                            <option value="alert">Important Alert</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[12px] font-bold text-text-muted uppercase tracking-wider mb-2">Title</label>
+                                        <input type="text" value={editTitle} onChange={e => setEditTitle(e.target.value)} className="w-full bg-surface-hover border border-border rounded-xl px-4 py-2.5 text-[14px] text-text-main focus:outline-none focus:ring-2 focus:ring-accent-primary/50 focus:border-accent-primary transition-all" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[12px] font-bold text-text-muted uppercase tracking-wider mb-2">Message</label>
+                                        <textarea value={editMessage} onChange={e => setEditMessage(e.target.value)} className="w-full bg-surface-hover border border-border rounded-xl px-4 py-3 text-[14px] text-text-main focus:outline-none focus:ring-2 focus:ring-accent-primary/50 focus:border-accent-primary transition-all min-h-[120px] resize-y" />
+                                    </div>
+                                    <p className="text-[12px] text-text-muted bg-surface-hover rounded-xl px-4 py-3 border border-border">
+                                        💡 Saving will re-send this as a fresh notification, marking it as <strong>unread</strong> for all recipients.
+                                    </p>
+                                </>
+                            ) : (
+                                <>
+                                    <div>
+                                        <div className="text-[12px] font-bold text-text-muted uppercase tracking-wider mb-1">Title</div>
+                                        <h4 className="text-[18px] font-extrabold text-text-main">{selectedNotif.title}</h4>
+                                    </div>
+                                    <div>
+                                        <div className="text-[12px] font-bold text-text-muted uppercase tracking-wider mb-1">Message</div>
+                                        <div className="text-[15px] text-text-main leading-relaxed whitespace-pre-wrap">{selectedNotif.message}</div>
+                                    </div>
+                                    <div className="flex items-center gap-4 text-[13px] text-text-muted pt-2 border-t border-border">
+                                        <span>{new Date(selectedNotif.created_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</span>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="px-6 py-4 border-t border-border bg-surface-hover/30 flex items-center justify-between gap-3">
+                            {isEditing ? (
+                                <>
+                                    <button onClick={() => setIsEditing(false)} className="px-5 py-2 rounded-xl border border-border text-text-muted hover:text-text-main hover:bg-surface-hover font-semibold text-[14px] transition-colors">
+                                        Cancel
+                                    </button>
+                                    <button onClick={handleSaveEdit} disabled={saving} className="flex items-center gap-2 px-6 py-2 bg-accent-primary hover:bg-accent-secondary text-white font-bold text-[14px] rounded-xl transition-colors disabled:opacity-50">
+                                        {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                                        {saving ? 'Saving...' : 'Save & Re-send'}
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <button onClick={handleCloseModal} className="px-5 py-2 rounded-xl border border-border text-text-muted hover:text-text-main hover:bg-surface-hover font-semibold text-[14px] transition-colors">
+                                        Close
+                                    </button>
+                                    <button onClick={() => setIsEditing(true)} className="flex items-center gap-2 px-6 py-2 bg-accent-primary hover:bg-accent-secondary text-white font-bold text-[14px] rounded-xl transition-colors">
+                                        <Edit3 size={16} /> Edit
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
