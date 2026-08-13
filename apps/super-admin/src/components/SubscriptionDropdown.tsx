@@ -61,23 +61,23 @@ export default function SubscriptionDropdown({
     }, [disabled, isOpen]);
 
     const getDisplayLabel = () => {
-        if (subscriptionStatus === 'ACTIVE' || subscriptionStatus === 'TRIAL') {
+        if (subscriptionStatus === 'active' || subscriptionStatus === 'trial') {
             const matchedPlan = billingPlans.find(p => p.name?.toLowerCase() === subscriptionPlan?.toLowerCase());
             if (matchedPlan) return matchedPlan.name?.toUpperCase() || 'PLAN';
             const matchedTrial = trialPlans.find(t => t.name?.toLowerCase() === subscriptionPlan?.toLowerCase());
             if (matchedTrial) return matchedTrial.name?.toUpperCase() || 'TRIAL';
             return subscriptionPlan?.toUpperCase() || 'CUSTOM';
         }
-        if (subscriptionStatus === 'SUSPENDED') return 'SUSPENDED';
-        if (subscriptionStatus === 'EXPIRED') return 'EXPIRED';
+        if (subscriptionStatus === 'suspended') return 'SUSPENDED';
+        if (subscriptionStatus === 'expired') return 'EXPIRED';
         return 'INACTIVE';
     };
 
     const getStatusColor = () => {
-        if (subscriptionStatus === 'ACTIVE') return 'text-green-500 bg-green-500/10';
-        if (subscriptionStatus === 'TRIAL') return 'text-blue-500 bg-blue-500/10';
-        if (subscriptionStatus === 'SUSPENDED') return 'text-red-500 bg-red-500/10';
-        if (subscriptionStatus === 'EXPIRED') return 'text-amber-500 bg-amber-500/10';
+        if (subscriptionStatus === 'active') return 'text-green-500 bg-green-500/10';
+        if (subscriptionStatus === 'trial') return 'text-blue-500 bg-blue-500/10';
+        if (subscriptionStatus === 'suspended') return 'text-red-500 bg-red-500/10';
+        if (subscriptionStatus === 'expired') return 'text-amber-500 bg-amber-500/10';
         return 'text-text-muted bg-surface-hover border border-border/50';
     };
 
@@ -135,7 +135,7 @@ export default function SubscriptionDropdown({
                     <button
                         type="button"
                         className={`w-full text-left px-3 py-1.5 text-[11px] font-semibold hover:bg-surface-hover transition-colors flex items-center gap-2 ${
-                            !subscriptionStatus || subscriptionStatus === 'INACTIVE' ? 'text-accent-primary' : 'text-text-main'
+                            !subscriptionStatus || subscriptionStatus === 'inactive' ? 'text-accent-primary' : 'text-text-main'
                         }`}
                         onClick={() => handleSelect('none')}
                     >
@@ -153,7 +153,7 @@ export default function SubscriptionDropdown({
                             type="button"
                             className={`w-full text-left px-3 py-1.5 text-[11px] font-semibold hover:bg-surface-hover transition-colors flex items-center justify-between gap-2 ${
                                 hoveredGroup === 'trial' ? 'bg-surface-hover' : ''
-                            } ${subscriptionStatus === 'TRIAL' ? 'text-blue-500' : 'text-text-main'}`}
+                            } ${subscriptionStatus === 'trial' ? 'text-blue-500' : 'text-text-main'}`}
                         >
                             <span className="flex items-center gap-2">
                                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
@@ -192,7 +192,7 @@ export default function SubscriptionDropdown({
                             type="button"
                             className={`w-full text-left px-3 py-1.5 text-[11px] font-semibold hover:bg-surface-hover transition-colors flex items-center justify-between gap-2 ${
                                 hoveredGroup === 'plan' ? 'bg-surface-hover' : ''
-                            } ${subscriptionStatus === 'ACTIVE' ? 'text-green-500' : 'text-text-main'}`}
+                            } ${subscriptionStatus === 'active' || subscriptionStatus === 'trial' ? 'text-green-500' : 'text-text-main'}`}
                         >
                             <span className="flex items-center gap-2">
                                 <span className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0" />
@@ -225,7 +225,7 @@ export default function SubscriptionDropdown({
                     <button
                         type="button"
                         className={`w-full text-left px-3 py-1.5 text-[11px] font-semibold hover:bg-surface-hover transition-colors flex items-center gap-2 ${
-                            subscriptionStatus === 'SUSPENDED' ? 'text-red-500' : 'text-text-main'
+                            subscriptionStatus === 'suspended' ? 'text-red-500' : 'text-text-main'
                         }`}
                         onClick={() => handleSelect('suspended')}
                     >
@@ -237,7 +237,7 @@ export default function SubscriptionDropdown({
                     <button
                         type="button"
                         className={`w-full text-left px-3 py-1.5 text-[11px] font-semibold hover:bg-surface-hover transition-colors flex items-center gap-2 ${
-                            subscriptionStatus === 'EXPIRED' ? 'text-amber-500' : 'text-text-main'
+                            subscriptionStatus === 'expired' ? 'text-amber-500' : 'text-text-main'
                         }`}
                         onClick={() => handleSelect('expired')}
                     >

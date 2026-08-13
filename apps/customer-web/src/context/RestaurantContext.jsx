@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useLocation, matchPath, useNavigate } from 'react-router-dom';
-import { getRestaurantById, getTableById, getTableByNumber, getRecommendedItems } from '../services/supabaseService';
+import { getRestaurantById, getTableById, getTableByNumber, getRecommendedItems, getPlatformSettings } from '../services/supabaseService';
 import { supabase } from '@restaurant-saas/supabase';
 
 
@@ -48,6 +48,7 @@ export function RestaurantProvider({ children }) {
     const [restaurantLoading, setRestaurantLoading] = useState(
         () => !!(urlRestaurantId || sessionStorage.getItem(SESSION_KEY_RESTAURANT))
     );
+    const [isServicePaused, setIsServicePaused] = useState(false);
 
     // Table data fetched from DB
     const [table, setTable] = useState(null);
@@ -184,17 +185,32 @@ export function RestaurantProvider({ children }) {
         }
     }, [urlRestaurantId, urlTableId, navigate]);
 
-    // Fetch restaurant info whenever restaurantId changes
+    // Fetch restaurant info and evaluate subscription status
     useEffect(() => {
         if (!restaurantId) {
             setRestaurant(null);
+            setIsServicePaused(false);
             return;
         }
         let cancelled = false;
         setRestaurantLoading(true);
-        getRestaurantById(restaurantId)
-            .then(data => {
-                if (!cancelled) setRestaurant(data);
+        
+        Promise.all([
+            getRestaurantById(restaurantId),
+            getPlatformSettings('billing_plans')
+        ])
+            .then(([data, billingConfig]) => {
+                if (cancelled) return;
+                setRestaurant(data);
+                
+                // Evaluate if service is paused
+                let paused = false;
+                if (data && data.status === 'active') {
+                    if (data.subscription_status === 'inactive' || data.subscription_status === 'expired' || data.subscription_status === 'suspended') {
+                        paused = true;
+                    }
+                }
+                setIsServicePaused(paused);
             })
             .catch(err => {
                 if (!cancelled) console.warn('[RestaurantContext] fetch error:', err.message);
@@ -252,6 +268,7 @@ export function RestaurantProvider({ children }) {
             tableId,
             restaurant,          // full row: { name, logo_url, phone, email, ... }
             restaurantLoading,
+            isServicePaused,
             table,               // full row: { table_number, qr_code_url, ... }
             tableLoading,
             tableNumber: table?.table_number || null,

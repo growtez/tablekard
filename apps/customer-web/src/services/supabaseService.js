@@ -12,6 +12,16 @@ export const getRestaurantById = async (id) => {
     return data;
 };
 
+export const getPlatformSettings = async (id) => {
+    const { data, error } = await supabase
+        .from('platform_settings')
+        .select('config')
+        .eq('id', id)
+        .maybeSingle();
+    if (error) throw error;
+    return data?.config || null;
+};
+
 export const getTableById = async (id) => {
     const { data, error } = await supabase
         .from('restaurant_tables')
