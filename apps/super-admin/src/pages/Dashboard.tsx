@@ -136,7 +136,7 @@ export default function Dashboard({ setSyncAction }) {
             if (restSubData) {
                 const now = new Date();
                 const counts = restSubData.reduce((acc, r) => {
-                    if (r.subscription_status) {
+                    if (r.subscription_status === 'ACTIVE' || r.subscription_status === 'TRIAL') {
                         acc.active++;
                     } else if (r.subscription_end_at && new Date(r.subscription_end_at) < now) {
                         acc.expired++;

@@ -332,7 +332,7 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                                             <select 
                                                 value={
                                                     res.status === 'active' 
-                                                        ? (res.subscription_status 
+                                                        ? (res.subscription_status === 'ACTIVE' || res.subscription_status === 'TRIAL'
                                                             ? (billingPlans.find(p => p.name?.toLowerCase() === res.subscription_type?.toLowerCase())?.id 
                                                                 ? `active-plan-${billingPlans.find(p => p.name?.toLowerCase() === res.subscription_type?.toLowerCase()).id}` 
                                                                 : 'active-custom')
@@ -366,7 +366,7 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                                                     <option value="active-plan-custom" className="text-green-600 font-bold">ACTIVE (PAID PLAN)</option>
                                                 )}
 
-                                                {res.status === 'active' && res.subscription_status && 
+                                                {res.status === 'active' && (res.subscription_status === 'ACTIVE' || res.subscription_status === 'TRIAL') && 
                                                  !billingPlans.some(p => p.name?.toLowerCase() === res.subscription_type?.toLowerCase()) && (
                                                     <option value="active-custom" className="text-green-600 font-bold">ACTIVE ({res.subscription_type?.toUpperCase() || 'CUSTOM'})</option>
                                                 )}
@@ -449,7 +449,7 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                                         <select 
                                             value={
                                                 res.status === 'active' 
-                                                    ? (res.subscription_status 
+                                                    ? (res.subscription_status === 'ACTIVE' || res.subscription_status === 'TRIAL'
                                                         ? (billingPlans.find(p => p.name?.toLowerCase() === res.subscription_type?.toLowerCase())?.id 
                                                             ? `active-plan-${billingPlans.find(p => p.name?.toLowerCase() === res.subscription_type?.toLowerCase()).id}` 
                                                             : 'active-custom')
@@ -483,7 +483,7 @@ export default function Restaurants({ openDrawer, setSyncAction }) {
                                                 <option value="active-plan-custom" className="text-green-600 font-bold">ACTIVE (PAID PLAN)</option>
                                             )}
 
-                                            {res.status === 'active' && res.subscription_status && 
+                                            {res.status === 'active' && (res.subscription_status === 'ACTIVE' || res.subscription_status === 'TRIAL') && 
                                                 !billingPlans.some(p => p.name?.toLowerCase() === res.subscription_type?.toLowerCase()) && (
                                                 <option value="active-custom" className="text-green-600 font-bold">ACTIVE ({res.subscription_type?.toUpperCase() || 'CUSTOM'})</option>
                                             )}
