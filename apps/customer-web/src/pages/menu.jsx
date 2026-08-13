@@ -620,8 +620,8 @@ const MenuPage = () => {
       )}
 
       {/* Modern Frosted Glow Cart Indicator */}
-      {cartTotal > 0 && (
-        <NavLink to="/orders" className={`cart-modern-glow ${showItemModal && !isVariantSheetOpen ? 'hide-glow' : ''}`}>
+      {cartTotal > 0 && !(showItemModal && !isVariantSheetOpen) && (
+        <NavLink to="/orders" className="cart-modern-glow">
           <div className="glow-content">
             <div className="glow-badge">
               <ShoppingCart size={16} strokeWidth={3} />

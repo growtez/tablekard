@@ -79,7 +79,7 @@ const MyOrderPage = () => {
       setOrdersLoading(true);
     }
     try {
-      const data = await getTodaysOrders(user.id);
+      const data = await getTodaysOrders(user.id, restaurant?.id);
       const mapped = data
         .map(order => ({
           id: order.order_number || order.id.substring(0, 8),

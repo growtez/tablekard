@@ -133,8 +133,8 @@ export const createOrder = async ({
     return { orderId: order.id, orderNumber };
 };
 
-export const getOrderHistory = async (userId) => {
-    const { data, error } = await supabase
+export const getOrderHistory = async (userId, restaurantId = null) => {
+    let query = supabase
         .from('orders')
         .select(`
             *,
@@ -144,6 +144,12 @@ export const getOrderHistory = async (userId) => {
         `)
         .eq('customer_id', userId)
         .order('created_at', { ascending: false });
+
+    if (restaurantId) {
+        query = query.eq('restaurant_id', restaurantId);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
 
@@ -202,11 +208,11 @@ export const submitFeedback = async ({ orderId, userId, rating, comment }) => {
     return data;
 };
 
-export const getTodaysOrders = async (userId) => {
+export const getTodaysOrders = async (userId, restaurantId = null) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const { data, error } = await supabase
+    let query = supabase
         .from('orders')
         .select(`
             *,
@@ -216,19 +222,25 @@ export const getTodaysOrders = async (userId) => {
         .gte('created_at', today.toISOString())
         .order('created_at', { ascending: false });
 
+    if (restaurantId) {
+        query = query.eq('restaurant_id', restaurantId);
+    }
+
+    const { data, error } = await query;
+
     if (error) throw error;
     return data ?? [];
 };
 
-export const getRecentOrderedItems = async (userId, limit = 3) => {
+export const getRecentOrderedItems = async (userId, restaurantId = null, limit = 3) => {
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-    const { data, error } = await supabase
+    let query = supabase
         .from('order_items')
         .select(`
             menu_item_id,
-            orders!inner(customer_id, created_at),
+            orders!inner(customer_id, restaurant_id, created_at),
             menu_items (
                 *,
                 menu_item_images (image_url, sort_order)
@@ -238,6 +250,12 @@ export const getRecentOrderedItems = async (userId, limit = 3) => {
         .gte('orders.created_at', oneWeekAgo.toISOString())
         .order('created_at', { foreignTable: 'orders', ascending: false })
         .limit(20); // Fetch more to filter for unique items
+
+    if (restaurantId) {
+        query = query.eq('orders.restaurant_id', restaurantId);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
     

@@ -182,26 +182,28 @@ const AboutPage = () => {
                 {/* Contact - Redesigned Visit Us */}
                 <section className="journal-section connect">
                     <div className="section-label-row">
-                        <MapPin size={16} />
-                        <span>VISIT US</span>
+                        {restaurant?.contact_address ? <MapPin size={16} /> : <Phone size={16} />}
+                        <span>{restaurant?.contact_address ? 'VISIT US' : 'CONTACT US'}</span>
                     </div>
 
                     {/* Location Card with Map Preview */}
-                    <div className="visit-location-card">
-                        <div className="location-map-placeholder">
-                            <MapPin size={32} className="map-icon-pulse" />
-                            <span className="map-label">
-                                {restaurant?.contact_address?.split(',').slice(-2, -1)[0]?.trim() || 'Location'}
-                            </span>
+                    {restaurant?.contact_address && (
+                        <div className="visit-location-card">
+                            <div className="location-map-placeholder">
+                                <MapPin size={32} className="map-icon-pulse" />
+                                <span className="map-label">
+                                    {restaurant.contact_address.split(',').slice(-2, -1)[0]?.trim() || 'Location'}
+                                </span>
+                            </div>
+                            <div className="location-details">
+                                <h3 className="location-name">{restaurant?.name?.toUpperCase() || 'TABLEKARD'}</h3>
+                                <p className="location-address">{restaurant.contact_address}</p>
+                                <a href={`https://maps.google.com/?q=${encodeURIComponent(restaurant.contact_address)}`} target="_blank" rel="noopener noreferrer" className="directions-btn">
+                                    <MapPin size={14} /> Get Directions
+                                </a>
+                            </div>
                         </div>
-                        <div className="location-details">
-                            <h3 className="location-name">{restaurant?.name?.toUpperCase() || 'TABLEKARD'}</h3>
-                            <p className="location-address">{restaurant?.contact_address || 'BOC Gate, Chapaguri Rd, Bongaigaon, Assam 783380'}</p>
-                            <a href={`https://maps.google.com/?q=${encodeURIComponent(restaurant?.contact_address || 'BOC Gate, Chapaguri Rd, Bongaigaon, Assam 783380')}`} target="_blank" rel="noopener noreferrer" className="directions-btn">
-                                <MapPin size={14} /> Get Directions
-                            </a>
-                        </div>
-                    </div>
+                    )}
 
                     {/* Contact Actions - Minimal Centered Icons */}
                     <div className="contact-icons-row">
