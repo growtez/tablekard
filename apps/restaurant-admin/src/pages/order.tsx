@@ -140,13 +140,13 @@ const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
               ) : (
                 <>
                   {[
-                    { label: 'Accept', value: 'CONFIRMED' },
+                    { label: 'Placed', value: 'CONFIRMED' },
                     { label: 'Preparing', value: 'PREPARING' },
                     { label: 'Ready', value: 'READY' }
                   ].map((step, stepIdx, arr) => {
                     const getStatusIdx = (status: string) => {
                       switch (status?.toUpperCase()) {
-                        case 'PENDING': return -1;
+                        case 'PENDING': return 0;
                         case 'CONFIRMED': return 0;
                         case 'PREPARING': return 1;
                         case 'READY': return 2;
@@ -834,9 +834,18 @@ const Order: React.FC = () => {
                               onClick={(e) => e.stopPropagation()}
                               className="bg-transparent border-none outline-none text-[10px] font-bold text-inherit cursor-pointer focus:outline-none py-0.5"
                             >
-                              <option value="pending" className="text-tk-text bg-tk-bg-surface font-semibold">Pending</option>
-                              <option value="paid" className="text-tk-text bg-tk-bg-surface font-semibold">Paid</option>
-                              <option value="refunded" className="text-tk-text bg-tk-bg-surface font-semibold">Refunded</option>
+                              {order.paymentMethod?.toLowerCase() === 'online' ? (
+                                <>
+                                  <option value="paid" className="text-tk-text bg-tk-bg-surface font-semibold">Paid</option>
+                                  <option value="refunded" className="text-tk-text bg-tk-bg-surface font-semibold">Refunded</option>
+                                </>
+                              ) : (
+                                <>
+                                  <option value="pending" className="text-tk-text bg-tk-bg-surface font-semibold">Pending</option>
+                                  <option value="paid" className="text-tk-text bg-tk-bg-surface font-semibold">Paid</option>
+                                  <option value="refunded" className="text-tk-text bg-tk-bg-surface font-semibold">Refunded</option>
+                                </>
+                              )}
                             </select>
                             {order.paymentStatus?.toLowerCase() === 'paid' && order.paymentMethod && (
                               <span className="opacity-80 font-semibold border-l border-current pl-1 ml-0.5">
@@ -874,7 +883,7 @@ const Order: React.FC = () => {
                         ) : (
                           <div className="flex items-center w-full pb-5">
                             {[
-                              { label: 'Accept', value: 'CONFIRMED' },
+                              { label: 'Placed', value: 'CONFIRMED' },
                               { label: 'Preparing', value: 'PREPARING' },
                               { label: 'Ready', value: 'READY' }
                             ].map((step, stepIdx, arr) => {
@@ -1015,9 +1024,18 @@ const Order: React.FC = () => {
                                   onClick={(e) => e.stopPropagation()}
                                   className="bg-transparent border-none outline-none text-[11px] font-bold text-inherit cursor-pointer py-0.5 focus:outline-none"
                                 >
-                                  <option value="pending" className="text-tk-text bg-tk-bg-surface font-semibold">Pending</option>
-                                  <option value="paid" className="text-tk-text bg-tk-bg-surface font-semibold">Paid</option>
-                                  <option value="refunded" className="text-tk-text bg-tk-bg-surface font-semibold">Refunded</option>
+                                  {order.paymentMethod?.toLowerCase() === 'online' ? (
+                                    <>
+                                      <option value="paid" className="text-tk-text bg-tk-bg-surface font-semibold">Paid</option>
+                                      <option value="refunded" className="text-tk-text bg-tk-bg-surface font-semibold">Refunded</option>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <option value="pending" className="text-tk-text bg-tk-bg-surface font-semibold">Pending</option>
+                                      <option value="paid" className="text-tk-text bg-tk-bg-surface font-semibold">Paid</option>
+                                      <option value="refunded" className="text-tk-text bg-tk-bg-surface font-semibold">Refunded</option>
+                                    </>
+                                  )}
                                 </select>
                                 {order.paymentStatus?.toLowerCase() === 'paid' && order.paymentMethod && (
                                   <span className="opacity-80 font-semibold border-l border-current pl-1 ml-0.5">
@@ -1049,13 +1067,13 @@ const Order: React.FC = () => {
                             ) : (
                               <div className="flex-1 flex items-center relative">
                                 {[
-                                  { label: 'Accept', value: 'CONFIRMED' },
+                                  { label: 'Placed', value: 'CONFIRMED' },
                                   { label: 'Preparing', value: 'PREPARING' },
                                   { label: 'Ready', value: 'READY' }
                                 ].map((step, idx, arr) => {
                                   const getStatusIdx = (status: string) => {
                                     switch (status?.toUpperCase()) {
-                                      case 'PENDING': return -1;
+                                      case 'PENDING': return 0;
                                       case 'CONFIRMED': return 0;
                                       case 'PREPARING': return 1;
                                       case 'READY': return 2;
@@ -1185,9 +1203,18 @@ const Order: React.FC = () => {
                               onClick={(e) => e.stopPropagation()}
                               className="bg-transparent border-none outline-none text-[11px] font-bold text-inherit cursor-pointer py-0.5 focus:outline-none"
                             >
-                              <option value="pending" className="text-tk-text bg-tk-bg-surface font-semibold">Pending</option>
-                              <option value="paid" className="text-tk-text bg-tk-bg-surface font-semibold">Paid</option>
-                              <option value="refunded" className="text-tk-text bg-tk-bg-surface font-semibold">Refunded</option>
+                              {order.paymentMethod?.toLowerCase() === 'online' ? (
+                                <>
+                                  <option value="paid" className="text-tk-text bg-tk-bg-surface font-semibold">Paid</option>
+                                  <option value="refunded" className="text-tk-text bg-tk-bg-surface font-semibold">Refunded</option>
+                                </>
+                              ) : (
+                                <>
+                                  <option value="pending" className="text-tk-text bg-tk-bg-surface font-semibold">Pending</option>
+                                  <option value="paid" className="text-tk-text bg-tk-bg-surface font-semibold">Paid</option>
+                                  <option value="refunded" className="text-tk-text bg-tk-bg-surface font-semibold">Refunded</option>
+                                </>
+                              )}
                             </select>
                             {order.paymentStatus?.toLowerCase() === 'paid' && order.paymentMethod && (
                               <span className="opacity-80 font-semibold border-l border-current pl-1 ml-0.5">
@@ -1227,7 +1254,7 @@ const Order: React.FC = () => {
                         ) : (
                           <>
                             {[
-                              { label: 'Accept', value: 'CONFIRMED' },
+                              { label: 'Placed', value: 'CONFIRMED' },
                               { label: 'Preparing', value: 'PREPARING' },
                               { label: 'Ready', value: 'READY' }
                             ].map((step, stepIdx, arr) => {

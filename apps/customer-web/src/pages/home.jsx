@@ -129,7 +129,7 @@ const HomePage = () => {
                 ];
                 
                 if (user?.id) {
-                    fetchPromises.push(getRecentOrderedItems(user.id, 3));
+                    fetchPromises.push(getRecentOrderedItems(user.id, restaurant.id, 3));
                 }
 
                 const results = await Promise.all(fetchPromises);
@@ -140,7 +140,7 @@ const HomePage = () => {
                 
                 if (user?.id) {
                     const [recent, favs] = await Promise.all([
-                        getRecentOrderedItems(user.id, 3),
+                        getRecentOrderedItems(user.id, restaurant.id, 3),
                         getFavorites(user.id)
                     ]);
                     setRecentOrders(recent || []);
@@ -347,6 +347,14 @@ const HomePage = () => {
             {/* Dynamic Hero Banner Slider */}
             <HeroBannerSlider
                 banners={banners}
+                onItemClick={(itemId) => {
+                    const item = menuItems.find(m => m.id === itemId) || discountItems.find(m => m.id === itemId);
+                    if (item) {
+                        handleItemClick(item);
+                    } else {
+                        navigate('/menu');
+                    }
+                }}
                 fallback={
                     <section className="hero-section">
                         <div className="hero-text">
@@ -434,12 +442,16 @@ const HomePage = () => {
                                     <Clock size={10} color="#888888" />
                                     {item.time}
                                 </span>
-                                <span className="food-card-rating">
-                                    <Star size={10} fill="#8B3A1E" color="#8B3A1E" />
-                                    {item.rating}
-                                </span>
+                                {item.ratingCount > 0 ? (
+                                    <span className="food-card-rating">
+                                        <Star size={10} fill="#8B3A1E" color="#8B3A1E" />
+                                        {item.rating}
+                                    </span>
+                                ) : (
+                                    <span className="food-card-new-badge">NEW</span>
+                                )}
                             </div>
-                            <div className="food-card-price">₹{item.price}</div>
+                            <div className="food-card-price">₹{item.variants && item.variants.length > 0 ? Math.min(...item.variants.map(v => v.price)) : item.price}</div>
                         </div>
                     )) : (
                         <div className="no-items-placeholder">
@@ -491,10 +503,14 @@ const HomePage = () => {
                                                 <Clock size={12} color="#666666" />
                                                 <span>{offer.time}</span>
                                             </div>
-                                            <div className="discount-rating">
-                                                <Star size={12} fill="#8B3A1E" color="#8B3A1E" />
-                                                <span>{offer.rating}</span>
-                                            </div>
+                                            {offer.ratingCount > 0 ? (
+                                                <div className="discount-rating">
+                                                    <Star size={12} fill="#8B3A1E" color="#8B3A1E" />
+                                                    <span>{offer.rating}</span>
+                                                </div>
+                                            ) : (
+                                                <span className="discount-new-badge">NEW</span>
+                                            )}
                                         </div>
                                         <div className="discount-price">
                                             {offer.originalPrice && offer.originalPrice !== offer.price && (
@@ -538,13 +554,17 @@ const HomePage = () => {
                                     <div className="recent-name">{item.name}</div>
                                     <div className="recent-meta">
                                         <span>{item.time}</span>
-                                        <span className="rating">
-                                            <Star size={10} fill="#8B3A1E" color="#8B3A1E" />
-                                            {item.rating}
-                                        </span>
+                                        {item.ratingCount > 0 ? (
+                                            <span className="rating">
+                                                <Star size={10} fill="#8B3A1E" color="#8B3A1E" />
+                                                {item.rating}
+                                            </span>
+                                        ) : (
+                                            <span className="food-card-new-badge">NEW</span>
+                                        )}
                                     </div>
                                 </div>
-                                <div className="recent-price">₹{item.price}</div>
+                                <div className="recent-price">₹{item.variants && item.variants.length > 0 ? Math.min(...item.variants.map(v => v.price)) : item.price}</div>
                                 <button
                                     className="reorder-btn"
                                     onClick={(e) => handleDirectAdd(item, e)}
@@ -568,8 +588,8 @@ const HomePage = () => {
             </section>
 
             {/* Modern Frosted Glow Cart Indicator */}
-            {cartTotal > 0 && (
-                <NavLink to="/orders" className={`cart-modern-glow ${showItemModal && !isVariantSheetOpen ? 'hide-glow' : ''}`}>
+            {cartTotal > 0 && !(showItemModal && !isVariantSheetOpen) && (
+                <NavLink to="/orders" className="cart-modern-glow">
                     <div className="glow-content">
                         <div className="glow-badge">
                             <ShoppingCart size={16} strokeWidth={3} />

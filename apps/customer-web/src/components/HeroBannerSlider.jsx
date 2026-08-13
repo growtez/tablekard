@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const AUTO_PLAY_INTERVAL = 4000;
 
-const HeroBannerSlider = ({ banners = [], fallback }) => {
+const HeroBannerSlider = ({ banners = [], fallback, onItemClick }) => {
+    const navigate = useNavigate();
     const [current, setCurrent] = useState(0);
     const touchStartX = useRef(null);
     const touchStartY = useRef(null);
@@ -47,6 +49,30 @@ const HeroBannerSlider = ({ banners = [], fallback }) => {
         touchStartX.current = null;
     };
 
+    const handleSlideClick = (banner) => {
+        if (!banner?.link_url) return;
+        const link = banner.link_url.trim();
+        if (link === '/menu') {
+            navigate('/menu');
+        } else if (link === '/offers' || link === '/discounts') {
+            const offersElement = document.querySelector('.discounted-items-section') || document.querySelector('.offers-section');
+            if (offersElement) {
+                offersElement.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                navigate('/menu');
+            }
+        } else if (link.startsWith('item:')) {
+            const itemId = link.replace('item:', '');
+            if (onItemClick) {
+                onItemClick(itemId);
+            }
+        } else if (link.startsWith('http://') || link.startsWith('https://')) {
+            window.open(link, '_blank', 'noopener,noreferrer');
+        } else {
+            navigate(link);
+        }
+    };
+
     if (count === 0) {
         return fallback || null;
     }
@@ -59,19 +85,18 @@ const HeroBannerSlider = ({ banners = [], fallback }) => {
         >
             <div className="hero-banner-track" style={{ transform: `translateX(-${current * 100}%)` }}>
                 {banners.map((banner, i) => (
-                    <div key={banner.id} className="hero-banner-slide">
+                    <div
+                        key={banner.id}
+                        className="hero-banner-slide"
+                        onClick={() => handleSlideClick(banner)}
+                        style={{ cursor: banner.link_url ? 'pointer' : 'default' }}
+                    >
                         <img
                             src={banner.image_url}
-                            alt={banner.title || `Banner ${i + 1}`}
+                            alt={`Banner ${i + 1}`}
                             className="hero-banner-img"
                             draggable={false}
                         />
-                        {(banner.title || banner.subtitle) && (
-                            <div className="hero-banner-overlay">
-                                {banner.title && <h2 className="hero-banner-title">{banner.title}</h2>}
-                                {banner.subtitle && <p className="hero-banner-subtitle">{banner.subtitle}</p>}
-                            </div>
-                        )}
                     </div>
                 ))}
             </div>

@@ -23,6 +23,7 @@ const SearchPage = () => {
     const [allItems, setAllItems] = useState([]);
     const [selectedItem, setSelectedItem] = useState(null);
     const [showItemModal, setShowItemModal] = useState(false);
+    const [isVariantSheetOpen, setIsVariantSheetOpen] = useState(false);
     const [modalQuantity, setModalQuantity] = useState(0);
     const [favorites, setFavorites] = useState([]);
 
@@ -44,15 +45,24 @@ const SearchPage = () => {
                 return {
                     id: m.id,
                     name: m.name,
-                    price: m.price,
+                    price: m.variants && m.variants.length > 0 ? Math.min(...m.variants.map(v => v.price)) : m.price,
                     time: m.preparation_time ? `${m.preparation_time}min` : '15min',
-                    rating: 4.8,
+                    rating: '4.5',
+                    ratingCount: 0,
                     serves: `Serves ${m.serves || 1}`,
                     image: primaryImage,
                     images: images.map(img => img.image_url),
                     description: m.long_description || m.short_description || '',
                     dietType: m.is_veg ? 'veg' : 'non-veg',
-                    modelUrl: m.model_url || null
+                    modelUrl: m.model_url || null,
+                    variants: (m.variants || []).map((v, i) => ({
+                        ...v,
+                        _key: v.id ?? `${v.name}_${v.price}_${i}`,
+                    })),
+                    addons: (m.addons || []).map((a, i) => ({
+                        ...a,
+                        _key: a.id ?? `${a.name}_${a.price}_${i}`,
+                    }))
                 };
             });
             setAllItems(processedItems);
@@ -117,7 +127,9 @@ const SearchPage = () => {
 
     const closeItemModal = () => {
         setShowItemModal(false);
+        setIsVariantSheetOpen(false);
         setSelectedItem(null);
+        setModalQuantity(0);
     };
 
     const toggleFavorite = async (itemId) => {
@@ -233,10 +245,14 @@ const SearchPage = () => {
                                                 {/* Name + Rating */}
                                                 <div className="rec-name-row">
                                                     <h4 className="rec-name">{item.name}</h4>
-                                                    <div className="rec-star-pill">
-                                                        <Star size={10} fill="#8B3A1E" color="#8B3A1E" />
-                                                        <span>{item.rating}</span>
-                                                    </div>
+                                                    {item.ratingCount > 0 ? (
+                                                        <div className="rec-star-pill">
+                                                            <Star size={10} fill="#8B3A1E" color="#8B3A1E" />
+                                                            <span>{item.rating}</span>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="menu-new-badge">NEW</span>
+                                                    )}
                                                 </div>
 
                                                 {/* Description */}
@@ -318,10 +334,14 @@ const SearchPage = () => {
                                     <div className="sr-info">
                                         <div className="sr-top">
                                             <h4 className="sr-name">{item.name}</h4>
-                                            <div className="sr-rating">
-                                                <Star size={10} fill="#8B3A1E" color="#8B3A1E" />
-                                                <span>{item.rating}</span>
-                                            </div>
+                                            {item.ratingCount > 0 ? (
+                                                <div className="sr-rating">
+                                                    <Star size={10} fill="#8B3A1E" color="#8B3A1E" />
+                                                    <span>{item.rating}</span>
+                                                </div>
+                                            ) : (
+                                                <span className="menu-new-badge">NEW</span>
+                                            )}
                                         </div>
                                         <p className="sr-desc">{item.description || 'A chef-curated delight'}</p>
                                         <div className="sr-bottom">
@@ -393,9 +413,10 @@ const SearchPage = () => {
                 item={selectedItem}
                 favorites={favorites}
                 onToggleFavorite={toggleFavorite}
+                onVariantSheetChange={setIsVariantSheetOpen}
             />
             {/* ── Modern Frosted Glow Cart Indicator ── */}
-            {cartTotal > 0 && !showItemModal && (
+            {cartTotal > 0 && !(showItemModal && !isVariantSheetOpen) && (
                 <Link to="/orders" className="cart-modern-glow">
                     <div className="glow-content">
                         <div className="glow-badge">

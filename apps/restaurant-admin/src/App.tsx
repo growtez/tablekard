@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import Layout from "./components/Layout";
 import DashboardSkeleton from "./components/DashboardSkeleton";
+import StatusGuard from "./components/StatusGuard";
 
 // Lazy load page components
 const Dashboard = lazy(() => import("./pages/dashboard"));
@@ -21,6 +22,8 @@ const Team = lazy(() => import("./pages/team"));
 const NotificationsPage = lazy(() => import("./pages/notifications"));
 const BannersPage = lazy(() => import("./pages/banners"));
 const UpdatePasswordPage = lazy(() => import("./pages/UpdatePassword"));
+const FeatureSettingsPage = lazy(() => import("./pages/feature-settings"));
+const ContactPage = lazy(() => import("./pages/contact"));
 // Loading fallback for Suspense
 const PageLoader = () => (
   <div className="flex justify-center items-center h-screen bg-[#F4F6F9] text-[#1E293B] font-sans text-base font-medium">
@@ -47,7 +50,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/login" replace />;
   }
 
-  return <Layout>{children}</Layout>;
+  return (
+    <StatusGuard>
+      <Layout>{children}</Layout>
+    </StatusGuard>
+  );
 }
 
 function AppRoutes() {
@@ -96,6 +103,13 @@ function AppRoutes() {
         <Route path="/banners" element={
           <ProtectedRoute><BannersPage /></ProtectedRoute>
         } />
+        <Route path="/feature-settings" element={
+          <ProtectedRoute><FeatureSettingsPage /></ProtectedRoute>
+        } />
+        <Route path="/contact" element={
+          <ProtectedRoute><ContactPage /></ProtectedRoute>
+        } />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </Suspense>
   );

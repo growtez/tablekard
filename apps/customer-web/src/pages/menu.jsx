@@ -64,7 +64,7 @@ const MenuPage = () => {
         ]);
 
         if (catsRes.data && itemsRes.data) {
-          const filteredCats = catsRes.data.filter(c => !c.name.toLowerCase().includes('beverage'));
+          const filteredCats = catsRes.data;
           const catNames = filteredCats.map(c => c.name);
           const grouped = {};
 
@@ -82,7 +82,8 @@ const MenuPage = () => {
                   price: item.discount_price || item.price,
                   originalPrice: item.discount_price ? item.price : null,
                   time: item.preparation_time ? `${item.preparation_time}min` : '15min',
-                  rating: parseFloat((4.5 + Math.random() * 0.4).toFixed(1)),
+                  rating: '4.5',
+                  ratingCount: 0,
                   serves: item.serves ? `Serves ${item.serves}` : 'Serves 1',
                   image: primaryImage,
                   images: images.map(img => img.image_url),
@@ -531,10 +532,14 @@ const MenuPage = () => {
                   </div>
 
                   <div className="details-meta">
-                    <div className="meta-item">
-                      <Star size={14} fill={isOutOfStock ? '#AAAAAA' : '#8B3A1E'} color={isOutOfStock ? '#AAAAAA' : '#8B3A1E'} />
-                      <span>{item.rating}</span>
-                    </div>
+                    {item.ratingCount > 0 ? (
+                      <div className="meta-item">
+                        <Star size={14} fill={isOutOfStock ? '#AAAAAA' : '#8B3A1E'} color={isOutOfStock ? '#AAAAAA' : '#8B3A1E'} />
+                        <span>{item.rating}</span>
+                      </div>
+                    ) : (
+                      <span className="menu-new-badge">NEW</span>
+                    )}
                     <div className="meta-item">
                       <Clock size={14} color={isOutOfStock ? '#AAAAAA' : '#1A1A1A'} />
                       <span>{item.time}</span>
@@ -615,8 +620,8 @@ const MenuPage = () => {
       )}
 
       {/* Modern Frosted Glow Cart Indicator */}
-      {cartTotal > 0 && (
-        <NavLink to="/orders" className={`cart-modern-glow ${showItemModal && !isVariantSheetOpen ? 'hide-glow' : ''}`}>
+      {cartTotal > 0 && !(showItemModal && !isVariantSheetOpen) && (
+        <NavLink to="/orders" className="cart-modern-glow">
           <div className="glow-content">
             <div className="glow-badge">
               <ShoppingCart size={16} strokeWidth={3} />

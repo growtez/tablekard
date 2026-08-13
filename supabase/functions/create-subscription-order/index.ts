@@ -119,23 +119,27 @@ serve(async (req: Request) => {
             .eq("active", true)
             .maybeSingle();
 
+        console.log("[debug] membership:", JSON.stringify(membership), "memberError:", JSON.stringify(memberError), "user.id:", user.id, "restaurant_id:", restaurant_id);
+
         if (memberError || !membership) {
             return new Response(
-                JSON.stringify({ error: "You are not a member of this restaurant" }),
+                JSON.stringify({ error: "GUARD_MEMBERSHIP: You are not an active member of this restaurant", debug: { memberError, userId: user.id, restaurant_id } }),
                 { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }
 
-        // ── 5. Guard: restaurant must be 'approved' or 'active' to subscribe ──
+        // ── 5. Guard: restaurant must be 'approved', 'active', or 'suspended' to subscribe ──
         const { data: restaurantRow } = await supabaseAdmin
             .from("restaurants")
             .select("name, status")
             .eq("id", restaurant_id)
             .single();
 
-        if (!restaurantRow || !["approved", "active"].includes(restaurantRow.status)) {
+        console.log("[debug] restaurantRow:", JSON.stringify(restaurantRow));
+
+        if (!restaurantRow || !["approved", "active", "suspended"].includes((restaurantRow.status || '').toLowerCase())) {
             return new Response(
-                JSON.stringify({ error: "Restaurant must be approved before subscribing" }),
+                JSON.stringify({ error: "GUARD_STATUS: Restaurant status not eligible", debug: { status: restaurantRow?.status } }),
                 { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }

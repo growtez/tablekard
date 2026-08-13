@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { useRestaurant } from '../context/RestaurantContext';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '@restaurant-saas/supabase';
+import Lottie from 'lottie-react';
+import kitchenAnimation from '../assets/kitchen-animation.json';
 import './live_queue.css';
 
 /* ── Cloche SVG illustration ─────────────────────── */
@@ -460,6 +462,15 @@ const LiveQueuePage = () => {
                     </React.Fragment>
                 );
             })}
+
+            {/* ── KITCHEN ANIMATION (STANDALONE OUTSIDE) ────── */}
+            <div className="lq-kitchen-standalone-anim">
+                <Lottie
+                    animationData={kitchenAnimation}
+                    loop={true}
+                    style={{ height: 180, width: '100%', maxWidth: '320px', margin: '0 auto' }}
+                />
+            </div>
 
             {/* ── PREPARING NOW ───────────────────────────── */}
             <div className="lq-section-card">

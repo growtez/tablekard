@@ -520,10 +520,19 @@ const Payment: React.FC = () => {
                           value={transaction.paymentStatus}
                           onChange={(e) => handleStatusChange(transaction.id, e.target.value)}
                         >
-                          <option value="Paid">Paid</option>
-                          <option value="Pending">Pending</option>
-                          <option value="Failed">Failed</option>
-                          <option value="Refunded">Refunded</option>
+                          {transaction.paymentMethod?.toLowerCase() === 'online' ? (
+                            <>
+                              <option value="Paid">Paid</option>
+                              <option value="Refunded">Refunded</option>
+                            </>
+                          ) : (
+                            <>
+                              <option value="Paid">Paid</option>
+                              <option value="Pending">Pending</option>
+                              <option value="Failed">Failed</option>
+                              <option value="Refunded">Refunded</option>
+                            </>
+                          )}
                         </select>
                         <div className="absolute right-2.5 pointer-events-none text-tk-text-secondary opacity-70 flex items-center">
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
@@ -604,10 +613,19 @@ const Payment: React.FC = () => {
                                 value={transaction.paymentStatus}
                                 onChange={(e) => handleStatusChange(transaction.id, e.target.value)}
                               >
-                                <option value="Paid">Paid</option>
-                                <option value="Pending">Pending</option>
-                                <option value="Failed">Failed</option>
-                                <option value="Refunded">Refunded</option>
+                                {transaction.paymentMethod?.toLowerCase() === 'online' ? (
+                                  <>
+                                    <option value="Paid">Paid</option>
+                                    <option value="Refunded">Refunded</option>
+                                  </>
+                                ) : (
+                                  <>
+                                    <option value="Paid">Paid</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="Failed">Failed</option>
+                                    <option value="Refunded">Refunded</option>
+                                  </>
+                                )}
                               </select>
                               <div className="absolute right-2.5 pointer-events-none text-tk-text-secondary opacity-70 flex items-center">
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>

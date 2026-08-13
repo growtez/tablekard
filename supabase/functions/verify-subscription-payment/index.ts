@@ -144,11 +144,11 @@ serve(async (req: Request) => {
             .eq("id", restaurantId)
             .single();
 
-        // Guard: only 'approved' or 'active' restaurants can activate a subscription.
+        // Guard: only 'approved', 'active', or 'suspended' restaurants can activate a subscription.
         // 'pending' and 'rejected' must be onboarded by a super-admin first.
-        if (!restaurant || !["approved", "active"].includes(restaurant.status)) {
+        if (!restaurant || !["approved", "active", "suspended"].includes((restaurant.status || '').toLowerCase())) {
             return new Response(
-                JSON.stringify({ error: "Restaurant must be approved before subscribing" }),
+                JSON.stringify({ error: "Restaurant must be approved, active, or suspended before subscribing" }),
                 { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }
@@ -191,8 +191,8 @@ serve(async (req: Request) => {
             .from("restaurants")
             .update({
                 status: "active",                                       // access control gate
-                subscription_status: true,                              // UI billing badge
-                subscription_type: planName ?? "QR",                   // plan name snapshot
+                subscription_status: 'active',                              // UI billing badge
+                subscription_plan: planName || null,                   // plan name snapshot
                 subscription_end_at: endsAt.toISOString(),
                 grace_period_ends_at: gracePeriodEndsAt.toISOString(), // auto-suspend after this
             })

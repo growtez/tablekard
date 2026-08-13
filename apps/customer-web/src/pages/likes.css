@@ -74,6 +74,8 @@
   border: 1.5px solid #1A1A1A;
   position: relative;
   transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
 }
 
 .likes-page-card:active {
@@ -137,6 +139,9 @@
 /* Info */
 .likes-page-info {
   padding: 14px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .likes-page-category {
@@ -173,6 +178,7 @@
   justify-content: center;
   align-items: center;
   gap: 12px;
+  margin-top: auto;
 }
 
 .likes-page-meta-item {

@@ -1,4 +1,7 @@
+declare const Deno: any;
+// @ts-ignore
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// @ts-ignore
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -22,7 +25,7 @@ serve(async (req: Request) => {
         }
 
         const body = await req.json();
-        const { name, email, password, role, restaurant_id } = body;
+        const { name, email, password, role, restaurant_id, avatar_url } = body;
 
         if (!name || !email || !password || !role || !restaurant_id) {
             return new Response(JSON.stringify({ error: "Missing required fields" }), {
@@ -54,19 +57,31 @@ serve(async (req: Request) => {
         // Initialize admin client to bypass RLS for subsequent checks and writes
         const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-        // 2. Authorize: Ensure caller is an admin for this specific restaurant
-        const { data: adminRecord, error: adminCheckError } = await supabaseAdmin
-            .from("restaurant_users")
+        // 2. Authorize: Ensure caller is an admin for this specific restaurant or a super_admin
+        const { data: callerProfile } = await supabaseAdmin
+            .from("profiles")
             .select("role")
-            .eq("profile_id", callerId)
-            .eq("restaurant_id", restaurant_id)
-            .single();
+            .eq("id", callerId)
+            .maybeSingle();
 
-        if (adminCheckError || !adminRecord || adminRecord.role !== 'admin') {
-             return new Response(JSON.stringify({ error: "Forbidden: You are not an admin for this restaurant" }), {
-                status: 403,
-                headers: { ...corsHeaders, "Content-Type": "application/json" }
-            });
+        const isSuperAdmin = callerProfile?.role === 'super_admin';
+
+        if (!isSuperAdmin) {
+            const { data: adminRecord, error: adminCheckError } = await supabaseAdmin
+                .from("restaurant_users")
+                .select("role")
+                .eq("profile_id", callerId)
+                .eq("restaurant_id", restaurant_id)
+                .maybeSingle();
+
+            const isRestAdmin = adminRecord && (adminRecord.role === 'admin' || adminRecord.role === 'restaurant_admin');
+
+            if (adminCheckError || !isRestAdmin) {
+                 return new Response(JSON.stringify({ error: "Forbidden: You are not an admin for this restaurant" }), {
+                    status: 403,
+                    headers: { ...corsHeaders, "Content-Type": "application/json" }
+                });
+            }
         }
 
         // 3. Create the user in Auth
@@ -90,14 +105,19 @@ serve(async (req: Request) => {
         const globalRole = role === 'admin' ? 'restaurant_admin' : 'restaurant_staff';
 
         // 4. Upsert Profile
+        const profilePayload: any = {
+            id: newUserId,
+            email: email.trim().toLowerCase(),
+            name: name,
+            role: globalRole
+        };
+        if (avatar_url) {
+            profilePayload.avatar_url = avatar_url;
+        }
+
         const { error: profileError } = await supabaseAdmin
             .from('profiles')
-            .upsert({
-                id: newUserId,
-                email: email.trim().toLowerCase(),
-                name: name,
-                role: globalRole
-            });
+            .upsert(profilePayload);
 
         if (profileError) {
              return new Response(JSON.stringify({ error: "Failed to create profile" }), {

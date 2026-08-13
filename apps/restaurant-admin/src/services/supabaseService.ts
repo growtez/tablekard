@@ -24,11 +24,11 @@ const db = supabase as any;
 // ==========================================
 
 interface RestaurantRow {
-    id: string; name: string; status: string; status_reason: string | null;
+    id: string; name: string; slug: string | null; status: string; status_reason: string | null;
     contact_email: string | null; contact_phone: string | null; contact_address: string | null;
     logo_url: string | null; primary_color: string | null; secondary_color: string | null;
     profile_urls: string[] | null; settings: Record<string, unknown> | null;
-    subscription_status: boolean; subscription_type: string | null; subscription_end_at: string | null; grace_period_ends_at: string | null;
+    subscription_status: string; subscription_plan: string | null; subscription_end_at: string | null; grace_period_ends_at: string | null;
     latitude: number | null; longitude: number | null; allowed_radius: number | null;
     opening_date: string | null; tagline: string | null; manifesto: string | null;
     operating_hours_weekdays: string | null; operating_hours_weekends: string | null;
@@ -139,6 +139,7 @@ export interface RestaurantPaymentSettingsInput {
 const mapRestaurantRow = (row: RestaurantRow): Restaurant => ({
     id: row.id,
     name: row.name,
+    slug: row.slug || '',
     status: row.status as Restaurant['status'],
     statusReason: row.status_reason,
     createdAt: row.created_at,
@@ -155,12 +156,10 @@ const mapRestaurantRow = (row: RestaurantRow): Restaurant => ({
     },
     settings: {
         ...(row.settings || {}),
-        serviceFeeEnabled: row.settings?.serviceFeeEnabled as boolean | undefined,
-        serviceFeeType: row.settings?.serviceFeeType as 'percentage' | 'flat' | undefined,
-        serviceFeeAmount: row.settings?.serviceFeeAmount as number | undefined,
+
     },
     subscriptionStatus: row.subscription_status,
-    subscriptionType: row.subscription_type,
+    subscriptionType: row.subscription_plan,
     subscriptionEndAt: row.subscription_end_at,
     gracePeriodEndsAt: row.grace_period_ends_at,
     profileUrls: row.profile_urls ?? [],

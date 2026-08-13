@@ -27,6 +27,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { useRestaurant } from '../context/RestaurantContext';
 import { getOrderHistory, getMenuItems } from '../services/supabaseService';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { jsPDF } from 'jspdf';
@@ -321,6 +322,7 @@ const OrderCard = ({ order, onReorder }) => {
 const OrderHistoryPage = () => {
     const navigate = useNavigate();
     const { user, isAuthenticated, loading: authLoading } = useAuth();
+    const { restaurant } = useRestaurant();
     const [activeFilter, setActiveFilter] = useState('all');
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -334,7 +336,7 @@ const OrderHistoryPage = () => {
         try {
             setLoading(true);
             setError(null);
-            const history = await getOrderHistory(user.id);
+            const history = await getOrderHistory(user.id, restaurant?.id);
 
             const mapped = history.map(order => ({
                 id: `#${order.order_number || order.id.substring(0, 8).toUpperCase()}`,
@@ -369,7 +371,7 @@ const OrderHistoryPage = () => {
         } finally {
             setLoading(false);
         }
-    }, [isAuthenticated, user]);
+    }, [isAuthenticated, user, restaurant?.id]);
 
     useEffect(() => {
         if (authLoading) return;
@@ -432,6 +434,7 @@ const OrderHistoryPage = () => {
                     price: currentItem ? (currentItem.discount_price || currentItem.price) : item.price,
                     image: currentItem?.menu_item_images?.[0]?.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
                     rating: currentItem?.rating || '4.5',
+                    ratingCount: currentItem?.ratingCount || 0,
                     serves: currentItem?.serves || '1',
                     quantity: item.quantity,
                     outOfStock: !isAvailable

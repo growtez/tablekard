@@ -12,6 +12,16 @@ export const getRestaurantById = async (id) => {
     return data;
 };
 
+export const getPlatformSettings = async (id) => {
+    const { data, error } = await supabase
+        .from('platform_settings')
+        .select('config')
+        .eq('id', id)
+        .maybeSingle();
+    if (error) throw error;
+    return data?.config || null;
+};
+
 export const getTableById = async (id) => {
     const { data, error } = await supabase
         .from('restaurant_tables')
@@ -66,8 +76,7 @@ export const createOrder = async ({
     paymentMethod = 'cash',
     taxRate = 0.05,
     type = 'dine_in',
-    specialInstructions = null,
-    serviceFee = 0
+    specialInstructions = null
 }) => {
     const total = items.reduce((sum, item) => {
         const itemBaseTotal = (item.basePrice || item.price || 0) * item.quantity;
@@ -92,7 +101,7 @@ export const createOrder = async ({
             subtotal,
             taxes,
             discount: 0,
-            total: total + (serviceFee || 0)
+            total: total
         })
         .select('*')
         .single();
@@ -134,8 +143,8 @@ export const createOrder = async ({
     return { orderId: order.id, orderNumber };
 };
 
-export const getOrderHistory = async (userId) => {
-    const { data, error } = await supabase
+export const getOrderHistory = async (userId, restaurantId = null) => {
+    let query = supabase
         .from('orders')
         .select(`
             *,
@@ -145,6 +154,12 @@ export const getOrderHistory = async (userId) => {
         `)
         .eq('customer_id', userId)
         .order('created_at', { ascending: false });
+
+    if (restaurantId) {
+        query = query.eq('restaurant_id', restaurantId);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
 
@@ -203,11 +218,11 @@ export const submitFeedback = async ({ orderId, userId, rating, comment }) => {
     return data;
 };
 
-export const getTodaysOrders = async (userId) => {
+export const getTodaysOrders = async (userId, restaurantId = null) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const { data, error } = await supabase
+    let query = supabase
         .from('orders')
         .select(`
             *,
@@ -217,19 +232,25 @@ export const getTodaysOrders = async (userId) => {
         .gte('created_at', today.toISOString())
         .order('created_at', { ascending: false });
 
+    if (restaurantId) {
+        query = query.eq('restaurant_id', restaurantId);
+    }
+
+    const { data, error } = await query;
+
     if (error) throw error;
     return data ?? [];
 };
 
-export const getRecentOrderedItems = async (userId, limit = 3) => {
+export const getRecentOrderedItems = async (userId, restaurantId = null, limit = 3) => {
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-    const { data, error } = await supabase
+    let query = supabase
         .from('order_items')
         .select(`
             menu_item_id,
-            orders!inner(customer_id, created_at),
+            orders!inner(customer_id, restaurant_id, created_at),
             menu_items (
                 *,
                 menu_item_images (image_url, sort_order)
@@ -239,6 +260,12 @@ export const getRecentOrderedItems = async (userId, limit = 3) => {
         .gte('orders.created_at', oneWeekAgo.toISOString())
         .order('created_at', { foreignTable: 'orders', ascending: false })
         .limit(20); // Fetch more to filter for unique items
+
+    if (restaurantId) {
+        query = query.eq('orders.restaurant_id', restaurantId);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
     
@@ -254,7 +281,8 @@ export const getRecentOrderedItems = async (userId, limit = 3) => {
                 name: m.name,
                 price: m.price,
                 time: m.preparation_time ? `${m.preparation_time}min` : '15min',
-                rating: 4.8, // Default rating
+                rating: '4.5', // Default rating fallback
+                ratingCount: 0,
                 serves: `Serves ${m.serves || 1}`,
                 image: m.menu_item_images?.[0]?.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
                 images: m.menu_item_images?.map(img => img.image_url) || [],
@@ -295,43 +323,35 @@ export const updateOrderType = async (orderId, type) => {
 // Beverages for Cart
 export const getBeveragesForCart = async (restaurantId, limit = 5) => {
     try {
-        // Find category IDs matching "beverage" or "drink"
         const { data: categories } = await supabase
             .from('menu_categories')
-            .select('id')
-            .eq('restaurant_id', restaurantId)
-            .ilike('name', '%beverage%');
+            .select('id, name')
+            .eq('restaurant_id', restaurantId);
 
-        let categoryIds = (categories || []).map(c => c.id);
-        
-        // Fallback: If no beverage category, try 'drink'
-        if (categoryIds.length === 0) {
-             const { data: altCategories } = await supabase
-                .from('menu_categories')
-                .select('id')
-                .eq('restaurant_id', restaurantId)
-                .ilike('name', '%drink%');
-             categoryIds = (altCategories || []).map(c => c.id);
+        if (!categories || categories.length === 0) return [];
+
+        const beverageKeywords = ['beverage', 'drink', 'shake', 'juice', 'mocktail', 'coffee', 'tea', 'cooler', 'soda'];
+        const beverageCatIds = categories
+            .filter(cat => {
+                const name = cat.name.toLowerCase();
+                return beverageKeywords.some(keyword => name.includes(keyword));
+            })
+            .map(cat => cat.id);
+
+        if (beverageCatIds.length === 0) {
+            return []; // Only show beverages in cart if beverage/drink categories exist in menu
         }
 
-        // Fetch items from these categories
-        let query = supabase
+        const { data: items, error } = await supabase
             .from('menu_items')
             .select('*, menu_item_images (image_url, sort_order)')
             .eq('restaurant_id', restaurantId)
-            .eq('is_available', true);
+            .eq('is_available', true)
+            .in('category_id', beverageCatIds)
+            .limit(limit);
 
-        if (categoryIds.length > 0) {
-            query = query.in('category_id', categoryIds);
-        } else {
-            // Fallback: just get 5 random items if no beverage categories exist
-            query = query.limit(limit);
-        }
-
-        const { data: items, error } = await query.limit(limit);
-        
         if (error) throw error;
-        
+
         return (items || []).map(m => ({
             id: m.id,
             name: m.name,
@@ -530,7 +550,7 @@ export const getRecommendedItems = async (userId, restaurantId) => {
                 // Calculate average rating from DB or provide a high-quality fallback for new items
                 const avgRating = itemRatings[m.id] 
                     ? (itemRatings[m.id].total / itemRatings[m.id].count).toFixed(1) 
-                    : (4.5 + (Math.random() * 0.4)).toFixed(1);
+                    : '4.5';
 
                 return {
                     id: m.id,
@@ -538,6 +558,7 @@ export const getRecommendedItems = async (userId, restaurantId) => {
                     price: m.price,
                     time: m.preparation_time ? `${m.preparation_time}min` : '15min',
                     rating: avgRating, // Dynamically fetched from Database feedback!
+                    ratingCount: itemRatings[m.id]?.count || 0,
                     serves: `Serves ${m.serves || 1}`,
                     image: m.menu_item_images?.[0]?.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
                     images: m.menu_item_images?.map(img => img.image_url) || [],
@@ -808,7 +829,8 @@ export const getOffersForCustomer = async (restaurantId, limit = 20) => {
 
                     // Meta
                     time: m.preparation_time ? `${m.preparation_time}min` : '15min',
-                    rating: (4.5 + Math.random() * 0.4).toFixed(1),
+                    rating: '4.5',
+                    ratingCount: 0,
                     serves: `Serves ${m.serves || 1}`,
                     image: images[0]?.image_url
                         || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',

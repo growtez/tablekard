@@ -157,7 +157,7 @@ interface Restaurant {
   primaryColor?: string;          // Hex color
   
   // Subscription
-  subscriptionPlanId: string;
+  subscriptionType: string;
   subscriptionStatus: 'ACTIVE' | 'EXPIRED' | 'TRIAL';
   subscriptionExpiresAt: Timestamp;
   
@@ -492,7 +492,7 @@ interface SaasConfig {
 ### Document: `saas/plans`
 
 ```typescript
-interface SubscriptionPlans {
+interface SubscriptionTypes {
   plans: {
     id: string;
     name: string;                 // "Basic", "Pro", "Enterprise"

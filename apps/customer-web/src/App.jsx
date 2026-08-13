@@ -98,8 +98,6 @@ const HomeLoading = () => {
   useEffect(() => {
     if (isFirstLoad) {
       showHomeLoader();
-      // We'll let HomePage set the session storage flag once it fully loads
-      // or set it here if we want to be sure it only happens once.
     }
     return () => {
       if (isFirstLoad) hideHomeLoader();
@@ -109,12 +107,17 @@ const HomeLoading = () => {
   return isFirstLoad ? null : <PageSkeleton />;
 };
 
+const getInitialFallback = () => {
+  const isFirstLoad = !sessionStorage.getItem('homeAnimationShown');
+  return isFirstLoad ? <HomeLoading /> : <PageSkeleton />;
+};
+
 // ─── Auth guard ───────────────────────────────────────────────────────────────
 function RequireAuth({ children }) {
   const { isAuthenticated, loading } = useAuth();
   const location = useLocation();
 
-  if (loading) return location.pathname === '/' ? <HomeLoading /> : <PageSkeleton />;
+  if (loading) return getInitialFallback();
 
   if (!isAuthenticated) {
     const redirect = encodeURIComponent(location.pathname + location.search);
@@ -126,7 +129,7 @@ function RequireAuth({ children }) {
 
 // ─── Restaurant guard ─────────────────────────────────────────────────────────
 function RequireRestaurant({ children }) {
-  const { restaurantId, restaurantLoading, restaurant, geofenceStatus, distance, allowedRadius, checkGeofence } = useRestaurant();
+  const { restaurantId, restaurantLoading, restaurant, isServicePaused, geofenceStatus, distance, allowedRadius, checkGeofence } = useRestaurant();
   const location = useLocation();
 
   const searchParams = new URLSearchParams(location.search);
@@ -135,13 +138,13 @@ function RequireRestaurant({ children }) {
   }
   const isPreviewMode = sessionStorage.getItem('previewMode') === 'true';
   
-  if (restaurantLoading) return location.pathname === '/' ? <HomeLoading /> : <PageSkeleton />;
+  if (restaurantLoading) return getInitialFallback();
   
   if (!restaurantId) {
     return <ScanQRPage />;
   }
 
-  if (!isPreviewMode && restaurantId && !restaurantLoading && (!restaurant || restaurant.status !== 'active')) {
+  if (!isPreviewMode && restaurantId && !restaurantLoading && (!restaurant || restaurant.status !== 'active' || isServicePaused)) {
     return (
       <div className="suspended-screen">
         <div className="suspended-card">
@@ -166,7 +169,7 @@ function RequireRestaurant({ children }) {
 
   // Bypass geofence if in preview mode
   if (geofenceStatus === 'checking' && !isPreviewMode) {
-    return location.pathname === '/' ? <HomeLoading /> : <PageSkeleton />;
+    return getInitialFallback();
   }
 
   if (geofenceStatus === 'outside' && !isPreviewMode) {
@@ -230,7 +233,7 @@ function AppRoutes() {
   const location = useLocation();
 
   return (
-      <Suspense key={location.pathname} fallback={location.pathname === '/' ? <HomeLoading /> : <PageSkeleton />}>
+      <Suspense key={location.pathname} fallback={getInitialFallback()}>
         <RequireRestaurant>
           <Routes location={location}>
             {/* QR Entry */}

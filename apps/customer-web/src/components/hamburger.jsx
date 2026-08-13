@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   Home, ShoppingBag, Star, ListOrdered, User,
-  Info, LogOut, LogIn, Menu as MenuIcon,
+  Info, LogOut, LogIn, Menu as MenuIcon, Store
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useRestaurant } from '../context/RestaurantContext';
@@ -81,12 +81,16 @@ const Hamburger = () => {
         {/* ── Header: restaurant logo + name ── */}
         <div className="sidebar-header">
           <div className="company-section">
-            <div className="company-logo">
-              <img
-                src={logoSrc}
-                alt={restaurantName}
-                onError={e => { e.currentTarget.src = '/assets/delish_logo.png'; }}
-              />
+            <div className="company-logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: restaurant?.logo_url ? 'transparent' : '#f8f9fa' }}>
+              {restaurant?.logo_url ? (
+                <img
+                  src={restaurant.logo_url}
+                  alt={restaurantName}
+                  onError={e => { e.currentTarget.style.display = 'none'; }}
+                />
+              ) : (
+                <Store size={24} color="#6B2A15" />
+              )}
             </div>
             <div className="company-info">
               <h3 style={dynamicStyles}>{restaurantName}</h3>
@@ -116,16 +120,18 @@ const Hamburger = () => {
             </NavLink>
           )}
 
-          <NavLink to="/profile"     className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`} onClick={close}>
-            <User size={20} /><span>Profile</span>
-          </NavLink>
+          {sessionStorage.getItem('previewMode') !== 'true' && (
+            <NavLink to="/profile"     className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`} onClick={close}>
+              <User size={20} /><span>Profile</span>
+            </NavLink>
+          )}
 
           <NavLink to="/about"       className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`} onClick={close}>
             <Info size={20} /><span>About</span>
           </NavLink>
 
           {/* ── Auth action ── */}
-          {!authLoading && (
+          {sessionStorage.getItem('previewMode') !== 'true' && !authLoading && (
             isAuthenticated ? (
               <button className="sidebar-item logout-btn" onClick={handleLogout}>
                 <LogOut size={20} />
