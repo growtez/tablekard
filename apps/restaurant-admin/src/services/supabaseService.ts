@@ -1401,6 +1401,7 @@ export interface RestaurantTable {
     capacity: number;
     active: boolean;
     qr_code_url: string | null;
+    qr_token?: string | null;
 }
 
 /**
@@ -1409,7 +1410,7 @@ export interface RestaurantTable {
 export const getRestaurantTables = async (restaurantId: string): Promise<RestaurantTable[]> => {
     const { data, error } = await db
         .from('restaurant_tables')
-        .select('id, table_number, capacity, active, qr_code_url')
+        .select('id, table_number, capacity, active, qr_code_url, qr_token')
         .eq('restaurant_id', restaurantId)
         .order('table_number', { ascending: true });
     if (error) throw error;
@@ -1418,7 +1419,8 @@ export const getRestaurantTables = async (restaurantId: string): Promise<Restaur
         table_number: row.table_number,
         capacity: row.capacity ?? 4,
         active: row.active ?? true,
-        qr_code_url: row.qr_code_url ?? null
+        qr_code_url: row.qr_code_url ?? null,
+        qr_token: row.qr_token ?? null
     }));
 };
 
@@ -1431,6 +1433,7 @@ export const createRestaurantTable = async (
         table_number: number;
         capacity: number;
         active?: boolean;
+        qr_token?: string | null;
     }
 ): Promise<RestaurantTable> => {
     const { data, error } = await db
@@ -1440,19 +1443,38 @@ export const createRestaurantTable = async (
             table_number: tableData.table_number,
             capacity: tableData.capacity,
             active: tableData.active ?? true,
-            qr_code_url: null
+            qr_code_url: null,
+            qr_token: tableData.qr_token ?? null
         })
-        .select('id, table_number, capacity, active, qr_code_url')
+        .select('id, table_number, capacity, active, qr_code_url, qr_token')
         .single();
 
     if (error) throw error;
+
+    // If a qr_token was provided, mark it assigned in qr_code_tokens
+    if (tableData.qr_token) {
+        try {
+            await db
+                .from('qr_code_tokens')
+                .update({
+                    status: 'assigned',
+                    assigned_restaurant_id: restaurantId,
+                    assigned_table_id: data.id,
+                    assigned_at: new Date().toISOString()
+                })
+                .eq('token', tableData.qr_token.toUpperCase());
+        } catch (e) {
+            console.error('Failed to update token status in qr_code_tokens:', e);
+        }
+    }
 
     return {
         id: data.id,
         table_number: data.table_number,
         capacity: data.capacity ?? 4,
         active: data.active ?? true,
-        qr_code_url: data.qr_code_url ?? null
+        qr_code_url: data.qr_code_url ?? null,
+        qr_token: data.qr_token ?? null
     };
 };
 
@@ -1466,6 +1488,7 @@ export const updateRestaurantTable = async (
         capacity: number;
         active: boolean;
         qr_code_url: string | null;
+        qr_token: string | null;
     }>
 ): Promise<void> => {
     const { error } = await db
@@ -1474,6 +1497,97 @@ export const updateRestaurantTable = async (
         .eq('id', tableId);
 
     if (error) throw error;
+};
+
+/**
+ * Fetch list of unassigned (available) QR tokens
+ */
+export const getAvailableQrTokens = async (): Promise<{ id: string; token: string }[]> => {
+    const { data, error } = await db
+        .from('qr_code_tokens')
+        .select('id, token')
+        .eq('status', 'available')
+        .order('token', { ascending: true });
+
+    if (error) {
+        console.warn('Failed to fetch available QR tokens:', error);
+        return [];
+    }
+    return data || [];
+};
+
+/**
+ * Link an existing QR token to a table
+ */
+export const linkQrTokenToTable = async (
+    tableId: string,
+    tokenCode: string,
+    restaurantId: string
+): Promise<void> => {
+    const cleanToken = tokenCode.trim().toUpperCase();
+
+    // Verify token availability
+    const { data: tokenRow, error: tokenErr } = await db
+        .from('qr_code_tokens')
+        .select('id, status, assigned_table_id')
+        .eq('token', cleanToken)
+        .maybeSingle();
+
+    if (tokenErr) throw tokenErr;
+    if (!tokenRow) throw new Error(`QR Token "${cleanToken}" does not exist.`);
+    if (tokenRow.status === 'assigned' && tokenRow.assigned_table_id !== tableId) {
+        throw new Error(`QR Token "${cleanToken}" is already assigned to another table.`);
+    }
+
+    // 1. Update table row
+    const { error: tableErr } = await db
+        .from('restaurant_tables')
+        .update({ qr_token: cleanToken })
+        .eq('id', tableId);
+    if (tableErr) throw tableErr;
+
+    // 2. Update token row
+    const { error: updateTokenErr } = await db
+        .from('qr_code_tokens')
+        .update({
+            status: 'assigned',
+            assigned_restaurant_id: restaurantId,
+            assigned_table_id: tableId,
+            assigned_at: new Date().toISOString()
+        })
+        .eq('token', cleanToken);
+
+    if (updateTokenErr) throw updateTokenErr;
+};
+
+/**
+ * Unlink a QR token from a table
+ */
+export const unlinkQrTokenFromTable = async (
+    tableId: string,
+    tokenCode: string
+): Promise<void> => {
+    const cleanToken = tokenCode.trim().toUpperCase();
+
+    // 1. Clear table qr_token
+    const { error: tableErr } = await db
+        .from('restaurant_tables')
+        .update({ qr_token: null })
+        .eq('id', tableId);
+    if (tableErr) throw tableErr;
+
+    // 2. Reset token status
+    const { error: tokenErr } = await db
+        .from('qr_code_tokens')
+        .update({
+            status: 'available',
+            assigned_restaurant_id: null,
+            assigned_table_id: null,
+            assigned_at: null
+        })
+        .eq('token', cleanToken);
+
+    if (tokenErr) console.warn('Unlink token reset error:', tokenErr);
 };
 
 /**

@@ -63,6 +63,14 @@ const ScanQRPage = () => {
             tableId      = qs.get('table_id');
         }
 
+        if (targetPath.startsWith('/q/')) {
+            setShowScanner(false);
+            setTimeout(() => {
+                window.location.href = targetPath;
+            }, 150);
+            return;
+        }
+
         if (restaurantId && tableId) {
             // Pre-seed sessionStorage so RestaurantContext initialises correctly
             sessionStorage.setItem('tablekard_restaurant_id', restaurantId);

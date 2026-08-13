@@ -90,6 +90,7 @@ const ARViewerPage    = lazy(() => import("./pages/ar_viewer"));
 
 
 const ScanQRPage    = lazy(() => import("./pages/scan_qr"));
+const QrResolverPage= lazy(() => import("./pages/qr_resolver"));
 
 // ─── Home Loader ───────────────────────────────────────────────────────────────
 const HomeLoading = () => {
@@ -231,6 +232,16 @@ function RequireRestaurant({ children }) {
 // tap a nav icon — no pause/freeze on the previous page.
 function AppRoutes() {
   const location = useLocation();
+
+  if (location.pathname.startsWith('/q/')) {
+    return (
+      <Suspense key={location.pathname} fallback={getInitialFallback()}>
+        <Routes location={location}>
+          <Route path="/q/:token" element={<QrResolverPage />} />
+        </Routes>
+      </Suspense>
+    );
+  }
 
   return (
       <Suspense key={location.pathname} fallback={getInitialFallback()}>
