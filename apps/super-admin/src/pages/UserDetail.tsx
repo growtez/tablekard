@@ -20,7 +20,6 @@ interface UserProfile {
     avatar_url: string | null;
     updated_at: string;
     restaurant_id?: string;
-    [key: string]: any;
 }
 
 interface Restaurant {
@@ -35,12 +34,31 @@ interface Order {
     status: string;
     payment_status: string;
     created_at: string;
-    restaurants?: { name: string } | { name: string }[] | any;
+    restaurants?: { name: string } | null;
+}
+
+interface HeaderData {
+    id?: string;
+    name?: string;
+    logo_url?: string | null;
+    status?: string;
+    onEdit?: (() => void) | null;
+    isEditing?: boolean;
+    onSave?: () => void;
+    onCancel?: () => void;
+    saving?: boolean;
+    backPath?: string;
+    backTitle?: string;
+}
+
+interface SyncAction {
+    onSync: () => void;
+    loading: boolean;
 }
 
 interface UserDetailProps {
-    setHeaderData?: (data: any) => void;
-    setSyncAction?: (action: any) => void;
+    setHeaderData?: (data: HeaderData | null) => void;
+    setSyncAction?: (action: SyncAction | null) => void;
 }
 
 export default function UserDetail({ setHeaderData, setSyncAction }: UserDetailProps) {
@@ -99,7 +117,7 @@ export default function UserDetail({ setHeaderData, setSyncAction }: UserDetailP
                 .order('name');
             if (error) throw error;
             setRestaurants(data || []);
-        } catch (err) {
+        } catch (err: unknown) {
             console.error('Failed to fetch restaurants:', err);
         }
     };
@@ -121,8 +139,8 @@ export default function UserDetail({ setHeaderData, setSyncAction }: UserDetailP
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
-            setOrders(data || []);
-        } catch (err) {
+            setOrders((data as unknown as Order[]) || []);
+        } catch (err: unknown) {
             console.error('Failed to fetch user orders:', err);
         }
     };
@@ -153,8 +171,8 @@ export default function UserDetail({ setHeaderData, setSyncAction }: UserDetailP
 
             setProfile(profileData);
             setFormData({ ...profileData, restaurant_id: restaurantId });
-        } catch (err) {
-            setError('Failed to fetch user profile: ' + err.message);
+        } catch (err: unknown) {
+            setError('Failed to fetch user profile: ' + (err instanceof Error ? err.message : String(err)));
         }
     };
 
@@ -215,8 +233,8 @@ export default function UserDetail({ setHeaderData, setSyncAction }: UserDetailP
 
             setIsEditing(false);
             fetchUserProfile();
-        } catch (err) {
-            setError('Failed to save changes: ' + err.message);
+        } catch (err: unknown) {
+            setError('Failed to save changes: ' + (err instanceof Error ? err.message : String(err)));
         } finally {
             setSaving(false);
         }
@@ -254,8 +272,8 @@ export default function UserDetail({ setHeaderData, setSyncAction }: UserDetailP
         }
     }, [profile, setHeaderData, isEditing, saving]);
 
-    const updateField = (field: string, value: any) => {
-        setFormData((prev: any) => ({ ...prev, [field]: value }));
+    const updateField = (field: keyof UserProfile, value: string) => {
+        setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
     if (loading) {
@@ -275,7 +293,7 @@ export default function UserDetail({ setHeaderData, setSyncAction }: UserDetailP
         );
     }
 
-    const renderField = (label: string, field: string, type = 'text', options: any[] = []) => {
+    const renderField = (label: string, field: keyof UserProfile, type = 'text', options: {value: string, label: string}[] = []) => {
         return (
             <div className="space-y-2">
                 <label className="text-xs text-text-muted uppercase tracking-wider">{label}</label>

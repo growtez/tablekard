@@ -42,7 +42,7 @@ export default function SubscriptionDetail({ setHeaderData }) {
                 .from('subscription_payments')
                 .select(`
                     *,
-                    restaurants(id, name, subscription_type, contact_email, contact_phone, logo_url),
+                    restaurants(id, name, subscription_plan, contact_email, contact_phone, logo_url),
                     profiles:user_id(email, name)
                 `)
                 .eq('id', id)
@@ -76,7 +76,7 @@ export default function SubscriptionDetail({ setHeaderData }) {
 
     const formatDate = (d, time = false) => {
         if (!d) return '—';
-        const options = { day: 'numeric', month: 'long', year: 'numeric' };
+        const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
         if (time) {
             options.hour = '2-digit';
             options.minute = '2-digit';
@@ -281,7 +281,7 @@ export default function SubscriptionDetail({ setHeaderData }) {
                                 <div className="space-y-4">
                                     <div className="flex justify-between items-center">
                                         <span className="text-sm text-text-muted">Subscription Tier</span>
-                                        <Badge variant="info">{data.restaurants?.subscription_type || 'No Plan'}</Badge>
+                                        <Badge variant="info">{data.restaurants?.subscription_plan || 'No Plan'}</Badge>
                                     </div>
                                     <div className="flex justify-between items-center">
                                         <span className="text-sm text-text-muted">Contact Email</span>

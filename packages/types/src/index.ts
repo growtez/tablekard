@@ -406,7 +406,7 @@ export interface Database {
           profile_urls: string[] | null;
           settings: Record<string, unknown> | null;
           subscription_status: string;
-          subscription_type: string | null;
+          subscription_plan: string | null;
           subscription_end_at: string | null;
           latitude: number | null;
           longitude: number | null;
@@ -437,7 +437,7 @@ export interface Database {
           profile_urls?: string[] | null;
           settings?: Record<string, unknown> | null;
           subscription_status?: string;
-          subscription_type?: string | null;
+          subscription_plan?: string | null;
           subscription_end_at?: string | null;
           latitude?: number | null;
           longitude?: number | null;
@@ -467,7 +467,7 @@ export interface Database {
           profile_urls?: string[] | null;
           settings?: Record<string, unknown> | null;
           subscription_status?: string;
-          subscription_type?: string | null;
+          subscription_plan?: string | null;
           subscription_end_at?: string | null;
           latitude?: number | null;
           longitude?: number | null;

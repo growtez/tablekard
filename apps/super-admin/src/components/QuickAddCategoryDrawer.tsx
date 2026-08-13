@@ -3,10 +3,24 @@ import { createPortal } from 'react-dom'
 import { supabase } from '../supabaseClient'
 import { X, Layers } from 'lucide-react'
 
-export default function QuickAddCategoryDrawer({ isOpen, onClose, restaurantId, onSuccess }) {
+interface FormData {
+    name: string;
+    description: string;
+    sort_order: string | number;
+    active: boolean;
+}
+
+interface QuickAddCategoryDrawerProps {
+    isOpen: boolean;
+    onClose: () => void;
+    restaurantId: string;
+    onSuccess?: () => void;
+}
+
+export default function QuickAddCategoryDrawer({ isOpen, onClose, restaurantId, onSuccess }: QuickAddCategoryDrawerProps) {
     const [loading, setLoading] = useState(false)
-    const [error, setError] = useState(null)
-    const [formData, setFormData] = useState({ name: '', description: '', sort_order: 0, active: true })
+    const [error, setError] = useState<string | null>(null)
+    const [formData, setFormData] = useState<FormData>({ name: '', description: '', sort_order: 0, active: true })
 
     useEffect(() => {
         if (!isOpen) {
@@ -15,7 +29,7 @@ export default function QuickAddCategoryDrawer({ isOpen, onClose, restaurantId, 
         }
     }, [isOpen])
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!formData.name.trim()) {
             setError("Category name is required")
@@ -32,7 +46,7 @@ export default function QuickAddCategoryDrawer({ isOpen, onClose, restaurantId, 
                     restaurant_id: restaurantId,
                     name: formData.name.trim(),
                     description: formData.description.trim() || null,
-                    order: parseInt(formData.sort_order) || 0,
+                    order: Number(formData.sort_order) || 0,
                     active: formData.active
                 })
 
@@ -40,7 +54,7 @@ export default function QuickAddCategoryDrawer({ isOpen, onClose, restaurantId, 
 
             onSuccess?.()
             onClose()
-        } catch (err) {
+        } catch (err: any) {
             console.error(err)
             setError(err.message || "Failed to create category")
         } finally {

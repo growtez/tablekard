@@ -52,7 +52,7 @@ export default function Subscriptions({ setSyncAction }: DashboardProps) {
                     razorpay_order_id, razorpay_payment_id,
                     paid_at, starts_at, ends_at, created_at,
                     restaurant_id,
-                    restaurants(id, name, subscription_type),
+                    restaurants(id, name, subscription_plan),
                     profiles:user_id(email, name)
                 `)
                 .order('created_at', { ascending: false });
@@ -163,7 +163,7 @@ export default function Subscriptions({ setSyncAction }: DashboardProps) {
     const handleExport = () => {
         const csvContent = "data:text/csv;charset=utf-8,"
             + "Restaurant,Plan,Amount,Status,Duration,Starts,Ends,Created,Payment ID\n"
-            + filtered.map(r => `${r.restaurants?.name || ''},${r.restaurants?.subscription_type || ''},${r.amount},${r.status},${r.plan_duration},${r.starts_at || ''},${r.ends_at || ''},${r.created_at},${r.razorpay_payment_id || ''}`).join("\n");
+            + filtered.map(r => `${r.restaurants?.name || ''},${r.restaurants?.subscription_plan || ''},${r.amount},${r.status},${r.plan_duration},${r.starts_at || ''},${r.ends_at || ''},${r.created_at},${r.razorpay_payment_id || ''}`).join("\n");
         const link = document.createElement("a");
         link.setAttribute("href", encodeURI(csvContent));
         link.setAttribute("download", `subscriptions_${new Date().toISOString().split('T')[0]}.csv`);
@@ -340,7 +340,7 @@ export default function Subscriptions({ setSyncAction }: DashboardProps) {
                                             </div>
                                         </td>
                                         <td className="py-2.5 px-4 align-middle">
-                                            <span className="text-[12px] font-bold text-accent-primary">{row.restaurants?.subscription_type || 'Standard'}</span>
+                                            <span className="text-[12px] font-bold text-accent-primary">{row.restaurants?.subscription_plan || 'Standard'}</span>
                                         </td>
                                         <td className="py-2.5 px-4 align-middle">
                                             <span className="font-bold text-[13px] text-text-main">₹{Number(row.amount).toLocaleString()}</span>
@@ -429,7 +429,7 @@ export default function Subscriptions({ setSyncAction }: DashboardProps) {
                                     <div className="flex items-center justify-between text-[12px]">
                                         <span className="text-text-muted">Plan / Amount</span>
                                         <span className="font-semibold text-text-main">
-                                            <span className="text-accent-primary mr-1.5 font-bold">{row.restaurants?.subscription_type || 'Standard'}</span> 
+                                            <span className="text-accent-primary mr-1.5 font-bold">{row.restaurants?.subscription_plan || 'Standard'}</span> 
                                             ₹{Number(row.amount).toLocaleString()}
                                         </span>
                                     </div>

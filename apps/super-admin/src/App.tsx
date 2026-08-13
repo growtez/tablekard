@@ -26,24 +26,52 @@ import Sidebar from './components/Sidebar'
 import QuickCreateDrawer from './components/QuickCreateDrawer'
 import { Plus, UserPlus, FilePlus, ChevronLeft, Edit, Save, X, RefreshCw, Menu, LogOut } from 'lucide-react'
 import { Badge } from './components/ui/Badge'
+import type { Dispatch, SetStateAction } from 'react'
+
+export interface GlobalStats {
+  restaurants: { total: number; active: number; recent: number };
+  users: { total: number; customers: number; restAdmins: number; restStaff: number };
+  subscriptions: { total: number };
+  subscriptions_summary: { total: number; paid: number; pending: number; failed: number };
+  transactions_summary: { total: number; paid: number; totalAmount: number; refunded: number };
+  revenue: { total: number };
+}
+
+export interface HeaderData {
+  name?: string;
+  backTitle?: string;
+  backPath?: string;
+  isEditing?: boolean;
+  saving?: boolean;
+  editLabel?: string;
+  onEdit?: () => void;
+  onSave?: () => void;
+  onCancel?: () => void;
+}
+
+export interface SyncAction {
+  onSync?: () => void;
+  loading?: boolean;
+}
+
 
 export default function App() {
-  const [session, setSession] = useState(null)
+  const [session, setSession] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [isCheckingPermissions, setIsCheckingPermissions] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
-  const [userRole, setUserRole] = useState(null)
-  const [authError, setAuthError] = useState(null)
+  const [userRole, setUserRole] = useState<string | null>(null)
+  const [authError, setAuthError] = useState<string | null>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const [activeForm, setActiveForm] = useState('user')
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
-  const [editingData, setEditingData] = useState(null)
-  const [refreshCallback, setRefreshCallback] = useState(null)
-  const [headerData, setHeaderData] = useState(null)
-  const [syncAction, setSyncAction] = useState(null)
-  const [globalStats, setGlobalStats] = useState({
+  const [editingData, setEditingData] = useState<any>(null)
+  const [refreshCallback, setRefreshCallback] = useState<(() => void) | null>(null)
+  const [headerData, setHeaderData] = useState<HeaderData | null>(null)
+  const [syncAction, setSyncAction] = useState<SyncAction | null>(null)
+  const [globalStats, setGlobalStats] = useState<GlobalStats>({
     restaurants: { total: 0, active: 0, recent: 0 },
     users: { total: 0, customers: 0, restAdmins: 0, restStaff: 0 },
     subscriptions: { total: 0 },
@@ -107,10 +135,10 @@ export default function App() {
   useEffect(() => {
     if (!showProfileMenu) return;
 
-    const handleClickOutside = (event) => {
+    const handleClickOutside = (event: MouseEvent) => {
       const trigger = document.getElementById('header-admin-menu-trigger');
       const menu = document.getElementById('header-admin-menu');
-      if (trigger?.contains(event.target) || menu?.contains(event.target)) return;
+      if (trigger?.contains(event.target as Node) || menu?.contains(event.target as Node)) return;
       setShowProfileMenu(false);
     };
 
@@ -118,7 +146,7 @@ export default function App() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showProfileMenu]);
 
-  const openDrawer = (formType, data = null, onRefresh = null) => {
+  const openDrawer = (formType: string, data: any = null, onRefresh: any = null) => {
     setActiveForm(formType); setEditingData(data); setRefreshCallback(() => onRefresh); setIsDrawerOpen(true);
   }
   const closeDrawer = () => { setIsDrawerOpen(false); setEditingData(null); setRefreshCallback(null); }
@@ -163,7 +191,7 @@ export default function App() {
     return () => { active = false; subscription?.unsubscribe(); clearTimeout(globalTimeout); };
   }, []);
 
-  const checkIsAdmin = async (session) => {
+  const checkIsAdmin = async (session: any) => {
     if (!session?.user) return;
     setIsCheckingPermissions(true);
     setAuthError(null);
@@ -422,7 +450,7 @@ export default function App() {
               <Route path="/dashboard" element={<Dashboard setSyncAction={setSyncAction} />} />
               <Route path="/restaurants" element={<Restaurants openDrawer={openDrawer} setSyncAction={setSyncAction} />} />
               <Route path="/restaurants/:id" element={<RestaurantDetail setHeaderData={setHeaderData} setSyncAction={setSyncAction} />} />
-              <Route path="/users" element={<AdminPanel activeForm={activeForm} setActiveForm={setActiveForm} openDrawer={openDrawer} setSyncAction={setSyncAction} />} />
+              <Route path="/users" element={<AdminPanel activeForm={activeForm} setActiveForm={setActiveForm} setSyncAction={setSyncAction} />} />
               <Route path="/users/:id" element={<UserDetail setHeaderData={setHeaderData} setSyncAction={setSyncAction} />} />
               <Route path="/leads" element={<LandingLeads />} />
               <Route path="/notifications" element={<Notifications />} />

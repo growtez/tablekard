@@ -11,12 +11,51 @@ const PRESET_ADDONS = [
   { name: 'Extra Bread', price: 20 },
 ]
 
-export default function QuickAddMenuItemDrawer({ isOpen, onClose, restaurantId, categories = [], onSuccess, onAddCategory }) {
-    const [loading, setLoading] = useState(false)
-    const [error, setError] = useState(null)
-    const fileInputRef = useRef(null)
+interface Variant {
+    name: string;
+    price: number;
+}
 
-    const [formData, setFormData] = useState({
+interface Addon {
+    name: string;
+    price: number;
+}
+
+interface FormData {
+    name: string;
+    price: string | number;
+    categoryId: string;
+    short_description: string;
+    long_description: string;
+    is_veg: boolean;
+    is_available: boolean;
+    serves: string | number;
+    preparation_time: string | number;
+    tags: string[];
+    variants: Variant[];
+    addons: Addon[];
+}
+
+interface Category {
+    id: string;
+    name: string;
+}
+
+interface QuickAddMenuItemDrawerProps {
+    isOpen: boolean;
+    onClose: () => void;
+    restaurantId: string;
+    categories?: Category[];
+    onSuccess?: () => void;
+    onAddCategory?: () => void;
+}
+
+export default function QuickAddMenuItemDrawer({ isOpen, onClose, restaurantId, categories = [], onSuccess, onAddCategory }: QuickAddMenuItemDrawerProps) {
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+    const fileInputRef = useRef<HTMLInputElement>(null)
+
+    const [formData, setFormData] = useState<FormData>({
         name: '',
         price: '',
         categoryId: '',
@@ -31,14 +70,14 @@ export default function QuickAddMenuItemDrawer({ isOpen, onClose, restaurantId, 
         addons: []
     })
 
-    const [imageFile, setImageFile] = useState(null)
-    const [imagePreview, setImagePreview] = useState(null)
+    const [imageFile, setImageFile] = useState<File | null>(null)
+    const [imagePreview, setImagePreview] = useState<string | null>(null)
     const [isCropping, setIsCropping] = useState(false)
-    const [cropSource, setCropSource] = useState(null)
+    const [cropSource, setCropSource] = useState<string | null>(null)
 
     const [newTag, setNewTag] = useState('')
-    const [newVariant, setNewVariant] = useState({ name: '', price: '' })
-    const [newAddon, setNewAddon] = useState({ name: '', price: '' })
+    const [newVariant, setNewVariant] = useState<{ name: string; price: string | number }>({ name: '', price: '' })
+    const [newAddon, setNewAddon] = useState<{ name: string; price: string | number }>({ name: '', price: '' })
 
     useEffect(() => {
         if (!isOpen) {
@@ -69,7 +108,7 @@ export default function QuickAddMenuItemDrawer({ isOpen, onClose, restaurantId, 
         }
     }, [isOpen, categories])
 
-    const handleImageFile = (e) => {
+    const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
         setCropSource(URL.createObjectURL(file));
@@ -77,7 +116,7 @@ export default function QuickAddMenuItemDrawer({ isOpen, onClose, restaurantId, 
         e.target.value = '';
     }
 
-    const handleCropComplete = (croppedBlob) => {
+    const handleCropComplete = (croppedBlob: Blob) => {
         const file = new File([croppedBlob], 'cropped-image.jpg', { type: 'image/jpeg' });
         setImageFile(file);
         setImagePreview(URL.createObjectURL(croppedBlob));
@@ -95,7 +134,7 @@ export default function QuickAddMenuItemDrawer({ isOpen, onClose, restaurantId, 
         setImagePreview(null);
     }
 
-    const toggleTag = (tag) => {
+    const toggleTag = (tag: string) => {
         setFormData(prev => ({
             ...prev,
             tags: prev.tags.includes(tag) ? prev.tags.filter(t => t !== tag) : [...prev.tags, tag]
@@ -108,20 +147,20 @@ export default function QuickAddMenuItemDrawer({ isOpen, onClose, restaurantId, 
         }
         setNewTag('')
     }
-    const removeTag = (tag) => {
+    const removeTag = (tag: string) => {
         setFormData(prev => ({ ...prev, tags: prev.tags.filter(t => t !== tag) }))
     }
 
     const addVariant = () => {
         if (!newVariant.name) return;
-        setFormData(prev => ({ ...prev, variants: [...prev.variants, { name: newVariant.name, price: parseFloat(newVariant.price) || 0 }] }))
+        setFormData(prev => ({ ...prev, variants: [...prev.variants, { name: newVariant.name, price: Number(newVariant.price) || 0 }] }))
         setNewVariant({ name: '', price: '' })
     }
-    const removeVariant = (idx) => {
+    const removeVariant = (idx: number) => {
         setFormData(prev => ({ ...prev, variants: prev.variants.filter((_, i) => i !== idx) }))
     }
 
-    const toggleAddon = (addon) => {
+    const toggleAddon = (addon: Addon) => {
         const exists = formData.addons.find(a => a.name === addon.name);
         if (exists) {
             setFormData(prev => ({ ...prev, addons: prev.addons.filter(a => a.name !== addon.name) }))
@@ -133,15 +172,15 @@ export default function QuickAddMenuItemDrawer({ isOpen, onClose, restaurantId, 
         if (!newAddon.name) return;
         const exists = formData.addons.find(a => a.name === newAddon.name);
         if (!exists) {
-            setFormData(prev => ({ ...prev, addons: [...prev.addons, { name: newAddon.name, price: parseFloat(newAddon.price) || 0 }] }))
+            setFormData(prev => ({ ...prev, addons: [...prev.addons, { name: newAddon.name, price: Number(newAddon.price) || 0 }] }))
         }
         setNewAddon({ name: '', price: '' })
     }
-    const removeAddon = (addonName) => {
+    const removeAddon = (addonName: string) => {
         setFormData(prev => ({ ...prev, addons: prev.addons.filter(a => a.name !== addonName) }))
     }
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!formData.name.trim() || !formData.price || !formData.categoryId) {
             setError("Name, Price, and Category are required.")
@@ -176,14 +215,14 @@ export default function QuickAddMenuItemDrawer({ isOpen, onClose, restaurantId, 
                 .insert({
                     restaurant_id: restaurantId,
                     name: formData.name.trim(),
-                    price: parseFloat(formData.price),
+                    price: Number(formData.price),
                     category_id: formData.categoryId,
                     short_description: formData.short_description.trim() || null,
                     long_description: formData.long_description.trim() || null,
                     is_veg: formData.is_veg,
                     is_available: formData.is_available,
-                    serves: parseInt(formData.serves) || 1,
-                    preparation_time: formData.preparation_time ? parseInt(formData.preparation_time) : null,
+                    serves: Number(formData.serves) || 1,
+                    preparation_time: formData.preparation_time ? Number(formData.preparation_time) : null,
                     tags: formData.tags,
                     variants: formData.variants,
                     addons: formData.addons,
@@ -194,7 +233,7 @@ export default function QuickAddMenuItemDrawer({ isOpen, onClose, restaurantId, 
 
             onSuccess?.()
             onClose()
-        } catch (err) {
+        } catch (err: any) {
             console.error(err)
             setError(err.message || "Failed to create menu item")
         } finally {

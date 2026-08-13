@@ -3,30 +3,50 @@ import Cropper from 'react-easy-crop';
 import { X, Check } from 'lucide-react';
 import './ImageCropper.css';
 
+interface Crop {
+  x: number;
+  y: number;
+}
+
+interface CroppedAreaPixels {
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+}
+
+interface ImageCropperProps {
+  image: string;
+  onCropComplete: (croppedBlob: Blob) => void;
+  onCancel: () => void;
+  aspect?: number;
+  circular?: boolean;
+}
+
 const ImageCropper = ({
   image,
   onCropComplete,
   onCancel,
   aspect = 1,
   circular = false
-}) => {
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
+}: ImageCropperProps) => {
+  const [crop, setCrop] = useState<Crop>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<CroppedAreaPixels | null>(null);
 
-  const onCropChange = (crop) => {
+  const onCropChange = (crop: Crop) => {
     setCrop(crop);
   };
 
-  const onZoomChange = (zoom) => {
+  const onZoomChange = (zoom: number) => {
     setZoom(zoom);
   };
 
-  const onCropAreaComplete = useCallback((_croppedArea, croppedAreaPixels) => {
+  const onCropAreaComplete = useCallback((_croppedArea: any, croppedAreaPixels: CroppedAreaPixels) => {
     setCroppedAreaPixels(croppedAreaPixels);
   }, []);
 
-  const createImage = (url) =>
+  const createImage = (url: string): Promise<HTMLImageElement> =>
     new Promise((resolve, reject) => {
       const image = new Image();
       image.addEventListener('load', () => resolve(image));
@@ -36,9 +56,9 @@ const ImageCropper = ({
     });
 
   const getCroppedImg = async (
-    imageSrc,
-    pixelCrop
-  ) => {
+    imageSrc: string,
+    pixelCrop: CroppedAreaPixels
+  ): Promise<Blob> => {
     const image = await createImage(imageSrc);
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');

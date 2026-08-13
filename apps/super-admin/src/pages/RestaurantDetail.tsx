@@ -22,9 +22,25 @@ interface Restaurant {
     name: string;
     status: string;
     logo_url: string;
-    subscription_type: string;
+    subscription_plan: string;
     subscription_status: string;
-    [key: string]: any;
+    tagline?: string;
+    contact_email?: string;
+    contact_phone?: string;
+    contact_address?: string;
+    primary_color?: string;
+    secondary_color?: string;
+    latitude?: number | string;
+    longitude?: number | string;
+    allowed_radius?: number | string;
+    operating_hours_weekdays?: string;
+    operating_hours_weekends?: string;
+    cover_image_url?: string;
+    website_url?: string;
+    instagram_url?: string;
+    facebook_url?: string;
+    manifesto?: string;
+    opening_date?: string;
 }
 
 interface MenuCategory {
@@ -59,13 +75,32 @@ interface AdminProfile {
 }
 
 interface BillingPlans {
-    plans: any[];
-    trials: any[];
+    plans: { id: string; name: string; [key: string]: unknown }[];
+    trials: { id: string; name: string; [key: string]: unknown }[];
+}
+
+interface HeaderData {
+    id?: string;
+    name?: string;
+    logo_url?: string | null;
+    status?: string;
+    backPath?: string;
+    backTitle?: string;
+    onEdit?: (() => void) | null;
+    isEditing?: boolean;
+    onSave?: () => void;
+    onCancel?: () => void;
+    saving?: boolean;
+}
+
+interface SyncAction {
+    onSync: () => void;
+    loading: boolean;
 }
 
 interface RestaurantDetailProps {
-    setHeaderData?: (data: any) => void;
-    setSyncAction?: (action: any) => void;
+    setHeaderData?: (data: HeaderData | null) => void;
+    setSyncAction?: (action: SyncAction | null) => void;
 }
 
 const TIME_OPTIONS = [
@@ -137,7 +172,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }: Resta
             ]);
             setCategories(catRes.data || []);
             setMenuItems(itemRes.data || []);
-        } catch (err) {
+        } catch (err: unknown) {
             console.error('Failed to fetch menu data:', err);
         }
     };
@@ -152,7 +187,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }: Resta
 
             if (error) throw error;
             setPayments(data || []);
-        } catch (err) {
+        } catch (err: unknown) {
             console.error('Failed to fetch payment history:', err);
         }
     };
@@ -189,7 +224,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }: Resta
 
                     if (adminError) throw adminError;
                     setAdmins((adminData?.map(d => Array.isArray(d.profiles) ? d.profiles[0] : d.profiles) as unknown as AdminProfile[]).filter(Boolean) || []);
-                } catch (err) {
+                } catch (err: unknown) {
                     console.error('Failed to fetch admins:', err);
                 }
             };
@@ -204,14 +239,14 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }: Resta
                     if (!error && data?.config) {
                         setBillingPlans(data.config);
                     }
-                } catch (err) {
+                } catch (err: unknown) {
                     console.error('Failed to fetch billing plans:', err);
                 }
             };
 
             await Promise.all([fetchMenuData(), fetchPayments(), fetchAdmins(), fetchBillingPlans()]);
-        } catch (err) {
-            setError('Failed to fetch restaurant details: ' + err.message);
+        } catch (err: unknown) {
+            setError('Failed to fetch restaurant details: ' + (err instanceof Error ? err.message : String(err)));
         } finally {
             setLoading(false);
         }
@@ -232,9 +267,9 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }: Resta
                     primary_color: formData.primary_color,
                     secondary_color: formData.secondary_color,
                     logo_url: formData.logo_url,
-                    latitude: parseFloat(formData.latitude) || null,
-                    longitude: parseFloat(formData.longitude) || null,
-                    allowed_radius: parseInt(formData.allowed_radius) || 100,
+                    latitude: formData.latitude ? parseFloat(String(formData.latitude)) : null,
+                    longitude: formData.longitude ? parseFloat(String(formData.longitude)) : null,
+                    allowed_radius: formData.allowed_radius ? parseInt(String(formData.allowed_radius)) : 100,
                     status: formData.status,
                     subscription_status: formData.status === 'active' ? 'ACTIVE' : 'INACTIVE',
                     operating_hours_weekdays: formData.operating_hours_weekdays || '09:00 AM - 10:00 PM',
@@ -251,8 +286,8 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }: Resta
             if (error) throw error;
             setEditingCard(null);
             fetchRestaurantDetails();
-        } catch (err) {
-            setError('Failed to save changes: ' + err.message);
+        } catch (err: unknown) {
+            setError('Failed to save changes: ' + (err instanceof Error ? err.message : String(err)));
         } finally {
             setSaving(false);
         }
@@ -287,8 +322,8 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }: Resta
         }
     }, [restaurant, location.state, id, setHeaderData]);
 
-    const updateField = (field: string, value: any) => {
-        setFormData((prev: any) => ({ ...prev, [field]: value }));
+    const updateField = (field: keyof Restaurant, value: string) => {
+        setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
     if (loading) {
@@ -377,7 +412,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }: Resta
         </CardHeader>
     );
 
-    const renderField = (label: string | null, field: string, cardId: string, type = 'text', options: any[] = []) => {
+    const renderField = (label: string | null, field: keyof Restaurant, cardId: string, type = 'text', options: {value: string, label: string}[] = []) => {
         const isEditingCard = editingCard === cardId;
         return (
             <div className="flex-1 w-full space-y-1">
@@ -394,9 +429,9 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }: Resta
                     ) : type === 'time-range' ? (
                         <div className="flex items-center gap-4">
                             <select
-                                value={formData[field] === 'Closed' ? 'Closed' : (formData[field]?.split(' - ')[0] || '09:00 AM')}
+                                value={formData[field] === 'Closed' ? 'Closed' : ((formData[field] as string)?.split(' - ')[0] || '09:00 AM')}
                                 onChange={(e) => {
-                                    const currentEnd = formData[field]?.split(' - ')[1] || '10:00 PM';
+                                    const currentEnd = (formData[field] as string)?.split(' - ')[1] || '10:00 PM';
                                     const newVal = e.target.value === 'Closed' ? 'Closed' : `${e.target.value} - ${currentEnd}`;
                                     updateField(field, newVal);
                                 }}
@@ -406,9 +441,9 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }: Resta
                             </select>
                             <span className="text-sm text-text-muted">to</span>
                             <select
-                                value={formData[field]?.split(' - ')[1] || '10:00 PM'}
+                                value={(formData[field] as string)?.split(' - ')[1] || '10:00 PM'}
                                 onChange={(e) => {
-                                    const currentStart = formData[field] === 'Closed' ? '09:00 AM' : (formData[field]?.split(' - ')[0] || '09:00 AM');
+                                    const currentStart = formData[field] === 'Closed' ? '09:00 AM' : ((formData[field] as string)?.split(' - ')[0] || '09:00 AM');
                                     const newVal = formData[field] === 'Closed' ? 'Closed' : `${currentStart} - ${e.target.value}`;
                                     updateField(field, newVal);
                                 }}
@@ -551,19 +586,19 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }: Resta
 
                 {activeTab === 'billing' && (() => {
                     const getPlanName = () => {
-                        if (!restaurant?.subscription_type) return 'NO PLAN SELECTED';
+                        if (!restaurant?.subscription_plan) return 'NO PLAN SELECTED';
                         const { plans = [], trials = [] } = billingPlans;
-                        const plan = plans.find(p => p.id === restaurant.subscription_type);
+                        const plan = plans.find(p => p.id === restaurant.subscription_plan);
                         if (plan) return plan.name.toUpperCase();
-                        const trial = trials.find(t => t.id === restaurant.subscription_type);
+                        const trial = trials.find(t => t.id === restaurant.subscription_plan);
                         if (trial) return trial.name.toUpperCase();
-                        return restaurant.subscription_type.toUpperCase().replace(/_/g, ' ');
+                        return restaurant.subscription_plan.toUpperCase().replace(/_/g, ' ');
                     };
 
                     const isTrial = () => {
-                        if (!restaurant?.subscription_type) return false;
+                        if (!restaurant?.subscription_plan) return false;
                         const { trials = [] } = billingPlans;
-                        if (trials.find(t => t.id === restaurant?.subscription_type)) return true;
+                        if (trials.find(t => t.id === restaurant?.subscription_plan)) return true;
                         return false;
                     };
 
@@ -637,7 +672,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }: Resta
                                         )}
                                     </div>
                                     <div className="flex items-center justify-between md:justify-start gap-1 shrink-0 md:border-x md:border-border/50 px-3 py-1.5 md:py-0 w-full md:w-auto">
-                                        <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
+                                        <button onClick={() => setPage(p => Math.max(1, Number(p) - 1))} disabled={safePage === 1} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
                                             <ChevronLeft size={14} />
                                         </button>
                                         <div className="flex items-center justify-center gap-1 w-[80px]">
@@ -647,7 +682,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }: Resta
                                                 <button key={p} onClick={() => setPage(Number(p))} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
                                             ))}
                                         </div>
-                                        <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
+                                        <button onClick={() => setPage(p => Math.min(totalPages, Number(p) + 1))} disabled={safePage === totalPages} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
                                             <ChevronRight size={14} />
                                         </button>
                                     </div>

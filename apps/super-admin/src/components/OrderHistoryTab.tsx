@@ -53,7 +53,7 @@ const payStatusStyle = {
 /* ─────────────────────────────────────────────────────────────
    Inline styles (scoped chart styles, exact match to reports.css)
 ───────────────────────────────────────────────────────────── */
-const chartContainerStyle = {
+const chartContainerStyle: React.CSSProperties = {
     height: '250px',
     display: 'flex',
     alignItems: 'flex-end',
@@ -63,7 +63,7 @@ const chartContainerStyle = {
     borderBottom: '1px solid var(--color-border, #E2E8F0)',
 };
 
-const chartBarGroupStyle = {
+const chartBarGroupStyle: React.CSSProperties = {
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
@@ -74,7 +74,7 @@ const chartBarGroupStyle = {
     cursor: 'pointer',
 };
 
-const chartBarBaseStyle = {
+const chartBarBaseStyle: React.CSSProperties = {
     width: '100%',
     maxWidth: '40px',
     background: 'linear-gradient(180deg, #4C51BF 0%, #434190 100%)',
@@ -83,7 +83,7 @@ const chartBarBaseStyle = {
     transition: 'all 0.3s ease',
 };
 
-const chartLabelStyle = {
+const chartLabelStyle: React.CSSProperties = {
     position: 'absolute',
     bottom: '-25px',
     fontSize: '11px',
@@ -93,7 +93,7 @@ const chartLabelStyle = {
     textAlign: 'center',
 };
 
-const chartTooltipStyle = {
+const chartTooltipStyle: React.CSSProperties = {
     position: 'absolute',
     top: '-38px',
     background: '#1A202C',
@@ -536,7 +536,7 @@ export default function OrderHistoryTab({ restaurantId, viewMode = 'orders' }) {
                     revHistory.push({ label: `Wk ${currentBucketIndex + 1}`, revenue: bucketRevenue, orders: bucketOrders, dateStart: s, dateEnd: e });
                 }
             } else if (timeframe === 'all' || dayDifference > 31) {
-                const monthMap = {};
+                const monthMap: Record<string, any> = {};
                 for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
                     const dKey = toISTDateKey(d.toISOString());
                     const year = d.getFullYear();
@@ -557,13 +557,13 @@ export default function OrderHistoryTab({ restaurantId, viewMode = 'orders' }) {
                     monthMap[key].orders  += revMap[dKey]?.orders || 0;
                 }
                 Object.values(monthMap)
-                    .sort((a, b) => a.date.getTime() - b.date.getTime())
-                    .forEach(v => revHistory.push({ label: v.label, revenue: v.revenue, orders: v.orders, dateStart: v.dateStart, dateEnd: v.dateEnd }));
+                    .sort((a: any, b: any) => a.date.getTime() - b.date.getTime())
+                    .forEach((v: any) => revHistory.push({ label: v.label, revenue: v.revenue, orders: v.orders, dateStart: v.dateStart, dateEnd: v.dateEnd }));
             } else if (timeframe === 'today') {
                 const ds = new Date(); ds.setHours(0, 0, 0, 0);
                 const de = new Date(); de.setHours(23, 59, 59, 999);
-                const totalRev = Object.values(revMap).reduce((s, v) => s + v.revenue, 0);
-                const totalOrd = Object.values(revMap).reduce((s, v) => s + v.orders, 0);
+                const totalRev = Object.values(revMap).reduce((s: any, v: any) => s + v.revenue, 0);
+                const totalOrd = Object.values(revMap).reduce((s: any, v: any) => s + v.orders, 0);
                 revHistory.push({ label: ds.toLocaleDateString('en-US', { weekday: 'short' }), revenue: totalRev, orders: totalOrd, dateStart: ds, dateEnd: de });
             } else {
                 for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
@@ -595,19 +595,17 @@ export default function OrderHistoryTab({ restaurantId, viewMode = 'orders' }) {
                 .gte('orders.created_at', start.toISOString())
                 .lte('orders.created_at', end.toISOString());
             if (oi) {
-                const map = {};
+                const map: Record<string, any> = {};
                 oi.forEach(i => {
-                    const nm = i.menu_items?.name || 'Unknown';
+                    const nm = Array.isArray(i.menu_items) ? (i.menu_items[0]?.name || 'Unknown') : ((i.menu_items as any)?.name || 'Unknown');
                     if (!map[nm]) map[nm] = { name: nm, sold: 0, revenue: 0 };
                     map[nm].sold    += i.quantity;
                     map[nm].revenue += i.quantity * i.price;
                 });
-                setTopItems(Object.values(map).sort((a, b) => b.revenue - a.revenue));
+                setTopItems(Object.values(map).sort((a: any, b: any) => b.revenue - a.revenue) as any);
             }
 
-    // Moved to outer scope
-
-    // Feedback
+            // Feedback
             const { data: fbData, error: fbErr } = await supabase
                 .from('feedback')
                 .select(`id, rating, comment, created_at, orders!inner(restaurant_id, profiles(name), order_items(name))`)
@@ -943,7 +941,7 @@ export default function OrderHistoryTab({ restaurantId, viewMode = 'orders' }) {
                                                 <div key={hi}
                                                     style={{ flex: 1, minWidth: 20, height: 22, borderRadius: 4, backgroundColor: heatColor(count, peakMax), cursor: 'default', transition: 'transform 0.15s, box-shadow 0.15s' }}
                                                     title={`${day} ${HOUR_LABELS[hi]}: ${count} order${count !== 1 ? 's' : ''}`}
-                                                    onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.25)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(76,81,191,0.35)'; e.currentTarget.style.zIndex = 1; e.currentTarget.style.position = 'relative'; }}
+                                                    onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.25)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(76,81,191,0.35)'; e.currentTarget.style.zIndex = '1'; e.currentTarget.style.position = 'relative'; }}
                                                     onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}
                                                 />
                                             );
@@ -1013,7 +1011,7 @@ export default function OrderHistoryTab({ restaurantId, viewMode = 'orders' }) {
                         )}
                     </div>
                     <div className="flex items-center justify-between md:justify-start gap-1 shrink-0 md:border-x md:border-border/50 px-3 py-1.5 md:py-0 w-full md:w-auto">
-                        <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
+                        <button onClick={() => setPage(p => Math.max(1, Number(p) - 1))} disabled={safePage === 1} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
                             <ChevronLeft size={14} />
                         </button>
                         <div className="flex items-center justify-center gap-1 w-[80px]">
@@ -1023,7 +1021,7 @@ export default function OrderHistoryTab({ restaurantId, viewMode = 'orders' }) {
                                 <button key={p} onClick={() => setPage(Number(p))} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
                             ))}
                         </div>
-                        <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
+                        <button onClick={() => setPage(p => Math.min(totalPages, Number(p) + 1))} disabled={safePage === totalPages} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
                             <ChevronRight size={14} />
                         </button>
                     </div>
