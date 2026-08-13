@@ -48,10 +48,11 @@ export const PaymentStatus = {
 export type PaymentStatus = typeof PaymentStatus[keyof typeof PaymentStatus];
 
 export const RestaurantStatus = {
-  PENDING: 'PENDING',
-  ACTIVE: 'ACTIVE',
-  REJECTED: 'REJECTED',
-  SUSPENDED: 'SUSPENDED',
+  PENDING: 'pending',
+  APPROVED: 'approved',
+  ACTIVE: 'active',
+  REJECTED: 'rejected',
+  SUSPENDED: 'suspended',
 } as const;
 export type RestaurantStatus = typeof RestaurantStatus[keyof typeof RestaurantStatus];
 

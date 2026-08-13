@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ExternalLink, CreditCard, Mail as MailIcon, Phone as PhoneIcon, MapPin as MapPinIcon, Crosshair } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+import { RestaurantStatus } from '@restaurant-saas/types';
 import './RestaurantDetailProfile.css';
 
 const formatCoordinate = (value) => {
@@ -40,13 +41,13 @@ const handleTimeChange = (dayType, openClose, val, updateField, formData) => {
   const parts = current.split(' - ');
   let open = parts[0] || '09:00 AM';
   let close = parts[1] || '10:00 PM';
-  
+
   if (openClose === 'open') {
     open = to12h(val);
   } else {
     close = to12h(val);
   }
-  
+
   updateField(field, `${open} - ${close}`);
 };
 
@@ -103,7 +104,7 @@ export default function RestaurantProfileView({
         .from('restaurants')
         .select('id')
         .eq('slug', slugToCheck);
-      
+
       if (!error) {
         setSlugAvailable(data.length === 0);
       }
@@ -143,11 +144,11 @@ export default function RestaurantProfileView({
 
   return (
     <div className="flex flex-col gap-0 w-full max-w-5xl animate-fade-in bg-surface p-6 rounded-2xl shadow-sm border border-border">
-      
+
       <div className="flex items-center justify-between mb-6 border-b border-border pb-4">
         <div>
-           <h2 className="text-xl font-bold m-0 text-text-main">General Information</h2>
-           <p className="text-sm text-text-muted mt-1">Manage restaurant identity, contact, and operations.</p>
+          <h2 className="text-xl font-bold m-0 text-text-main">General Information</h2>
+          <p className="text-sm text-text-muted mt-1">Manage restaurant identity, contact, and operations.</p>
         </div>
         <div className="flex gap-2">
           {isEditingProfile ? (
@@ -159,8 +160,8 @@ export default function RestaurantProfileView({
             </>
           ) : (
             <button onClick={() => {
-                Object.keys(restaurant).forEach(key => updateField(key, restaurant[key]));
-                setEditingCard('general');
+              Object.keys(restaurant).forEach(key => updateField(key, restaurant[key]));
+              setEditingCard('general');
             }} className="px-4 py-2 bg-accent-primary text-black font-bold rounded-xl border-none cursor-pointer hover:shadow-md transition-all shadow-sm">
               Edit Info
             </button>
@@ -236,19 +237,19 @@ export default function RestaurantProfileView({
         {isEditingProfile ? (
           <div className="flex items-center justify-between w-full gap-2">
             <select
-                className="w-full border border-border rounded-xl bg-surface text-text-main px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-accent-primary"
-                value={formData.status || 'pending'}
-                onChange={(e) => updateField('status', e.target.value)}
+              className="w-full border border-border rounded-xl bg-surface text-text-main px-3.5 py-1.5 text-[14px] font-['Outfit',sans-serif] focus:outline-none focus:border-accent-primary"
+              value={formData.status || 'pending'}
+              onChange={(e) => updateField('status', e.target.value)}
             >
-                <optgroup label="── Onboarding ──">
-                    <option value="pending">Pending — Awaiting Review</option>
-                    <option value="approved">Approved — Ready to Subscribe</option>
-                    <option value="rejected">Rejected</option>
-                </optgroup>
-                <optgroup label="── Subscription ──">
-                    <option value="active">Active — Subscribed &amp; Operational</option>
-                    <option value="suspended">Suspended — Service Halted</option>
-                </optgroup>
+              <optgroup label="── Onboarding ──">
+                <option value={RestaurantStatus.PENDING}>Pending — Awaiting Review</option>
+                <option value={RestaurantStatus.APPROVED}>Approved — Ready to Subscribe</option>
+                <option value={RestaurantStatus.REJECTED}>Rejected</option>
+              </optgroup>
+              <optgroup label="── Subscription ──">
+                <option value={RestaurantStatus.ACTIVE}>Active — Subscribed &amp; Operational</option>
+                <option value={RestaurantStatus.SUSPENDED}>Suspended — Service Halted</option>
+              </optgroup>
             </select>
           </div>
         ) : (
@@ -267,7 +268,7 @@ export default function RestaurantProfileView({
           >
             <CreditCard size={14} />
             {restaurant.subscription_status === 'ACTIVE' || restaurant.subscription_status === 'TRIAL' ? "Active" : "Inactive"}
-            {restaurant.subscription_type ? ` (${restaurant.subscription_type})` : ""}
+
           </span>
         </div>
       </Row>
