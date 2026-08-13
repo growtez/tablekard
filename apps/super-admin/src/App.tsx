@@ -15,6 +15,7 @@ import TransactionDetail from './pages/billing/TransactionDetail'
 import Plans from './pages/billing/Plans'
 import LandingLeads from './pages/LandingLeads'
 import Notifications from './pages/Notifications'
+import QrTokens from './pages/QrTokens'
 // import Complaints from './pages/support/Complaints'
 // import Reviews from './pages/support/Reviews'
 // import Announcements from './pages/support/Announcements'
@@ -297,6 +298,7 @@ export default function App() {
     if (path.startsWith('/subscriptions/')) return { title: '', isBreadcrumb: true, backTitle: 'Subscriptions', backPath: '/subscriptions' };
     if (path.startsWith('/billing/transactions/')) return { title: '', isBreadcrumb: true, backTitle: 'Transactions', backPath: '/billing/transactions' };
     if (path === '/notifications') return { title: 'Notifications' };
+    if (path === '/qr-tokens') return { title: 'QR Tokens' };
     return { title: 'Notifications' };
   };
 
@@ -454,6 +456,7 @@ export default function App() {
               <Route path="/users/:id" element={<UserDetail setHeaderData={setHeaderData} setSyncAction={setSyncAction} />} />
               <Route path="/leads" element={<LandingLeads />} />
               <Route path="/notifications" element={<Notifications />} />
+              <Route path="/qr-tokens" element={<QrTokens setSyncAction={setSyncAction} />} />
               {/* Billing */}
               <Route path="/subscriptions" element={<Subscriptions setSyncAction={setSyncAction} />} />
               <Route path="/subscriptions/:id" element={<SubscriptionDetail setHeaderData={setHeaderData} />} />

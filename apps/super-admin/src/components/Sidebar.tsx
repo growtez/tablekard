@@ -14,7 +14,8 @@ import {
     Inbox,
     Moon,
     Sun,
-    Bell
+    Bell,
+    QrCode
 } from 'lucide-react';
 
 const navItems = [
@@ -26,6 +27,7 @@ const navItems = [
     { path: '/billing/plans', icon: Layers, label: 'Pricing Plans' },
     { path: '/leads', icon: Inbox, label: 'Landing Leads' },
     { path: '/notifications', icon: Bell, label: 'Notifications' },
+    { path: '/qr-tokens', icon: QrCode, label: 'QR Tokens' },
     // {
     //     icon: Headphones,
     //     label: 'Support',

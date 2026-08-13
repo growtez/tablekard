@@ -19,16 +19,18 @@ const QRCodePage: React.FC = () => {
     const { data: tables = [], isLoading: loading, error: queryError, refetch } = useRestaurantTables(activeRestaurantId);
     const error = queryError ? 'Failed to load tables. Please try again.' : null;
 
-    const buildQrUrl = (_tableId: string, tableNumber: number) =>
-        `${CUSTOMER_APP_URL}/order/${activeRestaurantId}/${tableNumber}`;
+    const buildQrUrl = (_tableId: string, tableNumber: number, qrToken?: string | null) =>
+        qrToken
+            ? `${CUSTOMER_APP_URL}/q/${qrToken}`
+            : `${CUSTOMER_APP_URL}/order/${activeRestaurantId}/${tableNumber}`;
 
-    const downloadQR = async (tableId: string, tableNumber: number) => {
+    const downloadQR = async (tableId: string, tableNumber: number, qrToken?: string | null) => {
         try {
             const canvas = await paintQrTemplate({
                 qrSvgElementId: `qr-svg-${tableId}`,
                 restaurantName: activeRestaurantName,
                 tableNumber,
-                qrUrl: buildQrUrl(tableId, tableNumber),
+                qrUrl: buildQrUrl(tableId, tableNumber, qrToken),
                 qrSize
             });
 
@@ -42,13 +44,13 @@ const QRCodePage: React.FC = () => {
         }
     };
 
-    const downloadPDF = async (tableId: string, tableNumber: number) => {
+    const downloadPDF = async (tableId: string, tableNumber: number, qrToken?: string | null) => {
         try {
             const canvas = await paintQrTemplate({
                 qrSvgElementId: `qr-svg-${tableId}`,
                 restaurantName: activeRestaurantName,
                 tableNumber,
-                qrUrl: buildQrUrl(tableId, tableNumber),
+                qrUrl: buildQrUrl(tableId, tableNumber, qrToken),
                 qrSize: 300 // High resolution for PDF
             });
 
@@ -70,7 +72,7 @@ const QRCodePage: React.FC = () => {
 
     const downloadAll = () => {
         tables.forEach((t: RestaurantTable, i: number) => {
-            setTimeout(() => downloadQR(t.id, t.table_number), i * 300);
+            setTimeout(() => downloadQR(t.id, t.table_number, t.qr_token), i * 300);
         });
     };
 
@@ -146,7 +148,7 @@ const QRCodePage: React.FC = () => {
                 {!loading && !error && tables.length > 0 && (
                     <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] max-md:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] max-[480px]:grid-cols-1 gap-6 max-md:gap-4">
                         {tables.map((table: RestaurantTable) => {
-                            const url = buildQrUrl(table.id, table.table_number);
+                            const url = buildQrUrl(table.id, table.table_number, table.qr_token);
                             return (
                                 <div key={table.id} className={`bg-white rounded-[20px] p-6 shadow-[0_4px_16px_rgba(0,0,0,0.06)] border border-[#E2E8F0] flex flex-col items-center gap-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] ${!table.active ? 'opacity-60 border-dashed' : ''}`}>
                                     <div className="flex justify-between items-center w-full">
@@ -179,7 +181,7 @@ const QRCodePage: React.FC = () => {
                                         <div className="flex gap-2.5 w-full">
                                             <button
                                                 className="flex items-center justify-center gap-1.5 py-2 px-2 border border-[#E2E8F0] rounded-[10px] text-xs font-semibold cursor-pointer transition-all duration-200 flex-1 min-w-0 whitespace-nowrap bg-[#EDF2F7] text-[#4A5568] hover:bg-[#E2E8F0] hover:-translate-y-0.5"
-                                                onClick={() => downloadQR(table.id, table.table_number)}
+                                                onClick={() => downloadQR(table.id, table.table_number, table.qr_token)}
                                                 title="Download as PNG Image"
                                             >
                                                 <Download size={14} />
@@ -187,7 +189,7 @@ const QRCodePage: React.FC = () => {
                                             </button>
                                             <button
                                                 className="flex items-center justify-center gap-1.5 py-2 px-2 border-none rounded-[10px] text-xs font-semibold cursor-pointer transition-all duration-200 flex-1 min-w-0 whitespace-nowrap bg-tk-burgundy text-white shadow-[0_4px_12px_rgba(139,58,30,0.2)] hover:bg-[#6B2A15] hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(139,58,30,0.3)]"
-                                                onClick={() => downloadPDF(table.id, table.table_number)}
+                                                onClick={() => downloadPDF(table.id, table.table_number, table.qr_token)}
                                                 title="Generate PDF for Printing"
                                             >
                                                 <Download size={14} />
