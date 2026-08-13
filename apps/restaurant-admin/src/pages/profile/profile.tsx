@@ -205,19 +205,15 @@ const Row = ({
   children: React.ReactNode;
   plain?: boolean;
 }) => (
-  <div className="grid grid-cols-[220px_1fr] sm:grid-cols-[260px_1fr] gap-2 py-1 items-center">
-    <span className="text-[13px] text-[#4A5568] font-semibold uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">
-      {label}
-    </span>
-    {plain ? (
-      <div className="text-[15px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text flex items-center w-full">
-        {children}
-      </div>
-    ) : (
-      <div className="text-[15px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text flex justify-start items-center w-full gap-2 min-h-[46px]">
-        {children}
-      </div>
-    )}
+  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-1.5 border-b border-[#E2E8F0] dark:border-tk-border/50 last:border-0 hover:bg-slate-50/50 dark:hover:bg-tk-bg-hover/50 transition-colors px-2 -mx-2 rounded-md">
+    <div className="sm:w-[240px] shrink-0">
+      <span className="text-[12px] text-slate-500 dark:text-tk-text-secondary font-bold uppercase tracking-wider font-['Outfit',sans-serif]">
+        {label}
+      </span>
+    </div>
+    <div className={`flex-1 flex ${plain ? 'items-center w-full' : 'justify-start items-center w-full gap-2 min-h-[46px]'} text-[15px] text-[#1A202C] font-medium font-['Outfit',sans-serif] dark:text-tk-text`}>
+      {children}
+    </div>
   </div>
 );
 
@@ -765,37 +761,43 @@ const ProfilePage: React.FC = () => {
 
 
 
-  const SectionHeader = ({ title, sectionId }: { title: string, sectionId?: string }) => (
-    <div className="flex items-center justify-between pt-4 pb-2 border-b border-[#E2E8F0] dark:border-tk-border">
-      <h3 className="text-[18px] font-bold text-[#1A202C] dark:text-tk-text font-['Outfit',sans-serif] m-0 uppercase tracking-wide">
-        {title}
-      </h3>
+  const SectionHeader = ({ title, sectionId, description }: { title: string, sectionId?: string, description?: string }) => (
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-2 pb-2 mb-0.5">
+      <div className="flex flex-col">
+        <h3 className="text-[20px] font-bold bg-gradient-to-r from-[#1A202C] to-[#4A5568] dark:from-white dark:to-tk-text-secondary bg-clip-text text-transparent font-['Outfit',sans-serif] m-0 tracking-tight">
+          {title}
+        </h3>
+        {description && <p className="text-[13px] text-slate-500 mt-1 dark:text-tk-text-secondary">{description}</p>}
+      </div>
       {sectionId && editingSection !== sectionId && (
         <button
-          className="text-[#4A5568] hover:text-[#1A202C] dark:text-tk-text-secondary dark:hover:text-tk-text font-medium text-[13px] flex items-center gap-1.5 transition-colors"
+          className="mt-3 sm:mt-0 px-4 py-2 bg-white dark:bg-tk-bg-elevated border border-[#E2E8F0] dark:border-tk-border rounded-lg text-[#4A5568] hover:text-tk-burgundy hover:border-tk-burgundy hover:bg-tk-burgundy/5 hover:shadow-sm dark:text-tk-text-secondary dark:hover:text-tk-burgundy font-semibold text-[13px] flex items-center justify-center gap-1.5 transition-all"
           onClick={() => {
             setEditingSection(sectionId);
             if (sectionId === 'location') setShowMap(true);
           }}
           disabled={editingSection !== null}
         >
-          Edit
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+          Edit Section
         </button>
       )}
       {sectionId && editingSection === sectionId && (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 mt-3 sm:mt-0">
           <button
-            className="text-[#4A5568] hover:text-[#1A202C] dark:text-tk-text-secondary dark:hover:text-tk-text font-medium text-[13px] transition-colors"
+            className="px-4 py-2 bg-white dark:bg-tk-bg-elevated border border-[#E2E8F0] dark:border-tk-border rounded-lg text-[#4A5568] hover:text-[#1A202C] hover:bg-slate-50 dark:text-tk-text-secondary dark:hover:text-tk-text font-semibold text-[13px] transition-all shadow-sm"
             onClick={handleCancelEdit}
           >
             Cancel
           </button>
           <button
-            className="text-tk-burgundy hover:text-[#6B2A15] font-bold text-[13px] transition-colors flex items-center gap-1"
+            className="px-5 py-2 bg-tk-burgundy hover:bg-[#6B2A15] text-white border border-transparent rounded-lg font-bold text-[13px] transition-all shadow-[0_4px_12px_rgba(139,58,30,0.25)] hover:-translate-y-px hover:shadow-[0_6px_16px_rgba(139,58,30,0.35)] flex items-center gap-2"
             onClick={handleSaveProfile}
             disabled={isRestaurantSaving || isAdminSaving}
           >
-            {isRestaurantSaving || isAdminSaving ? "Saving..." : "Save"}
+            {isRestaurantSaving || isAdminSaving ? (
+              <><div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Saving...</>
+            ) : "Save Changes"}
           </button>
         </div>
       )}
@@ -823,8 +825,12 @@ const ProfilePage: React.FC = () => {
     return (
       <div className="flex flex-col gap-0 w-full max-w-5xl">
         {activeTab === "details" && (
-          <>
-            <SectionHeader title="Core Details" sectionId="core" />
+          <div className="flex flex-col gap-4 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Core Details Card */}
+            <div className="bg-white/80 dark:bg-tk-bg-card/80 backdrop-blur-2xl border border-[#E2E8F0] dark:border-tk-border shadow-[0_4px_20px_rgb(0,0,0,0.03)] rounded-lg p-3 sm:p-4 transition-all duration-500 hover:shadow-[0_4px_20px_rgb(0,0,0,0.06)] relative overflow-hidden group">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#1A202C] via-tk-burgundy to-[#4A5568] opacity-20 group-hover:opacity-100 transition-opacity duration-500" />
+              <SectionHeader title="Core Details" sectionId="core" description="Manage your restaurant's identity and basic information." />
+              <div className="flex flex-col mt-2">
             {/* Restaurant Name */}
             <Row label="Restaurant Name">
               {editingSection === "core" ? (
@@ -1035,7 +1041,14 @@ const ProfilePage: React.FC = () => {
             </Row>
 
 
-            <SectionHeader title="Contact Information" sectionId="contact" />
+              </div>
+            </div>
+
+            {/* Contact Information Card */}
+            <div className="bg-white/80 dark:bg-tk-bg-card/80 backdrop-blur-2xl border border-[#E2E8F0] dark:border-tk-border shadow-[0_4px_20px_rgb(0,0,0,0.03)] rounded-lg p-3 sm:p-4 transition-all duration-500 hover:shadow-[0_4px_20px_rgb(0,0,0,0.06)] relative overflow-hidden group">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-tk-burgundy via-[#1A202C] to-[#4A5568] opacity-20 group-hover:opacity-100 transition-opacity duration-500" />
+              <SectionHeader title="Contact Information" sectionId="contact" description="How customers can reach your restaurant." />
+              <div className="flex flex-col mt-2">
             {/* Email Address */}
             <Row label="Contact Email">
               {editingSection === "contact" ? (
@@ -1095,12 +1108,17 @@ const ProfilePage: React.FC = () => {
                 </>
               )}
             </Row>
-          </>
+              </div>
+            </div>
+          </div>
         )}
 
         {activeTab === "operations" && (
-          <>
-            <SectionHeader title="Location & Operations" sectionId="location" />
+          <div className="flex flex-col gap-4 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="bg-white/80 dark:bg-tk-bg-card/80 backdrop-blur-2xl border border-[#E2E8F0] dark:border-tk-border shadow-[0_4px_20px_rgb(0,0,0,0.03)] rounded-lg p-3 sm:p-4 transition-all duration-500 hover:shadow-[0_4px_20px_rgb(0,0,0,0.06)] relative overflow-hidden group">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-tk-burgundy via-[#1A202C] to-[#4A5568] opacity-20 group-hover:opacity-100 transition-opacity duration-500" />
+              <SectionHeader title="Location & Operations" sectionId="location" description="Manage your physical presence and timings." />
+              <div className="flex flex-col mt-2">
             {/* Address */}
             <Row label="Address">
               {editingSection === "location" ? (
@@ -1354,7 +1372,13 @@ const ProfilePage: React.FC = () => {
             </Row>
 
 
-            <SectionHeader title="Web & Social Media" sectionId="web" />
+              </div>
+            </div>
+
+            <div className="bg-white/80 dark:bg-tk-bg-card/80 backdrop-blur-2xl border border-[#E2E8F0] dark:border-tk-border shadow-[0_4px_20px_rgb(0,0,0,0.03)] rounded-lg p-3 sm:p-4 transition-all duration-500 hover:shadow-[0_4px_20px_rgb(0,0,0,0.06)] relative overflow-hidden group">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#1A202C] via-tk-burgundy to-[#4A5568] opacity-20 group-hover:opacity-100 transition-opacity duration-500" />
+              <SectionHeader title="Web & Social Media" sectionId="web" description="Connect your customers to your online presence." />
+              <div className="flex flex-col mt-2">
             {/* Website URL */}
             <Row label="Website URL">
               {editingSection === "web" ? (
@@ -1433,7 +1457,9 @@ const ProfilePage: React.FC = () => {
                 </>
               )}
             </Row>
-          </>
+              </div>
+            </div>
+          </div>
         )}
 
       </div>
@@ -1452,9 +1478,12 @@ const ProfilePage: React.FC = () => {
 
 
     return (
-      <div className="flex flex-col gap-0 w-full max-w-5xl">
-        <SectionHeader title="Administrator Details" sectionId="admin" />
-        <Row label="Admin Full Name">
+      <div className="flex flex-col gap-4 w-full max-w-5xl animate-in fade-in slide-in-from-bottom-4 duration-500 mt-8">
+        <div className="bg-white/80 dark:bg-tk-bg-card/80 backdrop-blur-2xl border border-[#E2E8F0] dark:border-tk-border shadow-[0_4px_20px_rgb(0,0,0,0.03)] rounded-lg p-3 sm:p-4 transition-all duration-500 hover:shadow-[0_4px_20px_rgb(0,0,0,0.06)] relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-tk-burgundy via-[#1A202C] to-[#4A5568] opacity-20 group-hover:opacity-100 transition-opacity duration-500" />
+          <SectionHeader title="Administrator Details" sectionId="admin" description="Manage your personal admin account." />
+          <div className="flex flex-col mt-2">
+            <Row label="Admin Full Name">
           {editingSection === "admin" ? (
             <div className="flex items-center justify-between w-full gap-2">
               <input
@@ -1512,9 +1541,9 @@ const ProfilePage: React.FC = () => {
               )}
             </div>
           )}
-        </Row>
-
-
+            </Row>
+          </div>
+        </div>
       </div>
     );
   }
@@ -1532,29 +1561,29 @@ const ProfilePage: React.FC = () => {
 
   return (
     <>
-      <div className="sticky top-0 z-[60] bg-tk-bg-surface pt-4 -mt-6 -mx-6 px-6 mb-6 border-b border-[#E2E8F0] dark:border-tk-border shadow-sm">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 relative">
+      <div className="sticky top-0 z-[60] bg-white/80 dark:bg-tk-bg-surface/80 backdrop-blur-2xl pt-6 -mt-6 -mx-6 px-8 mb-8 border-b border-[#E2E8F0] dark:border-tk-border shadow-[0_4px_20px_rgb(0,0,0,0.03)] transition-all duration-300">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 relative">
           
-          <div className="flex-1 w-full flex justify-start pb-2 sm:pb-3">
-            <h1 className="text-2xl font-extrabold text-[#1A202C] font-['Outfit',sans-serif] dark:text-white tracking-tight">
+          <div className="flex-1 w-full flex justify-start pb-2 sm:pb-4">
+            <h1 className="text-3xl font-extrabold bg-gradient-to-r from-tk-burgundy to-[#1A202C] dark:from-white dark:to-tk-text-secondary bg-clip-text text-transparent font-['Outfit',sans-serif] tracking-tight">
               Restaurant Profile
             </h1>
           </div>
 
-          <div className="flex justify-center gap-8 shrink-0">
+          <div className="flex justify-center gap-2 shrink-0 bg-slate-100/50 dark:bg-tk-bg-elevated/50 p-1 rounded-xl backdrop-blur-md border border-[#E2E8F0]/50 dark:border-tk-border/50">
             <button
-              className={`pb-3 px-2 border-b-2 -mb-[2px] sm:-mb-[14px] text-[14px] font-bold font-['Outfit',sans-serif] transition-colors ${activeTab === "details"
-                ? "border-tk-burgundy text-tk-burgundy"
-                : "border-transparent text-[#4A5568] hover:text-[#1A202C] dark:text-tk-text-secondary dark:hover:text-tk-text"
+              className={`px-6 py-2 rounded-lg text-[14px] font-bold font-['Outfit',sans-serif] transition-all duration-300 ${activeTab === "details"
+                ? "bg-white dark:bg-tk-bg-surface text-tk-burgundy shadow-sm ring-1 ring-[#E2E8F0] dark:ring-tk-border"
+                : "bg-transparent text-[#4A5568] hover:text-[#1A202C] dark:text-tk-text-secondary dark:hover:text-tk-text"
                 }`}
               onClick={() => setActiveTab("details")}
             >
               Details
             </button>
             <button
-              className={`pb-3 px-2 border-b-2 -mb-[2px] sm:-mb-[14px] text-[14px] font-bold font-['Outfit',sans-serif] transition-colors ${activeTab === "operations"
-                ? "border-tk-burgundy text-tk-burgundy"
-                : "border-transparent text-[#4A5568] hover:text-[#1A202C] dark:text-tk-text-secondary dark:hover:text-tk-text"
+              className={`px-6 py-2 rounded-lg text-[14px] font-bold font-['Outfit',sans-serif] transition-all duration-300 ${activeTab === "operations"
+                ? "bg-white dark:bg-tk-bg-surface text-tk-burgundy shadow-sm ring-1 ring-[#E2E8F0] dark:ring-tk-border"
+                : "bg-transparent text-[#4A5568] hover:text-[#1A202C] dark:text-tk-text-secondary dark:hover:text-tk-text"
                 }`}
               onClick={() => setActiveTab("operations")}
             >
@@ -1562,7 +1591,7 @@ const ProfilePage: React.FC = () => {
             </button>
           </div>
 
-          <div className="flex-1 w-full flex items-center justify-end gap-3 shrink-0 pb-2 sm:pb-3 hidden sm:flex">
+          <div className="flex-1 w-full flex items-center justify-end gap-3 shrink-0 pb-2 sm:pb-4 hidden sm:flex">
             <button
               className="relative h-10 px-4 rounded-xl bg-white dark:bg-tk-bg-elevated text-[#E53E3E] border border-[#E53E3E]/20 flex items-center justify-center cursor-pointer shadow-[0_2px_8px_rgba(229,62,62,0.08)] overflow-hidden transition-all duration-300 z-10 before:absolute before:inset-0 before:w-full before:h-full before:bg-[#E53E3E] before:-z-10 before:-translate-x-full before:transition-transform before:duration-300 hover:before:translate-x-0 hover:text-white hover:shadow-[0_8px_16px_rgba(229,62,62,0.3)] hover:-translate-y-0.5 active:translate-y-0 font-bold font-['Outfit',sans-serif] text-[13px] tracking-wide"
               title="Sign Out"
@@ -1573,7 +1602,7 @@ const ProfilePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Mobile sign out button placed below if needed, or we can just leave it inline. Since sm:flex is applied to the container, it's fine. */}
+        {/* Mobile sign out button */}
         <div className="flex w-full items-center justify-end pb-3 sm:hidden mt-2">
             <button
               className="relative h-10 px-4 rounded-xl bg-white dark:bg-tk-bg-elevated text-[#E53E3E] border border-[#E53E3E]/20 flex items-center justify-center cursor-pointer shadow-[0_2px_8px_rgba(229,62,62,0.08)] overflow-hidden transition-all duration-300 z-10 before:absolute before:inset-0 before:w-full before:h-full before:bg-[#E53E3E] before:-z-10 before:-translate-x-full before:transition-transform before:duration-300 hover:before:translate-x-0 hover:text-white hover:shadow-[0_8px_16px_rgba(229,62,62,0.3)] hover:-translate-y-0.5 active:translate-y-0 font-bold font-['Outfit',sans-serif] text-[13px] tracking-wide"
@@ -1616,25 +1645,14 @@ const ProfilePage: React.FC = () => {
         </div>
       )}
 
-      <div className="flex flex-col gap-8 w-full min-h-[100vh]" style={{ display: "block" }}>
+      <div className="flex flex-col gap-4 w-full min-h-[100vh]" style={{ display: "block" }}>
         {renderRestaurantProfileContent()}
 
         {/* Admin Profile Section */}
         {activeTab === "details" && (
-          <>
-            <div
-              style={{
-                width: "100%",
-                height: "1px",
-                background: "#E2E8F0",
-                margin: "40px 0 20px 0",
-              }}
-              className="dark:bg-tk-border"
-            />
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              {renderAdminReadOnly()}
-            </div>
-          </>
+          <div className="w-full">
+            {renderAdminReadOnly()}
+          </div>
         )}
       </div>
 
