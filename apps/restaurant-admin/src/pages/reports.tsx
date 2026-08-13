@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { formatDayMonth, formatDateRange, formatMonthYearLong, formatMonthYearCompact, formatWeekday, formatDate } from '@restaurant-saas/types';
+import { formatDayMonth, formatMonthYearLong, formatMonthYearCompact, formatWeekday, formatDate } from '@restaurant-saas/types';
 import { Download, Calendar, Info, ChevronLeft, ChevronRight, ChevronDown, Check, X, Eye, TrendingUp } from 'lucide-react';
 import RevenueOrdersModal from '../components/RevenueOrdersModal';
 import './reports.css';
