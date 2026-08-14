@@ -138,6 +138,7 @@ export interface Restaurant {
   subscriptionStatus?: string;
   subscriptionType?: string | null;
   subscriptionEndAt?: IsoDateString | null;
+  gracePeriodEndsAt?: IsoDateString | null;
   profileUrls?: string[] | null;
   location?: {
     latitude?: number | null;

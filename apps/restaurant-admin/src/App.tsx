@@ -39,11 +39,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
-    return (
-      <Layout>
-        <DashboardSkeleton />
-      </Layout>
-    );
+    return <PageLoader />;
   }
 
   if (!isAuthenticated) {
@@ -51,9 +47,9 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <StatusGuard>
-      <Layout>{children}</Layout>
-    </StatusGuard>
+    <Layout>
+      <StatusGuard>{children}</StatusGuard>
+    </Layout>
   );
 }
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
+import { formatDateShort } from '@restaurant-saas/types';
 import {
     QrCode, Download, RefreshCw, Plus, Search, Filter,
     Loader2, CheckCircle, AlertCircle, Unlink, Link,
@@ -503,7 +504,7 @@ export default function QrTokens({ setSyncAction }: { setSyncAction?: (s: any) =
                                             )}
                                         </td>
                                         <td className="px-4 py-3 text-text-muted text-xs hidden lg:table-cell">
-                                            {new Date(token.created_at).toLocaleDateString()}
+                                            {formatDateShort(token.created_at)}
                                         </td>
                                         <td className="px-4 py-3">
                                             <div className="flex items-center justify-end gap-1.5">

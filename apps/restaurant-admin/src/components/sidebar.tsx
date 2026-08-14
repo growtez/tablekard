@@ -414,7 +414,7 @@ const Sidebar: React.FC = () => {
         </button>
 
         <div className="flex-1 w-full overflow-y-auto no-scrollbar flex flex-col">
-          <div className={`flex flex-col items-center mb-5 shrink-0 ${isCollapsed ? 'mt-6' : 'mt-2'}`}>
+          <div className={`flex flex-col items-center mb-3 shrink-0 ${isCollapsed ? 'mt-6' : 'mt-2'}`}>
             <div className={`relative flex items-center justify-center mb-2 shrink-0 ${isCollapsed && !isMobile ? 'w-10 h-10' : 'w-14 h-14'}`}>
               <button
                 type="button"
@@ -452,7 +452,7 @@ const Sidebar: React.FC = () => {
               />
 
             </div>
-            <div className="w-full h-9 flex items-start justify-center shrink-0">
+            <div className="w-full min-h-[36px] flex items-start justify-center shrink-0">
               {showLabels && (
                 <div className="text-tk-text text-[14px] font-semibold text-center px-1 leading-tight">
                   {activeRestaurantName}
@@ -467,7 +467,7 @@ const Sidebar: React.FC = () => {
               return (
                 <Tooltip key={item.id} text={item.label} showTooltip={isCollapsed && !isMobile}>
                   <div
-                    className={`flex items-center rounded-tk-md cursor-pointer transition-all duration-200 text-[13px] border-[1px] gap-2 p-2 ${isActive ? 'bg-tk-burgundy text-white font-semibold border-tk-burgundy shadow-[0_4px_12px_rgba(139,58,30,0.25)]' : 'text-tk-text-secondary border-transparent hover:bg-tk-burgundy-bg hover:text-tk-burgundy hover:border-tk-burgundy/15 font-medium'}`}
+                    className={`flex items-center rounded-tk-md cursor-pointer transition-all duration-200 text-[13px] border-[1px] gap-2 py-1.5 px-2 ${isActive ? 'bg-tk-burgundy text-white font-semibold border-tk-burgundy shadow-[0_4px_12px_rgba(139,58,30,0.25)]' : 'text-tk-text-secondary border-transparent hover:bg-tk-burgundy-bg hover:text-tk-burgundy hover:border-tk-burgundy/15 font-medium'}`}
                     onClick={() => handleNavClick(item)}
                   >
                     <span className="w-6 h-6 flex items-center justify-center shrink-0">{item.icon(isActive)}</span>

@@ -60,9 +60,14 @@ function getStatusInfo(restaurant: Restaurant | null): {
     }
 
     const restStatus = (restaurant.status || '').toLowerCase();
+    const subStatus = (restaurant.subscriptionStatus || '').toLowerCase();
 
     if (restStatus === 'suspended') {
         return { label: 'Suspended', status: 'inactive', icon: <PauseCircle size={48} className="text-tk-error" />, message: 'Your restaurant has been suspended by administration. Service is halted.' };
+    }
+
+    if (subStatus === 'suspended') {
+        return { label: 'Billing Suspended', status: 'inactive', icon: <PauseCircle size={48} className="text-tk-error" />, message: 'Your access to the platform has been restricted because your subscription is suspended. Please renew your plan to regain full access.' };
     }
 
     if (restStatus === 'rejected') {
@@ -77,13 +82,13 @@ function getStatusInfo(restaurant: Restaurant | null): {
         return { label: 'Approved', status: 'inactive', icon: <CheckCircle size={48} className="text-tk-success" />, message: 'Your restaurant has been approved! Select a plan below to get started.' };
     }
 
-    if (restaurant.subscriptionStatus !== 'active' && restaurant.subscriptionStatus !== 'trial' && restStatus !== 'active') {
+    if (restaurant.subscriptionStatus !== 'active' && restaurant.subscriptionStatus !== 'trial' && restaurant.subscriptionStatus !== 'expired' && restStatus !== 'active') {
         return { label: 'Inactive', status: 'inactive', icon: <PauseCircle size={48} className="text-tk-text-secondary" />, message: 'Your subscription is inactive. Choose a plan to get started.' };
     }
 
     const now = new Date();
     const endAt = restaurant.subscriptionEndAt;
-    const graceEnd = (restaurant as any).gracePeriodEndsAt;
+    const graceEnd = restaurant.gracePeriodEndsAt;
 
     if (restaurant.subscriptionStatus === 'trial') {
         const days = endAt ? daysUntil(endAt) : 0;
@@ -97,7 +102,7 @@ function getStatusInfo(restaurant: Restaurant | null): {
         };
     }
 
-    if (endAt && new Date(endAt) > now) {
+    if (endAt && new Date(endAt) > now && restaurant.subscriptionStatus !== 'expired') {
         // Still within the paid subscription period
         const days = daysUntil(endAt);
         return {
@@ -110,7 +115,11 @@ function getStatusInfo(restaurant: Restaurant | null): {
         };
     }
 
-    if (graceEnd && new Date(graceEnd) > now) {
+    // Grace period: detected by DB status (cron has run) OR by timestamps (cron hasn't run yet)
+    const isExpiredByDB = restaurant.subscriptionStatus === 'expired';
+    const isExpiredByTime = endAt && new Date(endAt) <= now;
+
+    if ((isExpiredByDB || isExpiredByTime) && graceEnd && new Date(graceEnd) > now) {
         // Subscription ended but within 3-day grace period
         const graceDays = daysUntil(graceEnd);
         return {
@@ -119,6 +128,11 @@ function getStatusInfo(restaurant: Restaurant | null): {
             icon: <Timer size={48} className="text-tk-error" />,
             message: `Your subscription has expired. You have ${graceDays} day${graceDays !== 1 ? 's' : ''} remaining before services are suspended. Renew now to avoid interruption!`,
         };
+    }
+
+    if (isExpiredByDB) {
+        // subscription_status is 'expired' but grace period has also passed (shouldn't normally happen — cron would suspend)
+        return { label: 'Expired', status: 'expired', icon: <AlertTriangle size={48} className="text-tk-error" />, message: 'Your subscription has expired. Renew to continue using all features.' };
     }
 
     if (restStatus === 'active') {

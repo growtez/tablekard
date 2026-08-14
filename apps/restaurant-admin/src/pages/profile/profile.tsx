@@ -218,7 +218,7 @@ const Row = ({
 );
 
 const ProfilePage: React.FC = () => {
-  const { user, userProfile, activeRestaurantId, refreshSessionData, signOut } =
+  const { user, userProfile, activeRestaurantId, activeRestaurantStatus, refreshSessionData, signOut } =
     useAuth();
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [restaurantForm, setRestaurantForm] =
@@ -234,6 +234,8 @@ const ProfilePage: React.FC = () => {
     tone: "success" | "error" | "info";
     message: string;
   } | null>(null);
+
+  const isRejected = (activeRestaurantStatus || 'pending').toLowerCase() === 'rejected';
 
   useEffect(() => {
     if (feedback) {
@@ -769,7 +771,7 @@ const ProfilePage: React.FC = () => {
         </h3>
         {description && <p className="text-[13px] text-slate-500 mt-1 dark:text-tk-text-secondary">{description}</p>}
       </div>
-      {sectionId && editingSection !== sectionId && (
+      {sectionId && editingSection !== sectionId && !isRejected && (
         <button
           className="mt-3 sm:mt-0 px-4 py-2 bg-white dark:bg-tk-bg-elevated border border-[#E2E8F0] dark:border-tk-border rounded-lg text-[#4A5568] hover:text-tk-burgundy hover:border-tk-burgundy hover:bg-tk-burgundy/5 hover:shadow-sm dark:text-tk-text-secondary dark:hover:text-tk-burgundy font-semibold text-[13px] flex items-center justify-center gap-1.5 transition-all"
           onClick={() => {
@@ -1029,7 +1031,7 @@ const ProfilePage: React.FC = () => {
                     ? ` (${restaurant.subscriptionType})`
                     : ""}
                 </span>
-                {(restaurant?.subscriptionStatus !== 'active' && restaurant?.subscriptionStatus !== 'trial') && (
+                {(restaurant?.subscriptionStatus !== 'active' && restaurant?.subscriptionStatus !== 'trial' && !isRejected) && (
                   <Link
                     to="/subscription"
                     className="text-tk-burgundy hover:text-[#6B2A15] text-[13px] font-semibold underline underline-offset-2 decoration-tk-burgundy/30 hover:decoration-tk-burgundy transition-colors"
@@ -1613,6 +1615,31 @@ const ProfilePage: React.FC = () => {
             </button>
         </div>
       </div>
+
+      {isRejected && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 p-5 mb-8 rounded-2xl flex items-start gap-4">
+          <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-500/20 flex items-center justify-center shrink-0">
+            <AlertTriangle className="text-red-600 dark:text-red-400" size={20} />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-red-800 dark:text-red-400 font-bold text-lg mb-2 font-['Outfit',sans-serif]">Registration Rejected</h3>
+            <p className="text-red-700/90 dark:text-red-300/90 text-[14px] mb-3">
+              Unfortunately, your restaurant registration was not approved. Your profile is currently in read-only mode. 
+              If you believe this was a mistake, please contact our support team:
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-6 mt-2">
+              <a href="mailto:support@tablekard.com" className="flex items-center gap-2 text-red-800 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 font-semibold text-[14px] transition-colors">
+                <MailIcon size={16} />
+                support@tablekard.com
+              </a>
+              <a href="tel:+919876543210" className="flex items-center gap-2 text-red-800 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 font-semibold text-[14px] transition-colors">
+                <PhoneIcon size={16} />
+                +91 98765 43210
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
 
       {feedback && (
         <div
