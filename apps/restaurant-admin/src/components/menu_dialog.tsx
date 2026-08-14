@@ -54,6 +54,7 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, onAddC
 
   const [newTag, setNewTag] = useState('');
   const [isVariantModalOpen, setIsVariantModalOpen] = useState(false);
+  const [editingVariantIndex, setEditingVariantIndex] = useState<number | null>(null);
   const [variantFormData, setVariantFormData] = useState<Variant>({ name: '', price: 0, serves: '1', preparation_time: '' });
   const [newAddon, setNewAddon] = useState<Addon>({ name: '', price: 0 });
   const [isAddingCategory, setIsAddingCategory] = useState(false);
@@ -285,10 +286,19 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, onAddC
     setFormData(prev => ({ ...prev, tags: prev.tags.filter(t => t !== tag) }));
   };
 
-  const addVariant = () => {
+  const saveVariant = () => {
     if (!variantFormData.name) return;
-    setFormData(prev => ({ ...prev, variants: [...prev.variants, { ...variantFormData }] }));
+    if (editingVariantIndex !== null) {
+      setFormData(prev => {
+        const updated = [...prev.variants];
+        updated[editingVariantIndex] = { ...variantFormData };
+        return { ...prev, variants: updated };
+      });
+    } else {
+      setFormData(prev => ({ ...prev, variants: [...prev.variants, { ...variantFormData }] }));
+    }
     setVariantFormData({ name: '', price: 0, serves: '1', preparation_time: '' });
+    setEditingVariantIndex(null);
     setIsVariantModalOpen(false);
   };
 
@@ -623,12 +633,24 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, onAddC
             {formData.variants.length > 0 && (
               <div className="flex flex-col gap-2.5 mb-2.5">
                 {formData.variants.map((v, idx) => (
-                  <div key={idx} className="flex flex-col gap-1.5 bg-[#8B3A26]/5 dark:bg-rose-900/10 rounded-xl p-3.5 px-4 border border-[#8B3A26]/20 dark:border-rose-800/30 transition-all duration-200 hover:bg-[#8B3A26]/10 shadow-sm">
+                  <div 
+                    key={idx} 
+                    className="flex flex-col gap-1.5 bg-[#8B3A26]/5 dark:bg-rose-900/10 rounded-xl p-3.5 px-4 border border-[#8B3A26]/20 dark:border-rose-800/30 transition-all duration-200 hover:bg-[#8B3A26]/10 shadow-sm cursor-pointer group"
+                    onClick={() => {
+                      setEditingVariantIndex(idx);
+                      setVariantFormData({ ...v });
+                      setIsVariantModalOpen(true);
+                    }}
+                  >
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-[15px] font-bold text-[#8B3A26] dark:text-rose-400">{v.name}</span>
+                      <span className="text-[15px] font-bold text-[#8B3A26] dark:text-rose-400 group-hover:underline">{v.name}</span>
                       <div className="flex items-center gap-3">
                         <span className="text-[14px] font-bold text-tk-text bg-white dark:bg-tk-bg shadow-sm px-3 py-1 rounded-lg border border-tk-border">₹{v.price}</span>
-                        <button type="button" onClick={() => removeVariant(idx)} className="bg-white dark:bg-tk-bg-elevated border border-tk-border cursor-pointer text-red-500 p-1.5 rounded-lg flex items-center transition-all duration-200 hover:bg-red-50 hover:border-red-200 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:border-red-800 shadow-sm">
+                        <button 
+                          type="button" 
+                          onClick={(e) => { e.stopPropagation(); removeVariant(idx); }} 
+                          className="bg-white dark:bg-tk-bg-elevated border border-tk-border cursor-pointer text-red-500 p-1.5 rounded-lg flex items-center transition-all duration-200 hover:bg-red-50 hover:border-red-200 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:border-red-800 shadow-sm"
+                        >
                           <Trash2 size={15} />
                         </button>
                       </div>
@@ -645,7 +667,11 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, onAddC
             )}
             <button 
               type="button" 
-              onClick={() => setIsVariantModalOpen(true)}
+              onClick={() => {
+                setEditingVariantIndex(null);
+                setVariantFormData({ name: '', price: 0, serves: '1', preparation_time: '' });
+                setIsVariantModalOpen(true);
+              }}
               className="flex items-center justify-center gap-2 p-3 bg-[#8B3A26] text-white border-none rounded-xl cursor-pointer transition-colors duration-200 hover:bg-[#732F1E] w-full text-sm font-medium"
             >
               <Plus size={16} />
@@ -709,29 +735,55 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, onAddC
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium text-tk-text-secondary">Serves</label>
-              <input
-                type="number"
-                name="serves"
-                value={formData.serves}
-                onChange={handleChange}
-                className="p-3 px-4 border-2 border-tk-border bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.1)] placeholder:text-tk-text-muted"
-                placeholder="1"
-                min="1"
-                onWheel={(e) => e.currentTarget.blur()}
-              />
+              <div className="relative group w-full">
+                <input
+                  type="number"
+                  name="serves"
+                  value={formData.serves}
+                  onChange={handleChange}
+                  className={`p-3 px-4 border-2 bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none placeholder:text-tk-text-muted disabled:opacity-50 disabled:bg-tk-bg disabled:cursor-not-allowed border-tk-border focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.1)]`}
+                  placeholder="1"
+                  min="1"
+                  onWheel={(e) => e.currentTarget.blur()}
+                  disabled={formData.variants.length > 0}
+                />
+                {formData.variants.length > 0 && (
+                  <>
+                    <div className="absolute inset-0 z-10 cursor-not-allowed" title="Remove all variants to edit serves"></div>
+                    <div className="absolute left-1/2 -top-12 -translate-x-1/2 px-4 py-2.5 bg-[#8B3A26] text-white text-xs font-medium rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform group-hover:-translate-y-1 pointer-events-none whitespace-nowrap z-50 flex items-center gap-2">
+                      <Info size={14} className="opacity-80" />
+                      <span>Remove all variants to edit serves</span>
+                      <div className="absolute left-1/2 -bottom-1.5 -translate-x-1/2 border-[6px] border-transparent border-t-[#8B3A26]"></div>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium text-tk-text-secondary">Prep Time (mins)</label>
-              <input
-                type="number"
-                name="preparation_time"
-                value={formData.preparation_time}
-                onChange={handleChange}
-                className="p-3 px-4 border-2 border-tk-border bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.1)] placeholder:text-tk-text-muted"
-                placeholder="e.g. 15"
-                min="1"
-                onWheel={(e) => e.currentTarget.blur()}
-              />
+              <div className="relative group w-full">
+                <input
+                  type="number"
+                  name="preparation_time"
+                  value={formData.preparation_time}
+                  onChange={handleChange}
+                  className={`p-3 px-4 border-2 bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none placeholder:text-tk-text-muted disabled:opacity-50 disabled:bg-tk-bg disabled:cursor-not-allowed border-tk-border focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(104,211,145,0.1)]`}
+                  placeholder="e.g. 15"
+                  min="1"
+                  onWheel={(e) => e.currentTarget.blur()}
+                  disabled={formData.variants.length > 0}
+                />
+                {formData.variants.length > 0 && (
+                  <>
+                    <div className="absolute inset-0 z-10 cursor-not-allowed" title="Remove all variants to edit prep time"></div>
+                    <div className="absolute left-1/2 -top-12 -translate-x-1/2 px-4 py-2.5 bg-[#8B3A26] text-white text-xs font-medium rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform group-hover:-translate-y-1 pointer-events-none whitespace-nowrap z-50 flex items-center gap-2">
+                      <Info size={14} className="opacity-80" />
+                      <span>Remove all variants to edit prep time</span>
+                      <div className="absolute left-1/2 -bottom-1.5 -translate-x-1/2 border-[6px] border-transparent border-t-[#8B3A26]"></div>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
@@ -1033,7 +1085,7 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, onAddC
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-5 px-6 border-b border-tk-border flex justify-between items-center bg-tk-bg">
-              <h2 className="m-0 text-xl font-bold text-tk-text tracking-tight">Add Variant</h2>
+              <h2 className="m-0 text-xl font-bold text-tk-text tracking-tight">{editingVariantIndex !== null ? 'Edit Variant' : 'Add Variant'}</h2>
               <button 
                 onClick={() => setIsVariantModalOpen(false)}
                 className="bg-transparent border-none cursor-pointer p-2 rounded-full flex items-center justify-center text-tk-text-secondary transition-all duration-200 hover:bg-tk-border hover:text-tk-text hover:rotate-90"
@@ -1104,11 +1156,11 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, onAddC
               </button>
               <button 
                 type="button"
-                onClick={addVariant}
+                onClick={saveVariant}
                 disabled={!variantFormData.name}
                 className="px-6 py-2.5 rounded-xl font-semibold cursor-pointer transition-transform duration-200 hover:-translate-y-0.5 shadow-[0_4px_12px_rgba(0,0,0,0.1)] bg-[#8B3A26] text-white border-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 hover:bg-[#732F1E]"
               >
-                Add Variant
+                {editingVariantIndex !== null ? 'Save Changes' : 'Add Variant'}
               </button>
             </div>
           </div>

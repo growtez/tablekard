@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useRestaurant } from '../context/RestaurantContext';
 import { useCart } from '../context/CartContext';
-import { getMenuItems, getFavorites, addFavorite, removeFavoriteFromDB } from '../services/supabaseService';
+import { getMenuItems, getFavorites, addFavorite, removeFavoriteFromDB, processMenuItem } from '../services/supabaseService';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import ItemModal from '../components/ItemModal';
 import { Loader2 } from 'lucide-react';
@@ -39,32 +39,7 @@ const SearchPage = () => {
     useEffect(() => {
         if (!restaurantId) return;
         getMenuItems(restaurantId).then(items => {
-            const processedItems = items.map(m => {
-                const images = (m.menu_item_images || []).sort((a, b) => a.sort_order - b.sort_order);
-                const primaryImage = images.length > 0 ? images[0].image_url : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop';
-                return {
-                    id: m.id,
-                    name: m.name,
-                    price: m.variants && m.variants.length > 0 ? Math.min(...m.variants.map(v => v.price)) : m.price,
-                    time: m.preparation_time ? `${m.preparation_time}min` : '15min',
-                    rating: '4.5',
-                    ratingCount: 0,
-                    serves: `Serves ${m.serves || 1}`,
-                    image: primaryImage,
-                    images: images.map(img => img.image_url),
-                    description: m.long_description || m.short_description || '',
-                    dietType: m.is_veg ? 'veg' : 'non-veg',
-                    modelUrl: m.model_url || null,
-                    variants: (m.variants || []).map((v, i) => ({
-                        ...v,
-                        _key: v.id ?? `${v.name}_${v.price}_${i}`,
-                    })),
-                    addons: (m.addons || []).map((a, i) => ({
-                        ...a,
-                        _key: a.id ?? `${a.name}_${a.price}_${i}`,
-                    }))
-                };
-            });
+            const processedItems = items.map(m => processMenuItem(m));
             setAllItems(processedItems);
         }).catch(err => console.error("Error fetching menu items:", err));
     }, [restaurantId]);
@@ -257,13 +232,13 @@ const SearchPage = () => {
 
                                                 {/* Description */}
                                                 <p className="rec-desc">
-                                                    {item.description || 'A chef-curated delight'}
+                                                    {item.shortDesc || item.description || 'A chef-curated delight'}
                                                 </p>
 
                                                 {/* Price + Time + Add */}
                                                 <div className="rec-bottom-row">
                                                     <div className="rec-left-info">
-                                                        <span className="rec-price">₹{item.price}</span>
+                                                        <span className="rec-price">₹{item.variants && item.variants.length > 0 ? Math.min(...item.variants.map(v => v.price)) : item.price}</span>
                                                     </div>
 
                                                     {getItemQuantity(item.id) === 0 ? (
@@ -343,9 +318,9 @@ const SearchPage = () => {
                                                 <span className="menu-new-badge">NEW</span>
                                             )}
                                         </div>
-                                        <p className="sr-desc">{item.description || 'A chef-curated delight'}</p>
+                                        <p className="sr-desc">{item.shortDesc || item.description || 'A chef-curated delight'}</p>
                                         <div className="sr-bottom">
-                                            <span className="sr-price">₹{item.price}</span>
+                                            <span className="sr-price">₹{item.variants && item.variants.length > 0 ? Math.min(...item.variants.map(v => v.price)) : item.price}</span>
                                             {getItemQuantity(item.id) === 0 ? (
                                                 <button
                                                     className="sr-add-btn"

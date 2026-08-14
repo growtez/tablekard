@@ -202,10 +202,16 @@ const ItemModal = ({ isOpen, onClose, item, favorites, onToggleFavorite, initial
                                 color="#8B3A1E"
                             />
                         </button>
-                        <div className="dish-rating-pill">
-                            <Star size={10} fill="#8B3A1E" color="#8B3A1E" />
-                            <span>{item.rating || '4.5'}</span>
-                        </div>
+                        {item.ratingCount > 0 ? (
+                            <div className="dish-rating-pill">
+                                <Star size={10} fill="#8B3A1E" color="#8B3A1E" />
+                                <span>{item.rating}</span>
+                            </div>
+                        ) : (
+                            <div className="dish-rating-pill" style={{ background: '#8B3A1E', color: '#FFF' }}>
+                                <span>NEW</span>
+                            </div>
+                        )}
                     </div>
 
                     {/* Dish Info — Full Detail */}
@@ -213,8 +219,8 @@ const ItemModal = ({ isOpen, onClose, item, favorites, onToggleFavorite, initial
                         <h2 className="dish-title">{item.name}</h2>
 
                         <div className="dish-meta-chips">
-                            <span className="meta-chip"><Clock size={13} />{item.time || '15min'}</span>
-                            <span className="meta-chip"><Users size={13} /> {item.serves || 1}</span>
+                            <span className="meta-chip"><Clock size={13} />{selectedVariant?.preparation_time ? `${selectedVariant.preparation_time}min` : (item.time || '15min')}</span>
+                            <span className="meta-chip"><Users size={13} /> {selectedVariant?.serves ? `Serves ${selectedVariant.serves}` : (item.serves || 1)}</span>
                             {item.dietType === 'vegan' && (
                                 <span className="meta-chip vegan">Vegan</span>
                             )}
@@ -335,7 +341,23 @@ const ItemModal = ({ isOpen, onClose, item, favorites, onToggleFavorite, initial
                                                     <div className="custom-radio">
                                                         {isActive && <div className="custom-radio-inner" />}
                                                     </div>
-                                                    <span className="customization-option-name">{v.name}</span>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                        <span className="customization-option-name">{v.name}</span>
+                                                        {(v.preparation_time || v.serves) && (
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: '#888' }}>
+                                                                {v.preparation_time && (
+                                                                    <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                                                        <Clock size={10} /> {v.preparation_time} min
+                                                                    </span>
+                                                                )}
+                                                                {v.serves && (
+                                                                    <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                                                        <Users size={10} /> Serves {v.serves}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                                 <span className="customization-option-price">₹{v.price}</span>
                                             </div>
