@@ -1,5 +1,50 @@
 import { supabase } from '@restaurant-saas/supabase';
 
+export const processMenuItem = (m) => {
+    const images = (m.menu_item_images || []).sort((a, b) => a.sort_order - b.sort_order);
+    const primaryImage = images.length > 0 ? images[0].image_url : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop';
+    
+    let timeStr = m.preparation_time ? `${m.preparation_time}min` : '15min';
+    let servesStr = m.serves ? `Serves ${m.serves}` : 'Serves 1';
+
+    if (m.variants && m.variants.length > 0) {
+        const lowestPriceVariant = m.variants.reduce((prev, curr) => (prev.price < curr.price) ? prev : curr);
+        if (lowestPriceVariant.preparation_time) {
+            timeStr = `${lowestPriceVariant.preparation_time}min`;
+        }
+        if (lowestPriceVariant.serves) {
+            servesStr = `Serves ${lowestPriceVariant.serves}`;
+        }
+    }
+
+    return {
+        id: m.id,
+        name: m.name,
+        shortDesc: m.short_description || m.description?.substring(0, 80) || '',
+        description: m.long_description || m.description || '',
+        price: m.discount_price || m.price,
+        originalPrice: m.discount_price ? m.price : null,
+        time: timeStr,
+        rating: '4.5',
+        ratingCount: 0,
+        serves: servesStr,
+        image: primaryImage,
+        images: images.map(img => img.image_url),
+        dietType: m.is_veg ? 'veg' : 'non-veg',
+        tags: m.tags || [],
+        variants: (m.variants || []).map((v, i) => ({
+            ...v,
+            _key: v.id ?? `${v.name}_${v.price}_${i}`,
+        })),
+        addons: (m.addons || []).map((a, i) => ({
+            ...a,
+            _key: a.id ?? `${a.name}_${a.price}_${i}`,
+        })),
+        modelUrl: m.model_url || null,
+        isAvailable: m.is_available,
+        raw: m // Include raw just in case
+    };
+};
 
 export const getRestaurantById = async (id) => {
     const { data, error } = await supabase
@@ -275,22 +320,7 @@ export const getRecentOrderedItems = async (userId, restaurantId = null, limit =
     
     for (const row of data) {
         if (row.menu_items && !seenIds.has(row.menu_item_id)) {
-            const m = row.menu_items;
-            const item = {
-                id: m.id,
-                name: m.name,
-                price: m.price,
-                time: m.preparation_time ? `${m.preparation_time}min` : '15min',
-                rating: '4.5', // Default rating fallback
-                ratingCount: 0,
-                serves: `Serves ${m.serves || 1}`,
-                image: m.menu_item_images?.[0]?.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
-                images: m.menu_item_images?.map(img => img.image_url) || [],
-                description: m.long_description || m.short_description || '',
-                dietType: m.is_veg ? 'veg' : 'non-veg',
-                variants: m.variants || [],
-                addons: m.addons || []
-            };
+            const item = processMenuItem(row.menu_items);
             items.push(item);
             seenIds.add(row.menu_item_id);
         }
@@ -373,18 +403,23 @@ export const getBeveragesForCart = async (restaurantId, limit = 5) => {
 };
 
 // Favorites
-export const getFavorites = async (userId) => {
-    const { data, error } = await supabase
+export const getFavorites = async (userId, restaurantId = null) => {
+    let query = supabase
         .from('favorites')
         .select(`
             menu_item_id,
-            menu_items (
+            menu_items!inner (
                 *,
                 menu_item_images (image_url, sort_order)
             )
         `)
         .eq('user_id', userId);
+        
+    if (restaurantId) {
+        query = query.eq('menu_items.restaurant_id', restaurantId);
+    }
     
+    const { data, error } = await query;
     if (error) throw error;
     return data.map(f => f.menu_items);
 };
@@ -409,38 +444,44 @@ export const removeFavoriteFromDB = async (userId, menuItemId) => {
     return true;
 };
 
-export const getUserStats = async (userId) => {
+export const getUserStats = async (userId, restaurantId = null) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const isoToday = today.toISOString();
 
     try {
         // 1. Fetch Today's Orders
-        const { count: todaysOrders, error: err1 } = await supabase
+        let q1 = supabase
             .from('orders')
             .select('*', { count: 'exact', head: true })
             .eq('customer_id', userId)
             .gte('created_at', isoToday);
+        if (restaurantId) q1 = q1.eq('restaurant_id', restaurantId);
 
+        const { count: todaysOrders, error: err1 } = await q1;
         if (err1) throw err1;
 
         // 2. Fetch Total Spent (Sum of 'total' column)
-        const { data: orders, error: err2 } = await supabase
+        let q2 = supabase
             .from('orders')
             .select('total')
             .eq('customer_id', userId)
-            .not('status', 'eq', 'cancelled'); // Don't count cancelled orders
+            .not('status', 'eq', 'cancelled');
+        if (restaurantId) q2 = q2.eq('restaurant_id', restaurantId);
 
+        const { data: orders, error: err2 } = await q2;
         if (err2) throw err2;
 
         const totalSpent = (orders || []).reduce((sum, order) => sum + (parseFloat(order.total) || 0), 0);
 
         // 3. Fetch Favorites Count
-        const { count: favoriteItems, error: err3 } = await supabase
+        let q3 = supabase
             .from('favorites')
-            .select('*', { count: 'exact', head: true })
+            .select('*, menu_items!inner(restaurant_id)', { count: 'exact', head: true })
             .eq('user_id', userId);
+        if (restaurantId) q3 = q3.eq('menu_items.restaurant_id', restaurantId);
 
+        const { count: favoriteItems, error: err3 } = await q3;
         if (err3) throw err3;
 
         return {
@@ -457,6 +498,7 @@ export const getUserStats = async (userId) => {
         };
     }
 };
+
 
 // Mathematical ML Recommendation (JavaScript Native Implementation)
 export const getRecommendedItems = async (userId, restaurantId) => {
@@ -547,28 +589,17 @@ export const getRecommendedItems = async (userId, restaurantId) => {
 
         const processMenuItems = (items) => {
             return items.map(m => {
-                // Calculate average rating from DB or provide a high-quality fallback for new items
+                const processed = processMenuItem(m);
                 const avgRating = itemRatings[m.id] 
                     ? (itemRatings[m.id].total / itemRatings[m.id].count).toFixed(1) 
                     : '4.5';
 
                 return {
-                    id: m.id,
-                    name: m.name,
-                    price: m.price,
-                    time: m.preparation_time ? `${m.preparation_time}min` : '15min',
+                    ...processed,
                     rating: avgRating, // Dynamically fetched from Database feedback!
                     ratingCount: itemRatings[m.id]?.count || 0,
-                    serves: `Serves ${m.serves || 1}`,
-                    image: m.menu_item_images?.[0]?.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
-                    images: m.menu_item_images?.map(img => img.image_url) || [],
-                    description: m.long_description || m.short_description || '',
-                    dietType: m.is_veg ? 'veg' : 'non-veg',
-                    modelUrl: m.model_url || null,
                     salesCount: itemOrderCounts[m.id] || 0,
                     weeklySalesCount: itemWeeklyOrderCounts[m.id] || 0,
-                    variants: m.variants || [],
-                    addons: m.addons || []
                 };
             });
         };
@@ -659,25 +690,16 @@ export const getRecommendedItems = async (userId, restaurantId) => {
 };
 
 // ── Helper shared by home page functions ─────────────────────────────────────
-const normalizeHomeItem = (m, discountLabel = null) => ({
-    id: m.id,
-    name: m.name,
-    price: m.price,
-    time: m.preparation_time ? `${m.preparation_time}min` : '15min',
-    rating: (4.5 + Math.random() * 0.4).toFixed(1),
-    serves: `Serves ${m.serves || 1}`,
-    image: m.menu_item_images?.[0]?.image_url
-        || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
-    images: m.menu_item_images?.map(img => img.image_url) || [],
-    description: m.long_description || m.short_description || '',
-    dietType: m.is_veg ? 'veg' : 'non-veg',
-    modelUrl: m.model_url || null,
-    discount: discountLabel
-        || (m.discount_price ? `${Math.round(((m.price - m.discount_price) / m.price) * 100)}% OFF` : null),
-    timer: null,
-    variants: m.variants || [],
-    addons: m.addons || []
-});
+const normalizeHomeItem = (m, discountLabel = null) => {
+    const processed = processMenuItem(m);
+    return {
+        ...processed,
+        rating: (4.5 + Math.random() * 0.4).toFixed(1),
+        discount: discountLabel
+            || (m.discount_price ? `${Math.round(((m.price - m.discount_price) / m.price) * 100)}% OFF` : null),
+        timer: null
+    };
+};
 
 /**
  * Fetch items for the Discounts carousel on the home page.
@@ -801,16 +823,7 @@ export const getOffersForCustomer = async (restaurantId, limit = 20) => {
         if (validOffers.length > 0) {
             return validOffers.map(o => {
                 const m = o.menu_items;
-                const originalPrice = m.price;
-                const offerPrice = o.discount_price;
-                const savingPct = originalPrice > 0
-                    ? Math.round(((originalPrice - offerPrice) / originalPrice) * 100)
-                    : 0;
-
-                // Sort images by sort_order
-                const images = (m.menu_item_images || []).sort(
-                    (a, b) => a.sort_order - b.sort_order
-                );
+                const processed = processMenuItem(m);
 
                 return {
                     // IDs — use offer id as the primary key so each card is unique
@@ -819,27 +832,23 @@ export const getOffersForCustomer = async (restaurantId, limit = 20) => {
 
                     // Display fields
                     name: m.name,
-                    subtitle: o.title,           // offer title shown as subtitle
-                    price: offerPrice,           // the discounted price shown prominently
-                    originalPrice: originalPrice,
-                    discount: o.title,           // badge text taken directly from offers.title
+                    price: o.discount_price,
+                    originalPrice: m.price,
+                    discount: o.title,
                     timer: o.valid_until
                         ? `Until ${new Date(o.valid_until).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}`
                         : null,
-
-                    // Meta
-                    time: m.preparation_time ? `${m.preparation_time}min` : '15min',
-                    rating: '4.5',
-                    ratingCount: 0,
-                    serves: `Serves ${m.serves || 1}`,
-                    image: images[0]?.image_url
-                        || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
-                    images: images.map(img => img.image_url) || [],
-                    description: m.long_description || m.short_description || '',
-                    dietType: m.is_veg ? 'veg' : 'non-veg',
-                    modelUrl: m.model_url || null,
-                    variants: m.variants || [],
-                    addons: m.addons || [],
+                    
+                    // Mix in processed fields (like dynamic time, serves, images, etc.)
+                    time: processed.time,
+                    serves: processed.serves,
+                    image: processed.image,
+                    images: processed.images,
+                    description: processed.description,
+                    dietType: processed.dietType,
+                    modelUrl: processed.modelUrl,
+                    variants: processed.variants,
+                    addons: processed.addons
                 };
             });
         }

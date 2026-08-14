@@ -74,6 +74,19 @@ const MenuPage = () => {
               .map(item => {
                 const images = (item.menu_item_images || []).sort((a, b) => a.sort_order - b.sort_order);
                 const primaryImage = images.length > 0 ? images[0].image_url : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop';
+                let timeStr = item.preparation_time ? `${item.preparation_time}min` : '15min';
+                let servesStr = item.serves ? `Serves ${item.serves}` : 'Serves 1';
+
+                if (item.variants && item.variants.length > 0) {
+                  const lowestPriceVariant = item.variants.reduce((prev, curr) => (prev.price < curr.price) ? prev : curr);
+                  if (lowestPriceVariant.preparation_time) {
+                      timeStr = `${lowestPriceVariant.preparation_time}min`;
+                  }
+                  if (lowestPriceVariant.serves) {
+                      servesStr = `Serves ${lowestPriceVariant.serves}`;
+                  }
+                }
+
                 return {
                   id: item.id,
                   name: item.name,
@@ -81,10 +94,10 @@ const MenuPage = () => {
                   description: item.long_description || item.description || '',
                   price: item.discount_price || item.price,
                   originalPrice: item.discount_price ? item.price : null,
-                  time: item.preparation_time ? `${item.preparation_time}min` : '15min',
+                  time: timeStr,
                   rating: '4.5',
                   ratingCount: 0,
-                  serves: item.serves ? `Serves ${item.serves}` : 'Serves 1',
+                  serves: servesStr,
                   image: primaryImage,
                   images: images.map(img => img.image_url),
                   dietType: item.is_veg ? 'veg' : 'non-veg',
@@ -122,17 +135,16 @@ const MenuPage = () => {
     loadMenu();
 
     // Load favorites from DB if logged in
-    const loadFavorites = async () => {
-      if (isAuthenticated && user) {
-        try {
-          const data = await getFavorites(user.id);
-          setFavorites(data.map(f => f.id));
-        } catch (err) {
-          console.error('Failed to load favorites:', err);
-        }
+    const fetchFavorites = async () => {
+      if (!isAuthenticated || !user) return;
+      try {
+        const data = await getFavorites(user.id, restaurant?.id);
+        setFavorites(data.map(item => item.id));
+      } catch (err) {
+        console.error('Failed to load favorites:', err);
       }
     };
-    loadFavorites();
+    fetchFavorites();
 
     // 4. Real-time subscription for menu_items availability changes
     const subscription = supabase
@@ -155,6 +167,19 @@ const MenuPage = () => {
               updated[catName] = updated[catName].map(item => {
                 // UPDATE: item exists in state and matches the changed row
                 if (eventType === 'UPDATE' && newRow && item.id === newRow.id) {
+                  let timeStr = newRow.preparation_time ? `${newRow.preparation_time}min` : '15min';
+                  let servesStr = newRow.serves ? `Serves ${newRow.serves}` : 'Serves 1';
+
+                  if (newRow.variants && newRow.variants.length > 0) {
+                    const lowestPriceVariant = newRow.variants.reduce((prev, curr) => (prev.price < curr.price) ? prev : curr);
+                    if (lowestPriceVariant.preparation_time) {
+                        timeStr = `${lowestPriceVariant.preparation_time}min`;
+                    }
+                    if (lowestPriceVariant.serves) {
+                        servesStr = `Serves ${lowestPriceVariant.serves}`;
+                    }
+                  }
+
                   return {
                     ...item,
                     name: newRow.name,
@@ -162,8 +187,8 @@ const MenuPage = () => {
                     description: newRow.long_description || newRow.description || '',
                     price: newRow.discount_price || newRow.price,
                     originalPrice: newRow.discount_price ? newRow.price : null,
-                    time: newRow.preparation_time ? `${newRow.preparation_time}min` : '15min',
-                    serves: newRow.serves ? `Serves ${newRow.serves}` : 'Serves 1',
+                    time: timeStr,
+                    serves: servesStr,
                     dietType: newRow.is_veg ? 'veg' : 'non-veg',
                     tags: newRow.tags || [],
                     variants: newRow.variants || [],

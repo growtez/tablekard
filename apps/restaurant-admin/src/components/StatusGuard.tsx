@@ -72,24 +72,28 @@ export default function StatusGuard({ children }: { children: React.ReactNode })
     return (
         <div className="relative w-full h-full flex flex-col min-h-screen">
             {isTrial && (
-                <div className="bg-blue-600 text-white text-[13px] font-medium py-2.5 px-4 text-center flex items-center justify-center gap-2 z-[100] relative shadow-sm shrink-0 font-sans">
-                    <AlertCircle size={16} />
-                    <span>You are currently on a Free Trial.</span>
-                    <Link to="/subscription" className="underline hover:text-blue-100 ml-1">
+                <div className="bg-blue-600 text-white text-[13px] font-medium py-2.5 px-4 text-center flex items-center justify-center gap-4 z-10 relative shadow-sm shrink-0 font-sans w-full -mt-6 mb-6 max-md:mt-0 rounded-b-md sm:rounded-md">
+                    <div className="flex items-center gap-2">
+                        <AlertCircle size={16} />
+                        <span>You are currently on a Free Trial.</span>
+                    </div>
+                    <Link to="/subscription" className="bg-white text-blue-700 hover:bg-blue-50 font-semibold py-1 px-3 rounded-md text-xs transition-colors shadow-sm">
                         Upgrade your plan
                     </Link>
                 </div>
             )}
             {isExpired && !isTrial && (
-                <div className="bg-amber-600 text-white text-[13px] font-medium py-2.5 px-4 text-center flex items-center justify-center gap-2 z-[100] relative shadow-sm shrink-0 font-sans">
-                    <AlertCircle size={16} />
-                    <span>Your subscription has expired. Renew now to avoid suspension.</span>
-                    <Link to="/subscription" className="underline hover:text-amber-100 ml-1">
+                <div className="bg-amber-600 text-white text-[13px] font-medium py-2.5 px-4 text-center flex items-center justify-center gap-4 z-10 relative shadow-sm shrink-0 font-sans w-full -mt-6 mb-6 max-md:mt-0 rounded-b-md sm:rounded-md">
+                    <div className="flex items-center gap-2">
+                        <AlertCircle size={16} />
+                        <span>Your subscription has expired. Renew now to avoid suspension.</span>
+                    </div>
+                    <Link to="/subscription" className="bg-white text-amber-700 hover:bg-amber-50 font-semibold py-1 px-3 rounded-md text-xs transition-colors shadow-sm">
                         Go to Billing
                     </Link>
                 </div>
             )}
-            <div className="flex-1 flex flex-col relative z-0">
+            <div className="flex-1 flex flex-col">
                 {children}
             </div>
         </div>

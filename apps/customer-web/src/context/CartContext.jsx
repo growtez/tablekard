@@ -98,7 +98,8 @@ export function CartProvider({ children }) {
                 basePrice: basePrice,
                 image: item.image_url || item.image,
                 rating: item.rating || '4.5',
-                serves: item.serves || '1',
+                serves: selectedVariant?.serves ? `Serves ${selectedVariant.serves}` : (item.serves || '1'),
+                time: selectedVariant?.preparation_time ? `${selectedVariant.preparation_time}min` : (item.time || '15min'),
                 quantity: 1,
                 variant: selectedVariant,
                 configurations: [{ addons: selectedAddons, addonsPrice }]

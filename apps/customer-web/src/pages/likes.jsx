@@ -4,6 +4,7 @@ import { useNavigate, NavLink } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { useRestaurant } from '../context/RestaurantContext';
 import { getFavorites, removeFavoriteFromDB } from '../services/supabaseService';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import ItemModal from '../components/ItemModal';
@@ -12,6 +13,7 @@ import './likes.css';
 const LikesPage = () => {
     const navigate = useNavigate();
     const { user, isAuthenticated } = useAuth();
+    const { restaurant } = useRestaurant();
     const { cartItems, addToCart, removeFromCart, getItemQuantity, cartTotal, cartSubtotal } = useCart();
 
     const [favorites, setFavorites] = useState([]);
@@ -47,33 +49,8 @@ const LikesPage = () => {
             }
 
             try {
-                const data = await getFavorites(user.id);
-                // Map database items to UI format
-                const mapped = data.map(item => {
-                    const images = (item.menu_item_images || []).sort((a, b) => a.sort_order - b.sort_order);
-                    const primaryImage = images.length > 0 ? images[0].image_url : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop';
-                    
-                    return {
-                        id: item.id,
-                        name: item.name,
-                        description: item.short_description || item.long_description || item.description || '',
-                        price: item.discount_price || (item.variants && item.variants.length > 0 ? Math.min(...item.variants.map(v => v.price)) : item.price),
-                        rating: '4.5',
-                        ratingCount: 0,
-                        serves: item.serves || '1',
-                        image: primaryImage,
-                        raw: item, // Keep raw data for cart
-                        variants: (item.variants || []).map((v, i) => ({
-                            ...v,
-                            _key: v.id ?? `${v.name}_${v.price}_${i}`,
-                        })),
-                        addons: (item.addons || []).map((a, i) => ({
-                            ...a,
-                            _key: a.id ?? `${a.name}_${a.price}_${i}`,
-                        }))
-                    };
-                });
-                setFavorites(mapped);
+                const data = await getFavorites(user.id, restaurant?.id);
+                setFavorites(data);
             } catch (err) {
                 console.error('Failed to fetch favorites:', err);
             } finally {
@@ -82,7 +59,7 @@ const LikesPage = () => {
         };
 
         fetchFavorites();
-    }, [isAuthenticated, user]);
+    }, [isAuthenticated, user, restaurant?.id]);
 
     const handleItemClick = (item) => {
         setSelectedItem(item);

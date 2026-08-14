@@ -3,6 +3,7 @@ import { formatDateTimeShort } from '@restaurant-saas/types';
 import { ArrowLeft, Star, Send, ThumbsUp, Edit3, Calendar, ShoppingBag, ChevronRight, Loader2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useRestaurant } from '../context/RestaurantContext';
 import { getOrderHistory, submitFeedback } from '../services/supabaseService';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { supabase } from '@restaurant-saas/supabase';
@@ -12,6 +13,7 @@ const FeedbackPage = () => {
     const navigate = useNavigate();
     const { orderId: paramOrderId } = useParams();
     const { user, isAuthenticated } = useAuth();
+    const { restaurant } = useRestaurant();
 
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -32,7 +34,7 @@ const FeedbackPage = () => {
         if (!user) return;
         try {
             setLoading(true);
-            const data = await getOrderHistory(user.id);
+            const data = await getOrderHistory(user.id, restaurant?.id);
             // Filter only orders that are ready, served, or completed for review
             setOrders(data.filter(o => 
                 ['ready', 'READY', 'served', 'SERVED', 'completed', 'COMPLETED'].includes(o.status)

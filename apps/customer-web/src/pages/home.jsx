@@ -141,7 +141,7 @@ const HomePage = () => {
                 if (user?.id) {
                     const [recent, favs] = await Promise.all([
                         getRecentOrderedItems(user.id, restaurant.id, 3),
-                        getFavorites(user.id)
+                        getFavorites(user.id, restaurant.id)
                     ]);
                     setRecentOrders(recent || []);
                     setFavorites(favs?.map(f => f.id) || []);
@@ -503,6 +503,10 @@ const HomePage = () => {
                                                 <Clock size={12} color="#666666" />
                                                 <span>{offer.time}</span>
                                             </div>
+                                            <div className="discount-time">
+                                                <Users size={12} color="#666666" />
+                                                <span>{offer.serves}</span>
+                                            </div>
                                             {offer.ratingCount > 0 ? (
                                                 <div className="discount-rating">
                                                     <Star size={12} fill="#8B3A1E" color="#8B3A1E" />
@@ -553,7 +557,14 @@ const HomePage = () => {
                                 <div className="recent-info">
                                     <div className="recent-name">{item.name}</div>
                                     <div className="recent-meta">
-                                        <span>{item.time}</span>
+                                        <span className="recent-meta-item">
+                                            <Clock size={10} color="#888888" style={{ marginRight: '4px' }} />
+                                            {item.time}
+                                        </span>
+                                        <span className="recent-meta-item">
+                                            <Users size={10} color="#888888" style={{ marginRight: '4px', marginLeft: '4px' }} />
+                                            {item.serves}
+                                        </span>
                                         {item.ratingCount > 0 ? (
                                             <span className="rating">
                                                 <Star size={10} fill="#8B3A1E" color="#8B3A1E" />

@@ -328,6 +328,7 @@
     padding: 12px 14px 10px;
     gap: 2px;
     overflow: hidden;
+    text-align: left;
 }
 
 /* Name + Star row */
@@ -611,6 +612,7 @@
     flex-direction: column;
     padding: 10px 14px;
     gap: 2px;
+    text-align: left;
 }
 
 .sr-top {
@@ -745,10 +747,10 @@
 .search-no-results {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     padding: 72px 28px;
-    text-align: center;
+    text-align: left;
     gap: 12px;
 }
 

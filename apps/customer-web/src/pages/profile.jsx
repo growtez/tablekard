@@ -58,7 +58,7 @@ const ProfilePage = () => {
 
       // Then fetch heavy stats
       try {
-        const stats = await getUserStats(user.id);
+        const stats = await getUserStats(user.id, restaurant?.id);
         setUserProfile(prev => ({ ...prev, stats }));
       } catch (err) {
         console.error('Failed to load profile stats:', err);
