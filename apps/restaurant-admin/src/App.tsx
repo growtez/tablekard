@@ -51,9 +51,9 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <StatusGuard>
-      <Layout>{children}</Layout>
-    </StatusGuard>
+    <Layout>
+      <StatusGuard>{children}</StatusGuard>
+    </Layout>
   );
 }
 

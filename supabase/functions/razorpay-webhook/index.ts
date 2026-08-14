@@ -195,7 +195,7 @@ serve(async (req: Request) => {
                         .eq("id", restaurantId)
                         .single();
 
-                    if (restaurant && ["approved", "active"].includes(restaurant.status)) {
+                    if (restaurant && ["approved", "active", "suspended"].includes(restaurant.status)) {
                         let startsAt;
                         if (
                             restaurant.status === "active" &&
