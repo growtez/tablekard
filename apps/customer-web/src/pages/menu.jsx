@@ -104,11 +104,11 @@ const MenuPage = () => {
                   tags: item.tags || [],
                   variants: (item.variants || []).map((v, i) => ({
                     ...v,
-                    _key: v.id ?? `${v.name}_${v.price}_${i}`,
+                    _key: v.id ?? v.name ?? `${v.name}_${v.price}_${i}`,
                   })),
                   addons: (item.addons || []).map((a, i) => ({
                     ...a,
-                    _key: a.id ?? `${a.name}_${a.price}_${i}`,
+                    _key: a.id ?? a.name ?? `${a.name}_${a.price}_${i}`,
                   })),
                   modelUrl: item.model_url || null,
                   isAvailable: item.is_available,
@@ -645,8 +645,8 @@ const MenuPage = () => {
       )}
 
       {/* Modern Frosted Glow Cart Indicator */}
-      {cartTotal > 0 && !(showItemModal && !isVariantSheetOpen) && (
-        <NavLink to="/orders" className="cart-modern-glow">
+      {cartTotal > 0 && (!showItemModal || isVariantSheetOpen) && (
+        <NavLink to="/orders" className={`cart-modern-glow ${isVariantSheetOpen ? 'above-variant-sheet' : ''}`}>
           <div className="glow-content">
             <div className="glow-badge">
               <ShoppingCart size={16} strokeWidth={3} />

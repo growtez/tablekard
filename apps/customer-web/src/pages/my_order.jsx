@@ -791,7 +791,7 @@ const MyOrderPage = () => {
                           )}
                           <div className="cart-serves">
                             <Users size={12} />
-                            <span>{item.serves}</span>
+                            <span>{item.variant?.serves ? (item.variant.serves.toString().includes('Serves') ? item.variant.serves : `Serves ${item.variant.serves}`) : (item.serves?.toString().includes('Serves') ? item.serves : `Serves ${item.serves || '1'}`)}</span>
                           </div>
                         </div>
                         {/* Row 3: qty + price */}
@@ -1137,6 +1137,12 @@ const MyOrderPage = () => {
                                       <div className="oi-extra-name">
                                         <span className="oi-extra-badge">Variant</span>
                                         <span>{item.variant.name}</span>
+                                        {item.variant.serves && (
+                                          <span style={{ fontSize: '11px', color: '#666', background: '#f5f5f5', padding: '2px 6px', borderRadius: '4px', marginLeft: '6px' }}>
+                                            <Users size={10} style={{ display: 'inline', marginRight: '3px', verticalAlign: '-1px' }}/>
+                                            {item.variant.serves}
+                                          </span>
+                                        )}
                                       </div>
                                       <div className="oi-extra-price-group">
                                         {item.quantity > 1 && (
