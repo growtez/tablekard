@@ -479,7 +479,7 @@
   flex: 1;
   overflow-y: auto;
   scrollbar-width: none;
-  padding: 4px 0 24px;
+  padding: 4px 0 90px;
 }
 
 .variant-sheet-scroll::-webkit-scrollbar {

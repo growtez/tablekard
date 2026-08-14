@@ -599,8 +599,8 @@ const HomePage = () => {
             </section>
 
             {/* Modern Frosted Glow Cart Indicator */}
-            {cartTotal > 0 && !(showItemModal && !isVariantSheetOpen) && (
-                <NavLink to="/orders" className="cart-modern-glow">
+            {cartTotal > 0 && (!showItemModal || isVariantSheetOpen) && (
+                <NavLink to="/orders" className={`cart-modern-glow ${isVariantSheetOpen ? 'above-variant-sheet' : ''}`}>
                     <div className="glow-content">
                         <div className="glow-badge">
                             <ShoppingCart size={16} strokeWidth={3} />

@@ -20,7 +20,7 @@ export function CartProvider({ children }) {
                     if (!item.configurations) {
                         const basePrice = item.variant ? item.variant.price : (item.price || 0);
                         const addonsPrice = (item.addons || []).reduce((sum, a) => sum + a.price, 0);
-                        const variantId = item.variant ? item.variant.id : '';
+                        const variantId = item.variant ? (item.variant.id || item.variant.name || item.variant._key || '') : '';
                         const expectedId = `${item.menuItemId || item.id.split('_')[0]}_${variantId}`;
                         
                         const existing = migrated.find(i => i.id === expectedId);
@@ -69,7 +69,7 @@ export function CartProvider({ children }) {
     }, [cartItems, orderSpecialInstructions]);
 
     const addToCart = (item, selectedVariant = null, selectedAddons = []) => {
-        const variantId = selectedVariant ? selectedVariant.id : '';
+        const variantId = selectedVariant ? (selectedVariant.id || selectedVariant.name || selectedVariant._key || '') : '';
         const compositeId = `${item.id}_${variantId}`;
 
         setCartItems(prev => {

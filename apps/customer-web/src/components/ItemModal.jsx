@@ -85,7 +85,7 @@ const ItemModal = ({ isOpen, onClose, item, favorites, onToggleFavorite, initial
     };
 
     const getSelectedCompositeId = () => {
-        const variantId = selectedVariant ? selectedVariant.id : '';
+        const variantId = selectedVariant ? (selectedVariant.id || selectedVariant.name || selectedVariant._key || '') : '';
         return `${item.id}_${variantId}`;
     };
 
