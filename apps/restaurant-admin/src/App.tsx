@@ -3,7 +3,6 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import Layout from "./components/Layout";
-import DashboardSkeleton from "./components/DashboardSkeleton";
 import StatusGuard from "./components/StatusGuard";
 
 // Lazy load page components

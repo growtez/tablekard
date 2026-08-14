@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLocation, Link, Navigate } from 'react-router-dom';
-import { AlertCircle, Lock, Ban, CreditCard } from 'lucide-react';
+import { AlertCircle, Ban, CreditCard } from 'lucide-react';
 
 export default function StatusGuard({ children }: { children: React.ReactNode }) {
     const { activeRestaurantStatus, activeRestaurantSubscriptionStatus } = useAuth();
