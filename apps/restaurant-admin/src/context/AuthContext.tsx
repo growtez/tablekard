@@ -101,12 +101,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         localStorage.setItem('active_restaurant_id', restaurantId);
     };
 
-    const syncMemberships = async (nextUser: User | null) => {
+    const syncMemberships = async (nextUser: User | null): Promise<string | null> => {
         if (!nextUser) {
             setUserProfile(null);
             setMemberships([]);
             setActiveRestaurantIdState(null);
-            return;
+            return null;
         }
 
         const [profile, membershipList] = await Promise.all([
@@ -130,21 +130,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
             setUserProfile(null);
             setMemberships([]);
             setActiveRestaurantIdState(null);
-            return;
+            return null;
         }
 
         setUserProfile(profile);
         setMemberships(membershipList);
 
         const stored = localStorage.getItem('active_restaurant_id');
+        let nextActiveId: string | null = null;
         if (stored && membershipList.some(m => m.restaurantId === stored)) {
-            setActiveRestaurantIdState(stored);
+            nextActiveId = stored;
         } else if (membershipList[0]?.restaurantId) {
-            setActiveRestaurantIdState(membershipList[0].restaurantId);
-            localStorage.setItem('active_restaurant_id', membershipList[0].restaurantId);
-        } else {
-            setActiveRestaurantIdState(null);
+            nextActiveId = membershipList[0].restaurantId;
+            localStorage.setItem('active_restaurant_id', nextActiveId);
         }
+        
+        setActiveRestaurantIdState(nextActiveId);
+        return nextActiveId;
     };
 
     // Fetch restaurant branding whenever activeRestaurantId changes
@@ -216,7 +218,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
             const currentUser = data.session?.user ?? null;
             if (!mounted) return;
             setUser(currentUser);
-            await syncMemberships(currentUser);
+            const activeId = await syncMemberships(currentUser);
+            if (activeId) {
+                await fetchRestaurantBranding(activeId);
+            }
             setLoading(false);
         };
 
@@ -250,30 +255,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
             throw error ?? new Error('Failed to sign in');
         }
 
-        const [profile, membershipList] = await Promise.all([
-            fetchProfile(data.user.id),
-            fetchMemberships(data.user.id)
-        ]);
-
-        const roleStr = String(profile?.role).toLowerCase();
-        const isAllowedRole = roleStr === 'restaurant_admin'
-            || roleStr === 'super_admin'
-            || profile?.role === UserRole.RESTAURANT_ADMIN
-            || profile?.role === UserRole.SUPER_ADMIN;
-
-        if (!isAllowedRole || membershipList.length === 0) {
-            await supabase.auth.signOut();
-            throw new Error('Access denied. Only restaurant administrators can access the admin panel.');
+        const activeId = await syncMemberships(data.user);
+        if (!activeId) {
+            throw new Error('Access denied. Only restaurant administrators with active accounts can access the admin panel.');
         }
 
-        setUserProfile(profile);
-        setMemberships(membershipList);
-        if (membershipList[0]?.restaurantId) {
-            setActiveRestaurantIdState(membershipList[0].restaurantId);
-            localStorage.setItem('active_restaurant_id', membershipList[0].restaurantId);
-        } else {
-            setActiveRestaurantIdState(null);
-        }
+        await fetchRestaurantBranding(activeId);
 
         return data.user;
     };

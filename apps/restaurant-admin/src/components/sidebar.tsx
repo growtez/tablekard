@@ -452,7 +452,7 @@ const Sidebar: React.FC = () => {
               />
 
             </div>
-            <div className="w-full h-9 flex items-start justify-center shrink-0">
+            <div className="w-full min-h-[36px] flex items-start justify-center shrink-0">
               {showLabels && (
                 <div className="text-tk-text text-[14px] font-semibold text-center px-1 leading-tight">
                   {activeRestaurantName}

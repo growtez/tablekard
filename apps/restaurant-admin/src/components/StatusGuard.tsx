@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, Link, Navigate } from 'react-router-dom';
 import { AlertCircle, Lock, Ban, CreditCard } from 'lucide-react';
 
 export default function StatusGuard({ children }: { children: React.ReactNode }) {
@@ -31,18 +31,7 @@ export default function StatusGuard({ children }: { children: React.ReactNode })
 
     if (status === 'rejected') {
         if (isProfilePage) return <>{children}</>;
-        return (
-            <div className="flex flex-col items-center justify-center h-[70vh] text-center px-4 font-sans">
-                <div className="w-16 h-16 bg-red-500/10 text-red-500 flex items-center justify-center rounded-full mb-6">
-                    <Lock size={32} />
-                </div>
-                <h1 className="text-2xl font-bold text-[#1E293B] mb-3">Registration Rejected</h1>
-                <p className="text-[#64748B] max-w-md">
-                    Unfortunately, your restaurant registration was not approved.
-                    Please contact our support team if you believe this was a mistake.
-                </p>
-            </div>
-        );
+        return <Navigate to="/profile" replace />;
     }
 
     // 2. Check Subscription Status (Billing) - Only applies if Account is Active
