@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { formatDateShort } from '@restaurant-saas/types';
-import { Search, Plus, Edit3, Trash2, Layers, Loader2, List, LayoutGrid, MoreVertical, ArrowUpDown, ChevronDown, ExternalLink, Clock } from 'lucide-react';
+import { Search, Plus, Edit3, Trash2, Layers, Loader2, List, LayoutGrid, MoreVertical, ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Clock } from 'lucide-react';
 import MenuDialog from '../components/menu_dialog';
 import CategoryDialog from '../components/category_dialog';
 import ManageCategoriesDialog from '../components/manage_categories_dialog';
@@ -63,6 +63,152 @@ const VariantSelector = ({ variants, selectedIndex, onChange }: { variants: any[
               <span className="opacity-70 shrink-0">₹{v.price}</span>
             </button>
           ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const MenuItemImageCarousel: React.FC<{
+  images?: { id?: string; url: string; sortOrder?: number }[];
+  name: string;
+  className?: string;
+  aspectRatioClass?: string;
+  showArrows?: boolean;
+  showDots?: boolean;
+}> = ({
+  images,
+  name,
+  className = '',
+  aspectRatioClass = 'aspect-[16/9]',
+  showArrows = true,
+  showDots = true,
+}) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const activeImages = images && images.length > 0 ? images : [];
+
+  const handleScroll = () => {
+    if (!scrollRef.current) return;
+    const { scrollLeft, offsetWidth } = scrollRef.current;
+    if (offsetWidth > 0) {
+      const newIndex = Math.round(scrollLeft / offsetWidth);
+      if (newIndex !== activeIndex && newIndex >= 0 && newIndex < activeImages.length) {
+        setActiveIndex(newIndex);
+      }
+    }
+  };
+
+  const scrollToImage = (index: number, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (!scrollRef.current) return;
+    const targetLeft = index * scrollRef.current.offsetWidth;
+    scrollRef.current.scrollTo({
+      left: targetLeft,
+      behavior: 'smooth'
+    });
+    setActiveIndex(index);
+  };
+
+  const handlePrev = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const nextIdx = Math.max(0, activeIndex - 1);
+    scrollToImage(nextIdx);
+  };
+
+  const handleNext = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const nextIdx = Math.min(activeImages.length - 1, activeIndex + 1);
+    scrollToImage(nextIdx);
+  };
+
+  if (activeImages.length === 0) {
+    return (
+      <div className={`w-full ${aspectRatioClass} rounded-[12px] bg-[#f5f5f5] dark:bg-tk-bg-surface overflow-hidden relative shadow-sm border-[2px] border-white dark:border-tk-bg-card shrink-0 flex items-center justify-center text-[32px] sm:text-[48px] ${className}`}>
+        🍽️
+      </div>
+    );
+  }
+
+  if (activeImages.length === 1) {
+    return (
+      <div className={`w-full ${aspectRatioClass} rounded-[12px] bg-[#f5f5f5] dark:bg-tk-bg-surface overflow-hidden relative shadow-sm border-[2px] border-white dark:border-tk-bg-card shrink-0 ${className}`}>
+        <img
+          src={activeImages[0].url}
+          alt={name}
+          className="w-full h-full object-cover"
+          loading="lazy"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className={`group/carousel relative w-full ${aspectRatioClass} rounded-[12px] bg-[#f5f5f5] dark:bg-tk-bg-surface overflow-hidden shadow-sm border-[2px] border-white dark:border-tk-bg-card shrink-0 ${className}`}>
+      {/* Scrollable image track */}
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="flex w-full h-full overflow-x-auto snap-x snap-mandatory scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] select-none"
+      >
+        {activeImages.map((img, idx) => (
+          <div
+            key={img.id || idx}
+            className="flex-none w-full h-full snap-center snap-always relative overflow-hidden"
+          >
+            <img
+              src={img.url}
+              alt={`${name} - photo ${idx + 1}`}
+              className="w-full h-full object-cover"
+              loading="lazy"
+              draggable={false}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* Navigation Arrows */}
+      {showArrows && activeIndex > 0 && (
+        <button
+          type="button"
+          onClick={handlePrev}
+          aria-label="Previous photo"
+          className="absolute left-1.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm flex items-center justify-center shadow-md transition-all opacity-0 group-hover/carousel:opacity-100 z-10 cursor-pointer"
+        >
+          <ChevronLeft size={14} strokeWidth={2.5} />
+        </button>
+      )}
+
+      {showArrows && activeIndex < activeImages.length - 1 && (
+        <button
+          type="button"
+          onClick={handleNext}
+          aria-label="Next photo"
+          className="absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm flex items-center justify-center shadow-md transition-all opacity-0 group-hover/carousel:opacity-100 z-10 cursor-pointer"
+        >
+          <ChevronRight size={14} strokeWidth={2.5} />
+        </button>
+      )}
+
+      {/* Photo Counter Pill & Dots */}
+      {showDots && (
+        <div className="absolute bottom-2 left-0 right-0 flex items-center justify-center gap-1 z-10 pointer-events-none">
+          <div className="flex items-center gap-1 bg-black/50 backdrop-blur-md px-2 py-0.5 rounded-full pointer-events-auto shadow-sm">
+            {activeImages.map((_, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={(e) => scrollToImage(idx, e)}
+                aria-label={`Go to photo ${idx + 1}`}
+                className={`transition-all rounded-full cursor-pointer ${
+                  idx === activeIndex
+                    ? 'w-3 h-1.5 bg-white shadow-sm'
+                    : 'w-1.5 h-1.5 bg-white/50 hover:bg-white/80'
+                }`}
+              />
+            ))}
+          </div>
         </div>
       )}
     </div>
@@ -831,14 +977,12 @@ const Menu: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Top Image */}
-                  <div className="w-full aspect-[16/9] rounded-[12px] bg-[#f5f5f5] dark:bg-tk-bg-surface overflow-hidden relative shadow-sm border-[2px] border-white dark:border-tk-bg-card shrink-0">
-                    {(item.images && item.images.length > 0) ? (
-                      <img src={item.images[0].url} alt={item.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-[48px]">🍽️</div>
-                    )}
-                  </div>
+                  {/* Top Image / Carousel */}
+                  <MenuItemImageCarousel
+                    images={item.images}
+                    name={item.name}
+                    aspectRatioClass="aspect-[16/9]"
+                  />
                   
                   {/* Content & Actions */}
                   <div className="flex-1 flex flex-col justify-between min-w-0">
@@ -966,11 +1110,14 @@ const Menu: React.FC = () => {
 
                       <div className="flex gap-3">
                         {/* Image */}
-                        <div className="w-16 h-16 rounded-xl bg-[#FFF5E6] flex items-center justify-center text-[24px] shadow-sm overflow-hidden shrink-0">
-                          {(item.images && item.images.length > 0) ? (
-                            <img src={item.images[0].url} alt={item.name} className="w-full h-full object-cover" />
-                          ) : '🍽️'}
-                        </div>
+                        <MenuItemImageCarousel
+                          images={item.images}
+                          name={item.name}
+                          aspectRatioClass=""
+                          className="w-16 h-16 rounded-xl border border-tk-border"
+                          showArrows={false}
+                          showDots={false}
+                        />
                         
                         {/* Details */}
                         <div className="flex-1 min-w-0 flex flex-col justify-center">
@@ -1051,11 +1198,14 @@ const Menu: React.FC = () => {
                         <tr key={item.id} className="border-b border-tk-border last:border-b-0 hover:bg-tk-bg-hover transition-colors group">
                           <td className="py-3 px-4">
                             <div className="flex items-start gap-4">
-                              <div className="w-14 h-14 rounded-xl bg-[#FFF5E6] flex items-center justify-center text-[24px] shadow-sm overflow-hidden shrink-0">
-                                {(item.images && item.images.length > 0) ? (
-                                  <img src={item.images[0].url} alt={item.name} className="w-full h-full object-cover" />
-                                ) : '🍽️'}
-                              </div>
+                              <MenuItemImageCarousel
+                                images={item.images}
+                                name={item.name}
+                                aspectRatioClass=""
+                                className="w-14 h-14 rounded-xl border border-tk-border"
+                                showArrows={false}
+                                showDots={false}
+                              />
                               <div className="flex flex-col justify-center">
                                 <div className="font-semibold text-[15px] text-tk-text flex items-center gap-2">
                                   {item.name}
