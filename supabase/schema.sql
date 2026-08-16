@@ -1115,7 +1115,7 @@ CREATE TABLE public.restaurants (
     facebook_url text,
     website_url text,
     subscription_end_at timestamp with time zone,
-    pay_online boolean DEFAULT true,
+    pay_online boolean DEFAULT false,
     profile_urls text[] DEFAULT ARRAY[]::text[],
     grace_period_ends_at timestamp with time zone,
     kitchen_app_enabled boolean DEFAULT true,
