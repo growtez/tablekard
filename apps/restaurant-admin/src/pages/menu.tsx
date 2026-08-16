@@ -705,13 +705,13 @@ const Menu: React.FC = () => {
         {/* Tab Navigation */}
         <div className="flex gap-1 bg-[#F7FAFC] dark:bg-tk-bg-elevated p-1 rounded-xl w-fit shrink-0">
           <button
-            className={`px-4 py-2 border-none bg-transparent rounded-lg text-sm font-semibold text-tk-text-secondary cursor-pointer transition-all duration-200 hover:text-[#4A5568] hover:bg-white/60 dark:hover:text-tk-text font-['Outfit'] ${activeTab === 'menu-items' ? '!bg-tk-bg-card !text-tk-text shadow-sm' : ''}`}
+            className={`px-4 py-2 border-none bg-transparent rounded-lg text-sm font-semibold text-tk-text-secondary cursor-pointer transition-all duration-200 hover:text-[#4A5568] hover:bg-white/60 dark:hover:text-tk-text ${activeTab === 'menu-items' ? '!bg-tk-bg-card !text-tk-text shadow-sm' : ''}`}
             onClick={() => setActiveTab('menu-items')}
           >
             Menu Items
           </button>
           <button
-            className={`px-4 py-2 border-none bg-transparent rounded-lg text-sm font-semibold text-tk-text-secondary cursor-pointer transition-all duration-200 hover:text-[#4A5568] hover:bg-white/60 dark:hover:text-tk-text font-['Outfit'] ${activeTab === 'offers' ? '!bg-tk-bg-card !text-tk-text shadow-sm' : ''}`}
+            className={`px-4 py-2 border-none bg-transparent rounded-lg text-sm font-semibold text-tk-text-secondary cursor-pointer transition-all duration-200 hover:text-[#4A5568] hover:bg-white/60 dark:hover:text-tk-text ${activeTab === 'offers' ? '!bg-tk-bg-card !text-tk-text shadow-sm' : ''}`}
             onClick={() => setActiveTab('offers')}
           >
             Offers
@@ -730,15 +730,15 @@ const Menu: React.FC = () => {
            <div className="hidden md:flex items-center gap-2">
              {activeTab === 'menu-items' && (
                <>
-                 <button className="flex items-center justify-center gap-1.5 px-4 py-2 bg-[#E2E8F0] dark:bg-tk-bg-hover text-tk-text border-none rounded-lg text-[13px] sm:text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-[#CBD5E0] dark:hover:bg-tk-border font-['Outfit']" onClick={() => setManageCategoriesDialogOpen(true)}>
+                 <button className="flex items-center justify-center gap-1.5 px-4 py-2 bg-[#E2E8F0] dark:bg-tk-bg-hover text-tk-text border-none rounded-lg text-[13px] sm:text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-[#CBD5E0] dark:hover:bg-tk-border" onClick={() => setManageCategoriesDialogOpen(true)}>
                    <Layers size={14} />
                    Manage Categories
                  </button>
-                 <button className="flex items-center justify-center gap-1.5 px-4 py-2 bg-tk-burgundy text-white border-none rounded-lg text-[13px] sm:text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-tk-burgundy/90 hover:-translate-y-[1px] font-['Outfit'] shadow-sm" onClick={handleAddMenuItem}>
+                 <button className="flex items-center justify-center gap-1.5 px-4 py-2 bg-tk-burgundy text-white border-none rounded-lg text-[13px] sm:text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-tk-burgundy/90 hover:-translate-y-[1px] shadow-sm" onClick={handleAddMenuItem}>
                    <Plus size={14} />
                    Add New Item
                  </button>
-                 <button className="flex items-center justify-center gap-1.5 px-4 py-2 bg-[#805AD5] text-white border-none rounded-lg text-[13px] sm:text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-[#6B46C1] hover:-translate-y-[1px] font-['Outfit'] shadow-sm" onClick={handlePreviewStore}>
+                 <button className="flex items-center justify-center gap-1.5 px-4 py-2 bg-[#805AD5] text-white border-none rounded-lg text-[13px] sm:text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-[#6B46C1] hover:-translate-y-[1px] shadow-sm" onClick={handlePreviewStore}>
                    <ExternalLink size={14} />
                    Preview Store
                  </button>
@@ -746,7 +746,7 @@ const Menu: React.FC = () => {
              )}
              {activeTab === 'offers' && (
                <>
-                 <button className="flex items-center justify-center gap-1.5 px-4 py-2 bg-tk-burgundy text-white border-none rounded-lg text-[13px] sm:text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-tk-burgundy/90 hover:-translate-y-[1px] font-['Outfit'] shadow-sm" onClick={handleAddOffer}>
+                 <button className="flex items-center justify-center gap-1.5 px-4 py-2 bg-tk-burgundy text-white border-none rounded-lg text-[13px] sm:text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-tk-burgundy/90 hover:-translate-y-[1px] shadow-sm" onClick={handleAddOffer}>
                    <Plus size={14} />
                    Add New Offer
                  </button>
@@ -1253,7 +1253,7 @@ const Menu: React.FC = () => {
                           </td>
                           <td className="py-3 px-4">
                             <div className="flex items-center justify-center gap-2 relative">
-                              <button className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-tk-bg-hover text-tk-text-secondary border-none rounded-lg text-[12px] font-semibold cursor-pointer transition-all duration-200 hover:bg-tk-border hover:text-tk-text font-['Outfit']" onClick={() => handleEditMenuItem(item)}>
+                              <button className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-tk-bg-hover text-tk-text-secondary border-none rounded-lg text-[12px] font-semibold cursor-pointer transition-all duration-200 hover:bg-tk-border hover:text-tk-text" onClick={() => handleEditMenuItem(item)}>
                                 <Edit3 size={14} />
                                 <span className="hidden sm:inline">Edit</span>
                               </button>
@@ -1290,7 +1290,7 @@ const Menu: React.FC = () => {
             </div>
           )}
           {visibleItemCount < filteredMenuItems.length && (
-            <div ref={loadMoreItemsRef} style={{ textAlign: 'center', padding: '16px', color: '#718096', fontSize: '12px', fontFamily: "'Outfit', sans-serif" }}>
+            <div ref={loadMoreItemsRef} style={{ textAlign: 'center', padding: '16px', color: '#718096', fontSize: '12px' }}>
               Loading more items...
             </div>
           )}
@@ -1345,11 +1345,11 @@ const Menu: React.FC = () => {
                         </label>
                       </div>
                       <div className="flex gap-2 w-full justify-end">
-                        <button className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-tk-bg-hover text-tk-text-secondary border-none rounded-lg text-[12px] font-semibold cursor-pointer transition-all duration-200 hover:bg-tk-border hover:text-tk-text font-['Outfit']" onClick={() => handleEditOffer(offer)}>
+                        <button className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-tk-bg-hover text-tk-text-secondary border-none rounded-lg text-[12px] font-semibold cursor-pointer transition-all duration-200 hover:bg-tk-border hover:text-tk-text" onClick={() => handleEditOffer(offer)}>
                           <Edit3 size={14} />
                           Edit
                         </button>
-                        <button className="flex items-center justify-center gap-1.5 px-3 py-1.5 border border-[#FC8181] rounded-lg bg-[#FEF2F2] text-[#E53E3E] text-[12px] font-semibold cursor-pointer transition-all duration-200 hover:bg-[#FED7D7] font-['Outfit']" onClick={() => handleDeleteOffer(offer.id)}>
+                        <button className="flex items-center justify-center gap-1.5 px-3 py-1.5 border border-[#FC8181] rounded-lg bg-[#FEF2F2] text-[#E53E3E] text-[12px] font-semibold cursor-pointer transition-all duration-200 hover:bg-[#FED7D7]" onClick={() => handleDeleteOffer(offer.id)}>
                           <Trash2 size={14} />
                           Delete
                         </button>
