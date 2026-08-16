@@ -3,8 +3,8 @@ import { supabase } from '../supabaseClient';
 import { formatDateShort } from '@restaurant-saas/types';
 import {
     QrCode, Download, RefreshCw, Plus, Search, Filter,
-    Loader2, CheckCircle, AlertCircle, Unlink, Link,
-    ChevronLeft, ChevronRight, X, Copy, Check, Trash2
+    Loader2, CheckCircle, AlertCircle, Unlink, Link as LinkIcon,
+    ChevronLeft, ChevronRight, X, Copy, Check, Trash2, Building2
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { jsPDF } from 'jspdf';
@@ -39,7 +39,7 @@ export const CARD_MM_H = 152.4;
 
 function generateTokenCode(prefix: string): string {
     let code = '';
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 16; i++) {
         code += CHARS[Math.floor(Math.random() * CHARS.length)];
     }
     return `${prefix}${code}`;
@@ -219,6 +219,18 @@ export default function QrTokens({ setSyncAction }: { setSyncAction?: (s: any) =
     const [genCapacity, setGenCapacity] = useState('');
     const [generating, setGenerating] = useState(false);
 
+    // Link modal
+    const [showLinkModal, setShowLinkModal] = useState(false);
+    const [linkTarget, setLinkTarget] = useState<QrToken | null>(null);
+    const [restaurants, setRestaurants] = useState<{ id: string; name: string }[]>([]);
+    const [loadingRestaurants, setLoadingRestaurants] = useState(false);
+    const [linkTokenId, setLinkTokenId] = useState<string>('');
+    const [linkRestaurantId, setLinkRestaurantId] = useState<string>('');
+    const [linkTableNo, setLinkTableNo] = useState<number>(1);
+    const [linkSeatCapacity, setLinkSeatCapacity] = useState<number>(4);
+    const [linking, setLinking] = useState(false);
+    const [linkError, setLinkError] = useState<string | null>(null);
+
     // Filter / search
     const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'assigned'>('all');
     const [search, setSearch] = useState('');
@@ -266,6 +278,179 @@ export default function QrTokens({ setSyncAction }: { setSyncAction?: (s: any) =
         fetchTokens();
         if (setSyncAction) setSyncAction({ onSync: fetchTokens, loading });
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Auto-suggest next table number when selected restaurant changes in Link modal
+    useEffect(() => {
+        if (!linkRestaurantId || !showLinkModal) return;
+        const fetchExistingTables = async () => {
+            try {
+                const { data } = await supabase
+                    .from('restaurant_tables')
+                    .select('table_number, capacity')
+                    .eq('restaurant_id', linkRestaurantId);
+                
+                if (data && data.length > 0) {
+                    if (!linkTarget || !linkTarget.assigned_table_id) {
+                        const existingTableNumbers = data.map((t: any) => t.table_number);
+                        const nextNum = Math.max(...existingTableNumbers) + 1;
+                        setLinkTableNo(nextNum);
+                    }
+                } else {
+                    if (!linkTarget || !linkTarget.assigned_table_id) {
+                        setLinkTableNo(1);
+                    }
+                }
+            } catch (e) {
+                console.warn('Failed to fetch restaurant tables:', e);
+            }
+        };
+        fetchExistingTables();
+    }, [linkRestaurantId, showLinkModal]);
+
+    // ── Open Link Modal ──
+    const openLinkModal = async (token?: QrToken) => {
+        setLinkError(null);
+        if (token) {
+            setLinkTarget(token);
+            setLinkTokenId(token.id);
+            setLinkRestaurantId(token.assigned_restaurant_id || '');
+            setLinkTableNo(token.restaurant_tables?.table_number || 1);
+            setLinkSeatCapacity(4);
+        } else {
+            setLinkTarget(null);
+            const availableTok = tokens.find(t => t.status === 'available');
+            setLinkTokenId(availableTok ? availableTok.id : (tokens[0]?.id || ''));
+            setLinkRestaurantId('');
+            setLinkTableNo(1);
+            setLinkSeatCapacity(4);
+        }
+        setShowLinkModal(true);
+
+        if (restaurants.length === 0) {
+            setLoadingRestaurants(true);
+            try {
+                const { data, error: resErr } = await supabase
+                    .from('restaurants')
+                    .select('id, name')
+                    .order('name', { ascending: true });
+                if (resErr) throw resErr;
+                setRestaurants(data || []);
+            } catch (err: any) {
+                setLinkError('Failed to load restaurants: ' + err.message);
+            } finally {
+                setLoadingRestaurants(false);
+            }
+        }
+    };
+
+    // ── Handle Link Form Submission ──
+    const handleLinkSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLinkError(null);
+
+        const tokenObj = linkTarget || tokens.find(t => t.id === linkTokenId);
+        if (!tokenObj) {
+            setLinkError('Please select a valid QR token.');
+            return;
+        }
+        if (!linkRestaurantId) {
+            setLinkError('Please select a restaurant.');
+            return;
+        }
+        if (linkTableNo < 1) {
+            setLinkError('Table number must be at least 1.');
+            return;
+        }
+        if (linkSeatCapacity < 1) {
+            setLinkError('Seat capacity must be at least 1.');
+            return;
+        }
+
+        setLinking(true);
+        try {
+            // 1. If token was previously assigned to another table, clear qr_token on that table
+            if (tokenObj.assigned_table_id) {
+                await supabase
+                    .from('restaurant_tables')
+                    .update({ qr_token: null })
+                    .eq('id', tokenObj.assigned_table_id);
+            }
+
+            // 2. Check if a table with (restaurant_id, table_number) already exists
+            const { data: existingTable, error: findErr } = await supabase
+                .from('restaurant_tables')
+                .select('id, qr_token, capacity')
+                .eq('restaurant_id', linkRestaurantId)
+                .eq('table_number', linkTableNo)
+                .maybeSingle();
+
+            if (findErr) throw findErr;
+
+            let targetTableId = existingTable?.id;
+
+            // If existing table had a DIFFERENT qr_token, free up that old token in qr_code_tokens
+            if (existingTable && existingTable.qr_token && existingTable.qr_token !== tokenObj.token) {
+                await supabase
+                    .from('qr_code_tokens')
+                    .update({
+                        status: 'available',
+                        assigned_restaurant_id: null,
+                        assigned_table_id: null,
+                        assigned_at: null
+                    })
+                    .eq('token', existingTable.qr_token);
+            }
+
+            if (existingTable) {
+                // Update existing table with new qr_token and seat capacity
+                const { error: updateTableErr } = await supabase
+                    .from('restaurant_tables')
+                    .update({
+                        qr_token: tokenObj.token,
+                        capacity: linkSeatCapacity,
+                        active: true
+                    })
+                    .eq('id', existingTable.id);
+                if (updateTableErr) throw updateTableErr;
+            } else {
+                // Create a new table for the restaurant
+                const { data: newTable, error: createTableErr } = await supabase
+                    .from('restaurant_tables')
+                    .insert({
+                        restaurant_id: linkRestaurantId,
+                        table_number: linkTableNo,
+                        capacity: linkSeatCapacity,
+                        qr_token: tokenObj.token,
+                        active: true
+                    })
+                    .select('id')
+                    .single();
+                if (createTableErr) throw createTableErr;
+                targetTableId = newTable.id;
+            }
+
+            // 3. Update token status in qr_code_tokens
+            const { error: updateTokenErr } = await supabase
+                .from('qr_code_tokens')
+                .update({
+                    status: 'assigned',
+                    assigned_restaurant_id: linkRestaurantId,
+                    assigned_table_id: targetTableId,
+                    assigned_at: new Date().toISOString()
+                })
+                .eq('id', tokenObj.id);
+
+            if (updateTokenErr) throw updateTokenErr;
+
+            await fetchTokens();
+            setShowLinkModal(false);
+            setLinkTarget(null);
+        } catch (err: any) {
+            setLinkError('Failed to link token: ' + err.message);
+        } finally {
+            setLinking(false);
+        }
+    };
 
     // ── Filtered + paginated tokens ──
     const filtered = tokens.filter(t => {
@@ -407,7 +592,7 @@ export default function QrTokens({ setSyncAction }: { setSyncAction?: (s: any) =
                     <h1 className="text-xl font-bold text-text-main">QR Tokens</h1>
                     <p className="text-sm text-text-muted mt-0.5">Generate and manage generic pre-printed QR codes for restaurants.</p>
                 </div>
-                <div className="flex gap-2 items-center">
+                <div className="flex gap-2 items-center flex-wrap">
                     <button
                         onClick={fetchTokens}
                         disabled={loading}
@@ -415,6 +600,13 @@ export default function QrTokens({ setSyncAction }: { setSyncAction?: (s: any) =
                     >
                         <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
                         Refresh
+                    </button>
+                    <button
+                        onClick={() => openLinkModal()}
+                        className="flex items-center gap-2 px-4 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold shadow-[0_2px_8px_rgba(37,99,235,0.3)]"
+                    >
+                        <LinkIcon size={16} />
+                        Link QR Token
                     </button>
                     <button
                         onClick={() => setShowGenModal(true)}
@@ -536,7 +728,7 @@ export default function QrTokens({ setSyncAction }: { setSyncAction?: (s: any) =
                                         </td>
                                         <td className="px-4 py-3">
                                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${token.status === 'available' ? 'bg-accent-primary/15 text-accent-primary' : 'bg-blue-500/15 text-blue-400'}`}>
-                                                {token.status === 'available' ? <CheckCircle size={10} /> : <Link size={10} />}
+                                                {token.status === 'available' ? <CheckCircle size={10} /> : <LinkIcon size={10} />}
                                                 {token.status}
                                             </span>
                                         </td>
@@ -559,6 +751,14 @@ export default function QrTokens({ setSyncAction }: { setSyncAction?: (s: any) =
                                         </td>
                                         <td className="px-4 py-3">
                                             <div className="flex items-center justify-end gap-1.5">
+                                                <button
+                                                    onClick={() => openLinkModal(token)}
+                                                    className="px-2.5 py-1.5 text-xs rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 transition-colors flex items-center gap-1 font-medium"
+                                                    title={token.status === 'assigned' ? 'Re-link / Edit Restaurant & Table' : 'Link QR token to a restaurant'}
+                                                >
+                                                    <LinkIcon size={12} />
+                                                    {token.status === 'assigned' ? 'Edit Link' : 'Link'}
+                                                </button>
                                                 <button
                                                     onClick={() => downloadQR(token, 'png')}
                                                     disabled={isDownloading}
@@ -690,6 +890,141 @@ export default function QrTokens({ setSyncAction }: { setSyncAction?: (s: any) =
                 </div>
             )}
 
+            {/* ── Link Token Modal ── */}
+            {showLinkModal && (
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[1000] p-4" onClick={() => setShowLinkModal(false)}>
+                    <div className="bg-surface border border-border rounded-2xl w-full max-w-md shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between p-6 border-b border-border">
+                            <div className="flex items-center gap-2.5">
+                                <div className="p-2 rounded-lg bg-blue-500/15 text-blue-400">
+                                    <LinkIcon size={18} />
+                                </div>
+                                <div>
+                                    <h2 className="font-bold text-text-main text-lg">Link QR Token to Restaurant</h2>
+                                    <p className="text-xs text-text-muted">Assign pre-printed QR code to a table</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowLinkModal(false)} className="text-text-muted hover:text-text-main"><X size={20} /></button>
+                        </div>
+                        
+                        <form onSubmit={handleLinkSubmit}>
+                            <div className="p-6 space-y-4">
+                                {linkError && (
+                                    <div className="flex items-center gap-2 px-3.5 py-2.5 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs">
+                                        <AlertCircle size={14} className="shrink-0" />
+                                        <span>{linkError}</span>
+                                    </div>
+                                )}
+
+                                {/* QR Token selection */}
+                                <div>
+                                    <label className="block text-xs font-semibold text-text-muted mb-1.5">QR Token Code *</label>
+                                    {linkTarget ? (
+                                        <div className="flex items-center justify-between px-3 py-2 bg-bg border border-border rounded-lg text-sm font-mono text-text-main font-semibold">
+                                            <span>{linkTarget.token}</span>
+                                            <span className={`text-[11px] px-2 py-0.5 rounded-full ${linkTarget.status === 'available' ? 'bg-accent-primary/15 text-accent-primary' : 'bg-blue-500/15 text-blue-400'}`}>
+                                                {linkTarget.status}
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <select
+                                            value={linkTokenId}
+                                            onChange={e => {
+                                                const tid = e.target.value;
+                                                setLinkTokenId(tid);
+                                                const selectedTok = tokens.find(t => t.id === tid);
+                                                if (selectedTok) {
+                                                    if (selectedTok.assigned_restaurant_id) setLinkRestaurantId(selectedTok.assigned_restaurant_id);
+                                                    if (selectedTok.restaurant_tables?.table_number) setLinkTableNo(selectedTok.restaurant_tables.table_number);
+                                                }
+                                            }}
+                                            required
+                                            className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main font-mono focus:outline-none focus:border-accent-primary/50"
+                                        >
+                                            <option value="">-- Select QR Token --</option>
+                                            {tokens.map(t => (
+                                                <option key={t.id} value={t.id}>
+                                                    {t.token} ({t.status}{t.restaurants ? ` - ${t.restaurants.name}` : ''})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    )}
+                                </div>
+
+                                {/* Select Restaurant */}
+                                <div>
+                                    <label className="block text-xs font-semibold text-text-muted mb-1.5">Select Restaurant *</label>
+                                    {loadingRestaurants ? (
+                                        <div className="flex items-center gap-2 px-3 py-2 bg-bg border border-border rounded-lg text-xs text-text-muted">
+                                            <Loader2 size={14} className="animate-spin" />
+                                            Loading restaurants...
+                                        </div>
+                                    ) : (
+                                        <select
+                                            value={linkRestaurantId}
+                                            onChange={e => setLinkRestaurantId(e.target.value)}
+                                            required
+                                            className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main focus:outline-none focus:border-accent-primary/50"
+                                        >
+                                            <option value="">-- Choose Restaurant --</option>
+                                            {restaurants.map(r => (
+                                                <option key={r.id} value={r.id}>{r.name}</option>
+                                            ))}
+                                        </select>
+                                    )}
+                                </div>
+
+                                {/* Table Number & Seat Capacity */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-text-muted mb-1.5">Table No. *</label>
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            value={linkTableNo}
+                                            onChange={e => setLinkTableNo(parseInt(e.target.value) || 1)}
+                                            required
+                                            className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main focus:outline-none focus:border-accent-primary/50"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-text-muted mb-1.5">Seat Capacity *</label>
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            value={linkSeatCapacity}
+                                            onChange={e => setLinkSeatCapacity(parseInt(e.target.value) || 1)}
+                                            required
+                                            className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main focus:outline-none focus:border-accent-primary/50"
+                                        />
+                                    </div>
+                                </div>
+                                <p className="text-[11px] text-text-muted leading-relaxed">
+                                    If Table #{linkTableNo} already exists for this restaurant, the QR token will be assigned to it and seat capacity updated. If not, a new table with {linkSeatCapacity} seats will be created automatically.
+                                </p>
+                            </div>
+
+                            <div className="flex gap-3 px-6 py-4 border-t border-border">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowLinkModal(false)}
+                                    className="flex-1 py-2 rounded-lg border border-border text-sm text-text-muted hover:bg-surface-hover transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={linking}
+                                    className="flex-1 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2 shadow-[0_2px_8px_rgba(37,99,235,0.3)]"
+                                >
+                                    {linking ? <><Loader2 size={14} className="animate-spin" />Linking...</> : 'Link Token'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
             {/* ── Unlink Confirm Modal ── */}
             {unlinkTarget && (
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[1000] p-4" onClick={() => setUnlinkTarget(null)}>
@@ -764,3 +1099,4 @@ export default function QrTokens({ setSyncAction }: { setSyncAction?: (s: any) =
         </div>
     );
 }
+

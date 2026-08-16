@@ -114,89 +114,211 @@ const SkeletonCard = () => (
     </div>
 );
 
-const downloadInvoice = (order) => {
+const getBase64ImageFromUrl = async (imageUrl) => {
+    const res = await fetch(imageUrl);
+    const blob = await res.blob();
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.addEventListener("load", () => resolve(reader.result), false);
+        reader.addEventListener("error", () => reject());
+        reader.readAsDataURL(blob);
+    });
+};
+
+const downloadInvoice = async (order) => {
     const doc = new jsPDF();
 
-    // Header
-    doc.setFontSize(22);
-    doc.setTextColor(139, 58, 30);
-    doc.text('TABLEKARD', 105, 20, { align: 'center' });
+    // Set colors
+    const primaryColor = [139, 58, 30]; // #8B3A1E
+    const darkGray = [50, 50, 50];
+    const lightGray = [240, 240, 240];
 
-    doc.setFontSize(10);
-    doc.setTextColor(150, 150, 150);
-    doc.text('Powered by Tablekard · tablekard.com', 105, 27, { align: 'center' });
+    // Header Background
+    doc.setFillColor(...primaryColor);
+    doc.rect(0, 0, 210, 40, 'F');
 
-    doc.setDrawColor(220, 220, 220);
-    doc.line(20, 32, 190, 32);
-
-    // Invoice Details
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Invoice: ${order.id}`, 20, 42);
-    doc.text(`Date: ${order.date}`, 20, 50);
-    if (order.tableNumber) {
-        doc.text(`Table: ${order.tableNumber}`, 20, 58);
+    // Header Content
+    try {
+        const logoBase64 = await getBase64ImageFromUrl('/assets/tablekard-logo.png');
+        const logoWidth = 40;
+        const logoHeight = 12;
+        doc.addImage(logoBase64, 'PNG', 20, 14, logoWidth, logoHeight);
+    } catch (e) {
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(24);
+        doc.setFont(undefined, 'bold');
+        doc.text('TABLEKARD', 20, 25);
     }
-    const orderTypeLabel = { dine_in: 'Dine In', takeaway: 'Takeaway', delivery: 'Delivery' };
-    doc.text(`Type: ${orderTypeLabel[order.type] || order.type || 'Dine In'}`, 120, 42);
-    doc.text(`Payment: ${order.paymentMethod || 'Cash'}`, 120, 50);
-
-    doc.line(20, 64, 190, 64);
-
-    // Items Table Header
-    doc.setFont(undefined, 'bold');
-    doc.setFontSize(11);
-    doc.text('Item', 20, 73);
-    doc.text('Qty', 140, 73);
-    doc.text('Amount', 165, 73);
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(14);
     doc.setFont(undefined, 'normal');
-    doc.setFontSize(10);
+    doc.text('INVOICE', 190, 25, { align: 'right' });
 
-    let y = 82;
-    order.items.forEach(item => {
-        const itemName = item.name.length > 35 ? item.name.substring(0, 33) + '...' : item.name;
-        doc.text(itemName, 20, y);
-        doc.text(`x${item.quantity}`, 140, y);
-        doc.text(`Rs.${(item.price * item.quantity).toFixed(2)}`, 165, y);
-        y += 8;
+    // Normalize order data between my_order and order_history
+    const invoiceNo = order.id || order.order_number || 'N/A';
+    
+    let dateStr = '';
+    let timeStr = '';
+    if (order.rawDate) {
+        const dateObj = new Date(order.rawDate);
+        dateStr = dateObj.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+        timeStr = dateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+    } else if (order.fullDate || order.orderDate) {
+        dateStr = order.fullDate || '';
+        timeStr = order.orderDate || '';
+    } else if (order.date) {
+        dateStr = order.date;
+        timeStr = '';
+    }
+
+    const orderType = (order.rawOrder?.type || order.type || 'Dine In').replace('_', ' ').toUpperCase();
+    const payment = order.paymentStatus || order.paymentMethod || 'Pending';
+    
+    // Invoice Details
+    doc.setTextColor(...darkGray);
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'bold');
+    doc.text('Invoice No:', 20, 55);
+    doc.setFont(undefined, 'normal');
+    doc.text(invoiceNo, 45, 55);
+    
+    doc.setFont(undefined, 'bold');
+    doc.text('Date:', 20, 62);
+    doc.setFont(undefined, 'normal');
+    doc.text(dateStr, 45, 62);
+    
+    if (timeStr) {
+        doc.setFont(undefined, 'bold');
+        doc.text('Time:', 20, 69);
+        doc.setFont(undefined, 'normal');
+        doc.text(timeStr, 45, 69);
+    }
+    
+    doc.setFont(undefined, 'bold');
+    doc.text('Order Type:', 130, 55);
+    doc.setFont(undefined, 'normal');
+    doc.text(orderType, 155, 55);
+
+    doc.setFont(undefined, 'bold');
+    doc.text('Payment:', 130, 62);
+    doc.setFont(undefined, 'normal');
+    doc.text(payment, 155, 62);
+
+    // Table Header Background
+    let tableY = timeStr ? 75 : 75;
+    doc.setFillColor(...lightGray);
+    doc.rect(20, tableY, 170, 10, 'F');
+
+    // Table Headers
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'bold');
+    doc.text('Item Description', 25, tableY + 7);
+    doc.text('Qty', 130, tableY + 7, { align: 'center' });
+    doc.text('Price', 150, tableY + 7, { align: 'right' });
+    doc.text('Total', 185, tableY + 7, { align: 'right' });
+
+    // Table Items
+    let y = tableY + 17;
+    doc.setFont(undefined, 'normal');
+    
+    (order.items || []).forEach(item => {
+      // Add page if needed
+      if (y > 270) {
+        doc.addPage();
+        y = 20;
+      }
+
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(...darkGray);
+      doc.text(item.name, 25, y);
+      doc.setFont(undefined, 'normal');
+      doc.text(String(item.quantity), 130, y, { align: 'center' });
+      doc.text(`Rs. ${item.price}`, 150, y, { align: 'right' });
+      
+      const baseItemTotal = item.price * item.quantity;
+      doc.text(`Rs. ${baseItemTotal}`, 185, y, { align: 'right' });
+      y += 5;
+
+      // Variant and Addons
+      if (item.variant || (item.addons && item.addons.length > 0)) {
+        doc.setFontSize(9);
+        doc.setTextColor(100, 100, 100);
+        
+        if (item.variant) {
+          if (item.quantity > 1) {
+            doc.text(`- Variant: ${item.variant.name} (Rs. ${item.variant.price} x ${item.quantity})`, 28, y);
+          } else {
+            doc.text(`- Variant: ${item.variant.name}`, 28, y);
+          }
+          doc.text(`Rs. ${item.variant.price * item.quantity}`, 185, y, { align: 'right' });
+          y += 5;
+        }
+        
+        if (item.addons && item.addons.length > 0) {
+          const addonCounts = {};
+          item.addons.forEach(a => {
+              const key = a.name;
+              if (!addonCounts[key]) addonCounts[key] = { ...a, count: 0, totalPrice: 0 };
+              addonCounts[key].count += 1;
+              addonCounts[key].totalPrice += a.price;
+          });
+          
+          Object.values(addonCounts).forEach(a => {
+              let addonLabel = `- Add-on: ${a.name}`;
+              if (a.count > 1) addonLabel += ` x${a.count}`;
+              
+              if (item.quantity > 1) {
+                doc.text(`${addonLabel} (Rs. ${a.totalPrice} x ${item.quantity})`, 28, y);
+              } else {
+                doc.text(`${addonLabel}`, 28, y);
+              }
+              doc.text(`Rs. ${a.totalPrice * item.quantity}`, 185, y, { align: 'right' });
+              y += 5;
+          });
+        }
+        doc.setFontSize(10);
+        doc.setTextColor(...darkGray);
+      }
+      
+      // Draw line under item
+      y += 3;
+      doc.setDrawColor(230, 230, 230);
+      doc.line(20, y, 190, y);
+      y += 7;
     });
 
-    doc.line(20, y + 2, 190, y + 2);
-    y += 12;
-
-    // Tax breakdown (inclusive model)
-    const tax18 = Math.round(order.total * 0.18);
-    const tax5 = Math.round(order.total * 0.05);
-    const subtotal = order.total - tax18 - tax5;
-
-    doc.setFontSize(10);
-    doc.text('Subtotal (excl. taxes):', 120, y);
-    doc.text(`Rs.${subtotal}`, 175, y, { align: 'right' });
+    // Summary Box
+    y += 5;
+    if (y > 230) { doc.addPage(); y = 30; }
+    
+    doc.setDrawColor(...primaryColor);
+    doc.setLineWidth(0.5);
+    doc.line(120, y, 190, y);
     y += 8;
-    doc.setTextColor(100, 100, 100);
-    doc.text('GST (18%):', 120, y);
-    doc.text(`Rs.${tax18}`, 175, y, { align: 'right' });
-    y += 8;
-    doc.text('Service Charge (5%):', 120, y);
-    doc.text(`Rs.${tax5}`, 175, y, { align: 'right' });
-    y += 10;
 
-    doc.setTextColor(139, 58, 30);
+    // Total Background
+    doc.setFillColor(...lightGray);
+    doc.rect(125, y, 65, 10, 'F');
+    
+    y += 7;
+    doc.setFontSize(12);
     doc.setFont(undefined, 'bold');
-    doc.setFontSize(13);
-    doc.text('TOTAL PAID:', 120, y);
-    doc.text(`Rs.${order.total}`, 175, y, { align: 'right' });
+    doc.setTextColor(...primaryColor);
+    doc.text('SUBTOTAL:', 140, y);
+    doc.text(`Rs. ${order.total}`, 185, y, { align: 'right' });
 
     // Footer
-    y += 20;
-    doc.setFontSize(9);
+    y += 30;
+    if (y > 270) { doc.addPage(); y = 30; }
+    
+    doc.setFontSize(10);
     doc.setFont(undefined, 'italic');
     doc.setTextColor(150, 150, 150);
-    doc.text('Prices are inclusive of all applicable taxes.', 105, y, { align: 'center' });
-    y += 8;
-    doc.text('Thank you for dining with us! — Tablekard', 105, y, { align: 'center' });
+    doc.text('Thank you for dining with us!', 105, y, { align: 'center' });
+    doc.text('This is a computer generated invoice.', 105, y + 6, { align: 'center' });
 
-    doc.save(`Invoice_${order.id.replace('#', '')}.pdf`);
+    doc.save(`Invoice_${invoiceNo.replace('#', '')}.pdf`);
 };
 
 const OrderCard = ({ order, onReorder }) => {

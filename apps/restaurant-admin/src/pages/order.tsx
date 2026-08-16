@@ -795,7 +795,7 @@ const Order: React.FC = () => {
                 filteredOrders().map((order, idx) => {
                   const getStatusIdx = (status: string) => {
                     switch (status?.toUpperCase()) {
-                      case 'PLACED': return -1;
+                      case 'PLACED': return 0;
                       
                       case 'PREPARING': return 1;
                       case 'READY': return 2;
@@ -1165,7 +1165,7 @@ const Order: React.FC = () => {
               filteredOrders().map((order, idx) => {
                 const getStatusIdx = (status: string) => {
                   switch (status?.toUpperCase()) {
-                    case 'PLACED': return -1;
+                    case 'PLACED': return 0;
                     
                     case 'PREPARING': return 1;
                     case 'READY': return 2;

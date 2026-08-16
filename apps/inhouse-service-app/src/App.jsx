@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Check, ArrowUp, X, Loader2, RefreshCw, ChevronDown, PenLine, AlertTriangle, LogOut } from 'lucide-react';
+import { Check, ArrowUp, X, Loader2, RefreshCw, ChevronDown, PenLine, AlertTriangle, LogOut, User } from 'lucide-react';
 import { supabase } from '@restaurant-saas/supabase';
 import { useOrders } from './hooks/useOrders';
 import { useAuth } from './context/AuthContext';
@@ -87,6 +87,9 @@ const OrderCard = ({
   onPromote,
   onCancel,
   onUpdateItemStatus,
+  isLoading,
+  preparer,   // { name, role } | null — who claimed this order
+  isAdmin,    // bool — whether the current viewer is an admin
 }) => {
   const isPreparingCard = status === 'preparing';
 
@@ -257,9 +260,36 @@ const OrderCard = ({
     );
   };
 
-  /* ── render ───────────────────────────────────────── */
+  /* ── Preparer role classification ── */
+  const ADMIN_ROLES_SET = new Set(['restaurant_admin', 'super_admin', 'admin']);
+  const preparerRoleKey = preparer
+    ? ADMIN_ROLES_SET.has(String(preparer.role).toLowerCase()) ? 'admin' : 'staff'
+    : null;
+
+  /* ── render ───────────────────────────── */
   return (
-    <div className={`order-card${(expanded || isPreparingCard) ? ' order-card--expanded' : ''}`}>
+    <div className={`order-card${(expanded || isPreparingCard) ? ' order-card--expanded' : ''}${isLoading ? ' order-card--loading' : ''}`}>
+      {/* Loading overlay — shown while PREPARE is in flight */}
+      {isLoading && (
+        <div className="card-loading-overlay">
+          <div className="card-loading-sweep" />
+          <div className="card-loading-pill">
+            <Loader2 size={14} className="spin" />
+            <span>Preparing…</span>
+          </div>
+        </div>
+      )}
+
+      {/* Preparer chip — visible to admins on preparing cards */}
+      {isPreparingCard && isAdmin && preparer && (
+        <div className={`preparer-chip preparer-chip--${preparerRoleKey}`}>
+          <User size={10} strokeWidth={2.5} className="preparer-chip-icon" />
+          <span className="preparer-chip-name">{preparer.name || 'Unknown'}</span>
+          <span className="preparer-chip-role">
+            {preparerRoleKey === 'admin' ? 'Admin' : 'Staff'}
+          </span>
+        </div>
+      )}
 
       {/* Top row: table number + order info */}
       <div className="card-top">
@@ -396,6 +426,7 @@ function OrdersView({ onSignOut }) {
   const { activeRestaurantId, user } = useAuth();
   const [restaurantName, setRestaurantName] = useState('TABLEKARD');
   const [denyTarget, setDenyTarget] = useState(null); // { id, orderNumber }
+  const [promotingId, setPromotingId] = useState(null); // order being promoted
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [kitchenAppEnabled, setKitchenAppEnabled] = useState(true);
   // Track which queue cards are expanded by order ID — stable across realtime refetches
@@ -455,6 +486,8 @@ function OrdersView({ onSignOut }) {
     handleMarkReady,
     handleCancel,
     handleUpdateItemStatus,
+    isAdmin,
+    staffProfiles,
   } = useOrders();
 
   /** Open the deny confirmation dialog */
@@ -467,6 +500,17 @@ function OrdersView({ onSignOut }) {
     if (denyTarget) {
       await handleCancel(denyTarget.id);
       setDenyTarget(null);
+    }
+  };
+
+  /** Promote with loading state */
+  const handlePromoteWithLoader = async (orderId) => {
+    setPromotingId(orderId);
+    try {
+      await handlePromote(orderId);
+    } finally {
+      // Clear after a brief moment so the skeleton is visible even on fast connections
+      setTimeout(() => setPromotingId(null), 800);
     }
   };
 
@@ -534,38 +578,42 @@ function OrdersView({ onSignOut }) {
         <div className="orders-layout">
           {/* ── PREPARING panel ───────────────────────────── */}
           <div className="orders-panel">
-            <div className="section-bar section-preparing">PREPARING</div>
+            <div className="section-bar section-preparing">
+              PREPARING
+              {!isAdmin && (
+                <span className="section-bar-badge section-bar-badge--mine">MY ORDERS</span>
+              )}
+            </div>
             <div className="orders-container">
-              {preparingOrders
-                .map(order => ({
-                  ...order,
-                  order_items: order.order_items?.filter(item => item.prepared_by === user?.id)
-                }))
-                .filter(o => o.order_items && o.order_items.length > 0).length === 0 ? (
+              {preparingOrders.length === 0 ? (
                 <EmptyState message="No orders being prepared" />
               ) : (
-                preparingOrders
-                  .map(order => ({
-                    ...order,
-                    order_items: order.order_items?.filter(item => item.prepared_by === user?.id)
-                  }))
-                  .filter(o => o.order_items && o.order_items.length > 0)
-                  .map((order) => (
-                  <OrderCard
-                    key={order.id}
-                    id={order.id}
-                    orderNumber={order.order_number}
-                    tableNumber={getTableNumber(order)}
-                    type={order.type}
-                    createdAt={order.created_at}
-                    items={order.order_items ?? []}
-                    status={order.status}
-                    onMarkReady={handleMarkReady}
-                    onPromote={handlePromote}
-                    onCancel={(id) => requestDeny(id, order.order_number)}
-                    onUpdateItemStatus={handleUpdateItemStatus}
-                  />
-                ))
+                preparingOrders.map((order) => {
+                  // Find who claimed this order (first item with prepared_by)
+                  const preparerId = (order.order_items ?? [])
+                    .map((i) => i.prepared_by)
+                    .find(Boolean);
+                  const preparer = preparerId ? (staffProfiles[preparerId] ?? null) : null;
+
+                  return (
+                    <OrderCard
+                      key={order.id}
+                      id={order.id}
+                      orderNumber={order.order_number}
+                      tableNumber={getTableNumber(order)}
+                      type={order.type}
+                      createdAt={order.created_at}
+                      items={order.order_items ?? []}
+                      status={order.status}
+                      onMarkReady={handleMarkReady}
+                      onPromote={handlePromote}
+                      onCancel={(id) => requestDeny(id, order.order_number)}
+                      onUpdateItemStatus={handleUpdateItemStatus}
+                      preparer={preparer}
+                      isAdmin={isAdmin}
+                    />
+                  );
+                })
               )}
             </div>
           </div>
@@ -574,12 +622,10 @@ function OrdersView({ onSignOut }) {
           <div className="orders-panel">
             <div className="section-bar section-queue">ORDER QUEUE</div>
             <div className="orders-container">
-              {queueOrders.filter(o => o.order_items && o.order_items.length > 0).length === 0 ? (
+              {queueOrders.length === 0 ? (
                 <EmptyState message="No orders in queue" />
               ) : (
-                queueOrders
-                  .filter(o => o.order_items && o.order_items.length > 0)
-                  .map((order) => (
+                queueOrders.map((order) => (
                   <OrderCard
                     key={order.id}
                     id={order.id}
@@ -592,9 +638,10 @@ function OrdersView({ onSignOut }) {
                     expanded={expandedIds.has(order.id)}
                     onToggleExpand={() => toggleExpand(order.id)}
                     onMarkReady={handleMarkReady}
-                    onPromote={handlePromote}
+                    onPromote={handlePromoteWithLoader}
                     onCancel={(id) => requestDeny(id, order.order_number)}
                     onUpdateItemStatus={handleUpdateItemStatus}
+                    isLoading={promotingId === order.id}
                   />
                 ))
               )}

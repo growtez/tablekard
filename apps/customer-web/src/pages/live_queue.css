@@ -321,6 +321,14 @@
     font-weight: 800 !important;
 }
 
+/* ── Page Divider ─────────────────────────────────── */
+.lq-page-divider {
+    height: 1.5px;
+    background: #EEE5E0;
+    margin: 28px 20px 16px;
+    border-radius: 1px;
+}
+
 /* ── Section Card ─────────────────────────────────── */
 .lq-section-card {
     margin: 12px 20px 0;
@@ -661,8 +669,15 @@
 
 /* ── Kitchen Standalone Lottie Animation ─────────── */
 .lq-kitchen-standalone-anim {
-    margin: 12px 20px 8px;
+    position: sticky;
+    top: 0;
+    z-index: 15;
+    background: #FDF8F6;
+    margin: 0;
+    padding: 10px 0 16px;
     display: flex;
     align-items: center;
     justify-content: center;
+    /* Optional: subtle shadow so cards slide under smoothly */
+    box-shadow: 0 4px 16px -8px rgba(139, 58, 30, 0.15);
 }

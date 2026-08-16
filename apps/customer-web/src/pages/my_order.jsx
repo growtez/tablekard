@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { formatTime, formatDate } from '@restaurant-saas/types';
-import { Home, ShoppingBag, MessageCircle, User, Minus, Plus, Trash2, Clock, CheckCircle, Utensils, ShoppingCart, ListOrdered, ArrowRight, Star, Users, CreditCard, Wallet, Loader2, AlertCircle, Download, Pencil } from 'lucide-react';
+import { Home, ShoppingBag, MessageCircle, User, Minus, Plus, Trash2, Clock, CheckCircle, Utensils, ShoppingCart, ListOrdered, ArrowRight, Star, Users, CreditCard, Wallet, Loader2, AlertCircle, Download, Pencil, ChevronDown } from 'lucide-react';
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
@@ -31,6 +31,14 @@ const MyOrderPage = () => {
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [expandedItems, setExpandedItems] = useState({});
+
+  const toggleItemExpand = (orderId, index) => {
+    setExpandedItems(prev => ({
+      ...prev,
+      [`${orderId}-${index}`]: !prev[`${orderId}-${index}`]
+    }));
+  };
 
   const [showPayCounterPopup, setShowPayCounterPopup] = useState(false);
 
@@ -425,7 +433,18 @@ const MyOrderPage = () => {
     success: 'Payment successful!',
   };
 
-  const downloadInvoice = (order) => {
+  const getBase64ImageFromUrl = async (imageUrl) => {
+    const res = await fetch(imageUrl);
+    const blob = await res.blob();
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.addEventListener("load", () => resolve(reader.result), false);
+        reader.addEventListener("error", () => reject());
+        reader.readAsDataURL(blob);
+    });
+  };
+
+  const downloadInvoice = async (order) => {
     const doc = new jsPDF();
 
     // Set colors
@@ -437,57 +456,92 @@ const MyOrderPage = () => {
     doc.setFillColor(...primaryColor);
     doc.rect(0, 0, 210, 40, 'F');
 
-    // Header Text
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(24);
-    doc.setFont(undefined, 'bold');
-    doc.text('TABLEKARD', 20, 25);
+    // Header Content
+    try {
+        const logoBase64 = await getBase64ImageFromUrl('/assets/tablekard-logo.png');
+        const logoWidth = 40;
+        const logoHeight = 12;
+        doc.addImage(logoBase64, 'PNG', 20, 14, logoWidth, logoHeight);
+    } catch (e) {
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(24);
+        doc.setFont(undefined, 'bold');
+        doc.text('TABLEKARD', 20, 25);
+    }
     
+    doc.setTextColor(255, 255, 255);
     doc.setFontSize(14);
     doc.setFont(undefined, 'normal');
     doc.text('INVOICE', 190, 25, { align: 'right' });
 
+    // Normalize order data between my_order and order_history
+    const invoiceNo = order.id || order.order_number || 'N/A';
+    
+    let dateStr = '';
+    let timeStr = '';
+    if (order.rawDate) {
+        const dateObj = new Date(order.rawDate);
+        dateStr = dateObj.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+        timeStr = dateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+    } else if (order.fullDate || order.orderDate) {
+        dateStr = order.fullDate || '';
+        timeStr = order.orderDate || '';
+    } else if (order.date) {
+        dateStr = order.date;
+        timeStr = '';
+    }
+
+    const orderType = (order.rawOrder?.type || order.type || 'Dine In').replace('_', ' ').toUpperCase();
+    const payment = order.paymentStatus || order.paymentMethod || 'Pending';
+    
     // Invoice Details
     doc.setTextColor(...darkGray);
     doc.setFontSize(10);
     doc.setFont(undefined, 'bold');
     doc.text('Invoice No:', 20, 55);
     doc.setFont(undefined, 'normal');
-    doc.text(order.id || 'N/A', 45, 55);
+    doc.text(invoiceNo, 45, 55);
     
     doc.setFont(undefined, 'bold');
     doc.text('Date:', 20, 62);
     doc.setFont(undefined, 'normal');
-    doc.text(`${order.fullDate || ''} ${order.orderDate || ''}`, 45, 62);
+    doc.text(dateStr, 45, 62);
+    
+    if (timeStr) {
+        doc.setFont(undefined, 'bold');
+        doc.text('Time:', 20, 69);
+        doc.setFont(undefined, 'normal');
+        doc.text(timeStr, 45, 69);
+    }
     
     doc.setFont(undefined, 'bold');
     doc.text('Order Type:', 130, 55);
     doc.setFont(undefined, 'normal');
-    const typeText = (order.rawOrder?.type || 'Dine In').replace('_', ' ').toUpperCase();
-    doc.text(typeText, 155, 55);
+    doc.text(orderType, 155, 55);
 
     doc.setFont(undefined, 'bold');
     doc.text('Payment:', 130, 62);
     doc.setFont(undefined, 'normal');
-    doc.text(order.paymentStatus || 'Pending', 155, 62);
+    doc.text(payment, 155, 62);
 
     // Table Header Background
+    let tableY = timeStr ? 75 : 75;
     doc.setFillColor(...lightGray);
-    doc.rect(20, 75, 170, 10, 'F');
+    doc.rect(20, tableY, 170, 10, 'F');
 
     // Table Headers
     doc.setFontSize(10);
     doc.setFont(undefined, 'bold');
-    doc.text('Item Description', 25, 82);
-    doc.text('Qty', 130, 82, { align: 'center' });
-    doc.text('Price', 150, 82, { align: 'right' });
-    doc.text('Total', 185, 82, { align: 'right' });
+    doc.text('Item Description', 25, tableY + 7);
+    doc.text('Qty', 130, tableY + 7, { align: 'center' });
+    doc.text('Price', 150, tableY + 7, { align: 'right' });
+    doc.text('Total', 185, tableY + 7, { align: 'right' });
 
     // Table Items
-    let y = 92;
+    let y = tableY + 17;
     doc.setFont(undefined, 'normal');
     
-    order.items.forEach(item => {
+    (order.items || []).forEach(item => {
       // Add page if needed
       if (y > 270) {
         doc.addPage();
@@ -554,9 +608,6 @@ const MyOrderPage = () => {
     });
 
     // Summary Box
-    const subtotal = order.total - Math.round(order.total * 0.18);
-    const tax = Math.round(order.total * 0.18);
-    
     y += 5;
     if (y > 230) { doc.addPage(); y = 30; }
     
@@ -564,14 +615,6 @@ const MyOrderPage = () => {
     doc.setLineWidth(0.5);
     doc.line(120, y, 190, y);
     y += 8;
-
-    doc.text('Subtotal:', 140, y);
-    doc.text(`Rs. ${subtotal}`, 185, y, { align: 'right' });
-    y += 7;
-
-    doc.text('Tax (18%):', 140, y);
-    doc.text(`Rs. ${tax}`, 185, y, { align: 'right' });
-    y += 7;
 
     // Total Background
     doc.setFillColor(...lightGray);
@@ -581,7 +624,7 @@ const MyOrderPage = () => {
     doc.setFontSize(12);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...primaryColor);
-    doc.text('TOTAL:', 140, y);
+    doc.text('SUBTOTAL:', 140, y);
     doc.text(`Rs. ${order.total}`, 185, y, { align: 'right' });
 
     // Footer
@@ -594,7 +637,7 @@ const MyOrderPage = () => {
     doc.text('Thank you for dining with us!', 105, y, { align: 'center' });
     doc.text('This is a computer generated invoice.', 105, y + 6, { align: 'center' });
 
-    doc.save(`Invoice_${order.id || 'order'}.pdf`);
+    doc.save(`Invoice_${invoiceNo.replace('#', '')}.pdf`);
   };
 
   if (authLoading || isInitialLoad) {
@@ -1117,20 +1160,30 @@ const MyOrderPage = () => {
                             });
                           }
                           const aggregatedAddons = Object.values(addonCounts);
+                          const itemTotal = (item.price * item.quantity) + aggregatedAddons.reduce((sum, a) => sum + a.totalPrice, 0);
 
                           return (
                             <div key={index} className="oi-item-block">
                               {/* Item header row */}
-                              <div className="oi-item-top">
+                              <div 
+                                className="oi-item-top" 
+                                onClick={() => (item.variant || aggregatedAddons.length > 0) && toggleItemExpand(order.id, index)} 
+                                style={{ cursor: (item.variant || aggregatedAddons.length > 0) ? 'pointer' : 'default' }}
+                              >
                                 <div className="oi-item-left">
                                   <span className="oi-item-qty-badge">{item.quantity}×</span>
                                   <span className="oi-item-name">{item.name}</span>
                                 </div>
-                                <span className="oi-item-price">₹{item.price * item.quantity}</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <span className="oi-item-price">₹{itemTotal}</span>
+                                  {(item.variant || aggregatedAddons.length > 0) && (
+                                    <ChevronDown size={16} color="#888" style={{ transform: expandedItems[`${order.id}-${index}`] ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                                  )}
+                                </div>
                               </div>
 
                               {/* Extras: Variants & Addons */}
-                              {(item.variant || aggregatedAddons.length > 0) && (
+                              {(item.variant || aggregatedAddons.length > 0) && expandedItems[`${order.id}-${index}`] && (
                                 <div className="oi-extras-list">
                                   {item.variant && (
                                     <div className="oi-extra-item">
@@ -1160,10 +1213,10 @@ const MyOrderPage = () => {
                                         <span>{a.name} {a.count > 1 ? <span className="oi-addon-count">×{a.count}</span> : ''}</span>
                                       </div>
                                       <div className="oi-extra-price-group">
-                                        {item.quantity > 1 && (
-                                          <span className="oi-price-breakdown">₹{a.totalPrice} × {item.quantity} =</span>
+                                        {a.count > 1 && (
+                                          <span className="oi-price-breakdown">₹{a.price} × {a.count} =</span>
                                         )}
-                                        <span className="oi-extra-price">+₹{a.totalPrice * item.quantity}</span>
+                                        <span className="oi-extra-price">+₹{a.totalPrice}</span>
                                       </div>
                                     </div>
                                   ))}

@@ -130,3 +130,21 @@ export async function promoteToProcessing(orderId, userId = null) {
 export async function markAsReady(orderId) {
   return updateOrderStatus(orderId, 'ready');
 }
+
+/**
+ * Batch-fetch minimal profile info (id, name, role) for a list of user IDs.
+ * Used to resolve prepared_by → staff name on preparing order cards.
+ */
+export async function fetchProfilesByIds(userIds = []) {
+  if (userIds.length === 0) return [];
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, name, role')
+    .in('id', userIds);
+  if (error) {
+    console.warn('[supabaseService] fetchProfilesByIds error:', error.message);
+    return [];
+  }
+  return data ?? [];
+}
+
