@@ -96,12 +96,159 @@ body {
 .section-preparing {
   background-color: var(--preparing-bg);
   color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .section-queue {
   background-color: var(--queue-bg);
   color: #ffffff;
 }
+
+/* Badge inside the section bar header */
+.section-bar-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.section-bar-badge--mine {
+  background: rgba(255,255,255,0.22);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.4);
+}
+
+
+/* ── Card loading overlay (shown while PREPARE is in flight) */
+
+@keyframes card-sweep {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+@keyframes fade-in-overlay {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* The card dims and locks pointer events while loading */
+.order-card--loading {
+  pointer-events: none;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Semi-transparent frost overlay covering the whole card */
+.card-loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(1.5px);
+  z-index: 10;
+  animation: fade-in-overlay 0.18s ease forwards;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: inherit;
+}
+
+/* Diagonal shimmer sweep that slides across the card */
+.card-loading-sweep {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.7) 50%,
+    transparent 70%
+  );
+  animation: card-sweep 1.2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Centered "Preparing…" pill with spinner */
+.card-loading-pill {
+  position: relative;
+  z-index: 11;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(30, 30, 30, 0.82);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.22);
+}
+
+
+/* ── Preparer chip (top-right of preparing cards, admin-only) */
+
+.preparer-chip {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px 4px 8px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 16px;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  z-index: 5;
+  pointer-events: none;
+  box-shadow: -2px 2px 8px rgba(0,0,0,0.06);
+  animation: fade-in-overlay 0.25s ease;
+}
+
+/* Kitchen staff — warm amber */
+.preparer-chip--staff {
+  background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+  color: #bf6000;
+  border: 2px solid #ffb300;
+}
+
+/* Admin — cool indigo */
+.preparer-chip--admin {
+  background: linear-gradient(135deg, #e8eaf6 0%, #c5cae9 100%);
+  color: #283593;
+  border: 2px solid #7986cb;
+}
+
+.preparer-chip-icon {
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+.preparer-chip-name {
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Faint separator + role label */
+.preparer-chip-role {
+  font-size: 9px;
+  font-weight: 600;
+  opacity: 0.65;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding-left: 4px;
+  border-left: 1px solid currentColor;
+  line-height: 1;
+}
+
 
 /* ── Orders layout (global) ──────────────────────────────── */
 
@@ -118,10 +265,10 @@ body {
 /* ── Orders container ────────────────────────────────────── */
 
 .orders-container {
-  padding: 12px;
+  padding: 22px 12px 12px 12px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 20px;
 }
 
 /* ── Order card (new layout) ─────────────────────────────── */
@@ -135,6 +282,7 @@ body {
   flex-direction: column;
   gap: 14px;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
 }
 
 .order-card:hover {

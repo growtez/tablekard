@@ -42,7 +42,9 @@ export const processMenuItem = (m) => {
         })),
         modelUrl: m.model_url || null,
         isAvailable: m.is_available,
-        raw: m // Include raw just in case
+        categoryId: m.category_id || null,
+        categoryName: m._categoryName || null, // injected by callers that have category context
+        raw: m
     };
 };
 
@@ -176,7 +178,8 @@ export const createOrder = async ({
             total: itemTotal,
             variant: item.variant ?? null,
             addons: aggregatedAddons.length > 0 ? aggregatedAddons : null,
-            special_instructions: index === 0 ? specialInstructions : null
+            special_instructions: index === 0 ? specialInstructions : null,
+            status: 'placed'
         };
     });
 
@@ -184,6 +187,11 @@ export const createOrder = async ({
         .from('order_items')
         .insert(orderItems);
     if (itemsError) throw itemsError;
+
+    // Trigger realtime update for the kitchen app now that items are inserted
+    await supabase.from('orders')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', order.id);
 
     return { orderId: order.id, orderNumber };
 };
@@ -503,17 +511,33 @@ export const getUserStats = async (userId, restaurantId = null) => {
 // Mathematical ML Recommendation (JavaScript Native Implementation)
 export const getRecommendedItems = async (userId, restaurantId) => {
     try {
-        // Step 1: Get all menu items for the restaurant
-        const { data: menuItems, error: menuError } = await supabase
-            .from('menu_items')
-            .select(`
-                *,
-                menu_item_images (image_url, sort_order)
-            `)
-            .eq('restaurant_id', restaurantId)
-            .eq('is_available', true);
+        // Step 1: Get all menu items AND categories for the restaurant in parallel
+        const [{ data: menuItems, error: menuError }, { data: menuCategories }] = await Promise.all([
+            supabase
+                .from('menu_items')
+                .select(`
+                    *,
+                    menu_item_images (image_url, sort_order)
+                `)
+                .eq('restaurant_id', restaurantId)
+                .eq('is_available', true),
+            supabase
+                .from('menu_categories')
+                .select('id, name')
+                .eq('restaurant_id', restaurantId)
+                .eq('active', true)
+        ]);
 
         if (menuError) throw menuError;
+
+        // Build categoryId → name lookup
+        const categoryNameMap = {};
+        (menuCategories || []).forEach(cat => { categoryNameMap[cat.id] = cat.name; });
+
+        // Attach _categoryName to each raw menu item for processMenuItem to pick up
+        (menuItems || []).forEach(m => {
+            m._categoryName = categoryNameMap[m.category_id] || null;
+        });
 
         // --- NEW: Fetch and Aggregate Ratings from Feedback Table ---
         // We join feedback -> orders -> order_items to find which rating belongs to which dish

@@ -288,10 +288,21 @@ const HomePage = () => {
 
     // All dynamic — no hardcoded featuredOffers or popularItems
 
+    // Keywords that identify beverage/drink categories — case-insensitive
+    const BEVERAGE_KEYWORDS = ['drink', 'beverage', 'beverages', 'juice', 'juices', 'mocktail', 'mocktails', 'cocktail', 'cocktails', 'shake', 'shakes', 'milkshake', 'milkshakes', 'smoothie', 'smoothies', 'soda', 'water', 'tea', 'coffee', 'lassi', 'chaas', 'buttermilk', 'lemonade', 'soft drink', 'cold drink'];
+
+    const isBeverageItem = (item) => {
+        const catName = (item.categoryName || '').toLowerCase().trim();
+        if (!catName) return false;
+        return BEVERAGE_KEYWORDS.some(kw => catName.includes(kw));
+    };
+
     // Function to get filtered items based on active filter
     const getFilteredItems = () => {
         if (loadingItems) return [];
-        const base = vegOnly ? menuItems.filter(item => item.dietType === 'veg') : menuItems;
+        // Exclude beverage/drink category items from home page sections
+        const nonBeverage = menuItems.filter(item => !isBeverageItem(item));
+        const base = vegOnly ? nonBeverage.filter(item => item.dietType === 'veg') : nonBeverage;
         switch (activeFilter) {
             case 'popular':
                 return [...base].sort((a, b) => (b.weeklySalesCount || 0) - (a.weeklySalesCount || 0)).slice(0, 4);
