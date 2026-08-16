@@ -70,12 +70,7 @@ const TableManagementPage: React.FC = () => {
     const [showActionsMenu, setShowActionsMenu] = useState(false);
     const actionsMenuRef = useRef<HTMLDivElement>(null);
 
-    // QR Linking state for modals
-    const [qrMode, setQrMode] = useState<'auto' | 'link'>('auto');
-    const [availableTokens, setAvailableTokens] = useState<{ id: string; token: string }[]>([]);
-    const [selectedTokenCode, setSelectedTokenCode] = useState<string>('');
-    const [linkingToken, setLinkingToken] = useState(false);
-
+    // QR Linking state removed: auto-linking is handled by the backend
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (actionsMenuRef.current && !actionsMenuRef.current.contains(event.target as Node)) {
@@ -157,18 +152,8 @@ const TableManagementPage: React.FC = () => {
             capacity: 4,
             active: true
         });
-        setQrMode('auto');
-        setSelectedTokenCode('');
         setFormErrors(null);
         setShowAddModal(true);
-
-        // Fetch available tokens
-        try {
-            const tokensList = await getAvailableQrTokens();
-            setAvailableTokens(tokensList);
-        } catch (err) {
-            console.warn('Failed to load available tokens', err);
-        }
     };
 
     const handleSubmitAdd = async (e: React.FormEvent) => {
@@ -187,17 +172,12 @@ const TableManagementPage: React.FC = () => {
             setFormErrors(`Table ${formData.table_number} already exists`);
             return;
         }
-        if (qrMode === 'link' && !selectedTokenCode.trim()) {
-            setFormErrors('Please select or enter a valid QR token code.');
-            return;
-        }
 
         setSubmitting(true);
         setFormErrors(null);
         try {
             await createRestaurantTable(activeRestaurantId, {
-                ...formData,
-                qr_token: qrMode === 'link' ? selectedTokenCode.trim().toUpperCase() : null
+                ...formData
             });
             invalidateTables(activeRestaurantId);
             setShowAddModal(false);
@@ -217,16 +197,8 @@ const TableManagementPage: React.FC = () => {
             capacity: table.capacity,
             active: table.active
         });
-        setSelectedTokenCode('');
         setFormErrors(null);
         setShowEditModal(true);
-
-        try {
-            const tokensList = await getAvailableQrTokens();
-            setAvailableTokens(tokensList);
-        } catch (err) {
-            console.warn('Failed to load available tokens', err);
-        }
     };
 
     const handleSubmitEdit = async (e: React.FormEvent) => {
@@ -258,38 +230,6 @@ const TableManagementPage: React.FC = () => {
             setFormErrors(err.message || 'Failed to update table. Please try again.');
         } finally {
             setSubmitting(false);
-        }
-    };
-
-    const handleLinkTokenInEdit = async () => {
-        if (!currentTable || !activeRestaurantId || !selectedTokenCode.trim()) return;
-        setLinkingToken(true);
-        setFormErrors(null);
-        try {
-            await linkQrTokenToTable(currentTable.id, selectedTokenCode.trim(), activeRestaurantId);
-            invalidateTables(activeRestaurantId);
-            const updatedTable = { ...currentTable, qr_token: selectedTokenCode.trim().toUpperCase() };
-            setCurrentTable(updatedTable);
-            setSelectedTokenCode('');
-        } catch (err: any) {
-            setFormErrors(err.message || 'Failed to link QR token.');
-        } finally {
-            setLinkingToken(false);
-        }
-    };
-
-    const handleUnlinkTokenInEdit = async () => {
-        if (!currentTable || !currentTable.qr_token || !activeRestaurantId) return;
-        setLinkingToken(true);
-        setFormErrors(null);
-        try {
-            await unlinkQrTokenFromTable(currentTable.id, currentTable.qr_token);
-            invalidateTables(activeRestaurantId);
-            setCurrentTable({ ...currentTable, qr_token: null });
-        } catch (err: any) {
-            setFormErrors(err.message || 'Failed to unlink QR token.');
-        } finally {
-            setLinkingToken(false);
         }
     };
 
@@ -554,52 +494,6 @@ const TableManagementPage: React.FC = () => {
                                         {formErrors}
                                     </div>
                                 )}
-                                <div className="mb-5">
-                                    <label className="block text-sm font-medium text-tk-text-secondary mb-2">QR Code Mode</label>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <button
-                                            type="button"
-                                            onClick={() => setQrMode('auto')}
-                                            className={`p-3 rounded-xl border text-xs font-semibold text-left transition-all ${qrMode === 'auto' ? 'border-tk-burgundy bg-tk-burgundy/5 text-tk-burgundy' : 'border-tk-border bg-tk-bg-elevated text-tk-text-secondary hover:bg-tk-bg-hover'}`}
-                                        >
-                                            Auto-generate QR
-                                            <span className="block text-[10px] font-normal text-[#718096] mt-0.5">Standard system QR</span>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setQrMode('link')}
-                                            className={`p-3 rounded-xl border text-xs font-semibold text-left transition-all ${qrMode === 'link' ? 'border-tk-burgundy bg-tk-burgundy/5 text-tk-burgundy' : 'border-tk-border bg-tk-bg-elevated text-tk-text-secondary hover:bg-tk-bg-hover'}`}
-                                        >
-                                            Link Existing QR
-                                            <span className="block text-[10px] font-normal text-[#718096] mt-0.5">Use pre-printed sticker</span>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {qrMode === 'link' && (
-                                    <div className="mb-5 p-4 bg-[#F7FAFC] border border-[#E2E8F0] rounded-xl dark:bg-tk-bg-elevated dark:border-tk-border">
-                                        <label className="block text-xs font-semibold text-tk-text mb-1.5">Select or Enter QR Token Code *</label>
-                                        {availableTokens.length > 0 ? (
-                                            <select
-                                                value={selectedTokenCode}
-                                                onChange={(e) => setSelectedTokenCode(e.target.value)}
-                                                className="p-2.5 px-3 border border-tk-border bg-white rounded-lg text-xs text-tk-text w-full mb-2 focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-card"
-                                            >
-                                                <option value="">-- Pick from available tokens --</option>
-                                                {availableTokens.map(t => (
-                                                    <option key={t.id} value={t.token}>{t.token}</option>
-                                                ))}
-                                            </select>
-                                        ) : null}
-                                        <input
-                                            type="text"
-                                            placeholder="Or type token e.g. TK-A1B2C3"
-                                            value={selectedTokenCode}
-                                            onChange={(e) => setSelectedTokenCode(e.target.value.toUpperCase())}
-                                            className="p-2.5 px-3 border border-tk-border bg-white rounded-lg text-xs font-mono text-tk-text w-full focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-card"
-                                        />
-                                    </div>
-                                )}
 
                                 <div className="mb-5 last:mb-0">
                                     <label className="block text-sm font-medium text-tk-text-secondary mb-1.5">Table Number *</label>
@@ -699,64 +593,6 @@ const TableManagementPage: React.FC = () => {
                                         className="p-3 px-4 border-2 border-tk-border bg-tk-bg-elevated rounded-xl text-sm text-tk-text font-sans transition-all duration-200 w-full box-border focus:outline-none focus:border-tk-burgundy focus:shadow-[0_0_0_3px_rgba(139,58,30,0.1)] placeholder:text-tk-text-muted"
                                         required
                                     />
-                                </div>
-
-                                {/* QR Token Section */}
-                                <div className="mb-5 p-4 bg-[#F7FAFC] border border-[#E2E8F0] rounded-xl dark:bg-tk-bg-elevated dark:border-tk-border">
-                                    <label className="block text-xs font-semibold text-tk-text mb-2">Pre-printed QR Sticker</label>
-                                    {currentTable.qr_token ? (
-                                        <div className="flex items-center justify-between gap-3">
-                                            <div>
-                                                <span className="text-xs font-mono font-bold text-[#2B6CB0] bg-[#EBF8FF] px-2.5 py-1 rounded-md border border-[#BEE3F8]">
-                                                    {currentTable.qr_token}
-                                                </span>
-                                                <span className="block text-[11px] text-[#718096] mt-1">Currently linked to this table</span>
-                                            </div>
-                                            <button
-                                                type="button"
-                                                onClick={handleUnlinkTokenInEdit}
-                                                disabled={linkingToken}
-                                                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-colors disabled:opacity-50 flex items-center gap-1"
-                                            >
-                                                <Unlink size={12} />
-                                                Unlink Token
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-2">
-                                            <p className="text-xs text-[#718096] m-0">No pre-printed QR sticker linked yet.</p>
-                                            {availableTokens.length > 0 && (
-                                                <select
-                                                    value={selectedTokenCode}
-                                                    onChange={(e) => setSelectedTokenCode(e.target.value)}
-                                                    className="p-2.5 px-3 border border-tk-border bg-white rounded-lg text-xs text-tk-text w-full focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-card"
-                                                >
-                                                    <option value="">-- Pick from available tokens --</option>
-                                                    {availableTokens.map(t => (
-                                                        <option key={t.id} value={t.token}>{t.token}</option>
-                                                    ))}
-                                                </select>
-                                            )}
-                                            <div className="flex gap-2">
-                                                <input
-                                                    type="text"
-                                                    placeholder="Or type token e.g. TK-A1B2C3"
-                                                    value={selectedTokenCode}
-                                                    onChange={(e) => setSelectedTokenCode(e.target.value.toUpperCase())}
-                                                    className="p-2.5 px-3 border border-tk-border bg-white rounded-lg text-xs font-mono text-tk-text flex-1 focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-card"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={handleLinkTokenInEdit}
-                                                    disabled={linkingToken || !selectedTokenCode.trim()}
-                                                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#2B6CB0] text-white border-none hover:bg-[#2C5282] transition-colors disabled:opacity-50 flex items-center gap-1"
-                                                >
-                                                    <LinkIcon size={12} />
-                                                    Link Token
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
                                 </div>
 
                                 <div className="mb-5 flex items-center gap-2.5 cursor-pointer font-medium">

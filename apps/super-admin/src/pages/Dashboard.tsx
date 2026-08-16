@@ -154,20 +154,18 @@ export default function Dashboard({ setSyncAction }: DashboardProps) {
                         acc.trial = (acc.trial || 0) + 1;
                     } else if (r.subscription_status === 'expired') {
                         acc.expired++;
-                    } else if (r.subscription_status === 'suspended') {
-                        acc.suspended = (acc.suspended || 0) + 1;
                     } else {
                         acc.inactive++;
                     }
                     return acc;
-                }, { active: 0, expired: 0, inactive: 0, suspended: 0, trial: 0 });
+                }, { active: 0, expired: 0, inactive: 0, trial: 0 });
 
                 setSubscriptionPieData([
                     { name: 'Active', value: counts.active, color: '#10B981' },
                     { name: 'Trial / Free', value: counts.trial, color: '#3B82F6' },
                     { name: 'Expired', value: counts.expired, color: '#EF4444' },
                     { name: 'Inactive', value: counts.inactive, color: '#9CA3AF' },
-                    { name: 'Suspended', value: counts.suspended, color: '#F59E0B' },
+
                 ].filter(d => d.value > 0));
             } */
 

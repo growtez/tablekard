@@ -1431,6 +1431,23 @@ export const createRestaurantTable = async (
         qr_token?: string | null;
     }
 ): Promise<RestaurantTable> => {
+    let tokenToAssign = tableData.qr_token;
+
+    // Auto-link logic: Find an available token matching table_number & capacity
+    if (!tokenToAssign) {
+        const { data: availableTokens, error: tokenErr } = await db
+            .from('qr_code_tokens')
+            .select('token')
+            .eq('status', 'available')
+            .eq('table_number', tableData.table_number)
+            .eq('capacity', tableData.capacity)
+            .limit(1);
+
+        if (!tokenErr && availableTokens && availableTokens.length > 0) {
+            tokenToAssign = availableTokens[0].token;
+        }
+    }
+
     const { data, error } = await db
         .from('restaurant_tables')
         .insert({
@@ -1439,15 +1456,15 @@ export const createRestaurantTable = async (
             capacity: tableData.capacity,
             active: tableData.active ?? true,
             qr_code_url: null,
-            qr_token: tableData.qr_token ?? null
+            qr_token: tokenToAssign ?? null
         })
         .select('id, table_number, capacity, active, qr_code_url, qr_token')
         .single();
 
     if (error) throw error;
 
-    // If a qr_token was provided, mark it assigned in qr_code_tokens
-    if (tableData.qr_token) {
+    // If a qr_token was provided or auto-assigned, mark it assigned in qr_code_tokens
+    if (tokenToAssign) {
         try {
             await db
                 .from('qr_code_tokens')
@@ -1457,7 +1474,7 @@ export const createRestaurantTable = async (
                     assigned_table_id: data.id,
                     assigned_at: new Date().toISOString()
                 })
-                .eq('token', tableData.qr_token.toUpperCase());
+                .eq('token', tokenToAssign.toUpperCase());
         } catch (e) {
             console.error('Failed to update token status in qr_code_tokens:', e);
         }
@@ -1486,6 +1503,42 @@ export const updateRestaurantTable = async (
         qr_token: string | null;
     }>
 ): Promise<void> => {
+    let tokenToAssign = tableData.qr_token;
+
+    // Auto-link logic on update if the table changes and doesn't already have a token
+    if (tokenToAssign === undefined && tableData.table_number !== undefined && tableData.capacity !== undefined) {
+        const { data: existingTable } = await db
+            .from('restaurant_tables')
+            .select('qr_token, restaurant_id')
+            .eq('id', tableId)
+            .single();
+
+        if (existingTable && !existingTable.qr_token) {
+            const { data: availableTokens, error: tokenErr } = await db
+                .from('qr_code_tokens')
+                .select('token')
+                .eq('status', 'available')
+                .eq('table_number', tableData.table_number)
+                .eq('capacity', tableData.capacity)
+                .limit(1);
+
+            if (!tokenErr && availableTokens && availableTokens.length > 0) {
+                tokenToAssign = availableTokens[0].token;
+                tableData.qr_token = tokenToAssign;
+
+                await db
+                    .from('qr_code_tokens')
+                    .update({
+                        status: 'assigned',
+                        assigned_restaurant_id: existingTable.restaurant_id,
+                        assigned_table_id: tableId,
+                        assigned_at: new Date().toISOString()
+                    })
+                    .eq('token', tokenToAssign);
+            }
+        }
+    }
+
     const { error } = await db
         .from('restaurant_tables')
         .update(tableData)

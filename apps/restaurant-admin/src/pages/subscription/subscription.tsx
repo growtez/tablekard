@@ -66,9 +66,7 @@ function getStatusInfo(restaurant: Restaurant | null): {
         return { label: 'Suspended', status: 'inactive', icon: <PauseCircle size={48} className="text-tk-error" />, message: 'Your restaurant has been suspended by administration. Service is halted.' };
     }
 
-    if (subStatus === 'suspended') {
-        return { label: 'Billing Suspended', status: 'inactive', icon: <PauseCircle size={48} className="text-tk-error" />, message: 'Your access to the platform has been restricted because your subscription is suspended. Please renew your plan to regain full access.' };
-    }
+
 
     if (restStatus === 'rejected') {
         return { label: 'Rejected', status: 'inactive', icon: <AlertTriangle size={48} className="text-tk-error" />, message: 'Your restaurant application was rejected by administration.' };

@@ -15,6 +15,8 @@ interface QrToken {
     id: string;
     token: string;
     status: 'available' | 'assigned';
+    table_number: number | null;
+    capacity: number | null;
     assigned_restaurant_id: string | null;
     assigned_table_id: string | null;
     assigned_at: string | null;
@@ -45,7 +47,7 @@ function generateTokenCode(prefix: string): string {
 
 // ─── Canvas QR card painter (generic, no table number) ───────────────────────
 
-async function paintGenericQrCard(svgId: string, tokenCode: string): Promise<HTMLCanvasElement> {
+async function paintGenericQrCard(svgId: string, tokenCode: string, tableNumber?: number | null, capacity?: number | null): Promise<HTMLCanvasElement> {
     const SCALE = 3;
     const canvas = document.createElement('canvas');
     canvas.width = CARD_W * SCALE;
@@ -74,14 +76,37 @@ async function paintGenericQrCard(svgId: string, tokenCode: string): Promise<HTM
     ctx.fillStyle = 'rgba(255,255,255,0.65)';
     ctx.fillText('Scan · Order · Enjoy', CARD_W / 2, 62);
 
-    // "GENERIC" label
-    ctx.fillStyle = ACCENT;
-    ctx.font = `700 28px "Segoe UI", Arial, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.fillText('TABLE QR', CARD_W / 2, 128);
+    let tokenBadgeY = 145;
+
+    if (tableNumber != null && !isNaN(tableNumber)) {
+        const tableBadgeW = 200, tableBadgeH = 44, tableBadgeX = (CARD_W - tableBadgeW) / 2, tableBadgeY = 105;
+        ctx.fillStyle = ACCENT;
+        ctx.beginPath();
+        (ctx as any).roundRect(tableBadgeX, tableBadgeY, tableBadgeW, tableBadgeH, 22);
+        ctx.fill();
+        ctx.fillStyle = WHITE;
+        ctx.font = `700 24px "Segoe UI", Arial, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText(`TABLE ${tableNumber}`, CARD_W / 2, tableBadgeY + 31);
+
+        if (capacity != null && !isNaN(capacity)) {
+            ctx.fillStyle = GRAY;
+            ctx.font = `600 14px "Segoe UI", Arial, sans-serif`;
+            ctx.fillText(`👥 Capacity: ${capacity}`, CARD_W / 2, tableBadgeY + tableBadgeH + 20);
+            tokenBadgeY = 195;
+        } else {
+            tokenBadgeY = 175;
+        }
+    } else {
+        // "GENERIC" label
+        ctx.fillStyle = ACCENT;
+        ctx.font = `700 28px "Segoe UI", Arial, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText('TABLE QR', CARD_W / 2, 128);
+    }
 
     // Token code badge
-    const badgeW = 240, badgeH = 44, badgeX = (CARD_W - badgeW) / 2, badgeY = 145;
+    const badgeW = 240, badgeH = 44, badgeX = (CARD_W - badgeW) / 2, badgeY = tokenBadgeY;
     ctx.fillStyle = '#F7FAFC';
     ctx.strokeStyle = BORDER;
     ctx.lineWidth = 2;
@@ -110,7 +135,7 @@ async function paintGenericQrCard(svgId: string, tokenCode: string): Promise<HTM
     const qrBoxW = QR_SIZE + qrPad * 2;
     const qrBoxH = QR_SIZE + qrPad * 2;
     const qrBoxX = (CARD_W - qrBoxW) / 2;
-    const qrBoxY = badgeY + badgeH + 20;
+    const qrBoxY = tokenBadgeY + 44 + 20;
 
     ctx.shadowColor = 'rgba(0,0,0,0.10)';
     ctx.shadowBlur = 16;
@@ -190,6 +215,8 @@ export default function QrTokens({ setSyncAction }: { setSyncAction?: (s: any) =
     const [showGenModal, setShowGenModal] = useState(false);
     const [genQuantity, setGenQuantity] = useState(10);
     const [genPrefix, setGenPrefix] = useState('TK-');
+    const [genTableNum, setGenTableNum] = useState('');
+    const [genCapacity, setGenCapacity] = useState('');
     const [generating, setGenerating] = useState(false);
 
     // Filter / search
@@ -216,7 +243,7 @@ export default function QrTokens({ setSyncAction }: { setSyncAction?: (s: any) =
             const { data, error: e } = await supabase
                 .from('qr_code_tokens')
                 .select(`
-                    id, token, status, assigned_restaurant_id, assigned_table_id, assigned_at, created_at,
+                    id, token, status, table_number, capacity, assigned_restaurant_id, assigned_table_id, assigned_at, created_at,
                     restaurants (name),
                     restaurant_tables (table_number)
                 `)
@@ -259,13 +286,24 @@ export default function QrTokens({ setSyncAction }: { setSyncAction?: (s: any) =
         setGenerating(true);
         try {
             const existing = new Set(tokens.map(t => t.token));
-            const newTokens: { token: string; status: string }[] = [];
+            const newTokens: any[] = [];
             let attempts = 0;
+            let currentTableNum = genTableNum ? parseInt(genTableNum) : null;
+            const parsedCap = genCapacity ? parseInt(genCapacity) : null;
+
             while (newTokens.length < genQuantity && attempts < genQuantity * 10) {
                 attempts++;
                 const code = generateTokenCode(genPrefix);
                 if (!existing.has(code) && !newTokens.some(nt => nt.token === code)) {
-                    newTokens.push({ token: code, status: 'available' });
+                    newTokens.push({ 
+                        token: code, 
+                        status: 'available',
+                        table_number: !isNaN(currentTableNum as number) ? currentTableNum : null,
+                        capacity: !isNaN(parsedCap as number) ? parsedCap : null
+                    });
+                    if (currentTableNum !== null && !isNaN(currentTableNum)) {
+                        currentTableNum++;
+                    }
                 }
             }
             const { error: insertErr } = await supabase
@@ -287,7 +325,7 @@ export default function QrTokens({ setSyncAction }: { setSyncAction?: (s: any) =
         try {
             const qrUrl = `${CUSTOMER_APP_URL}/q/${token.token}`;
             const svgId = `qr-svg-${token.id}`;
-            const canvas = await paintGenericQrCard(svgId, token.token);
+            const canvas = await paintGenericQrCard(svgId, token.token, token.table_number, token.capacity);
 
             if (format === 'png') {
                 const link = document.createElement('a');
@@ -453,6 +491,7 @@ export default function QrTokens({ setSyncAction }: { setSyncAction?: (s: any) =
                         <thead>
                             <tr className="border-b border-border">
                                 <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wide">Token</th>
+                                <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wide">Table Info</th>
                                 <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wide">Status</th>
                                 <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wide hidden md:table-cell">Assigned To</th>
                                 <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wide hidden lg:table-cell">Created</th>
@@ -482,6 +521,18 @@ export default function QrTokens({ setSyncAction }: { setSyncAction?: (s: any) =
                                                     />
                                                 </div>
                                             </div>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            {token.table_number != null ? (
+                                                <div className="flex flex-col">
+                                                    <span className="text-text-main text-xs font-medium">Table {token.table_number}</span>
+                                                    {token.capacity != null && (
+                                                        <span className="text-text-muted text-[10px]">Cap: {token.capacity}</span>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <span className="text-text-muted text-xs">—</span>
+                                            )}
                                         </td>
                                         <td className="px-4 py-3">
                                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${token.status === 'available' ? 'bg-accent-primary/15 text-accent-primary' : 'bg-blue-500/15 text-blue-400'}`}>
@@ -571,29 +622,58 @@ export default function QrTokens({ setSyncAction }: { setSyncAction?: (s: any) =
                             <button onClick={() => setShowGenModal(false)} className="text-text-muted hover:text-text-main"><X size={20} /></button>
                         </div>
                         <div className="p-6 space-y-5">
-                            <div>
-                                <label className="block text-sm font-medium text-text-muted mb-1.5">Token Prefix</label>
-                                <input
-                                    type="text"
-                                    value={genPrefix}
-                                    onChange={e => setGenPrefix(e.target.value.toUpperCase())}
-                                    maxLength={5}
-                                    className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main font-mono focus:outline-none focus:border-accent-primary/50"
-                                    placeholder="TK-"
-                                />
-                                <p className="text-xs text-text-muted mt-1">Preview: <span className="font-mono text-accent-primary">{genPrefix}A1B2C3</span></p>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-text-muted mb-1.5">Token Prefix</label>
+                                    <input
+                                        type="text"
+                                        value={genPrefix}
+                                        onChange={e => setGenPrefix(e.target.value.toUpperCase())}
+                                        maxLength={5}
+                                        className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main font-mono focus:outline-none focus:border-accent-primary/50"
+                                        placeholder="TK-"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-text-muted mb-1.5">Quantity</label>
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        max={500}
+                                        value={genQuantity}
+                                        onChange={e => setGenQuantity(parseInt(e.target.value) || 1)}
+                                        className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main focus:outline-none focus:border-accent-primary/50"
+                                    />
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-text-muted mb-1.5">Quantity</label>
-                                <input
-                                    type="number"
-                                    min={1}
-                                    max={500}
-                                    value={genQuantity}
-                                    onChange={e => setGenQuantity(parseInt(e.target.value) || 1)}
-                                    className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main focus:outline-none focus:border-accent-primary/50"
-                                />
-                                <p className="text-xs text-text-muted mt-1">Max 500 per batch.</p>
+                            
+                            <div className="p-4 bg-surface-hover rounded-xl border border-border space-y-4">
+                                <h3 className="text-sm font-medium text-text-main">Pre-configure Table Info (Optional)</h3>
+                                <p className="text-xs text-text-muted">If provided, table numbers will automatically increment for each token in the batch.</p>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-medium text-text-muted mb-1.5">Starting Table Number</label>
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            value={genTableNum}
+                                            onChange={e => setGenTableNum(e.target.value)}
+                                            className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main focus:outline-none focus:border-accent-primary/50"
+                                            placeholder="e.g. 1"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-text-muted mb-1.5">Seat Capacity</label>
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            value={genCapacity}
+                                            onChange={e => setGenCapacity(e.target.value)}
+                                            className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main focus:outline-none focus:border-accent-primary/50"
+                                            placeholder="e.g. 4"
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div className="flex gap-3 px-6 py-4 border-t border-border">

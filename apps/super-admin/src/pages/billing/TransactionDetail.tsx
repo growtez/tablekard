@@ -39,7 +39,7 @@ export default function TransactionDetail({ setHeaderData }) {
             if (source === 'payments') {
                 const { data: payment, error: pErr } = await supabase
                     .from('payments')
-                    .select(`*, restaurants(id, name, contact_email, contact_phone), orders(*), profiles:user_id(id, email, name)`)
+                    .select(`*, restaurants(id, name, contact_email, contact_phone), orders(*, restaurant_tables(table_number)), profiles:user_id(id, email, name)`)
                     .eq('id', id)
                     .single();
                 if (pErr) throw pErr;
@@ -56,13 +56,16 @@ export default function TransactionDetail({ setHeaderData }) {
                     raw: payment
                 });
                 if (payment.orders) {
-                    setOrderData(payment.orders);
+                    setOrderData({
+                        ...payment.orders,
+                        table_number: payment.orders.restaurant_tables?.table_number || null,
+                    });
                     fetchOrderItems(payment.orders.id);
                 }
             } else if (source === 'orders') {
                 const { data: order, error: oErr } = await supabase
                     .from('orders')
-                    .select(`*, restaurants(id, name, contact_email, contact_phone), profiles:customer_id(id, email, name)`)
+                    .select(`*, restaurants(id, name, contact_email, contact_phone), profiles:customer_id(id, email, name), restaurant_tables(table_number)`)
                     .eq('id', id)
                     .single();
                 if (oErr) throw oErr;
@@ -80,7 +83,10 @@ export default function TransactionDetail({ setHeaderData }) {
                     customer: order.profiles,
                     raw: { order, payment }
                 });
-                setOrderData(order);
+                setOrderData({
+                    ...order,
+                    table_number: order.restaurant_tables?.table_number || null,
+                });
                 fetchOrderItems(order.id);
             }
         } catch (err) {
@@ -227,7 +233,7 @@ export default function TransactionDetail({ setHeaderData }) {
                                 </div>
                             </CardHeader>
                             <div className="p-6">
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6 p-4 bg-surface-hover rounded-xl">
+                                <div className={`grid grid-cols-2 ${orderData.table_number ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-4 mb-6 p-4 bg-surface-hover rounded-xl`}>
                                     <div>
                                         <div className="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-0.5">Payment Method</div>
                                         <div className="text-[13px] font-semibold text-text-main capitalize">{orderData.payment_method || '—'}</div>
@@ -236,6 +242,12 @@ export default function TransactionDetail({ setHeaderData }) {
                                         <div className="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-0.5">Order Date</div>
                                         <div className="text-[13px] font-semibold text-text-main">{formatDate(orderData.created_at, true)}</div>
                                     </div>
+                                    {orderData.table_number && (
+                                        <div>
+                                            <div className="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-0.5">Table</div>
+                                            <div className="text-[13px] font-semibold text-text-main">{orderData.table_number}</div>
+                                        </div>
+                                    )}
                                     <div>
                                         <div className="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-0.5">Order UUID</div>
                                         <div className="text-[11px] font-mono text-text-muted truncate" title={orderData.id}>{orderData.id}</div>

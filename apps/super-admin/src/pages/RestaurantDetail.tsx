@@ -618,7 +618,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }: Resta
                         badgeText = 'FREE TIER (ACTIVE)';
                         badgeVariant = 'info';
                     } else {
-                        badgeText = restaurant?.subscription_status === 'suspended' ? 'SUSPENDED' : 'EXPIRED / INACTIVE';
+                        badgeText = 'EXPIRED / INACTIVE';
                         badgeVariant = 'error';
                     }
 

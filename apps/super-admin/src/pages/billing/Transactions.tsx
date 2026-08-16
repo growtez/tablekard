@@ -17,6 +17,7 @@ const normalisePayment = (row) => ({
     _source: 'payments',
     order_number: row.orders?.order_number || null,
     order_type: row.orders?.type || null,
+    table_number: row.orders?.restaurant_tables?.table_number || null,
     restaurant_name: row.restaurants?.name || 'Unknown',
     amount: Number(row.amount || 0),
     currency: row.currency || 'INR',
@@ -33,6 +34,7 @@ const normaliseOrder = (row) => ({
     _source: 'orders',
     order_number: row.order_number,
     order_type: row.type,
+    table_number: row.restaurant_tables?.table_number || null,
     restaurant_name: row.restaurants?.name || 'Unknown',
     amount: Number(row.total || 0),
     currency: 'INR',
@@ -64,13 +66,13 @@ export default function Transactions({ setSyncAction }) {
         try {
             const { data: payments, error: pErr } = await supabase
                 .from('payments')
-                .select(`id, amount, currency, method, gateway, status, razorpay_payment_id, failure_reason, paid_at, created_at, order_id, restaurants(name), orders(order_number, type)`)
+                .select(`id, amount, currency, method, gateway, status, razorpay_payment_id, failure_reason, paid_at, created_at, order_id, restaurants(name), orders(order_number, type, restaurant_tables(table_number))`)
                 .order('created_at', { ascending: false });
             if (pErr) throw pErr;
 
             const { data: cashOrders, error: oErr } = await supabase
                 .from('orders')
-                .select(`id, order_number, type, payment_method, payment_status, total, created_at, updated_at, restaurants(name)`)
+                .select(`id, order_number, type, payment_method, payment_status, total, created_at, updated_at, restaurants(name), restaurant_tables(table_number)`)
                 .in('payment_method', ['cash', 'card'])
                 .order('created_at', { ascending: false });
             if (oErr) throw oErr;
@@ -322,8 +324,9 @@ export default function Transactions({ setSyncAction }) {
                                             {row.order_number ? (
                                                 <div className="flex items-center gap-1.5">
                                                     <Hash size={11} className="text-text-muted shrink-0" />
-                                                    <div>
-                                                        <div className="text-[12px] font-bold font-mono text-text-main">{row.order_number}</div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[12px] font-bold font-mono text-text-main">{row.order_number}</span>
+                                                        {row.table_number && <span className="text-[11px] text-text-muted">Table {row.table_number}</span>}
                                                     </div>
                                                 </div>
                                             ) : <span className="text-text-muted text-[12px]">—</span>}
@@ -408,9 +411,12 @@ export default function Transactions({ setSyncAction }) {
 
                                 <div className="flex flex-col gap-1.5 pl-11">
                                     {row.order_number && (
-                                        <div className="flex justify-between items-center text-[12px]">
-                                            <span className="text-text-muted">Order</span>
-                                            <span className="font-bold font-mono text-text-main">#{row.order_number}</span>
+                                        <div className="flex justify-between items-start text-[12px]">
+                                            <span className="text-text-muted mt-0.5">Order</span>
+                                            <div className="flex flex-col items-end">
+                                                <span className="font-bold font-mono text-text-main">#{row.order_number}</span>
+                                                {row.table_number && <span className="text-[11px] text-text-muted mt-0.5">Table {row.table_number}</span>}
+                                            </div>
                                         </div>
                                     )}
 

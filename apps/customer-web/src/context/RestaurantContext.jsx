@@ -206,7 +206,10 @@ export function RestaurantProvider({ children }) {
                 // Evaluate if service is paused
                 let paused = false;
                 if (data && data.status === 'active') {
-                    if (data.subscription_status === 'inactive' || data.subscription_status === 'suspended') {
+                    if (
+                        data.subscription_status === 'inactive' || 
+                        (data.subscription_status === 'expired' && data.grace_period_ends_at && new Date(data.grace_period_ends_at) < new Date())
+                    ) {
                         paused = true;
                     }
                 }
