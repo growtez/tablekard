@@ -421,7 +421,7 @@ export const getFavorites = async (userId, restaurantId = null) => {
     
     const { data, error } = await query;
     if (error) throw error;
-    return data.map(f => f.menu_items);
+    return data.map(f => processMenuItem(f.menu_items));
 };
 
 export const addFavorite = async (userId, menuItemId) => {

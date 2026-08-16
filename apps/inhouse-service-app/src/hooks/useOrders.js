@@ -10,9 +10,9 @@ import {
 } from '../lib/supabaseService';
 import { enqueueMutation, safeProcessQueue } from '../lib/offlineQueue';
 
-// Orders in the queue have status 'pending' or 'confirmed';
+// Orders in the queue have status 'placed', 'pending' or 'confirmed';
 // orders being prepared have status 'preparing'.
-const WATCHED_STATUSES = ['pending', 'confirmed', 'preparing'];
+const WATCHED_STATUSES = ['placed', 'pending', 'confirmed', 'preparing'];
 
 export function useOrders() {
   const { activeRestaurantId } = useAuth();
@@ -42,7 +42,7 @@ export function useOrders() {
       const orders = await fetchOrdersByStatus(WATCHED_STATUSES, activeRestaurantId);
 
       setPreparingOrders(orders.filter((o) => o.status === 'preparing'));
-      setQueueOrders(orders.filter((o) => o.status === 'pending' || o.status === 'confirmed'));
+      setQueueOrders(orders.filter((o) => o.status === 'placed' || o.status === 'pending' || o.status === 'confirmed'));
       
       // Attempt to process queue in case we just came back online
       safeProcessQueue();
@@ -59,17 +59,23 @@ export function useOrders() {
   useEffect(() => {
     loadOrders();
 
+    if (!activeRestaurantId) return;
+
+    // Use a unique channel name per restaurant to avoid cross-tab collisions
+    const channelName = `orders-realtime-${activeRestaurantId}`;
+
     const channel = supabase
-      .channel('orders-realtime')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'orders',
+          filter: `restaurant_id=eq.${activeRestaurantId}`,
         },
         () => {
-          // Re-fetch on any change to the orders table
+          // Re-fetch on any change to this restaurant's orders
           loadOrders();
         }
       )
@@ -84,16 +90,22 @@ export function useOrders() {
           loadOrders();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('[useOrders] Realtime channel subscribed:', channelName);
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.warn('[useOrders] Realtime channel error:', status, channelName);
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [loadOrders]);
+  }, [loadOrders, activeRestaurantId]);
 
   // ── Action handlers ────────────────────────────────────────
 
-  /** Move a 'confirmed' order → 'preparing' */
+  /** Move a queued order ('placed' | 'confirmed' | 'pending') → 'preparing' */
   const handlePromote = useCallback(
     async (orderId) => {
       // Optimistic Update

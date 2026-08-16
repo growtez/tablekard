@@ -536,21 +536,10 @@ function OrdersView({ onSignOut }) {
           <div className="orders-panel">
             <div className="section-bar section-preparing">PREPARING</div>
             <div className="orders-container">
-              {preparingOrders
-                .map(order => ({
-                  ...order,
-                  order_items: order.order_items?.filter(item => item.prepared_by === user?.id)
-                }))
-                .filter(o => o.order_items && o.order_items.length > 0).length === 0 ? (
+              {preparingOrders.length === 0 ? (
                 <EmptyState message="No orders being prepared" />
               ) : (
-                preparingOrders
-                  .map(order => ({
-                    ...order,
-                    order_items: order.order_items?.filter(item => item.prepared_by === user?.id)
-                  }))
-                  .filter(o => o.order_items && o.order_items.length > 0)
-                  .map((order) => (
+                preparingOrders.map((order) => (
                   <OrderCard
                     key={order.id}
                     id={order.id}
@@ -574,12 +563,10 @@ function OrdersView({ onSignOut }) {
           <div className="orders-panel">
             <div className="section-bar section-queue">ORDER QUEUE</div>
             <div className="orders-container">
-              {queueOrders.filter(o => o.order_items && o.order_items.length > 0).length === 0 ? (
+              {queueOrders.length === 0 ? (
                 <EmptyState message="No orders in queue" />
               ) : (
-                queueOrders
-                  .filter(o => o.order_items && o.order_items.length > 0)
-                  .map((order) => (
+                queueOrders.map((order) => (
                   <OrderCard
                     key={order.id}
                     id={order.id}
