@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { 
   Plus, X, Users, Shield, CheckCircle2, AlertTriangle, Loader2, 
-  Search, MoreVertical, RefreshCw, CheckCircle, AlertCircle, Trash2, Utensils, Camera
+  Search, MoreVertical, RefreshCw, CheckCircle, AlertCircle, Trash2, Utensils, Camera, Pencil
 } from 'lucide-react';
 import { supabase } from '@restaurant-saas/supabase';
 import { uploadProfileImage } from '../services/storageService';
@@ -56,6 +56,19 @@ const Team: React.FC = () => {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
+  // Edit Member state
+  const [editMember, setEditMember] = useState<TeamMember | null>(null);
+  const [isEditingSubmitting, setIsEditingSubmitting] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    email: '',
+    role: 'staff'
+  });
+  const [editAvatarFile, setEditAvatarFile] = useState<File | null>(null);
+  const [editAvatarPreview, setEditAvatarPreview] = useState<string | null>(null);
+  const editAvatarInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (activeRestaurantId) {
       fetchMembers();
@@ -108,6 +121,120 @@ const Team: React.FC = () => {
     setAvatarFile(null);
     setAvatarPreview(null);
     setError(null);
+  };
+
+  const handleOpenEditModal = (member: TeamMember) => {
+    setEditMember(member);
+    setEditFormData({
+      name: member.profiles?.name || '',
+      email: member.profiles?.email || '',
+      role: member.role || 'staff'
+    });
+    setEditAvatarPreview(member.profiles?.avatar_url || null);
+    setEditAvatarFile(null);
+    setEditError(null);
+  };
+
+  const resetEditModalState = () => {
+    setEditMember(null);
+    setEditFormData({ name: '', email: '', role: 'staff' });
+    setEditAvatarFile(null);
+    setEditAvatarPreview(null);
+    setEditError(null);
+  };
+
+  const handleEditAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        setEditError('Avatar image must be under 2 MB.');
+        return;
+      }
+      setEditAvatarFile(file);
+      setEditAvatarPreview(URL.createObjectURL(file));
+      setEditError(null);
+    }
+  };
+
+  const handleUpdateMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editMember || !activeRestaurantId) return;
+
+    setEditError(null);
+    setIsEditingSubmitting(true);
+
+    try {
+      let uploadedAvatarUrl: string | undefined = undefined;
+      if (editAvatarFile) {
+        try {
+          uploadedAvatarUrl = await uploadProfileImage('avatars/staff', editAvatarFile);
+        } catch (uploadErr: any) {
+          throw new Error(`Failed to upload avatar: ${uploadErr.message || 'Upload error'}`);
+        }
+      }
+
+      // Invoke update-team-member Edge Function (bypasses RLS & updates Auth email)
+      const { data, error: fnError } = await supabase.functions.invoke('update-team-member', {
+        body: {
+          member_id: editMember.id,
+          profile_id: editMember.profile_id,
+          restaurant_id: activeRestaurantId,
+          name: editFormData.name,
+          email: editFormData.email,
+          role: editFormData.role,
+          avatar_url: uploadedAvatarUrl !== undefined ? uploadedAvatarUrl : (editMember.profiles?.avatar_url || undefined)
+        }
+      });
+
+      if (fnError) {
+        throw new Error(fnError.message || 'Failed to invoke update function');
+      }
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      resetEditModalState();
+      fetchMembers();
+    } catch (err: any) {
+      console.error('Error updating team member:', err);
+      // Fallback: try direct DB update if edge function fails or is not deployed locally
+      try {
+        let uploadedAvatarUrl: string | undefined = undefined;
+        if (editAvatarFile) {
+          uploadedAvatarUrl = await uploadProfileImage('avatars/staff', editAvatarFile);
+        }
+
+        const profilePatch: Record<string, any> = {
+          name: editFormData.name,
+          email: editFormData.email
+        };
+        if (uploadedAvatarUrl) {
+          profilePatch.avatar_url = uploadedAvatarUrl;
+        }
+
+        const { error: pErr } = await supabase
+          .from('profiles')
+          .update(profilePatch)
+          .eq('id', editMember.profile_id);
+          
+        if (pErr) throw pErr;
+
+        if (editFormData.role !== editMember.role) {
+          const { error: rErr } = await (supabase as any)
+            .from('restaurant_users')
+            .update({ role: editFormData.role })
+            .eq('id', editMember.id);
+          if (rErr) throw rErr;
+        }
+
+        resetEditModalState();
+        fetchMembers();
+      } catch (fallbackErr: any) {
+        setEditError(err.message || fallbackErr.message || 'Failed to update team member');
+      }
+    } finally {
+      setIsEditingSubmitting(false);
+    }
   };
 
   const handleCreateMember = async (e: React.FormEvent) => {
@@ -266,6 +393,17 @@ const Team: React.FC = () => {
           >
             {member.active ? 'Deactivate' : 'Activate'}
           </button>
+
+          {member.role !== 'admin' && (
+            <button
+              className="flex items-center justify-center gap-1.5 px-3 py-2 bg-[#F7FAFC] text-[#4A5568] hover:bg-[#EDF2F7] border border-[#E2E8F0] rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 hover:-translate-y-0.5 dark:bg-tk-bg-elevated dark:text-tk-text dark:border-tk-border dark:hover:bg-tk-bg-hover"
+              onClick={() => handleOpenEditModal(member)}
+              title="Edit member"
+            >
+              <Pencil size={14} />
+              Edit
+            </button>
+          )}
 
           <button
             className="flex items-center justify-center gap-1.5 px-3 py-2 bg-[#FFF5F5] text-[#E53E3E] hover:bg-[#FED7D7] border border-[#FEB2B2] rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
@@ -582,7 +720,7 @@ const Team: React.FC = () => {
               </div>
 
               <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-tk-text uppercase tracking-wider">Temporary Password</label>
+                <label className="text-[13px] font-bold text-tk-text uppercase tracking-wider">Password</label>
                 <input
                   type="text"
                   required
@@ -617,6 +755,140 @@ const Team: React.FC = () => {
                     <>
                       <CheckCircle2 size={18} />
                       Confirm & Create
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Member Modal */}
+      {editMember && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[1100] p-4 animate-[fadeIn_0.2s_ease]" onClick={() => !isEditingSubmitting && resetEditModalState()}>
+          <div className="bg-white dark:bg-tk-bg-card rounded-[28px] p-8 max-w-[480px] w-full border border-[#E2E8F0] dark:border-tk-border shadow-[0_24px_48px_rgba(0,0,0,0.2)] animate-[slideUp_0.3s_ease]" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-tk-burgundy/10 flex items-center justify-center text-tk-burgundy">
+                  <Pencil size={20} strokeWidth={2.5} />
+                </div>
+                <h2 className="text-[22px] font-extrabold text-tk-text m-0">Edit Member</h2>
+              </div>
+              <button 
+                onClick={() => !isEditingSubmitting && resetEditModalState()}
+                className="w-8 h-8 flex items-center justify-center bg-tk-bg-surface text-tk-text-secondary hover:text-tk-text hover:bg-tk-bg-hover rounded-full transition-colors cursor-pointer"
+                disabled={isEditingSubmitting}
+              >
+                <X size={18} strokeWidth={2.5} />
+              </button>
+            </div>
+
+            {editError && (
+              <div className="mb-6 p-4 bg-[#FFF5F5] border border-[#FEB2B2] rounded-2xl flex items-start gap-3 text-[#C53030]">
+                <AlertTriangle size={18} className="shrink-0 mt-0.5" />
+                <p className="text-[13px] font-bold m-0">{editError}</p>
+              </div>
+            )}
+
+            <form onSubmit={handleUpdateMember} className="flex flex-col gap-5">
+              {/* Avatar Upload / Change Picker */}
+              <div className="flex flex-col items-center gap-2 mb-1">
+                <div 
+                  className="relative w-20 h-20 rounded-full bg-tk-bg-surface border-2 border-dashed border-tk-border hover:border-tk-burgundy cursor-pointer flex items-center justify-center overflow-hidden transition-all group shadow-inner"
+                  onClick={() => editAvatarInputRef.current?.click()}
+                  title="Click to change profile photo"
+                >
+                  {editAvatarPreview ? (
+                    <img src={editAvatarPreview} alt="Avatar preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="flex flex-col items-center gap-1 text-tk-text-secondary group-hover:text-tk-burgundy transition-colors">
+                      <Camera size={22} />
+                      <span className="text-[10px] font-bold">Upload</span>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Camera size={20} />
+                  </div>
+                </div>
+                <input
+                  type="file"
+                  ref={editAvatarInputRef}
+                  accept="image/png,image/jpeg,image/jpg,image/webp"
+                  className="hidden"
+                  onChange={handleEditAvatarChange}
+                />
+                <span className="text-[12px] font-semibold text-tk-text-secondary">
+                  {editAvatarFile ? editAvatarFile.name : 'Click photo to change (optional)'}
+                </span>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-[13px] font-bold text-tk-text uppercase tracking-wider">Email Address</label>
+                <input
+                  type="email"
+                  required
+                  value={editFormData.email}
+                  onChange={e => setEditFormData({...editFormData, email: e.target.value})}
+                  placeholder="staff@restaurant.com"
+                  className="w-full px-4 py-3 bg-tk-bg-surface border border-tk-border rounded-xl text-tk-text text-[14px] font-medium focus:outline-none focus:ring-4 focus:ring-tk-burgundy/10 focus:border-tk-burgundy transition-all"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[13px] font-bold text-tk-text uppercase tracking-wider">Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={editFormData.name}
+                    onChange={e => setEditFormData({...editFormData, name: e.target.value})}
+                    placeholder="e.g. John Doe"
+                    className="w-full px-4 py-3 bg-tk-bg-surface border border-tk-border rounded-xl text-tk-text text-[14px] font-medium focus:outline-none focus:ring-4 focus:ring-tk-burgundy/10 focus:border-tk-burgundy transition-all"
+                  />
+                </div>
+                
+                <div className="flex flex-col gap-2">
+                  <label className="text-[13px] font-bold text-tk-text uppercase tracking-wider">Role</label>
+                  <div className="relative">
+                    <select
+                      value={editFormData.role}
+                      onChange={e => setEditFormData({...editFormData, role: e.target.value})}
+                      className="w-full px-4 py-3 bg-tk-bg-surface border border-tk-border rounded-xl text-tk-text text-[14px] font-medium focus:outline-none focus:ring-4 focus:ring-tk-burgundy/10 focus:border-tk-burgundy transition-all appearance-none cursor-pointer"
+                    >
+                      <option value="staff">Kitchen Staff</option>
+                      <option value="admin">Restaurant Admin</option>
+                    </select>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-tk-text-secondary">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 mt-2 pt-5 border-t border-tk-border">
+                <button
+                  type="button"
+                  onClick={() => resetEditModalState()}
+                  disabled={isEditingSubmitting}
+                  className="px-6 py-3 text-tk-text-secondary font-bold hover:bg-tk-bg-surface rounded-full transition-colors text-[14px] disabled:opacity-50 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isEditingSubmitting}
+                  className="px-8 py-3 bg-[linear-gradient(135deg,var(--tk-burgundy),#6B2A15)] text-white font-bold rounded-full transition-all flex items-center justify-center gap-2 text-[14px] disabled:opacity-70 shadow-[0_8px_16px_rgba(139,58,30,0.2)] hover:shadow-[0_12px_20px_rgba(139,58,30,0.3)] hover:-translate-y-0.5 cursor-pointer"
+                >
+                  {isEditingSubmitting ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 size={18} />
+                      Save Changes
                     </>
                   )}
                 </button>
