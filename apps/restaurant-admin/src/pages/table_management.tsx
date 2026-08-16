@@ -132,7 +132,7 @@ const TableManagementPage: React.FC = () => {
             });
             const imgData = canvas.toDataURL('image/png', 1.0);
             const pdf = new jsPDF({
-                orientation: 'portrait',
+                orientation: 'landscape',
                 unit: 'mm',
                 format: [CARD_MM_W, CARD_MM_H]
             });
