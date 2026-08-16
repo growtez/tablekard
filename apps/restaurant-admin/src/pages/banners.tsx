@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { uploadProfileImage, deleteMenuItemImageFromStorage } from '../services/storageService';
 import { getMenuItems } from '../services/supabaseService';
 import type { MenuItem } from '@restaurant-saas/types';
-import { Image, Plus, Trash2, Eye, EyeOff, X, Upload, AlertTriangle, Pencil, Link, Utensils, Tag, Compass, GripVertical } from 'lucide-react';
+import { Image, Plus, Trash2, Eye, EyeOff, X, Upload, AlertTriangle, Pencil, Link, Utensils, Tag, Compass, GripVertical, Search, ChevronDown } from 'lucide-react';
 import ImageCropper from '../components/ImageCropper';
 
 interface Banner {
@@ -52,6 +52,19 @@ export default function BannersPage() {
   const [destinationType, setDestinationType] = useState<'none' | 'menu' | 'offers' | 'item' | 'custom'>('none');
   const [selectedItemId, setSelectedItemId] = useState<string>('');
   const [customUrl, setCustomUrl] = useState<string>('');
+  const [itemSearchQuery, setItemSearchQuery] = useState('');
+  const [isItemDropdownOpen, setIsItemDropdownOpen] = useState(false);
+  const itemDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (itemDropdownRef.current && !itemDropdownRef.current.contains(event.target as Node)) {
+        setIsItemDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const fetchBanners = async () => {
     if (!activeRestaurantId) return;
@@ -426,22 +439,59 @@ export default function BannersPage() {
               {destinationType === 'item' && (
                 <div className="flex flex-col gap-1.5 mt-2 animate-in fade-in duration-200">
                   <span className="text-[12px] font-medium text-[#64748B] dark:text-tk-text-secondary">Select Food Item:</span>
-                  <select
-                    value={selectedItemId}
-                    onChange={(e) => {
-                      const itemId = e.target.value;
-                      setSelectedItemId(itemId);
-                      setForm(prev => ({ ...prev, link_url: itemId ? `item:${itemId}` : '' }));
-                    }}
-                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                  >
-                    <option value="">-- Choose a Food Item --</option>
-                    {menuItems.map(item => (
-                      <option key={item.id} value={item.id}>
-                        {item.name} — ₹{item.price}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative" ref={itemDropdownRef}>
+                    <button
+                      type="button"
+                      onClick={() => setIsItemDropdownOpen(!isItemDropdownOpen)}
+                      className="w-full flex justify-between items-center border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] transition-all duration-200 focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text text-left"
+                    >
+                      <span className="truncate flex-1 pr-2">
+                        {selectedItemId
+                          ? (menuItems.find(i => i.id === selectedItemId)?.name || 'Selected Item') + ' — ₹' + (menuItems.find(i => i.id === selectedItemId)?.price || '')
+                          : '-- Choose a Food Item --'}
+                      </span>
+                      <ChevronDown size={16} className={`text-tk-text-secondary transition-transform ${isItemDropdownOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                    
+                    {isItemDropdownOpen && (
+                      <div className="absolute z-50 w-full mt-2 bg-white dark:bg-tk-bg-surface border border-[#CBD5E0] dark:border-tk-border rounded-xl shadow-lg overflow-hidden flex flex-col">
+                        <div className="p-2 border-b border-[#CBD5E0] dark:border-tk-border relative">
+                          <Search size={14} className="absolute left-4 top-[50%] -translate-y-1/2 text-tk-text-secondary" />
+                          <input
+                            type="text"
+                            placeholder="Search items..."
+                            value={itemSearchQuery}
+                            onChange={(e) => setItemSearchQuery(e.target.value)}
+                            className="w-full pl-8 pr-3 py-2 bg-[#F8FAFC] dark:bg-tk-bg-elevated border-none rounded-lg text-[13px] text-[#1A202C] dark:text-tk-text focus:outline-none focus:ring-1 focus:ring-tk-burgundy transition-all"
+                            autoFocus
+                          />
+                        </div>
+                        <div className="max-h-60 overflow-y-auto tk-table-scroll">
+                          {menuItems.filter(item => item.name.toLowerCase().includes(itemSearchQuery.toLowerCase())).length > 0 ? (
+                            menuItems.filter(item => item.name.toLowerCase().includes(itemSearchQuery.toLowerCase())).map(item => (
+                              <button
+                                key={item.id}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedItemId(item.id);
+                                  setForm(prev => ({ ...prev, link_url: item.id ? `item:${item.id}` : '' }));
+                                  setIsItemDropdownOpen(false);
+                                  setItemSearchQuery('');
+                                }}
+                                className={`w-full text-left px-3.5 py-2.5 text-[13px] font-['Outfit',sans-serif] hover:bg-[#FFF5F5] dark:hover:bg-[rgba(199,91,58,0.1)] transition-colors ${selectedItemId === item.id ? 'bg-[#FFF5F5] text-tk-burgundy dark:bg-[rgba(199,91,58,0.15)] font-semibold' : 'text-[#4A5568] dark:text-tk-text-secondary'}`}
+                              >
+                                {item.name} <span className="opacity-70">— ₹{item.price}</span>
+                              </button>
+                            ))
+                          ) : (
+                            <div className="px-3.5 py-4 text-center text-[13px] text-tk-text-secondary">
+                              No items found
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 

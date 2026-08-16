@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { formatTime, formatDate } from '@restaurant-saas/types';
-import { Home, ShoppingBag, MessageCircle, User, Minus, Plus, Trash2, Clock, CheckCircle, Utensils, ShoppingCart, ListOrdered, ArrowRight, Star, Users, CreditCard, Wallet, Loader2, AlertCircle, Download, Pencil } from 'lucide-react';
+import { Home, ShoppingBag, MessageCircle, User, Minus, Plus, Trash2, Clock, CheckCircle, Utensils, ShoppingCart, ListOrdered, ArrowRight, Star, Users, CreditCard, Wallet, Loader2, AlertCircle, Download, Pencil, ChevronDown } from 'lucide-react';
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
@@ -31,6 +31,14 @@ const MyOrderPage = () => {
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [expandedItems, setExpandedItems] = useState({});
+
+  const toggleItemExpand = (orderId, index) => {
+    setExpandedItems(prev => ({
+      ...prev,
+      [`${orderId}-${index}`]: !prev[`${orderId}-${index}`]
+    }));
+  };
 
   const [showPayCounterPopup, setShowPayCounterPopup] = useState(false);
 
@@ -1117,20 +1125,30 @@ const MyOrderPage = () => {
                             });
                           }
                           const aggregatedAddons = Object.values(addonCounts);
+                          const itemTotal = (item.price * item.quantity) + aggregatedAddons.reduce((sum, a) => sum + a.totalPrice, 0);
 
                           return (
                             <div key={index} className="oi-item-block">
                               {/* Item header row */}
-                              <div className="oi-item-top">
+                              <div 
+                                className="oi-item-top" 
+                                onClick={() => (item.variant || aggregatedAddons.length > 0) && toggleItemExpand(order.id, index)} 
+                                style={{ cursor: (item.variant || aggregatedAddons.length > 0) ? 'pointer' : 'default' }}
+                              >
                                 <div className="oi-item-left">
                                   <span className="oi-item-qty-badge">{item.quantity}×</span>
                                   <span className="oi-item-name">{item.name}</span>
                                 </div>
-                                <span className="oi-item-price">₹{item.price * item.quantity}</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <span className="oi-item-price">₹{itemTotal}</span>
+                                  {(item.variant || aggregatedAddons.length > 0) && (
+                                    <ChevronDown size={16} color="#888" style={{ transform: expandedItems[`${order.id}-${index}`] ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                                  )}
+                                </div>
                               </div>
 
                               {/* Extras: Variants & Addons */}
-                              {(item.variant || aggregatedAddons.length > 0) && (
+                              {(item.variant || aggregatedAddons.length > 0) && expandedItems[`${order.id}-${index}`] && (
                                 <div className="oi-extras-list">
                                   {item.variant && (
                                     <div className="oi-extra-item">
@@ -1160,10 +1178,10 @@ const MyOrderPage = () => {
                                         <span>{a.name} {a.count > 1 ? <span className="oi-addon-count">×{a.count}</span> : ''}</span>
                                       </div>
                                       <div className="oi-extra-price-group">
-                                        {item.quantity > 1 && (
-                                          <span className="oi-price-breakdown">₹{a.totalPrice} × {item.quantity} =</span>
+                                        {a.count > 1 && (
+                                          <span className="oi-price-breakdown">₹{a.price} × {a.count} =</span>
                                         )}
-                                        <span className="oi-extra-price">+₹{a.totalPrice * item.quantity}</span>
+                                        <span className="oi-extra-price">+₹{a.totalPrice}</span>
                                       </div>
                                     </div>
                                   ))}
