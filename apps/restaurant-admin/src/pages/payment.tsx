@@ -462,9 +462,30 @@ const Payment: React.FC = () => {
                 <div key={transaction.id} onClick={() => handleView(transaction.id)} className="bg-tk-bg-card rounded-[16px] shadow-sm border border-tk-border p-4 flex flex-col gap-4 cursor-pointer transition-all duration-300 hover:shadow-md hover:border-tk-burgundy/30">
                   <div className="flex justify-between items-center">
                     <span className="font-bold text-[14px] text-tk-text">{transaction.orderNumber}</span>
-                    <span className={`inline-flex px-2.5 py-1 rounded-lg text-[11px] font-bold ${transaction.statusColor === 'paid' ? 'bg-[#F0FFF4] text-[#38A169]' : transaction.statusColor === 'pending' ? 'bg-[#FFFFF0] text-[#D69E2E]' : transaction.statusColor === 'failed' ? 'bg-[#FFF5F5] text-[#E53E3E]' : 'bg-[#FAF5FF] text-[#805AD5]'}`}>
-                      {transaction.paymentStatus}
-                    </span>
+                    <div className="relative inline-flex items-center" onClick={(e) => e.stopPropagation()}>
+                      <select
+                        className={`appearance-none outline-none border border-tk-border px-2.5 py-1 pr-7 rounded-lg text-[11px] font-bold cursor-pointer hover:shadow-sm transition-all shadow-sm w-full ${transaction.statusColor === 'paid' ? 'bg-[#F0FFF4] text-[#38A169] hover:border-[#38A169]/30' : transaction.statusColor === 'pending' ? 'bg-[#FFFFF0] text-[#D69E2E] hover:border-[#D69E2E]/30' : transaction.statusColor === 'failed' ? 'bg-[#FFF5F5] text-[#E53E3E] hover:border-[#E53E3E]/30' : 'bg-[#FAF5FF] text-[#805AD5] hover:border-[#805AD5]/30'}`}
+                        value={transaction.paymentStatus}
+                        onChange={(e) => handleStatusChange(transaction.id, e.target.value)}
+                      >
+                        {transaction.paymentMethod?.toLowerCase() === 'online' ? (
+                          <>
+                            <option value="Paid">Paid</option>
+                            <option value="Refunded">Refunded</option>
+                          </>
+                        ) : (
+                          <>
+                            <option value="Paid">Paid</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Failed">Failed</option>
+                            <option value="Refunded">Refunded</option>
+                          </>
+                        )}
+                      </select>
+                      <div className="absolute right-2 pointer-events-none text-tk-text-secondary opacity-70 flex items-center">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                      </div>
+                    </div>
                   </div>
                   <div>
                     <div className="text-[24px] font-extrabold text-[#111] dark:text-tk-text tracking-tight mb-1">₹{transaction.amount.toLocaleString()}</div>

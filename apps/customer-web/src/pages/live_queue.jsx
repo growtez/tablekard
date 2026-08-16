@@ -133,10 +133,10 @@ const LiveQueuePage = () => {
 
             const now = new Date();
             const activeData = data.filter(o => {
-                if (o.status === 'ready' && o.payment_status === 'paid') {
+                if (o.status === 'ready') {
                     const updatedAt = new Date(o.updated_at);
                     const diffMins = (now - updatedAt) / (1000 * 60);
-                    return diffMins <= 15;
+                    return diffMins <= 10;
                 }
                 return true;
             });
@@ -339,6 +339,15 @@ const LiveQueuePage = () => {
                 </div>
             </header>
 
+            {/* ── KITCHEN ANIMATION (STANDALONE OUTSIDE) ────── */}
+            <div className="lq-kitchen-standalone-anim">
+                <Lottie
+                    animationData={kitchenAnimation}
+                    loop={true}
+                    style={{ height: 180, width: '100%', maxWidth: '320px', margin: '0 auto' }}
+                />
+            </div>
+
             {/* ── YOUR ORDER CARDS ──────────────────────── */}
             {queueData.yourTokens && queueData.yourTokens.map((token) => {
                 const isExpanded = !!expandedOrders[token.id];
@@ -461,14 +470,8 @@ const LiveQueuePage = () => {
                 );
             })}
 
-            {/* ── KITCHEN ANIMATION (STANDALONE OUTSIDE) ────── */}
-            <div className="lq-kitchen-standalone-anim">
-                <Lottie
-                    animationData={kitchenAnimation}
-                    loop={true}
-                    style={{ height: 180, width: '100%', maxWidth: '320px', margin: '0 auto' }}
-                />
-            </div>
+            {/* ── DIVIDER ─────────────────────────────────── */}
+            <div className="lq-page-divider" />
 
             {/* ── PREPARING NOW ───────────────────────────── */}
             <div className="lq-section-card">

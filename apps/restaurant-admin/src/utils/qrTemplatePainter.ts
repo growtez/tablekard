@@ -21,7 +21,7 @@ interface QrTemplateOptions {
 // ─── Fixed standee dimensions (6 × 3 inches at 96 dpi CSS pixels) ─────────
 const CARD_W = 576;   // 6 in × 96 dpi
 const CARD_H = 288;   // 3 in × 96 dpi
-const QR_SIZE = 200;  // QR size for the right side
+const QR_SIZE = 170;  // QR size for the right side
 
 // PDF physical size constants (millimetres)
 export const CARD_MM_W = 152.4;   // 6 inches in mm
@@ -69,32 +69,34 @@ export async function paintQrTemplate(opts: QrTemplateOptions): Promise<HTMLCanv
     ctx.fillStyle = THEME_COLOR;
     ctx.fillText(`${tableNumber}`, 150, 145);
 
+    const BOTTOM_ROW_Y = 245;
+
     // TableKard Logo under Table Number
     try {
         const logoImg = await loadImage(logoImgSrc);
         const logoTargetWidth = 130;
         const logoRatio = logoImg.height / logoImg.width;
         const logoTargetHeight = logoTargetWidth * logoRatio;
-        ctx.drawImage(logoImg, 150 - logoTargetWidth / 2, 225, logoTargetWidth, logoTargetHeight);
+        ctx.drawImage(logoImg, 150 - logoTargetWidth / 2, BOTTOM_ROW_Y - logoTargetHeight / 2, logoTargetWidth, logoTargetHeight);
     } catch (e) {
         console.error("Failed to load tablekard logo", e);
     }
+
+    const qrPad = 10;
+    const qrBoxW = QR_SIZE + qrPad * 2;
+    const qrBoxX = 343;
+    const qrBoxY = 25;
 
     // ── Middle divider ───────────────────────────────────────────────────────
     ctx.strokeStyle = BLACK;
     ctx.lineWidth = 4;
     ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.moveTo(300, 30);
+    ctx.moveTo(300, qrBoxY); // Match divider top with QR border top
     ctx.lineTo(300, H - 30);
     ctx.stroke();
 
     // ── Right side ───────────────────────────────────────────────────────────
-    
-    const qrPad = 10;
-    const qrBoxW = QR_SIZE + qrPad * 2;
-    const qrBoxX = 330;
-    const qrBoxY = 20;
 
     // QR Box Border
     ctx.strokeStyle = BLACK;
@@ -108,10 +110,9 @@ export async function paintQrTemplate(opts: QrTemplateOptions): Promise<HTMLCanv
     ctx.fillStyle = THEME_COLOR;
     ctx.font = `600 15px "Segoe UI", Arial, sans-serif`;
     ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
+    ctx.textBaseline = 'middle';
     
-    ctx.fillText('Scan QR code to', qrBoxX + qrBoxW / 2, qrBoxY + qrBoxW + 10);
-    ctx.fillText('place order', qrBoxX + qrBoxW / 2, qrBoxY + qrBoxW + 30);
+    ctx.fillText('Scan QR code to place order', qrBoxX + qrBoxW / 2, BOTTOM_ROW_Y);
 
     return canvas;
 }
