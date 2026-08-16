@@ -56,31 +56,29 @@ export async function paintQrTemplate(opts: QrTemplateOptions): Promise<HTMLCanv
 
     // ── Left side ────────────────────────────────────────────────────────────
 
-    ctx.textAlign = 'left';
+    ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     
     // "Table No."
     ctx.font = `700 28px "Segoe UI", Arial, sans-serif`;
     ctx.fillStyle = THEME_COLOR;
-    ctx.fillText('Table No.', 30, 50);
-
-    // TableKard Logo under Table No.
-    try {
-        const logoImg = await loadImage(logoImgSrc);
-        const logoTargetWidth = 110;
-        const logoRatio = logoImg.height / logoImg.width;
-        const logoTargetHeight = logoTargetWidth * logoRatio;
-        ctx.drawImage(logoImg, 30, 75, logoTargetWidth, logoTargetHeight);
-    } catch (e) {
-        console.error("Failed to load tablekard logo", e);
-    }
+    ctx.fillText('Table No.', 150, 50);
 
     // Huge Table Number
     ctx.font = `900 120px "Comic Sans MS", "Marker Felt", "Arial Black", sans-serif`;
     ctx.fillStyle = THEME_COLOR;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(`${tableNumber}`, 160, 185);
+    ctx.fillText(`${tableNumber}`, 150, 145);
+
+    // TableKard Logo under Table Number
+    try {
+        const logoImg = await loadImage(logoImgSrc);
+        const logoTargetWidth = 130;
+        const logoRatio = logoImg.height / logoImg.width;
+        const logoTargetHeight = logoTargetWidth * logoRatio;
+        ctx.drawImage(logoImg, 150 - logoTargetWidth / 2, 225, logoTargetWidth, logoTargetHeight);
+    } catch (e) {
+        console.error("Failed to load tablekard logo", e);
+    }
 
     // ── Middle divider ───────────────────────────────────────────────────────
     ctx.strokeStyle = BLACK;
