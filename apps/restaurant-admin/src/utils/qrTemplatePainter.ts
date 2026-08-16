@@ -1,3 +1,5 @@
+import logoImgSrc from './image.png';
+
 /**
  * QR Download Template Painter
  * ─────────────────────────────────────────────────────────────────────────────
@@ -26,7 +28,7 @@ export const CARD_MM_W = 152.4;   // 6 inches in mm
 export const CARD_MM_H = 76.2;    // 3 inches in mm
 
 export async function paintQrTemplate(opts: QrTemplateOptions): Promise<HTMLCanvasElement> {
-    const { qrSvgElementId, restaurantName, tableNumber } = opts;
+    const { qrSvgElementId, tableNumber } = opts;
 
     // ── canvas ──────────────────────────────────────────────────────────────
     const SCALE = 3;   
@@ -42,9 +44,9 @@ export async function paintQrTemplate(opts: QrTemplateOptions): Promise<HTMLCanv
     const qrImage = await loadSvgAsImage(qrSvgElementId, QR_SIZE);
 
     // ── colours ──────────────────────────────────────────────────────────────
-    const BLACK  = '#1A202C';
-    const WHITE  = '#FFFFFF';
-    const RED    = '#E53E3E'; 
+    const BLACK       = '#1A202C';
+    const WHITE       = '#FFFFFF';
+    const THEME_COLOR = '#8B3A1E'; // Project theme (burgundy/brown)
 
     // ── background ───────────────────────────────────────────────────────────
     roundRect(ctx, 0, 0, W, H, 12, WHITE);
@@ -57,24 +59,28 @@ export async function paintQrTemplate(opts: QrTemplateOptions): Promise<HTMLCanv
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     
-    // Restaurant Name 
-    ctx.font = `900 20px "Arial Black", "Segoe UI Black", Impact, sans-serif`;
-    ctx.fillStyle = RED;
-    let rName = clamp(restaurantName, 12);
-    ctx.fillText(rName, 30, 50);
-    
-    // Next to it "Table No."
-    let rNameWidth = ctx.measureText(rName).width;
-    ctx.font = `700 22px "Segoe UI", Arial, sans-serif`;
-    ctx.fillStyle = BLACK;
-    ctx.fillText('Table No.', 30 + rNameWidth + 12, 50);
+    // "Table No."
+    ctx.font = `700 28px "Segoe UI", Arial, sans-serif`;
+    ctx.fillStyle = THEME_COLOR;
+    ctx.fillText('Table No.', 30, 50);
+
+    // TableKard Logo under Table No.
+    try {
+        const logoImg = await loadImage(logoImgSrc);
+        const logoTargetWidth = 110;
+        const logoRatio = logoImg.height / logoImg.width;
+        const logoTargetHeight = logoTargetWidth * logoRatio;
+        ctx.drawImage(logoImg, 30, 75, logoTargetWidth, logoTargetHeight);
+    } catch (e) {
+        console.error("Failed to load tablekard logo", e);
+    }
 
     // Huge Table Number
     ctx.font = `900 120px "Comic Sans MS", "Marker Felt", "Arial Black", sans-serif`;
-    ctx.fillStyle = '#2D3748';
+    ctx.fillStyle = THEME_COLOR;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(`${tableNumber}`, 155, 175);
+    ctx.fillText(`${tableNumber}`, 160, 185);
 
     // ── Middle divider ───────────────────────────────────────────────────────
     ctx.strokeStyle = BLACK;
@@ -101,19 +107,13 @@ export async function paintQrTemplate(opts: QrTemplateOptions): Promise<HTMLCanv
     ctx.drawImage(qrImage, qrBoxX + qrPad, qrBoxY + qrPad, QR_SIZE, QR_SIZE);
 
     // Scan to order text
-    ctx.fillStyle = BLACK;
+    ctx.fillStyle = THEME_COLOR;
     ctx.font = `600 15px "Segoe UI", Arial, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     
-    ctx.fillText('Scan QR code* to', qrBoxX + qrBoxW / 2, qrBoxY + qrBoxW + 10);
+    ctx.fillText('Scan QR code to', qrBoxX + qrBoxW / 2, qrBoxY + qrBoxW + 10);
     ctx.fillText('place order', qrBoxX + qrBoxW / 2, qrBoxY + qrBoxW + 30);
-
-    // T&C Apply
-    ctx.font = `700 10px "Segoe UI", Arial, sans-serif`;
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'bottom';
-    ctx.fillText('*T&C Apply', W - 15, H - 15);
 
     return canvas;
 }
@@ -134,6 +134,15 @@ function loadSvgAsImage(svgId: string, size: number): Promise<HTMLImageElement> 
     });
 }
 
+function loadImage(src: string): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = src;
+    });
+}
+
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number, fill: string) {
     ctx.fillStyle = fill;
     ctx.beginPath();
@@ -149,8 +158,4 @@ function roundRectStroke(ctx: CanvasRenderingContext2D, x: number, y: number, w:
     ctx.beginPath();
     ctx.roundRect(x, y, w, h, r);
     ctx.stroke();
-}
-
-function clamp(str: string, max: number): string {
-    return str.length > max ? str.slice(0, max - 1) + '…' : str;
 }
