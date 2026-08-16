@@ -1,49 +1,35 @@
 /**
  * QR Download Template Painter
  * ─────────────────────────────────────────────────────────────────────────────
- * Renders a styled 4×6 inch standee card on an HTML5 Canvas and returns it
+ * Renders a styled 6x3 inch landscape table card on an HTML5 Canvas and returns it
  * as a downloadable PNG / PDF source.
  *
- * Fixed card size: 4 × 6 inches (portrait standee)
- * At SCALE=3 the canvas is 1152 × 1728 px — ~300 dpi equivalent for print.
- *
- * Card layout (top → bottom):
- *   ┌────────────────────────────────┐  0
- *   │  Header bar (dark)  80px       │
- *   ├────────────────────────────────┤  80
- *   │  Restaurant name   48px        │  ~130
- *   │  Table badge       44px        │  ~148–192
- *   │  [gap 20px]                    │  192–212
- *   │  QR code box       248px       │  212–476
- *   │  [gap]                         │
- *   │  Arrow + SCAN TO ORDER         │  ~530
- *   │  Bottom accent bar  8px        │  568–576
- *   └────────────────────────────────┘  576
+ * Fixed card size: 6 × 3 inches
+ * At SCALE=3 the canvas is 1728 × 864 px
  */
 
 interface QrTemplateOptions {
-    qrSvgElementId: string;   // id of the <svg> tag already in the DOM
+    qrSvgElementId: string;
     restaurantName: string;
     tableNumber: number;
-    qrUrl?: string;            // encoded in the QR SVG itself; kept for API compat
-    qrSize?: number;           // ignored — card uses fixed internal size for consistency
+    qrUrl?: string;
+    qrSize?: number;
 }
 
-// ─── Fixed standee dimensions (4 × 6 inches at 96 dpi CSS pixels) ─────────
-const CARD_W = 384;   // 4 in × 96 dpi
-const CARD_H = 576;   // 6 in × 96 dpi
-const QR_SIZE = 240;  // fixed QR size that fits the card comfortably
+// ─── Fixed standee dimensions (6 × 3 inches at 96 dpi CSS pixels) ─────────
+const CARD_W = 576;   // 6 in × 96 dpi
+const CARD_H = 288;   // 3 in × 96 dpi
+const QR_SIZE = 200;  // QR size for the right side
 
 // PDF physical size constants (millimetres)
-export const CARD_MM_W = 101.6;   // 4 inches in mm
-export const CARD_MM_H = 152.4;   // 6 inches in mm
+export const CARD_MM_W = 152.4;   // 6 inches in mm
+export const CARD_MM_H = 76.2;    // 3 inches in mm
 
-/** Main entry-point – returns a canvas element ready for .toDataURL() */
 export async function paintQrTemplate(opts: QrTemplateOptions): Promise<HTMLCanvasElement> {
     const { qrSvgElementId, restaurantName, tableNumber } = opts;
 
     // ── canvas ──────────────────────────────────────────────────────────────
-    const SCALE = 3;   // 3× super-sampling → ~300 dpi equivalent
+    const SCALE = 3;   
     const W = CARD_W;
     const H = CARD_H;
     const canvas = document.createElement('canvas');
@@ -56,87 +42,78 @@ export async function paintQrTemplate(opts: QrTemplateOptions): Promise<HTMLCanv
     const qrImage = await loadSvgAsImage(qrSvgElementId, QR_SIZE);
 
     // ── colours ──────────────────────────────────────────────────────────────
-    const DARK   = '#61270e';
-    const ACCENT = '#2D6A4F';
+    const BLACK  = '#1A202C';
     const WHITE  = '#FFFFFF';
-    const BORDER = '#E2E8F0';
+    const RED    = '#E53E3E'; 
 
     // ── background ───────────────────────────────────────────────────────────
-    roundRect(ctx, 0, 0, W, H, 0, WHITE);
+    roundRect(ctx, 0, 0, W, H, 12, WHITE);
+    ctx.strokeStyle = '#CBD5E0';
+    ctx.lineWidth = 2;
+    roundRectStroke(ctx, 0, 0, W, H, 12);
 
-    // ── header bar (0 → 80) ──────────────────────────────────────────────────
-    ctx.fillStyle = DARK;
+    // ── Left side ────────────────────────────────────────────────────────────
+
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    
+    // Restaurant Name 
+    ctx.font = `900 20px "Arial Black", "Segoe UI Black", Impact, sans-serif`;
+    ctx.fillStyle = RED;
+    let rName = clamp(restaurantName, 12);
+    ctx.fillText(rName, 30, 50);
+    
+    // Next to it "Table No."
+    let rNameWidth = ctx.measureText(rName).width;
+    ctx.font = `700 22px "Segoe UI", Arial, sans-serif`;
+    ctx.fillStyle = BLACK;
+    ctx.fillText('Table No.', 30 + rNameWidth + 12, 50);
+
+    // Huge Table Number
+    ctx.font = `900 120px "Comic Sans MS", "Marker Felt", "Arial Black", sans-serif`;
+    ctx.fillStyle = '#2D3748';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`${tableNumber}`, 155, 175);
+
+    // ── Middle divider ───────────────────────────────────────────────────────
+    ctx.strokeStyle = BLACK;
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.rect(0, 0, W, 80);
-    ctx.fill();
-
-    ctx.fillStyle = WHITE;
-    ctx.font = `700 20px "Segoe UI", Arial, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.fillText('TABLEKARD', W / 2, 42);
-
-    ctx.font = `400 11px "Segoe UI", Arial, sans-serif`;
-    ctx.fillStyle = 'rgba(255,255,255,0.65)';
-    ctx.fillText('Scan · Order · Enjoy', W / 2, 62);
-
-    // ── restaurant name (y ≈ 80 → 138) ───────────────────────────────────────
-    ctx.fillStyle = DARK;
-    ctx.font = `700 40px "Segoe UI", Arial, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.fillText(clamp(restaurantName, 18), W / 2, 128);
-
-    // ── table badge (y = 140 → 184, h = 44) ──────────────────────────────────
-    const badgeW = 200, badgeH = 44, badgeX = (W - badgeW) / 2, badgeY = 158;
-    roundRect(ctx, badgeX, badgeY, badgeW, badgeH, 22, ACCENT);
-    ctx.fillStyle = WHITE;
-    ctx.font = `700 24px "Segoe UI", Arial, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.fillText(`TABLE  ${tableNumber}`, W / 2, badgeY + 31);
-
-    // ── QR code box (y = 204 → 468, gap of 20 after badge) ───────────────────
-    const qrPad  = 12;
-    const qrBoxW = QR_SIZE + qrPad * 2;
-    const qrBoxH = QR_SIZE + qrPad * 2;
-    const qrBoxX = (W - qrBoxW) / 2;
-    const qrBoxY = badgeY + badgeH + 20;   // 204 — safely below badge
-
-    ctx.shadowColor = 'rgba(0,0,0,0.10)';
-    ctx.shadowBlur  = 16;
-    roundRect(ctx, qrBoxX, qrBoxY, qrBoxW, qrBoxH, 12, WHITE);
-    ctx.shadowBlur  = 0;
-
-    ctx.strokeStyle = BORDER;
-    ctx.lineWidth   = 1;
-    roundRectStroke(ctx, qrBoxX, qrBoxY, qrBoxW, qrBoxH, 12);
-
-    ctx.drawImage(qrImage, qrBoxX + qrPad, qrBoxY + qrPad, QR_SIZE, QR_SIZE);
-
-    // ── SCAN TO ORDER (below QR, centred) ────────────────────────────────────
-    const textY = qrBoxY + qrBoxH + 60;   // ~532
-
-    // arrow
-    ctx.strokeStyle = DARK;
-    ctx.lineWidth   = 3.5;
-    ctx.lineCap     = 'round';
-    ctx.lineJoin    = 'round';
-    const arrowX = W / 2;
-    const arrowTip = textY - 54;
-    ctx.beginPath();
-    ctx.moveTo(arrowX, arrowTip);
-    ctx.lineTo(arrowX, arrowTip + 18);
-    ctx.moveTo(arrowX - 7, arrowTip + 8);
-    ctx.lineTo(arrowX, arrowTip);
-    ctx.lineTo(arrowX + 7, arrowTip + 8);
+    ctx.moveTo(300, 30);
+    ctx.lineTo(300, H - 30);
     ctx.stroke();
 
-    ctx.fillStyle = DARK;
-    ctx.font      = `800 30px "Segoe UI", Arial, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.fillText('SCAN TO ORDER', W / 2, textY);
+    // ── Right side ───────────────────────────────────────────────────────────
+    
+    const qrPad = 10;
+    const qrBoxW = QR_SIZE + qrPad * 2;
+    const qrBoxX = 330;
+    const qrBoxY = 20;
 
-    // ── bottom accent bar ─────────────────────────────────────────────────────
-    ctx.fillStyle = ACCENT;
-    ctx.fillRect(0, H - 8, W, 8);
+    // QR Box Border
+    ctx.strokeStyle = BLACK;
+    ctx.lineWidth = 1.5;
+    roundRectStroke(ctx, qrBoxX, qrBoxY, qrBoxW, qrBoxW, 0);
+
+    // Draw QR
+    ctx.drawImage(qrImage, qrBoxX + qrPad, qrBoxY + qrPad, QR_SIZE, QR_SIZE);
+
+    // Scan to order text
+    ctx.fillStyle = BLACK;
+    ctx.font = `600 15px "Segoe UI", Arial, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    
+    ctx.fillText('Scan QR code* to', qrBoxX + qrBoxW / 2, qrBoxY + qrBoxW + 10);
+    ctx.fillText('place order', qrBoxX + qrBoxW / 2, qrBoxY + qrBoxW + 30);
+
+    // T&C Apply
+    ctx.font = `700 10px "Segoe UI", Arial, sans-serif`;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('*T&C Apply', W - 15, H - 15);
 
     return canvas;
 }
