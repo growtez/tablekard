@@ -22,6 +22,7 @@ interface QrToken {
     status: 'available' | 'assigned';
     table_number: number | null;
     capacity: number | null;
+    is_auto_generated?: boolean;
     assigned_restaurant_id: string | null;
     assigned_table_id: string | null;
     assigned_at: string | null;
@@ -224,7 +225,7 @@ export default function QrTokens() {
     const [genCapacity, setGenCapacity] = useState('');
     const [generating, setGenerating] = useState(false);
     const [genTab, setGenTab] = useState<'way1' | 'way2'>('way1');
-    const [genRows, setGenRows] = useState<{tableNum: string, capacity: string}[]>([{tableNum: '', capacity: ''}]);
+    const [genRows, setGenRows] = useState<{prefix: string, tableNum: string, capacity: string, quantity: string}[]>([{prefix: 'TK-', tableNum: '', capacity: '', quantity: '1'}]);
 
     // Link modal
     const [showLinkModal, setShowLinkModal] = useState(false);
@@ -240,6 +241,7 @@ export default function QrTokens() {
     const [isBulkLink, setIsBulkLink] = useState(false);
 
     // Filter / search
+    const [tokenTypeTab, setTokenTypeTab] = useState<'physical' | 'auto_generated'>('physical');
     const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'assigned'>('all');
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
@@ -247,7 +249,28 @@ export default function QrTokens() {
     const [isStatusFilterOpen, setIsStatusFilterOpen] = useState(false);
     const [sortKey, setSortKey] = useState<string | null>(null);
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
-    const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
+    const [viewMode, setViewMode] = useState<'list' | 'grid' | 'restaurant'>(
+        () => (localStorage.getItem('qr_tokens_view_mode') as 'list' | 'grid' | 'restaurant') || 'list'
+    );
+
+    useEffect(() => {
+        localStorage.setItem('qr_tokens_view_mode', viewMode);
+    }, [viewMode]);
+
+    // Restaurant View State
+    const [selectedViewRestaurantId, setSelectedViewRestaurantId] = useState<string>('');
+    const [restaurantTables, setRestaurantTables] = useState<any[]>([]);
+    const [loadingRestaurantTables, setLoadingRestaurantTables] = useState(false);
+    
+    // Add/Edit Table Modal
+    const [showTableModal, setShowTableModal] = useState(false);
+    const [tableModalMode, setTableModalMode] = useState<'add' | 'edit'>('add');
+    const [tableModalId, setTableModalId] = useState<string>('');
+    const [tableModalTableNo, setTableModalTableNo] = useState<number>(1);
+    const [tableModalCapacity, setTableModalCapacity] = useState<number>(4);
+    const [tableModalQuantity, setTableModalQuantity] = useState<number>(1);
+    const [tableModalSaving, setTableModalSaving] = useState(false);
+    const [tableModalError, setTableModalError] = useState<string | null>(null);
 
     // Download state
     const [downloadingId, setDownloadingId] = useState<string | null>(null);
@@ -273,7 +296,7 @@ export default function QrTokens() {
             const { data, error: e } = await supabase
                 .from('qr_code_tokens')
                 .select(`
-                    id, token, status, table_number, capacity, assigned_restaurant_id, assigned_table_id, assigned_at, created_at,
+                    id, token, status, table_number, capacity, is_auto_generated, assigned_restaurant_id, assigned_table_id, assigned_at, created_at,
                     restaurants (name),
                     restaurant_tables (table_number)
                 `)
@@ -295,6 +318,53 @@ export default function QrTokens() {
     useEffect(() => {
         fetchTokens();
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const fetchRestaurantsList = async () => {
+        if (restaurants.length > 0) return;
+        setLoadingRestaurants(true);
+        try {
+            const { data, error: resErr } = await supabase
+                .from('restaurants')
+                .select('id, name')
+                .order('name', { ascending: true });
+            if (resErr) throw resErr;
+            setRestaurants(data || []);
+        } catch (err: any) {
+            console.error('Failed to load restaurants', err);
+        } finally {
+            setLoadingRestaurants(false);
+        }
+    };
+
+    const fetchRestaurantTables = async () => {
+        if (!selectedViewRestaurantId) return;
+        setLoadingRestaurantTables(true);
+        try {
+            const { data, error } = await supabase
+                .from('restaurant_tables')
+                .select('*')
+                .eq('restaurant_id', selectedViewRestaurantId)
+                .order('table_number', { ascending: true });
+            if (error) throw error;
+            setRestaurantTables(data || []);
+        } catch (err) {
+            console.error('Failed to fetch restaurant tables', err);
+        } finally {
+            setLoadingRestaurantTables(false);
+        }
+    };
+
+    useEffect(() => {
+        if (viewMode === 'restaurant') {
+            fetchRestaurantsList();
+        }
+    }, [viewMode]);
+
+    useEffect(() => {
+        if (viewMode === 'restaurant' && selectedViewRestaurantId) {
+            fetchRestaurantTables();
+        }
+    }, [selectedViewRestaurantId, viewMode]);
 
     // Auto-suggest next table number when selected restaurant changes in Link modal
     useEffect(() => {
@@ -399,6 +469,14 @@ export default function QrTokens() {
         setLinking(true);
         try {
             const processToken = async (tokenObj: QrToken, tableNo: number) => {
+                // Strict Option 2 Validation
+                if (tokenObj.table_number !== tableNo) {
+                    throw new Error(`Token ${tokenObj.token} is configured for Table ${tokenObj.table_number}, but you are trying to link it to Table ${tableNo}.`);
+                }
+                if (tokenObj.capacity !== linkSeatCapacity) {
+                    throw new Error(`Token ${tokenObj.token} is configured for ${tokenObj.capacity} seats, but you are trying to link it to ${linkSeatCapacity} seats.`);
+                }
+
                 // 1. If token was previously assigned to another table, clear qr_token on that table
                 if (tokenObj.assigned_table_id) {
                     await supabase
@@ -499,6 +577,10 @@ export default function QrTokens() {
 
     // ── Filtered + sorted + paginated tokens ──
     const filtered = tokens.filter(t => {
+        const isAuto = t.is_auto_generated === true;
+        if (tokenTypeTab === 'physical' && isAuto) return false;
+        if (tokenTypeTab === 'auto_generated' && !isAuto) return false;
+
         if (statusFilter !== 'all' && t.status !== statusFilter) return false;
         if (search && !t.token.toLowerCase().includes(search.toLowerCase())) return false;
         return true;
@@ -655,21 +737,24 @@ export default function QrTokens() {
                     const row = genRows[i];
                     const tNum = parseInt(row.tableNum);
                     const cap = parseInt(row.capacity);
+                    const qty = parseInt(row.quantity) || 1;
                     
-                    let created = false;
-                    let localAttempts = 0;
-                    while (!created && localAttempts < 10) {
-                        localAttempts++;
-                        attempts++;
-                        const code = generateTokenCode(genPrefix);
-                        if (!existing.has(code) && !newTokens.some(nt => nt.token === code)) {
-                            newTokens.push({
-                                token: code,
-                                status: 'available',
-                                table_number: !isNaN(tNum) ? tNum : null,
-                                capacity: !isNaN(cap) ? cap : null
-                            });
-                            created = true;
+                    for (let q = 0; q < qty; q++) {
+                        let created = false;
+                        let localAttempts = 0;
+                        while (!created && localAttempts < 10) {
+                            localAttempts++;
+                            attempts++;
+                            const code = generateTokenCode(row.prefix || 'TK-');
+                            if (!existing.has(code) && !newTokens.some(nt => nt.token === code)) {
+                                newTokens.push({
+                                    token: code,
+                                    status: 'available',
+                                    table_number: !isNaN(tNum) ? tNum : null,
+                                    capacity: !isNaN(cap) ? cap : null
+                                });
+                                created = true;
+                            }
                         }
                     }
                 }
@@ -766,6 +851,97 @@ export default function QrTokens() {
         } finally {
             setDeleting(false);
         }
+    };
+
+    const handleSaveRestaurantTable = async () => {
+        if (!selectedViewRestaurantId) return;
+        setTableModalError(null);
+        setTableModalSaving(true);
+        try {
+            if (tableModalMode === 'add') {
+                if (tableModalQuantity < 1) throw new Error("Quantity must be at least 1.");
+                
+                const inserts = [];
+                for (let i = 0; i < tableModalQuantity; i++) {
+                    const tNum = tableModalTableNo + i;
+                    const existing = restaurantTables.find(t => t.table_number === tNum);
+                    if (existing) {
+                        throw new Error(`Table ${tNum} already exists.`);
+                    }
+                    inserts.push({
+                        restaurant_id: selectedViewRestaurantId,
+                        table_number: tNum,
+                        capacity: tableModalCapacity,
+                        active: true
+                    });
+                }
+
+                const { error } = await supabase
+                    .from('restaurant_tables')
+                    .insert(inserts);
+                if (error) throw error;
+            } else {
+                const existing = restaurantTables.find(t => t.table_number === tableModalTableNo && t.id !== tableModalId);
+                if (existing) {
+                    throw new Error(`Table ${tableModalTableNo} already exists.`);
+                }
+                const { error } = await supabase
+                    .from('restaurant_tables')
+                    .update({
+                        table_number: tableModalTableNo,
+                        capacity: tableModalCapacity,
+                    })
+                    .eq('id', tableModalId);
+                if (error) throw error;
+            }
+            await fetchRestaurantTables();
+            await fetchTokens();
+            setShowTableModal(false);
+        } catch (err: any) {
+            setTableModalError(err.message);
+        } finally {
+            setTableModalSaving(false);
+        }
+    };
+
+    const handleDeleteRestaurantTable = async (tableId: string) => {
+        if (!confirm('Are you sure you want to delete this table?')) return;
+        try {
+            const tableToDelete = restaurantTables.find(t => t.id === tableId);
+            const { error } = await supabase
+                .from('restaurant_tables')
+                .delete()
+                .eq('id', tableId);
+            if (error) throw error;
+            
+            if (tableToDelete?.qr_token) {
+                await supabase
+                    .from('qr_code_tokens')
+                    .update({
+                        status: 'available',
+                        assigned_restaurant_id: null,
+                        assigned_table_id: null,
+                        assigned_at: null
+                    })
+                    .eq('token', tableToDelete.qr_token);
+            }
+            
+            await fetchRestaurantTables();
+            await fetchTokens();
+        } catch (err: any) {
+            setError('Failed to delete table: ' + err.message);
+        }
+    };
+
+    const openAssignTokenToTableModal = (tableNo: number, capacity: number) => {
+        const availableTok = tokens.find(t => t.status === 'available');
+        setIsBulkLink(false);
+        setLinkTarget(availableTok || null);
+        setLinkTokenId(availableTok ? availableTok.id : '');
+        setLinkRestaurantId(selectedViewRestaurantId);
+        setLinkTableNo(tableNo);
+        setLinkSeatCapacity(capacity);
+        setShowLinkModal(true);
     };
 
     const toggleSelectAll = () => {
@@ -877,19 +1053,23 @@ export default function QrTokens() {
     return (
         <div className="space-y-3 w-full">
 
-            {/* ── Stats ── */}
-            <div className="grid grid-cols-3 gap-4">
-                {[
-                    { label: 'Total Generated', value: totalCount, color: 'text-text-main' },
-                    { label: 'Available', value: availableCount, color: 'text-accent-primary' },
-                    { label: 'Assigned', value: assignedCount, color: 'text-blue-400' },
-                ].map(s => (
-                    <div key={s.label} className="bg-surface border border-border rounded-xl p-4">
-                        <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
-                        <div className="text-xs text-text-muted mt-0.5">{s.label}</div>
-                    </div>
-                ))}
+            {/* ── Type Tabs ── */}
+            <div className="flex items-center gap-6 border-b border-border px-2">
+                <button 
+                    onClick={() => { setTokenTypeTab('physical'); setPage(1); }}
+                    className={`py-2.5 text-[13px] font-semibold border-b-2 transition-colors ${tokenTypeTab === 'physical' ? 'border-accent-primary text-accent-primary' : 'border-transparent text-text-muted hover:text-text-main'} bg-transparent cursor-pointer`}
+                >
+                    Physical Tokens
+                </button>
+                <button 
+                    onClick={() => { setTokenTypeTab('auto_generated'); setPage(1); }}
+                    className={`py-2.5 text-[13px] font-semibold border-b-2 transition-colors ${tokenTypeTab === 'auto_generated' ? 'border-accent-primary text-accent-primary' : 'border-transparent text-text-muted hover:text-text-main'} bg-transparent cursor-pointer`}
+                >
+                    Auto Gen By Rest
+                </button>
             </div>
+
+
 
             {/* ── Error ── */}
             {error && (
@@ -944,21 +1124,29 @@ export default function QrTokens() {
                 </div>
 
                 {/* Pagination Controls */}
-                <div className="flex items-center justify-between md:justify-start gap-1 shrink-0 md:border-x md:border-border/50 px-3 py-1.5 md:py-0 w-full md:w-auto">
-                    <button onClick={() => setPage(p => Math.max(1, Number(p) - 1))} disabled={safePage === 1} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
-                        <ChevronLeft size={14} />
-                    </button>
-                    <div className="flex items-center justify-center gap-1 w-[80px]">
-                        {getPaginationPages().map((p, i) => p === '...' ? (
-                            <div key={`ellipsis-${i}`} className="w-6 h-6 flex items-center justify-center text-[11px] text-text-muted">…</div>
-                        ) : (
-                            <button key={p} onClick={() => setPage(Number(p))} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
-                        ))}
+                {viewMode !== 'grid' && (
+                    <div className="flex items-center justify-between md:justify-start gap-1 shrink-0 md:border-x md:border-border/50 px-3 py-1.5 md:py-0 w-full md:w-auto">
+                        <button onClick={() => setPage(p => Math.max(1, Number(p) - 1))} disabled={safePage === 1} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
+                            <ChevronLeft size={14} />
+                        </button>
+                        <div className="flex items-center justify-center gap-1 w-[80px]">
+                            {getPaginationPages().map((p, i) => p === '...' ? (
+                                <div key={`ellipsis-${i}`} className="w-6 h-6 flex items-center justify-center text-[11px] text-text-muted">…</div>
+                            ) : (
+                                <button key={p} onClick={() => setPage(Number(p))} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
+                            ))}
+                        </div>
+                        <button onClick={() => setPage(p => Math.min(totalPages, Number(p) + 1))} disabled={safePage === totalPages} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
+                            <ChevronRight size={14} />
+                        </button>
+
+                        <div className="w-px h-6 bg-border mx-1 hidden md:block"></div>
+                        
+                        <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1); }} className="py-1 px-2 rounded-lg border border-border bg-surface text-text-main text-[12px] focus:outline-none focus:ring-1 focus:ring-accent-primary cursor-pointer">
+                            {[8, 20, 50, 100].map(n => <option key={n} value={n}>{n} / page</option>)}
+                        </select>
                     </div>
-                    <button onClick={() => setPage(p => Math.min(totalPages, Number(p) + 1))} disabled={safePage === totalPages} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
-                        <ChevronRight size={14} />
-                    </button>
-                </div>
+                )}
 
                 {/* Per-page & Actions */}
                 <div className="flex flex-wrap items-center gap-2 shrink-0 w-full md:w-auto">
@@ -976,10 +1164,9 @@ export default function QrTokens() {
                     <div className="flex bg-surface-hover p-1 rounded-lg border border-border">
                         <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-surface shadow-sm text-text-main' : 'text-text-muted hover:text-text-main'}`} title="List View"><List size={14}/></button>
                         <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-surface shadow-sm text-text-main' : 'text-text-muted hover:text-text-main'}`} title="Grid View"><LayoutGrid size={14}/></button>
+                        <button onClick={() => setViewMode('restaurant')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'restaurant' ? 'bg-surface shadow-sm text-text-main' : 'text-text-muted hover:text-text-main'}`} title="Restaurant View"><Building2 size={14}/></button>
                     </div>
-                    <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1); }} className="py-1.5 px-2 rounded-lg border border-border bg-surface text-text-main text-[12px] focus:outline-none focus:ring-1 focus:ring-accent-primary cursor-pointer flex-1 md:flex-none">
-                        {[8, 20, 50, 100].map(n => <option key={n} value={n}>{n} / page</option>)}
-                    </select>
+
                     <div className="relative group flex-1 md:flex-none">
                         <button
                             onClick={() => setIsStatusFilterOpen(!isStatusFilterOpen)}
@@ -1016,7 +1203,109 @@ export default function QrTokens() {
             </div>
 
             {/* ── Tokens Table or Grid ── */}
-            {viewMode === 'list' ? (
+            {viewMode === 'restaurant' ? (
+                <div className="w-full space-y-4">
+                    <div className="bg-surface p-4 rounded-xl border border-border shadow-sm flex flex-col sm:flex-row sm:items-center gap-4 justify-between animate-fade-in">
+                        <div className="flex flex-col gap-1 flex-1">
+                            <label className="text-sm font-semibold text-text-main">Select Restaurant</label>
+                            <select 
+                                value={selectedViewRestaurantId}
+                                onChange={(e) => setSelectedViewRestaurantId(e.target.value)}
+                                className="px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main focus:outline-none focus:border-accent-primary max-w-sm"
+                            >
+                                <option value="">-- Choose a Restaurant --</option>
+                                {restaurants.map(r => (
+                                    <option key={r.id} value={r.id}>{r.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        {selectedViewRestaurantId && (
+                            <button
+                                onClick={() => {
+                                    setTableModalMode('add');
+                                    setTableModalTableNo(1);
+                                    setTableModalCapacity(4);
+                                    setTableModalQuantity(1);
+                                    setShowTableModal(true);
+                                }}
+                                className="flex items-center gap-2 px-4 py-2 bg-accent-primary text-white text-sm font-semibold rounded-lg hover:bg-accent-secondary transition-colors shrink-0"
+                            >
+                                <Plus size={16} /> Add Table
+                            </button>
+                        )}
+                    </div>
+                    
+                    {selectedViewRestaurantId && (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 animate-fade-in">
+                            {loadingRestaurantTables ? (
+                                <div className="col-span-full py-10 flex items-center justify-center">
+                                    <Loader2 className="animate-spin text-text-muted" size={24} />
+                                </div>
+                            ) : restaurantTables.length === 0 ? (
+                                <div className="col-span-full bg-surface border border-border rounded-xl p-8 flex items-center justify-center text-text-muted text-sm">
+                                    No tables configured for this restaurant. Click "Add Table" to start.
+                                </div>
+                            ) : (
+                                restaurantTables.map(table => (
+                                    <div key={table.id} className="bg-surface border border-border rounded-xl p-4 flex flex-col gap-3 shadow-sm hover:border-border/80 transition-colors">
+                                        <div className="flex items-center justify-between">
+                                            <span className="font-bold text-text-main text-lg">Table {table.table_number}</span>
+                                            <span className="text-xs font-semibold px-2 py-0.5 bg-surface-hover rounded-md text-text-muted">
+                                                {table.capacity} Seats
+                                            </span>
+                                        </div>
+                                        
+                                        <div className="h-px bg-border/50 w-full" />
+                                        
+                                        <div className="flex flex-col gap-2">
+                                            {table.qr_token ? (
+                                                <div className="flex items-center gap-2 text-xs text-text-main font-medium truncate">
+                                                    <div className="w-2 h-2 rounded-full bg-green-500 shrink-0"></div>
+                                                    Token: <span className="font-mono bg-bg border border-border/50 px-1.5 rounded truncate">{table.qr_token}</span>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center justify-between text-xs font-medium">
+                                                    <span className="text-text-muted flex items-center gap-1">
+                                                        <div className="w-2 h-2 rounded-full bg-red-500 shrink-0"></div> No Token
+                                                    </span>
+                                                    <button 
+                                                        onClick={() => openAssignTokenToTableModal(table.table_number, table.capacity)}
+                                                        className="text-accent-primary hover:text-accent-secondary shrink-0 font-bold border-none bg-transparent cursor-pointer"
+                                                    >
+                                                        Assign
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                        
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <button 
+                                                onClick={() => {
+                                                    setTableModalMode('edit');
+                                                    setTableModalId(table.id);
+                                                    setTableModalTableNo(table.table_number);
+                                                    setTableModalCapacity(table.capacity);
+                                                    setShowTableModal(true);
+                                                }}
+                                                className="flex-1 py-1.5 text-xs font-semibold text-text-main bg-surface-hover hover:bg-bg border border-border/50 rounded transition-colors cursor-pointer"
+                                            >
+                                                Edit
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteRestaurantTable(table.id)}
+                                                className="p-1.5 text-text-muted hover:text-red-500 hover:bg-red-500/10 rounded transition-colors cursor-pointer border border-transparent hover:border-red-500/20"
+                                                title="Delete Table"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    )}
+                </div>
+            ) : viewMode === 'list' ? (
                 <div className="w-full bg-surface rounded-xl shadow-sm border border-border overflow-hidden">
                 {/* Desktop View Table */}
                 <table className="hidden md:table w-full text-left border-collapse whitespace-nowrap table-fixed">
@@ -1419,7 +1708,7 @@ export default function QrTokens() {
             {/* ── Generate Modal ── */}
             {showGenModal && createPortal(
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[1000] p-4" onClick={() => setShowGenModal(false)}>
-                    <div className="bg-surface border border-border rounded-2xl w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
+                    <div className={`bg-surface border border-border rounded-2xl w-full ${genTab === 'way2' ? 'max-w-2xl' : 'max-w-md'} shadow-2xl transition-all duration-300`} onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-between p-6 border-b border-border pb-4">
                             <h2 className="font-bold text-text-main text-lg">Generate QR Token Batch</h2>
                             <button onClick={() => setShowGenModal(false)} className="text-text-muted hover:text-text-main"><X size={20} /></button>
@@ -1500,83 +1789,112 @@ export default function QrTokens() {
                                     </div>
                                 </>
                             ) : (
-                                <>
-                                    <div>
-                                        <label className="block text-sm font-medium text-text-muted mb-1.5">Token Prefix</label>
-                                        <input
-                                            type="text"
-                                            value={genPrefix}
-                                            onChange={e => setGenPrefix(e.target.value.toUpperCase())}
-                                            maxLength={5}
-                                            className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main font-mono focus:outline-none focus:border-accent-primary/50"
-                                            placeholder="TK-"
-                                        />
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <label className="block text-sm font-medium text-text-muted">Table Configuration</label>
+                                        <span className="text-xs text-text-muted font-medium">{genRows.reduce((sum, row) => sum + (parseInt(row.quantity) || 1), 0)} token{genRows.reduce((sum, row) => sum + (parseInt(row.quantity) || 1), 0) !== 1 ? 's' : ''} to generate</span>
                                     </div>
                                     
-                                    <div className="space-y-3">
-                                        <div className="flex items-center justify-between">
-                                            <label className="block text-sm font-medium text-text-muted">Table Configuration</label>
-                                            <span className="text-xs text-text-muted font-medium">{genRows.length} token{genRows.length !== 1 ? 's' : ''} to generate</span>
-                                        </div>
-                                        <div className="max-h-[250px] overflow-y-auto pr-2 space-y-2 no-scrollbar">
-                                            {genRows.map((row, idx) => (
-                                                <div key={idx} className="flex items-center gap-2">
-                                                    <div className="flex-1">
-                                                        <input
-                                                            type="number"
-                                                            min={1}
-                                                            value={row.tableNum}
-                                                            onChange={e => {
-                                                                const newRows = [...genRows];
-                                                                newRows[idx].tableNum = e.target.value;
-                                                                setGenRows(newRows);
-                                                            }}
-                                                            className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main focus:outline-none focus:border-accent-primary/50"
-                                                            placeholder="Table Number"
-                                                        />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <input
-                                                            type="number"
-                                                            min={1}
-                                                            value={row.capacity}
-                                                            onChange={e => {
-                                                                const newRows = [...genRows];
-                                                                newRows[idx].capacity = e.target.value;
-                                                                setGenRows(newRows);
-                                                            }}
-                                                            className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main focus:outline-none focus:border-accent-primary/50"
-                                                            placeholder="Seat Capacity"
-                                                        />
-                                                    </div>
+                                    {/* Header row for custom list */}
+                                    <div className="flex items-center gap-2 px-1 mb-2">
+                                        <div className="w-[80px] text-xs font-medium text-text-muted">Prefix</div>
+                                        <div className="w-[120px] text-xs font-medium text-text-muted">Table Number</div>
+                                        <div className="w-[120px] text-xs font-medium text-text-muted">Seat Capacity</div>
+                                        <div className="w-[80px] text-xs font-medium text-text-muted">Quantity</div>
+                                        <div className="flex items-center gap-1 w-16"></div>
+                                    </div>
+
+                                    <div className="max-h-[300px] overflow-y-auto pr-2 space-y-2 no-scrollbar">
+                                        {genRows.map((row, idx) => (
+                                            <div key={idx} className="flex items-center gap-2">
+                                                <div className="w-[80px]">
+                                                    <input
+                                                        type="text"
+                                                        value={row.prefix}
+                                                        onChange={e => {
+                                                            const newRows = [...genRows];
+                                                            newRows[idx].prefix = e.target.value.toUpperCase();
+                                                            setGenRows(newRows);
+                                                        }}
+                                                        maxLength={5}
+                                                        className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main font-mono focus:outline-none focus:border-accent-primary/50"
+                                                        placeholder="TK-"
+                                                    />
+                                                </div>
+                                                <div className="w-[120px]">
+                                                    <input
+                                                        type="number"
+                                                        min={1}
+                                                        value={row.tableNum}
+                                                        onChange={e => {
+                                                            const newRows = [...genRows];
+                                                            newRows[idx].tableNum = e.target.value;
+                                                            setGenRows(newRows);
+                                                        }}
+                                                        className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main focus:outline-none focus:border-accent-primary/50"
+                                                        placeholder="Table"
+                                                    />
+                                                </div>
+                                                <div className="w-[120px]">
+                                                    <input
+                                                        type="number"
+                                                        min={1}
+                                                        value={row.capacity}
+                                                        onChange={e => {
+                                                            const newRows = [...genRows];
+                                                            newRows[idx].capacity = e.target.value;
+                                                            setGenRows(newRows);
+                                                        }}
+                                                        className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main focus:outline-none focus:border-accent-primary/50"
+                                                        placeholder="Seats"
+                                                    />
+                                                </div>
+                                                <div className="w-[80px]">
+                                                    <input
+                                                        type="number"
+                                                        min={1}
+                                                        value={row.quantity}
+                                                        onChange={e => {
+                                                            const newRows = [...genRows];
+                                                            newRows[idx].quantity = e.target.value;
+                                                            setGenRows(newRows);
+                                                        }}
+                                                        className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main focus:outline-none focus:border-accent-primary/50"
+                                                        placeholder="Qty"
+                                                    />
+                                                </div>
+                                                <div className="flex items-center gap-1 w-16">
                                                     <button 
                                                         onClick={() => setGenRows(genRows.filter((_, i) => i !== idx))}
                                                         disabled={genRows.length === 1}
-                                                        className="p-2 text-text-muted hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                                        className="p-1.5 text-text-muted hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                                                     >
                                                         <X size={16} />
                                                     </button>
+                                                    {idx === genRows.length - 1 && (
+                                                        <button 
+                                                            onClick={() => setGenRows([...genRows, { prefix: genRows[idx].prefix || 'TK-', tableNum: '', capacity: '', quantity: '1' }])}
+                                                            className="p-1.5 text-text-muted hover:text-accent-primary hover:bg-accent-primary/10 rounded-lg transition-colors"
+                                                            title="Add Row"
+                                                        >
+                                                            <Plus size={16} />
+                                                        </button>
+                                                    )}
                                                 </div>
-                                            ))}
-                                        </div>
-                                        <button 
-                                            onClick={() => setGenRows([...genRows, { tableNum: '', capacity: '' }])}
-                                            className="w-full py-2 border border-dashed border-border rounded-lg text-sm font-medium text-text-muted hover:text-text-main hover:border-text-muted transition-colors flex items-center justify-center gap-1.5"
-                                        >
-                                            <Plus size={14} /> Add Row
-                                        </button>
+                                            </div>
+                                        ))}
                                     </div>
-                                </>
+                                </div>
                             )}
                         </div>
                         <div className="flex gap-3 px-6 py-4 border-t border-border">
                             <button onClick={() => setShowGenModal(false)} className="flex-1 py-2 rounded-lg border border-border text-sm text-text-muted hover:bg-surface-hover transition-colors">Cancel</button>
                             <button
                                 onClick={handleGenerate}
-                                disabled={generating || (genTab === 'way1' ? (!genTableNum || !genCapacity) : (genRows.length === 0 || genRows.some(r => !r.tableNum || !r.capacity)))}
+                                disabled={generating || (genTab === 'way1' ? (!genTableNum || !genCapacity) : (genRows.length === 0 || genRows.some(r => !r.tableNum || !r.capacity || !r.quantity)))}
                                 className="flex-1 py-2 rounded-lg bg-accent-primary text-white text-sm font-semibold hover:bg-accent-secondary transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
                             >
-                                {generating ? <><Loader2 size={14} className="animate-spin" />Generating...</> : `Generate ${genTab === 'way1' ? genQuantity : genRows.length} Tokens`}
+                                {generating ? <><Loader2 size={14} className="animate-spin" />Generating...</> : `Generate ${genTab === 'way1' ? genQuantity : genRows.reduce((sum, row) => sum + (parseInt(row.quantity) || 1), 0)} Tokens`}
                             </button>
                         </div>
                     </div>
@@ -1990,6 +2308,97 @@ export default function QrTokens() {
                     return <QRCodeSVG key={`hidden-qr-${token.id}`} id={`qr-svg-${token.id}`} value={qrUrl} size={QR_SIZE} bgColor="#ffffff" fgColor="#1A202C" level="H" includeMargin />
                 })}
             </div>
+            {showTableModal && createPortal(
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[1000] p-4 animate-fade-in" onClick={() => setShowTableModal(false)}>
+                    <div className="bg-surface border border-border rounded-xl w-full max-w-sm shadow-xl" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between p-4 border-b border-border">
+                            <h2 className="font-bold text-text-main text-base">{tableModalMode === 'add' ? 'Add Table' : 'Edit Table'}</h2>
+                            <button onClick={() => setShowTableModal(false)} className="text-text-muted hover:text-text-main border-none bg-transparent cursor-pointer"><X size={18} /></button>
+                        </div>
+                        <div className="p-4 space-y-4">
+                            {tableModalError && (
+                                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-xs flex gap-2">
+                                    <AlertCircle size={14} className="shrink-0" />
+                                    <span>{tableModalError}</span>
+                                </div>
+                            )}
+                            {tableModalMode === 'add' ? (
+                                <>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-1.5">Starting Table Number</label>
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            value={tableModalTableNo}
+                                            onChange={e => setTableModalTableNo(parseInt(e.target.value) || 1)}
+                                            className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main focus:outline-none focus:border-accent-primary"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-1.5">Seat Capacity</label>
+                                            <input
+                                                type="number"
+                                                min={1}
+                                                value={tableModalCapacity}
+                                                onChange={e => setTableModalCapacity(parseInt(e.target.value) || 1)}
+                                                className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main focus:outline-none focus:border-accent-primary"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-1.5">Quantity</label>
+                                            <input
+                                                type="number"
+                                                min={1}
+                                                value={tableModalQuantity}
+                                                onChange={e => setTableModalQuantity(parseInt(e.target.value) || 1)}
+                                                className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main focus:outline-none focus:border-accent-primary"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="p-3 bg-surface-hover border border-border rounded-lg text-xs text-text-muted">
+                                        This will create <strong>{tableModalQuantity}</strong> table{tableModalQuantity !== 1 ? 's' : ''} starting from number <strong>{tableModalTableNo}</strong> (to {tableModalTableNo + tableModalQuantity - 1}), each with <strong>{tableModalCapacity}</strong> seats.
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-1.5">Table Number</label>
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            value={tableModalTableNo}
+                                            onChange={e => setTableModalTableNo(parseInt(e.target.value) || 1)}
+                                            className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main focus:outline-none focus:border-accent-primary"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-1.5">Seat Capacity</label>
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            value={tableModalCapacity}
+                                            onChange={e => setTableModalCapacity(parseInt(e.target.value) || 1)}
+                                            className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main focus:outline-none focus:border-accent-primary"
+                                        />
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                        <div className="flex gap-2 p-4 border-t border-border bg-surface-hover/30 rounded-b-xl">
+                            <button onClick={() => setShowTableModal(false)} className="flex-1 py-2 text-sm font-semibold text-text-muted hover:text-text-main border border-border rounded-lg transition-colors bg-surface cursor-pointer">Cancel</button>
+                            <button 
+                                onClick={handleSaveRestaurantTable}
+                                disabled={tableModalSaving}
+                                className="flex-1 py-2 text-sm font-semibold text-white bg-accent-primary hover:bg-accent-secondary rounded-lg transition-colors flex items-center justify-center cursor-pointer border-none disabled:opacity-50"
+                            >
+                                {tableModalSaving ? <Loader2 size={16} className="animate-spin" /> : 'Save Table'}
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
         </div>
     );
 }

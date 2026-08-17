@@ -36,6 +36,7 @@ export interface GlobalStats {
   subscriptions_summary: { total: number; paid: number; pending: number; failed: number };
   transactions_summary: { total: number; paid: number; totalAmount: number; refunded: number };
   revenue: { total: number };
+  qrTokens: { total: number; available: number; assigned: number };
 }
 
 export interface HeaderData {
@@ -74,18 +75,20 @@ export default function App() {
     subscriptions: { total: 0 },
     subscriptions_summary: { total: 0, paid: 0, pending: 0, failed: 0 },
     transactions_summary: { total: 0, paid: 0, totalAmount: 0, refunded: 0 },
-    revenue: { total: 0 }
+    revenue: { total: 0 },
+    qrTokens: { total: 0, available: 0, assigned: 0 }
   });
 
   const fetchGlobalStats = async () => {
     try {
-      const [{ count: resCount }, { count: activeResCount }, { data: profiles }, { data: subPayments }, { data: allPayments }, { data: cashOrders }] = await Promise.all([
+      const [{ count: resCount }, { count: activeResCount }, { data: profiles }, { data: subPayments }, { data: allPayments }, { data: cashOrders }, { data: qrTokensData }] = await Promise.all([
         supabase.from('restaurants').select('*', { count: 'exact', head: true }),
         supabase.from('restaurants').select('*', { count: 'exact', head: true }).eq('status', 'active'),
         supabase.from('profiles').select('role'),
         supabase.from('subscription_payments').select('amount, status'),
         supabase.from('payments').select('amount, status, order_id'),
-        supabase.from('orders').select('id, total, payment_status').in('payment_method', ['cash', 'card'])
+        supabase.from('orders').select('id, total, payment_status').in('payment_method', ['cash', 'card']),
+        supabase.from('qr_code_tokens').select('status')
       ]);
       const payments = subPayments || [];
       const totalRevenue = payments.filter(p => p.status === 'paid').reduce((sum, p) => sum + Number(p.amount || 0), 0);
@@ -122,7 +125,12 @@ export default function App() {
           totalAmount: txAmount,
           refunded: txRefunded
         },
-        revenue: { total: totalRevenue }
+        revenue: { total: totalRevenue },
+        qrTokens: {
+          total: qrTokensData?.length || 0,
+          available: qrTokensData?.filter(t => t.status === 'available').length || 0,
+          assigned: qrTokensData?.filter(t => t.status === 'assigned').length || 0
+        }
       });
     } catch (err) { console.error('App: Global stats fetch failed:', err); }
   };
@@ -294,7 +302,14 @@ export default function App() {
     if (path.startsWith('/subscriptions/')) return { title: '', isBreadcrumb: true, backTitle: 'Subscriptions', backPath: '/subscriptions' };
     if (path.startsWith('/billing/transactions/')) return { title: '', isBreadcrumb: true, backTitle: 'Transactions', backPath: '/billing/transactions' };
     if (path === '/notifications') return { title: 'Notifications' };
-    if (path === '/qr-tokens') return { title: 'QR Tokens' };
+    if (path === '/qr-tokens') return { 
+        title: 'QR Tokens',
+        stats: [
+            { label: 'Total Generated', value: String(globalStats.qrTokens?.total || 0) },
+            { label: 'Available', value: String(globalStats.qrTokens?.available || 0) },
+            { label: 'Assigned', value: String(globalStats.qrTokens?.assigned || 0) }
+        ]
+    };
     return { title: 'Notifications' };
   };
 

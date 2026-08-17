@@ -390,7 +390,7 @@ const SubscriptionPage: React.FC = () => {
                             <div key={trial.id} className="bg-tk-success/10 border-[1.5px] border-tk-success/30 rounded-[20px] p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-6 w-full text-left">
                                 <div className="flex-1">
                                     <div className="inline-flex items-center gap-1.5 text-tk-success font-bold text-[11px] uppercase tracking-wider mb-2">
-                                        Risk-Free Trial Available
+                                            Risk-Free Trial Available
                                     </div>
                                     <h3 className="text-[18px] sm:text-[20px] font-black text-tk-text m-0 mb-1">{trial.name}</h3>
                                     <p className="text-[13px] text-tk-text-secondary m-0">

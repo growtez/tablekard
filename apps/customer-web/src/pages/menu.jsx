@@ -48,8 +48,10 @@ const MenuPage = () => {
     if (!restaurantId) return; // Don't fetch if no restaurant context
     const loadMenu = async () => {
       // 1. Check Cache First
-      const cachedMenu = sessionStorage.getItem('menuData');
-      const cachedCats = sessionStorage.getItem('menuCategories');
+      const cacheKeyMenu = `menuData_${restaurantId}`;
+      const cacheKeyCats = `menuCategories_${restaurantId}`;
+      const cachedMenu = sessionStorage.getItem(cacheKeyMenu);
+      const cachedCats = sessionStorage.getItem(cacheKeyCats);
       if (cachedMenu && cachedCats) {
         setMenuItems(JSON.parse(cachedMenu));
         setCategories(JSON.parse(cachedCats));
@@ -119,8 +121,8 @@ const MenuPage = () => {
           // 3. Update State & Cache
           setCategories(catNames);
           setMenuItems(grouped);
-          sessionStorage.setItem('menuData', JSON.stringify(grouped));
-          sessionStorage.setItem('menuCategories', JSON.stringify(catNames));
+          sessionStorage.setItem(`menuData_${restaurantId}`, JSON.stringify(grouped));
+          sessionStorage.setItem(`menuCategories_${restaurantId}`, JSON.stringify(catNames));
 
           if (selectedCategory !== 'All' && !catNames.includes(selectedCategory) && catNames.length > 0) {
             setSelectedCategory(catNames[0]);
@@ -211,7 +213,7 @@ const MenuPage = () => {
               loadMenu();
             } else {
               // Sync updated state to sessionStorage cache
-              sessionStorage.setItem('menuData', JSON.stringify(updated));
+              sessionStorage.setItem(`menuData_${restaurantId}`, JSON.stringify(updated));
             }
 
             return updated;

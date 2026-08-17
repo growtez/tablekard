@@ -26,13 +26,21 @@ export const showHomeLoader = () => {
     // Failsafe: Force hide after 8 seconds in case of network hangs
     if (window.__homeLoaderFailsafe) clearTimeout(window.__homeLoaderFailsafe);
     window.__homeLoaderFailsafe = setTimeout(() => {
-        hideHomeLoader();
+        hideHomeLoader(true);
     }, 8000);
 };
 
-export const hideHomeLoader = () => {
+export const hideHomeLoader = (force = false) => {
     const loader = document.getElementById('global-home-loader');
     if (loader) {
+        let count = parseInt(loader.dataset.refCount || '0') - 1;
+        if (force) count = 0;
+        
+        if (count > 0) {
+            loader.dataset.refCount = count.toString();
+            return;
+        }
+        
         loader.dataset.refCount = '0';
         if (window.__homeLoaderFailsafe) clearTimeout(window.__homeLoaderFailsafe);
         window.__homeLoaderTimeout = setTimeout(() => {

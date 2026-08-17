@@ -107,9 +107,9 @@ const HomePage = () => {
             
             const isFirstLoad = !sessionStorage.getItem('homeAnimationShown');
             
-            // Force a minimum delay of 3 seconds only on first load so animation completes
+            // Force a minimum delay of 1 second only on first load so animation completes
             const minDelay = isFirstLoad 
-                ? new Promise(resolve => setTimeout(resolve, 3000))
+                ? new Promise(resolve => setTimeout(resolve, 1000))
                 : Promise.resolve();
             
             if (isFirstLoad) {
@@ -117,8 +117,23 @@ const HomePage = () => {
                 sessionStorage.setItem('homeAnimationShown', 'true');
             }
             
-            setLoadingRecent(true);
-            setLoadingItems(true);
+            const cacheKey = `homeData_${restaurant.id}_${user?.id || 'guest'}`;
+            const cachedData = sessionStorage.getItem(cacheKey);
+            if (cachedData && !isFirstLoad) {
+                try {
+                    const parsed = JSON.parse(cachedData);
+                    setMenuItems(parsed.menuItems || []);
+                    setDiscountItems(parsed.discountItems || []);
+                    setBanners(parsed.banners || []);
+                    setRecentOrders(parsed.recentOrders || []);
+                    setFavorites(parsed.favorites || []);
+                    setLoadingRecent(false);
+                    setLoadingItems(false);
+                } catch (e) {}
+            } else {
+                setLoadingRecent(true);
+                setLoadingItems(true);
+            }
 
             try {
                 const fetchPromises = [
@@ -134,18 +149,34 @@ const HomePage = () => {
 
                 const results = await Promise.all(fetchPromises);
                 
-                setMenuItems(results[0] || []);
-                setDiscountItems(results[1] || []);
-                setBanners(results[2] || []);
+                const newMenuItems = results[0] || [];
+                const newDiscountItems = results[1] || [];
+                const newBanners = results[2] || [];
                 
+                setMenuItems(newMenuItems);
+                setDiscountItems(newDiscountItems);
+                setBanners(newBanners);
+                
+                let newRecentOrders = [];
+                let newFavorites = [];
                 if (user?.id) {
                     const [recent, favs] = await Promise.all([
                         getRecentOrderedItems(user.id, restaurant.id, 3),
                         getFavorites(user.id, restaurant.id)
                     ]);
-                    setRecentOrders(recent || []);
-                    setFavorites(favs?.map(f => f.id) || []);
+                    newRecentOrders = recent || [];
+                    newFavorites = favs?.map(f => f.id) || [];
+                    setRecentOrders(newRecentOrders);
+                    setFavorites(newFavorites);
                 }
+
+                sessionStorage.setItem(cacheKey, JSON.stringify({
+                    menuItems: newMenuItems,
+                    discountItems: newDiscountItems,
+                    banners: newBanners,
+                    recentOrders: newRecentOrders,
+                    favorites: newFavorites
+                }));
             } catch (err) {
                 console.error('Error fetching home data:', err);
             } finally {
@@ -203,14 +234,7 @@ const HomePage = () => {
     }, [restaurant?.id, user?.id]);
 
     if (loadingRecent) {
-        // If it's the first load, the showHomeLoader covers the screen, so returning null is fine.
-        // On subsequent loads, we show the skeleton.
-        const loader = document.getElementById('global-home-loader');
-        const isLoaderVisible = loader && loader.style.display !== 'none';
-        
-        return sessionStorage.getItem('homeAnimationShown') === 'true' && !isLoaderVisible 
-            ? <PageSkeleton /> 
-            : null;
+        return <PageSkeleton />;
     }
 
     const toggleFavorite = async (itemId, e) => {

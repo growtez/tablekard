@@ -6,12 +6,27 @@ if (!window.__TablekardCartContext) {
 }
 const CartContext = window.__TablekardCartContext;
 
-const STORAGE_KEY = 'tablekard_cart_v2';
+import { useRestaurant } from './RestaurantContext';
+
+const STORAGE_KEY_PREFIX = 'tablekard_cart_v2_';
+const INSTRUCTIONS_KEY_PREFIX = 'tablekard_special_instructions_';
 
 export function CartProvider({ children }) {
-    const [cartItems, setCartItems] = useState(() => {
+    const { restaurantId } = useRestaurant();
+    
+    const [cartItems, setCartItems] = useState([]);
+    const [orderSpecialInstructions, setOrderSpecialInstructions] = useState('');
+    const [isLoaded, setIsLoaded] = useState(false);
+
+    // Load cart from sessionStorage whenever restaurantId changes
+    useEffect(() => {
+        if (!restaurantId) return;
+        
+        const storageKey = `${STORAGE_KEY_PREFIX}${restaurantId}`;
+        const instrKey = `${INSTRUCTIONS_KEY_PREFIX}${restaurantId}`;
+        
         try {
-            const saved = sessionStorage.getItem(STORAGE_KEY);
+            const saved = sessionStorage.getItem(storageKey);
             const parsed = saved ? JSON.parse(saved) : [];
             if (Array.isArray(parsed)) {
                 // Migrate old format to new format and group duplicates
@@ -36,7 +51,6 @@ export function CartProvider({ children }) {
                             });
                         }
                     } else {
-                        // Already new format, check if we need to merge
                         const existing = migrated.find(i => i.id === item.id);
                         if (existing) {
                             existing.quantity += item.quantity;
@@ -46,27 +60,33 @@ export function CartProvider({ children }) {
                         }
                     }
                 });
-                return migrated;
+                setCartItems(migrated);
+            } else {
+                setCartItems([]);
             }
-            return [];
         } catch {
-            return [];
+            setCartItems([]);
         }
-    });
 
-    const [orderSpecialInstructions, setOrderSpecialInstructions] = useState(() => {
         try {
-            return sessionStorage.getItem('tablekard_special_instructions') || '';
+            setOrderSpecialInstructions(sessionStorage.getItem(instrKey) || '');
         } catch {
-            return '';
+            setOrderSpecialInstructions('');
         }
-    });
+        
+        setIsLoaded(true);
+    }, [restaurantId]);
 
     // Persist cart to sessionStorage whenever it changes
     useEffect(() => {
-        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(cartItems));
-        sessionStorage.setItem('tablekard_special_instructions', orderSpecialInstructions);
-    }, [cartItems, orderSpecialInstructions]);
+        if (!restaurantId || !isLoaded) return;
+        
+        const storageKey = `${STORAGE_KEY_PREFIX}${restaurantId}`;
+        const instrKey = `${INSTRUCTIONS_KEY_PREFIX}${restaurantId}`;
+        
+        sessionStorage.setItem(storageKey, JSON.stringify(cartItems));
+        sessionStorage.setItem(instrKey, orderSpecialInstructions);
+    }, [cartItems, orderSpecialInstructions, restaurantId, isLoaded]);
 
     const addToCart = (item, selectedVariant = null, selectedAddons = []) => {
         const variantId = selectedVariant ? (selectedVariant.id || selectedVariant.name || selectedVariant._key || '') : '';
