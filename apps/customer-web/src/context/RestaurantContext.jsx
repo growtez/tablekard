@@ -206,11 +206,12 @@ export function RestaurantProvider({ children }) {
                 // Evaluate if service is paused
                 let paused = false;
                 if (data && data.status === 'active') {
-                    if (
-                        data.subscription_status === 'inactive' || 
-                        (data.subscription_status === 'expired' && data.grace_period_ends_at && new Date(data.grace_period_ends_at) < new Date())
-                    ) {
+                    if (data.subscription_status === 'inactive') {
                         paused = true;
+                    } else if (data.subscription_status === 'expired') {
+                        if (!data.grace_period_ends_at || new Date(data.grace_period_ends_at) < new Date()) {
+                            paused = true;
+                        }
                     }
                 }
                 setIsServicePaused(paused);

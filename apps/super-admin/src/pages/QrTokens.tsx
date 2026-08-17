@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from '../supabaseClient';
 import { formatDateShort } from '@restaurant-saas/types';
 import {
     QrCode, Download, RefreshCw, Plus, Search, Filter,
     Loader2, CheckCircle, AlertCircle, Unlink, Link as LinkIcon,
-    ChevronLeft, ChevronRight, X, Copy, Check, Trash2, Building2
+    ChevronLeft, ChevronRight, X, Copy, Check, Trash2, Building2,
+    ArrowUpDown, ArrowUp, ArrowDown, Eye, ExternalLink, Calendar, Hash,
+    LayoutGrid, List
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { jsPDF } from 'jspdf';
+import JSZip from 'jszip';
 import { TableRowsSkeleton } from '../components/ui/Skeleton';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -219,6 +223,8 @@ export default function QrTokens() {
     const [genTableNum, setGenTableNum] = useState('');
     const [genCapacity, setGenCapacity] = useState('');
     const [generating, setGenerating] = useState(false);
+    const [genTab, setGenTab] = useState<'way1' | 'way2'>('way1');
+    const [genRows, setGenRows] = useState<{tableNum: string, capacity: string}[]>([{tableNum: '', capacity: ''}]);
 
     // Link modal
     const [showLinkModal, setShowLinkModal] = useState(false);
@@ -231,6 +237,7 @@ export default function QrTokens() {
     const [linkSeatCapacity, setLinkSeatCapacity] = useState<number>(4);
     const [linking, setLinking] = useState(false);
     const [linkError, setLinkError] = useState<string | null>(null);
+    const [isBulkLink, setIsBulkLink] = useState(false);
 
     // Filter / search
     const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'assigned'>('all');
@@ -238,9 +245,15 @@ export default function QrTokens() {
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(8);
     const [isStatusFilterOpen, setIsStatusFilterOpen] = useState(false);
+    const [sortKey, setSortKey] = useState<string | null>(null);
+    const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+    const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
 
     // Download state
     const [downloadingId, setDownloadingId] = useState<string | null>(null);
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [isBulkDownloading, setIsBulkDownloading] = useState(false);
+    const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
     // Unlink confirm
     const [unlinkTarget, setUnlinkTarget] = useState<QrToken | null>(null);
@@ -249,6 +262,9 @@ export default function QrTokens() {
     // Delete confirm
     const [deleteTarget, setDeleteTarget] = useState<QrToken | null>(null);
     const [deleting, setDeleting] = useState(false);
+
+    // Detail modal
+    const [detailToken, setDetailToken] = useState<QrToken | null>(null);
 
     const fetchTokens = async () => {
         setLoading(true);
@@ -309,9 +325,16 @@ export default function QrTokens() {
     }, [linkRestaurantId, showLinkModal]);
 
     // ── Open Link Modal ──
-    const openLinkModal = async (token?: QrToken) => {
+    const openLinkModal = async (token?: QrToken, bulk: boolean = false) => {
         setLinkError(null);
-        if (token) {
+        setIsBulkLink(bulk);
+        if (bulk) {
+            setLinkTarget(null);
+            setLinkTokenId('');
+            setLinkRestaurantId('');
+            setLinkTableNo(1);
+            setLinkSeatCapacity(4);
+        } else if (token) {
             setLinkTarget(token);
             setLinkTokenId(token.id);
             setLinkRestaurantId(token.assigned_restaurant_id || '');
@@ -349,11 +372,17 @@ export default function QrTokens() {
         e.preventDefault();
         setLinkError(null);
 
-        const tokenObj = linkTarget || tokens.find(t => t.id === linkTokenId);
-        if (!tokenObj) {
-            setLinkError('Please select a valid QR token.');
+        if (!isBulkLink) {
+            const tokenObj = linkTarget || tokens.find(t => t.id === linkTokenId);
+            if (!tokenObj) {
+                setLinkError('Please select a valid QR token.');
+                return;
+            }
+        } else if (selectedIds.size === 0) {
+            setLinkError('Please select at least one QR token.');
             return;
         }
+
         if (!linkRestaurantId) {
             setLinkError('Please select a restaurant.');
             return;
@@ -369,79 +398,94 @@ export default function QrTokens() {
 
         setLinking(true);
         try {
-            // 1. If token was previously assigned to another table, clear qr_token on that table
-            if (tokenObj.assigned_table_id) {
-                await supabase
+            const processToken = async (tokenObj: QrToken, tableNo: number) => {
+                // 1. If token was previously assigned to another table, clear qr_token on that table
+                if (tokenObj.assigned_table_id) {
+                    await supabase
+                        .from('restaurant_tables')
+                        .update({ qr_token: null })
+                        .eq('id', tokenObj.assigned_table_id);
+                }
+
+                // 2. Check if a table with (restaurant_id, table_number) already exists
+                const { data: existingTable, error: findErr } = await supabase
                     .from('restaurant_tables')
-                    .update({ qr_token: null })
-                    .eq('id', tokenObj.assigned_table_id);
-            }
+                    .select('id, qr_token, capacity')
+                    .eq('restaurant_id', linkRestaurantId)
+                    .eq('table_number', tableNo)
+                    .maybeSingle();
 
-            // 2. Check if a table with (restaurant_id, table_number) already exists
-            const { data: existingTable, error: findErr } = await supabase
-                .from('restaurant_tables')
-                .select('id, qr_token, capacity')
-                .eq('restaurant_id', linkRestaurantId)
-                .eq('table_number', linkTableNo)
-                .maybeSingle();
+                if (findErr) throw findErr;
 
-            if (findErr) throw findErr;
+                let targetTableId = existingTable?.id;
 
-            let targetTableId = existingTable?.id;
+                // If existing table had a DIFFERENT qr_token, free up that old token in qr_code_tokens
+                if (existingTable && existingTable.qr_token && existingTable.qr_token !== tokenObj.token) {
+                    await supabase
+                        .from('qr_code_tokens')
+                        .update({
+                            status: 'available',
+                            assigned_restaurant_id: null,
+                            assigned_table_id: null,
+                            assigned_at: null
+                        })
+                        .eq('token', existingTable.qr_token);
+                }
 
-            // If existing table had a DIFFERENT qr_token, free up that old token in qr_code_tokens
-            if (existingTable && existingTable.qr_token && existingTable.qr_token !== tokenObj.token) {
-                await supabase
+                if (existingTable) {
+                    // Update existing table with new qr_token and seat capacity
+                    const { error: updateTableErr } = await supabase
+                        .from('restaurant_tables')
+                        .update({
+                            qr_token: tokenObj.token,
+                            capacity: linkSeatCapacity,
+                            active: true
+                        })
+                        .eq('id', existingTable.id);
+                    if (updateTableErr) throw updateTableErr;
+                } else {
+                    // Create a new table for the restaurant
+                    const { data: newTable, error: createTableErr } = await supabase
+                        .from('restaurant_tables')
+                        .insert({
+                            restaurant_id: linkRestaurantId,
+                            table_number: tableNo,
+                            capacity: linkSeatCapacity,
+                            qr_token: tokenObj.token,
+                            active: true
+                        })
+                        .select('id')
+                        .single();
+                    if (createTableErr) throw createTableErr;
+                    targetTableId = newTable.id;
+                }
+
+                // 3. Update token status in qr_code_tokens
+                const { error: updateTokenErr } = await supabase
                     .from('qr_code_tokens')
                     .update({
-                        status: 'available',
-                        assigned_restaurant_id: null,
-                        assigned_table_id: null,
-                        assigned_at: null
+                        status: 'assigned',
+                        assigned_restaurant_id: linkRestaurantId,
+                        assigned_table_id: targetTableId,
+                        assigned_at: new Date().toISOString()
                     })
-                    .eq('token', existingTable.qr_token);
-            }
+                    .eq('id', tokenObj.id);
 
-            if (existingTable) {
-                // Update existing table with new qr_token and seat capacity
-                const { error: updateTableErr } = await supabase
-                    .from('restaurant_tables')
-                    .update({
-                        qr_token: tokenObj.token,
-                        capacity: linkSeatCapacity,
-                        active: true
-                    })
-                    .eq('id', existingTable.id);
-                if (updateTableErr) throw updateTableErr;
+                if (updateTokenErr) throw updateTokenErr;
+            };
+
+            if (isBulkLink) {
+                const tokensToLink = tokens.filter(t => selectedIds.has(t.id));
+                let currentTableNo = linkTableNo;
+                for (const tokenObj of tokensToLink) {
+                    await processToken(tokenObj, currentTableNo);
+                    currentTableNo++;
+                }
+                setSelectedIds(new Set());
             } else {
-                // Create a new table for the restaurant
-                const { data: newTable, error: createTableErr } = await supabase
-                    .from('restaurant_tables')
-                    .insert({
-                        restaurant_id: linkRestaurantId,
-                        table_number: linkTableNo,
-                        capacity: linkSeatCapacity,
-                        qr_token: tokenObj.token,
-                        active: true
-                    })
-                    .select('id')
-                    .single();
-                if (createTableErr) throw createTableErr;
-                targetTableId = newTable.id;
+                const tokenObj = linkTarget || tokens.find(t => t.id === linkTokenId)!;
+                await processToken(tokenObj, linkTableNo);
             }
-
-            // 3. Update token status in qr_code_tokens
-            const { error: updateTokenErr } = await supabase
-                .from('qr_code_tokens')
-                .update({
-                    status: 'assigned',
-                    assigned_restaurant_id: linkRestaurantId,
-                    assigned_table_id: targetTableId,
-                    assigned_at: new Date().toISOString()
-                })
-                .eq('id', tokenObj.id);
-
-            if (updateTokenErr) throw updateTokenErr;
 
             await fetchTokens();
             setShowLinkModal(false);
@@ -453,15 +497,106 @@ export default function QrTokens() {
         }
     };
 
-    // ── Filtered + paginated tokens ──
+    // ── Filtered + sorted + paginated tokens ──
     const filtered = tokens.filter(t => {
         if (statusFilter !== 'all' && t.status !== statusFilter) return false;
         if (search && !t.token.toLowerCase().includes(search.toLowerCase())) return false;
         return true;
     });
-    const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+
+    const sorted = sortKey ? [...filtered].sort((a, b) => {
+        let aVal: any, bVal: any;
+        switch (sortKey) {
+            case 'token': aVal = a.token; bVal = b.token; break;
+            case 'table_number': aVal = a.table_number ?? -1; bVal = b.table_number ?? -1; break;
+            case 'capacity': aVal = a.capacity ?? -1; bVal = b.capacity ?? -1; break;
+            case 'status': aVal = a.status; bVal = b.status; break;
+            case 'assigned': aVal = a.restaurants?.name ?? ''; bVal = b.restaurants?.name ?? ''; break;
+            case 'created_at': aVal = a.created_at; bVal = b.created_at; break;
+            default: return 0;
+        }
+        if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
+        if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
+        return 0;
+    }) : filtered;
+
+    const totalPages = Math.max(1, Math.ceil(sorted.length / perPage));
     const safePage = Math.min(page, totalPages);
-    const paginated = filtered.slice((safePage - 1) * perPage, safePage * perPage);
+    const paginated = sorted.slice((safePage - 1) * perPage, safePage * perPage);
+
+    // ── Grid view groupings ──
+    const groupedByCapacity = React.useMemo(() => {
+        const groups: Record<string, QrToken[]> = {};
+        filtered.forEach(token => {
+            const cap = token.capacity != null ? token.capacity.toString() : 'Unassigned';
+            if (!groups[cap]) groups[cap] = [];
+            groups[cap].push(token);
+        });
+        
+        // Sort tokens inside each capacity group by table_number ascending
+        for (const cap in groups) {
+            groups[cap].sort((a, b) => {
+                if (a.table_number == null && b.table_number == null) return 0;
+                if (a.table_number == null) return 1;
+                if (b.table_number == null) return -1;
+                return a.table_number - b.table_number;
+            });
+        }
+        
+        return groups;
+    }, [filtered]);
+
+    const capacityGroups = Object.keys(groupedByCapacity).sort((a, b) => {
+        if (a === 'Unassigned') return 1;
+        if (b === 'Unassigned') return -1;
+        return Number(a) - Number(b);
+    });
+
+    const getTableSummary = (tokens: QrToken[]) => {
+        const tableStats: Record<string, { total: number, available: number }> = {};
+        let unassignedTotal = 0;
+        let unassignedAvailable = 0;
+        tokens.forEach(t => {
+            if (t.table_number != null) {
+                if (!tableStats[t.table_number]) tableStats[t.table_number] = { total: 0, available: 0 };
+                tableStats[t.table_number].total++;
+                if (t.status === 'available') tableStats[t.table_number].available++;
+            } else {
+                unassignedTotal++;
+                if (t.status === 'available') unassignedAvailable++;
+            }
+        });
+        
+        const parts = Object.entries(tableStats)
+            .sort(([a], [b]) => Number(a) - Number(b))
+            .map(([tableNum, stats]) => ({ 
+                label: `Table ${tableNum}`, 
+                total: stats.total, 
+                available: stats.available 
+            }));
+            
+        if (unassignedTotal > 0) {
+            parts.push({ label: 'Unassigned', total: unassignedTotal, available: unassignedAvailable });
+        }
+        
+        return parts;
+    };
+
+    const handleSort = (key: string) => {
+        if (sortKey === key) {
+            if (sortDir === 'asc') setSortDir('desc');
+            else { setSortKey(null); setSortDir('asc'); }
+        } else {
+            setSortKey(key);
+            setSortDir('asc');
+        }
+        setPage(1);
+    };
+
+    const SortIcon = ({ col }: { col: string }) => {
+        if (sortKey !== col) return <ArrowUpDown size={12} className="opacity-0 group-hover/th:opacity-40 transition-opacity" />;
+        return sortDir === 'asc' ? <ArrowUp size={12} className="text-accent-primary" /> : <ArrowDown size={12} className="text-accent-primary" />;
+    };
 
     const getPaginationPages = () => {
         if (totalPages <= 3) {
@@ -482,30 +617,64 @@ export default function QrTokens() {
 
     // ── Generate tokens ──
     const handleGenerate = async () => {
-        if (genQuantity < 1 || genQuantity > 500) return;
+        if (genTab === 'way1') {
+            if (genQuantity < 1 || genQuantity > 500) return;
+            if (!genTableNum || !genCapacity) return;
+        } else {
+            if (genRows.length === 0) return;
+            if (genRows.some(r => !r.tableNum || !r.capacity)) return;
+        }
+
         setGenerating(true);
         try {
             const existing = new Set(tokens.map(t => t.token));
             const newTokens: any[] = [];
             let attempts = 0;
-            let currentTableNum = genTableNum ? parseInt(genTableNum) : null;
-            const parsedCap = genCapacity ? parseInt(genCapacity) : null;
 
-            while (newTokens.length < genQuantity && attempts < genQuantity * 10) {
-                attempts++;
-                const code = generateTokenCode(genPrefix);
-                if (!existing.has(code) && !newTokens.some(nt => nt.token === code)) {
-                    newTokens.push({
-                        token: code,
-                        status: 'available',
-                        table_number: !isNaN(currentTableNum as number) ? currentTableNum : null,
-                        capacity: !isNaN(parsedCap as number) ? parsedCap : null
-                    });
-                    if (currentTableNum !== null && !isNaN(currentTableNum)) {
-                        currentTableNum++;
+            if (genTab === 'way1') {
+                let currentTableNum = genTableNum ? parseInt(genTableNum) : null;
+                const parsedCap = genCapacity ? parseInt(genCapacity) : null;
+
+                while (newTokens.length < genQuantity && attempts < genQuantity * 10) {
+                    attempts++;
+                    const code = generateTokenCode(genPrefix);
+                    if (!existing.has(code) && !newTokens.some(nt => nt.token === code)) {
+                        newTokens.push({
+                            token: code,
+                            status: 'available',
+                            table_number: !isNaN(currentTableNum as number) ? currentTableNum : null,
+                            capacity: !isNaN(parsedCap as number) ? parsedCap : null
+                        });
+                        if (currentTableNum !== null && !isNaN(currentTableNum)) {
+                            currentTableNum++;
+                        }
+                    }
+                }
+            } else {
+                for (let i = 0; i < genRows.length; i++) {
+                    const row = genRows[i];
+                    const tNum = parseInt(row.tableNum);
+                    const cap = parseInt(row.capacity);
+                    
+                    let created = false;
+                    let localAttempts = 0;
+                    while (!created && localAttempts < 10) {
+                        localAttempts++;
+                        attempts++;
+                        const code = generateTokenCode(genPrefix);
+                        if (!existing.has(code) && !newTokens.some(nt => nt.token === code)) {
+                            newTokens.push({
+                                token: code,
+                                status: 'available',
+                                table_number: !isNaN(tNum) ? tNum : null,
+                                capacity: !isNaN(cap) ? cap : null
+                            });
+                            created = true;
+                        }
                     }
                 }
             }
+
             const { error: insertErr } = await supabase
                 .from('qr_code_tokens')
                 .insert(newTokens);
@@ -599,6 +768,112 @@ export default function QrTokens() {
         }
     };
 
+    const toggleSelectAll = () => {
+        if (selectedIds.size === filtered.length && filtered.length > 0) {
+            setSelectedIds(new Set());
+        } else {
+            setSelectedIds(new Set(filtered.map(t => t.id)));
+        }
+    };
+
+    const toggleGroupSelectAll = (cap: string) => {
+        const groupTokens = groupedByCapacity[cap] || [];
+        if (groupTokens.length === 0) return;
+        const allSelected = groupTokens.every(t => selectedIds.has(t.id));
+        const next = new Set(selectedIds);
+        
+        if (allSelected) {
+            groupTokens.forEach(t => next.delete(t.id));
+        } else {
+            groupTokens.forEach(t => next.add(t.id));
+        }
+        setSelectedIds(next);
+    };
+
+    const toggleSelect = (e: React.ChangeEvent<HTMLInputElement> | React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        const next = new Set(selectedIds);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        setSelectedIds(next);
+    };
+
+    const handleBulkDelete = async () => {
+        if (selectedIds.size === 0) return;
+        if (!window.confirm(`Are you sure you want to permanently delete ${selectedIds.size} selected token(s)?`)) return;
+        setIsBulkDeleting(true);
+        try {
+            const tokensToDelete = tokens.filter(t => selectedIds.has(t.id));
+            const assignedTokens = tokensToDelete.filter(t => t.assigned_table_id);
+            if (assignedTokens.length > 0) {
+                const assignedTableIds = assignedTokens.map(t => t.assigned_table_id);
+                const { error: updErr } = await supabase.from('restaurant_tables').update({ qr_token: null }).in('id', assignedTableIds);
+                if (updErr) console.error("Error unlinking tables", updErr);
+            }
+            const { error: delErr } = await supabase.from('qr_code_tokens').delete().in('id', Array.from(selectedIds));
+            if (delErr) throw delErr;
+            await fetchTokens();
+            setSelectedIds(new Set());
+        } catch (err: any) {
+            setError('Failed to bulk delete: ' + err.message);
+        } finally {
+            setIsBulkDeleting(false);
+        }
+    };
+
+    const handleBulkDownloadPdf = async () => {
+        if (selectedIds.size === 0) return;
+        setIsBulkDownloading(true);
+        try {
+            const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [CARD_MM_W, CARD_MM_H] });
+            const tokensList = filtered.filter(t => selectedIds.has(t.id));
+            for (let i = 0; i < tokensList.length; i++) {
+                const t = tokensList[i];
+                const svgId = `qr-svg-${t.id}`;
+                const canvas = await paintGenericQrCard(svgId, t.token, t.table_number, t.capacity);
+                if (i > 0) pdf.addPage();
+                pdf.addImage(canvas.toDataURL('image/png', 1.0), 'PNG', 0, 0, CARD_MM_W, CARD_MM_H);
+            }
+            pdf.save(`tablekard-bulk-${tokensList.length}-qrs.pdf`);
+        } catch (err: any) {
+            console.error('Bulk QR download failed:', err);
+            setError('Failed to generate bulk QR download.');
+        } finally {
+            setIsBulkDownloading(false);
+            setSelectedIds(new Set());
+        }
+    };
+
+    const handleBulkDownloadPng = async () => {
+        if (selectedIds.size === 0) return;
+        setIsBulkDownloading(true);
+        try {
+            const zip = new JSZip();
+            const tokensList = filtered.filter(t => selectedIds.has(t.id));
+            
+            for (const t of tokensList) {
+                const svgId = `qr-svg-${t.id}`;
+                const canvas = await paintGenericQrCard(svgId, t.token, t.table_number, t.capacity);
+                const dataUrl = canvas.toDataURL('image/png', 1.0);
+                const base64Data = dataUrl.replace(/^data:image\/png;base64,/, "");
+                zip.file(`tablekard-qr-${t.token}.png`, base64Data, { base64: true });
+            }
+            
+            const content = await zip.generateAsync({ type: "blob" });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(content);
+            link.download = `tablekard-bulk-${tokensList.length}-qrs.zip`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        } catch (err: any) {
+            console.error('Bulk QR PNG download failed:', err);
+            setError('Failed to generate bulk PNG download.');
+        } finally {
+            setIsBulkDownloading(false);
+            setSelectedIds(new Set());
+        }
+    };
+
     return (
         <div className="space-y-3 w-full">
 
@@ -687,6 +962,21 @@ export default function QrTokens() {
 
                 {/* Per-page & Actions */}
                 <div className="flex flex-wrap items-center gap-2 shrink-0 w-full md:w-auto">
+                    {viewMode === 'grid' && (
+                        <label className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-surface hover:bg-surface-hover cursor-pointer transition-colors md:mr-2 flex-1 md:flex-none">
+                            <input
+                                type="checkbox"
+                                className="w-4 h-4 rounded border-border text-accent-primary focus:ring-accent-primary cursor-pointer"
+                                checked={filtered.length > 0 && selectedIds.size === filtered.length}
+                                onChange={toggleSelectAll}
+                            />
+                            <span className="text-[12px] font-medium text-text-main select-none">Select All</span>
+                        </label>
+                    )}
+                    <div className="flex bg-surface-hover p-1 rounded-lg border border-border">
+                        <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-surface shadow-sm text-text-main' : 'text-text-muted hover:text-text-main'}`} title="List View"><List size={14}/></button>
+                        <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-surface shadow-sm text-text-main' : 'text-text-muted hover:text-text-main'}`} title="Grid View"><LayoutGrid size={14}/></button>
+                    </div>
                     <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1); }} className="py-1.5 px-2 rounded-lg border border-border bg-surface text-text-main text-[12px] focus:outline-none focus:ring-1 focus:ring-accent-primary cursor-pointer flex-1 md:flex-none">
                         {[8, 20, 50, 100].map(n => <option key={n} value={n}>{n} / page</option>)}
                     </select>
@@ -725,26 +1015,48 @@ export default function QrTokens() {
                 </div>
             </div>
 
-            {/* ── Tokens Table ── */}
-            <div className="w-full bg-surface rounded-xl shadow-sm border border-border overflow-hidden">
+            {/* ── Tokens Table or Grid ── */}
+            {viewMode === 'list' ? (
+                <div className="w-full bg-surface rounded-xl shadow-sm border border-border overflow-hidden">
                 {/* Desktop View Table */}
                 <table className="hidden md:table w-full text-left border-collapse whitespace-nowrap table-fixed">
                     <thead>
                         <tr className="border-b border-border">
-                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[25%]">Token</th>
-                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[12%]">Table Info</th>
-                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[10%]">Status</th>
-                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[20%]">Assigned To</th>
-                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[10%]">Created</th>
+                            <th className="py-3 px-4 w-10">
+                                <input 
+                                    type="checkbox" 
+                                    className="w-4 h-4 rounded border-border text-accent-primary focus:ring-accent-primary cursor-pointer"
+                                    checked={filtered.length > 0 && selectedIds.size === filtered.length}
+                                    onChange={toggleSelectAll}
+                                />
+                            </th>
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[12%] cursor-pointer select-none group/th" onClick={() => handleSort('table_number')}>
+                                <span className="inline-flex items-center gap-1.5">Table <SortIcon col="table_number" /></span>
+                            </th>
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[8%] cursor-pointer select-none group/th" onClick={() => handleSort('capacity')}>
+                                <span className="inline-flex items-center gap-1.5">Capacity <SortIcon col="capacity" /></span>
+                            </th>
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[17%] cursor-pointer select-none group/th" onClick={() => handleSort('token')}>
+                                <span className="inline-flex items-center gap-1.5">Token Code <SortIcon col="token" /></span>
+                            </th>
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[10%] cursor-pointer select-none group/th" onClick={() => handleSort('status')}>
+                                <span className="inline-flex items-center gap-1.5">Status <SortIcon col="status" /></span>
+                            </th>
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[20%] cursor-pointer select-none group/th" onClick={() => handleSort('assigned')}>
+                                <span className="inline-flex items-center gap-1.5">Assigned To <SortIcon col="assigned" /></span>
+                            </th>
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[10%] cursor-pointer select-none group/th" onClick={() => handleSort('created_at')}>
+                                <span className="inline-flex items-center gap-1.5">Created <SortIcon col="created_at" /></span>
+                            </th>
                             <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent text-right w-[23%]">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {loading ? (
-                            <TableRowsSkeleton rows={perPage} columns={6} />
+                            <TableRowsSkeleton rows={perPage} columns={7} />
                         ) : filtered.length === 0 ? (
                             <tr>
-                                <td colSpan={6} className="text-center py-10 text-text-muted text-[13px]">
+                                <td colSpan={7} className="text-center py-10 text-text-muted text-[13px]">
                                     {tokens.length === 0 ? 'No tokens generated yet. Click "Generate Batch" to start.' : 'No tokens match your filter.'}
                                 </td>
                             </tr>
@@ -756,16 +1068,30 @@ export default function QrTokens() {
                                     return (
                                         <tr
                                             key={token.id}
-                                            className="group even:bg-bg hover:bg-surface-hover border-b border-border/40 last:border-b-0 transition-colors"
+                                            className="group even:bg-bg hover:bg-surface-hover border-b border-border/40 last:border-b-0 transition-colors cursor-pointer"
+                                            onClick={() => setDetailToken(token)}
                                         >
+                                            <td className="py-2.5 px-4" onClick={(e) => e.stopPropagation()}>
+                                                <input 
+                                                    type="checkbox" 
+                                                    className="w-4 h-4 rounded border-border text-accent-primary focus:ring-accent-primary cursor-pointer"
+                                                    checked={selectedIds.has(token.id)}
+                                                    onChange={(e) => toggleSelect(e, token.id)}
+                                                />
+                                            </td>
                                             <td className="py-2.5 px-4 align-middle">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-8 h-8 rounded-full bg-accent-primary/10 flex items-center justify-center shrink-0">
                                                         <QrCode size={14} className="text-accent-primary" />
                                                     </div>
-                                                    <div className="flex items-center gap-1.5 min-w-0">
-                                                        <span className="font-mono font-semibold text-text-main text-[13px] tracking-wide truncate max-w-[140px] group-hover:text-accent-primary transition-colors" title={token.token}>{token.token}</span>
-                                                        <CopyButton value={token.token} />
+                                                    <div className="flex flex-col min-w-0">
+                                                        {token.table_number != null ? (
+                                                            <span className="font-bold text-text-main text-[14px] truncate group-hover:text-accent-primary transition-colors">
+                                                                Table {token.table_number}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="font-semibold text-text-muted text-[13px] opacity-70 italic group-hover:text-accent-primary/70 transition-colors">Unassigned</span>
+                                                        )}
                                                     </div>
                                                     <div className="sr-only">
                                                         <QRCodeSVG id={`qr-svg-${token.id}`} value={qrUrl} size={QR_SIZE} bgColor="#ffffff" fgColor="#1A202C" level="H" includeMargin />
@@ -773,16 +1099,17 @@ export default function QrTokens() {
                                                 </div>
                                             </td>
                                             <td className="py-2.5 px-4 align-middle">
-                                                {token.table_number != null ? (
-                                                    <div className="flex flex-col">
-                                                        <span className="text-text-main text-[12px] font-medium">Table {token.table_number}</span>
-                                                        {token.capacity != null && (
-                                                            <span className="text-text-muted text-[11px]">Cap: {token.capacity}</span>
-                                                        )}
-                                                    </div>
+                                                {token.capacity != null ? (
+                                                    <span className="text-text-main text-[13px] font-medium">{token.capacity}</span>
                                                 ) : (
                                                     <span className="text-text-muted text-[12px] opacity-60">—</span>
                                                 )}
+                                            </td>
+                                            <td className="py-2.5 px-4 align-middle">
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="font-mono text-text-muted text-[12px] tracking-wide truncate max-w-[120px]" title={token.token}>{token.token}</span>
+                                                    <CopyButton value={token.token} />
+                                                </div>
                                             </td>
                                             <td className="py-2.5 px-4 align-middle">
                                                 <span className={`text-[12px] font-bold ${token.status === 'available' ? 'text-green-600' : 'text-blue-600'}`}>
@@ -811,7 +1138,7 @@ export default function QrTokens() {
                                                 </span>
                                             </td>
                                             <td className="py-2.5 px-4 align-middle">
-                                                <div className="flex items-center justify-end gap-1.5">
+                                                <div className="flex items-center justify-end gap-1.5" onClick={e => e.stopPropagation()}>
                                                     <button
                                                         onClick={() => openLinkModal(token)}
                                                         className="px-2.5 py-1.5 text-xs rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 transition-colors flex items-center gap-1 font-medium"
@@ -900,19 +1227,28 @@ export default function QrTokens() {
                             return (
                                 <div
                                     key={token.id}
-                                    className="p-4 hover:bg-surface-hover border-b border-border/40 last:border-b-0 transition-colors flex flex-col gap-2.5"
+                                    className="p-4 hover:bg-surface-hover border-b border-border/40 last:border-b-0 transition-colors flex flex-col gap-2.5 cursor-pointer"
+                                    onClick={() => setDetailToken(token)}
                                 >
                                     <div className="flex items-center justify-between gap-3">
                                         <div className="flex items-center gap-3 min-w-0">
                                             <div className="w-8 h-8 rounded-full bg-accent-primary/10 flex items-center justify-center shrink-0">
                                                 <QrCode size={14} className="text-accent-primary" />
                                             </div>
-                                            <span className="font-mono font-semibold text-text-main text-[13px] truncate" title={token.token}>
-                                                {token.token}
-                                            </span>
-                                            <CopyButton value={token.token} />
+                                            <div className="flex flex-col min-w-0">
+                                                {token.table_number != null ? (
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-bold text-text-main text-[14px] truncate">Table {token.table_number}</span>
+                                                        {token.capacity != null && (
+                                                            <span className="text-text-muted text-[11px] font-medium shrink-0">({token.capacity} seats)</span>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <span className="font-semibold text-text-muted text-[13px] opacity-70 italic">Unassigned Table</span>
+                                                )}
+                                            </div>
                                         </div>
-                                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded bg-surface-hover border border-border/40 ${token.status === 'available' ? 'text-green-600' : 'text-blue-600'}`}>
+                                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded bg-surface-hover border border-border/40 shrink-0 ${token.status === 'available' ? 'text-green-600' : 'text-blue-600'}`}>
                                             {token.status.toUpperCase()}
                                         </span>
                                     </div>
@@ -922,14 +1258,13 @@ export default function QrTokens() {
                                     </div>
 
                                     <div className="flex flex-col gap-1.5 pl-11">
-                                        {token.table_number != null && (
-                                            <div className="flex items-center gap-2 text-[12px] text-text-main">
-                                                <span className="font-medium">Table {token.table_number}</span>
-                                                {token.capacity != null && (
-                                                    <span className="text-text-muted text-[11px]">· Cap: {token.capacity}</span>
-                                                )}
-                                            </div>
-                                        )}
+                                        <div className="flex items-center gap-1.5 text-[12px]">
+                                            <span className="text-text-muted font-medium">Token:</span>
+                                            <span className="font-mono text-text-main tracking-wide truncate" title={token.token}>
+                                                {token.token}
+                                            </span>
+                                            <CopyButton value={token.token} />
+                                        </div>
 
                                         {token.status === 'assigned' && token.restaurants && (
                                             <div className="flex items-center gap-2 text-[12px]">
@@ -995,86 +1330,262 @@ export default function QrTokens() {
                     )}
                 </div>
             </div>
+            ) : (
+                <div className="space-y-6">
+                    {capacityGroups.length === 0 ? (
+                        <div className="w-full bg-surface rounded-xl border border-border p-10 flex items-center justify-center text-text-muted text-[13px]">
+                            {tokens.length === 0 ? 'No tokens generated yet. Click "Generate Batch" to start.' : 'No tokens match your filter.'}
+                        </div>
+                    ) : (
+                        capacityGroups.map(cap => (
+                            <div key={cap} className="bg-surface border border-border rounded-xl shadow-sm overflow-hidden flex flex-col animate-fade-in">
+                                <div className="bg-surface-hover border-b border-border px-5 py-3 flex items-center flex-wrap gap-2">
+                                    <label className="flex items-center gap-2 cursor-pointer mr-1">
+                                        <input 
+                                            type="checkbox"
+                                            className="w-4 h-4 rounded border-border text-accent-primary focus:ring-accent-primary cursor-pointer"
+                                            checked={groupedByCapacity[cap].length > 0 && groupedByCapacity[cap].every(t => selectedIds.has(t.id))}
+                                            onChange={() => toggleGroupSelectAll(cap)}
+                                        />
+                                    </label>
+                                    <h3 className="font-bold text-text-main text-[14px]">
+                                        {cap === 'Unassigned' ? 'Unassigned Capacity' : `Capacity: ${cap} Seats`}
+                                    </h3>
+                                    <span className="bg-bg border border-border text-text-muted text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0">
+                                        {groupedByCapacity[cap].length} token{groupedByCapacity[cap].length !== 1 ? 's' : ''}
+                                    </span>
+                                    <div className="flex flex-wrap items-center gap-2 ml-2 pl-3 border-l border-border/50 hidden sm:flex">
+                                        {getTableSummary(groupedByCapacity[cap]).map((item, idx) => (
+                                            <div key={idx} className="flex items-center gap-1.5 text-[10px] bg-surface border border-border/70 rounded-md shadow-sm px-1.5 py-0.5">
+                                                <span className="font-bold text-text-main">{item.label}</span>
+                                                {item.available > 0 ? (
+                                                    <span className="px-1 py-0.5 rounded text-green-600 bg-green-500/10 font-semibold tracking-wide">
+                                                        {item.available} available
+                                                    </span>
+                                                ) : (
+                                                    <span className="px-1 py-0.5 rounded text-text-muted bg-surface-hover font-medium">
+                                                        0 available
+                                                    </span>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="p-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                                    {groupedByCapacity[cap].map(token => (
+                                        <div 
+                                            key={token.id} 
+                                            onClick={() => setDetailToken(token)}
+                                            className={`p-3 rounded-xl border transition-colors cursor-pointer group flex flex-col gap-2 ${
+                                                token.status === 'available' 
+                                                ? 'bg-green-500/5 border-green-500/20 hover:bg-green-500/10' 
+                                                : 'bg-blue-500/5 border-blue-500/20 hover:bg-blue-500/10'
+                                            }`}
+                                        >
+                                            <div className="flex items-center justify-between min-w-0 gap-2">
+                                                <div className="flex items-center gap-2 min-w-0" onClick={e => e.stopPropagation()}>
+                                                    <input 
+                                                        type="checkbox" 
+                                                        className="w-4 h-4 rounded border-border text-accent-primary focus:ring-accent-primary shrink-0 cursor-pointer"
+                                                        checked={selectedIds.has(token.id)}
+                                                        onChange={(e) => toggleSelect(e, token.id)}
+                                                    />
+                                                    <span className="font-bold text-text-main text-[15px] truncate">
+                                                        {token.table_number != null ? `Table ${token.table_number}` : 'Unassigned'}
+                                                    </span>
+                                                </div>
+                                                <QrCode size={14} className="text-text-muted shrink-0 group-hover:text-accent-primary transition-colors" />
+                                            </div>
+                                            
+                                            <div className="flex items-center gap-1 min-w-0">
+                                                <span className="text-text-muted font-mono text-[11px] truncate">{token.token}</span>
+                                            </div>
+                                            
+                                            {token.status === 'assigned' && token.restaurants && (
+                                                <div className="mt-2 pt-2 border-t border-blue-500/20 flex flex-col min-w-0">
+                                                    <span className="text-[10px] text-blue-500 font-bold uppercase truncate">Assigned</span>
+                                                    <span className="text-[11px] text-text-main font-medium truncate">{token.restaurants.name}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            )}
 
             {/* ── Generate Modal ── */}
-            {showGenModal && (
+            {showGenModal && createPortal(
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[1000] p-4" onClick={() => setShowGenModal(false)}>
                     <div className="bg-surface border border-border rounded-2xl w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
-                        <div className="flex items-center justify-between p-6 border-b border-border">
+                        <div className="flex items-center justify-between p-6 border-b border-border pb-4">
                             <h2 className="font-bold text-text-main text-lg">Generate QR Token Batch</h2>
                             <button onClick={() => setShowGenModal(false)} className="text-text-muted hover:text-text-main"><X size={20} /></button>
                         </div>
-                        <div className="p-6 space-y-5">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-text-muted mb-1.5">Token Prefix</label>
-                                    <input
-                                        type="text"
-                                        value={genPrefix}
-                                        onChange={e => setGenPrefix(e.target.value.toUpperCase())}
-                                        maxLength={5}
-                                        className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main font-mono focus:outline-none focus:border-accent-primary/50"
-                                        placeholder="TK-"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-text-muted mb-1.5">Quantity</label>
-                                    <input
-                                        type="number"
-                                        min={1}
-                                        max={500}
-                                        value={genQuantity}
-                                        onChange={e => setGenQuantity(parseInt(e.target.value) || 1)}
-                                        className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main focus:outline-none focus:border-accent-primary/50"
-                                    />
-                                </div>
+                        
+                        <div className="px-6 pt-4">
+                            <div className="flex bg-surface-hover p-1 rounded-lg border border-border">
+                                <button 
+                                    onClick={() => setGenTab('way1')} 
+                                    className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-colors ${genTab === 'way1' ? 'bg-surface shadow-sm text-text-main' : 'text-text-muted hover:text-text-main'}`}
+                                >
+                                    Sequential Batch
+                                </button>
+                                <button 
+                                    onClick={() => setGenTab('way2')} 
+                                    className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-colors ${genTab === 'way2' ? 'bg-surface shadow-sm text-text-main' : 'text-text-muted hover:text-text-main'}`}
+                                >
+                                    Custom List
+                                </button>
                             </div>
+                        </div>
 
-                            <div className="p-4 bg-surface-hover rounded-xl border border-border space-y-4">
-                                <h3 className="text-sm font-medium text-text-main">Pre-configure Table Info (Optional)</h3>
-                                <p className="text-xs text-text-muted">If provided, table numbers will automatically increment for each token in the batch.</p>
-                                <div className="grid grid-cols-2 gap-4">
+                        <div className="p-6 space-y-5">
+                            {genTab === 'way1' ? (
+                                <>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-text-muted mb-1.5">Token Prefix</label>
+                                            <input
+                                                type="text"
+                                                value={genPrefix}
+                                                onChange={e => setGenPrefix(e.target.value.toUpperCase())}
+                                                maxLength={5}
+                                                className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main font-mono focus:outline-none focus:border-accent-primary/50"
+                                                placeholder="TK-"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-text-muted mb-1.5">Quantity</label>
+                                            <input
+                                                type="number"
+                                                min={1}
+                                                max={500}
+                                                value={genQuantity}
+                                                onChange={e => setGenQuantity(parseInt(e.target.value) || 1)}
+                                                className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main focus:outline-none focus:border-accent-primary/50"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="p-4 bg-surface-hover rounded-xl border border-border space-y-4">
+                                        <h3 className="text-sm font-medium text-text-main">Pre-configure Table Info</h3>
+                                        <p className="text-xs text-text-muted">Table numbers will automatically increment for each token in the batch.</p>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-xs font-medium text-text-muted mb-1.5">Starting Table Number</label>
+                                                <input
+                                                    type="number"
+                                                    min={1}
+                                                    value={genTableNum}
+                                                    onChange={e => setGenTableNum(e.target.value)}
+                                                    className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main focus:outline-none focus:border-accent-primary/50"
+                                                    placeholder="e.g. 1"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-medium text-text-muted mb-1.5">Seat Capacity</label>
+                                                <input
+                                                    type="number"
+                                                    min={1}
+                                                    value={genCapacity}
+                                                    onChange={e => setGenCapacity(e.target.value)}
+                                                    className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main focus:outline-none focus:border-accent-primary/50"
+                                                    placeholder="e.g. 4"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
                                     <div>
-                                        <label className="block text-xs font-medium text-text-muted mb-1.5">Starting Table Number</label>
+                                        <label className="block text-sm font-medium text-text-muted mb-1.5">Token Prefix</label>
                                         <input
-                                            type="number"
-                                            min={1}
-                                            value={genTableNum}
-                                            onChange={e => setGenTableNum(e.target.value)}
-                                            className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main focus:outline-none focus:border-accent-primary/50"
-                                            placeholder="e.g. 1"
+                                            type="text"
+                                            value={genPrefix}
+                                            onChange={e => setGenPrefix(e.target.value.toUpperCase())}
+                                            maxLength={5}
+                                            className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main font-mono focus:outline-none focus:border-accent-primary/50"
+                                            placeholder="TK-"
                                         />
                                     </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-text-muted mb-1.5">Seat Capacity</label>
-                                        <input
-                                            type="number"
-                                            min={1}
-                                            value={genCapacity}
-                                            onChange={e => setGenCapacity(e.target.value)}
-                                            className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main focus:outline-none focus:border-accent-primary/50"
-                                            placeholder="e.g. 4"
-                                        />
+                                    
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <label className="block text-sm font-medium text-text-muted">Table Configuration</label>
+                                            <span className="text-xs text-text-muted font-medium">{genRows.length} token{genRows.length !== 1 ? 's' : ''} to generate</span>
+                                        </div>
+                                        <div className="max-h-[250px] overflow-y-auto pr-2 space-y-2 no-scrollbar">
+                                            {genRows.map((row, idx) => (
+                                                <div key={idx} className="flex items-center gap-2">
+                                                    <div className="flex-1">
+                                                        <input
+                                                            type="number"
+                                                            min={1}
+                                                            value={row.tableNum}
+                                                            onChange={e => {
+                                                                const newRows = [...genRows];
+                                                                newRows[idx].tableNum = e.target.value;
+                                                                setGenRows(newRows);
+                                                            }}
+                                                            className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main focus:outline-none focus:border-accent-primary/50"
+                                                            placeholder="Table Number"
+                                                        />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <input
+                                                            type="number"
+                                                            min={1}
+                                                            value={row.capacity}
+                                                            onChange={e => {
+                                                                const newRows = [...genRows];
+                                                                newRows[idx].capacity = e.target.value;
+                                                                setGenRows(newRows);
+                                                            }}
+                                                            className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-main focus:outline-none focus:border-accent-primary/50"
+                                                            placeholder="Seat Capacity"
+                                                        />
+                                                    </div>
+                                                    <button 
+                                                        onClick={() => setGenRows(genRows.filter((_, i) => i !== idx))}
+                                                        disabled={genRows.length === 1}
+                                                        className="p-2 text-text-muted hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                                    >
+                                                        <X size={16} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <button 
+                                            onClick={() => setGenRows([...genRows, { tableNum: '', capacity: '' }])}
+                                            className="w-full py-2 border border-dashed border-border rounded-lg text-sm font-medium text-text-muted hover:text-text-main hover:border-text-muted transition-colors flex items-center justify-center gap-1.5"
+                                        >
+                                            <Plus size={14} /> Add Row
+                                        </button>
                                     </div>
-                                </div>
-                            </div>
+                                </>
+                            )}
                         </div>
                         <div className="flex gap-3 px-6 py-4 border-t border-border">
                             <button onClick={() => setShowGenModal(false)} className="flex-1 py-2 rounded-lg border border-border text-sm text-text-muted hover:bg-surface-hover transition-colors">Cancel</button>
                             <button
                                 onClick={handleGenerate}
-                                disabled={generating}
+                                disabled={generating || (genTab === 'way1' ? (!genTableNum || !genCapacity) : (genRows.length === 0 || genRows.some(r => !r.tableNum || !r.capacity)))}
                                 className="flex-1 py-2 rounded-lg bg-accent-primary text-white text-sm font-semibold hover:bg-accent-secondary transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
                             >
-                                {generating ? <><Loader2 size={14} className="animate-spin" />Generating...</> : `Generate ${genQuantity} Tokens`}
+                                {generating ? <><Loader2 size={14} className="animate-spin" />Generating...</> : `Generate ${genTab === 'way1' ? genQuantity : genRows.length} Tokens`}
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* ── Link Token Modal ── */}
-            {showLinkModal && (
+            {showLinkModal && createPortal(
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[1000] p-4" onClick={() => setShowLinkModal(false)}>
                     <div className="bg-surface border border-border rounded-2xl w-full max-w-md shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-between p-6 border-b border-border">
@@ -1205,11 +1716,12 @@ export default function QrTokens() {
                             </div>
                         </form>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* ── Unlink Confirm Modal ── */}
-            {unlinkTarget && (
+            {unlinkTarget && createPortal(
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[1000] p-4" onClick={() => setUnlinkTarget(null)}>
                     <div className="bg-surface border border-border rounded-2xl w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
                         <div className="p-6">
@@ -1241,11 +1753,12 @@ export default function QrTokens() {
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* ── Delete Confirm Modal ── */}
-            {deleteTarget && (
+            {deleteTarget && createPortal(
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[1000] p-4" onClick={() => setDeleteTarget(null)}>
                     <div className="bg-surface border border-border rounded-2xl w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
                         <div className="p-6">
@@ -1277,8 +1790,206 @@ export default function QrTokens() {
                             </button>
                         </div>
                     </div>
+                </div>,
+                document.body
+            )}
+
+            {/* ── Detail Drawer ── */}
+            {detailToken && createPortal((() => {
+                const qrUrl = `${CUSTOMER_APP_URL}/q/${detailToken.token}`;
+                return (
+                    <>
+                        {/* Backdrop */}
+                        <div 
+                            className="fixed inset-0 bg-black/60 z-[1000] animate-fade-in" 
+                            onClick={() => setDetailToken(null)}
+                        />
+                        {/* Drawer Panel */}
+                        <div className="fixed inset-y-0 right-0 w-full sm:max-w-md bg-surface shadow-2xl z-[1001] flex flex-col animate-slide-in-right border-l border-border">
+                            {/* Header */}
+                            <div className="flex items-center justify-between p-6 border-b border-border shrink-0">
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <div className="w-10 h-10 rounded-full bg-accent-primary/10 flex items-center justify-center shrink-0">
+                                        <QrCode size={20} className="text-accent-primary" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <h2 className="font-bold text-text-main text-lg truncate">Token Details</h2>
+                                        <p className="text-xs text-text-muted font-mono truncate">{detailToken.token}</p>
+                                    </div>
+                                </div>
+                                <button onClick={() => setDetailToken(null)} className="text-text-muted hover:text-text-main transition-colors p-2 rounded-lg hover:bg-surface-hover shrink-0">
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            {/* Body */}
+                            {/* Body */}
+                            <div className="p-5 space-y-4 overflow-y-auto flex-1 no-scrollbar">
+                                {/* Header Section: QR on Left, Status/Table on Right */}
+                                <div className="flex gap-4 items-start">
+                                    {/* Left: QR Preview */}
+                                    <div className="flex flex-col items-center gap-2 shrink-0">
+                                        <div className="p-2 bg-white rounded-xl border border-border shadow-sm">
+                                            <QRCodeSVG value={qrUrl} size={110} bgColor="#ffffff" fgColor="#1A202C" level="H" includeMargin />
+                                        </div>
+                                        <a href={qrUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1.5 text-[10px] text-accent-primary hover:text-accent-secondary hover:underline font-medium transition-colors bg-accent-primary/5 px-2.5 py-1 rounded-full w-full">
+                                            <ExternalLink size={10} /> Open Link
+                                        </a>
+                                    </div>
+
+                                    {/* Right: Key Info Stack */}
+                                    <div className="flex-1 flex flex-col gap-2 min-w-0">
+                                        <div className="bg-bg rounded-lg p-2.5 border border-border/50 flex flex-col items-start gap-1">
+                                            <div className="text-[10px] text-text-muted font-medium uppercase tracking-wider">Status</div>
+                                            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${detailToken.status === 'available' ? 'bg-green-500/10 text-green-600' : 'bg-blue-500/10 text-blue-600'}`}>
+                                                {detailToken.status.toUpperCase()}
+                                            </span>
+                                        </div>
+
+                                        <div className="bg-bg rounded-lg p-2.5 border border-border/50 flex flex-col items-start gap-1">
+                                            <div className="text-[10px] text-text-muted font-medium uppercase tracking-wider">Table</div>
+                                            {detailToken.table_number != null ? (
+                                                <div className="flex flex-col items-start gap-1">
+                                                    <span className="text-text-main text-[13px] font-bold leading-none">Table {detailToken.table_number}</span>
+                                                    {detailToken.capacity != null && (
+                                                        <span className="text-text-muted text-[10px] leading-none">{detailToken.capacity} seats</span>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <span className="text-text-muted text-[11px] italic">Not set</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div className="space-y-2">
+                                    
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div className="bg-bg rounded-lg p-2.5 border border-border/50">
+                                            <div className="text-[10px] text-text-muted font-medium uppercase tracking-wider mb-0.5 flex items-center gap-1"><Calendar size={10} /> Created</div>
+                                            <span className="text-text-main text-[12px] font-medium">{formatDateShort(detailToken.created_at)}</span>
+                                        </div>
+                                        <div className="bg-bg rounded-lg p-2.5 border border-border/50">
+                                            <div className="text-[10px] text-text-muted font-medium uppercase tracking-wider mb-0.5 flex items-center gap-1"><Calendar size={10} /> Assigned</div>
+                                            <span className="text-text-main text-[12px] font-medium">
+                                                {detailToken.assigned_at ? formatDateShort(detailToken.assigned_at) : '—'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Assignment Info */}
+                                {detailToken.status === 'assigned' && detailToken.restaurants && (
+                                    <div className="bg-blue-500/5 border border-blue-500/15 rounded-lg p-3">
+                                        <div className="text-[10px] text-blue-400 font-bold uppercase tracking-wider mb-2 flex items-center gap-1"><Building2 size={12} /> Assigned To</div>
+                                        <div className="flex items-center gap-2.5 bg-surface border border-border/50 p-2 rounded-md shadow-sm">
+                                            <div className="w-8 h-8 rounded-md bg-blue-500/10 flex items-center justify-center shrink-0">
+                                                <Building2 size={14} className="text-blue-500" />
+                                            </div>
+                                            <div className="flex flex-col min-w-0">
+                                                <span className="text-text-main text-[13px] font-bold truncate">{detailToken.restaurants.name}</span>
+                                                {detailToken.restaurant_tables && (
+                                                    <span className="text-[11px] text-text-muted">
+                                                        Table {detailToken.restaurant_tables.table_number}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Token Code */}
+                                <div className="bg-bg rounded-lg p-3 border border-border/50">
+                                    <div className="text-[10px] text-text-muted font-medium uppercase tracking-wider mb-1.5 flex items-center gap-1"><Hash size={12} /> Token Code</div>
+                                    <div className="flex items-center gap-2 bg-surface border border-border p-2 rounded-md">
+                                        <code className="text-text-main font-mono text-[13px] font-bold tracking-widest flex-1 truncate">{detailToken.token}</code>
+                                        <CopyButton value={detailToken.token} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Footer Actions */}
+                            <div className="p-4 border-t border-border bg-surface shrink-0 flex flex-col gap-2">
+                                <button
+                                    onClick={() => { setDetailToken(null); openLinkModal(detailToken); }}
+                                    className="w-full py-2 rounded-lg bg-blue-600 text-white text-[12px] font-bold hover:bg-blue-700 transition-colors flex items-center justify-center gap-1.5 shadow-sm cursor-pointer border-none"
+                                >
+                                    <LinkIcon size={14} /> {detailToken.status === 'assigned' ? 'Edit Link' : 'Link to Restaurant'}
+                                </button>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => downloadQR(detailToken, 'png')}
+                                        className="flex-1 py-2 rounded-lg border border-border bg-surface hover:bg-surface-hover transition-colors flex items-center justify-center gap-1.5 text-[12px] font-medium text-text-main shadow-sm cursor-pointer"
+                                    >
+                                        <Download size={14} /> PNG
+                                    </button>
+                                    <button
+                                        onClick={() => downloadQR(detailToken, 'pdf')}
+                                        className="flex-1 py-2 rounded-lg border border-border bg-surface hover:bg-surface-hover transition-colors flex items-center justify-center gap-1.5 text-[12px] font-medium text-text-main shadow-sm cursor-pointer"
+                                    >
+                                        <Download size={14} /> PDF
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                );
+            })(), document.body)}
+
+            {/* ── Bulk Actions Floating Bar ── */}
+            {selectedIds.size > 0 && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 md:translate-x-0 md:left-auto md:right-8 bg-surface border border-border shadow-2xl rounded-2xl px-5 py-3 flex items-center gap-4 z-[90] animate-slide-up">
+                    <span className="text-[13px] font-bold text-text-main bg-surface-hover px-2.5 py-1 rounded-lg border border-border/50">
+                        {selectedIds.size} selected
+                    </span>
+                    <div className="w-px h-6 bg-border"></div>
+                    <button 
+                        onClick={() => openLinkModal(undefined, true)}
+                        disabled={isBulkDownloading || isBulkDeleting}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-semibold rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors shadow-sm disabled:opacity-50 cursor-pointer border-none"
+                    >
+                        <LinkIcon size={14} /> Link
+                    </button>
+                    <button 
+                        onClick={handleBulkDownloadPng}
+                        disabled={isBulkDownloading || isBulkDeleting}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors shadow-sm disabled:opacity-50 cursor-pointer border-none"
+                    >
+                        {isBulkDownloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                        PNGs (ZIP)
+                    </button>
+                    <button 
+                        onClick={handleBulkDownloadPdf}
+                        disabled={isBulkDownloading || isBulkDeleting}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors shadow-sm disabled:opacity-50 cursor-pointer border-none"
+                    >
+                        {isBulkDownloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                        PDFs
+                    </button>
+                    <button 
+                        onClick={handleBulkDelete}
+                        disabled={isBulkDownloading || isBulkDeleting}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-semibold rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors shadow-sm disabled:opacity-50 cursor-pointer border-none"
+                    >
+                        {isBulkDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                        Delete
+                    </button>
+                    <button 
+                        onClick={() => setSelectedIds(new Set())}
+                        className="p-1.5 text-text-muted hover:bg-surface-hover hover:text-text-main rounded-lg transition-colors ml-1 cursor-pointer border-none bg-transparent"
+                    >
+                        <X size={16} />
+                    </button>
                 </div>
             )}
+            
+            {/* Hidden SVGs for ALL tokens (needed for bulk PDF downloads across pages) */}
+            <div className="sr-only">
+                {tokens.map(token => {
+                    const qrUrl = `${CUSTOMER_APP_URL}/q/${token.token}`;
+                    return <QRCodeSVG key={`hidden-qr-${token.id}`} id={`qr-svg-${token.id}`} value={qrUrl} size={QR_SIZE} bgColor="#ffffff" fgColor="#1A202C" level="H" includeMargin />
+                })}
+            </div>
         </div>
     );
 }
