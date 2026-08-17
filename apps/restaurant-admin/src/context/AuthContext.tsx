@@ -29,6 +29,7 @@ interface AuthContextType {
     activeRestaurantStatus: string;
     activeRestaurantSubscriptionStatus: string;
     activeRestaurantSubscriptionPlan: string | null;
+    activeRestaurantGracePeriodEndsAt: string | null;
     setActiveRestaurantId: (restaurantId: string) => void;
     refreshSessionData: () => Promise<void>;
     loading: boolean;
@@ -94,6 +95,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const [activeRestaurantStatus, setActiveRestaurantStatus] = useState<string>('pending');
     const [activeRestaurantSubscriptionStatus, setActiveRestaurantSubscriptionStatus] = useState<string>('inactive');
     const [activeRestaurantSubscriptionPlan, setActiveRestaurantSubscriptionPlan] = useState<string | null>(null);
+    const [activeRestaurantGracePeriodEndsAt, setActiveRestaurantGracePeriodEndsAt] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
     const setActiveRestaurantId = (restaurantId: string) => {
@@ -157,12 +159,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
             setActiveRestaurantStatus('pending');
             setActiveRestaurantSubscriptionStatus('inactive');
             setActiveRestaurantSubscriptionPlan(null);
+            setActiveRestaurantGracePeriodEndsAt(null);
             return;
         }
         try {
             const { data, error } = await supabase
                 .from('restaurants')
-                .select('name, logo_url, status, subscription_status, subscription_plan')
+                .select('name, logo_url, status, subscription_status, subscription_plan, grace_period_ends_at')
                 .eq('id', restaurantId)
                 .maybeSingle();
             if (!error && data) {
@@ -171,6 +174,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 setActiveRestaurantStatus(data.status || 'pending');
                 setActiveRestaurantSubscriptionStatus(data.subscription_status || 'inactive');
                 setActiveRestaurantSubscriptionPlan(data.subscription_plan || null);
+                setActiveRestaurantGracePeriodEndsAt(data.grace_period_ends_at || null);
             }
         } catch {
             // silently ignore
@@ -320,6 +324,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         user, userProfile, memberships, activeRestaurantId, 
         activeRestaurantName, activeRestaurantLogo, 
         activeRestaurantStatus, activeRestaurantSubscriptionStatus, activeRestaurantSubscriptionPlan, 
+        activeRestaurantGracePeriodEndsAt,
         loading, isAllowedAdminRole
     ]);
 

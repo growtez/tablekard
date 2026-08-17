@@ -52,17 +52,11 @@ interface HeaderData {
     backTitle?: string;
 }
 
-interface SyncAction {
-    onSync: () => void;
-    loading: boolean;
-}
-
 interface UserDetailProps {
     setHeaderData?: (data: HeaderData | null) => void;
-    setSyncAction?: (action: SyncAction | null) => void;
 }
 
-export default function UserDetail({ setHeaderData, setSyncAction }: UserDetailProps) {
+export default function UserDetail({ setHeaderData }: UserDetailProps) {
     const { id } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
@@ -87,18 +81,8 @@ export default function UserDetail({ setHeaderData, setSyncAction }: UserDetailP
         }
         return () => {
             setHeaderData && setHeaderData(null);
-            setSyncAction && setSyncAction(null);
         };
     }, [id]);
-
-    useEffect(() => {
-        if (setSyncAction && !isEditing) {
-            setSyncAction({
-                onSync: fetchInitialData,
-                loading: loading
-            });
-        }
-    }, [loading, setSyncAction, isEditing]);
 
     const fetchInitialData = async () => {
         setLoading(true);

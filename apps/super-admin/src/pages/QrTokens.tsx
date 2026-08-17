@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { jsPDF } from 'jspdf';
+import { TableRowsSkeleton } from '../components/ui/Skeleton';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -206,7 +207,7 @@ function CopyButton({ value }: { value: string }) {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
-export default function QrTokens({ setSyncAction }: { setSyncAction?: (s: any) => void }) {
+export default function QrTokens() {
     const [tokens, setTokens] = useState<QrToken[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -235,7 +236,8 @@ export default function QrTokens({ setSyncAction }: { setSyncAction?: (s: any) =
     const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'assigned'>('all');
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
-    const PER_PAGE = 12;
+    const [perPage, setPerPage] = useState(8);
+    const [isStatusFilterOpen, setIsStatusFilterOpen] = useState(false);
 
     // Download state
     const [downloadingId, setDownloadingId] = useState<string | null>(null);
@@ -276,7 +278,6 @@ export default function QrTokens({ setSyncAction }: { setSyncAction?: (s: any) =
 
     useEffect(() => {
         fetchTokens();
-        if (setSyncAction) setSyncAction({ onSync: fetchTokens, loading });
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Auto-suggest next table number when selected restaurant changes in Link modal
@@ -288,7 +289,7 @@ export default function QrTokens({ setSyncAction }: { setSyncAction?: (s: any) =
                     .from('restaurant_tables')
                     .select('table_number, capacity')
                     .eq('restaurant_id', linkRestaurantId);
-                
+
                 if (data && data.length > 0) {
                     if (!linkTarget || !linkTarget.assigned_table_id) {
                         const existingTableNumbers = data.map((t: any) => t.table_number);
@@ -458,8 +459,22 @@ export default function QrTokens({ setSyncAction }: { setSyncAction?: (s: any) =
         if (search && !t.token.toLowerCase().includes(search.toLowerCase())) return false;
         return true;
     });
-    const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
-    const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+    const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+    const safePage = Math.min(page, totalPages);
+    const paginated = filtered.slice((safePage - 1) * perPage, safePage * perPage);
+
+    const getPaginationPages = () => {
+        if (totalPages <= 3) {
+            return Array.from({ length: totalPages }, (_, i) => i + 1);
+        }
+        if (safePage === totalPages) {
+            return [1, '...', totalPages];
+        }
+        if (safePage === totalPages - 1) {
+            return [safePage - 1, safePage, totalPages];
+        }
+        return [safePage, '...', totalPages];
+    };
 
     const totalCount = tokens.length;
     const availableCount = tokens.filter(t => t.status === 'available').length;
@@ -480,8 +495,8 @@ export default function QrTokens({ setSyncAction }: { setSyncAction?: (s: any) =
                 attempts++;
                 const code = generateTokenCode(genPrefix);
                 if (!existing.has(code) && !newTokens.some(nt => nt.token === code)) {
-                    newTokens.push({ 
-                        token: code, 
+                    newTokens.push({
+                        token: code,
                         status: 'available',
                         table_number: !isNaN(currentTableNum as number) ? currentTableNum : null,
                         capacity: !isNaN(parsedCap as number) ? parsedCap : null
@@ -585,38 +600,7 @@ export default function QrTokens({ setSyncAction }: { setSyncAction?: (s: any) =
     };
 
     return (
-        <div className="space-y-5">
-            {/* ── Header ── */}
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-                <div>
-                    <h1 className="text-xl font-bold text-text-main">QR Tokens</h1>
-                    <p className="text-sm text-text-muted mt-0.5">Generate and manage generic pre-printed QR codes for restaurants.</p>
-                </div>
-                <div className="flex gap-2 items-center flex-wrap">
-                    <button
-                        onClick={fetchTokens}
-                        disabled={loading}
-                        className="flex items-center gap-2 px-3 py-1.5 text-sm bg-surface border border-border text-text-muted rounded-lg hover:bg-surface-hover transition-colors"
-                    >
-                        <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-                        Refresh
-                    </button>
-                    <button
-                        onClick={() => openLinkModal()}
-                        className="flex items-center gap-2 px-4 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold shadow-[0_2px_8px_rgba(37,99,235,0.3)]"
-                    >
-                        <LinkIcon size={16} />
-                        Link QR Token
-                    </button>
-                    <button
-                        onClick={() => setShowGenModal(true)}
-                        className="flex items-center gap-2 px-4 py-1.5 text-sm bg-accent-primary text-white rounded-lg hover:bg-accent-secondary transition-colors font-semibold shadow-[0_2px_8px_rgba(5,150,105,0.3)]"
-                    >
-                        <Plus size={16} />
-                        Generate Batch
-                    </button>
-                </div>
-            </div>
+        <div className="space-y-3 w-full">
 
             {/* ── Stats ── */}
             <div className="grid grid-cols-3 gap-4">
@@ -641,177 +625,376 @@ export default function QrTokens({ setSyncAction }: { setSyncAction?: (s: any) =
                 </div>
             )}
 
-            {/* ── Filter bar ── */}
-            <div className="flex gap-3 items-center flex-wrap">
-                <div className="relative flex-1 min-w-[200px]">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+            {/* ── List Control ── */}
+            <div className="flex flex-col md:flex-row md:items-center gap-3 w-full bg-surface p-3 md:p-2 rounded-xl shadow-sm border border-border">
+                {/* Search Box */}
+                <div className="relative w-full md:max-w-[260px] shrink-0">
+                    <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
                     <input
                         type="text"
-                        placeholder="Search token..."
+                        placeholder="Search tokens..."
                         value={search}
-                        onChange={e => { setSearch(e.target.value); setPage(1); }}
-                        className="w-full pl-8 pr-4 py-2 text-sm bg-surface border border-border rounded-lg text-text-main placeholder:text-text-muted focus:outline-none focus:border-accent-primary/50"
+                        onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                        className="w-full py-2 pl-4 pr-10 bg-surface-hover border border-border rounded-full text-text-main text-[13px] focus:outline-none focus:ring-1 focus:ring-accent-primary transition-all"
                     />
                 </div>
-                <div className="flex gap-1">
-                    {(['all', 'available', 'assigned'] as const).map(s => (
+
+                {/* Inline Active Filters */}
+                <div className="flex-1 flex items-center gap-1.5 overflow-x-auto no-scrollbar min-w-0 px-2 md:border-x md:border-border/50 py-1 md:py-0">
+                    {(search || statusFilter !== 'all') ? (
+                        <>
+                            <span className="text-[11px] text-text-muted font-medium uppercase tracking-wider shrink-0 mr-1">Active:</span>
+                            {search && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 text-[11px] font-medium border border-blue-500/20 shrink-0">
+                                    "{search}"
+                                    <button onClick={() => setSearch('')} className="hover:text-blue-800 focus:outline-none flex items-center justify-center bg-transparent border-none cursor-pointer p-0 ml-1"><X size={10} /></button>
+                                </span>
+                            )}
+                            {statusFilter !== 'all' && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 text-[11px] font-medium border border-blue-500/20 shrink-0">
+                                    {statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}
+                                    <button onClick={() => setStatusFilter('all')} className="hover:text-blue-800 focus:outline-none flex items-center justify-center bg-transparent border-none cursor-pointer p-0 ml-1"><X size={10} /></button>
+                                </span>
+                            )}
+                            <button
+                                onClick={() => { setSearch(''); setStatusFilter('all'); setPage(1); }}
+                                className="text-[11px] text-text-muted hover:text-red-500 transition-colors ml-1 bg-transparent border-none cursor-pointer font-medium shrink-0"
+                            >
+                                Clear
+                            </button>
+                        </>
+                    ) : (
+                        <span className="text-[11px] text-text-muted italic opacity-50">No active filters</span>
+                    )}
+                </div>
+
+                {/* Pagination Controls */}
+                <div className="flex items-center justify-between md:justify-start gap-1 shrink-0 md:border-x md:border-border/50 px-3 py-1.5 md:py-0 w-full md:w-auto">
+                    <button onClick={() => setPage(p => Math.max(1, Number(p) - 1))} disabled={safePage === 1} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
+                        <ChevronLeft size={14} />
+                    </button>
+                    <div className="flex items-center justify-center gap-1 w-[80px]">
+                        {getPaginationPages().map((p, i) => p === '...' ? (
+                            <div key={`ellipsis-${i}`} className="w-6 h-6 flex items-center justify-center text-[11px] text-text-muted">…</div>
+                        ) : (
+                            <button key={p} onClick={() => setPage(Number(p))} className={`w-6 h-6 flex items-center justify-center rounded text-[11px] font-semibold transition-colors border-none cursor-pointer ${safePage === p ? 'bg-accent-primary text-white' : 'text-text-muted hover:bg-surface-hover bg-transparent'}`}>{p}</button>
+                        ))}
+                    </div>
+                    <button onClick={() => setPage(p => Math.min(totalPages, Number(p) + 1))} disabled={safePage === totalPages} className="w-6 h-6 flex items-center justify-center rounded text-text-muted hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-transparent border-none cursor-pointer">
+                        <ChevronRight size={14} />
+                    </button>
+                </div>
+
+                {/* Per-page & Actions */}
+                <div className="flex flex-wrap items-center gap-2 shrink-0 w-full md:w-auto">
+                    <select value={perPage} onChange={e => { setPerPage(Number(e.target.value)); setPage(1); }} className="py-1.5 px-2 rounded-lg border border-border bg-surface text-text-main text-[12px] focus:outline-none focus:ring-1 focus:ring-accent-primary cursor-pointer flex-1 md:flex-none">
+                        {[8, 20, 50, 100].map(n => <option key={n} value={n}>{n} / page</option>)}
+                    </select>
+                    <div className="relative group flex-1 md:flex-none">
                         <button
-                            key={s}
-                            onClick={() => { setStatusFilter(s); setPage(1); }}
-                            className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-colors capitalize ${statusFilter === s ? 'bg-accent-primary text-white' : 'bg-surface border border-border text-text-muted hover:bg-surface-hover'}`}
+                            onClick={() => setIsStatusFilterOpen(!isStatusFilterOpen)}
+                            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface text-text-main hover:bg-surface-hover transition-colors text-[12px] font-medium"
                         >
-                            {s}
+                            <Filter size={14} className="text-accent-primary" /> Status
                         </button>
-                    ))}
+                        <div className={`absolute right-0 top-full mt-2 w-48 bg-surface border border-border rounded-xl shadow-lg transition-all z-50 flex flex-col overflow-hidden py-1 ${isStatusFilterOpen ? 'opacity-100 visible' : 'opacity-0 invisible group-hover:opacity-100 group-hover:visible'
+                            }`}>
+                            {[
+                                { value: 'all', label: 'All Statuses' },
+                                { value: 'available', label: 'Available' },
+                                { value: 'assigned', label: 'Assigned' }
+                            ].map(option => (
+                                <button key={option.value} onClick={() => { setStatusFilter(option.value as any); setIsStatusFilterOpen(false); setPage(1); }} className={`px-4 py-2 text-left text-[13px] hover:bg-surface-hover transition-colors ${statusFilter === option.value ? 'text-accent-primary font-medium bg-blue-500/5' : 'text-text-main'}`}>
+                                    {option.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => openLinkModal()}
+                        className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-[12px] font-medium shadow-sm cursor-pointer border-none flex-1 md:flex-none"
+                    >
+                        <LinkIcon size={14} /> Link
+                    </button>
+                    <button
+                        onClick={() => setShowGenModal(true)}
+                        className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-accent-primary text-white hover:bg-accent-hover transition-colors text-[12px] font-medium shadow-sm cursor-pointer border-none flex-1 md:flex-none"
+                    >
+                        <Plus size={14} /> Generate
+                    </button>
                 </div>
             </div>
 
-            {/* ── Table ── */}
-            <div className="bg-surface border border-border rounded-xl overflow-hidden">
-                {loading ? (
-                    <div className="flex items-center justify-center py-20 text-text-muted gap-3">
-                        <Loader2 size={20} className="animate-spin" />
-                        <span className="text-sm">Loading tokens...</span>
-                    </div>
-                ) : paginated.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-text-muted gap-3">
-                        <QrCode size={48} className="opacity-30" />
-                        <p className="text-sm">{tokens.length === 0 ? 'No tokens generated yet. Click "Generate Batch" to start.' : 'No tokens match your filter.'}</p>
-                    </div>
-                ) : (
-                    <table className="w-full text-sm">
-                        <thead>
-                            <tr className="border-b border-border">
-                                <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wide">Token</th>
-                                <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wide">Table Info</th>
-                                <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wide">Status</th>
-                                <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wide hidden md:table-cell">Assigned To</th>
-                                <th className="text-left px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wide hidden lg:table-cell">Created</th>
-                                <th className="text-right px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wide">Actions</th>
+            {/* ── Tokens Table ── */}
+            <div className="w-full bg-surface rounded-xl shadow-sm border border-border overflow-hidden">
+                {/* Desktop View Table */}
+                <table className="hidden md:table w-full text-left border-collapse whitespace-nowrap table-fixed">
+                    <thead>
+                        <tr className="border-b border-border">
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[25%]">Token</th>
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[12%]">Table Info</th>
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[10%]">Status</th>
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[20%]">Assigned To</th>
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent w-[10%]">Created</th>
+                            <th className="py-3 px-4 text-[12px] font-bold text-text-main bg-transparent text-right w-[23%]">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {loading ? (
+                            <TableRowsSkeleton rows={perPage} columns={6} />
+                        ) : filtered.length === 0 ? (
+                            <tr>
+                                <td colSpan={6} className="text-center py-10 text-text-muted text-[13px]">
+                                    {tokens.length === 0 ? 'No tokens generated yet. Click "Generate Batch" to start.' : 'No tokens match your filter.'}
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            {paginated.map(token => {
-                                const qrUrl = `${CUSTOMER_APP_URL}/q/${token.token}`;
-                                const isDownloading = downloadingId === token.id;
-                                return (
-                                    <tr key={token.id} className="border-b border-border/50 hover:bg-surface-hover transition-colors last:border-0">
-                                        <td className="px-4 py-3">
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-mono font-semibold text-text-main tracking-wide">{token.token}</span>
-                                                <CopyButton value={token.token} />
-                                                {/* Hidden QR SVG for download */}
-                                                <div className="sr-only">
-                                                    <QRCodeSVG
-                                                        id={`qr-svg-${token.id}`}
-                                                        value={qrUrl}
-                                                        size={QR_SIZE}
-                                                        bgColor="#ffffff"
-                                                        fgColor="#1A202C"
-                                                        level="H"
-                                                        includeMargin
-                                                    />
+                        ) : (
+                            <>
+                                {paginated.map(token => {
+                                    const qrUrl = `${CUSTOMER_APP_URL}/q/${token.token}`;
+                                    const isDownloading = downloadingId === token.id;
+                                    return (
+                                        <tr
+                                            key={token.id}
+                                            className="group even:bg-bg hover:bg-surface-hover border-b border-border/40 last:border-b-0 transition-colors"
+                                        >
+                                            <td className="py-2.5 px-4 align-middle">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-full bg-accent-primary/10 flex items-center justify-center shrink-0">
+                                                        <QrCode size={14} className="text-accent-primary" />
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 min-w-0">
+                                                        <span className="font-mono font-semibold text-text-main text-[13px] tracking-wide truncate max-w-[140px] group-hover:text-accent-primary transition-colors" title={token.token}>{token.token}</span>
+                                                        <CopyButton value={token.token} />
+                                                    </div>
+                                                    <div className="sr-only">
+                                                        <QRCodeSVG id={`qr-svg-${token.id}`} value={qrUrl} size={QR_SIZE} bgColor="#ffffff" fgColor="#1A202C" level="H" includeMargin />
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            {token.table_number != null ? (
-                                                <div className="flex flex-col">
-                                                    <span className="text-text-main text-xs font-medium">Table {token.table_number}</span>
-                                                    {token.capacity != null && (
-                                                        <span className="text-text-muted text-[10px]">Cap: {token.capacity}</span>
-                                                    )}
-                                                </div>
-                                            ) : (
-                                                <span className="text-text-muted text-xs">—</span>
-                                            )}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${token.status === 'available' ? 'bg-accent-primary/15 text-accent-primary' : 'bg-blue-500/15 text-blue-400'}`}>
-                                                {token.status === 'available' ? <CheckCircle size={10} /> : <LinkIcon size={10} />}
-                                                {token.status}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3 hidden md:table-cell">
-                                            {token.status === 'assigned' && token.restaurants ? (
-                                                <div className="text-text-muted text-xs">
-                                                    <span className="text-text-main font-medium">{token.restaurants.name}</span>
-                                                    {token.restaurant_tables && (
-                                                        <span className="ml-1.5 px-1.5 py-0.5 bg-surface-hover rounded text-[10px]">
-                                                            Table {token.restaurant_tables.table_number}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            ) : (
-                                                <span className="text-text-muted text-xs">—</span>
-                                            )}
-                                        </td>
-                                        <td className="px-4 py-3 text-text-muted text-xs hidden lg:table-cell">
-                                            {formatDateShort(token.created_at)}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <div className="flex items-center justify-end gap-1.5">
-                                                <button
-                                                    onClick={() => openLinkModal(token)}
-                                                    className="px-2.5 py-1.5 text-xs rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 transition-colors flex items-center gap-1 font-medium"
-                                                    title={token.status === 'assigned' ? 'Re-link / Edit Restaurant & Table' : 'Link QR token to a restaurant'}
-                                                >
-                                                    <LinkIcon size={12} />
-                                                    {token.status === 'assigned' ? 'Edit Link' : 'Link'}
-                                                </button>
-                                                <button
-                                                    onClick={() => downloadQR(token, 'png')}
-                                                    disabled={isDownloading}
-                                                    className="px-2.5 py-1.5 text-xs rounded-lg bg-surface-hover border border-border text-text-muted hover:text-text-main hover:bg-border transition-colors disabled:opacity-50"
-                                                    title="Download PNG"
-                                                >
-                                                    {isDownloading ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
-                                                </button>
-                                                <button
-                                                    onClick={() => downloadQR(token, 'pdf')}
-                                                    disabled={isDownloading}
-                                                    className="px-2.5 py-1.5 text-xs rounded-lg bg-accent-primary/10 border border-accent-primary/20 text-accent-primary hover:bg-accent-primary/20 transition-colors disabled:opacity-50"
-                                                    title="Download PDF"
-                                                >
-                                                    PDF
-                                                </button>
-                                                {token.status === 'assigned' && (
-                                                    <button
-                                                        onClick={() => setUnlinkTarget(token)}
-                                                        className="px-2.5 py-1.5 text-xs rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:bg-amber-500/20 transition-colors"
-                                                        title="Unlink from table"
-                                                    >
-                                                        <Unlink size={12} />
-                                                    </button>
+                                            </td>
+                                            <td className="py-2.5 px-4 align-middle">
+                                                {token.table_number != null ? (
+                                                    <div className="flex flex-col">
+                                                        <span className="text-text-main text-[12px] font-medium">Table {token.table_number}</span>
+                                                        {token.capacity != null && (
+                                                            <span className="text-text-muted text-[11px]">Cap: {token.capacity}</span>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-text-muted text-[12px] opacity-60">—</span>
                                                 )}
-                                                <button
-                                                    onClick={() => setDeleteTarget(token)}
-                                                    className="px-2.5 py-1.5 text-xs rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-colors"
-                                                    title="Delete token"
-                                                >
-                                                    <Trash2 size={12} />
-                                                </button>
-                                            </div>
+                                            </td>
+                                            <td className="py-2.5 px-4 align-middle">
+                                                <span className={`text-[12px] font-bold ${token.status === 'available' ? 'text-green-600' : 'text-blue-600'}`}>
+                                                    {token.status.toUpperCase()}
+                                                </span>
+                                            </td>
+                                            <td className="py-2.5 px-4 align-middle">
+                                                {token.status === 'assigned' && token.restaurants ? (
+                                                    <div className="flex items-center gap-2 text-[12px]">
+                                                        <span className="font-medium text-text-main truncate max-w-[150px]" title={token.restaurants.name}>
+                                                            {token.restaurants.name}
+                                                        </span>
+                                                        {token.restaurant_tables && (
+                                                            <span className="px-1.5 py-0.5 bg-surface-hover rounded text-[10px] text-text-muted shrink-0">
+                                                                Table {token.restaurant_tables.table_number}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-text-muted text-[12px] opacity-60">—</span>
+                                                )}
+                                            </td>
+                                            <td className="py-2.5 px-4 align-middle">
+                                                <span className="text-text-muted text-[12px] font-medium">
+                                                    {formatDateShort(token.created_at)}
+                                                </span>
+                                            </td>
+                                            <td className="py-2.5 px-4 align-middle">
+                                                <div className="flex items-center justify-end gap-1.5">
+                                                    <button
+                                                        onClick={() => openLinkModal(token)}
+                                                        className="px-2.5 py-1.5 text-xs rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 transition-colors flex items-center gap-1 font-medium"
+                                                        title={token.status === 'assigned' ? 'Re-link / Edit Restaurant & Table' : 'Link QR token to a restaurant'}
+                                                    >
+                                                        <LinkIcon size={12} />
+                                                        {token.status === 'assigned' ? 'Edit Link' : 'Link'}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => downloadQR(token, 'png')}
+                                                        disabled={isDownloading}
+                                                        className="px-2.5 py-1.5 text-xs rounded-lg bg-surface-hover border border-border text-text-muted hover:text-text-main hover:bg-border transition-colors disabled:opacity-50"
+                                                        title="Download PNG"
+                                                    >
+                                                        {isDownloading ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => downloadQR(token, 'pdf')}
+                                                        disabled={isDownloading}
+                                                        className="px-2.5 py-1.5 text-xs rounded-lg bg-accent-primary/10 border border-accent-primary/20 text-accent-primary hover:bg-accent-primary/20 transition-colors disabled:opacity-50"
+                                                        title="Download PDF"
+                                                    >
+                                                        PDF
+                                                    </button>
+                                                    {token.status === 'assigned' && (
+                                                        <button
+                                                            onClick={() => setUnlinkTarget(token)}
+                                                            className="px-2.5 py-1.5 text-xs rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:bg-amber-500/20 transition-colors"
+                                                            title="Unlink from table"
+                                                        >
+                                                            <Unlink size={12} />
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        onClick={() => setDeleteTarget(token)}
+                                                        className="px-2.5 py-1.5 text-xs rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-colors"
+                                                        title="Delete token"
+                                                    >
+                                                        <Trash2 size={12} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                                {perPage - paginated.length > 0 && Array.from({ length: perPage - paginated.length }).map((_, idx) => (
+                                    <tr key={`empty-${idx}`} className="border-b border-border/40 last:border-b-0 opacity-0 pointer-events-none">
+                                        <td colSpan={6} className="py-2.5 px-4 align-middle">
+                                            <div className="h-8"></div>
                                         </td>
                                     </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                )}
-            </div>
+                                ))}
+                            </>
+                        )}
+                    </tbody>
+                </table>
 
-            {/* ── Pagination ── */}
-            {totalPages > 1 && (
-                <div className="flex items-center justify-between text-sm text-text-muted">
-                    <span>{filtered.length} tokens</span>
-                    <div className="flex gap-1">
-                        <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="p-1.5 rounded-lg hover:bg-surface-hover disabled:opacity-40"><ChevronLeft size={16} /></button>
-                        <span className="px-3 py-1 text-xs">{page} / {totalPages}</span>
-                        <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="p-1.5 rounded-lg hover:bg-surface-hover disabled:opacity-40"><ChevronRight size={16} /></button>
-                    </div>
+                {/* Mobile View Cards */}
+                <div className="block md:hidden divide-y divide-border/40">
+                    {loading ? (
+                        <div className="p-4 space-y-4">
+                            {[1, 2, 3].map(n => (
+                                <div key={n} className="animate-pulse flex flex-col gap-3">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-border/40" />
+                                            <div className="h-4 bg-border/40 rounded w-28" />
+                                        </div>
+                                        <div className="h-4 bg-border/40 rounded w-16" />
+                                    </div>
+                                    <div className="space-y-2 pl-11">
+                                        <div className="h-3.5 bg-border/40 rounded w-48" />
+                                        <div className="h-3.5 bg-border/40 rounded w-36" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : filtered.length === 0 ? (
+                        <div className="text-center py-10 text-text-muted text-[13px]">
+                            {tokens.length === 0 ? 'No tokens generated yet. Click "Generate Batch" to start.' : 'No tokens match your filter.'}
+                        </div>
+                    ) : (
+                        paginated.map(token => {
+                            const qrUrl = `${CUSTOMER_APP_URL}/q/${token.token}`;
+                            const isDownloading = downloadingId === token.id;
+                            return (
+                                <div
+                                    key={token.id}
+                                    className="p-4 hover:bg-surface-hover border-b border-border/40 last:border-b-0 transition-colors flex flex-col gap-2.5"
+                                >
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <div className="w-8 h-8 rounded-full bg-accent-primary/10 flex items-center justify-center shrink-0">
+                                                <QrCode size={14} className="text-accent-primary" />
+                                            </div>
+                                            <span className="font-mono font-semibold text-text-main text-[13px] truncate" title={token.token}>
+                                                {token.token}
+                                            </span>
+                                            <CopyButton value={token.token} />
+                                        </div>
+                                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded bg-surface-hover border border-border/40 ${token.status === 'available' ? 'text-green-600' : 'text-blue-600'}`}>
+                                            {token.status.toUpperCase()}
+                                        </span>
+                                    </div>
+
+                                    <div className="sr-only">
+                                        <QRCodeSVG id={`qr-svg-${token.id}`} value={qrUrl} size={QR_SIZE} bgColor="#ffffff" fgColor="#1A202C" level="H" includeMargin />
+                                    </div>
+
+                                    <div className="flex flex-col gap-1.5 pl-11">
+                                        {token.table_number != null && (
+                                            <div className="flex items-center gap-2 text-[12px] text-text-main">
+                                                <span className="font-medium">Table {token.table_number}</span>
+                                                {token.capacity != null && (
+                                                    <span className="text-text-muted text-[11px]">· Cap: {token.capacity}</span>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {token.status === 'assigned' && token.restaurants && (
+                                            <div className="flex items-center gap-2 text-[12px]">
+                                                <span className="font-medium text-text-main truncate">
+                                                    {token.restaurants.name}
+                                                </span>
+                                                {token.restaurant_tables && (
+                                                    <span className="px-1.5 py-0.5 bg-surface-hover rounded text-[10px] text-text-muted">
+                                                        Table {token.restaurant_tables.table_number}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        <div className="flex items-center justify-between text-[11px] text-text-muted mt-1 pt-1.5 border-t border-border/20">
+                                            <span>Created</span>
+                                            <span className="font-medium text-text-main">
+                                                {formatDateShort(token.created_at)}
+                                            </span>
+                                        </div>
+
+                                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                                            <button
+                                                onClick={() => openLinkModal(token)}
+                                                className="px-2.5 py-1.5 text-xs rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 transition-colors flex items-center gap-1 font-medium"
+                                            >
+                                                <LinkIcon size={12} />
+                                                {token.status === 'assigned' ? 'Edit Link' : 'Link'}
+                                            </button>
+                                            <button
+                                                onClick={() => downloadQR(token, 'png')}
+                                                disabled={isDownloading}
+                                                className="px-2.5 py-1.5 text-xs rounded-lg bg-surface-hover border border-border text-text-muted hover:text-text-main hover:bg-border transition-colors disabled:opacity-50"
+                                            >
+                                                {isDownloading ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
+                                            </button>
+                                            <button
+                                                onClick={() => downloadQR(token, 'pdf')}
+                                                disabled={isDownloading}
+                                                className="px-2.5 py-1.5 text-xs rounded-lg bg-accent-primary/10 border border-accent-primary/20 text-accent-primary hover:bg-accent-primary/20 transition-colors disabled:opacity-50"
+                                            >
+                                                PDF
+                                            </button>
+                                            {token.status === 'assigned' && (
+                                                <button
+                                                    onClick={() => setUnlinkTarget(token)}
+                                                    className="px-2.5 py-1.5 text-xs rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:bg-amber-500/20 transition-colors"
+                                                >
+                                                    <Unlink size={12} />
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={() => setDeleteTarget(token)}
+                                                className="px-2.5 py-1.5 text-xs rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-colors"
+                                            >
+                                                <Trash2 size={12} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
                 </div>
-            )}
+            </div>
 
             {/* ── Generate Modal ── */}
             {showGenModal && (
@@ -846,7 +1029,7 @@ export default function QrTokens({ setSyncAction }: { setSyncAction?: (s: any) =
                                     />
                                 </div>
                             </div>
-                            
+
                             <div className="p-4 bg-surface-hover rounded-xl border border-border space-y-4">
                                 <h3 className="text-sm font-medium text-text-main">Pre-configure Table Info (Optional)</h3>
                                 <p className="text-xs text-text-muted">If provided, table numbers will automatically increment for each token in the batch.</p>
@@ -906,7 +1089,7 @@ export default function QrTokens({ setSyncAction }: { setSyncAction?: (s: any) =
                             </div>
                             <button onClick={() => setShowLinkModal(false)} className="text-text-muted hover:text-text-main"><X size={20} /></button>
                         </div>
-                        
+
                         <form onSubmit={handleLinkSubmit}>
                             <div className="p-6 space-y-4">
                                 {linkError && (

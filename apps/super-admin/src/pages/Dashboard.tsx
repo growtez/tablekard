@@ -78,11 +78,7 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
     return null;
 };
 
-export interface DashboardProps {
-    setSyncAction: (action: { onSync: () => void; loading: boolean }) => void;
-}
-
-export default function Dashboard({ setSyncAction }: DashboardProps) {
+export default function Dashboard() {
     const navigate = useNavigate();
     const [stats, setStats] = useState({
         totalUsers: 0,
@@ -186,9 +182,6 @@ export default function Dashboard({ setSyncAction }: DashboardProps) {
 
     useEffect(() => { fetchRealStats(); }, []);
 
-    useEffect(() => {
-        if (setSyncAction) setSyncAction({ onSync: fetchRealStats, loading });
-    }, [loading, setSyncAction]);
 
     const StatSkeleton = () => (
         <div style={{ height: '1.5rem', width: '4rem', borderRadius: '6px', background: '#F7FAFC', animation: 'pulse 1.5s infinite' }} />
