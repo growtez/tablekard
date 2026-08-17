@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { formatFullDate } from '@restaurant-saas/types';
-import { TrendingUp, X, CheckCircle, Check, ChevronDown, Search, ArrowUpDown, List, LayoutGrid, ArrowRight } from 'lucide-react';
+import { TrendingUp, X, Check, ChevronDown, Search, ArrowUpDown, List, LayoutGrid, ArrowRight } from 'lucide-react';
+
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useDashboardOrders, useInvalidateQueries, useRevenueData, useMenuItems } from '../hooks/useSupabaseQuery';
@@ -53,13 +54,12 @@ const Dashboard: React.FC = () => {
 
 
 
-  const handlePaymentComplete = async (paymentId: string) => {
+  const handleUpdatePaymentStatus = async (paymentId: string, status: string) => {
     try {
-      await updatePaymentStatus(paymentId, 'paid');
+      await updatePaymentStatus(paymentId, status);
       if (activeRestaurantId) invalidateOrders(activeRestaurantId);
     } catch (err) {
-      console.error(err);
-      alert('Failed to update payment status');
+      console.error('Failed to update payment status:', err);
     }
   };
 
@@ -452,9 +452,43 @@ const Dashboard: React.FC = () => {
                         </div>
                         <div className="flex flex-col items-end">
                           <span className="font-bold text-tk-text text-base">₹{order.total}</span>
-                          <span className={`mt-1 inline-flex px-2 py-0.5 rounded text-[10px] font-bold ${order.isPaid ? 'bg-[#C6F6D5] text-[#22543D]' : 'bg-[#FEF2F2] text-[#E53E3E]'}`}>
-                            {order.isPaid ? `Paid (${order.paymentMethod})` : 'Pending'}
-                          </span>
+                          <div className="mt-1 flex items-center gap-1.5">
+                            <span
+                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${
+                                  order.paymentStatus?.toLowerCase() === 'paid' ? 'bg-[#C6F6D5] text-[#22543D]' : 
+                                  order.paymentStatus?.toLowerCase() === 'refunded' ? 'bg-[#EDF2F7] text-[#4A5568]' : 
+                                  'bg-[#FEF2F2] text-[#E53E3E]'
+                                }`}
+                              >
+                                <select
+                                  value={order.paymentStatus?.toLowerCase() || 'pending'}
+                                  onChange={(e) => {
+                                    handleUpdatePaymentStatus(order.id, e.target.value);
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="bg-transparent border-none outline-none text-[10px] font-bold text-inherit cursor-pointer py-0.5 focus:outline-none"
+                                >
+                                  {order.paymentMethod?.toLowerCase() === 'online' ? (
+                                    <>
+                                      <option value="paid" className="text-tk-text bg-tk-bg-surface font-semibold">Paid</option>
+                                      <option value="refunded" className="text-tk-text bg-tk-bg-surface font-semibold">Refunded</option>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <option value="pending" className="text-tk-text bg-tk-bg-surface font-semibold">Pending</option>
+                                      <option value="paid" className="text-tk-text bg-tk-bg-surface font-semibold">Paid</option>
+                                      <option value="refunded" className="text-tk-text bg-tk-bg-surface font-semibold">Refunded</option>
+                                    </>
+                                  )}
+                                </select>
+                                <ChevronDown size={10} className="opacity-70 pointer-events-none" />
+                              </span>
+                              {order.paymentStatus?.toLowerCase() === 'paid' && order.paymentMethod && (
+                                <span className="opacity-80 text-[10px] font-semibold">
+                                  ({order.paymentMethod})
+                                </span>
+                              )}
+                          </div>
                         </div>
                       </div>
 
@@ -534,14 +568,7 @@ const Dashboard: React.FC = () => {
                           ) : order.status?.toUpperCase() === 'CANCELLED' ? (
                             <span className="px-2.5 py-1 bg-[#FEF2F2] text-[#E53E3E] rounded-lg text-[11px] font-bold">Cancelled</span>
                           ) : <div />}
-                          {!order.isPaid && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handlePaymentComplete(order.id); }}
-                              className="flex items-center gap-1 px-2.5 py-1 bg-[#C6F6D5] text-[#22543D] rounded-lg text-[11px] font-semibold hover:bg-[#9AE6B4] transition-colors"
-                            >
-                              <CheckCircle size={12} strokeWidth={3} /> Mark Paid
-                            </button>
-                          )}
+
                         </div>
                       </div>
                     </div>
@@ -610,21 +637,39 @@ const Dashboard: React.FC = () => {
                             <span className="text-tk-text font-semibold">₹ {order.total}</span>
                             <div className="flex items-center gap-1.5">
                               <span
-                                className={`inline-flex px-2.5 py-0.5 rounded text-[11px] font-bold ${order.isPaid ? 'bg-[#C6F6D5] text-[#22543D]' : 'bg-[#FEF2F2] text-[#E53E3E]'}`}
+                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold ${
+                                  order.paymentStatus?.toLowerCase() === 'paid' ? 'bg-[#C6F6D5] text-[#22543D]' : 
+                                  order.paymentStatus?.toLowerCase() === 'refunded' ? 'bg-[#EDF2F7] text-[#4A5568]' : 
+                                  'bg-[#FEF2F2] text-[#E53E3E]'
+                                }`}
                               >
-                                {order.isPaid ? `Paid (${order.paymentMethod})` : 'Pending'}
-                              </span>
-                              {!order.isPaid && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handlePaymentComplete(order.id);
+                                <select
+                                  value={order.paymentStatus?.toLowerCase() || 'pending'}
+                                  onChange={(e) => {
+                                    handleUpdatePaymentStatus(order.id, e.target.value);
                                   }}
-                                  className="p-1 bg-[#C6F6D5] text-[#22543D] rounded hover:bg-[#9AE6B4] transition-colors flex items-center justify-center"
-                                  title="Mark Paid"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="bg-transparent border-none outline-none text-[11px] font-bold text-inherit cursor-pointer py-0.5 focus:outline-none"
                                 >
-                                  <CheckCircle size={12} strokeWidth={3} />
-                                </button>
+                                  {order.paymentMethod?.toLowerCase() === 'online' ? (
+                                    <>
+                                      <option value="paid" className="text-tk-text bg-tk-bg-surface font-semibold">Paid</option>
+                                      <option value="refunded" className="text-tk-text bg-tk-bg-surface font-semibold">Refunded</option>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <option value="pending" className="text-tk-text bg-tk-bg-surface font-semibold">Pending</option>
+                                      <option value="paid" className="text-tk-text bg-tk-bg-surface font-semibold">Paid</option>
+                                      <option value="refunded" className="text-tk-text bg-tk-bg-surface font-semibold">Refunded</option>
+                                    </>
+                                  )}
+                                </select>
+                                <ChevronDown size={10} className="opacity-70 pointer-events-none" />
+                              </span>
+                              {order.paymentStatus?.toLowerCase() === 'paid' && order.paymentMethod && (
+                                <span className="opacity-80 text-[11px] font-semibold border-l border-current pl-1 ml-0.5">
+                                  {order.paymentMethod}
+                                </span>
                               )}
                             </div>
                           </div>
@@ -865,18 +910,41 @@ const Dashboard: React.FC = () => {
                         <div className="flex items-center gap-1 text-[10px] sm:text-[11px]">
                           <span className="font-bold text-tk-text text-[12px] sm:text-[13px] whitespace-nowrap">₹{order.total}</span>
                           <div className="flex items-center gap-1 ml-0.5">
-                            <span className={`inline-flex px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-bold whitespace-nowrap ${order.isPaid ? 'bg-[#C6F6D5] text-[#22543D]' : 'bg-[#FEF2F2] text-[#E53E3E]'}`}>
-                              {order.isPaid ? `Paid` : 'Pending'}
-                            </span>
-                            {!order.isPaid && (
-                              <button
-                                onClick={(e) => { e.stopPropagation(); handlePaymentComplete(order.id); }}
-                                className="p-0.5 bg-[#C6F6D5] text-[#22543D] rounded hover:bg-[#9AE6B4] transition-colors flex items-center justify-center shrink-0"
-                                title="Mark Paid"
+                              <span
+                                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-bold ${
+                                  order.paymentStatus?.toLowerCase() === 'paid' ? 'bg-[#C6F6D5] text-[#22543D]' : 
+                                  order.paymentStatus?.toLowerCase() === 'refunded' ? 'bg-[#EDF2F7] text-[#4A5568]' : 
+                                  'bg-[#FEF2F2] text-[#E53E3E]'
+                                }`}
                               >
-                                <CheckCircle size={10} strokeWidth={3} />
-                              </button>
-                            )}
+                                <select
+                                  value={order.paymentStatus?.toLowerCase() || 'pending'}
+                                  onChange={(e) => {
+                                    handleUpdatePaymentStatus(order.id, e.target.value);
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="bg-transparent border-none outline-none text-[8px] sm:text-[9px] font-bold text-inherit cursor-pointer focus:outline-none"
+                                >
+                                  {order.paymentMethod?.toLowerCase() === 'online' ? (
+                                    <>
+                                      <option value="paid" className="text-tk-text bg-tk-bg-surface font-semibold">Paid</option>
+                                      <option value="refunded" className="text-tk-text bg-tk-bg-surface font-semibold">Refunded</option>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <option value="pending" className="text-tk-text bg-tk-bg-surface font-semibold">Pending</option>
+                                      <option value="paid" className="text-tk-text bg-tk-bg-surface font-semibold">Paid</option>
+                                      <option value="refunded" className="text-tk-text bg-tk-bg-surface font-semibold">Refunded</option>
+                                    </>
+                                  )}
+                                </select>
+                                <ChevronDown size={8} className="opacity-70 pointer-events-none" />
+                              </span>
+                              {order.paymentStatus?.toLowerCase() === 'paid' && order.paymentMethod && (
+                                <span className="opacity-80 text-[8px] sm:text-[9px] font-semibold border-l border-current pl-0.5">
+                                  {order.paymentMethod}
+                                </span>
+                              )}
                           </div>
                         </div>
                       </div>
@@ -907,7 +975,7 @@ const Dashboard: React.FC = () => {
             onClose={() => setSelectedOrder(null)}
             onUpdateStatus={handleUpdateStatus}
             onCancel={(o) => setOrderToCancel(o)}
-            onMarkPaid={handlePaymentComplete}
+            onMarkPaid={(orderId) => handleUpdatePaymentStatus(orderId, 'paid')}
             onPrev={handlePrevOrder}
             onNext={handleNextOrder}
             hasPrev={hasPrev}
