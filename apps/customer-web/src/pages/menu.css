@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
-
 * {
   margin: 0;
   padding: 0;
@@ -751,7 +749,7 @@ body {
 .nav-btn {
   background: none;
   border: none;
-  color: #D4A59A;
+  color: #845649;
   cursor: pointer;
   padding: 12px;
   border-radius: 14px;
@@ -779,7 +777,7 @@ body {
 /* Remove special center button elevation - all buttons same level */
 .nav-center {
   background: none;
-  color: #D4A59A;
+  color: #845649;
   width: auto;
   height: auto;
   border-radius: 14px;

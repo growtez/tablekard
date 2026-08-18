@@ -159,7 +159,7 @@ const LikesPage = () => {
                             <div key={item.id} className="food-card" onClick={() => handleItemClick(item)}>
                                 <div className="food-card-image">
                                     <img src={item.image} alt={item.name} />
-                                    <button
+                                    <button aria-label="Favorite" 
                                         className="favorite-btn active"
                                         onClick={(e) => {
                                             e.stopPropagation();

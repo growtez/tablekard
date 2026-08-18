@@ -193,7 +193,7 @@ const DiscountsPage = () => {
                                             <p className="menu-description" style={{ fontStyle: 'italic', color: '#888' }}>{item.subtitle}</p>
                                         )}
                                     </div>
-                                    <button
+                                    <button aria-label="Favorite" 
                                         className="favorite-btn-inline"
                                         onClick={(e) => {
                                             e.stopPropagation();

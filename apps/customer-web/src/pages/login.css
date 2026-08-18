@@ -1,6 +1,4 @@
 /* Premium Login Page Design */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
-
 .login-container {
   min-height: 100vh;
   background: var(--color-background);

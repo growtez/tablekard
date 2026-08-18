@@ -393,7 +393,7 @@ const MenuPage = () => {
       <header className="menu-header-nav">
         <Hamburger />
         <div className="header-nav-right">
-          <NavLink to="/likes" className="header-nav-btn">
+          <NavLink to="/likes" className="header-nav-btn" aria-label="Liked items">
             <Heart size={24} color="#8B3A1E" />
             {favorites.length > 0 && (
               <span className="nav-badge">
@@ -401,7 +401,7 @@ const MenuPage = () => {
               </span>
             )}
           </NavLink>
-          <NavLink to="/orders" className="header-nav-btn">
+          <NavLink to="/orders" className="header-nav-btn" aria-label="Orders">
             <ShoppingCart size={22} color="#8B3A1E" />
             {cartTotal > 0 && (
               <span className="nav-badge">{cartTotal}</span>
@@ -542,7 +542,7 @@ const MenuPage = () => {
                       <p className="menu-description">{item.shortDesc}</p>
                     </div>
                     {!isOutOfStock && (
-                      <button
+                      <button aria-label="Favorite" 
                         className="favorite-btn-inline"
                         onClick={(e) => {
                           e.stopPropagation();

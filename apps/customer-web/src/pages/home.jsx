@@ -368,7 +368,7 @@ const HomePage = () => {
                     <span className="header-brand-name" style={dynamicHeaderStyles}>{restaurantName}</span>
                 </div>
                 <div className="header-nav-right" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <NavLink to="/likes" className="header-nav-btn">
+                    <NavLink to="/likes" className="header-nav-btn" aria-label="Liked items">
                         <Heart size={24} color="#8B3A1E" />
                         {favorites.length > 0 && (
                             <span className="nav-badge">
@@ -460,7 +460,7 @@ const HomePage = () => {
                         <div key={item.id} className="food-card" onClick={() => handleItemClick(item)}>
                             <div className="food-card-image">
                                 <img src={item.image} alt={item.name} />
-                                <button
+                                <button aria-label="Favorite" 
                                     className={`favorite-btn ${favorites.includes(item.id) ? 'active' : ''}`}
                                     onClick={(e) => toggleFavorite(item.id, e)}
                                 >
@@ -625,7 +625,7 @@ const HomePage = () => {
                                 <ShoppingBag size={28} strokeWidth={1.5} />
                             </div>
                             <div className="no-recent-text">
-                                <h4>No recent orders</h4>
+                                <h3>No recent orders</h3>
                                 <p>You haven't ordered anything in the last 7 days.</p>
                             </div>
                         </div>

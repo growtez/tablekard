@@ -3,14 +3,21 @@ import BottomNav from './BottomNav';
 
 const SHIMMER_CSS = `
   @keyframes _sk_shimmer {
-    0%   { background-position: -200% 0; }
-    100% { background-position:  200% 0; }
+    100% { transform: translateX(100%); }
   }
   .sk-pulse {
-    background: linear-gradient(90deg, #FFF0EC 25%, #FFD6C9 50%, #FFF0EC 75%);
-    background-size: 200% 100%;
-    animation: _sk_shimmer 1.5s infinite;
+    background: #FFF0EC;
     border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+  .sk-pulse::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 214, 201, 0.6), transparent);
+    transform: translateX(-100%);
+    animation: _sk_shimmer 1.5s infinite;
   }
 
   /* Inject real BottomNav styles during skeleton phase before home.css loads */
@@ -30,7 +37,7 @@ const SHIMMER_CSS = `
   .nav-btn {
     background: none;
     border: none;
-    color: #D4A59A;
+    color: #845649;
     cursor: pointer;
     padding: 12px;
     border-radius: 14px;
