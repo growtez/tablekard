@@ -41,8 +41,5 @@
     "optionalDependencies": {
         "@esbuild/linux-arm64": "^0.21.5",
         "@esbuild/linux-x64": "^0.21.5"
-    },
-    "devDependencies": {
-        "lightningcss-win32-x64-msvc": "^1.32.0"
     }
 }
