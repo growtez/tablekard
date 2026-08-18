@@ -154,80 +154,71 @@ const LikesPage = () => {
                         </button>
                     </div>
                 ) : (
-                    <div className="likes-page-grid">
+                    <div className="food-grid">
                         {visibleItems.map(item => (
-                            <div key={item.id} className="likes-page-card" onClick={() => handleItemClick(item)}>
-                                {/* Remove Button */}
-                                <button
-                                    className="likes-page-remove-btn"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        removeFavorite(item.id);
-                                    }}
-                                >
-                                    <Trash2 size={16} />
-                                </button>
-
-                                {/* Image */}
-                                <div className="likes-page-image">
+                            <div key={item.id} className="food-card" onClick={() => handleItemClick(item)}>
+                                <div className="food-card-image">
                                     <img src={item.image} alt={item.name} />
+                                    <button
+                                        className="favorite-btn active"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            removeFavorite(item.id);
+                                        }}
+                                    >
+                                        <Heart
+                                            size={14}
+                                            fill="#FFFFFF"
+                                            color="#FFFFFF"
+                                        />
+                                    </button>
                                 </div>
-
-                                {/* Info */}
-                                <div className="likes-page-info">
-                                    <h3 className="likes-page-name">{item.name}</h3>
-                                    <p className="likes-page-desc">{item.description}</p>
-
-                                    <div className="likes-page-meta">
-                                        {item.ratingCount > 0 ? (
-                                            <span className="likes-page-meta-item rating">
-                                                <Star size={12} fill="#8B3A1E" color="#8B3A1E" />
-                                                {item.rating}
-                                            </span>
-                                        ) : (
-                                            <span className="menu-new-badge">NEW</span>
-                                        )}
-                                        <span className="likes-page-meta-item serves">
-                                            <Users size={12} />
-                                            Serves {item.serves}
+                                <div className="food-card-name">{item.name}</div>
+                                <div className="food-card-meta">
+                                    <span className="food-card-time">
+                                        <Clock size={10} color="#888888" />
+                                        {item.time || '15-20 min'}
+                                    </span>
+                                    {item.ratingCount > 0 ? (
+                                        <span className="food-card-rating">
+                                            <Star size={10} fill="#8B3A1E" color="#8B3A1E" />
+                                            {item.rating}
                                         </span>
-                                    </div>
+                                    ) : (
+                                        <span className="food-card-new-badge">NEW</span>
+                                    )}
                                 </div>
-
-                                {/* Footer */}
-                                <div className="likes-page-card-footer">
-                                    <div className="likes-page-price-wrapper">
-                                        <span className="likes-page-price-label">Price</span>
-                                        <span className="likes-page-price">₹{item.price}</span>
-                                    </div>
-
+                                <div className="food-card-bottom" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto', paddingTop: '4px' }}>
+                                    <div className="food-card-price" style={{ margin: 0 }}>₹{item.variants && item.variants.length > 0 ? Math.min(...item.variants.map(v => v.price)) : item.price}</div>
+                                    
                                     {getItemQuantity(item.id) > 0 ? (
-                                        <div className="likes-page-qty-control" onClick={(e) => e.stopPropagation()}>
-                                            <button onClick={() => removeFromCart(item.id)}>
+                                        <div className="recent-qty-stepper" onClick={(e) => e.stopPropagation()} style={{ height: '28px', padding: '2px', width: '70px', justifyContent: 'space-between', display: 'flex', alignItems: 'center', background: '#8B3A1E', borderRadius: '8px' }}>
+                                            <button onClick={() => removeFromCart(item.id)} style={{ width: '22px', height: '24px', background: 'transparent', border: 'none', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                 <Minus size={14} />
                                             </button>
-                                            <span className="qty-value">{getItemQuantity(item.id)}</span>
-                                            <button onClick={() => addToCart(item.raw)}>
+                                            <span style={{ color: '#FFF', fontSize: '12px', fontWeight: '600' }}>{getItemQuantity(item.id)}</span>
+                                            <button onClick={() => addToCart(item.raw)} style={{ width: '22px', height: '24px', background: 'transparent', border: 'none', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                 <Plus size={14} />
                                             </button>
                                         </div>
                                     ) : (
                                         <button
-                                            className="likes-page-add-btn-circle"
+                                            className="reorder-btn"
+                                            style={{ width: '28px', height: '28px', borderRadius: '8px', background: '#8B3A1E', border: 'none', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 addToCart(item.raw);
                                             }}
                                             aria-label="Add to cart"
                                         >
-                                            <Plus size={18} />
+                                            <ShoppingCart size={14} />
                                         </button>
                                     )}
                                 </div>
                             </div>
                         ))}
                         {/* Progressive Rendering Loader */}
-                        <div ref={loaderRef} style={{ height: '20px', display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
+                        <div ref={loaderRef} style={{ height: '20px', display: 'flex', justifyContent: 'center', marginTop: '10px', gridColumn: '1 / -1' }}>
                             {hasMore && <Loader2 className="likes-spinner animate-spin" size={20} color="#888" />}
                         </div>
                     </div>
