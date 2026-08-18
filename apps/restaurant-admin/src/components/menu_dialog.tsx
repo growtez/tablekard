@@ -44,7 +44,7 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, onAddC
     category_id: categories.length > 0 ? categories[0].id : '',
     images: [] as { id?: string, file?: File, url: string, sortOrder: number, isDeleted?: boolean }[],
     is_available: true,
-    is_veg: true,
+    is_veg: false,
     preparation_time: '',
     serves: '1',
     tags: [] as string[],
@@ -138,7 +138,7 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, onAddC
         price: '', discount_price: '',
         category_id: categories[0]?.id ?? '',
         images: [],
-        is_available: true, is_veg: true,
+        is_available: true, is_veg: false,
         preparation_time: '',
         serves: '1',
         tags: [], variants: [], addons: []
@@ -378,7 +378,7 @@ const MenuDialog: React.FC<MenuDialogProps> = ({ isOpen, onClose, onSave, onAddC
         price: '', discount_price: '',
         category_id: categories[0]?.id ?? '',
         images: [],
-        is_available: true, is_veg: true,
+        is_available: true, is_veg: false,
         preparation_time: '',
         serves: '1',
         tags: [], variants: [], addons: []
