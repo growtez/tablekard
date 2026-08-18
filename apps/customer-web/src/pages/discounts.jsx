@@ -38,11 +38,24 @@ const DiscountsPage = () => {
 
     useEffect(() => {
         if (!restaurant?.id) return;
-        setLoadingItems(true);
+        
+        const cacheKey = `discounts_${restaurant.id}`;
+        const cachedData = sessionStorage.getItem(cacheKey);
+        if (cachedData) {
+            try {
+                setDiscountItems(JSON.parse(cachedData));
+                setLoadingItems(false);
+            } catch (e) {}
+        } else {
+            setLoadingItems(true);
+        }
         
         const fetchDiscounts = () => {
             getOffersForCustomer(restaurant.id, 50)
-                .then(discounts => setDiscountItems(discounts || []))
+                .then(discounts => {
+                    setDiscountItems(discounts || []);
+                    sessionStorage.setItem(cacheKey, JSON.stringify(discounts || []));
+                })
                 .catch(err => console.error('Offers fetch failed:', err))
                 .finally(() => setLoadingItems(false));
         };

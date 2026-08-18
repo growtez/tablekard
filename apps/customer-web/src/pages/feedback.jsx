@@ -30,15 +30,31 @@ const FeedbackPage = () => {
     const { visibleItems, loaderRef, hasMore } = useInfiniteScroll(orders, 10);
 
     // 1. Fetch Real Orders
-    const fetchOrders = async () => {
+    const fetchOrders = async (isBackground = false) => {
         if (!user) return;
+        
+        const cacheKey = `feedback_orders_${user.id}_${restaurant?.id}`;
+        
+        if (!isBackground) {
+            const cachedData = sessionStorage.getItem(cacheKey);
+            if (cachedData) {
+                try {
+                    setOrders(JSON.parse(cachedData));
+                    setLoading(false);
+                } catch (e) {}
+            } else {
+                setLoading(true);
+            }
+        }
+        
         try {
-            setLoading(true);
             const data = await getOrderHistory(user.id, restaurant?.id);
             // Filter only orders that are ready, served, or completed for review
-            setOrders(data.filter(o => 
+            const filteredOrders = data.filter(o => 
                 ['ready', 'READY', 'served', 'SERVED', 'completed', 'COMPLETED'].includes(o.status)
-            ));
+            );
+            setOrders(filteredOrders);
+            sessionStorage.setItem(cacheKey, JSON.stringify(filteredOrders));
         } catch (err) {
             console.error('Error fetching orders for feedback:', err);
         } finally {

@@ -140,7 +140,7 @@ const MenuPage = () => {
     const fetchFavorites = async () => {
       if (!isAuthenticated || !user) return;
       try {
-        const data = await getFavorites(user.id, restaurant?.id);
+        const data = await getFavorites(user.id, restaurantId);
         setFavorites(data.map(item => item.id));
       } catch (err) {
         console.error('Failed to load favorites:', err);

@@ -13,10 +13,21 @@ const AboutPage = () => {
 
     React.useEffect(() => {
         if (restaurantId) {
-            setIsLoading(true);
+            const cacheKey = `about_${restaurantId}`;
+            const cachedData = sessionStorage.getItem(cacheKey);
+            if (cachedData) {
+                try {
+                    setRestaurant(JSON.parse(cachedData));
+                    setIsLoading(false);
+                } catch (e) {}
+            } else {
+                setIsLoading(true);
+            }
+            
             getRestaurantById(restaurantId)
                 .then(data => {
                     setRestaurant(data);
+                    sessionStorage.setItem(cacheKey, JSON.stringify(data));
                     setIsLoading(false);
                 })
                 .catch(err => {
