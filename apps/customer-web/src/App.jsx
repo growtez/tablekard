@@ -325,9 +325,9 @@ function App() {
           <ScrollToTop />
           <OfflineBanner />
           <MobileOnlyWrapper>
-            <div className="App">
+            <main className="App">
               <AppRoutes />
-            </div>
+            </main>
           </MobileOnlyWrapper>
         </ThemeProvider>
       </CartProvider>

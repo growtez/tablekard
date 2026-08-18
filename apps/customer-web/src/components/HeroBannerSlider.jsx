@@ -96,6 +96,8 @@ const HeroBannerSlider = ({ banners = [], fallback, onItemClick }) => {
                             alt={`Banner ${i + 1}`}
                             className="hero-banner-img"
                             draggable={false}
+                            fetchPriority={i === 0 ? "high" : "auto"}
+                            loading={i === 0 ? "eager" : "lazy"}
                         />
                     </div>
                 ))}
@@ -104,7 +106,7 @@ const HeroBannerSlider = ({ banners = [], fallback, onItemClick }) => {
             {count > 1 && (
                 <div className="hero-banner-dots">
                     {banners.map((_, i) => (
-                        <button
+                        <button aria-label={`Go to banner ${i + 1}`} 
                             key={i}
                             className={`hero-banner-dot ${i === current ? 'active' : ''}`}
                             onClick={() => { setCurrent(i); resetAutoPlay(); }}
