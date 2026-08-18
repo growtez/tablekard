@@ -8,7 +8,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useRestaurant } from '../context/RestaurantContext';
-import { SkeletonBottomNav } from '../components/PageSkeleton';
+
 import './profile.css';
 import Hamburger from '../components/hamburger';
 import { getUserStats } from '../services/supabaseService';
@@ -224,7 +224,7 @@ const ProfilePage = () => {
         </div>
 
         {/* Bottom Navigation - Using the exact same skeleton as Home */}
-        <SkeletonBottomNav />
+        <BottomNav />
       </div>
     );
   }

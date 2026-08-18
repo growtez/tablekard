@@ -81,6 +81,10 @@ export function RestaurantProvider({ children }) {
     // checkGeofence accepts an optional restaurantData argument so it can be called
     // immediately after fetch without relying on stale closure values of lat/lon/rad.
     const checkGeofence = (restaurantData) => {
+        // TEMPORARY: Disable geofencing for testing purposes
+        setGeofenceStatus('disabled');
+        return;
+
         const r = restaurantData || restaurant;
         const rLat = r?.latitude !== undefined && r?.latitude !== null ? r.latitude : r?.location?.latitude;
         const rLon = r?.longitude !== undefined && r?.longitude !== null ? r.longitude : r?.location?.longitude;
