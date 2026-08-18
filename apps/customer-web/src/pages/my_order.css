@@ -21,7 +21,7 @@ body {
 
 /* ===== HEADER - Same as Home Page ===== */
 .menu-header-nav {
-  padding: 16px 20px;
+  padding: 12px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -100,11 +100,17 @@ body {
 
 /* ===== HERO SECTION (scoped to My Orders page only) ===== */
 .myorder-container .hero-section {
-  padding: 4px 20px 16px;
+  padding: 2px 20px 8px;
   background: #FFFFFF;
   display: flex;
   justify-content: center;
   align-items: center;
+  margin: 0;
+  border-radius: 0;
+  min-height: auto;
+  border: none;
+  box-shadow: none;
+  overflow: visible;
 }
 
 .myorder-container .hero-text {
@@ -113,12 +119,13 @@ body {
 }
 
 .myorder-container .hero-text h1 {
-  font-family: 'Playfair Display', serif;
-  font-size: 32px;
+  font-family: 'Inter', sans-serif;
+  font-size: 24px;
   font-weight: 800;
   line-height: 1.15;
   color: #1A1A1A;
   margin: 0;
+  white-space: nowrap;
 }
 
 .myorder-container .ampersand {
@@ -131,7 +138,7 @@ body {
 
 /* ===== TAB SECTION ===== */
 .tab-section {
-  padding: 0 20px 20px;
+  padding: 0 20px 14px;
   background: #FFFFFF;
   border-bottom: 1px solid #F0F0F0;
 }

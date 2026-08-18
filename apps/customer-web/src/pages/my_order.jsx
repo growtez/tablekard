@@ -437,10 +437,10 @@ const MyOrderPage = () => {
     const res = await fetch(imageUrl);
     const blob = await res.blob();
     return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.addEventListener("load", () => resolve(reader.result), false);
-        reader.addEventListener("error", () => reject());
-        reader.readAsDataURL(blob);
+      const reader = new FileReader();
+      reader.addEventListener("load", () => resolve(reader.result), false);
+      reader.addEventListener("error", () => reject());
+      reader.readAsDataURL(blob);
     });
   };
 
@@ -458,17 +458,17 @@ const MyOrderPage = () => {
 
     // Header Content
     try {
-        const logoBase64 = await getBase64ImageFromUrl('/assets/tablekard-logo.png');
-        const logoWidth = 40;
-        const logoHeight = 12;
-        doc.addImage(logoBase64, 'PNG', 20, 14, logoWidth, logoHeight);
+      const logoBase64 = await getBase64ImageFromUrl('/assets/tablekard-logo.png');
+      const logoWidth = 40;
+      const logoHeight = 12;
+      doc.addImage(logoBase64, 'PNG', 20, 14, logoWidth, logoHeight);
     } catch (e) {
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(24);
-        doc.setFont(undefined, 'bold');
-        doc.text('TABLEKARD', 20, 25);
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(24);
+      doc.setFont(undefined, 'bold');
+      doc.text('TABLEKARD', 20, 25);
     }
-    
+
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(14);
     doc.setFont(undefined, 'normal');
@@ -476,24 +476,24 @@ const MyOrderPage = () => {
 
     // Normalize order data between my_order and order_history
     const invoiceNo = order.id || order.order_number || 'N/A';
-    
+
     let dateStr = '';
     let timeStr = '';
     if (order.rawDate) {
-        const dateObj = new Date(order.rawDate);
-        dateStr = dateObj.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
-        timeStr = dateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+      const dateObj = new Date(order.rawDate);
+      dateStr = dateObj.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+      timeStr = dateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
     } else if (order.fullDate || order.orderDate) {
-        dateStr = order.fullDate || '';
-        timeStr = order.orderDate || '';
+      dateStr = order.fullDate || '';
+      timeStr = order.orderDate || '';
     } else if (order.date) {
-        dateStr = order.date;
-        timeStr = '';
+      dateStr = order.date;
+      timeStr = '';
     }
 
     const orderType = (order.rawOrder?.type || order.type || 'Dine In').replace('_', ' ').toUpperCase();
     const payment = order.paymentStatus || order.paymentMethod || 'Pending';
-    
+
     // Invoice Details
     doc.setTextColor(...darkGray);
     doc.setFontSize(10);
@@ -501,19 +501,19 @@ const MyOrderPage = () => {
     doc.text('Invoice No:', 20, 55);
     doc.setFont(undefined, 'normal');
     doc.text(invoiceNo, 45, 55);
-    
+
     doc.setFont(undefined, 'bold');
     doc.text('Date:', 20, 62);
     doc.setFont(undefined, 'normal');
     doc.text(dateStr, 45, 62);
-    
+
     if (timeStr) {
-        doc.setFont(undefined, 'bold');
-        doc.text('Time:', 20, 69);
-        doc.setFont(undefined, 'normal');
-        doc.text(timeStr, 45, 69);
+      doc.setFont(undefined, 'bold');
+      doc.text('Time:', 20, 69);
+      doc.setFont(undefined, 'normal');
+      doc.text(timeStr, 45, 69);
     }
-    
+
     doc.setFont(undefined, 'bold');
     doc.text('Order Type:', 130, 55);
     doc.setFont(undefined, 'normal');
@@ -540,7 +540,7 @@ const MyOrderPage = () => {
     // Table Items
     let y = tableY + 17;
     doc.setFont(undefined, 'normal');
-    
+
     (order.items || []).forEach(item => {
       // Add page if needed
       if (y > 270) {
@@ -554,7 +554,7 @@ const MyOrderPage = () => {
       doc.setFont(undefined, 'normal');
       doc.text(String(item.quantity), 130, y, { align: 'center' });
       doc.text(`Rs. ${item.price}`, 150, y, { align: 'right' });
-      
+
       const baseItemTotal = item.price * item.quantity;
       doc.text(`Rs. ${baseItemTotal}`, 185, y, { align: 'right' });
       y += 5;
@@ -563,7 +563,7 @@ const MyOrderPage = () => {
       if (item.variant || (item.addons && item.addons.length > 0)) {
         doc.setFontSize(9);
         doc.setTextColor(100, 100, 100);
-        
+
         if (item.variant) {
           if (item.quantity > 1) {
             doc.text(`- Variant: ${item.variant.name} (Rs. ${item.variant.price} x ${item.quantity})`, 28, y);
@@ -573,33 +573,33 @@ const MyOrderPage = () => {
           doc.text(`Rs. ${item.variant.price * item.quantity}`, 185, y, { align: 'right' });
           y += 5;
         }
-        
+
         if (item.addons && item.addons.length > 0) {
           const addonCounts = {};
           item.addons.forEach(a => {
-              const key = a.name;
-              if (!addonCounts[key]) addonCounts[key] = { ...a, count: 0, totalPrice: 0 };
-              addonCounts[key].count += 1;
-              addonCounts[key].totalPrice += a.price;
+            const key = a.name;
+            if (!addonCounts[key]) addonCounts[key] = { ...a, count: 0, totalPrice: 0 };
+            addonCounts[key].count += 1;
+            addonCounts[key].totalPrice += a.price;
           });
-          
+
           Object.values(addonCounts).forEach(a => {
-              let addonLabel = `- Add-on: ${a.name}`;
-              if (a.count > 1) addonLabel += ` x${a.count}`;
-              
-              if (item.quantity > 1) {
-                doc.text(`${addonLabel} (Rs. ${a.totalPrice} x ${item.quantity})`, 28, y);
-              } else {
-                doc.text(`${addonLabel}`, 28, y);
-              }
-              doc.text(`Rs. ${a.totalPrice * item.quantity}`, 185, y, { align: 'right' });
-              y += 5;
+            let addonLabel = `- Add-on: ${a.name}`;
+            if (a.count > 1) addonLabel += ` x${a.count}`;
+
+            if (item.quantity > 1) {
+              doc.text(`${addonLabel} (Rs. ${a.totalPrice} x ${item.quantity})`, 28, y);
+            } else {
+              doc.text(`${addonLabel}`, 28, y);
+            }
+            doc.text(`Rs. ${a.totalPrice * item.quantity}`, 185, y, { align: 'right' });
+            y += 5;
           });
         }
         doc.setFontSize(10);
         doc.setTextColor(...darkGray);
       }
-      
+
       // Draw line under item
       y += 3;
       doc.setDrawColor(230, 230, 230);
@@ -610,7 +610,7 @@ const MyOrderPage = () => {
     // Summary Box
     y += 5;
     if (y > 230) { doc.addPage(); y = 30; }
-    
+
     doc.setDrawColor(...primaryColor);
     doc.setLineWidth(0.5);
     doc.line(120, y, 190, y);
@@ -619,7 +619,7 @@ const MyOrderPage = () => {
     // Total Background
     doc.setFillColor(...lightGray);
     doc.rect(125, y, 65, 10, 'F');
-    
+
     y += 7;
     doc.setFontSize(12);
     doc.setFont(undefined, 'bold');
@@ -630,7 +630,7 @@ const MyOrderPage = () => {
     // Footer
     y += 30;
     if (y > 270) { doc.addPage(); y = 30; }
-    
+
     doc.setFontSize(10);
     doc.setFont(undefined, 'italic');
     doc.setTextColor(150, 150, 150);
@@ -703,13 +703,7 @@ const MyOrderPage = () => {
         </div>
       </header>
 
-      {/* Hero Title Section */}
-      <section className="hero-section">
-        <div className="hero-text">
-          <h1>My <span className="highlight">Orders</span></h1>
-          <h1><span className="ampersand">&</span> <span className="highlight">Cart</span></h1>
-        </div>
-      </section>
+
 
       {/* Tab Navigation */}
       <div className="tab-section">
@@ -798,83 +792,84 @@ const MyOrderPage = () => {
                   const itemTotal = (item.basePrice * item.quantity) + (item.configurations || []).reduce((sum, c) => sum + (c.addonsPrice || 0), 0);
 
                   return (
-                  <div key={item.id} className="cart-item" style={{ opacity: item.outOfStock ? 0.6 : 1, filter: item.outOfStock ? 'grayscale(100%)' : 'none', flexDirection: 'column', gap: 0 }}>
-                    {item.variant && (
-                      <span className="cart-variant-badge">{item.variant.name}</span>
-                    )}
-                    <div className="cart-item-main" style={{ display: 'flex' }}>
-                      <div className="cart-image">
-                        <img src={item.image} alt={item.name} />
-                        {item.outOfStock && (
-                          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(0,0,0,0.7)', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
-                            OUT OF STOCK
-                          </div>
-                        )}
-                      </div>
-                      <div className="cart-info">
-                        {/* Row 1: name + [badge] [trash] */}
-                        <div className="cart-header">
-                          <h3>{item.name}</h3>
-                          <div className="cart-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <button className="remove-btn" onClick={() => removeItem(item.id)}>
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        </div>
-                        
-                        {/* Row 2: meta */}
-                        <div className="cart-meta">
-                          {item.ratingCount > 0 ? (
-                            <div className="cart-rating">
-                              <Star size={12} fill="#8B3A1E" color="#8B3A1E" />
-                              <span>{item.rating}</span>
+                    <div key={item.id} className="cart-item" style={{ opacity: item.outOfStock ? 0.6 : 1, filter: item.outOfStock ? 'grayscale(100%)' : 'none', flexDirection: 'column', gap: 0 }}>
+                      {item.variant && (
+                        <span className="cart-variant-badge">{item.variant.name}</span>
+                      )}
+                      <div className="cart-item-main" style={{ display: 'flex' }}>
+                        <div className="cart-image">
+                          <img src={item.image} alt={item.name} />
+                          {item.outOfStock && (
+                            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(0,0,0,0.7)', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+                              OUT OF STOCK
                             </div>
-                          ) : (
-                            <span className="food-card-new-badge" style={{ marginTop: '2px' }}>NEW</span>
                           )}
-                          <div className="cart-serves">
-                            <Users size={12} />
-                            <span>{item.variant?.serves ? (item.variant.serves.toString().includes('Serves') ? item.variant.serves : `Serves ${item.variant.serves}`) : (item.serves?.toString().includes('Serves') ? item.serves : `Serves ${item.serves || '1'}`)}</span>
-                          </div>
                         </div>
-                        {/* Row 3: qty + price */}
-                        <div className="cart-bottom">
-                          <div className="quantity-controls">
-                            {item.outOfStock ? (
-                              <span style={{ fontSize: '12px', color: '#EF4444', fontWeight: 'bold' }}>Out of stock</span>
-                            ) : (
-                              <>
-                                <button className="quantity-btn" onClick={() => updateQuantity(item.id, -1)}><Minus size={14} /></button>
-                                <span className="quantity">{item.quantity}</span>
-                                <button className="quantity-btn" onClick={() => updateQuantity(item.id, 1)}><Plus size={14} /></button>
-                              </>
-                            )}
-                          </div>
-                          <div className="item-price">₹{itemTotal}</div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Add-ons Section */}
-                    {aggregatedAddons.length > 0 && (
-                      <div className="cart-addons-section">
-                        <div className="cart-addons-header">Add-ons</div>
-                        <div className="cart-addons-list-new">
-                          {aggregatedAddons.map(a => (
-                            <div key={a.name} className="cart-addon-row-new">
-                              <span className="cart-addon-name-new">{a.name} <span className="cart-addon-price-new">(+₹{a.price})</span></span>
-                              <div className="addon-stepper">
-                                <button className="addon-stepper-btn" onClick={() => updateAddonQuantity(item.id, a, -1)}><Minus size={12} /></button>
-                                <span className="addon-stepper-count">{a.count}</span>
-                                <button className="addon-stepper-btn" onClick={() => updateAddonQuantity(item.id, a, 1)}><Plus size={12} /></button>
-                              </div>
+                        <div className="cart-info">
+                          {/* Row 1: name + [badge] [trash] */}
+                          <div className="cart-header">
+                            <h3>{item.name}</h3>
+                            <div className="cart-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <button className="remove-btn" onClick={() => removeItem(item.id)}>
+                                <Trash2 size={14} />
+                              </button>
                             </div>
-                          ))}
+                          </div>
+
+                          {/* Row 2: meta */}
+                          <div className="cart-meta">
+                            {item.ratingCount > 0 ? (
+                              <div className="cart-rating">
+                                <Star size={12} fill="#8B3A1E" color="#8B3A1E" />
+                                <span>{item.rating}</span>
+                              </div>
+                            ) : (
+                              <span className="food-card-new-badge" style={{ marginTop: '2px' }}>NEW</span>
+                            )}
+                            <div className="cart-serves">
+                              <Users size={12} />
+                              <span>{item.variant?.serves ? (item.variant.serves.toString().includes('Serves') ? item.variant.serves : `Serves ${item.variant.serves}`) : (item.serves?.toString().includes('Serves') ? item.serves : `Serves ${item.serves || '1'}`)}</span>
+                            </div>
+                          </div>
+                          {/* Row 3: qty + price */}
+                          <div className="cart-bottom">
+                            <div className="quantity-controls">
+                              {item.outOfStock ? (
+                                <span style={{ fontSize: '12px', color: '#EF4444', fontWeight: 'bold' }}>Out of stock</span>
+                              ) : (
+                                <>
+                                  <button className="quantity-btn" onClick={() => updateQuantity(item.id, -1)}><Minus size={14} /></button>
+                                  <span className="quantity">{item.quantity}</span>
+                                  <button className="quantity-btn" onClick={() => updateQuantity(item.id, 1)}><Plus size={14} /></button>
+                                </>
+                              )}
+                            </div>
+                            <div className="item-price">₹{itemTotal}</div>
+                          </div>
                         </div>
                       </div>
-                    )}
-                  </div>
-                )})}
+
+                      {/* Add-ons Section */}
+                      {aggregatedAddons.length > 0 && (
+                        <div className="cart-addons-section">
+                          <div className="cart-addons-header">Add-ons</div>
+                          <div className="cart-addons-list-new">
+                            {aggregatedAddons.map(a => (
+                              <div key={a.name} className="cart-addon-row-new">
+                                <span className="cart-addon-name-new">{a.name} <span className="cart-addon-price-new">(+₹{a.price})</span></span>
+                                <div className="addon-stepper">
+                                  <button className="addon-stepper-btn" onClick={() => updateAddonQuantity(item.id, a, -1)}><Minus size={12} /></button>
+                                  <span className="addon-stepper-count">{a.count}</span>
+                                  <button className="addon-stepper-btn" onClick={() => updateAddonQuantity(item.id, a, 1)}><Plus size={12} /></button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
 
               {/* Order Type Selection - Premium Sliding Toggle */}
@@ -954,7 +949,7 @@ const MyOrderPage = () => {
                       <span>{orderSpecialInstructions.length}/500</span>
                       <span>Instructions sent to kitchen for entire order.</span>
                     </div>
-                    <button 
+                    <button
                       className="special-inst-done-btn"
                       onClick={() => setShowSpecialInstructions(false)}
                     >
@@ -976,25 +971,25 @@ const MyOrderPage = () => {
                           <div className="upsell-img-wrapper">
                             <img src={bev.image} alt={bev.name} loading="lazy" />
                             {qty > 0 ? (
-                                <div className="upsell-qty-controls">
-                                    <button className="upsell-qty-btn" onClick={(e) => {
-                                        e.stopPropagation();
-                                        e.preventDefault();
-                                        // For beverages, find the composite ID in cart and remove it.
-                                        // If it has variants, it might be complex. But since we use updateQuantity from useCart, it expects the exact cart item ID.
-                                        // For simplicity in upselling UI, if it's a simple item:
-                                        const cartItem = cartItems.find(i => i.menuItemId === bev.id || i.id === bev.id || i.id.startsWith(bev.id + '_'));
-                                        if (cartItem) {
-                                            updateQuantity(cartItem.id, -1);
-                                        }
-                                    }}><Minus size={12} /></button>
-                                    <span>{qty}</span>
-                                    <button className="upsell-qty-btn" onClick={() => handleBeverageAdd(bev)}><Plus size={12} /></button>
-                                </div>
+                              <div className="upsell-qty-controls">
+                                <button className="upsell-qty-btn" onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  // For beverages, find the composite ID in cart and remove it.
+                                  // If it has variants, it might be complex. But since we use updateQuantity from useCart, it expects the exact cart item ID.
+                                  // For simplicity in upselling UI, if it's a simple item:
+                                  const cartItem = cartItems.find(i => i.menuItemId === bev.id || i.id === bev.id || i.id.startsWith(bev.id + '_'));
+                                  if (cartItem) {
+                                    updateQuantity(cartItem.id, -1);
+                                  }
+                                }}><Minus size={12} /></button>
+                                <span>{qty}</span>
+                                <button className="upsell-qty-btn" onClick={() => handleBeverageAdd(bev)}><Plus size={12} /></button>
+                              </div>
                             ) : (
-                                <button className="upsell-add-btn" onClick={(e) => handleBeverageAdd(bev, e)}>
-                                  <Plus size={14} /> Add
-                                </button>
+                              <button className="upsell-add-btn" onClick={(e) => handleBeverageAdd(bev, e)}>
+                                <Plus size={14} /> Add
+                              </button>
                             )}
                           </div>
                           <div className="upsell-info">
@@ -1019,7 +1014,7 @@ const MyOrderPage = () => {
                   <span>Discount</span>
                   <span>- ₹0</span>
                 </div>
-                
+
                 <div className="summary-row total" style={{ alignItems: 'flex-start' }}>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <span>Total Amount</span>
@@ -1165,9 +1160,9 @@ const MyOrderPage = () => {
                           return (
                             <div key={index} className="oi-item-block">
                               {/* Item header row */}
-                              <div 
-                                className="oi-item-top" 
-                                onClick={() => (item.variant || aggregatedAddons.length > 0) && toggleItemExpand(order.id, index)} 
+                              <div
+                                className="oi-item-top"
+                                onClick={() => (item.variant || aggregatedAddons.length > 0) && toggleItemExpand(order.id, index)}
                                 style={{ cursor: (item.variant || aggregatedAddons.length > 0) ? 'pointer' : 'default' }}
                               >
                                 <div className="oi-item-left">
@@ -1192,7 +1187,7 @@ const MyOrderPage = () => {
                                         <span>{item.variant.name}</span>
                                         {item.variant.serves && (
                                           <span style={{ fontSize: '11px', color: '#666', background: '#f5f5f5', padding: '2px 6px', borderRadius: '4px', marginLeft: '6px' }}>
-                                            <Users size={10} style={{ display: 'inline', marginRight: '3px', verticalAlign: '-1px' }}/>
+                                            <Users size={10} style={{ display: 'inline', marginRight: '3px', verticalAlign: '-1px' }} />
                                             {item.variant.serves}
                                           </span>
                                         )}
@@ -1205,7 +1200,7 @@ const MyOrderPage = () => {
                                       </div>
                                     </div>
                                   )}
-                                  
+
                                   {aggregatedAddons.map((a, idx) => (
                                     <div key={idx} className="oi-extra-item">
                                       <div className="oi-extra-name">

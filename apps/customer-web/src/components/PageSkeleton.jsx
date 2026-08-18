@@ -52,8 +52,10 @@ export function SkeletonBottomNav() {
       <style>{`
         .sk-nav-link {
           display: flex;
+          flex-direction: column;
           align-items: center;
           justify-content: center;
+          gap: 2px;
           width: 44px;
           height: 44px;
           border-radius: 12px;
@@ -65,6 +67,11 @@ export function SkeletonBottomNav() {
           background: rgba(139, 58, 30, 0.10);
           color: #8B3A1E;
         }
+        .sk-nav-label {
+          font-size: 10px;
+          font-weight: 500;
+          line-height: 1;
+        }
       `}</style>
       {NAV_ITEMS.map(({ to, Icon, label }) => (
         <NavLink
@@ -74,7 +81,8 @@ export function SkeletonBottomNav() {
           className={({ isActive }) => `sk-nav-link${isActive ? " active" : ""}`}
           aria-label={label}
         >
-          <Icon size={22} strokeWidth={1.8} />
+          <Icon size={20} strokeWidth={1.8} />
+          <span className="sk-nav-label">{label}</span>
         </NavLink>
       ))}
     </nav>
