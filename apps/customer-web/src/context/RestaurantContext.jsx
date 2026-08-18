@@ -4,7 +4,11 @@ import { getRestaurantById, getTableById, getTableByNumber, getRecommendedItems,
 import { supabase } from '@restaurant-saas/supabase';
 
 
-const RestaurantContext = createContext(null);
+// Use a global singleton context to prevent HMR and duplicate import module issues in Vite
+if (!window.__TablekardRestaurantContext) {
+    window.__TablekardRestaurantContext = createContext(null);
+}
+const RestaurantContext = window.__TablekardRestaurantContext;
 
 const SESSION_KEY_RESTAURANT = 'tablekard_restaurant_id';
 const SESSION_KEY_TABLE      = 'tablekard_table_id';

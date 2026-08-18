@@ -17,13 +17,13 @@ body {
 .profile-container {
   min-height: 100vh;
   background-color: #FFFFFF;
-  padding-bottom: 100px;
+  padding-bottom: 80px;
 }
 
 /* ===== HERO SECTION ===== */
 .profile-hero {
   background: linear-gradient(to bottom, #FFF0EC 0%, #FFFFFF 100%);
-  padding: 16px 24px 40px;
+  padding: 12px 16px 24px;
   position: relative;
   overflow: hidden;
 }
@@ -36,7 +36,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 32px;
+  margin-bottom: 14px;
   position: relative;
   z-index: 2;
 }
@@ -61,7 +61,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
   position: relative;
   z-index: 2;
 }
@@ -135,7 +135,7 @@ body {
 
 .hero-info h1 {
   font-family: 'Playfair Display', serif;
-  font-size: 26px;
+  font-size: 20px;
   font-weight: 800;
   color: #1A1A1A;
   margin-bottom: 6px;
@@ -162,7 +162,7 @@ body {
 
 /* ===== PROFILE CONTENT ===== */
 .profile-content {
-  padding: 0 20px;
+  padding: 0 16px;
   margin-top: 0;
   position: relative;
   z-index: 10;
@@ -176,7 +176,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-around;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(0, 0, 0, 0.04);
 }
@@ -191,7 +191,7 @@ body {
 }
 
 .stat-value {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 800;
   color: #1A1A1A;
   margin-bottom: 4px;
@@ -216,7 +216,7 @@ body {
   background: #FFFFFF;
   border-radius: 20px;
   padding: 24px;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
   border: 1px solid rgba(0, 0, 0, 0.06);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
 }
@@ -226,7 +226,7 @@ body {
   font-size: 18px;
   font-weight: 700;
   color: #1A1A1A;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
 }
 
 .form-group {
@@ -263,7 +263,7 @@ body {
 
 .form-actions {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   margin-top: 20px;
 }
 
@@ -323,7 +323,7 @@ body {
 /* Quick Actions */
 .quick-actions {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   margin-bottom: 24px;
 }
 
@@ -336,7 +336,7 @@ body {
   background: #FFFFFF;
   border: 1.5px solid rgba(0, 0, 0, 0.06);
   border-radius: 18px;
-  padding: 18px 12px;
+  padding: 12px 10px;
   cursor: pointer;
   transition: all 0.3s ease;
 }
@@ -402,13 +402,13 @@ body {
 
 /* Menu Section */
 .menu-section {
-  margin-bottom: 20px;
+  margin-bottom: 14px;
 }
 
 .menu-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   
 }
 
@@ -416,7 +416,7 @@ body {
   width: 100%;
   display: flex;
   align-items: center;
-  padding: 16px 18px;
+  padding: 12px 16px;
   background: #FFFFFF;
   border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 20px;
@@ -472,7 +472,7 @@ body {
   border: 1.5px solid rgba(139, 58, 30, 0.12);
   border-radius: 18px;
   padding: 18px;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
 }
 
 .restaurant-header {
@@ -527,7 +527,7 @@ body {
   font-family: 'Inter', sans-serif;
   cursor: pointer;
   transition: all 0.3s ease;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
 }
 
 .signout-btn:active {
@@ -581,7 +581,7 @@ body {
 /* Responsive Design */
 @media (max-width: 380px) {
   .hero-info h1 {
-    font-size: 22px;
+    font-size: 20px;
   }
 
   .stat-value {

@@ -84,9 +84,22 @@ const MyOrderPage = () => {
 
   const fetchOrders = async (isBackground = false) => {
     if (!isAuthenticated || !user) return;
+    
+    const cacheKey = `orders_${user.id}_${restaurant?.id}`;
+    
     if (!isBackground) {
-      setOrdersLoading(true);
+      const cachedOrders = sessionStorage.getItem(cacheKey);
+      if (cachedOrders) {
+        try {
+          setOrders(JSON.parse(cachedOrders));
+          setIsInitialLoad(false);
+          setOrdersLoading(false);
+        } catch (e) {}
+      } else {
+        setOrdersLoading(true);
+      }
     }
+    
     try {
       const data = await getTodaysOrders(user.id, restaurant?.id);
       const mapped = data
@@ -119,6 +132,7 @@ const MyOrderPage = () => {
       }));
 
       setOrders(finalMapped);
+      sessionStorage.setItem(cacheKey, JSON.stringify(finalMapped));
     } catch (err) {
       console.error("Failed to fetch today's orders:", err);
     } finally {
@@ -703,7 +717,13 @@ const MyOrderPage = () => {
         </div>
       </header>
 
-
+      {/* Hero Section */}
+      <section className="cart-hero-section">
+        <div className="cart-hero-text">
+          <h1>My <span className="highlight">Cart</span></h1>
+          <h1>& Orders</h1>
+        </div>
+      </section>
 
       {/* Tab Navigation */}
       <div className="tab-section">

@@ -26,17 +26,17 @@ body {
 .menu-container {
   min-height: 100vh;
   background-color: var(--color-background, #FFFFFF);
-  padding-bottom: 90px;
+  padding-bottom: 80px;
 }
 
 /* Extra bottom room when the floating "View Cart" popup is visible */
 .menu-container.has-cart {
-  padding-bottom: 140px;
+  padding-bottom: 130px;
 }
 
 /* Header Styles */
 .menu-header-nav {
-  padding: 16px 20px;
+  padding: 10px 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -101,11 +101,11 @@ body {
 
 /* Hero Section */
 .menu-hero-section {
-  padding: 10px 20px 20px;
+  padding: 6px 16px 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  min-height: 120px;
+  min-height: 90px;
   position: relative;
 }
 
@@ -116,7 +116,7 @@ body {
 }
 
 .menu-hero-text h1 {
-  font-size: 32px;
+  font-size: 26px;
   font-weight: 800;
   color: #1A1A1A;
   line-height: 1.1;
@@ -128,8 +128,8 @@ body {
 }
 
 .menu-hero-image {
-  width: 140px;
-  height: 140px;
+  width: 110px;
+  height: 110px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -143,15 +143,15 @@ body {
 
 /* Search Container */
 .menu-search-section {
-  padding: 0 20px 24px;
+  padding: 0 16px 14px;
 }
 
 .menu-search-container {
   display: flex;
   align-items: center;
   background: #F8F8F8;
-  border-radius: 14px;
-  padding: 12px 16px;
+  border-radius: 12px;
+  padding: 10px 14px;
   gap: 10px;
   border: 1px solid #F0F0F0;
   cursor: pointer;
@@ -181,7 +181,7 @@ body {
 
 /* Categories Section */
 .categories-section {
-  margin: 0 20px 24px;
+  margin: 0 16px 14px;
 }
 
 .categories-list {
@@ -200,8 +200,8 @@ body {
 .category-btn {
   background: #FFFFFF;
   border: 1.5px solid #1A1A1A;
-  border-radius: 20px;
-  padding: 10px 18px;
+  border-radius: 16px;
+  padding: 8px 14px;
   font-size: 13px;
   font-weight: 500;
   color: #1A1A1A;
@@ -277,19 +277,19 @@ body {
 /* Menu Items Grid */
 /* Menu Items Redesign */
 .menu-items {
-  padding: 0 22px;
+  padding: 0 16px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  margin-top: 8px;
+  gap: 10px;
+  margin-top: 4px;
   overflow: visible;
 }
 
 .menu-container .menu-item {
   display: flex;
   background: var(--color-card, #FFFFFF);
-  border-radius: 24px;
-  padding: 12px;
+  border-radius: 18px;
+  padding: 10px;
   box-shadow: none;
   border: 1.5px solid #000000 !important;
   box-shadow: none !important;
@@ -349,8 +349,8 @@ body {
 }
 
 .menu-image-container {
-  width: 90px;
-  height: 90px;
+  width: 80px;
+  height: 80px;
   flex-shrink: 0;
   overflow: hidden;
   position: relative;
@@ -375,7 +375,7 @@ body {
   width: 100%;
   height: 100%;
   background: var(--color-card-hover, #F5F5F5);
-  border-radius: 18px;
+  border-radius: 14px;
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -392,7 +392,7 @@ body {
 
 .menu-details {
   flex: 1;
-  padding-left: 14px;
+  padding-left: 10px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -462,7 +462,7 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 10px 0 12px;
+  margin: 6px 0 8px;
   flex-wrap: nowrap;
 }
 
@@ -512,16 +512,16 @@ body {
 }
 
 .price-text {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 800;
   color: #1A1A1A;
 }
 
 .add-btn-large {
   background: #8B3A1E;
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
   border: none;
   display: flex;
   align-items: center;
@@ -960,7 +960,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 48px 20px;
+  padding: 28px 16px;
   text-align: center;
 }
 

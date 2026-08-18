@@ -56,9 +56,20 @@ const ProfilePage = () => {
         tableNumber: tableNumber ? `Table No-${tableNumber}` : 'N/A',
       }));
 
-      // Then fetch heavy stats
+      const cacheKey = `profileStats_${user.id}_${restaurant?.id}`;
+      const cachedStats = sessionStorage.getItem(cacheKey);
+      
+      if (cachedStats) {
+        try {
+          setUserProfile(prev => ({ ...prev, stats: JSON.parse(cachedStats) }));
+          setIsProfileLoading(false);
+        } catch (e) {}
+      }
+
+      // Then fetch heavy stats in background (or foreground if not cached)
       try {
         const stats = await getUserStats(user.id, restaurant?.id);
+        sessionStorage.setItem(cacheKey, JSON.stringify(stats));
         setUserProfile(prev => ({ ...prev, stats }));
       } catch (err) {
         console.error('Failed to load profile stats:', err);
