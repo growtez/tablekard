@@ -6,7 +6,7 @@ import { processSubscriptionPayment } from '../../services/subscriptionService';
 import type { Restaurant } from '@restaurant-saas/types';
 import { formatDateShort as formatDateShortUtil } from '@restaurant-saas/types';
 import { supabase } from '@restaurant-saas/supabase';
-import { CheckCircle2, Loader2, Calendar, X, Store, PauseCircle, Timer, AlertTriangle, CheckCircle, Sparkles } from 'lucide-react';
+import { CheckCircle2, Loader2, Calendar, X, Store, PauseCircle, Timer, AlertTriangle, CheckCircle } from 'lucide-react';
 
 // ──────────────────────────────────────────────
 // Plan definitions (display only — pricing enforced server-side)
@@ -60,15 +60,12 @@ function getStatusInfo(restaurant: Restaurant | null): {
     }
 
     const restStatus = (restaurant.status || '').toLowerCase();
-    const subStatus = (restaurant.subscriptionStatus || '').toLowerCase();
 
     if (restStatus === 'suspended') {
         return { label: 'Suspended', status: 'inactive', icon: <PauseCircle size={48} className="text-tk-error" />, message: 'Your restaurant has been suspended by administration. Service is halted.' };
     }
 
-    if (subStatus === 'suspended') {
-        return { label: 'Billing Suspended', status: 'inactive', icon: <PauseCircle size={48} className="text-tk-error" />, message: 'Your access to the platform has been restricted because your subscription is suspended. Please renew your plan to regain full access.' };
-    }
+
 
     if (restStatus === 'rejected') {
         return { label: 'Rejected', status: 'inactive', icon: <AlertTriangle size={48} className="text-tk-error" />, message: 'Your restaurant application was rejected by administration.' };
@@ -82,7 +79,7 @@ function getStatusInfo(restaurant: Restaurant | null): {
         return { label: 'Approved', status: 'inactive', icon: <CheckCircle size={48} className="text-tk-success" />, message: 'Your restaurant has been approved! Select a plan below to get started.' };
     }
 
-    if (restaurant.subscriptionStatus !== 'active' && restaurant.subscriptionStatus !== 'trial' && restaurant.subscriptionStatus !== 'expired' && restStatus !== 'active') {
+    if (restaurant.subscriptionStatus !== 'active' && restaurant.subscriptionStatus !== 'trial' && restaurant.subscriptionStatus !== 'expired') {
         return { label: 'Inactive', status: 'inactive', icon: <PauseCircle size={48} className="text-tk-text-secondary" />, message: 'Your subscription is inactive. Choose a plan to get started.' };
     }
 
@@ -96,8 +93,8 @@ function getStatusInfo(restaurant: Restaurant | null): {
             label: 'Trial Period',
             status: 'trial',
             icon: <CheckCircle size={48} className="text-blue-500" />,
-            message: endAt 
-                ? `Your free trial expires in ${days} day${days !== 1 ? 's' : ''} on ${formatDate(endAt)}.` 
+            message: endAt
+                ? `Your free trial expires in ${days} day${days !== 1 ? 's' : ''} on ${formatDate(endAt)}.`
                 : 'Your restaurant is currently on a free trial.',
         };
     }
@@ -126,13 +123,13 @@ function getStatusInfo(restaurant: Restaurant | null): {
             label: 'Grace Period',
             status: 'grace',
             icon: <Timer size={48} className="text-tk-error" />,
-            message: `Your subscription has expired. You have ${graceDays} day${graceDays !== 1 ? 's' : ''} remaining before services are suspended. Renew now to avoid interruption!`,
+            message: `Your plan is over. You have ${graceDays} day${graceDays !== 1 ? 's' : ''} remaining before your customer web is disabled. Please renew.`,
         };
     }
 
     if (isExpiredByDB) {
         // subscription_status is 'expired' but grace period has also passed (shouldn't normally happen — cron would suspend)
-        return { label: 'Expired', status: 'expired', icon: <AlertTriangle size={48} className="text-tk-error" />, message: 'Your subscription has expired. Renew to continue using all features.' };
+        return { label: 'Expired', status: 'expired', icon: <AlertTriangle size={48} className="text-tk-error" />, message: 'Your plan is over and your customer web is disabled. Please renew.' };
     }
 
     if (restStatus === 'active') {
@@ -322,8 +319,8 @@ const SubscriptionPage: React.FC = () => {
 
     // Find current active plan from the latest successful payment
     const latestSuccessfulPayment = payments.find(p => p.status === 'succeeded');
-    const currentPlanDuration = (statusInfo.status === 'active' || statusInfo.status === 'grace') 
-        ? latestSuccessfulPayment?.planDuration 
+    const currentPlanDuration = (statusInfo.status === 'active' || statusInfo.status === 'grace')
+        ? latestSuccessfulPayment?.planDuration
         : null;
 
     // ── Loading state ──
@@ -342,11 +339,10 @@ const SubscriptionPage: React.FC = () => {
         <div className="max-w-[1200px] w-full mx-auto pb-12">
             {/* Feedback Banner */}
             {feedback && (
-                <div className={`flex items-center gap-3 px-5 py-4 rounded-xl mb-6 text-[0.9rem] font-medium animate-[sub-fadeIn_0.3s_ease] shadow-sm border-[1.5px] ${
-                    feedback.tone === 'success' ? 'bg-tk-success-bg text-tk-success border-tk-success/30' : 
-                    feedback.tone === 'error' ? 'bg-tk-error-bg text-tk-error border-tk-error/30' : 
-                    'bg-gray-100 text-gray-700 border-gray-300'
-                }`}>
+                <div className={`flex items-center gap-3 px-5 py-4 rounded-xl mb-6 text-[0.9rem] font-medium animate-[sub-fadeIn_0.3s_ease] shadow-sm border-[1.5px] ${feedback.tone === 'success' ? 'bg-tk-success-bg text-tk-success border-tk-success/30' :
+                        feedback.tone === 'error' ? 'bg-tk-error-bg text-tk-error border-tk-error/30' :
+                            'bg-gray-100 text-gray-700 border-gray-300'
+                    }`}>
                     {feedback.tone === 'success' && <CheckCircle2 size={18} />}
                     {feedback.tone === 'error' && <X size={18} />}
                     <span>{feedback.message}</span>
@@ -359,61 +355,65 @@ const SubscriptionPage: React.FC = () => {
                     <h1 className="text-[18px] sm:text-[22px] font-extrabold text-tk-text m-0 mb-1 tracking-tight whitespace-nowrap">Subscription<span className="hidden sm:inline"> & Billing</span></h1>
                     <div className="flex items-center gap-2 mt-2">
                         <span className="relative flex h-2.5 w-2.5">
-                            {statusInfo.status === 'active' && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-tk-success opacity-75"></span>}
-                            <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${statusInfo.status === 'active' ? 'bg-tk-success' : 'bg-tk-error'}`}></span>
+                            {(statusInfo.status === 'active' || statusInfo.status === 'trial') && <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${statusInfo.status === 'active' ? 'bg-tk-success' : 'bg-blue-500'}`}></span>}
+                            <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${statusInfo.status === 'active' ? 'bg-tk-success' : statusInfo.status === 'trial' ? 'bg-blue-500' : 'bg-tk-error'}`}></span>
                         </span>
                         <span className="text-[13px] font-medium text-tk-text-secondary">
-                            Status: <span className={`font-bold ${statusInfo.status === 'active' ? 'text-tk-success' : 'text-tk-error'}`}>{statusInfo.label}</span>
+                            Status: <span className={`font-bold ${statusInfo.status === 'active' ? 'text-tk-success' : statusInfo.status === 'trial' ? 'text-blue-500' : 'text-tk-error'}`}>{statusInfo.label}</span>
                         </span>
                     </div>
                     <p className="text-[13px] text-tk-text-secondary mt-1.5 mb-0 max-w-[600px]">{statusInfo.message}</p>
                 </div>
-                
+
                 <div className="flex items-center gap-3 bg-tk-bg-surface px-4 py-2.5 rounded-xl border-[1.5px] border-tk-border shadow-sm">
-                    {statusInfo.status === 'active' ? (
+                    {statusInfo.status === 'active' || statusInfo.status === 'trial' ? (
                         <>
                             <div className="text-[24px] font-black text-tk-text leading-none">{days}</div>
-                            <div className="text-[11px] font-bold text-tk-text-secondary uppercase tracking-widest">Days<br/>Left</div>
+                            <div className="text-[11px] font-bold text-tk-text-secondary uppercase tracking-widest">Days<br />Left</div>
                         </>
                     ) : (
                         <>
                             <div className="w-6 h-6 flex items-center justify-center">{statusInfo.icon}</div>
-                            <div className="text-[11px] font-bold text-tk-error uppercase tracking-widest">Action<br/>Required</div>
+                            <div className="text-[11px] font-bold text-tk-error uppercase tracking-widest">Action<br />Required</div>
                         </>
                     )}
                 </div>
             </div>
 
             {/* SaaS Pricing Cards */}
-            
-            {dbTrials.length > 0 && (
+
+            {(statusInfo.status === 'inactive' || statusInfo.status === 'expired') && dbTrials.length > 0 && (
                 <div className="mb-10">
-                    <div className="text-center mb-6">
-                        <h2 className="text-[24px] font-extrabold text-tk-text m-0 mb-2 tracking-tight text-tk-success">Start Your Free Trial</h2>
-                        <p className="text-[14px] text-tk-text-secondary m-0">Experience Tablekard risk-free before choosing a paid package.</p>
-                    </div>
-                    <div className="flex flex-wrap justify-center gap-6 max-w-[800px] mx-auto pt-2">
+                    <div className="flex flex-col gap-4 max-w-[1000px] mx-auto">
                         {dbTrials.map(trial => (
-                            <div key={trial.id} className="bg-tk-bg-card border-2 border-tk-success/40 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all rounded-[24px] p-8 flex flex-col sm:flex-row items-center justify-between gap-8 relative overflow-hidden w-full text-left">
-                                <div className="absolute top-0 left-0 w-64 h-64 bg-tk-success/10 rounded-full blur-3xl -translate-y-1/2 -translate-x-1/4 pointer-events-none"></div>
-                                <div className="relative z-10 flex-1">
-                                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-tk-success/10 text-tk-success rounded-full text-[12px] font-bold uppercase tracking-wider mb-4">
-                                        <Sparkles size={14} /> Risk-Free
+                            <div key={trial.id} className="bg-tk-success/10 border-[1.5px] border-tk-success/30 rounded-[20px] p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-6 w-full text-left">
+                                <div className="flex-1">
+                                    <div className="inline-flex items-center gap-1.5 text-tk-success font-bold text-[11px] uppercase tracking-wider mb-2">
+                                            Risk-Free Trial Available
                                     </div>
-                                    <h3 className="text-[28px] font-black text-tk-text m-0 mb-2">{trial.name}</h3>
-                                    <p className="text-[15px] text-tk-text-secondary m-0 max-w-md">
+                                    <h3 className="text-[18px] sm:text-[20px] font-black text-tk-text m-0 mb-1">{trial.name}</h3>
+                                    <p className="text-[13px] text-tk-text-secondary m-0">
                                         Get full access to all premium features for {trial.duration_days} days. No credit card required. Cancel anytime.
                                     </p>
                                 </div>
-                                <div className="relative z-10 flex flex-col items-center shrink-0 min-w-[180px] bg-tk-bg-surface/50 p-6 rounded-2xl border border-tk-border">
-                                    <div className="text-[56px] font-black leading-none text-tk-success mb-1">{trial.duration_days}</div>
-                                    <div className="text-[12px] font-bold text-tk-text-secondary uppercase tracking-widest mb-4">Days Free</div>
-                                    <button
-                                        onClick={() => alert('Trial activation flow goes here! Contacting backend...')}
-                                        className="w-full py-3 rounded-xl font-bold text-[14px] uppercase tracking-wider bg-tk-success text-white hover:bg-tk-success/90 shadow-[0_8px_20px_rgba(16,185,129,0.25)] transition-colors"
-                                    >
-                                        Claim Trial
-                                    </button>
+                                <div className="shrink-0 w-full sm:w-auto flex flex-row items-center gap-5 bg-white/60 dark:bg-black/10 px-5 py-4 sm:py-3 rounded-2xl border border-tk-success/20">
+                                    <div className="text-center hidden sm:block">
+                                        <div className="text-[28px] font-black leading-none text-tk-success mb-1">{trial.duration_days}</div>
+                                        <div className="text-[10px] font-bold text-tk-success/70 uppercase tracking-widest">Days Free</div>
+                                    </div>
+                                    {(() => {
+                                        const rStat = (restaurant?.status || '').toLowerCase();
+                                        const isBlocked = rStat === 'pending' || rStat === 'rejected';
+                                        return (
+                                            <button
+                                                onClick={() => alert('Trial activation flow goes here! Contacting backend...')}
+                                                className="w-full sm:w-[160px] py-2.5 rounded-xl font-bold text-[13px] uppercase tracking-wider bg-tk-success text-white hover:bg-tk-success/90 shadow-[0_4px_12px_rgba(16,185,129,0.25)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                disabled={isBlocked}
+                                            >
+                                                {rStat === 'pending' ? 'Awaiting Approval' : rStat === 'rejected' ? 'Application Rejected' : 'Claim Trial'}
+                                            </button>
+                                        );
+                                    })()}
                                 </div>
                             </div>
                         ))}
@@ -421,166 +421,189 @@ const SubscriptionPage: React.FC = () => {
                 </div>
             )}
 
-            <div className="mb-10">
-                <div className="text-center mb-6">
-                    <h2 className="text-[24px] font-extrabold text-tk-text m-0 mb-2 tracking-tight">Choose the Perfect Plan</h2>
-                    <p className="text-[14px] text-tk-text-secondary m-0">Simple, transparent pricing to power your restaurant's growth.</p>
-                </div>
-                
-                <div className="grid grid-cols-4 gap-6 max-lg:grid-cols-2 max-sm:grid-cols-1 items-stretch pt-4">
-                    {dbPlans.map((plan) => {
-                        const isCurrentPlan = currentPlanDuration === plan.duration;
-                        
-                        return (
-                        <div
-                            key={plan.duration}
-                            className={`relative flex flex-col rounded-[24px] transition-all duration-300 ${
-                                plan.popular 
-                                ? 'bg-[linear-gradient(135deg,#8B3A1E,#521c0b)] text-white border-[2px] border-tk-burgundy shadow-[0_16px_40px_rgba(139,58,30,0.3)] -translate-y-4 max-lg:-translate-y-0 z-10' 
-                                : 'bg-tk-bg-card border-[1.5px] border-tk-border shadow-sm hover:shadow-xl hover:border-tk-burgundy/40 hover:-translate-y-2'
-                            }`}
-                        >
-                            {plan.popular && (
-                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[linear-gradient(135deg,var(--tk-burgundy),#6B2A15)] text-white text-[11px] font-bold px-4 py-1.5 rounded-full uppercase tracking-[0.2em] shadow-md whitespace-nowrap z-20">
-                                    Most Popular
-                                </div>
-                            )}
-                            
-                            {isCurrentPlan && (
-                                <div className="absolute top-0 right-0 bg-tk-success text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl rounded-tr-[22px] uppercase tracking-widest z-20 shadow-sm">
-                                    Current Plan
-                                </div>
-                            )}
-                            
-                            <div className="p-8 border-b border-tk-border/50 text-center relative overflow-hidden rounded-t-[24px] flex flex-col items-center justify-center">
-                                {plan.popular && (
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-tk-burgundy/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
-                                )}
-                                <div className={`text-[14px] font-bold mb-5 uppercase tracking-[0.15em] relative z-10 ${plan.popular ? 'text-white/80' : 'text-tk-text-secondary'}`}>{plan.label}</div>
-                                <div className={`flex items-start justify-center gap-1 mb-2 relative z-10 ${plan.popular ? 'text-white' : 'text-tk-text'}`}>
-                                    <span className={`text-[20px] font-bold mt-1 ${plan.popular ? 'text-white' : 'text-tk-text'}`}>₹</span>
-                                    <span className={`text-[42px] font-black leading-none tracking-tighter ${plan.popular ? 'text-white' : 'text-tk-text'}`}>{plan.price.toLocaleString('en-IN')}</span>
-                                </div>
-                                <div className={`text-[14px] font-semibold relative z-10 ${plan.popular ? 'text-white/80' : 'text-tk-text-secondary'}`}>
-                                    Just ₹{plan.perMonth} / month
-                                </div>
-                                {plan.savings > 0 ? (
-                                    <div className="mt-4 inline-block bg-tk-success-bg text-tk-success text-[12px] font-bold px-3 py-1.5 rounded-full relative z-10 uppercase tracking-wider">
-                                        Save {plan.savings}%
-                                    </div>
-                                ) : (
-                                    <div className="mt-4 inline-block px-3 py-1.5 opacity-0 pointer-events-none text-[12px]">
-                                        No savings
-                                    </div>
-                                )}
-                            </div>
-                            
-                            <div className={`p-8 flex-1 flex flex-col rounded-b-[24px] ${plan.popular ? 'bg-black/10' : 'bg-tk-bg-surface/30'}`}>
-                                <div className={`text-[12px] font-bold mb-5 uppercase tracking-widest text-center ${plan.popular ? 'text-white/90' : 'text-tk-text'}`}>What's included</div>
-                                <ul className="flex flex-col gap-4 mb-8">
-                                    {PLAN_FEATURES.map((feature, i) => (
-                                        <li key={i} className={`flex items-center gap-3 text-[14px] font-medium ${plan.popular ? 'text-white/90' : 'text-tk-text-secondary'}`}>
-                                            <CheckCircle2 size={18} className={`shrink-0 ${plan.popular ? 'text-[#FBD38D]' : 'text-tk-burgundy'}`} />
-                                            <span>{feature}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                                
-                                <div className="mt-auto">
-                                    {(() => {
-                                        const rStat = (restaurant?.status || '').toLowerCase();
-                                        const isBlocked = rStat === 'pending' || rStat === 'rejected';
-                                        return (
-                                            <button
-                                                className={`w-full py-4 rounded-xl font-bold text-[15px] transition-all flex items-center justify-center gap-2 uppercase tracking-wider ${
-                                                    plan.popular
-                                                    ? 'bg-white text-[#8B3A1E] hover:bg-gray-100 shadow-lg hover:shadow-xl hover:-translate-y-0.5'
-                                                    : 'bg-tk-burgundy-bg text-tk-burgundy hover:bg-tk-burgundy hover:text-white shadow-sm'
-                                                } disabled:opacity-50 disabled:cursor-not-allowed`}
-                                                disabled={isProcessing !== null || !activeRestaurantId || isBlocked}
-                                                onClick={() => handleRenew(plan.duration)}
-                                            >
-                                                {isProcessing === plan.duration ? (
-                                                    <>
-                                                        <Loader2 size={18} className="animate-spin" />
-                                                        Processing...
-                                                    </>
-                                                ) : rStat === 'pending' ? (
-                                                    'Awaiting Approval'
-                                                ) : rStat === 'rejected' ? (
-                                                    'Application Rejected'
-                                                ) : rStat === 'suspended' ? (
-                                                    'Reactivate Subscription'
-                                                ) : isCurrentPlan ? (
-                                                    'Extend Plan'
-                                                ) : (
-                                                    'Subscribe Now'
-                                                )}
-                                            </button>
-                                        );
-                                    })()}
-                                </div>
-                            </div>
-                        </div>
-                    )})}
-                </div>
-            </div>
+            {(() => {
+                const hasActivePlan = restaurant?.subscriptionStatus === 'active';
 
-            {/* Payment History */}
-            <div>
-                <h2 className="text-[20px] font-bold text-tk-text m-0 mb-5 tracking-tight">Payment History</h2>
-                <div className="bg-tk-bg-card rounded-[16px] border-[1.5px] border-tk-border shadow-sm flex flex-col h-full relative z-0 overflow-hidden">
-                    {payments.length === 0 ? (
-                        <div className="p-12 text-center text-tk-text-secondary text-[15px] font-medium flex flex-col items-center gap-3">
-                            <Calendar size={32} className="text-tk-border" />
-                            No subscription payments yet.
+                const pricingCardsElement = (
+                    <div className="mb-10">
+                        <div className="text-center mb-6">
+                            <h2 className="text-[24px] font-extrabold text-tk-text m-0 mb-2 tracking-tight">Choose the Perfect Plan</h2>
+                            <p className="text-[14px] text-tk-text-secondary m-0">Simple, transparent pricing to power your restaurant's growth.</p>
                         </div>
-                    ) : (
-                        <div className="w-full overflow-x-auto overflow-y-auto max-h-[400px] relative rounded-[16px]">
-                            <table className="w-full text-left border-collapse table-fixed min-w-[700px]">
-                                <thead>
-                                    <tr>
-                                        <th className="sticky top-0 z-10 w-[20%] px-6 py-4 text-[12px] font-bold text-tk-text-secondary uppercase tracking-[0.1em] bg-tk-bg-surface border-b border-tk-border">Date</th>
-                                        <th className="sticky top-0 z-10 w-[20%] px-6 py-4 text-[12px] font-bold text-tk-text-secondary uppercase tracking-[0.1em] bg-tk-bg-surface border-b border-tk-border">Plan</th>
-                                        <th className="sticky top-0 z-10 w-[20%] px-6 py-4 text-[12px] font-bold text-tk-text-secondary uppercase tracking-[0.1em] bg-tk-bg-surface border-b border-tk-border">Amount</th>
-                                        <th className="sticky top-0 z-10 w-[25%] px-6 py-4 text-[12px] font-bold text-tk-text-secondary uppercase tracking-[0.1em] bg-tk-bg-surface border-b border-tk-border">Period</th>
-                                        <th className="sticky top-0 z-10 w-[15%] px-6 py-4 text-[12px] font-bold text-tk-text-secondary uppercase tracking-[0.1em] bg-tk-bg-surface border-b border-tk-border text-center">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {payments.map((payment, i) => (
-                                        <tr key={payment.id} className={`group hover:bg-tk-bg-hover transition-colors ${i !== payments.length - 1 ? 'border-b border-tk-border' : ''}`}>
-                                            <td className="px-6 py-4 text-[14px] text-tk-text whitespace-nowrap font-medium">
-                                                {formatDate(payment.createdAt)}
-                                            </td>
-                                            <td className="px-6 py-4 text-[14px] text-tk-text font-medium">
-                                                {planLabel(payment.planDuration)}
-                                            </td>
-                                            <td className="px-6 py-4 text-[14px] font-bold text-tk-text">
-                                                ₹{payment.amount.toLocaleString('en-IN')}
-                                            </td>
-                                            <td className="px-6 py-4 text-[13px] text-tk-text-secondary font-medium">
-                                                {payment.startsAt && payment.endsAt
-                                                    ? <div>{formatDate(payment.startsAt)} — {formatDate(payment.endsAt)}</div>
-                                                    : '—'}
-                                            </td>
-                                            <td className="px-6 py-4 text-center">
-                                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-[0.1em] ${
-                                                    payment.status === 'succeeded' ? 'bg-tk-success-bg text-tk-success' :
-                                                    payment.status === 'failed' ? 'bg-tk-error-bg text-tk-error' :
-                                                    'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'
-                                                }`}>
-                                                    {payment.status}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+
+                        <div className="grid grid-cols-4 gap-6 max-lg:grid-cols-2 max-sm:grid-cols-1 items-stretch pt-4">
+                            {dbPlans.map((plan) => {
+                                const isCurrentPlan = currentPlanDuration === plan.duration;
+
+                                return (
+                                    <div
+                                        key={plan.duration}
+                                        className={`relative flex flex-col rounded-[24px] transition-all duration-300 ${plan.popular
+                                                ? 'bg-[linear-gradient(135deg,#8B3A1E,#521c0b)] text-white border-[2px] border-tk-burgundy shadow-[0_16px_40px_rgba(139,58,30,0.3)] -translate-y-4 max-lg:-translate-y-0 z-10'
+                                                : 'bg-tk-bg-card border-[1.5px] border-tk-border shadow-sm hover:shadow-xl hover:border-tk-burgundy/40 hover:-translate-y-2'
+                                            }`}
+                                    >
+                                        {plan.popular && (
+                                            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[linear-gradient(135deg,var(--tk-burgundy),#6B2A15)] text-white text-[11px] font-bold px-4 py-1.5 rounded-full uppercase tracking-[0.2em] shadow-md whitespace-nowrap z-20">
+                                                Most Popular
+                                            </div>
+                                        )}
+
+                                        {isCurrentPlan && (
+                                            <div className="absolute top-0 right-0 bg-tk-success text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl rounded-tr-[22px] uppercase tracking-widest z-20 shadow-sm">
+                                                Current Plan
+                                            </div>
+                                        )}
+
+                                        <div className="p-8 border-b border-tk-border/50 text-center relative overflow-hidden rounded-t-[24px] flex flex-col items-center justify-center">
+                                            {plan.popular && (
+                                                <div className="absolute top-0 right-0 w-32 h-32 bg-tk-burgundy/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+                                            )}
+                                            <div className={`text-[14px] font-bold mb-5 uppercase tracking-[0.15em] relative z-10 ${plan.popular ? 'text-white/80' : 'text-tk-text-secondary'}`}>{plan.label}</div>
+                                            <div className={`flex items-start justify-center gap-1 mb-2 relative z-10 ${plan.popular ? 'text-white' : 'text-tk-text'}`}>
+                                                <span className={`text-[20px] font-bold mt-1 ${plan.popular ? 'text-white' : 'text-tk-text'}`}>₹</span>
+                                                <span className={`text-[42px] font-black leading-none tracking-tighter ${plan.popular ? 'text-white' : 'text-tk-text'}`}>{plan.price.toLocaleString('en-IN')}</span>
+                                            </div>
+                                            <div className={`text-[14px] font-semibold relative z-10 ${plan.popular ? 'text-white/80' : 'text-tk-text-secondary'}`}>
+                                                Just ₹{plan.perMonth} / month
+                                            </div>
+                                            {plan.savings > 0 ? (
+                                                <div className="mt-4 inline-block bg-tk-success-bg text-tk-success text-[12px] font-bold px-3 py-1.5 rounded-full relative z-10 uppercase tracking-wider">
+                                                    Save {plan.savings}%
+                                                </div>
+                                            ) : (
+                                                <div className="mt-4 inline-block px-3 py-1.5 opacity-0 pointer-events-none text-[12px]">
+                                                    No savings
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className={`p-8 flex-1 flex flex-col rounded-b-[24px] ${plan.popular ? 'bg-black/10' : 'bg-tk-bg-surface/30'}`}>
+                                            <div className={`text-[12px] font-bold mb-5 uppercase tracking-widest text-center ${plan.popular ? 'text-white/90' : 'text-tk-text'}`}>What's included</div>
+                                            <ul className="flex flex-col gap-4 mb-8">
+                                                {PLAN_FEATURES.map((feature, i) => (
+                                                    <li key={i} className={`flex items-center gap-3 text-[14px] font-medium ${plan.popular ? 'text-white/90' : 'text-tk-text-secondary'}`}>
+                                                        <CheckCircle2 size={18} className={`shrink-0 ${plan.popular ? 'text-[#FBD38D]' : 'text-tk-burgundy'}`} />
+                                                        <span>{feature}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+
+                                            <div className="mt-auto">
+                                                {(() => {
+                                                    const rStat = (restaurant?.status || '').toLowerCase();
+                                                    const isBlocked = rStat === 'pending' || rStat === 'rejected';
+                                                    return (
+                                                        <button
+                                                            className={`w-full py-4 rounded-xl font-bold text-[15px] transition-all flex items-center justify-center gap-2 uppercase tracking-wider ${plan.popular
+                                                                    ? 'bg-white text-[#8B3A1E] hover:bg-gray-100 shadow-lg hover:shadow-xl hover:-translate-y-0.5'
+                                                                    : 'bg-tk-burgundy-bg text-tk-burgundy hover:bg-tk-burgundy hover:text-white shadow-sm'
+                                                                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                                            disabled={isProcessing !== null || !activeRestaurantId || isBlocked}
+                                                            onClick={() => handleRenew(plan.duration)}
+                                                        >
+                                                            {isProcessing === plan.duration ? (
+                                                                <>
+                                                                    <Loader2 size={18} className="animate-spin" />
+                                                                    Processing...
+                                                                </>
+                                                            ) : rStat === 'pending' ? (
+                                                                'Awaiting Approval'
+                                                            ) : rStat === 'rejected' ? (
+                                                                'Application Rejected'
+                                                            ) : rStat === 'suspended' ? (
+                                                                'Reactivate Subscription'
+                                                            ) : isCurrentPlan ? (
+                                                                'Extend Plan'
+                                                            ) : hasActivePlan ? (
+                                                                'Upgrade Now'
+                                                            ) : (
+                                                                'Subscribe Now'
+                                                            )}
+                                                        </button>
+                                                    );
+                                                })()}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )
+                            })}
                         </div>
-                    )}
-                </div>
-            </div>
+                    </div>
+                );
+
+                const paymentHistoryElement = (
+                    <div className="mb-10">
+                        <h2 className="text-[20px] font-bold text-tk-text m-0 mb-5 tracking-tight">Payment History</h2>
+                        <div className="bg-tk-bg-card rounded-[16px] border-[1.5px] border-tk-border shadow-sm flex flex-col h-full relative z-0 overflow-hidden">
+                            {payments.length === 0 ? (
+                                <div className="p-12 text-center text-tk-text-secondary text-[15px] font-medium flex flex-col items-center gap-3">
+                                    <Calendar size={32} className="text-tk-border" />
+                                    No subscription payments yet.
+                                </div>
+                            ) : (
+                                <div className="w-full overflow-x-auto overflow-y-auto max-h-[400px] relative rounded-[16px]">
+                                    <table className="w-full text-left border-collapse table-fixed min-w-[700px]">
+                                        <thead>
+                                            <tr>
+                                                <th className="sticky top-0 z-10 w-[20%] px-6 py-4 text-[12px] font-bold text-tk-text-secondary uppercase tracking-[0.1em] bg-tk-bg-surface border-b border-tk-border">Date</th>
+                                                <th className="sticky top-0 z-10 w-[20%] px-6 py-4 text-[12px] font-bold text-tk-text-secondary uppercase tracking-[0.1em] bg-tk-bg-surface border-b border-tk-border">Plan</th>
+                                                <th className="sticky top-0 z-10 w-[20%] px-6 py-4 text-[12px] font-bold text-tk-text-secondary uppercase tracking-[0.1em] bg-tk-bg-surface border-b border-tk-border">Amount</th>
+                                                <th className="sticky top-0 z-10 w-[25%] px-6 py-4 text-[12px] font-bold text-tk-text-secondary uppercase tracking-[0.1em] bg-tk-bg-surface border-b border-tk-border">Period</th>
+                                                <th className="sticky top-0 z-10 w-[15%] px-6 py-4 text-[12px] font-bold text-tk-text-secondary uppercase tracking-[0.1em] bg-tk-bg-surface border-b border-tk-border text-center">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {payments.map((payment, i) => (
+                                                <tr key={payment.id} className={`group hover:bg-tk-bg-hover transition-colors ${i !== payments.length - 1 ? 'border-b border-tk-border' : ''}`}>
+                                                    <td className="px-6 py-4 text-[14px] text-tk-text whitespace-nowrap font-medium">
+                                                        {formatDate(payment.createdAt)}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-[14px] text-tk-text font-medium">
+                                                        {planLabel(payment.planDuration)}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-[14px] font-bold text-tk-text">
+                                                        ₹{payment.amount.toLocaleString('en-IN')}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-[13px] text-tk-text-secondary font-medium">
+                                                        {payment.startsAt && payment.endsAt
+                                                            ? <div>{formatDate(payment.startsAt)} — {formatDate(payment.endsAt)}</div>
+                                                            : '—'}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-center">
+                                                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-[0.1em] ${payment.status === 'succeeded' ? 'bg-tk-success-bg text-tk-success' :
+                                                                payment.status === 'failed' ? 'bg-tk-error-bg text-tk-error' :
+                                                                    'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'
+                                                            }`}>
+                                                            {payment.status}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                );
+
+                if (hasActivePlan) {
+                    return (
+                        <>
+                            {paymentHistoryElement}
+                            {pricingCardsElement}
+                        </>
+                    );
+                }
+
+                return (
+                    <>
+                        {pricingCardsElement}
+                        {paymentHistoryElement}
+                    </>
+                );
+            })()}
         </div>
     );
 };

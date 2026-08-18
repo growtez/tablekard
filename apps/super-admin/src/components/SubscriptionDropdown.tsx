@@ -68,7 +68,7 @@ export default function SubscriptionDropdown({
             if (matchedTrial) return matchedTrial.name?.toUpperCase() || 'TRIAL';
             return subscriptionPlan?.toUpperCase() || 'CUSTOM';
         }
-        if (subscriptionStatus === 'suspended') return 'SUSPENDED';
+
         if (subscriptionStatus === 'expired') return 'EXPIRED';
         return 'INACTIVE';
     };
@@ -76,7 +76,7 @@ export default function SubscriptionDropdown({
     const getStatusColor = () => {
         if (subscriptionStatus === 'active') return 'text-green-500 bg-green-500/10';
         if (subscriptionStatus === 'trial') return 'text-blue-500 bg-blue-500/10';
-        if (subscriptionStatus === 'suspended') return 'text-red-500 bg-red-500/10';
+
         if (subscriptionStatus === 'expired') return 'text-amber-500 bg-amber-500/10';
         return 'text-text-muted bg-surface-hover border border-border/50';
     };
@@ -220,18 +220,6 @@ export default function SubscriptionDropdown({
                             </div>
                         )}
                     </div>
-
-                    {/* SUSPENDED */}
-                    <button
-                        type="button"
-                        className={`w-full text-left px-3 py-1.5 text-[11px] font-semibold hover:bg-surface-hover transition-colors flex items-center gap-2 ${
-                            subscriptionStatus === 'suspended' ? 'text-red-500' : 'text-text-main'
-                        }`}
-                        onClick={() => handleSelect('suspended')}
-                    >
-                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
-                        Suspended
-                    </button>
 
                     {/* EXPIRED */}
                     <button

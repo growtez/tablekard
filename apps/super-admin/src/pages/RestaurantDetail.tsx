@@ -94,14 +94,8 @@ interface HeaderData {
     saving?: boolean;
 }
 
-interface SyncAction {
-    onSync: () => void;
-    loading: boolean;
-}
-
 interface RestaurantDetailProps {
     setHeaderData?: (data: HeaderData | null) => void;
-    setSyncAction?: (action: SyncAction | null) => void;
 }
 
 const TIME_OPTIONS = [
@@ -117,7 +111,7 @@ for (let h = 0; h < 24; h++) {
     }
 }
 
-export default function RestaurantDetail({ setHeaderData, setSyncAction }: RestaurantDetailProps) {
+export default function RestaurantDetail({ setHeaderData }: RestaurantDetailProps) {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const location = useLocation();
@@ -152,18 +146,8 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }: Resta
         }
         return () => {
             setHeaderData && setHeaderData(null);
-            setSyncAction && setSyncAction(null);
         };
     }, [id]);
-
-    useEffect(() => {
-        if (setSyncAction && !editingCard) {
-            setSyncAction({
-                onSync: fetchRestaurantDetails,
-                loading: loading
-            });
-        }
-    }, [loading, setSyncAction, editingCard]);
 
     const fetchMenuData = async () => {
         try {
@@ -618,7 +602,7 @@ export default function RestaurantDetail({ setHeaderData, setSyncAction }: Resta
                         badgeText = 'FREE TIER (ACTIVE)';
                         badgeVariant = 'info';
                     } else {
-                        badgeText = restaurant?.subscription_status === 'suspended' ? 'SUSPENDED' : 'EXPIRED / INACTIVE';
+                        badgeText = 'EXPIRED / INACTIVE';
                         badgeVariant = 'error';
                     }
 

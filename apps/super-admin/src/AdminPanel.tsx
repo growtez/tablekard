@@ -6,7 +6,7 @@ import { Filter, SlidersHorizontal, Search, RefreshCw, MoreVertical, Edit2, Tras
 import { Card } from './components/ui/Card'
 import { TableRowsSkeleton } from './components/ui/Skeleton'
 
-export default function AdminPanel({ activeForm, setActiveForm, setSyncAction }) {
+export default function AdminPanel({ activeForm, setActiveForm }) {
   const navigate = useNavigate()
   const [users, setUsers] = useState([])
   const [restaurants, setRestaurants] = useState([])
@@ -19,14 +19,6 @@ export default function AdminPanel({ activeForm, setActiveForm, setSyncAction })
   const [perPage, setPerPage] = useState(8)
   const [isRoleFilterOpen, setIsRoleFilterOpen] = useState(false)
 
-  useEffect(() => {
-    if (setSyncAction) {
-      setSyncAction({
-        onSync: fetchUsers,
-        loading: loading
-      });
-    }
-  }, [loading, setSyncAction]);
 
   const [formData, setFormData] = useState({ email: '', password: '', role: 'customer', restaurantId: '' })
   const [resFormData, setResFormData] = useState({ name: '', contact_email: '', contact_address: '', contact_phone: '' })

@@ -36,6 +36,7 @@ export interface GlobalStats {
   subscriptions_summary: { total: number; paid: number; pending: number; failed: number };
   transactions_summary: { total: number; paid: number; totalAmount: number; refunded: number };
   revenue: { total: number };
+  qrTokens: { total: number; available: number; assigned: number };
 }
 
 export interface HeaderData {
@@ -50,10 +51,6 @@ export interface HeaderData {
   onCancel?: () => void;
 }
 
-export interface SyncAction {
-  onSync?: () => void;
-  loading?: boolean;
-}
 
 
 export default function App() {
@@ -71,25 +68,27 @@ export default function App() {
   const [editingData, setEditingData] = useState<any>(null)
   const [refreshCallback, setRefreshCallback] = useState<(() => void) | null>(null)
   const [headerData, setHeaderData] = useState<HeaderData | null>(null)
-  const [syncAction, setSyncAction] = useState<SyncAction | null>(null)
+
   const [globalStats, setGlobalStats] = useState<GlobalStats>({
     restaurants: { total: 0, active: 0, recent: 0 },
     users: { total: 0, customers: 0, restAdmins: 0, restStaff: 0 },
     subscriptions: { total: 0 },
     subscriptions_summary: { total: 0, paid: 0, pending: 0, failed: 0 },
     transactions_summary: { total: 0, paid: 0, totalAmount: 0, refunded: 0 },
-    revenue: { total: 0 }
+    revenue: { total: 0 },
+    qrTokens: { total: 0, available: 0, assigned: 0 }
   });
 
   const fetchGlobalStats = async () => {
     try {
-      const [{ count: resCount }, { count: activeResCount }, { data: profiles }, { data: subPayments }, { data: allPayments }, { data: cashOrders }] = await Promise.all([
+      const [{ count: resCount }, { count: activeResCount }, { data: profiles }, { data: subPayments }, { data: allPayments }, { data: cashOrders }, { data: qrTokensData }] = await Promise.all([
         supabase.from('restaurants').select('*', { count: 'exact', head: true }),
         supabase.from('restaurants').select('*', { count: 'exact', head: true }).eq('status', 'active'),
         supabase.from('profiles').select('role'),
         supabase.from('subscription_payments').select('amount, status'),
         supabase.from('payments').select('amount, status, order_id'),
-        supabase.from('orders').select('id, total, payment_status').in('payment_method', ['cash', 'card'])
+        supabase.from('orders').select('id, total, payment_status').in('payment_method', ['cash', 'card']),
+        supabase.from('qr_code_tokens').select('status')
       ]);
       const payments = subPayments || [];
       const totalRevenue = payments.filter(p => p.status === 'paid').reduce((sum, p) => sum + Number(p.amount || 0), 0);
@@ -126,7 +125,12 @@ export default function App() {
           totalAmount: txAmount,
           refunded: txRefunded
         },
-        revenue: { total: totalRevenue }
+        revenue: { total: totalRevenue },
+        qrTokens: {
+          total: qrTokensData?.length || 0,
+          available: qrTokensData?.filter(t => t.status === 'available').length || 0,
+          assigned: qrTokensData?.filter(t => t.status === 'assigned').length || 0
+        }
       });
     } catch (err) { console.error('App: Global stats fetch failed:', err); }
   };
@@ -298,7 +302,14 @@ export default function App() {
     if (path.startsWith('/subscriptions/')) return { title: '', isBreadcrumb: true, backTitle: 'Subscriptions', backPath: '/subscriptions' };
     if (path.startsWith('/billing/transactions/')) return { title: '', isBreadcrumb: true, backTitle: 'Transactions', backPath: '/billing/transactions' };
     if (path === '/notifications') return { title: 'Notifications' };
-    if (path === '/qr-tokens') return { title: 'QR Tokens' };
+    if (path === '/qr-tokens') return { 
+        title: 'QR Tokens',
+        stats: [
+            { label: 'Total Generated', value: String(globalStats.qrTokens?.total || 0) },
+            { label: 'Available', value: String(globalStats.qrTokens?.available || 0) },
+            { label: 'Assigned', value: String(globalStats.qrTokens?.assigned || 0) }
+        ]
+    };
     return { title: 'Notifications' };
   };
 
@@ -397,11 +408,7 @@ export default function App() {
             )}
 
             <div className="flex items-center gap-3 md:gap-6">
-              {syncAction && (
-                <button onClick={() => { syncAction.onSync?.(); fetchGlobalStats(); }} className="flex items-center justify-center w-8 h-8 md:w-9 md:h-9 rounded-lg bg-surface-hover border border-border text-text-main hover:bg-border transition-colors" title="Sync Data">
-                  <RefreshCw size={16} className={syncAction.loading ? 'animate-spin' : ''} />
-                </button>
-              )}
+
               <div className="relative group">
                 <button className="flex items-center justify-center w-8 h-8 md:w-9 md:h-9 bg-accent-primary hover:bg-accent-secondary text-white rounded-lg shadow-[0_2px_6px_rgba(5,150,105,0.2)] hover:shadow-[0_4px_12px_rgba(5,150,105,0.4)] transition-all hover:-translate-y-0.5" onClick={() => openDrawer('restaurant')} title="Quick Create">
                   <Plus size={18} />
@@ -448,32 +455,32 @@ export default function App() {
         <main className="flex-1 animate-fade-in relative z-10">
           <div className="w-full max-w-[1400px] mx-auto px-4 md:px-6 pt-3 pb-6">
             <Routes>
-              <Route path="/" element={<Dashboard setSyncAction={setSyncAction} />} />
-              <Route path="/dashboard" element={<Dashboard setSyncAction={setSyncAction} />} />
-              <Route path="/restaurants" element={<Restaurants openDrawer={openDrawer} setSyncAction={setSyncAction} />} />
-              <Route path="/restaurants/:id" element={<RestaurantDetail setHeaderData={setHeaderData} setSyncAction={setSyncAction} />} />
-              <Route path="/users" element={<AdminPanel activeForm={activeForm} setActiveForm={setActiveForm} setSyncAction={setSyncAction} />} />
-              <Route path="/users/:id" element={<UserDetail setHeaderData={setHeaderData} setSyncAction={setSyncAction} />} />
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/restaurants" element={<Restaurants openDrawer={openDrawer} />} />
+              <Route path="/restaurants/:id" element={<RestaurantDetail setHeaderData={setHeaderData} />} />
+              <Route path="/users" element={<AdminPanel activeForm={activeForm} setActiveForm={setActiveForm} />} />
+              <Route path="/users/:id" element={<UserDetail setHeaderData={setHeaderData} />} />
               <Route path="/leads" element={<LandingLeads />} />
               <Route path="/notifications" element={<Notifications />} />
-              <Route path="/qr-tokens" element={<QrTokens setSyncAction={setSyncAction} />} />
+              <Route path="/qr-tokens" element={<QrTokens />} />
               {/* Billing */}
-              <Route path="/subscriptions" element={<Subscriptions setSyncAction={setSyncAction} />} />
+              <Route path="/subscriptions" element={<Subscriptions />} />
               <Route path="/subscriptions/:id" element={<SubscriptionDetail setHeaderData={setHeaderData} />} />
               <Route path="/billing/transactions/:source/:id" element={<TransactionDetail setHeaderData={setHeaderData} />} />
-              <Route path="/billing/transactions" element={<Transactions setSyncAction={setSyncAction} />} />
-              <Route path="/billing/plans" element={<Plans setSyncAction={setSyncAction} setHeaderData={setHeaderData} />} />
+              <Route path="/billing/transactions" element={<Transactions />} />
+              <Route path="/billing/plans" element={<Plans setHeaderData={setHeaderData} />} />
               {/* Support */}
-              {/* <Route path="/support/complaints" element={<Complaints setSyncAction={setSyncAction} />} />
-              <Route path="/support/reviews" element={<Reviews setSyncAction={setSyncAction} />} />
-              <Route path="/support/announcements" element={<Announcements setSyncAction={setSyncAction} />} /> */}
+              {/* <Route path="/support/complaints" element={<Complaints />} />
+              <Route path="/support/reviews" element={<Reviews />} />
+              <Route path="/support/announcements" element={<Announcements />} /> */}
               {/* Settings */}
-              {/* <Route path="/settings/general" element={<General setSyncAction={setSyncAction} />} />
-              <Route path="/settings/integrations" element={<Integrations setSyncAction={setSyncAction} />} />
-              <Route path="/settings/security" element={<Security setSyncAction={setSyncAction} />} />
-              <Route path="/settings/email" element={<EmailTemplates setSyncAction={setSyncAction} />} /> */}
+              {/* <Route path="/settings/general" element={<General />} />
+              <Route path="/settings/integrations" element={<Integrations />} />
+              <Route path="/settings/security" element={<Security />} />
+              <Route path="/settings/email" element={<EmailTemplates />} /> */}
               {/* Fallback */}
-              <Route path="*" element={<Dashboard setSyncAction={setSyncAction} />} />
+              <Route path="*" element={<Dashboard />} />
             </Routes>
           </div>
         </main>

@@ -7,7 +7,6 @@ import { TableRowsSkeleton } from '../components/ui/Skeleton';
 import SubscriptionDropdown from '../components/SubscriptionDropdown';
 import AccountStatusDropdown from '../components/AccountStatusDropdown';
 
-import { DashboardProps } from './Dashboard';
 
 export interface Restaurant {
     id: string;
@@ -22,7 +21,7 @@ export interface Restaurant {
     contact_phone?: string;
 }
 
-export default function Restaurants({ openDrawer, setSyncAction }: { openDrawer: (drawer: string) => void } & DashboardProps) {
+export default function Restaurants({ openDrawer }: { openDrawer: (drawer: string) => void }) {
     const navigate = useNavigate();
     const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
     const [billingPlans, setBillingPlans] = useState<any[]>([]);
@@ -40,14 +39,6 @@ export default function Restaurants({ openDrawer, setSyncAction }: { openDrawer:
         fetchRestaurants();
     }, []);
 
-    useEffect(() => {
-        if (setSyncAction) {
-            setSyncAction({
-                onSync: fetchRestaurants,
-                loading: loading
-            });
-        }
-    }, [loading, setSyncAction]);
 
     const fetchRestaurants = async () => {
         setLoading(true);
@@ -122,6 +113,7 @@ export default function Restaurants({ openDrawer, setSyncAction }: { openDrawer:
             subStatus = 'suspended';
         } else if (newStatusVal === 'expired') {
             subStatus = 'expired';
+            updates.grace_period_ends_at = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
         }
 
         updates.subscription_plan = subType;

@@ -4,7 +4,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { Search, Filter, SlidersHorizontal, Download, X, ChevronLeft, ChevronRight, Clock, Store, Calendar, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { TableRowsSkeleton } from '../components/ui/Skeleton';
-import { DashboardProps } from './Dashboard';
 
 export interface SubscriptionPayment {
     id: string;
@@ -23,7 +22,7 @@ export interface SubscriptionPayment {
     profiles?: any;
 }
 
-export default function Subscriptions({ setSyncAction }: DashboardProps) {
+export default function Subscriptions() {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const [data, setData] = useState<SubscriptionPayment[]>([]);
@@ -78,7 +77,6 @@ export default function Subscriptions({ setSyncAction }: DashboardProps) {
     };
 
     useEffect(() => { fetchData(); }, []);
-    useEffect(() => { if (setSyncAction) setSyncAction({ onSync: fetchData, loading }); }, [loading, setSyncAction]);
 
     const getAvailableMonths = () => {
         const monthsMap: Record<string, string> = {};

@@ -156,7 +156,7 @@ const ContactIcon = ({ active }: { active: boolean }) => (
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { activeRestaurantName, activeRestaurantLogo, activeRestaurantId, refreshSessionData, signOut } = useAuth();
+  const { activeRestaurantName, activeRestaurantLogo, activeRestaurantId, activeRestaurantSubscriptionStatus, activeRestaurantStatus, refreshSessionData, signOut } = useAuth();
   const { isDark, toggleTheme } = useTheme();
 
   const [logoError, setLogoError] = useState(false);
@@ -470,8 +470,17 @@ const Sidebar: React.FC = () => {
                     className={`flex items-center rounded-tk-md cursor-pointer transition-all duration-200 text-[13px] border-[1px] gap-2 py-1.5 px-2 ${isActive ? 'bg-tk-burgundy text-white font-semibold border-tk-burgundy shadow-[0_4px_12px_rgba(139,58,30,0.25)]' : 'text-tk-text-secondary border-transparent hover:bg-tk-burgundy-bg hover:text-tk-burgundy hover:border-tk-burgundy/15 font-medium'}`}
                     onClick={() => handleNavClick(item)}
                   >
-                    <span className="w-6 h-6 flex items-center justify-center shrink-0">{item.icon(isActive)}</span>
-                    {showLabels && <span className="font-inherit whitespace-nowrap">{item.label}</span>}
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 flex items-center justify-center shrink-0">{item.icon(isActive)}</span>
+                        {showLabels && <span className="font-inherit whitespace-nowrap">{item.label}</span>}
+                      </div>
+                      {showLabels && item.id === 'subscription' && activeRestaurantSubscriptionStatus === 'trial' && (
+                        <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-1.5 py-0.5 rounded-md ml-2">
+                          TRIAL
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </Tooltip>
               );
@@ -486,7 +495,12 @@ const Sidebar: React.FC = () => {
                   onClick={() => { navigate('/profile'); if (window.innerWidth <= 768) setIsCollapsed(true); }}
                 >
                   <span className="w-6 h-6 flex items-center justify-center shrink-0"><ProfileIcon active={activeTab === 'profile'} /></span>
-                  {(!isCollapsed || isMobile) && <span className="font-inherit whitespace-nowrap">Profile</span>}
+                  {showLabels && <span className="font-inherit whitespace-nowrap">Profile</span>}
+                  {showLabels && activeRestaurantStatus === 'pending' && (
+                    <span className="bg-amber-100 text-amber-700 text-[10px] font-bold px-1.5 py-0.5 rounded-md ml-auto">
+                      PENDING
+                    </span>
+                  )}
                 </div>
 
 
