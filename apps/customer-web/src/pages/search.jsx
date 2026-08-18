@@ -38,9 +38,16 @@ const SearchPage = () => {
 
     useEffect(() => {
         if (!restaurantId) return;
+        const cacheKey = `searchItems_${restaurantId}`;
+        const cached = sessionStorage.getItem(cacheKey);
+        if (cached) {
+            try { setAllItems(JSON.parse(cached)); } catch(e) {}
+        }
+        
         getMenuItems(restaurantId).then(items => {
             const processedItems = items.map(m => processMenuItem(m));
             setAllItems(processedItems);
+            sessionStorage.setItem(cacheKey, JSON.stringify(processedItems));
         }).catch(err => console.error("Error fetching menu items:", err));
     }, [restaurantId]);
 

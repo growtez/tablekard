@@ -42,15 +42,30 @@ const LikesPage = () => {
     }, [showItemModal]);
 
     useEffect(() => {
-        const fetchFavorites = async () => {
+        const fetchFavorites = async (isBackground = false) => {
             if (!isAuthenticated || !user) {
                 setLoading(false);
                 return;
             }
 
+            const cacheKey = `favorites_${user.id}_${restaurant?.id}`;
+            
+            if (!isBackground) {
+                const cachedData = sessionStorage.getItem(cacheKey);
+                if (cachedData) {
+                    try {
+                        setFavorites(JSON.parse(cachedData));
+                        setLoading(false);
+                    } catch (e) {}
+                } else {
+                    setLoading(true);
+                }
+            }
+
             try {
                 const data = await getFavorites(user.id, restaurant?.id);
                 setFavorites(data);
+                sessionStorage.setItem(cacheKey, JSON.stringify(data));
             } catch (err) {
                 console.error('Failed to fetch favorites:', err);
             } finally {

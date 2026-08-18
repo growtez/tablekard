@@ -108,8 +108,24 @@ const LiveQueuePage = () => {
         yourTokens: [],
     });
 
-    const fetchLiveQueue = async () => {
+    const fetchLiveQueue = async (isBackground = false) => {
         if (!restaurant?.id) return;
+        
+        const cacheKey = `liveQueue_${restaurant.id}`;
+        
+        if (!isBackground) {
+            const cachedData = sessionStorage.getItem(cacheKey);
+            if (cachedData) {
+                try {
+                    const parsed = JSON.parse(cachedData);
+                    setQueueData(parsed);
+                    setIsLoading(false);
+                } catch (e) {}
+            } else {
+                setIsLoading(true);
+            }
+        }
+        
         const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
         try {
             const { data, error } = await supabase
@@ -199,7 +215,9 @@ const LiveQueuePage = () => {
             prevReadyItemsRef.current = currentReadyItems;
             isInitialFetchRef.current = false;
 
-            setQueueData({ nowServing, preparing: preparingTokens, upcoming: upcomingTokens, yourTokens });
+            const newQueueData = { nowServing, preparing: preparingTokens, upcoming: upcomingTokens, yourTokens };
+            setQueueData(newQueueData);
+            sessionStorage.setItem(cacheKey, JSON.stringify(newQueueData));
             setIsLoading(false);
         } catch (err) {
             console.error('Error fetching live queue:', err);

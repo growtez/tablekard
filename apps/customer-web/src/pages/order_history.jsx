@@ -450,14 +450,28 @@ const OrderHistoryPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const fetchHistory = useCallback(async () => {
+    const fetchHistory = useCallback(async (isBackground = false) => {
         if (!isAuthenticated || !user) {
             setLoading(false);
             return;
         }
+
+        const cacheKey = `orderHistory_${user.id}_${restaurant?.id}`;
+        
+        if (!isBackground) {
+            const cachedData = sessionStorage.getItem(cacheKey);
+            if (cachedData) {
+                try {
+                    setOrders(JSON.parse(cachedData));
+                    setLoading(false);
+                } catch (e) {}
+            } else {
+                setLoading(true);
+            }
+        }
+        
+        setError(null);
         try {
-            setLoading(true);
-            setError(null);
             const history = await getOrderHistory(user.id, restaurant?.id);
 
             const mapped = history.map(order => ({
@@ -487,6 +501,7 @@ const OrderHistoryPage = () => {
             }));
 
             setOrders(mapped);
+            sessionStorage.setItem(cacheKey, JSON.stringify(mapped));
         } catch (err) {
             console.error('Failed to fetch order history:', err);
             setError('Failed to load your order history. Please try again.');
