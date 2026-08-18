@@ -1,7 +1,5 @@
 import React from 'react';
-import { Home, ShoppingCart, User } from 'lucide-react';
-import { NavLink } from 'react-router-dom';
-import { CustomMenuIcon } from './BottomNav';
+import BottomNav from './BottomNav';
 
 const SHIMMER_CSS = `
   @keyframes _sk_shimmer {
@@ -14,80 +12,58 @@ const SHIMMER_CSS = `
     animation: _sk_shimmer 1.5s infinite;
     border-radius: 8px;
   }
-  .sk-nav-link {
+
+  /* Inject real BottomNav styles during skeleton phase before home.css loads */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #FFFFFF;
+    padding: 12px 24px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #F0F0F0;
+    z-index: 100;
+  }
+  .nav-btn {
+    background: none;
+    border: none;
+    color: #D4A59A;
+    cursor: pointer;
+    padding: 12px;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
     text-decoration: none;
-    color: #9C8F8A;
-    transition: background 0.15s, color 0.15s;
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+    transition: all 0.2s ease;
   }
-  .sk-nav-link.active {
-    background: rgba(139, 58, 30, 0.10);
-    color: #8B3A1E;
+  .nav-btn.active {
+    background: #8B3A1E !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 4px 12px rgba(139, 58, 30, 0.3);
+  }
+  .cart-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #8B3A1E;
+    color: #FFFFFF;
+    font-size: 9px;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
   }
 `;
-
-
-const NAV_ITEMS = [
-  { to: "/",        Icon: Home,           label: "Home"    },
-  { to: "/menu",    Icon: CustomMenuIcon, label: "Menu"    },
-  { to: "/orders",  Icon: ShoppingCart,   label: "Orders"  },
-  ...(sessionStorage.getItem('previewMode') !== 'true' ? [{ to: "/profile", Icon: User,           label: "Profile" }] : []),
-];
-
-export function SkeletonBottomNav() {
-  return (
-    <nav style={{
-      position: "fixed", bottom: 0, left: 0, right: 0, height: 64,
-      display: "flex", alignItems: "center", justifyContent: "space-around",
-      background: "#FFF7F3",
-      borderTop: "1.5px solid #F0F0F0",
-      boxShadow: "0 -4px 20px rgba(139,58,30,0.06)",
-      zIndex: 1000,
-    }}>
-      <style>{`
-        .sk-nav-link {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 2px;
-          width: 44px;
-          height: 44px;
-          border-radius: 12px;
-          text-decoration: none;
-          color: #9C8F8A;
-          transition: background 0.15s, color 0.15s;
-        }
-        .sk-nav-link.active {
-          background: rgba(139, 58, 30, 0.10);
-          color: #8B3A1E;
-        }
-        .sk-nav-label {
-          font-size: 10px;
-          font-weight: 500;
-          line-height: 1;
-        }
-      `}</style>
-      {NAV_ITEMS.map(({ to, Icon, label }) => (
-        <NavLink
-          key={to}
-          to={to}
-          end={to === "/"}
-          className={({ isActive }) => `sk-nav-link${isActive ? " active" : ""}`}
-          aria-label={label}
-        >
-          <Icon size={20} strokeWidth={1.8} />
-          <span className="sk-nav-label">{label}</span>
-        </NavLink>
-      ))}
-    </nav>
-  );
-}
 
 export function PageSkeleton() {
   return (
@@ -142,8 +118,8 @@ export function PageSkeleton() {
         ))}
       </div>
 
-      {/* Real icon bottom nav */}
-      <SkeletonBottomNav />
+      {/* Render the EXACT same BottomNav component used by the real pages */}
+      <BottomNav />
     </div>
   );
 }
