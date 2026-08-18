@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLocation, Link, Navigate } from 'react-router-dom';
-import { AlertCircle, Ban, CreditCard } from 'lucide-react';
+import { AlertCircle, Ban } from 'lucide-react';
 
 export default function StatusGuard({ children }: { children: React.ReactNode }) {
     const { activeRestaurantStatus, activeRestaurantSubscriptionStatus, activeRestaurantGracePeriodEndsAt } = useAuth();
@@ -36,8 +36,6 @@ export default function StatusGuard({ children }: { children: React.ReactNode })
 
     // 2. Check Subscription Status (Billing) - Only applies if Account is Active
     const subStatus = (activeRestaurantSubscriptionStatus || 'inactive').toLowerCase();
-    const isSubscriptionPage = location.pathname.includes('/subscription');
-
 
     // 3. Handle Trial and Expired Banners
     const isTrial = subStatus === 'trial' || subStatus.includes('trial');

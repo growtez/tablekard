@@ -24,10 +24,7 @@ import {
     createRestaurantTable,
     updateRestaurantTable,
     deleteRestaurantTable,
-    getRestaurantById,
-    getAvailableQrTokens,
-    linkQrTokenToTable,
-    unlinkQrTokenFromTable
+    getRestaurantById
 } from '../services/supabaseService';
 import type { RestaurantTable } from '../services/supabaseService';
 import { useRestaurantTables, useInvalidateQueries } from '../hooks/useSupabaseQuery';

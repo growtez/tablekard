@@ -163,12 +163,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
             return;
         }
         try {
-            const { data, error } = await supabase
+            const { data: rawData, error } = await supabase
                 .from('restaurants')
-                .select('name, logo_url, status, subscription_status, subscription_plan, grace_period_ends_at')
+                .select('*')
                 .eq('id', restaurantId)
                 .maybeSingle();
-            if (!error && data) {
+            if (!error && rawData) {
+                const data = rawData as any;
                 setActiveRestaurantName(data.name || 'Restaurant');
                 setActiveRestaurantLogo(data.logo_url || null);
                 setActiveRestaurantStatus(data.status || 'pending');
@@ -311,6 +312,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         activeRestaurantStatus,
         activeRestaurantSubscriptionStatus,
         activeRestaurantSubscriptionPlan,
+        activeRestaurantGracePeriodEndsAt,
         setActiveRestaurantId,
         refreshSessionData,
         loading,

@@ -6,7 +6,7 @@ import { processSubscriptionPayment } from '../../services/subscriptionService';
 import type { Restaurant } from '@restaurant-saas/types';
 import { formatDateShort as formatDateShortUtil } from '@restaurant-saas/types';
 import { supabase } from '@restaurant-saas/supabase';
-import { CheckCircle2, Loader2, Calendar, X, Store, PauseCircle, Timer, AlertTriangle, CheckCircle, Sparkles } from 'lucide-react';
+import { CheckCircle2, Loader2, Calendar, X, Store, PauseCircle, Timer, AlertTriangle, CheckCircle } from 'lucide-react';
 
 // ──────────────────────────────────────────────
 // Plan definitions (display only — pricing enforced server-side)
@@ -60,7 +60,6 @@ function getStatusInfo(restaurant: Restaurant | null): {
     }
 
     const restStatus = (restaurant.status || '').toLowerCase();
-    const subStatus = (restaurant.subscriptionStatus || '').toLowerCase();
 
     if (restStatus === 'suspended') {
         return { label: 'Suspended', status: 'inactive', icon: <PauseCircle size={48} className="text-tk-error" />, message: 'Your restaurant has been suspended by administration. Service is halted.' };
