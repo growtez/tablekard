@@ -426,51 +426,66 @@ const TableManagementPage: React.FC = () => {
                                                 <LinkIcon size={11} /> {table.qr_token}
                                             </span>
                                         ) : (
-                                            <span className="flex items-center gap-1 px-2 py-1 rounded-full text-[11px] text-[#718096] bg-[#EDF2F7] dark:bg-tk-bg-elevated dark:text-tk-text-secondary" title="Standard auto-generated QR">
-                                                Auto QR
+                                            <span className="flex items-center gap-1 px-2 py-1 rounded-full text-[11px] text-[#A0AEC0] bg-[#F7FAFC] border border-[#E2E8F0] dark:bg-[rgba(255,255,255,0.02)] dark:border-tk-border dark:text-tk-text-muted" title="No token linked">
+                                                <Unlink size={11} /> Unlinked
                                             </span>
                                         )}
                                     </div>
+                                    {table.qr_token ? (
+                                        <>
+                                            <div className="bg-white rounded-xl p-2 border border-[#E2E8F0] flex items-center justify-center dark:bg-tk-bg-card dark:border-tk-border">
+                                                <QRCodeSVG
+                                                    id={`qr-svg-${table.id}`}
+                                                    value={url}
+                                                    size={180}
+                                                    bgColor="#ffffff"
+                                                    fgColor="#1A202C"
+                                                    level="H"
+                                                    includeMargin
+                                                />
+                                            </div>
 
-                                    <div className="bg-white rounded-xl p-2 border border-[#E2E8F0] flex items-center justify-center dark:bg-tk-bg-card dark:border-tk-border">
-                                        <QRCodeSVG
-                                            id={`qr-svg-${table.id}`}
-                                            value={url}
-                                            size={180}
-                                            bgColor="#ffffff"
-                                            fgColor="#1A202C"
-                                            level="H"
-                                            includeMargin
-                                        />
-                                    </div>
-
-                                    <div className="w-full flex flex-col gap-2.5 items-center">
-                                        <p className="text-[10px] text-[#718096] break-all text-center m-0 leading-relaxed dark:text-tk-text-secondary">{autoUrl}</p>
-                                        <div className="flex gap-3 text-[13px] text-[#4A5568] font-medium dark:text-tk-text-secondary">
-                                            <span className="flex items-center gap-1.5">
-                                                <Users size={14} />
-                                                {table.capacity} seats
-                                            </span>
+                                            <div className="w-full flex flex-col gap-2.5 items-center">
+                                                <p className="text-[10px] text-[#718096] break-all text-center m-0 leading-relaxed dark:text-tk-text-secondary">{autoUrl}</p>
+                                                <div className="flex gap-3 text-[13px] text-[#4A5568] font-medium dark:text-tk-text-secondary">
+                                                    <span className="flex items-center gap-1.5">
+                                                        <Users size={14} />
+                                                        {table.capacity} seats
+                                                    </span>
+                                                </div>
+                                                <div className="flex gap-2.5 w-full">
+                                                    <button
+                                                        className="flex items-center justify-center gap-1.5 px-2 py-2 border-none rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 flex-1 min-w-0 whitespace-nowrap bg-[#EDF2F7] text-[#4A5568] border border-[#E2E8F0] hover:bg-[#E2E8F0] hover:-translate-y-0.5 dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text dark:hover:bg-tk-bg-hover"
+                                                        onClick={() => downloadQR(table.id, table.table_number, table.qr_token)}
+                                                        title="Download as PNG"
+                                                    >
+                                                        <Download size={14} />
+                                                        PNG
+                                                    </button>
+                                                    <button
+                                                        className="flex items-center justify-center gap-1.5 px-2 py-2 border-none rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 flex-1 min-w-0 whitespace-nowrap bg-tk-burgundy text-white shadow-[0_4px_12px_rgba(139,58,30,0.2)] hover:bg-[#6B2A15] hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(139,58,30,0.3)]"
+                                                        onClick={() => downloadPDF(table.id, table.table_number, table.qr_token)}
+                                                        title="Download as PDF"
+                                                    >
+                                                        <Download size={14} />
+                                                        PDF
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center py-10 px-4 bg-[#F7FAFC] rounded-xl border border-dashed border-[#CBD5E0] dark:bg-tk-bg-elevated dark:border-tk-border h-full gap-4">
+                                            <div className="w-12 h-12 rounded-full bg-[#EDF2F7] dark:bg-[rgba(255,255,255,0.05)] flex items-center justify-center text-[#A0AEC0] dark:text-[#718096]">
+                                                <LinkIcon size={24} />
+                                            </div>
+                                            <div className="text-center">
+                                                <h4 className="text-sm font-semibold text-[#2D3748] dark:text-[#E2E8F0] mb-1">Unlinked Table</h4>
+                                                <p className="text-xs text-[#718096] dark:text-[#A0AEC0] max-w-[200px]">
+                                                    This table requires a QR token to be linked before it can be used.
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div className="flex gap-2.5 w-full">
-                                            <button
-                                                className="flex items-center justify-center gap-1.5 px-2 py-2 border-none rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 flex-1 min-w-0 whitespace-nowrap bg-[#EDF2F7] text-[#4A5568] border border-[#E2E8F0] hover:bg-[#E2E8F0] hover:-translate-y-0.5 dark:bg-tk-bg-elevated dark:border-tk-border dark:text-tk-text dark:hover:bg-tk-bg-hover"
-                                                onClick={() => downloadQR(table.id, table.table_number, table.qr_token)}
-                                                title="Download as PNG"
-                                            >
-                                                <Download size={14} />
-                                                PNG
-                                            </button>
-                                            <button
-                                                className="flex items-center justify-center gap-1.5 px-2 py-2 border-none rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 flex-1 min-w-0 whitespace-nowrap bg-tk-burgundy text-white shadow-[0_4px_12px_rgba(139,58,30,0.2)] hover:bg-[#6B2A15] hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(139,58,30,0.3)]"
-                                                onClick={() => downloadPDF(table.id, table.table_number, table.qr_token)}
-                                                title="Download as PDF"
-                                            >
-                                                <Download size={14} />
-                                                PDF
-                                            </button>
-                                        </div>
-                                    </div>
+                                    )}
                                 </div>
                             );
                         })}

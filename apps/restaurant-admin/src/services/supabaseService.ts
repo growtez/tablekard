@@ -1676,11 +1676,20 @@ export const unlinkQrTokenFromTable = async (
         .eq('id', tableId);
     if (tableErr) throw tableErr;
 
-    // 2. Reset token status
+    // 2. Fetch the token to see if it's auto-generated
+    const { data: tokenData } = await db
+        .from('qr_code_tokens')
+        .select('is_auto_generated')
+        .eq('token', cleanToken)
+        .single();
+        
+    const isAuto = tokenData?.is_auto_generated;
+
+    // 3. Reset token status
     const { error: tokenErr } = await db
         .from('qr_code_tokens')
         .update({
-            status: 'available',
+            status: isAuto ? 'trashed' : 'available',
             assigned_restaurant_id: null,
             assigned_table_id: null,
             assigned_at: null
@@ -1697,7 +1706,7 @@ export const deleteRestaurantTable = async (tableId: string): Promise<void> => {
     // Get the qr_token associated with this table before deleting
     const { data: tableData } = await db
         .from('restaurant_tables')
-        .select('qr_token')
+        .select('qr_token, qr_code_tokens(is_auto_generated)')
         .eq('id', tableId)
         .single();
 
@@ -1710,10 +1719,14 @@ export const deleteRestaurantTable = async (tableId: string): Promise<void> => {
 
     // Free up the token
     if (tableData && tableData.qr_token) {
+        const isAuto = Array.isArray(tableData.qr_code_tokens) 
+            ? tableData.qr_code_tokens[0]?.is_auto_generated 
+            : (tableData.qr_code_tokens as any)?.is_auto_generated;
+            
         await db
             .from('qr_code_tokens')
             .update({
-                status: 'available',
+                status: isAuto ? 'trashed' : 'available',
                 assigned_restaurant_id: null,
                 assigned_table_id: null,
                 assigned_at: null

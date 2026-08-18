@@ -19,7 +19,7 @@ import { TableRowsSkeleton } from '../components/ui/Skeleton';
 interface QrToken {
     id: string;
     token: string;
-    status: 'available' | 'assigned';
+    status: 'available' | 'assigned' | 'trashed';
     table_number: number | null;
     capacity: number | null;
     is_auto_generated?: boolean;
@@ -241,8 +241,8 @@ export default function QrTokens() {
     const [isBulkLink, setIsBulkLink] = useState(false);
 
     // Filter / search
-    const [tokenTypeTab, setTokenTypeTab] = useState<'physical' | 'auto_generated'>('physical');
-    const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'assigned'>('all');
+    const [tokenTypeTab, setTokenTypeTab] = useState<'physical' | 'auto_generated' | 'trashed'>('physical');
+    const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'assigned' | 'trashed'>('all');
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(8);
@@ -284,6 +284,8 @@ export default function QrTokens() {
 
     // Delete confirm
     const [deleteTarget, setDeleteTarget] = useState<QrToken | null>(null);
+    const [restoreTarget, setRestoreTarget] = useState<QrToken | null>(null);
+    const [restoring, setRestoring] = useState(false);
     const [deleting, setDeleting] = useState(false);
 
     // Detail modal
@@ -578,6 +580,11 @@ export default function QrTokens() {
     // ── Filtered + sorted + paginated tokens ──
     const filtered = tokens.filter(t => {
         const isAuto = t.is_auto_generated === true;
+        const isTrash = t.status === 'trashed';
+
+        if (tokenTypeTab === 'trashed' && !isTrash) return false;
+        if (tokenTypeTab !== 'trashed' && isTrash) return false;
+
         if (tokenTypeTab === 'physical' && isAuto) return false;
         if (tokenTypeTab === 'auto_generated' && !isAuto) return false;
 
@@ -830,19 +837,39 @@ export default function QrTokens() {
         if (!deleteTarget) return;
         setDeleting(true);
         try {
-            // Clear qr_token on table row if assigned
-            if (deleteTarget.assigned_table_id) {
-                await supabase
-                    .from('restaurant_tables')
-                    .update({ qr_token: null })
-                    .eq('id', deleteTarget.assigned_table_id);
+            if (deleteTarget.status === 'trashed') {
+                // Permanently delete if already in trash
+                const { error: delErr } = await supabase
+                    .from('qr_code_tokens')
+                    .delete()
+                    .eq('id', deleteTarget.id);
+                if (delErr) throw delErr;
+            } else {
+                // Move to trash
+                if (deleteTarget.assigned_table_id) {
+                    if (deleteTarget.is_auto_generated) {
+                        await supabase
+                            .from('restaurant_tables')
+                            .delete()
+                            .eq('id', deleteTarget.assigned_table_id);
+                    } else {
+                        await supabase
+                            .from('restaurant_tables')
+                            .update({ qr_token: null })
+                            .eq('id', deleteTarget.assigned_table_id);
+                    }
+                }
+                const { error: updErr } = await supabase
+                    .from('qr_code_tokens')
+                    .update({ 
+                        status: 'trashed',
+                        assigned_restaurant_id: null,
+                        assigned_table_id: null,
+                        assigned_at: null 
+                    })
+                    .eq('id', deleteTarget.id);
+                if (updErr) throw updErr;
             }
-            // Delete the token row
-            const { error: delErr } = await supabase
-                .from('qr_code_tokens')
-                .delete()
-                .eq('id', deleteTarget.id);
-            if (delErr) throw delErr;
 
             await fetchTokens();
             setDeleteTarget(null);
@@ -850,6 +877,25 @@ export default function QrTokens() {
             setError('Failed to delete token: ' + err.message);
         } finally {
             setDeleting(false);
+        }
+    };
+
+    const handleRestore = async () => {
+        if (!restoreTarget) return;
+        setRestoring(true);
+        try {
+            const { error: resErr } = await supabase
+                .from('qr_code_tokens')
+                .update({ status: 'available' })
+                .eq('id', restoreTarget.id);
+            if (resErr) throw resErr;
+
+            await fetchTokens();
+            setRestoreTarget(null);
+        } catch (err: any) {
+            setError('Failed to restore token: ' + err.message);
+        } finally {
+            setRestoring(false);
         }
     };
 
@@ -976,18 +1022,51 @@ export default function QrTokens() {
 
     const handleBulkDelete = async () => {
         if (selectedIds.size === 0) return;
-        if (!window.confirm(`Are you sure you want to permanently delete ${selectedIds.size} selected token(s)?`)) return;
+        
+        const tokensToDelete = tokens.filter(t => selectedIds.has(t.id));
+        const alreadyTrashedIds = tokensToDelete.filter(t => t.status === 'trashed').map(t => t.id);
+        const toTrashIds = tokensToDelete.filter(t => t.status !== 'trashed').map(t => t.id);
+        
+        const confirmMsg = alreadyTrashedIds.length > 0 
+            ? `Are you sure you want to permanently delete ${alreadyTrashedIds.length} token(s) and move ${toTrashIds.length} token(s) to trash?`
+            : `Are you sure you want to move ${toTrashIds.length} token(s) to trash?`;
+            
+        if (!window.confirm(confirmMsg)) return;
+        
         setIsBulkDeleting(true);
         try {
-            const tokensToDelete = tokens.filter(t => selectedIds.has(t.id));
-            const assignedTokens = tokensToDelete.filter(t => t.assigned_table_id);
-            if (assignedTokens.length > 0) {
-                const assignedTableIds = assignedTokens.map(t => t.assigned_table_id);
-                const { error: updErr } = await supabase.from('restaurant_tables').update({ qr_token: null }).in('id', assignedTableIds);
-                if (updErr) console.error("Error unlinking tables", updErr);
+            // Handle tokens to move to trash
+            if (toTrashIds.length > 0) {
+                const tokensToTrash = tokensToDelete.filter(t => t.status !== 'trashed');
+                const assignedTokens = tokensToTrash.filter(t => t.assigned_table_id);
+                if (assignedTokens.length > 0) {
+                    const autoGenTableIds = assignedTokens.filter(t => t.is_auto_generated).map(t => t.assigned_table_id);
+                    const physicalTableIds = assignedTokens.filter(t => !t.is_auto_generated).map(t => t.assigned_table_id);
+                    
+                    if (physicalTableIds.length > 0) {
+                        const { error: updErr } = await supabase.from('restaurant_tables').update({ qr_token: null }).in('id', physicalTableIds);
+                        if (updErr) console.error("Error unlinking tables", updErr);
+                    }
+                    if (autoGenTableIds.length > 0) {
+                        const { error: delTableErr } = await supabase.from('restaurant_tables').delete().in('id', autoGenTableIds);
+                        if (delTableErr) console.error("Error deleting tables", delTableErr);
+                    }
+                }
+                const { error: trashErr } = await supabase.from('qr_code_tokens').update({ 
+                    status: 'trashed',
+                    assigned_restaurant_id: null,
+                    assigned_table_id: null,
+                    assigned_at: null
+                }).in('id', toTrashIds);
+                if (trashErr) throw trashErr;
             }
-            const { error: delErr } = await supabase.from('qr_code_tokens').delete().in('id', Array.from(selectedIds));
-            if (delErr) throw delErr;
+            
+            // Handle tokens to permanently delete
+            if (alreadyTrashedIds.length > 0) {
+                const { error: delErr } = await supabase.from('qr_code_tokens').delete().in('id', alreadyTrashedIds);
+                if (delErr) throw delErr;
+            }
+            
             await fetchTokens();
             setSelectedIds(new Set());
         } catch (err: any) {
@@ -1056,16 +1135,22 @@ export default function QrTokens() {
             {/* ── Type Tabs ── */}
             <div className="flex items-center gap-6 border-b border-border px-2">
                 <button
-                    onClick={() => { setTokenTypeTab('physical'); setPage(1); }}
+                    onClick={() => { setTokenTypeTab('physical'); setPage(1); fetchTokens(); }}
                     className={`py-2.5 text-[13px] font-semibold border-b-2 transition-colors ${tokenTypeTab === 'physical' ? 'border-accent-primary text-accent-primary' : 'border-transparent text-text-muted hover:text-text-main'} bg-transparent cursor-pointer`}
                 >
                     Super Admin
                 </button>
                 <button
-                    onClick={() => { setTokenTypeTab('auto_generated'); setPage(1); }}
+                    onClick={() => { setTokenTypeTab('auto_generated'); setPage(1); fetchTokens(); }}
                     className={`py-2.5 text-[13px] font-semibold border-b-2 transition-colors ${tokenTypeTab === 'auto_generated' ? 'border-accent-primary text-accent-primary' : 'border-transparent text-text-muted hover:text-text-main'} bg-transparent cursor-pointer`}
                 >
                     Rest Admins
+                </button>
+                <button
+                    onClick={() => { setTokenTypeTab('trashed'); setPage(1); fetchTokens(); }}
+                    className={`py-2.5 text-[13px] font-semibold border-b-2 transition-colors ${tokenTypeTab === 'trashed' ? 'border-accent-primary text-accent-primary' : 'border-transparent text-text-muted hover:text-text-main'} bg-transparent cursor-pointer`}
+                >
+                    Trash
                 </button>
             </div>
 
@@ -1401,7 +1486,7 @@ export default function QrTokens() {
                                                     </div>
                                                 </td>
                                                 <td className="py-2.5 px-4 align-middle">
-                                                    <span className={`text-[12px] font-bold ${token.status === 'available' ? 'text-green-600' : 'text-blue-600'}`}>
+                                                    <span className={`text-[12px] font-bold ${token.status === 'available' ? 'text-green-600' : token.status === 'trashed' ? 'text-gray-500' : 'text-blue-600'}`}>
                                                         {token.status.toUpperCase()}
                                                     </span>
                                                 </td>
@@ -1452,7 +1537,7 @@ export default function QrTokens() {
                                                         >
                                                             PDF
                                                         </button>
-                                                        {token.status === 'assigned' && (
+                                                        {token.status === 'assigned' && !token.is_auto_generated && (
                                                             <button
                                                                 onClick={() => setUnlinkTarget(token)}
                                                                 className="px-2.5 py-1.5 text-xs rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:bg-amber-500/20 transition-colors"
@@ -1537,7 +1622,7 @@ export default function QrTokens() {
                                                     )}
                                                 </div>
                                             </div>
-                                            <span className={`text-[11px] font-bold px-2 py-0.5 rounded bg-surface-hover border border-border/40 shrink-0 ${token.status === 'available' ? 'text-green-600' : 'text-blue-600'}`}>
+                                            <span className={`text-[11px] font-bold px-2 py-0.5 rounded bg-surface-hover border border-border/40 shrink-0 ${token.status === 'available' ? 'text-green-600' : token.status === 'trashed' ? 'text-gray-500' : 'text-blue-600'}`}>
                                                 {token.status.toUpperCase()}
                                             </span>
                                         </div>
@@ -1597,13 +1682,23 @@ export default function QrTokens() {
                                                 >
                                                     PDF
                                                 </button>
-                                                {token.status === 'assigned' && (
+                                                {token.status === 'trashed' ? (
                                                     <button
-                                                        onClick={() => setUnlinkTarget(token)}
-                                                        className="px-2.5 py-1.5 text-xs rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:bg-amber-500/20 transition-colors"
+                                                        onClick={() => setRestoreTarget(token)}
+                                                        className="px-2.5 py-1.5 text-xs rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 hover:bg-green-500/20 transition-colors"
+                                                        title="Restore token"
                                                     >
-                                                        <Unlink size={12} />
+                                                        <RefreshCw size={12} />
                                                     </button>
+                                                ) : (
+                                                    token.status === 'assigned' && !token.is_auto_generated && (
+                                                        <button
+                                                            onClick={() => setUnlinkTarget(token)}
+                                                            className="px-2.5 py-1.5 text-xs rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:bg-amber-500/20 transition-colors"
+                                                        >
+                                                            <Unlink size={12} />
+                                                        </button>
+                                                    )
                                                 )}
                                                 <button
                                                     onClick={() => setDeleteTarget(token)}
@@ -2074,6 +2169,37 @@ export default function QrTokens() {
                 document.body
             )}
 
+            {/* ── Restore Confirm Modal ── */}
+            {restoreTarget && createPortal(
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[1000] p-4" onClick={() => setRestoreTarget(null)}>
+                    <div className="bg-surface border border-border rounded-2xl w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
+                        <div className="p-6">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-10 h-10 rounded-full bg-green-500/15 flex items-center justify-center">
+                                    <RefreshCw size={18} className="text-green-500" />
+                                </div>
+                                <h2 className="font-bold text-text-main">Restore Token</h2>
+                            </div>
+                            <p className="text-sm text-text-muted mb-1">
+                                Are you sure you want to restore token <span className="font-mono font-semibold text-text-main">{restoreTarget.token}</span>?
+                            </p>
+                            <p className="text-xs text-green-500 mt-3">This will make it available again.</p>
+                        </div>
+                        <div className="flex gap-3 px-6 py-4 border-t border-border">
+                            <button onClick={() => setRestoreTarget(null)} className="flex-1 py-2 rounded-lg border border-border text-sm text-text-muted hover:bg-surface-hover transition-colors">Cancel</button>
+                            <button
+                                onClick={handleRestore}
+                                disabled={restoring}
+                                className="flex-1 py-2 rounded-lg bg-green-500 text-white text-sm font-semibold hover:bg-green-600 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+                            >
+                                {restoring ? <Loader2 size={16} className="animate-spin" /> : 'Restore'}
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
             {/* ── Delete Confirm Modal ── */}
             {deleteTarget && createPortal(
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[1000] p-4" onClick={() => setDeleteTarget(null)}>
@@ -2158,7 +2284,7 @@ export default function QrTokens() {
                                     <div className="flex-1 flex flex-col gap-2 min-w-0">
                                         <div className="bg-bg rounded-lg p-2.5 border border-border/50 flex flex-col items-start gap-1">
                                             <div className="text-[10px] text-text-muted font-medium uppercase tracking-wider">Status</div>
-                                            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${detailToken.status === 'available' ? 'bg-green-500/10 text-green-600' : 'bg-blue-500/10 text-blue-600'}`}>
+                                            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${detailToken.status === 'available' ? 'bg-green-500/10 text-green-600' : detailToken.status === 'trashed' ? 'bg-gray-500/10 text-gray-500' : 'bg-blue-500/10 text-blue-600'}`}>
                                                 {detailToken.status.toUpperCase()}
                                             </span>
                                         </div>
