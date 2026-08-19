@@ -1,0 +1,10 @@
+# Tablekard Customer Web
+
+Tablekard is a platform to order delicious food from your favorite restaurants.
+
+## Links
+
+- [Home](https://app.tablekard.com/)
+- [Menu](https://app.tablekard.com/menu)
+- [Orders](https://app.tablekard.com/orders)
+- [Profile](https://app.tablekard.com/profile)

@@ -240,36 +240,37 @@ body {
   bottom: 8px;
   right: 12px;
   display: flex;
-  gap: 5px;
+  gap: 0;
   z-index: 10;
   background: rgba(0, 0, 0, 0.25);
   backdrop-filter: blur(4px);
-  padding: 4px 8px;
+  padding: 0 4px;
   border-radius: 10px;
 }
 
 .hero-banner-dot {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-banner-dot::before {
+  content: "";
+  display: block;
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  border: none;
   background: rgba(255,255,255,0.5);
-  cursor: pointer;
-  padding: 0;
   transition: all 0.3s ease;
-  position: relative;
 }
 
-.hero-banner-dot::after {
-  content: "";
-  position: absolute;
-  top: -14px;
-  right: -14px;
-  bottom: -14px;
-  left: -14px;
-}
-
-.hero-banner-dot.active {
+.hero-banner-dot.active::before {
   background: #ffffff;
   width: 16px;
   border-radius: 3px;

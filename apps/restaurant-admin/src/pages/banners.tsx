@@ -345,202 +345,218 @@ export default function BannersPage() {
         </div>
       )}
 
-      {/* Add / Edit Banner Form */}
+      {/* Add / Edit Banner Full-Screen Modal */}
       {showForm && (
-        <div className="mb-8 bg-white border border-[#E2E8F0] rounded-[24px] p-6 sm:p-8 shadow-sm dark:bg-tk-bg-card dark:border-tk-border">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-[18px] font-bold text-[#1A202C] font-['Outfit',sans-serif] dark:text-tk-text m-0">{editingBanner ? 'Edit Banner' : 'New Banner'}</h3>
-            <button onClick={() => { setShowForm(false); setEditingBanner(null); setCroppedBlob(null); setRawImageSrc(null); }} className="bg-transparent border-none cursor-pointer text-[#94A3B8] hover:text-[#475569] transition-colors p-1" type="button"><X size={20} /></button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Image Upload */}
-            <div className="md:col-span-2">
-              <label className="flex flex-col gap-2">
-                <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Banner Image *</span>
-                {form.image_url ? (
-                  <div
-                    onClick={() => {
-                      if (rawImageSrc) {
-                        setCropImageSrc(rawImageSrc);
-                        setShowCropper(true);
-                      } else {
-                        fileInputRef.current?.click();
-                      }
-                    }}
-                    className="group relative w-full aspect-[21/9] rounded-[16px] overflow-hidden border border-[#CBD5E0] bg-[#F8FAFC] dark:bg-tk-bg-surface dark:border-tk-border cursor-pointer"
-                  >
-                    <img src={form.image_url} alt="Preview" className="w-full h-full object-cover group-hover:opacity-90 transition-opacity" />
-                    <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[13px] font-bold font-['Outfit',sans-serif] pointer-events-none">
-                      Click to edit crop
-                    </div>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setForm(prev => ({ ...prev, image_url: '' }));
-                        setCroppedBlob(null);
-                        setRawImageSrc(null);
-                      }}
-                      className="absolute top-3 right-3 p-2 bg-black/60 backdrop-blur-sm rounded-full text-white hover:bg-black/80 transition-colors cursor-pointer border-none z-10"
-                      title="Remove image"
-                    >
-                      <X size={16} />
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-full aspect-[21/9] border-2 border-dashed border-[#CBD5E0] rounded-[16px] flex flex-col items-center justify-center gap-2 text-[#64748B] hover:border-tk-burgundy hover:text-tk-burgundy hover:bg-[#FFF5F5] dark:hover:bg-[rgba(199,91,58,0.05)] transition-all cursor-pointer bg-[#F8FAFC] dark:bg-tk-bg-surface dark:border-tk-border"
-                  >
-                    <div className="w-12 h-12 rounded-full bg-[#EDF2F7] dark:bg-tk-bg-elevated flex items-center justify-center mb-2">
-                      <Upload size={24} className="text-[#A0AEC0] dark:text-tk-text-secondary" />
-                    </div>
-                    <span className="text-[14px] font-bold font-['Outfit',sans-serif]">Click to upload image</span>
-                    <span className="text-[12px] font-['Outfit',sans-serif]">PNG, JPG, WebP — max 2MB (21:9 aspect ratio recommended)</span>
-                  </button>
-                )}
-                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-              </label>
+        <div
+          className="fixed inset-0 z-[999] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => { if (!saving) { setShowForm(false); setEditingBanner(null); setCroppedBlob(null); setRawImageSrc(null); } }}
+        >
+          <div
+            className="relative w-full h-full bg-white dark:bg-tk-bg-card shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Sticky Header */}
+            <div className="flex items-center justify-between px-6 sm:px-8 py-3 border-b border-[#E2E8F0] dark:border-tk-border shrink-0 bg-white dark:bg-tk-bg-card">
+              <h3 className="text-[16px] font-bold text-[#1A202C] font-['Outfit',sans-serif] dark:text-tk-text m-0">{editingBanner ? 'Edit Banner' : 'New Banner'}</h3>
+              <button onClick={() => { setShowForm(false); setEditingBanner(null); setCroppedBlob(null); setRawImageSrc(null); }} className="w-8 h-8 rounded-lg bg-[#F1F5F9] dark:bg-tk-bg-elevated flex items-center justify-center border-none cursor-pointer text-[#94A3B8] hover:text-[#475569] hover:bg-[#E2E8F0] dark:hover:bg-tk-bg-hover transition-all" type="button"><X size={18} /></button>
             </div>
 
-            <div className="flex flex-col gap-3 md:col-span-2">
-              <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Click Target Destination (optional)</span>
-              
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                {[
-                  { type: 'none', label: 'No Link', icon: Link },
-                  { type: 'menu', label: 'Menu Page', icon: Compass },
-                  { type: 'offers', label: 'Offers / Discounts', icon: Tag },
-                  { type: 'item', label: 'Specific Item', icon: Utensils },
-                  { type: 'custom', label: 'Custom URL', icon: Link },
-                ].map(({ type, label, icon: Icon }) => (
-                  <button
-                    key={type}
-                    type="button"
-                    onClick={() => {
-                      const newType = type as any;
-                      setDestinationType(newType);
-                      if (newType === 'none') setForm(prev => ({ ...prev, link_url: '' }));
-                      else if (newType === 'menu') setForm(prev => ({ ...prev, link_url: '/menu' }));
-                      else if (newType === 'offers') setForm(prev => ({ ...prev, link_url: '/offers' }));
-                      else if (newType === 'item') setForm(prev => ({ ...prev, link_url: selectedItemId ? `item:${selectedItemId}` : '' }));
-                      else if (newType === 'custom') setForm(prev => ({ ...prev, link_url: customUrl }));
-                    }}
-                    className={`flex flex-col items-center justify-center p-3 rounded-xl border text-[12px] font-bold font-['Outfit',sans-serif] cursor-pointer transition-all gap-1.5 ${destinationType === type ? 'bg-[#FFF5F5] dark:bg-[rgba(199,91,58,0.15)] border-tk-burgundy text-tk-burgundy shadow-sm' : 'bg-white dark:bg-tk-bg-surface border-[#CBD5E0] dark:border-tk-border text-[#4A5568] dark:text-tk-text-secondary hover:border-tk-burgundy/50'}`}
-                  >
-                    <Icon size={16} />
-                    <span>{label}</span>
-                  </button>
-                ))}
-              </div>
-
-              {destinationType === 'item' && (
-                <div className="flex flex-col gap-1.5 mt-2 animate-in fade-in duration-200">
-                  <span className="text-[12px] font-medium text-[#64748B] dark:text-tk-text-secondary">Select Food Item:</span>
-                  <div className="relative" ref={itemDropdownRef}>
-                    <button
-                      type="button"
-                      onClick={() => setIsItemDropdownOpen(!isItemDropdownOpen)}
-                      className="w-full flex justify-between items-center border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] transition-all duration-200 focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text text-left"
-                    >
-                      <span className="truncate flex-1 pr-2">
-                        {selectedItemId
-                          ? (menuItems.find(i => i.id === selectedItemId)?.name || 'Selected Item') + ' — ₹' + (menuItems.find(i => i.id === selectedItemId)?.price || '')
-                          : '-- Choose a Food Item --'}
-                      </span>
-                      <ChevronDown size={16} className={`text-tk-text-secondary transition-transform ${isItemDropdownOpen ? 'rotate-180' : ''}`} />
-                    </button>
-                    
-                    {isItemDropdownOpen && (
-                      <div className="absolute z-50 w-full mt-2 bg-white dark:bg-tk-bg-surface border border-[#CBD5E0] dark:border-tk-border rounded-xl shadow-lg overflow-hidden flex flex-col">
-                        <div className="p-2 border-b border-[#CBD5E0] dark:border-tk-border relative">
-                          <Search size={14} className="absolute left-4 top-[50%] -translate-y-1/2 text-tk-text-secondary" />
-                          <input
-                            type="text"
-                            placeholder="Search items..."
-                            value={itemSearchQuery}
-                            onChange={(e) => setItemSearchQuery(e.target.value)}
-                            className="w-full pl-8 pr-3 py-2 bg-[#F8FAFC] dark:bg-tk-bg-elevated border-none rounded-lg text-[13px] text-[#1A202C] dark:text-tk-text focus:outline-none focus:ring-1 focus:ring-tk-burgundy transition-all"
-                            autoFocus
-                          />
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-6 tk-table-scroll">
+              <div className="flex flex-col lg:flex-row gap-6">
+                {/* Left: Image Upload */}
+                <div className="w-full lg:w-[60%] shrink-0">
+                  <label className="flex flex-col gap-2">
+                    <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Banner Image *</span>
+                    {form.image_url ? (
+                      <div
+                        onClick={() => {
+                          if (rawImageSrc) {
+                            setCropImageSrc(rawImageSrc);
+                            setShowCropper(true);
+                          } else {
+                            fileInputRef.current?.click();
+                          }
+                        }}
+                        className="group relative w-full aspect-[21/9] rounded-[16px] overflow-hidden border border-[#CBD5E0] bg-[#F8FAFC] dark:bg-tk-bg-surface dark:border-tk-border cursor-pointer"
+                      >
+                        <img src={form.image_url} alt="Preview" className="w-full h-full object-cover group-hover:opacity-90 transition-opacity" />
+                        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[13px] font-bold font-['Outfit',sans-serif] pointer-events-none">
+                          Click to edit crop
                         </div>
-                        <div className="max-h-60 overflow-y-auto tk-table-scroll">
-                          {menuItems.filter(item => item.name.toLowerCase().includes(itemSearchQuery.toLowerCase())).length > 0 ? (
-                            menuItems.filter(item => item.name.toLowerCase().includes(itemSearchQuery.toLowerCase())).map(item => (
-                              <button
-                                key={item.id}
-                                type="button"
-                                onClick={() => {
-                                  setSelectedItemId(item.id);
-                                  setForm(prev => ({ ...prev, link_url: item.id ? `item:${item.id}` : '' }));
-                                  setIsItemDropdownOpen(false);
-                                  setItemSearchQuery('');
-                                }}
-                                className={`w-full text-left px-3.5 py-2.5 text-[13px] font-['Outfit',sans-serif] hover:bg-[#FFF5F5] dark:hover:bg-[rgba(199,91,58,0.1)] transition-colors ${selectedItemId === item.id ? 'bg-[#FFF5F5] text-tk-burgundy dark:bg-[rgba(199,91,58,0.15)] font-semibold' : 'text-[#4A5568] dark:text-tk-text-secondary'}`}
-                              >
-                                {item.name} <span className="opacity-70">— ₹{item.price}</span>
-                              </button>
-                            ))
-                          ) : (
-                            <div className="px-3.5 py-4 text-center text-[13px] text-tk-text-secondary">
-                              No items found
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setForm(prev => ({ ...prev, image_url: '' }));
+                            setCroppedBlob(null);
+                            setRawImageSrc(null);
+                          }}
+                          className="absolute top-3 right-3 p-2 bg-black/60 backdrop-blur-sm rounded-full text-white hover:bg-black/80 transition-colors cursor-pointer border-none z-10"
+                          title="Remove image"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full aspect-[21/9] border-2 border-dashed border-[#CBD5E0] rounded-[16px] flex flex-col items-center justify-center gap-2 text-[#64748B] hover:border-tk-burgundy hover:text-tk-burgundy hover:bg-[#FFF5F5] dark:hover:bg-[rgba(199,91,58,0.05)] transition-all cursor-pointer bg-[#F8FAFC] dark:bg-tk-bg-surface dark:border-tk-border"
+                      >
+                        <div className="w-12 h-12 rounded-full bg-[#EDF2F7] dark:bg-tk-bg-elevated flex items-center justify-center mb-2">
+                          <Upload size={24} className="text-[#A0AEC0] dark:text-tk-text-secondary" />
+                        </div>
+                        <span className="text-[14px] font-bold font-['Outfit',sans-serif]">Click to upload image</span>
+                        <span className="text-[12px] font-['Outfit',sans-serif]">PNG, JPG, WebP — max 2MB (21:9 aspect ratio recommended)</span>
+                      </button>
+                    )}
+                    <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                  </label>
+                </div>
+
+                {/* Right: Destination & Toggle */}
+                <div className="w-full lg:w-[40%] flex flex-col gap-5">
+                  <div className="flex flex-col gap-3">
+                    <span className="text-[12px] font-semibold text-[#4A5568] uppercase tracking-[0.5px] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Click Target Destination (optional)</span>
+                    
+                    <div className="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-2 gap-2">
+                      {[
+                        { type: 'none', label: 'No Link', icon: Link },
+                        { type: 'menu', label: 'Menu Page', icon: Compass },
+                        { type: 'offers', label: 'Offers / Discounts', icon: Tag },
+                        { type: 'item', label: 'Specific Item', icon: Utensils },
+                        { type: 'custom', label: 'Custom URL', icon: Link },
+                      ].map(({ type, label, icon: Icon }) => (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => {
+                            const newType = type as any;
+                            setDestinationType(newType);
+                            if (newType === 'none') setForm(prev => ({ ...prev, link_url: '' }));
+                            else if (newType === 'menu') setForm(prev => ({ ...prev, link_url: '/menu' }));
+                            else if (newType === 'offers') setForm(prev => ({ ...prev, link_url: '/offers' }));
+                            else if (newType === 'item') setForm(prev => ({ ...prev, link_url: selectedItemId ? `item:${selectedItemId}` : '' }));
+                            else if (newType === 'custom') setForm(prev => ({ ...prev, link_url: customUrl }));
+                          }}
+                          className={`flex flex-col items-center justify-center p-3 rounded-xl border text-[12px] font-bold font-['Outfit',sans-serif] cursor-pointer transition-all gap-1.5 ${destinationType === type ? 'bg-[#FFF5F5] dark:bg-[rgba(199,91,58,0.15)] border-tk-burgundy text-tk-burgundy shadow-sm' : 'bg-white dark:bg-tk-bg-surface border-[#CBD5E0] dark:border-tk-border text-[#4A5568] dark:text-tk-text-secondary hover:border-tk-burgundy/50'}`}
+                        >
+                          <Icon size={16} />
+                          <span>{label}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {destinationType === 'item' && (
+                      <div className="flex flex-col gap-1.5 mt-2 animate-in fade-in duration-200">
+                        <span className="text-[12px] font-medium text-[#64748B] dark:text-tk-text-secondary">Select Food Item:</span>
+                        <div className="relative" ref={itemDropdownRef}>
+                          <button
+                            type="button"
+                            onClick={() => setIsItemDropdownOpen(!isItemDropdownOpen)}
+                            className="w-full flex justify-between items-center border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] transition-all duration-200 focus:outline-none focus:border-tk-burgundy dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text text-left"
+                          >
+                            <span className="truncate flex-1 pr-2">
+                              {selectedItemId
+                                ? (menuItems.find(i => i.id === selectedItemId)?.name || 'Selected Item') + ' — ₹' + (menuItems.find(i => i.id === selectedItemId)?.price || '')
+                                : '-- Choose a Food Item --'}
+                            </span>
+                            <ChevronDown size={16} className={`text-tk-text-secondary transition-transform ${isItemDropdownOpen ? 'rotate-180' : ''}`} />
+                          </button>
+                          
+                          {isItemDropdownOpen && (
+                            <div className="absolute z-50 w-full mt-2 bg-white dark:bg-tk-bg-surface border border-[#CBD5E0] dark:border-tk-border rounded-xl shadow-lg overflow-hidden flex flex-col">
+                              <div className="p-2 border-b border-[#CBD5E0] dark:border-tk-border relative">
+                                <Search size={14} className="absolute left-4 top-[50%] -translate-y-1/2 text-tk-text-secondary" />
+                                <input
+                                  type="text"
+                                  placeholder="Search items..."
+                                  value={itemSearchQuery}
+                                  onChange={(e) => setItemSearchQuery(e.target.value)}
+                                  className="w-full pl-8 pr-3 py-2 bg-[#F8FAFC] dark:bg-tk-bg-elevated border-none rounded-lg text-[13px] text-[#1A202C] dark:text-tk-text focus:outline-none focus:ring-1 focus:ring-tk-burgundy transition-all"
+                                  autoFocus
+                                />
+                              </div>
+                              <div className="max-h-60 overflow-y-auto tk-table-scroll">
+                                {menuItems.filter(item => item.name.toLowerCase().includes(itemSearchQuery.toLowerCase())).length > 0 ? (
+                                  menuItems.filter(item => item.name.toLowerCase().includes(itemSearchQuery.toLowerCase())).map(item => (
+                                    <button
+                                      key={item.id}
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedItemId(item.id);
+                                        setForm(prev => ({ ...prev, link_url: item.id ? `item:${item.id}` : '' }));
+                                        setIsItemDropdownOpen(false);
+                                        setItemSearchQuery('');
+                                      }}
+                                      className={`w-full text-left px-3.5 py-2.5 text-[13px] font-['Outfit',sans-serif] hover:bg-[#FFF5F5] dark:hover:bg-[rgba(199,91,58,0.1)] transition-colors ${selectedItemId === item.id ? 'bg-[#FFF5F5] text-tk-burgundy dark:bg-[rgba(199,91,58,0.15)] font-semibold' : 'text-[#4A5568] dark:text-tk-text-secondary'}`}
+                                    >
+                                      {item.name} <span className="opacity-70">— ₹{item.price}</span>
+                                    </button>
+                                  ))
+                                ) : (
+                                  <div className="px-3.5 py-4 text-center text-[13px] text-tk-text-secondary">
+                                    No items found
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           )}
                         </div>
                       </div>
                     )}
+
+                    {destinationType === 'custom' && (
+                      <div className="flex flex-col gap-1.5 mt-2 animate-in fade-in duration-200">
+                        <span className="text-[12px] font-medium text-[#64748B] dark:text-tk-text-secondary">Enter Custom URL:</span>
+                        <input
+                          type="text"
+                          placeholder="https://..."
+                          value={customUrl}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setCustomUrl(val);
+                            setForm(prev => ({ ...prev, link_url: val }));
+                          }}
+                          className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
+                        />
+                      </div>
+                    )}
                   </div>
+
+                  {/* Active toggle */}
+                  <div className="flex items-center gap-3 p-4 rounded-xl bg-[#F8FAFC] dark:bg-tk-bg-surface border border-[#E2E8F0] dark:border-tk-border cursor-pointer" onClick={() => setForm(prev => ({ ...prev, is_active: !prev.is_active }))}>
+                    <button
+                      type="button"
+                      className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${form.is_active ? 'bg-tk-burgundy' : 'bg-[#CBD5E0] dark:bg-[#4A5568]'}`}
+                    >
+                      <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${form.is_active ? 'translate-x-5' : 'translate-x-0'}`} />
+                    </button>
+                    <div className="flex flex-col">
+                      <span className="text-[14px] font-bold text-[#1A202C] font-['Outfit',sans-serif] dark:text-tk-text">Active</span>
+                      <span className="text-[12px] text-[#64748B] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Visible to customers on the home page</span>
+                    </div>
+                  </div>
+
+                  {error && <div className="p-3 bg-red-50 text-red-600 rounded-xl text-[13px] font-medium font-['Outfit',sans-serif] flex items-center gap-2"><div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center shrink-0">!</div>{error}</div>}
                 </div>
-              )}
-
-              {destinationType === 'custom' && (
-                <div className="flex flex-col gap-1.5 mt-2 animate-in fade-in duration-200">
-                  <span className="text-[12px] font-medium text-[#64748B] dark:text-tk-text-secondary">Enter Custom URL:</span>
-                  <input
-                    type="text"
-                    placeholder="https://..."
-                    value={customUrl}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setCustomUrl(val);
-                      setForm(prev => ({ ...prev, link_url: val }));
-                    }}
-                    className="w-full border border-[#CBD5E0] rounded-xl bg-white text-[#1A202C] px-3.5 py-3 text-[14px] font-['Outfit',sans-serif] box-border transition-all duration-200 focus:outline-none focus:border-tk-burgundy focus:ring-4 focus:ring-[rgba(139,58,30,0.12)] dark:bg-tk-bg-surface dark:border-tk-border dark:text-tk-text"
-                  />
-                </div>
-              )}
+              </div>
             </div>
-          </div>
 
-          {/* Active toggle */}
-          <div className="flex items-center gap-3 mt-6 p-4 rounded-xl bg-[#F8FAFC] dark:bg-tk-bg-surface border border-[#E2E8F0] dark:border-tk-border cursor-pointer" onClick={() => setForm(prev => ({ ...prev, is_active: !prev.is_active }))}>
-            <button
-              type="button"
-              className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${form.is_active ? 'bg-tk-burgundy' : 'bg-[#CBD5E0] dark:bg-[#4A5568]'}`}
-            >
-              <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${form.is_active ? 'translate-x-5' : 'translate-x-0'}`} />
-            </button>
-            <div className="flex flex-col">
-              <span className="text-[14px] font-bold text-[#1A202C] font-['Outfit',sans-serif] dark:text-tk-text">Active</span>
-              <span className="text-[12px] text-[#64748B] font-['Outfit',sans-serif] dark:text-tk-text-secondary">Visible to customers on the home page</span>
+            {/* Sticky Footer */}
+            <div className="flex justify-end gap-3 px-6 sm:px-8 py-5 border-t border-[#E2E8F0] dark:border-tk-border shrink-0 bg-white dark:bg-tk-bg-card">
+              <button type="button" onClick={() => { setShowForm(false); setEditingBanner(null); setCroppedBlob(null); setRawImageSrc(null); }} className="inline-flex items-center justify-center gap-2 min-h-[44px] px-5 border-none rounded-xl font-['Outfit',sans-serif] text-[14px] font-semibold cursor-pointer transition-all duration-200 bg-[#EDF2F7] text-[#2D3748] hover:bg-[#E2E8F0] dark:bg-tk-bg-elevated dark:text-tk-text dark:hover:bg-tk-bg-hover">Cancel</button>
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saving}
+                className="inline-flex items-center justify-center gap-2 min-h-[44px] px-6 border-none rounded-xl font-['Outfit',sans-serif] text-[14px] font-semibold cursor-pointer transition-all duration-200 bg-[linear-gradient(135deg,var(--tk-burgundy),#6B2A15)] text-white shadow-[0_8px_18px_rgba(139,58,30,0.2)] hover:shadow-[0_12px_24px_rgba(139,58,30,0.3)] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+              >
+                {saving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : null}
+                {saving ? 'Saving...' : editingBanner ? 'Update Banner' : 'Save Banner'}
+              </button>
             </div>
-          </div>
-
-          {error && <div className="mt-4 p-3 bg-red-50 text-red-600 rounded-xl text-[13px] font-medium font-['Outfit',sans-serif] flex items-center gap-2"><div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center shrink-0">!</div>{error}</div>}
-
-          <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-[#E2E8F0] dark:border-tk-border">
-            <button type="button" onClick={() => { setShowForm(false); setEditingBanner(null); setCroppedBlob(null); setRawImageSrc(null); }} className="inline-flex items-center justify-center gap-2 min-h-[44px] px-5 border-none rounded-xl font-['Outfit',sans-serif] text-[14px] font-semibold cursor-pointer transition-all duration-200 bg-[#EDF2F7] text-[#2D3748] hover:bg-[#E2E8F0] dark:bg-tk-bg-elevated dark:text-tk-text dark:hover:bg-tk-bg-hover">Cancel</button>
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={saving}
-              className="inline-flex items-center justify-center gap-2 min-h-[44px] px-6 border-none rounded-xl font-['Outfit',sans-serif] text-[14px] font-semibold cursor-pointer transition-all duration-200 bg-[linear-gradient(135deg,var(--tk-burgundy),#6B2A15)] text-white shadow-[0_8px_18px_rgba(139,58,30,0.2)] hover:shadow-[0_12px_24px_rgba(139,58,30,0.3)] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
-            >
-              {saving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : null}
-              {saving ? 'Saving...' : editingBanner ? 'Update Banner' : 'Save Banner'}
-            </button>
           </div>
         </div>
       )}
