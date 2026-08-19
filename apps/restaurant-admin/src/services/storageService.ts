@@ -1,7 +1,43 @@
 import { supabase } from '@restaurant-saas/supabase';
+import imageCompression from 'browser-image-compression';
 
 const BUCKET_NAME = 'menu-images';
 const PROFILE_BUCKET = 'menu-images';
+
+/**
+ * Compresses an image before uploading. Converts to WebP.
+ */
+const compressImage = async (file: File): Promise<File> => {
+    // Skip SVGs and GIFs
+    if (file.type === 'image/svg+xml' || file.type === 'image/gif') {
+        return file;
+    }
+
+    const options = {
+        maxSizeMB: 0.3,          // Max 300KB
+        maxWidthOrHeight: 1024,  // Max 1024x1024
+        useWebWorker: true,
+        fileType: 'image/webp'   // Convert everything to WebP
+    };
+
+    try {
+        const compressedBlob = await imageCompression(file, options);
+        // Ensure new file has correct extension
+        let newFileName = file.name;
+        if (!newFileName.toLowerCase().endsWith('.webp')) {
+            const lastDotIndex = newFileName.lastIndexOf('.');
+            if (lastDotIndex !== -1) {
+                newFileName = newFileName.substring(0, lastDotIndex) + '.webp';
+            } else {
+                newFileName += '.webp';
+            }
+        }
+        return new File([compressedBlob], newFileName, { type: compressedBlob.type });
+    } catch (error) {
+        console.error('Error compressing image:', error);
+        return file; // Fallback to original file
+    }
+};
 
 /**
  * Uploads a profile-related image (logo or avatar) to Supabase Storage.
@@ -17,19 +53,21 @@ export const uploadProfileImage = async (folder: string, file: File): Promise<st
         throw new Error('Only PNG, JPG, WebP, SVG, and GIF images are supported.');
     }
 
-    // Validate file size (max 2MB)
-    const MAX_SIZE = 2 * 1024 * 1024;
+    // Validate file size (max 5MB initially before compression)
+    const MAX_SIZE = 5 * 1024 * 1024;
     if (file.size > MAX_SIZE) {
-        throw new Error('Image must be under 2 MB.');
+        throw new Error('Image must be under 5 MB before compression.');
     }
 
-    const ext = file.name.split('.').pop() || 'png';
+    const compressedFile = await compressImage(file);
+
+    const ext = compressedFile.name.split('.').pop() || 'png';
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${ext}`;
     const filePath = `${folder}/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
         .from(PROFILE_BUCKET)
-        .upload(filePath, file, {
+        .upload(filePath, compressedFile, {
             cacheControl: '3600',
             upsert: false
         });
@@ -62,14 +100,16 @@ export const uploadMenuItemImage = async (restaurantId: string, _restaurantName:
         throw new Error('Image must be under 5 MB.');
     }
 
+    const compressedFile = await compressImage(file);
+
     // Generate a secure random file name: menu_items/restaurantId/timestamp-random.ext
-    const ext = file.name.split('.').pop();
+    const ext = compressedFile.name.split('.').pop() || 'png';
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${ext}`;
     const filePath = `menu_items/${restaurantId}/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
         .from(BUCKET_NAME)
-        .upload(filePath, file, {
+        .upload(filePath, compressedFile, {
             cacheControl: '3600',
             upsert: false
         });
